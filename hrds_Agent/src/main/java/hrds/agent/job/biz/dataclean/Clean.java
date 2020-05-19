@@ -45,7 +45,7 @@ public class Clean {
 	                          List<Object> list, String database_code, String database_separatorr) {
 
 		if (!ordering.isEmpty()) {
-			Map<Integer, String> colMap = ordering.get(columnname);
+			Map<Integer, String> colMap = ordering.get(columnname.toUpperCase());
 			for (int i = colMap.size(); i >= 1; i--) {
 				switch (colMap.get(i)) {
 					case "2":

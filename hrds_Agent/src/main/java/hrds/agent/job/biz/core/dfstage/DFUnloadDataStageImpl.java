@@ -23,12 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 
 @DocClass(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
 public class DFUnloadDataStageImpl extends AbstractJobStage {
@@ -63,15 +65,28 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
 					.generateTableInfo(sourceDataConfBean, collectTableBean);
 			//文件所在的路径为  根路径+跑批日期+表名+文件格式
-			String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
-					+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
-					+ File.separator + JobConstant.fileFormatMap.get(tableBean.getFile_format())
-					+ File.separator, true);
+//			String file_path = FileNameUtils.normalize(tableBean.getRoot_path() + File.separator
+//					+ collectTableBean.getEtlDate() + File.separator + collectTableBean.getTable_name()
+//					+ File.separator + JobConstant.fileFormatMap.get(tableBean.getFile_format())
+//					+ File.separator, true);
+			//获取文件所在的路径下，符合正则匹配的文件
+			String filePathPattern = getFilePathPattern(tableBean.getRoot_path(), collectTableBean.getEtlDate(),
+					collectTableBean.getTable_name(), tableBean.getFile_format());
+			String file_path = FileNameUtils.getFullPath(filePathPattern);
+			String regex = FileNameUtils.getName(filePathPattern);
+			String[] file_name_list = new File(file_path).list(new FilenameFilter() {
+				private Pattern pattern = Pattern.compile(regex);
+
+				@Override
+				public boolean accept(File dir, String name) {
+					return pattern.matcher(name).matches();
+				}
+			});
 			//列出文件目录下的文件
-			String[] file_name_list = new File(file_path).list(
-					(dir, name) -> (name.contains(collectTableBean.getTable_name()) &&
-							!name.startsWith("."))
-			);
+//			String[] file_name_list = new File(file_path).list(
+//					(dir, name) -> (name.contains(collectTableBean.getTable_name()) &&
+//							!name.startsWith("."))
+//			);
 			//判断是否转存
 			if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived()) || UnloadType.ZengLiangXieShu.getCode().
 					equals(collectTableBean.getUnload_type())) {
@@ -179,6 +194,25 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
+	}
+
+	/**
+	 * 替换文件全路径的占位符
+	 *
+	 * @param root_path   文件全路径
+	 * @param etlDate     跑批日期
+	 * @param table_name  表名
+	 * @param file_format 文件格式
+	 * @return 返回替换占位符后的路径
+	 */
+	private String getFilePathPattern(String root_path, String etlDate, String table_name, String file_format) {
+		//替换跑批日期
+		root_path = root_path.replace("#{date}", etlDate);
+		//替换表名
+		root_path = root_path.replace("#{table}", table_name);
+		//替换文件格式
+		root_path = root_path.replace("#{文件格式}", JobConstant.fileFormatMap.get(file_format));
+		return root_path;
 	}
 
 	/**

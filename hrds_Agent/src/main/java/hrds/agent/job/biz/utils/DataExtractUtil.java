@@ -26,7 +26,7 @@ public class DataExtractUtil {
 	 */
 	public static synchronized void writeDataDictionary(String dictionaryPath, String tableName, String allColumns
 			, String allType, List<Data_extraction_def> ext_defList, String unload_type, String primaryKeyInfo
-			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo) {
+			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo, String hbase_name) {
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
 		String dataDictionaryFile = dictionaryPath + DATADICTIONARY;
@@ -60,7 +60,13 @@ public class DataExtractUtil {
 				object.put("is_header", data_extraction_def.getIs_header());
 				object.put("dbfile_format", data_extraction_def.getDbfile_format());
 				object.put("database_code", data_extraction_def.getDatabase_code());
-				object.put("plane_url", data_extraction_def.getPlane_url());
+				if (StringUtil.isEmpty(data_extraction_def.getFile_suffix())) {
+					data_extraction_def.setFile_suffix("dat");
+				}
+				///home/hyshf/xccccccccccc/#{date}/#{table}/#{文件格式}/.*
+				object.put("plane_url", data_extraction_def.getPlane_url() + File.separator + "#{date}" +
+						File.separator + "#{table}" + File.separator + "#{文件格式}" + File.separator
+						+ hbase_name + ".*." + data_extraction_def.getFile_suffix());
 				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
 				object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
 				storageArray.add(object);
