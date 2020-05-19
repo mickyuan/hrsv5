@@ -90,6 +90,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		if (result.isEmpty()) {
 			String job_rs_id = UUID.randomUUID().toString();
 			collect.setJob_rs_id(job_rs_id);
+			collect.setCc_remark(msg);
 			//新增source_file_attribute表
 			collect.add(Dbo.db());
 			//新增错误信息表，保存到系统
@@ -102,6 +103,7 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		} else {
 			String job_rs_id = result.getString(0, "job_rs_id");
 			collect.setJob_rs_id(job_rs_id);
+			collect.setCc_remark(msg);
 			//更新source_file_attribute表
 			collect.update(Dbo.db());
 			//更新error_info表
