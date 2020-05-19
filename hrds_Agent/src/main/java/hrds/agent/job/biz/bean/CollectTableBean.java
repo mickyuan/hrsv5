@@ -260,8 +260,8 @@ public class CollectTableBean implements Serializable {
 				case "\\n":
 					data_extraction_def.setRow_separator("\n");
 					break;
-				default: //可选
-					data_extraction_def.setRow_separator("\n");
+//				default: //可选
+//					data_extraction_def.setRow_separator("\n");
 			}
 			data_extraction_def.setDatabase_separatorr(StringUtil.
 					unicode2String(data_extraction_def.getDatabase_separatorr()));
