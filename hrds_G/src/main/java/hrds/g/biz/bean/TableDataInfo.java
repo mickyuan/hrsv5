@@ -15,15 +15,25 @@ public class TableDataInfo extends ProjectTableEntity {
 
 	@DocBean(name = "file_id", value = "表ID:", dataType = Long.class, required = true)
 	private String file_id;
-	@DocBean(name = "columnDataInfo", value = "表字段实体对象:", dataType = String.class, required = true)
-	private ColumnDataInfo[] columnDataInfos;
+	@DocBean(name = "table_ch_column", value = "字段中文名称:", dataType = String.class, required = true)
+	private String[] table_ch_column;
+	@DocBean(name = "table_en_column", value = "字段英文名称:", dataType = String.class, required = true)
+	private String[] table_en_column;
 
-	public ColumnDataInfo[] getColumnDataInfos() {
-		return columnDataInfos;
+	public String[] getTable_ch_column() {
+		return table_ch_column;
 	}
 
-	public void setColumnDataInfos(ColumnDataInfo[] columnDataInfos) {
-		this.columnDataInfos = columnDataInfos;
+	public void setTable_ch_column(String[] table_ch_column) {
+		this.table_ch_column = table_ch_column;
+	}
+
+	public String[] getTable_en_column() {
+		return table_en_column;
+	}
+
+	public void setTable_en_column(String[] table_en_column) {
+		this.table_en_column = table_en_column;
 	}
 
 	public String getFile_id() {
