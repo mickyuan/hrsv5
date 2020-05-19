@@ -79,7 +79,7 @@ public class MarketInfoAction extends BaseAction {
     private static final String xlsxSuffix = ".xlsx";
     private static final String xlsSuffix = ".xlsx";
     private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
-
+    private static final String[] nolengthcolumntypes = {"string", "text", "bigint"};
 
     /**
      * 封装一个检查字段正确的方法
@@ -144,9 +144,9 @@ public class MarketInfoAction extends BaseAction {
         //1.检查数据合法性
         Long data_mart_id = dm_info.getData_mart_id();
         //如果是更新 就先删除原有的信息
-        if(data_mart_id != null){
-            Dbo.execute("delete from "+Dm_info.TableName+" where data_mart_id = ?",dm_info.getData_mart_id());
-        }else{
+        if (data_mart_id != null) {
+            Dbo.execute("delete from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+        } else {
             dm_info.setData_mart_id(PrimayKeyGener.getNextId());
             dm_info.setMart_storage_path(Mart_Storage_path);
             dm_info.setCreate_date(DateUtil.getSysDate());
@@ -176,10 +176,10 @@ public class MarketInfoAction extends BaseAction {
             logicStep = "")
     @Param(name = "data_mart_id", desc = "data_mart_id", range = "data_mart_id")
     @Return(desc = "集市工程信息", range = "返回值取值范围")
-    public List<Dm_info> getdminfo(String data_mart_id){
+    public List<Dm_info> getdminfo(String data_mart_id) {
         Dm_info dm_info = new Dm_info();
         dm_info.setData_mart_id(data_mart_id);
-        return Dbo.queryList(Dm_info.class,"select * from "+Dm_info.TableName+" where data_mart_id = ?",dm_info.getData_mart_id());
+        return Dbo.queryList(Dm_info.class, "select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
     }
 
 
@@ -626,10 +626,7 @@ public class MarketInfoAction extends BaseAction {
                     if (field_length == null) {
                         field_length = "";
                     }
-                    if (targetfield_type.equals("string")) {
-                        field_length = "";
-                    }
-                    if (targetfield_type.equals("text")) {
+                    if (Arrays.asList(nolengthcolumntypes).contains(targetfield_type)) {
                         field_length = "";
                     }
                 } else {
@@ -882,7 +879,7 @@ public class MarketInfoAction extends BaseAction {
     @Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
     @Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
     @Param(name = "ifrepeat", desc = "ifrepeat", range = "表名是否为重复的")
-    public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort, boolean ifrepeat) {
+    public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dm_column_storage[] dm_column_storage, String querysql, String hbasesort, String ifrepeat) {
         Map<String, Object> resultmap = new HashMap<>();
         for (int i = 0; i < datatable_field_info.length; i++) {
             Datatable_field_info df_info = datatable_field_info[i];
@@ -925,7 +922,7 @@ public class MarketInfoAction extends BaseAction {
         List<String> columnnames = new ArrayList<>();
         List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         Dm_datatable dm_datatable1 = dm_datatables.get(0);
-        if (ifrepeat) {
+        if (Boolean.parseBoolean(ifrepeat)) {
             List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select field_en_name from " + Datatable_field_info.TableName + " t1 left join " + Dm_datatable.TableName + " t2 on t1.datatable_id =t2.datatable_id \n" +
                     "where t2.datatable_en_name = ?", dm_datatable1.getDatatable_en_name());
             for (Datatable_field_info everydatatable_field_info : datatable_field_infos) {
@@ -934,8 +931,8 @@ public class MarketInfoAction extends BaseAction {
         }
         for (int i = 0; i < datatable_field_info.length; i++) {
             Datatable_field_info df_info = datatable_field_info[i];
-            if (ifrepeat && !columnnames.contains(df_info.getField_en_name())) {
-                throw new BusinessSystemException("填写的字段 "+df_info.getField_en_name()+" 不存在于现有表 "+dm_datatable1.getDatatable_en_name()+" 中，请确认");
+            if (Boolean.parseBoolean(ifrepeat) && !columnnames.contains(df_info.getField_en_name())) {
+                throw new BusinessSystemException("填写的字段 " + df_info.getField_en_name() + " 不存在于现有表 " + dm_datatable1.getDatatable_en_name() + " 中，请确认");
             }
             String datatable_field_id = PrimayKeyGener.getNextId();
             df_info.setDatatable_field_id(datatable_field_id);
