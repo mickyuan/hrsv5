@@ -176,11 +176,16 @@ public class DataRangeManageAction extends BaseAction {
 		// 5.循环保存系统登记表参数信息
 		String[] table_ch_column = tableDataInfo.getTable_ch_column();
 		String[] table_en_column = tableDataInfo.getTable_en_column();
-		for (int i = 0; i < table_en_column.length; i++) {
-			sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-			sysreg_parameter_info.setTable_ch_column(table_ch_column[i]);
-			sysreg_parameter_info.setTable_en_column(table_en_column[i]);
-			sysreg_parameter_info.add(Dbo.db());
+		if (table_ch_column != null && table_en_column != null) {
+			if (table_ch_column.length != table_en_column.length) {
+				throw new BusinessException("列中文名称与列英文名称不对应，长度不一致");
+			}
+			for (int i = 0; i < table_en_column.length; i++) {
+				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+				sysreg_parameter_info.setTable_ch_column(table_ch_column[i]);
+				sysreg_parameter_info.setTable_en_column(table_en_column[i]);
+				sysreg_parameter_info.add(Dbo.db());
+			}
 		}
 	}
 
