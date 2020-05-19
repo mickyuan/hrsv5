@@ -26,7 +26,7 @@ public class DataTableUseInfoAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.clean();
-		assembler.addSql("SELECT distinct t1.use_id,t1.original_name,t1.sysreg_name," +
+		assembler.addSql("SELECT distinct t1.use_id,t1.original_name," +
 				"t3.user_name FROM " + Table_use_info.TableName + " t1," + Sysreg_parameter_info.TableName +
 				" t2," + Sys_user.TableName + " t3 WHERE t1.use_id = t2.use_id AND t1.user_id = t3.user_id");
 		// 2.判断用户ID是否为空，不为空增加条件查询
@@ -67,7 +67,7 @@ public class DataTableUseInfoAction extends BaseAction {
 	public Result searchFieldInfoById(Long use_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询字段信息并返回
-		return Dbo.queryResult("SELECT table_ch_column,table_cn_column FROM "
+		return Dbo.queryResult("SELECT table_ch_column,table_en_column FROM "
 				+ Sysreg_parameter_info.TableName + " WHERE use_id = ?", use_id);
 	}
 
