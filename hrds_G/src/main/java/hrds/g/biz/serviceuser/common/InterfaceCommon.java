@@ -8,7 +8,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -17,7 +16,6 @@ import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Interface_file_info;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
@@ -252,17 +250,17 @@ public class InterfaceCommon {
 				return checkParamsMap;
 			}
 			// 3.判断表名称是否为空
-			if (StringUtil.isBlank(singleTable.gettableName())) {
+			if (StringUtil.isBlank(singleTable.getTableName())) {
 				return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 
 			}
 			// 4.检查表是否有使用权限
-			if (!InterfaceManager.existsTable(db, user_id, singleTable.gettableName())) {
+			if (!InterfaceManager.existsTable(db, user_id, singleTable.getTableName())) {
 				return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 			}
 			// 5.从内存中获取当前表的字段信息
-			String table_column_name = InterfaceManager.getUserTableInfo(user_id, singleTable.gettableName())
-					.getTable_column_name();
+			String table_en_column = InterfaceManager.getUserTableInfo(user_id,
+					singleTable.getTableName()).getTable_en_column();
 			// 6.判断要查询列是否存在
 //			String selectColumn = singleTable.getSelectColumn();
 //			if (StringUtil.isBlank(selectColumn)) {
@@ -290,7 +288,7 @@ public class InterfaceCommon {
 //				singleTable.setSelectColumn(table_column_name);
 //			}
 			// 8.检查列信息
-			return checkColumn(db, singleTable, table_column_name, user_id);
+			return checkColumn(db, singleTable, table_en_column, user_id);
 		} catch (Exception e) {
 			if (e instanceof BusinessException) {
 				return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
@@ -366,11 +364,11 @@ public class InterfaceCommon {
 			"9.获取新sql，判断视图" +
 			"10.根据sql获取搜索引擎并根据输出数据类型处理数据")
 	@Param(name = "singleTable", desc = "单表查询参数实体", range = "无限制")
-	@Param(name = "table_column_name", desc = "当前表对应登记列名称通过逗号拼接的字符串", range = "无限制")
+	@Param(name = "table_en_column", desc = "当前表对应登记列名称通过特殊字符拼接的字符串", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	public static Map<String, Object> checkColumn(DatabaseWrapper db, SingleTable singleTable,
-	                                              String table_column_name, Long user_id) {
+	                                              String table_en_column, Long user_id) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 2.显示条数如果为空默认10条
 		Integer num = singleTable.getNum();
@@ -378,13 +376,13 @@ public class InterfaceCommon {
 			num = 10;
 		}
 		// 3.获取当前表对应数据库的列名称集合
-		List<String> columns = StringUtil.split(table_column_name.toLowerCase(), Constant.METAINFOSPLIT);
+		List<String> columns = StringUtil.split(table_en_column.toLowerCase(), Constant.METAINFOSPLIT);
 		String selectColumn = singleTable.getSelectColumn();
 		// 4.检查需要查询的列名是否存在
 		Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
 		if (userColumn != null) return userColumn;
 		// 5.判断当前表对应登记列名称是否为空，为空查询所有*
-		if (StringUtil.isNotBlank(table_column_name.toLowerCase())) {
+		if (StringUtil.isNotBlank(table_en_column.toLowerCase())) {
 			selectColumn = String.join(",", columns).toLowerCase();
 		} else {
 			selectColumn = " * ";
@@ -401,8 +399,8 @@ public class InterfaceCommon {
 			condition = sqlSelectCondition.get("condition").toString();
 		}
 		// 8.获取查询sql
-		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.gettableName() + condition;
-		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.gettableName(), db);
+		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTableName() + condition;
+		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.getTableName(), db);
 		if (layerByTable == null || layerByTable.isEmpty()) {
 			return StateType.getResponseInfo(StateType.STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE.getCode(),
 					"当前表对应的存储层信息不存在");

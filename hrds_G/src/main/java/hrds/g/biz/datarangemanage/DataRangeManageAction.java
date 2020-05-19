@@ -1,6 +1,5 @@
 package hrds.g.biz.datarangemanage;
 
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -21,13 +20,11 @@ import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
-import hrds.g.biz.bean.ColumnDataInfo;
 import hrds.g.biz.bean.TableDataInfo;
 import hrds.g.biz.init.InterfaceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +33,6 @@ public class DataRangeManageAction extends BaseAction {
 	// 有效结束日期
 	public static final String END_DATE = "99991231";
 
-	private static final Type MAPTYPE = new TypeReference<Map<String, Object>>() {
-	}.getType();
 	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "查询数据使用范围信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -71,8 +66,7 @@ public class DataRangeManageAction extends BaseAction {
 		for (TableDataInfo tableDataInfo : tableDataInfos) {
 			if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
 				// 2.保存贴源层数据
-				saveDCLData(table_note, tableDataInfo.getFile_id(), data_layer,
-						tableDataInfo.getColumnDataInfos(), user_id);
+				saveDCLData(table_note, data_layer, tableDataInfo, user_id);
 			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
 				// 3.保存集市层数据
 				saveDMLData(table_note, data_layer, user_id, tableDataInfo);
@@ -109,21 +103,8 @@ public class DataRangeManageAction extends BaseAction {
 				// 4.保存系统登记表使用信息
 				addTableUseInfo(table_note, data_layer, userId, useId, new Table_use_info(),
 						dmDataTable.getDatatable_en_name(), dmDataTable.getDatatable_cn_name());
-				Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
-				sysreg_parameter_info.setUser_id(userId);
-				sysreg_parameter_info.setUse_id(useId);
-				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
-				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-				ColumnDataInfo[] columnDataInfos = tableDataInfo.getColumnDataInfos();
 				// 5.判断列信息是否为空
-				if (columnDataInfos != null && columnDataInfos.length != 0) {
-					for (ColumnDataInfo columnDataInfo : columnDataInfos) {
-						columnDataInfo.setTable_ch_column(columnDataInfo.getTable_ch_column());
-						columnDataInfo.setTable_cn_column(columnDataInfo.getTable_cn_column());
-						// 6.保存系统登记参数表信息，一对多存储
-						sysreg_parameter_info.add(Dbo.db());
-					}
-				}
+				addSysRegParameterInfo(tableDataInfo, useId, userId);
 			}
 		}
 	}
@@ -143,13 +124,13 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "table_note", desc = "备注", range = "无限制")
 	@Param(name = "file_id", desc = "文件ID", range = "无限制")
 	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
-	@Param(name = "columnDataInfos", desc = "表列信息实体对象数组", range = "无限制")
-	private void saveDCLData(String table_note, String file_id, String data_layer,
-	                         ColumnDataInfo[] columnDataInfos, long[] user_id) {
+	@Param(name = "columnDataInfo", desc = "表列信息实体对象", range = "无限制")
+	private void saveDCLData(String table_note, String data_layer,
+	                         TableDataInfo tableDataInfo, long[] user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询贴源层表数据信息
 		Result tableResult = Dbo.queryResult("SELECT hyren_name,meta_info,original_name FROM " +
-				Data_store_reg.TableName + " WHERE file_id = ?", file_id);
+				Data_store_reg.TableName + " WHERE file_id = ?", tableDataInfo.getFile_id());
 		for (long userId : user_id) {
 			Table_use_info table_use_info = new Table_use_info();
 			// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
@@ -171,7 +152,7 @@ public class DataRangeManageAction extends BaseAction {
 				addTableUseInfo(table_note, data_layer, userId, useId, table_use_info,
 						hyren_name, original_name);
 				// 10.新增系统登记表参数信息
-				addSysRegParameterInfo(columnDataInfos, useId, userId);
+				addSysRegParameterInfo(tableDataInfo, useId, userId);
 			}
 		}
 	}
@@ -181,22 +162,24 @@ public class DataRangeManageAction extends BaseAction {
 			"3.元数据并解析" +
 			"4.获取相同的列类型参数信息" +
 			"5.保存系统登记表参数信息")
-	@Param(name = "columnDataInfos", desc = "表列信息实体对象数组", range = "无限制")
+	@Param(name = "tableDataInfo", desc = "表信息实体对象", range = "无限制")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
-	private void addSysRegParameterInfo(ColumnDataInfo[] columnDataInfos, String useId,
+	private void addSysRegParameterInfo(TableDataInfo tableDataInfo, String useId,
 	                                    long userId) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
-		sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
 		sysreg_parameter_info.setUse_id(useId);
 		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
 		sysreg_parameter_info.setUser_id(userId);
 		// 5.循环保存系统登记表参数信息
-		for (ColumnDataInfo columnDataInfo : columnDataInfos) {
-			sysreg_parameter_info.setTable_ch_column(columnDataInfo.getTable_ch_column());
-			sysreg_parameter_info.setTable_ch_column(columnDataInfo.getTable_cn_column());
+		String[] table_ch_column = tableDataInfo.getTable_ch_column();
+		String[] table_en_column = tableDataInfo.getTable_en_column();
+		for (int i = 0; i < table_en_column.length; i++) {
+			sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+			sysreg_parameter_info.setTable_ch_column(table_ch_column[i]);
+			sysreg_parameter_info.setTable_en_column(table_en_column[i]);
 			sysreg_parameter_info.add(Dbo.db());
 		}
 	}

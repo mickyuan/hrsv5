@@ -39,11 +39,12 @@ public class SingleTable {
 			dataType = String.class, required = false)
 	private String filepath;
 
-	public String gettableName() {
+
+	public String getTableName() {
 		return tableName;
 	}
 
-	public void settableName(String tableName) {
+	public void setTableName(String tableName) {
 		this.tableName = tableName;
 	}
 

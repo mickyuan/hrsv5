@@ -217,7 +217,7 @@ public class MarketInfoAction extends BaseAction {
         //7、删除集市表存储关系表
         Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
         //删除前后置处理关系表
-        Dbo.execute("delete from "+Dm_relevant_info.TableName+" where datatable_id = ?",dm_datatable.getDatatable_id());
+        Dbo.execute("delete from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
     }
 
     @Method(desc = "获取登录用户集市查询存储配置表",
@@ -930,16 +930,17 @@ public class MarketInfoAction extends BaseAction {
         dm_operation_info.setDatatable_id(datatable_id);
         dm_operation_info.setExecute_sql(querysql);
         dm_operation_info.add(Dbo.db());
-        saveBloodRelationToPGTable(querysql,datatable_id);
+        saveBloodRelationToPGTable(querysql, datatable_id);
         resultmap.put("success", true);
         return resultmap;
     }
 
     /**
-     *保存血缘关系到PGSQL中的表里
+     * 保存血缘关系到PGSQL中的表里
+     *
      * @param querysql
      */
-    private void saveBloodRelationToPGTable(String querysql,String datatable_id){
+    private void saveBloodRelationToPGTable(String querysql, String datatable_id) {
 
         DruidParseQuerySql dpqs = new DruidParseQuerySql();
         HashMap<String, Object> bloodRelationMap = dpqs.getBloodRelationMap(querysql);
@@ -1008,6 +1009,7 @@ public class MarketInfoAction extends BaseAction {
             }
         }
     }
+
     @Method(desc = "根据集市表ID,获取SQL回显",
             logicStep = "返回查询结果")
     @Param(name = "datatable_id", desc = "datatable_id", range = "String类型集市表ID")
@@ -1495,6 +1497,9 @@ public class MarketInfoAction extends BaseAction {
         List<Dm_column_storage> dm_column_storages = Dbo.queryList(Dm_column_storage.class, "select * from " + Dm_column_storage.TableName + " where datatable_field_id in (" +
                 "select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id in " +
                 "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? ))", dm_info.getData_mart_id());
+       //前后置作业表
+        List<Dm_relevant_info> dm_relevant_infos = Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id in " +
+                "(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
         resultmap.put("dm_infos", dm_infos);
         resultmap.put("dm_datatables", dm_datatables);
         resultmap.put("dm_operation_infos", dm_operation_infos);
@@ -1504,6 +1509,7 @@ public class MarketInfoAction extends BaseAction {
         resultmap.put("datatable_field_infos", datatable_field_infos);
         resultmap.put("dm_relation_datatables", dm_relation_datatables);
         resultmap.put("dm_column_storages", dm_column_storages);
+        resultmap.put("dm_relevant_infos", dm_relevant_infos);
         byte[] bytes = JSON.toJSONString(resultmap).getBytes();
         Map<String, Object> map = JSON.parseObject(new String(bytes));
         return bytes;
@@ -1567,6 +1573,11 @@ public class MarketInfoAction extends BaseAction {
         List<Own_source_field> own_source_fields = JSONObject.parseArray(jsonObject.getJSONArray("own_source_fields").toJSONString(), Own_source_field.class);
         for (Own_source_field own_source_field : own_source_fields) {
             own_source_field.add(Dbo.db());
+        }
+        //前后置作业表
+        List<Dm_relevant_info> dm_relevant_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_relevant_infos").toJSONString(), Dm_relevant_info.class);
+        for (Dm_relevant_info dm_relevant_info : dm_relevant_infos) {
+            dm_relevant_info.add(Dbo.db());
         }
     }
 
@@ -1889,7 +1900,7 @@ public class MarketInfoAction extends BaseAction {
                 }
                 columncount++;
             }
-            saveBloodRelationToPGTable(sql,datatable_id);
+            saveBloodRelationToPGTable(sql, datatable_id);
         } catch (Exception e) {
             logger.error(e.getMessage());
 //            throw e;
