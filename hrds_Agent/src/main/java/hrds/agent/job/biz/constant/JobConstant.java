@@ -47,6 +47,9 @@ public class JobConstant {
 
 	public static final Map<String, String> fileFormatMap = new HashMap<>();
 
+	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
+			String.valueOf(Runtime.getRuntime().availableProcessors())));
+
 	/*
 	 * 数据库抽取卸数下来文件格式对应路径的关系
 	 */

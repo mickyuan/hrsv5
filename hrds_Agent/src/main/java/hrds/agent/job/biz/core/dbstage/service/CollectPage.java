@@ -11,14 +11,12 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +34,9 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	private long end;
 	private int pageNum;
 	private long pageRow;
-	private Connection conn;
 
 	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
-	                   TableBean tableBean, long start, long end, int pageNum, long pageRow, Connection conn) {
+	                   TableBean tableBean, long start, long end, int pageNum, long pageRow) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
 		this.tableBean = tableBean;
@@ -48,11 +45,10 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		this.pageNum = pageNum;
 		this.pageRow = pageRow;
 		this.sql = tableBean.getCollectSQL();
-		this.conn = conn;
 	}
 
 	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
-	                   TableBean tableBean, long start, long end, int pageNum, long pageRow, String sql, Connection conn) {
+	                   TableBean tableBean, long start, long end, int pageNum, long pageRow, String sql) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
 		this.tableBean = tableBean;
@@ -61,7 +57,6 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		this.pageNum = pageNum;
 		this.pageRow = pageRow;
 		this.sql = sql;
-		this.conn = conn;
 	}
 
 	@Method(desc = "多线程采集执行方法", logicStep = "" +
@@ -74,11 +69,11 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			"3、pageCount，代表当前线程采集到的数据量")
 	@Override
 	public Map<String, Object> call() {
-//		Connection conn = null;
+		Connection conn = null;
 		try {
 			//获取jdbc连接
-//			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
-//					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
+			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
+					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
 			//获得数据抽取文件格式
 			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 			if (data_extraction_def_list == null || data_extraction_def_list.isEmpty()) {
@@ -109,15 +104,15 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			return map;
 		} catch (Exception e) {
 			throw new AppSystemException("执行分页卸数程序失败", e);
-		} /*finally {
+		} finally {
 			if (conn != null) {
 				try {
 					conn.close();
 				} catch (SQLException e) {
-					LOGGER.error(e.getMessage());
+					LOGGER.warn(e.getMessage());
 				}
 			}
-		}*/
+		}
 
 	}
 

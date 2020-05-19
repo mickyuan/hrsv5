@@ -121,7 +121,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						fd.ng.core.utils.FileUtil.forceMkdir(dir);
 					}
 					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件开始转存");
-					executorService = Executors.newFixedThreadPool(5);
+					executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
 					List<Future<String>> futures = new ArrayList<>();
 					for (String fileName : file_name_list) {
 						FileConversionThread thread = new FileConversionThread(tableBean, collectTableBean,

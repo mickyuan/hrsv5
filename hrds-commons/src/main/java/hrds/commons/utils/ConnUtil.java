@@ -161,17 +161,15 @@ public class ConnUtil {
 	}
 
 	/**
-	 * 获取connection
-	 *
-	 * @param database_drive
-	 * @param user_name
-	 * @param database_pad
-	 * @return
-	 * @throws Exception
+	 * 获取jdbc连接
+	 * @param database_drive 驱动
+	 * @param jdbc_url jdbc连接url
+	 * @param user_name 用户名
+	 * @param database_pad 密码
+	 * @return jdbc连接
 	 */
 	public static Connection getConnection(
-			String database_drive, String jdbc_url, String user_name, String database_pad)
-			throws Exception {
+			String database_drive, String jdbc_url, String user_name, String database_pad) {
 		Connection conn;
 		try {
 			logger.info("开始连接 :" + jdbc_url);
