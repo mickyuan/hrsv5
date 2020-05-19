@@ -17,6 +17,7 @@ import hrds.commons.entity.Data_source;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.AgentDeploy;
+import hrds.commons.utils.jsch.ChineseUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.io.File;
 import java.util.List;
@@ -134,10 +135,17 @@ public class AgentDeployAction extends BaseAction {
       if (IsFlag.Fou.getCode().equals(customPath)) {
         // 这里取得海云用户默认的安装路径
         agent_down_info.setSave_dir(PropertyParaValue.getString("agentDeployPath", "/home/hyshf/"));
+        //将Agent的名称转换为 拼音_端口 作为Agent的目录
+        String agentDirName =
+            ChineseUtil.getPingYin(agent_down_info.getAgent_name())
+                + "_"
+                + agent_down_info.getAgent_port();
         agent_down_info.setLog_dir(
             PropertyParaValue.getString("agentDeployPath", "/home/hyshf/")
                 + File.separator
                 + "running"
+                + File.separator
+                + agentDirName
                 + File.separator
                 + "running.log");
       }
