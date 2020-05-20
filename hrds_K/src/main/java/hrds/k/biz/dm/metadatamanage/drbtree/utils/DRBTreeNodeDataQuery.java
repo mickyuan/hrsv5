@@ -4,7 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import hrds.commons.entity.Data_store_layer;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.query.SFLDataQuery;
 import hrds.commons.utils.User;
@@ -34,7 +33,9 @@ public class DRBTreeNodeDataQuery {
         dataList.addAll(DRBDataConvertedNodeData.conversionDCLDataStorageLayers(dataStorageLayers));
         //获取并设置回收站DCL层下表信息
         List<Map<String, Object>> tableInfos = DRBDataQuery.getDCLTableInfos();
-        dataList.addAll(DRBDataConvertedNodeData.conversionDCLStorageLayerTableInfos(tableInfos));
+        if (!tableInfos.isEmpty()) {
+            dataList.addAll(DRBDataConvertedNodeData.conversionDCLStorageLayerTableInfos(tableInfos));
+        }
     }
 
     @Method(desc = "获取DPL数据层的节点数据", logicStep = "获取DPL数据层的节点数据")
@@ -60,7 +61,7 @@ public class DRBTreeNodeDataQuery {
     public static void getSFLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
         //TODO 暂未配置该存储层
         //添加SFL层下节点数据
-        //dataList.addAll(SFLDataQuery.getSFLDataInfos());
+//        dataList.addAll(SFLDataQuery.getSFLDataInfos());
     }
 
     @Method(desc = "获取AML数据层的节点数据", logicStep = "获取AML数据层的节点数据")

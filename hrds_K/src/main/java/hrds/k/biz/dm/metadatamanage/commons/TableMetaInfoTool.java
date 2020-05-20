@@ -9,10 +9,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.entity.Data_store_reg;
-import hrds.commons.entity.Dq_failure_table;
-import hrds.commons.entity.Table_column;
-import hrds.commons.entity.Table_info;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -32,6 +29,8 @@ public class TableMetaInfoTool {
             Data_store_reg dsr = MDMDataQuery.getDataStoreRegInfo(file_id);
             //放入回收站前先检查是否被其他表依赖
             checkDependencies(dsr.getTable_name(), DataSourceType.DCL.getCode());
+            //重命名数据层表
+            DataLayerTableOperation.renameDCLDataLayerTable(dsr, Constant.DM_SET_INVALID_TABLE);
             //添加到回收站表
             Dq_failure_table dq_failure_table = new Dq_failure_table();
             dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
@@ -39,12 +38,10 @@ public class TableMetaInfoTool {
             dq_failure_table.setTable_cn_name(dsr.getOriginal_name());
             dq_failure_table.setTable_en_name(dsr.getTable_name());
             dq_failure_table.setTable_source(DataSourceType.DCL.getCode());
-            dq_failure_table.setTable_meta_info(JsonUtil.toJson(dsr.toString()));
+            dq_failure_table.setTable_meta_info(JsonUtil.toJson(dsr));
             dq_failure_table.add(db);
             //删除源表的数据
             MDMDataQuery.deleteDataStoreRegInfo(file_id);
-            //重命名数据层表
-            DataLayerTableOperation.renameDCLDataLayerTable(dsr, Constant.DM_SET_INVALID_TABLE);
             //提交数据库操作
             db.commit();
         }
@@ -85,6 +82,7 @@ public class TableMetaInfoTool {
             table_info.setTable_ch_name(table_ch_name);
             //修改表
             table_info.update(db);
+            //修改表字段信息
             for (ColumnInfoBean columnInfoBean : columnInfoBeans) {
                 //设置 Table_column 对象
                 Table_column table_column = new Table_column();
@@ -96,7 +94,33 @@ public class TableMetaInfoTool {
             //提交数据库操作
             db.commit();
         }
+    }
 
+    @Method(desc = "修改DML层下的表元信息",
+            logicStep = "修改DML层批量数据下的表元信息")
+    @Param(name = "table_id", desc = "数据表id", range = "String类型")
+    @Param(name = "table_ch_name", desc = "表中文名", range = "String类型", nullable = true)
+    @Param(name = "columnInfoBeans", desc = "自定义实体ColumnInfoBean[]", range = "ColumnInfoBean", isBean = true)
+    public static void updateDMLTableMetaInfo(String table_id, String table_ch_name, ColumnInfoBean[] columnInfoBeans) {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //设置 Dm_datatable 对象
+            Dm_datatable dm_datatable = new Dm_datatable();
+            dm_datatable.setDatatable_id(table_id);
+            dm_datatable.setDatatable_cn_name(table_ch_name);
+            //修改集市数据表
+            dm_datatable.update(db);
+            //修改表字段信息
+            for (ColumnInfoBean columnInfoBean : columnInfoBeans) {
+                //设置 Table_column 对象
+                Datatable_field_info dfi = new Datatable_field_info();
+                dfi.setDatatable_field_id(columnInfoBean.getColumn_id());
+                dfi.setField_cn_name(columnInfoBean.getColumn_ch_name());
+                //修改表字段
+                dfi.update(db);
+            }
+            //提交数据库操作
+            db.commit();
+        }
     }
 
     @Method(desc = "完全删除DCL层下表信息", logicStep = "完全删除DCL层下表元信息")
