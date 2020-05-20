@@ -3,9 +3,9 @@ package hrds.k.biz.dm.metadatamanage.drbtree.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.tree.background.bean.TreeConf;
-import hrds.commons.tree.background.query.SFLDataQuery;
 import hrds.commons.utils.User;
 import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 
@@ -30,11 +30,11 @@ public class DRBTreeNodeDataQuery {
     public static void getDCLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
         //设置DCL层下节点数据
         List<Data_store_layer> dataStorageLayers = DRBDataQuery.getDCLExistTableDataStorageLayers();
-        dataList.addAll(DRBDataConvertedNodeData.conversionDCLDataStorageLayers(dataStorageLayers));
+        dataList.addAll(StorageLayerConvertedNodeData.conversionStorageLayers(dataStorageLayers, DataSourceType.DCL));
         //获取并设置回收站DCL层下表信息
-        List<Map<String, Object>> tableInfos = DRBDataQuery.getDCLTableInfos();
+        List<Map<String, Object>> tableInfos = DRBDataQuery.getDCLStorageLayerTableInfos();
         if (!tableInfos.isEmpty()) {
-            dataList.addAll(DRBDataConvertedNodeData.conversionDCLStorageLayerTableInfos(tableInfos));
+            dataList.addAll(DRBDataConvertedNodeData.conversionStorageLayerTableInfos(tableInfos, DataSourceType.DCL));
         }
     }
 
@@ -51,7 +51,14 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDMLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        //TODO 暂未配置该存储层
+        //设置DML层下节点数据
+        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getDMLExistTableDataStorageLayers();
+        dataList.addAll(StorageLayerConvertedNodeData.conversionStorageLayers(dataStorageLayers, DataSourceType.DML));
+        //获取并设置回收站DML层下表信息
+        List<Map<String, Object>> tableInfos = DRBDataQuery.getDMLStorageLayerTableInfos();
+        if (!tableInfos.isEmpty()) {
+            dataList.addAll(DRBDataConvertedNodeData.conversionStorageLayerTableInfos(tableInfos, DataSourceType.DML));
+        }
     }
 
     @Method(desc = "获取SFL数据层的节点数据", logicStep = "获取SFL数据层的节点数据")
@@ -60,8 +67,6 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getSFLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
         //TODO 暂未配置该存储层
-        //添加SFL层下节点数据
-//        dataList.addAll(SFLDataQuery.getSFLDataInfos());
     }
 
     @Method(desc = "获取AML数据层的节点数据", logicStep = "获取AML数据层的节点数据")

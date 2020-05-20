@@ -8,6 +8,7 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.util.Dbo;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -22,11 +23,10 @@ public class TableMetaInfoTool {
 
     @Method(desc = "数据管控-删除 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
     @Param(name = "file_id", desc = "表id", range = "表id")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
     public static void setDCLTableInvalid(String file_id) {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             //获取 Data_store_reg
-            Data_store_reg dsr = MDMDataQuery.getDataStoreRegInfo(file_id);
+            Data_store_reg dsr = MDMDataQuery.getDCLDataStoreRegInfo(file_id);
             //放入回收站前先检查是否被其他表依赖
             checkDependencies(dsr.getTable_name(), DataSourceType.DCL.getCode());
             //重命名数据层表
@@ -34,14 +34,41 @@ public class TableMetaInfoTool {
             //添加到回收站表
             Dq_failure_table dq_failure_table = new Dq_failure_table();
             dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
-            dq_failure_table.setFile_id(file_id);
+            dq_failure_table.setFile_id(dsr.getTable_id().toString());
             dq_failure_table.setTable_cn_name(dsr.getOriginal_name());
-            dq_failure_table.setTable_en_name(dsr.getTable_name());
+            dq_failure_table.setTable_en_name(dsr.getHyren_name());
             dq_failure_table.setTable_source(DataSourceType.DCL.getCode());
             dq_failure_table.setTable_meta_info(JsonUtil.toJson(dsr));
             dq_failure_table.add(db);
             //删除源表的数据
-            MDMDataQuery.deleteDataStoreRegInfo(file_id);
+            MDMDataQuery.deleteDCLDataStoreRegInfo(file_id);
+            //提交数据库操作
+            db.commit();
+        }
+    }
+
+
+    @Method(desc = "数据管控-删除 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
+    @Param(name = "datatable_id", desc = "集市表id", range = "集市表id")
+    public static void setDMLTableInvalid(String datatable_id) {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //获取 Data_store_reg
+            Dm_datatable dm_datatable = MDMDataQuery.getDMLDmDatatableInfo(datatable_id);
+            //放入回收站前先检查是否被其他表依赖
+            checkDependencies(dm_datatable.getDatatable_en_name(), DataSourceType.DML.getCode());
+            //重命名数据层表
+            DataLayerTableOperation.renameDMLDataLayerTable(dm_datatable, Constant.DM_SET_INVALID_TABLE);
+            //添加到回收站表
+            Dq_failure_table dq_failure_table = new Dq_failure_table();
+            dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
+            dq_failure_table.setFile_id(datatable_id);
+            dq_failure_table.setTable_cn_name(dm_datatable.getDatatable_cn_name());
+            dq_failure_table.setTable_en_name(dm_datatable.getDatatable_en_name());
+            dq_failure_table.setTable_source(DataSourceType.DML.getCode());
+            dq_failure_table.setTable_meta_info(JsonUtil.toJson(dm_datatable));
+            dq_failure_table.add(db);
+            //删除源表的数据
+            MDMDataQuery.deleteDMLDataStoreRegInfo(datatable_id);
             //提交数据库操作
             db.commit();
         }
@@ -55,8 +82,16 @@ public class TableMetaInfoTool {
         Data_store_reg dsr = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
                 Data_store_reg.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dsr) {
-            //恢复表元信息
+            //校验数据DCL层登记信息是否存在
+            boolean boo = Dbo.queryNumber("select count(*) from " + Data_store_reg.TableName + " where hyren_name=?",
+                    dsr.getHyren_name()).orElseThrow(() -> new BusinessException("校验DCL表层登记信息的SQL错误")) == 1;
+            //恢复存储层表信息
+            if (boo) {
+                throw new BusinessException("恢复的数据表已经存在!");
+            }
             DataLayerTableOperation.renameDCLDataLayerTable(dsr, Constant.DM_RESTORE_TABLE);
+            //恢复表元信息
+            dsr.add(Dbo.db());
         }
     }
 
@@ -150,17 +185,10 @@ public class TableMetaInfoTool {
         }
     }
 
-    @Method(desc = "创建DCL层表", logicStep = "创建DCL层表")
-    @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void createDCLTable(long dsl_id) {
-        //TODO 未实现,等表实体
-    }
-
     @Method(desc = "依赖表检查", logicStep = "依赖表检查")
     @Param(name = "tableName", desc = "表英文名", range = "String类型")
     @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
     private static void checkDependencies(String tableName, String data_layer) {
-        System.out.println("表放入回收站时,依赖表检查暂未实现!");
+        //TODO 表放入回收站时,依赖表检查暂未实现
     }
 }
