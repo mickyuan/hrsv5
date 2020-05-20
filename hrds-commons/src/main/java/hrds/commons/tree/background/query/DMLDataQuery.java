@@ -8,9 +8,11 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.UserType;
+import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.entity.Dm_datatable;
 import hrds.commons.entity.Dm_info;
 import hrds.commons.entity.Sys_user;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.User;
 import org.apache.commons.lang.StringUtils;
 
@@ -55,8 +57,8 @@ public class DMLDataQuery {
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
-    @Method(desc = "获取集市下表信息",
-            logicStep = "获取集市下表信息")
+    @Method(desc = "获取集市下表信息列表",
+            logicStep = "获取集市下表信息列表")
     @Param(name = "data_mart_id", desc = "集市id,该值唯一", range = "String类型")
     @Param(name = "user", desc = "User", range = "登录用户信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
@@ -64,8 +66,8 @@ public class DMLDataQuery {
         return getDMLTableInfos(data_mart_id, user, null);
     }
 
-    @Method(desc = "获取集市下表信息",
-            logicStep = "获取集市下表信息")
+    @Method(desc = "获取集市下表信息列表",
+            logicStep = "获取集市下表信息列表")
     @Param(name = "data_mart_id", desc = "集市id,该值唯一", range = "String类型")
     @Param(name = "user", desc = "User", range = "登录用户信息")
     @Param(name = "table_name", desc = "集市表名", range = "String类型")
@@ -99,6 +101,40 @@ public class DMLDataQuery {
             asmSql.addSql(" lower(t1.datatable_en_name) like ?").addParam('%' + table_name.toLowerCase() + '%');
 
         }
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
+    }
+
+    @Method(desc = "获取集市下表信息",
+            logicStep = "获取集市下表信息")
+    @Param(name = "datatable_id", desc = "集市表id,唯一", range = "String类型")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static Dm_datatable getDMLTableInfo(String datatable_id) {
+        //设置集市表对象
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        //查询集市表信息
+        return Dbo.queryOneObject(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where datatable_id" +
+                "=?", dm_datatable.getDatatable_id()).orElseThrow(() -> new BusinessException("获取集市数据表信息的sql失败!"));
+    }
+
+    @Method(desc = "获取集市下表的字段信息",
+            logicStep = "获取集市下表的字段信息")
+    @Param(name = "datatable_id", desc = "集市表id,唯一", range = "String类型")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Map<String, Object>> getDMLTableColumns(String datatable_id) {
+        //初始化sql
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        //设置集市表对象
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        //查询表字段信息
+        asmSql.addSql("select t2.datatable_field_id AS column_id,field_en_name as column_name," +
+                " field_cn_name as column_ch_name,concat(field_type,'(',field_length,')') AS column_type," +
+                " '0' AS is_primary_key,t1.datatable_create_date AS create_date FROM " + Dm_datatable.TableName + " " +
+                " t1 join " + Datatable_field_info.TableName + " t2 ON t1.datatable_id = t2.datatable_id" +
+                " WHERE t1.datatable_id= ?");
+        asmSql.addParam(dm_datatable.getDatatable_id());
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 }

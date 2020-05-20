@@ -230,8 +230,9 @@ public class DCLDataQuery {
         //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
-        asmSql.addSql("SELECT tc.column_name AS column_name,tc.column_ch_name,tc.column_type,tc.is_primary_key" +
-                " FROM table_info ti JOIN table_column tc ON ti.table_id = tc.table_id WHERE ti.table_id = ?")
+        asmSql.addSql("SELECT tc.column_ch_name,tc.column_name,tc.tc_remark,tc.column_type,tc.is_primary_key," +
+                " tc.column_id,ti.database_id FROM table_info ti JOIN table_column tc" +
+                " ON ti.table_id = tc.table_id WHERE ti.table_id = ?")
                 .addParam(dsr.getTable_id());
         List<Map<String, Object>> column_list = Dbo.queryList(asmSql.sql(), asmSql.params());
         if (column_list.isEmpty()) {
