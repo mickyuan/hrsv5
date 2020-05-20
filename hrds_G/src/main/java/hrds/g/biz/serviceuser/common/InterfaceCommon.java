@@ -56,6 +56,8 @@ public class InterfaceCommon {
 
 	private static final Type type = new TypeReference<List<String>>() {
 	}.getType();
+	private static final Type mapType = new TypeReference<Map<String, Object>>() {
+	}.getType();
 
 	@Method(desc = "获取token值",
 			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -475,7 +477,7 @@ public class InterfaceCommon {
 				map.put("column", streamCsv);
 				map.put("data", streamCsvData);
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						map);
+						JsonUtil.toJson(map));
 			} else {
 				// 8.如果输出数据类型为json则直接返回数据
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
@@ -519,7 +521,7 @@ public class InterfaceCommon {
 		BufferedWriter writer;
 		try {
 			// 4.创建写文件流
-			writer = new BufferedWriter(new FileWriter(createFile,true));
+			writer = new BufferedWriter(new FileWriter(createFile, true));
 			// 5.根据输出数据类型对数据进行不同的处理
 			if (DataType.csv == DataType.ofEnumByCode(dataType)) {
 				// 6.map的key为列名称，value为列名称对应的对象信息
@@ -838,11 +840,19 @@ public class InterfaceCommon {
 				&& OutType.STREAM == OutType.ofEnumByCode(outType)
 				&& StateType.NORMAL == StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			try {
-				List<String> dataList = JsonUtil.toObject(responseMap.get("data").toString(), type);
-				List<String> columnList = JsonUtil.toObject(responseMap.get("column").toString(), type);
-				String column = String.join(",", dataList);
-				String columnVal = String.join("\n", columnList);
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(), column + "\n" + columnVal);
+				Map<String, Object> message = JsonUtil.toObject(responseMap.get("message").toString(),
+						mapType);
+				List<String> dataList = JsonUtil.toObject(message.get("data").toString(), type);
+				List<String> columnList = JsonUtil.toObject(message.get("column").toString(), type);
+				StringBuilder sb = new StringBuilder();
+				for (String data : dataList) {
+					sb.append(data).append("\n");
+				}
+				String columnVal = sb.deleteCharAt(sb.length() - 4).toString();
+				String column = String.join(",", columnList);
+				StringBuilder stringBuilder = new StringBuilder();
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
+						stringBuilder.append(column).append("\n").append(columnVal).toString());
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
 			}
