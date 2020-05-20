@@ -17,6 +17,7 @@ import hrds.commons.utils.DruidParseQuerySql;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.*;
 
 @DocClass(desc = "数据处理类，获取表的存储等信息", author = "xchao", createdate = "2020年3月31日 16:32:43")
@@ -31,51 +32,36 @@ public abstract class ProcessingData {
 
         LayerTypeBean ltb = getAllTableIsLayer(sql, db);
         //只有一个存储，且是jdbc的方式
-        if (ltb.getConnType() == LayerTypeBean.ConnType.oneJdbc) {
-            Long dsl_id = ltb.getLayerBean().getDsl_id();
-            return getResultSet(sql, db, dsl_id);
-        }
-        //只有一种存储，是什么，可以使用ltb.getLayerBean().getStore_type(),进行判断
-        else if (ltb.getConnType() == LayerTypeBean.ConnType.oneOther) {
-            //ltb.getLayerBean().getStore_type();
-            //TODO 数据在一种存介质中，但不是jdbc
-        }
-        //有多种存储，但都支持JDBC，是否可以使用dblink的方式
-        else if (ltb.getConnType() == LayerTypeBean.ConnType.moreJdbc) {
-            //List<LayerBean> layerBeanList = ltb.getLayerBeanList();
-            //TODO 数据都在关系型数据库，也就说都可以使用jdbc的方式的实现方式
-            return getMoreJdbcResult(sql);
-        }
-        // 其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
-        else if (ltb.getConnType() == LayerTypeBean.ConnType.moreOther) {
-            //List<LayerBean> layerBeanList = ltb.getLayerBeanList();
-            // TODO 混搭模式
-        }
-        return null;
-    }
-
-    private List<String> getMoreJdbcResult(String sql){
-        List<String> colArray = new ArrayList<>();//获取数据的列信息，存放到list中
-        try(DatabaseWrapper db = new DatabaseWrapper.Builder()
-                .dbname("Hive").create()){
-            ResultSet rs = db.queryGetResultSet(sql);
-            ResultSetMetaData meta = rs.getMetaData();
-            int cols = meta.getColumnCount();
-            for (int i = 0; i < cols; i++) {
-                String colName = meta.getColumnName(i + 1).toLowerCase();
-                colArray.add(colName);
-            }
-            while (rs.next()) {
-                Map<String, Object> result = new HashMap<>();
-                for (String col : colArray) {
-                    result.put(col, rs.getObject(col));
+        try {
+            if (ltb.getConnType() == LayerTypeBean.ConnType.oneJdbc) {
+                Long dsl_id = ltb.getLayerBean().getDsl_id();
+                List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
+                        "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
+                try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
+                    return getResultSet(sql, dbDataConn);
                 }
-                dealLine(result);
             }
-        } catch (Exception e) {
+            //只有一种存储，是什么，可以使用ltb.getLayerBean().getStore_type(),进行判断
+            else if (ltb.getConnType() == LayerTypeBean.ConnType.oneOther) {
+                //ltb.getLayerBean().getStore_type();
+                //TODO 数据在一种存介质中，但不是jdbc
+            }
+            //有多种存储，但都支持JDBC，使用spark-thriftserver实现跨库查询
+            else if (ltb.getConnType() == LayerTypeBean.ConnType.moreJdbc) {
+                try (DatabaseWrapper dbDataConn = new DatabaseWrapper.Builder()
+                        .dbname("Hive").create()) {
+                    return getResultSet(sql, dbDataConn);
+                }
+            }
+            // 其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
+            else if (ltb.getConnType() == LayerTypeBean.ConnType.moreOther) {
+                //List<LayerBean> layerBeanList = ltb.getLayerBeanList();
+                // TODO 混搭模式
+            }
+        } catch (SQLException e) {
             throw new AppSystemException("系统不支持该数据库类型", e);
         }
-        return colArray;
+        return null;
     }
 
     @Method(desc = "获取表的存储位置",
@@ -262,10 +248,8 @@ public abstract class ProcessingData {
      * @param db     {@link DatabaseWrapper} db
      * @param dsl_id 存储层id
      */
-    private List<String> getResultSet(String sql, DatabaseWrapper db, long dsl_id) {
-        List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
-                "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
+    private List<String> getResultSet(String sql, DatabaseWrapper dbDataConn) throws SQLException {
+
             ResultSet rs = dbDataConn.queryGetResultSet(sql);
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
@@ -282,11 +266,8 @@ public abstract class ProcessingData {
                 dealLine(result);
             }
             return colArray;
-        } catch (Exception e) {
-            throw new AppSystemException("系统不支持该数据库类型", e);
-        }
     }
 
-    public abstract void dealLine(Map<String, Object> map) throws Exception;
+    public abstract void dealLine(Map<String, Object> map);
     //public abstract void dealColHead(Map<String, Object> map) throws Exception;
 }
