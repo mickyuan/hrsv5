@@ -846,13 +846,13 @@ public class InterfaceCommon {
 				List<String> columnList = JsonUtil.toObject(message.get("column").toString(), type);
 				StringBuilder sb = new StringBuilder();
 				for (String data : dataList) {
-					sb.append(data).append("\n");
+					sb.append(data).append(System.lineSeparator());
 				}
 				String columnVal = sb.deleteCharAt(sb.length() - 4).toString();
 				String column = String.join(",", columnList);
 				StringBuilder stringBuilder = new StringBuilder();
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						stringBuilder.append(column).append("\n").append(columnVal).toString());
+						stringBuilder.append(column).append(System.lineSeparator()).append(columnVal).toString());
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
 			}
