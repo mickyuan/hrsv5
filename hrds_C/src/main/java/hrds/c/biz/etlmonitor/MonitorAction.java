@@ -44,16 +44,54 @@ public class MonitorAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 
-	@Method(desc = "监控当前批量情况",
+	@Method(desc = "监控当前批量情况(系统运行状态）",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
 					+ "2.判断工程是否存在"
-					+ "3.获取当前工程下的每个任务作业状态"
-					+ "4.当前工程批量运行状态汇总"
-					+ "5.将系统运行状态信息封装入当前运行状态信息集合中"
-					+ "6.返回系统运行状态信息与当前运行状态信息")
+					+ "3.当前工程批量运行状态汇总"
+					+ "4.返回系统运行状态信息")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Return(desc = "返回系统运行状态信息与当前运行状态信息", range = "无限制")
 	public Map<String, Object> monitorCurrentBatchInfo(String etl_sys_cd) {
+		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		// 2.判断工程是否存在
+		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在！");
+		}
+		// 3.当前工程批量运行状态汇总
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.clean();
+		asmSql.clean();
+		asmSql.addSql(
+				"SELECT SUM(case when job_disp_status = ? then 1 else 0 end ) Pending,"
+						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Waiting,"
+						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Runing,"
+						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Done,"
+						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Suspension,"
+						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Error,"
+						+ " A.curr_bath_date,A.etl_sys_cd,CONCAT(A.etl_sys_cd,'(',B.etl_sys_name,')') sys_name"
+						+ " FROM "
+						+ Etl_job_cur.TableName
+						+ " A,"
+						+ Etl_sys.TableName
+						+ " B WHERE  A.etl_sys_cd = B.etl_sys_cd");
+		if (StringUtils.isNotBlank(etl_sys_cd)) {
+			asmSql.addSql(" and  A.etl_sys_cd = ? ");
+		}
+		asmSql.addSql(" and A.curr_bath_date=B.curr_bath_date group by A.curr_bath_date,A.etl_sys_cd,"
+				+ "B.etl_sys_name ORDER BY A.etl_sys_cd");
+		addParamsToSql(etl_sys_cd, asmSql);
+		// 4.返回系统运行状态信息
+		return Dbo.queryOneObject(asmSql.sql(), asmSql.params());
+	}
+
+	@Method(desc = "监控当前批量情况(根据任务查询作业运行状态）",
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+					"2.判断工程是否存在" +
+					"3.获取当前工程下的每个任务作业状态" +
+					"4.返回根据任务查询作业运行状态信息")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+	@Return(desc = "返回根据任务查询作业运行状态信息", range = "无限制")
+	public List<Map<String, Object>> monitorCurrentBatchInfoByTask(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.判断工程是否存在
 		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -79,33 +117,8 @@ public class MonitorAction extends BaseAction {
 		}
 		asmSql.addSql(" GROUP BY T1.sub_sys_cd, T2.sub_sys_cd,T1.etl_sys_cd,sub_sys_desc");
 		addParamsToSql(etl_sys_cd, asmSql);
-		List<Map<String, Object>> batchOperationStatus = Dbo.queryList(asmSql.sql(), asmSql.params());
-		// 4.当前工程批量运行状态汇总
-		asmSql.clean();
-		asmSql.addSql(
-				"SELECT SUM(case when job_disp_status = ? then 1 else 0 end ) Pending,"
-						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Waiting,"
-						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Runing,"
-						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Done,"
-						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Suspension,"
-						+ " SUM(case when job_disp_status = ? then 1 else 0 end ) Error,"
-						+ " A.curr_bath_date,A.etl_sys_cd,CONCAT(A.etl_sys_cd,'(',B.etl_sys_name,')') sys_name"
-						+ " FROM "
-						+ Etl_job_cur.TableName
-						+ " A,"
-						+ Etl_sys.TableName
-						+ " B WHERE  A.etl_sys_cd = B.etl_sys_cd");
-		if (StringUtils.isNotBlank(etl_sys_cd)) {
-			asmSql.addSql(" and  A.etl_sys_cd = ? ");
-		}
-		asmSql.addSql(" and A.curr_bath_date=B.curr_bath_date group by A.curr_bath_date,A.etl_sys_cd,"
-				+ "B.etl_sys_name ORDER BY A.etl_sys_cd");
-		addParamsToSql(etl_sys_cd, asmSql);
-		Map<String, Object> systemOperationStatus = Dbo.queryOneObject(asmSql.sql(), asmSql.params());
-		// 5.将系统运行状态信息封装入当前运行状态信息集合中
-		systemOperationStatus.put("systemOperationStatus", batchOperationStatus);
-		// 6.返回系统运行状态信息与当前运行状态信息
-		return systemOperationStatus;
+		// 4.返回根据任务查询作业运行状态信息
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
 	private void addParamsToSql(String etl_sys_cd, SqlOperator.Assembler asmSql) {
