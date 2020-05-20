@@ -54,10 +54,8 @@ public class Constant {
 	public static final String SYS_DATA_TABLE = "sys_data_table";
 	//系统数据备份 12:系统数据备份
 	public static final String SYS_DATA_BAK = "sys_data_bak";
-	//数据管控失效标记前缀
-	public static final String DQC_INVALID_TABLE = "dqc_invalid_table_";
-	//数据管控失效标记后缀
-	public static final String _HYREN = "_hyren";
+	//数据管控失效标记前缀 dqc_invalid_table_
+	public static final String DQC_INVALID_TABLE = "dit_";
 	//数据管控表操作类型 set_invalid:设置为无效,restore:恢复
 	public static final String DM_SET_INVALID_TABLE = "set_invalid";
 	public static final String DM_RESTORE_TABLE = "restore";
