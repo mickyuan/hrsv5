@@ -164,15 +164,15 @@ public enum StateType {
 	 */
 	INTERFACECHECK_EXCEPTION("438", "接口检查失败"),
 	/**
-	 * 检查接口失败
+	 * json转换对象失败
 	 */
 	JSONCONVERSION_EXCEPTION("439", "json转换对象失败"),
 	/**
-	 * 检查接口失败
+	 * 要删除的表不存在
 	 */
 	TABLE_NON_EXISTENT("440", "要删除的表不存在"),
 	/**
-	 * 检查接口失败
+	 * uuid不能为空或uuid错误
 	 */
 	UUID_NOT_NULL("441", "uuid不能为空或uuid错误"),
 	/**
@@ -182,7 +182,15 @@ public enum StateType {
 	/**
 	 * 当前表对应的存储层信息不存在
 	 */
-	ORACLE9I_NOT_SUPPORT("442", "当前表对应的存储层信息不存在"),
+	ORACLE9I_NOT_SUPPORT("443", "当前表对应的存储层信息不存在"),
+	/**
+	 * 创建文件失败
+	 */
+	CREATE_FILE_ERROR("444", "创建文件失败"),
+	/**
+	 * 创建文件目录失败
+	 */
+	CREATE_DIRECTOR_ERROR("445", "创建文件目录失败"),
 	/**
 	 * 系统错误
 	 */

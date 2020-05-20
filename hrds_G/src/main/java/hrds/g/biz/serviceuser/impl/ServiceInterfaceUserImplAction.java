@@ -364,7 +364,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 								col = col.toLowerCase();
 							}
 							// 14.判断列是否有权限
-							if (!InterfaceCommon.colIsExist(col, columnList)) {
+							if (InterfaceCommon.columnIsExist(col, columnList)) {
 								return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
 										"请求错误,查询列名" + col + "不存在");
 							}

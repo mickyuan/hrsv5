@@ -150,7 +150,9 @@ public class InterfaceCommon {
 			File file = new File(filepath);
 			// 2.判断文件是否存在且是否是文件夹，不存在创建目录
 			if (!file.exists() && file.isDirectory()) {
-				file.mkdirs();
+				if (!file.mkdirs()) {
+					return StateType.getResponseInfo(StateType.CREATE_DIRECTOR_ERROR);
+				}
 			}
 			// 3.获取文件路径
 			if (!filepath.endsWith(File.separator)) {
@@ -163,7 +165,9 @@ public class InterfaceCommon {
 			// 4.判断文件是否存在，不存在创建
 			File writeFile = new File(filepath);
 			if (!writeFile.exists()) {
-				writeFile.createNewFile();
+				if (writeFile.createNewFile()) {
+					return StateType.getResponseInfo(StateType.CREATE_FILE_ERROR);
+				}
 			}
 			// 5.开始写文件
 			writer = new BufferedWriter(new FileWriter(writeFile));
@@ -319,7 +323,7 @@ public class InterfaceCommon {
 				if (columns != null && columns.size() != 0) {
 					for (String userColumn : userColumns) {
 						// 5.判断当前列名称是否有权限,没有返回错误响应信息
-						if (!colIsExist(userColumn.toLowerCase(), columns)) {
+						if (columnIsExist(userColumn.toLowerCase(), columns)) {
 							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
 									"请求错误,查询列名" + userColumn + "不存在");
 						}
@@ -337,19 +341,19 @@ public class InterfaceCommon {
 	@Param(name = "col", desc = "需要查询的列信息", range = "无限制")
 	@Param(name = "columns", desc = "权限的列信息集合", range = "无限制")
 	@Return(desc = "返回列是否有权限标志", range = "")
-	public static boolean colIsExist(String col, List<String> columns) {
+	public static boolean columnIsExist(String col, List<String> columns) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 2.判断没有字段查询的列是否为查询记录数
 		if (notCheckFunction.contains(col.toLowerCase())) {
-			return true;
+			return false;
 		}
 		// 3.遍历有权限列，判断当前列是否有权限，有返回true，否则返回false
 		for (String column : columns) {
 			if (column.trim().toLowerCase().equals(col.trim().toLowerCase())) {
-				return true;
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	@Method(desc = "检查列", logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
@@ -460,7 +464,7 @@ public class InterfaceCommon {
 					dealWithStream(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
 				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
 					// 5.输出类型为file，创建本地文件,准备数据的写入
-					dealWithFile(map, sbCol, sbVal, dataType, createFile, uuid);
+					dealWithFile(map, sbCol, sbVal, dataType, createFile);
 				} else {
 					// 6.输出类型错误
 					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
@@ -515,7 +519,7 @@ public class InterfaceCommon {
 	@Param(name = "sbVal", desc = "拼接列对应值对象", range = "无限制")
 	@Param(name = "dataType", desc = "输出数据类型", range = "使用（DataType代码项）")
 	private static void dealWithFile(Map<String, Object> map, StringBuffer sbCol, StringBuffer sbVal,
-	                                 String dataType, File createFile, String uuid) {
+	                                 String dataType, File createFile) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 3.创建存放文件的路径.文件名为UUID+dataType
 		BufferedWriter writer;
@@ -658,7 +662,7 @@ public class InterfaceCommon {
 				// 列值
 				String colVal = col_name[1];
 				// 4.判断列名是否存在,不存在返回错误响应信息
-				if (!colIsExist(colName.toLowerCase(), columns)) {
+				if (columnIsExist(colName.toLowerCase(), columns)) {
 					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
 							"请求错误,条件列名" + colName + "不存在");
 				}
@@ -739,10 +743,7 @@ public class InterfaceCommon {
 			return responseMap;
 		}
 		// 4.检查异步响应状态信息
-		responseMap = checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
-		// 5.如果checkasyn不为响应状态不为normal返回错误响应信息
-		StateType.ofEnumByCode(responseMap.get("status").toString());
-		return responseMap;
+		return checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
 	}
 
 	@Method(desc = "检查回调url地址是否可以连接",
