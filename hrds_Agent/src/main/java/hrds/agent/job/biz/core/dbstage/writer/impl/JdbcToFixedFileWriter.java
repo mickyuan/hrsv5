@@ -38,10 +38,14 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToFixedFileWriter.class);
 
+	public JdbcToFixedFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                             TableBean tableBean, Data_extraction_def data_extraction_def) {
+		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles() {
 		//获取行分隔符
 		String database_separatorr = data_extraction_def.getDatabase_separatorr();
 		String eltDate = collectTableBean.getEtlDate();
@@ -68,8 +72,6 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(database_code));
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();

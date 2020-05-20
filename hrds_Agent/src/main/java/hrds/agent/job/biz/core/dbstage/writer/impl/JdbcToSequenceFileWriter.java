@@ -37,10 +37,14 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToSequenceFileWriter.class);
 
+	public JdbcToSequenceFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                                TableBean tableBean, Data_extraction_def data_extraction_def) {
+		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles() {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
@@ -67,8 +71,6 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			writer = writerFile.getSequenceWrite();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();

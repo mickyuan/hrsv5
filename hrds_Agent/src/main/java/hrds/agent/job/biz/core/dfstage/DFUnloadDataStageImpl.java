@@ -72,11 +72,12 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			//获取文件所在的路径下，符合正则匹配的文件
 			String filePathPattern = getFilePathPattern(tableBean.getRoot_path(), collectTableBean.getEtlDate(),
 					collectTableBean.getTable_name(), tableBean.getFile_format());
+			//拿到文件所在的文件夹路径
 			String file_path = FileNameUtils.getFullPath(filePathPattern);
+			//拿到匹配文件的规则
 			String regex = FileNameUtils.getName(filePathPattern);
 			String[] file_name_list = new File(file_path).list(new FilenameFilter() {
 				private Pattern pattern = Pattern.compile(regex);
-
 				@Override
 				public boolean accept(File dir, String name) {
 					return pattern.matcher(name).matches();

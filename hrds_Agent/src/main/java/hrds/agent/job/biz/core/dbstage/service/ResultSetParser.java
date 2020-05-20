@@ -40,8 +40,7 @@ public class ResultSetParser {
 		}
 		//当前线程生成的数据文件的路径，用于返回
 		//8、写文件结束，返回本线程生成数据文件的路径和一个写出数据量
-		return FileWriterFactory.getFileWriterImpl(data_extraction_def.getDbfile_format(),
-				collectTableBean.getUnload_type()).writeFiles(rs,
-				collectTableBean, pageNum, tableBean, data_extraction_def);
+		return FileWriterFactory.getFileWriterImpl(rs,
+				collectTableBean, pageNum, tableBean, data_extraction_def).writeFiles();
 	}
 }

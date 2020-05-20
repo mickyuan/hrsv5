@@ -37,6 +37,7 @@ public class TestConnection extends AgentBaseAction {
 	@Param(name = "pageSql", desc = "并行抽取使用的分页SQL", range = "不为空")
 	@Return(desc = "根据并行抽取是否成功获取数据的判断", range = "不会为空")
 	public boolean testParallelSQL(Database_set dbSet, String pageSql) {
+		//TODO 这里需要修改
 		//1、创建DatabaseWrapper，并执行SQL语句
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbSet)) {
 			//2、将并行抽取SQL中的占位符替换为0和1，类似于select * from XXX limit 0 offset 1

@@ -38,10 +38,14 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToCsvFileWriter.class);
 
+	public JdbcToCsvFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                           TableBean tableBean, Data_extraction_def data_extraction_def) {
+		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles() {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();

@@ -294,6 +294,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		List<Future<Map<String, Object>>> futures;
 		//根据collectSql中是否包含~@^分隔符判断是否用户自定义sql并行抽取。
 		// 为了防止用户自定义并行抽取，又只写了一个sql,加了第二个判断条件
+		//FIXME 自定义sql常量
 		if (tableBean.getCollectSQL().contains(JobConstant.SQLDELIMITER) ||
 				IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
 			//包含，是否用户自定义的sql进行多线程抽取
