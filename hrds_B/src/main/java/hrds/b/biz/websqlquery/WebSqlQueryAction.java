@@ -42,7 +42,7 @@ public class WebSqlQueryAction extends BaseAction {
                 public void dealLine(Map<String, Object> map) {
                     query_list.add(map);
                 }
-            }.getPageDataLayer(sql, db, 1, 100);
+            }.getPageDataLayer(sql, db, 1, 10);
         }
         return query_list;
     }

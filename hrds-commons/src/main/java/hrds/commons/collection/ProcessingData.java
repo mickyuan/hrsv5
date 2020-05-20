@@ -29,7 +29,7 @@ public abstract class ProcessingData {
 	}
 
 	public List<String> getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end) {
-		return getPageDataLayer(sql, db, 0, 0, false);
+		return getPageDataLayer(sql, db, begin, end, false);
 	}
 
 	@Method(desc = "根据表名获取该表相应的存储信息", logicStep = "1")
