@@ -89,7 +89,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 				if (resultSet != null) {
 					//2、解析ResultSet，并写数据文件
 					ResultSetParser parser = new ResultSetParser();
-					//文件路径
+					//返回值为卸数文件全路径拼接卸数文件的条数
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum,
 							tableBean, data_extraction_def);
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
