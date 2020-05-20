@@ -848,11 +848,10 @@ public class InterfaceCommon {
 				for (String data : dataList) {
 					sb.append(data).append(System.lineSeparator());
 				}
-				String columnVal = sb.deleteCharAt(sb.length() - 4).toString();
 				String column = String.join(",", columnList);
 				StringBuilder stringBuilder = new StringBuilder();
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						stringBuilder.append(column).append(System.lineSeparator()).append(columnVal).toString());
+						stringBuilder.append(column).append(System.lineSeparator()).append(sb.toString()).toString());
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
 			}

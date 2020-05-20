@@ -259,12 +259,12 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			}
 			// 9.判断采集任务路径是否为空，不为空加条件查询
 			String[] filepath = fileAttribute.getFilepath();
-			if (filepath == null || filepath.length == 0) {
+			if (filepath != null && filepath.length > 0) {
 				assembler.addORParam("source_path", filepath);
 			}
 			// 10.判断采集任务id是否为空，不为空加条件查询
 			Long[] fcs_id = fileAttribute.getFcs_id();
-			if (fcs_id == null || fcs_id.length == 0) {
+			if (fcs_id != null && fcs_id.length > 0) {
 				assembler.addORParam("fcs_id", fcs_id);
 			}
 			assembler.addSql(" and storage_date=?").addParam(fileAttribute.getStoragedate());
@@ -274,7 +274,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			assembler.addLikeParam("fcs_name", fileAttribute.getFcs_name());
 			// 11.判断部门ID是否为空，不为空加条件查询
 			Long[] dep_id = fileAttribute.getDep_id();
-			if (dep_id == null || dep_id.length == 0) {
+			if (dep_id != null && dep_id.length > 0) {
 				assembler.addSql(" and  exists (select source_id from " + Source_relation_dep.TableName +
 						" dep where dep.SOURCE_ID = ds.SOURCE_ID ").addORParam("dep_id", dep_id).addSql(" ) ");
 			}
