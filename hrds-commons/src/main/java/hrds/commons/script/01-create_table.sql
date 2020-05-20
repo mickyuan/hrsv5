@@ -1505,7 +1505,7 @@ CONSTRAINT SYSREG_PARAMETER_INFO_PK PRIMARY KEY(PARAMETER_ID)   );
 --接口文件生成信息表
 DROP TABLE IF EXISTS INTERFACE_FILE_INFO ;
 CREATE TABLE INTERFACE_FILE_INFO(
-FILE_ID                                           BIGINT default 0 NOT NULL, --文件ID
+FILE_ID                                           VARCHAR(40) NOT NULL, --文件ID
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 FILE_PATH                                         VARCHAR(512) NOT NULL, --文件路径
 DATA_CLASS                                        VARCHAR(10) NOT NULL, --输出数据类型

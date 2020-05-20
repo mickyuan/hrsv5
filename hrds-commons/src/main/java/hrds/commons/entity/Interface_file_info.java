@@ -30,8 +30,8 @@ public class Interface_file_info extends ProjectTableEntity
 		__tmpPKS.add("file_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="file_id",value="文件ID:",dataType = Long.class,required = true)
-	private Long file_id;
+	@DocBean(name ="file_id",value="文件ID:",dataType = String.class,required = true)
+	private String file_id;
 	@DocBean(name ="file_path",value="文件路径:",dataType = String.class,required = true)
 	private String file_path;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
@@ -44,18 +44,12 @@ public class Interface_file_info extends ProjectTableEntity
 	private Long user_id;
 
 	/** 取得：文件ID */
-	public Long getFile_id(){
+	public String getFile_id(){
 		return file_id;
 	}
 	/** 设置：文件ID */
-	public void setFile_id(Long file_id){
-		this.file_id=file_id;
-	}
-	/** 设置：文件ID */
 	public void setFile_id(String file_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(file_id)){
-			this.file_id=new Long(file_id);
-		}
+		this.file_id=file_id;
 	}
 	/** 取得：文件路径 */
 	public String getFile_path(){

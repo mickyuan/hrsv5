@@ -30,24 +30,6 @@ public class Source_file_detailed extends ProjectTableEntity
 		__tmpPKS.add("sfd_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="original_name",value="原始文件名或表中文名称:",dataType = String.class,required = true)
-	private String original_name;
-	@DocBean(name ="original_update_date",value="原文件最后修改日期:",dataType = String.class,required = true)
-	private String original_update_date;
-	@DocBean(name ="hbase_name",value="HBase对应表名:",dataType = String.class,required = true)
-	private String hbase_name;
-	@DocBean(name ="storage_date",value="入库日期:",dataType = String.class,required = true)
-	private String storage_date;
-	@DocBean(name ="file_size",value="文件大小:",dataType = Long.class,required = true)
-	private Long file_size;
-	@DocBean(name ="file_type",value="文件类型:",dataType = String.class,required = true)
-	private String file_type;
-	@DocBean(name ="hdfs_storage_path",value="hdfs储路径:",dataType = String.class,required = false)
-	private String hdfs_storage_path;
-	@DocBean(name ="original_update_time",value="原文件最后修改时间:",dataType = String.class,required = true)
-	private String original_update_time;
-	@DocBean(name ="storage_time",value="入库时间:",dataType = String.class,required = true)
-	private String storage_time;
 	@DocBean(name ="file_suffix",value="文件后缀:",dataType = String.class,required = true)
 	private String file_suffix;
 	@DocBean(name ="table_name",value="表名:",dataType = String.class,required = false)
@@ -76,85 +58,25 @@ public class Source_file_detailed extends ProjectTableEntity
 	private Long collect_set_id;
 	@DocBean(name ="folder_id",value="文件夹编号:",dataType = Long.class,required = true)
 	private Long folder_id;
+	@DocBean(name ="original_name",value="原始文件名或表中文名称:",dataType = String.class,required = true)
+	private String original_name;
+	@DocBean(name ="original_update_date",value="原文件最后修改日期:",dataType = String.class,required = true)
+	private String original_update_date;
+	@DocBean(name ="hbase_name",value="HBase对应表名:",dataType = String.class,required = true)
+	private String hbase_name;
+	@DocBean(name ="storage_date",value="入库日期:",dataType = String.class,required = true)
+	private String storage_date;
+	@DocBean(name ="file_size",value="文件大小:",dataType = Long.class,required = true)
+	private Long file_size;
+	@DocBean(name ="file_type",value="文件类型:",dataType = String.class,required = true)
+	private String file_type;
+	@DocBean(name ="hdfs_storage_path",value="hdfs储路径:",dataType = String.class,required = false)
+	private String hdfs_storage_path;
+	@DocBean(name ="original_update_time",value="原文件最后修改时间:",dataType = String.class,required = true)
+	private String original_update_time;
+	@DocBean(name ="storage_time",value="入库时间:",dataType = String.class,required = true)
+	private String storage_time;
 
-	/** 取得：原始文件名或表中文名称 */
-	public String getOriginal_name(){
-		return original_name;
-	}
-	/** 设置：原始文件名或表中文名称 */
-	public void setOriginal_name(String original_name){
-		this.original_name=original_name;
-	}
-	/** 取得：原文件最后修改日期 */
-	public String getOriginal_update_date(){
-		return original_update_date;
-	}
-	/** 设置：原文件最后修改日期 */
-	public void setOriginal_update_date(String original_update_date){
-		this.original_update_date=original_update_date;
-	}
-	/** 取得：HBase对应表名 */
-	public String getHbase_name(){
-		return hbase_name;
-	}
-	/** 设置：HBase对应表名 */
-	public void setHbase_name(String hbase_name){
-		this.hbase_name=hbase_name;
-	}
-	/** 取得：入库日期 */
-	public String getStorage_date(){
-		return storage_date;
-	}
-	/** 设置：入库日期 */
-	public void setStorage_date(String storage_date){
-		this.storage_date=storage_date;
-	}
-	/** 取得：文件大小 */
-	public Long getFile_size(){
-		return file_size;
-	}
-	/** 设置：文件大小 */
-	public void setFile_size(Long file_size){
-		this.file_size=file_size;
-	}
-	/** 设置：文件大小 */
-	public void setFile_size(String file_size){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(file_size)){
-			this.file_size=new Long(file_size);
-		}
-	}
-	/** 取得：文件类型 */
-	public String getFile_type(){
-		return file_type;
-	}
-	/** 设置：文件类型 */
-	public void setFile_type(String file_type){
-		this.file_type=file_type;
-	}
-	/** 取得：hdfs储路径 */
-	public String getHdfs_storage_path(){
-		return hdfs_storage_path;
-	}
-	/** 设置：hdfs储路径 */
-	public void setHdfs_storage_path(String hdfs_storage_path){
-		this.hdfs_storage_path=hdfs_storage_path;
-	}
-	/** 取得：原文件最后修改时间 */
-	public String getOriginal_update_time(){
-		return original_update_time;
-	}
-	/** 设置：原文件最后修改时间 */
-	public void setOriginal_update_time(String original_update_time){
-		this.original_update_time=original_update_time;
-	}
-	/** 取得：入库时间 */
-	public String getStorage_time(){
-		return storage_time;
-	}
-	/** 设置：入库时间 */
-	public void setStorage_time(String storage_time){
-		this.storage_time=storage_time;
-	}
 	/** 取得：文件后缀 */
 	public String getFile_suffix(){
 		return file_suffix;
@@ -296,5 +218,83 @@ public class Source_file_detailed extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(folder_id)){
 			this.folder_id=new Long(folder_id);
 		}
+	}
+	/** 取得：原始文件名或表中文名称 */
+	public String getOriginal_name(){
+		return original_name;
+	}
+	/** 设置：原始文件名或表中文名称 */
+	public void setOriginal_name(String original_name){
+		this.original_name=original_name;
+	}
+	/** 取得：原文件最后修改日期 */
+	public String getOriginal_update_date(){
+		return original_update_date;
+	}
+	/** 设置：原文件最后修改日期 */
+	public void setOriginal_update_date(String original_update_date){
+		this.original_update_date=original_update_date;
+	}
+	/** 取得：HBase对应表名 */
+	public String getHbase_name(){
+		return hbase_name;
+	}
+	/** 设置：HBase对应表名 */
+	public void setHbase_name(String hbase_name){
+		this.hbase_name=hbase_name;
+	}
+	/** 取得：入库日期 */
+	public String getStorage_date(){
+		return storage_date;
+	}
+	/** 设置：入库日期 */
+	public void setStorage_date(String storage_date){
+		this.storage_date=storage_date;
+	}
+	/** 取得：文件大小 */
+	public Long getFile_size(){
+		return file_size;
+	}
+	/** 设置：文件大小 */
+	public void setFile_size(Long file_size){
+		this.file_size=file_size;
+	}
+	/** 设置：文件大小 */
+	public void setFile_size(String file_size){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(file_size)){
+			this.file_size=new Long(file_size);
+		}
+	}
+	/** 取得：文件类型 */
+	public String getFile_type(){
+		return file_type;
+	}
+	/** 设置：文件类型 */
+	public void setFile_type(String file_type){
+		this.file_type=file_type;
+	}
+	/** 取得：hdfs储路径 */
+	public String getHdfs_storage_path(){
+		return hdfs_storage_path;
+	}
+	/** 设置：hdfs储路径 */
+	public void setHdfs_storage_path(String hdfs_storage_path){
+		this.hdfs_storage_path=hdfs_storage_path;
+	}
+	/** 取得：原文件最后修改时间 */
+	public String getOriginal_update_time(){
+		return original_update_time;
+	}
+	/** 设置：原文件最后修改时间 */
+	public void setOriginal_update_time(String original_update_time){
+		this.original_update_time=original_update_time;
+	}
+	/** 取得：入库时间 */
+	public String getStorage_time(){
+		return storage_time;
+	}
+	/** 设置：入库时间 */
+	public void setStorage_time(String storage_time){
+		this.storage_time=storage_time;
 	}
 }
