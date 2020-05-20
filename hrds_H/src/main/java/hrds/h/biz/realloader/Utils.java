@@ -137,6 +137,15 @@ public class Utils {
 
     /**
      * 创建表
+     * 如果表存在就报错
+     */
+    static void createTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
+        String createSql = "CREATE TABLE " + tableName + " (" + createTableColumnTypes + ")";
+        db.execute(createSql);
+    }
+
+    /**
+     * 创建表
      * 如果表存在就删除掉
      */
     static void forceCreateTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
@@ -144,8 +153,23 @@ public class Utils {
         if (db.isExistTable(tableName)) {
             db.execute("DROP TABLE " + tableName);
         }
-        String createSql = "CREATE TABLE " + tableName + " (" + createTableColumnTypes + ")";
-        db.execute(createSql);
+        createTable(db, tableName, createTableColumnTypes);
+    }
+
+    /**
+     * 创建表
+     * 如果表不存在就创建
+     */
+    static void softCreateTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
+        if (!db.isExistTable(tableName))
+            createTable(db, tableName, createTableColumnTypes);
+    }
+
+    /**
+     * 清空表数据
+     */
+    static void truncateTable(DatabaseWrapper db, String tableName) {
+        db.execute("TRUNCATE TABLE " + tableName);
     }
 
     /**

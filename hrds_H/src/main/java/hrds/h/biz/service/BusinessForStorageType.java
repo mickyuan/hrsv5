@@ -20,37 +20,18 @@ public final class BusinessForStorageType extends AbstractBusiness {
 
         String loaderName = loader.getClass().getSimpleName();
         logger.info("开始计算并导入数据，导入类型为：" + loaderName);
-
+        loader.ensureRelation();
         try {
-            if (conf.isFirstLoad()) {
-                logger.info("======================= 首次执行 =======================");
-                logger.info("======================= 主作业执行 =======================");
-                loader.firstLoad();
+            logger.info("======================= 主作业执行 =======================");
+            String storageType = conf.getDmDatatable().getStorage_type();
+            if (StorageType.TiHuan.getCode().equals(storageType)) {
+                replace();
+            } else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
+                append();
+            } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
+                increment();
             } else {
-                logger.info("======================= 非首次执行 =======================");
-                logger.info("======================= 主作业执行 =======================");
-                //该变量表示追加，替换还是增量
-                String storageType = conf.getDmDatatable().getStorage_type();
-                if (StorageType.TiHuan.getCode().equals(storageType)) {
-                    logger.info("======================= 替换 =======================");
-                    loader.replace();
-                } else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
-                    logger.info("======================= 追加 =======================");
-                    /**
-                     * 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
-                     */
-                    restore(loaderName);
-                    loader.append();
-                } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
-                    logger.info("======================= 增量 =======================");
-                    /**
-                     * 支持增量重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
-                     */
-                    restore(loaderName);
-                    loader.increment();
-                } else {
-                    throw new AppSystemException("无效的进数方式: " + storageType);
-                }
+                throw new AppSystemException("无效的进数方式: " + storageType);
             }
             logger.info("======================= 后置作业执行 =======================");
             loader.finalWork();
@@ -64,11 +45,30 @@ public final class BusinessForStorageType extends AbstractBusiness {
         }
     }
 
-    private void restore(String loaderName) {
+    private void restore() {
         if (conf.isRerun()) {
-            logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行过，恢复数据到上次跑批完的数据状态: " + loaderName);
+            logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行过，恢复数据到上次跑批完的数据状态.");
             loader.restore();
         }
+    }
+
+    private void replace() {
+        logger.info("======================= 替换 =======================");
+        loader.replace();
+    }
+
+    private void append() {
+        logger.info("======================= 追加 =======================");
+        // 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
+        restore();
+        loader.append();
+    }
+
+    private void increment() {
+        logger.info("======================= 增量 =======================");
+        // 支持增量重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
+        restore();
+        loader.increment();
     }
 
 }

@@ -35,16 +35,12 @@ public class DatabaseLoader extends AbstractRealLoader {
     }
 
     @Override
-    public void firstLoad() {
-        //手动创建表，可强制指定表类型，spark无法实现非spark支持的类型指定
+    public void ensureRelation() {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
             String createTableColumnTypes =
                     Utils.buildCreateTableColumnTypes(conf, true);
-            Utils.forceCreateTable(db, tableName, createTableColumnTypes);
+            Utils.softCreateTable(db, tableName, createTableColumnTypes);
         }
-        databaseArgs.setOverWrite(true);
-        SparkJobRunner.runJob(datatableId, databaseArgs);
-
     }
 
     @Override

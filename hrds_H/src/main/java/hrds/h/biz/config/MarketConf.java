@@ -31,11 +31,6 @@ public class MarketConf implements Serializable {
      */
     private boolean rerun;
     /**
-     * 是否属于第一次运行
-     * 第一次运行时，逻辑与其他不同
-     */
-    private boolean firstLoad;
-    /**
      * 目的地表名
      */
     private String tableName;
@@ -51,14 +46,6 @@ public class MarketConf implements Serializable {
      * 数据表信息
      */
     private Dm_datatable dmDatatable = null;
-    /**
-     * 数据集市信息表
-     */
-    private Dm_info dmInfo = null;
-    /**
-     * 数据操作信息表
-     */
-    private Dm_operation_info dmOperationInfo = null;
     /**
      * 集市字段信息
      */
@@ -90,8 +77,6 @@ public class MarketConf implements Serializable {
         final MarketConf conf = new MarketConf(datatableId, etldate, sqlParams);
         //初始化实体类
         MarketConfUtils.initBeans(conf);
-        //验证是否是首次运行
-        MarketConfUtils.checkFirstLoad(conf);
         //验证是否属于重跑
         MarketConfUtils.checkReRun(conf, etldate);
 
@@ -104,14 +89,6 @@ public class MarketConf implements Serializable {
 
     void setRerun(boolean rerun) {
         this.rerun = rerun;
-    }
-
-    public boolean isFirstLoad() {
-        return firstLoad;
-    }
-
-    void setFirstLoad(boolean firstLoad) {
-        this.firstLoad = firstLoad;
     }
 
     public String getDatatableId() {
@@ -156,14 +133,6 @@ public class MarketConf implements Serializable {
 
     void setDmDatatable(Dm_datatable dmDatatable) {
         this.dmDatatable = dmDatatable;
-    }
-
-    public Dm_operation_info getDmOperationInfo() {
-        return dmOperationInfo;
-    }
-
-    void setDmOperationInfo(Dm_operation_info dmOperationInfo) {
-        this.dmOperationInfo = dmOperationInfo;
     }
 
     public List<Datatable_field_info> getDatatableFields() {
