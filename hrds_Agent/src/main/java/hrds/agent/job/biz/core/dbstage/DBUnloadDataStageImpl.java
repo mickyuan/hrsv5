@@ -8,7 +8,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -99,7 +98,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
 					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
 					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
-					, tableBean.getDeleteColumnInfo(),collectTableBean.getHbase_name());
+					, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
 			//卸数成功，删除重命名的目录
 			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
@@ -258,6 +257,13 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		}
 	}
 
+	/**
+	 * 计算本次采集数据总量
+	 *
+	 * @param fileResult      文件的集合
+	 * @param pageCountResult 每个分页采集的数据量
+	 * @param stageParamInfo  多个流程之间传递的参数
+	 */
 	public static void countResult(List<String> fileResult, List<Long> pageCountResult, StageParamInfo stageParamInfo) {
 		//获得本次采集总数据量
 		long rowCount = 0;
@@ -292,10 +298,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
 		List<Long> pageCountResult = new ArrayList<>();
 		List<Future<Map<String, Object>>> futures;
-		//根据collectSql中是否包含~@^分隔符判断是否用户自定义sql并行抽取。
-		// 为了防止用户自定义并行抽取，又只写了一个sql,加了第二个判断条件
-		//FIXME 自定义sql常量
-		if (tableBean.getCollectSQL().contains(JobConstant.SQLDELIMITER) ||
+		//根据collectSql中是否包含`@^分隔符判断是否用户自定义sql并行抽取。
+		// 为了防止用户自定义并行抽取，又只写了一个sql,因此加了第二个判断条件
+		if (tableBean.getCollectSQL().contains(Constant.SQLDELIMITER) ||
 				IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
 			//包含，是否用户自定义的sql进行多线程抽取
 			futures = customizeParallelExtract(tableBean);
@@ -320,20 +325,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		try {
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
 			long lastPageEnd = Long.MAX_VALUE;
-			//判断是否并行抽取
-			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_parallel())) {
-				//3、读取并行抽取sql数
-				List<String> parallelSqlList = StringUtil.split(tableBean.getCollectSQL(), JobConstant.SQLDELIMITER);
-				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
-				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-				executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
-				for (int i = 0; i < parallelSqlList.size(); i++) {
-					//最后一个线程的最大条数设为Long.MAX_VALUE
-					CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-							0, lastPageEnd, i, lastPageEnd, parallelSqlList.get(i));
-					Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
-					futures.add(lastFuture);
-				}
+			//1、读取并行抽取sql数
+			List<String> parallelSqlList = StringUtil.split(tableBean.getCollectSQL(), Constant.SQLDELIMITER);
+			//2、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
+			// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
+			executorService = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
+			for (int i = 0; i < parallelSqlList.size(); i++) {
+				//直接每个线程都去0到最大值的数据量
+				CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
+						0, lastPageEnd, i, lastPageEnd, parallelSqlList.get(i));
+				Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
+				futures.add(lastFuture);
 			}
 			return futures;
 		} catch (Exception e) {
@@ -382,7 +384,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				long pageRow = totalCount / threadCount;
 				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-				executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+				executorService = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
 				for (int i = 0; i < threadCount; i++) {
 					long start = (i * pageRow);
 					long end = (i + 1) * pageRow;

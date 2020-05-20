@@ -52,7 +52,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.CSV.getCode()) + File.separator;
+				+ File.separator + Constant.fileFormatMap.get(FileFormat.CSV.getCode()) + File.separator;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		CsvListWriter writer;
@@ -107,7 +107,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 							sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(JobConstant.DATADELIMITER);
+						midStringOther.append(Constant.DATADELIMITER);
 					}
 					//清洗操作
 					currValue = sb_.toString();
@@ -122,7 +122,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
-							JobConstant.DATADELIMITER);
+							Constant.DATADELIMITER);
 					allclean.merge(mergeIng, arrColString.toArray(new String[0]), selectColumnList.toArray
 									(new String[0]), null, sb,
 							FileFormat.CSV.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);

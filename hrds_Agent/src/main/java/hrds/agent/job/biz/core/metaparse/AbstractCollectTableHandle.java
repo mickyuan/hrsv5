@@ -6,7 +6,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.ColumnCleanBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.metaparse.impl.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.SQLUtil;
@@ -133,16 +132,12 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		StringBuilder addWhereSql = new StringBuilder();
 		//抽取的sql最后可能需要有过滤条件，需要拼接到collectSQL后面
 		if (!StringUtil.isEmpty(filter)) {
-			for (String sql : StringUtil.split(collectSql, JobConstant.SQLDELIMITER)) {
-				if (sql.toLowerCase().contains("where")) {
-					addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_where ")
-							.append(" WHERE ").append(filter).append(JobConstant.SQLDELIMITER);
-				} else {
-					addWhereSql.append(sql).append(" WHERE ").append(filter).append(JobConstant.SQLDELIMITER);
-				}
+			for (String sql : StringUtil.split(collectSql, Constant.SQLDELIMITER)) {
+				addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_where ")
+						.append(" WHERE ").append(filter).append(Constant.SQLDELIMITER);
 			}
 			//去掉最后一个分隔符
-			addWhereSql.delete(addWhereSql.length() - JobConstant.SQLDELIMITER.length(), addWhereSql.length());
+			addWhereSql.delete(addWhereSql.length() - Constant.SQLDELIMITER.length(), addWhereSql.length());
 			return addWhereSql.toString();
 		} else {
 			return collectSql;
@@ -158,7 +153,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 */
 	public static String replaceSqlParam(String collectSql, String sqlParam) {
 		//将多个需要替换的参数分割出来
-		List<String> splitParamList = StringUtil.split(sqlParam, JobConstant.SQLDELIMITER);
+		List<String> splitParamList = StringUtil.split(sqlParam, Constant.SQLDELIMITER);
 		if (splitParamList != null && splitParamList.size() > 0) {
 			for (String splitParam : splitParamList) {
 				//遍历，分割出需要替换的key和值
