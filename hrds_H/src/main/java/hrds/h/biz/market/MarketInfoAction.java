@@ -12,6 +12,7 @@ import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
@@ -56,7 +57,7 @@ import java.util.*;
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
 
-@DocClass(desc = "集市信息查询类", author = "BY-HLL", createdate = "2019/10/31 0031 下午 04:19")
+@DocClass(desc = "集市信息查询类", author = "TBH", createdate = "2020年5月20日 16点55分")
 /**
  * author:TBH
  * Time:2020.4.10
@@ -382,7 +383,7 @@ public class MarketInfoAction extends BaseAction {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_id  from " + Dm_datatable.TableName + " where datatable_en_name in (select datatable_en_name from "
-                + Dm_datatable.TableName + " where datatable_id = ?) and datatable_id != ? order by datatable_create_date,datatable_create_time", dm_datatable.getDatatable_id(),dm_datatable.getDatatable_id());
+                + Dm_datatable.TableName + " where datatable_id = ?) and datatable_id != ? order by datatable_create_date,datatable_create_time", dm_datatable.getDatatable_id(), dm_datatable.getDatatable_id());
         return dm_datatables;
     }
 
@@ -543,17 +544,15 @@ public class MarketInfoAction extends BaseAction {
                 //去除分号
                 querysql = querysql.substring(0, querysql.length() - 1);
             }
-            querysql = getlimitsql(querysql, datatable_id);
-            //2.查询SQL
             List<Map<String, Object>> maps = new ArrayList<>();
-            ProcessingData processingData = new ProcessingData() {
-                @Override
-                public void dealLine(Map<String, Object> map) throws Exception {
-                    //因为限制了limit 100所以此处可以将数据存放在内存中进行处理
-                    maps.add(map);
-                }
-            };
-            processingData.getDataLayer(querysql, Dbo.db());
+            try (DatabaseWrapper db = new DatabaseWrapper()) {
+                new ProcessingData() {
+                    @Override
+                    public void dealLine(Map<String, Object> map) {
+                        maps.add(map);
+                    }
+                }.getPageDataLayer(querysql, db,1,10);
+            }
             resultmap.put("result", maps);
             resultmap.put("success", true);
         } catch (Exception e) {
@@ -1280,7 +1279,7 @@ public class MarketInfoAction extends BaseAction {
             logicStep = "")
     @Param(name = "data_mart_id", desc = "data_mart_id", range = "String类型集市工程主键")
     @Return(desc = "查询返回结果集", range = "无限制")
-    public void downLoadMart(String data_mart_id) {
+    public void downloadMart(String data_mart_id) {
         String fileName = data_mart_id + ".hrds";
         try {
             ResponseUtil.getResponse().reset();
@@ -2019,9 +2018,13 @@ public class MarketInfoAction extends BaseAction {
             }
             saveBloodRelationToPGTable(sql, datatable_id);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-//            throw e;
-            throw new BusinessSystemException("上传的excel模板存在问题，请确认填写正确");
+
+            if (e.getMessage() != null) {
+                logger.error(e.getMessage());
+                throw e;
+            } else {
+                throw new BusinessSystemException("上传的excel模板存在问题，请确认填写正确");
+            }
         }
 
     }
