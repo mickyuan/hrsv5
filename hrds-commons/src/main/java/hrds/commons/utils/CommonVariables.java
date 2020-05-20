@@ -29,6 +29,10 @@ public class CommonVariables {
     public static final String SOLR_URL = PropertyParaValue.getString("solrUrl",
             "http://127.0.0.1:8983/solr/");
 
-
     public static final String OCR_SERVER_ADDRESS = PropertyParaValue.getString("ocr_rpc_cpu", "");
+
+    // 对于SQL的字段是否使用字段验证
+    public static final String AUTHORITY = PropertyParaValue.getString("restAuthority", "");
+    // 接口数据文件的存放路径
+    public static final String RESTFILEPATH = PropertyParaValue.getString("restFilePath", "");
 }
