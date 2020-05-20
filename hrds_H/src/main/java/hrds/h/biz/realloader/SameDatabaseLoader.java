@@ -28,6 +28,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     private final String currentTableName;
     private final String validTableName;
     private final String invalidTableName;
+    private final String createTableColumnTypes;
 
     SameDatabaseLoader(MarketConf conf) {
         super(conf);
@@ -35,34 +36,31 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         sql = conf.getCompleteSql();
 
         columns = Utils.columns(conf.getDatatableFields());
+        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, true);
         databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
         currentTableName = "curr_" + tableName;
         validTableName = "valid_" + tableName;
         invalidTableName = "invalid_" + tableName;
     }
 
-
     @Override
-    public void firstLoad() {
-        this.replace();
+    public void ensureRelation() {
+        Utils.softCreateTable(db, tableName, createTableColumnTypes);
     }
-
 
     @Override
     public void append() {
-        ensureTableExists("追加");
         insertData(tableName);
     }
 
     @Override
     public void replace() {
-        forceCreateTable(tableName);
+        Utils.truncateTable(db, tableName);
         insertData(tableName);
     }
 
     @Override
     public void increment() {
-        ensureTableExists("增量");
         //1.创建当前表
         forceCreateTable(currentTableName);
         //2.将执行sql后的结果集插入当前表中
@@ -107,7 +105,6 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void restore() {
-        ensureTableExists("重追加");
         Utils.restoreDatabaseData(db, tableName, conf.getEtlDate());
     }
 
@@ -133,20 +130,11 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         }
     }
 
-    private void ensureTableExists(String action) {
-        if (!db.isExistTable(tableName)) {
-            throw new AppSystemException(String.format("表不存在,无法执行 %s 操作: %s",
-                    action, tableName));
-        }
-    }
-
     /**
      * 创建表
      * 如果表存在就删除掉
      */
     private void forceCreateTable(String tableName) {
-        String createTableColumnTypes =
-                Utils.buildCreateTableColumnTypes(conf, true);
         Utils.forceCreateTable(db, tableName, createTableColumnTypes);
     }
 

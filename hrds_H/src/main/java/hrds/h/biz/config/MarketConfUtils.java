@@ -193,16 +193,6 @@ public class MarketConfUtils {
         return sql;
     }
 
-    /**
-     * 如果元数据库中存的跑批日期是 8个0，则表示这个任务只是设置过，还没运行过
-     * 因为运行完之后会更新这个跑批日期
-     */
-    private static final String FIRST_LOAD_DATE = "00000000";
-
-    static void checkFirstLoad(MarketConf conf) {
-        conf.setFirstLoad(FIRST_LOAD_DATE.equals(conf.getDmDatatable().getEtl_date()));
-    }
-
     static void checkReRun(MarketConf conf, String etlDate) {
         conf.setRerun(etlDate.equals(conf.getDmDatatable().getEtl_date()));
     }

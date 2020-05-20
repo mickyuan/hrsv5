@@ -1,12 +1,12 @@
 package hrds.h.biz.spark.dealdataset;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.StorageTypeKey;
 import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.dealdataset.dataprocesser.AddColumnsForDataSet;
 import hrds.h.biz.spark.dealdataset.dataprocesser.DataSetProcesser;
@@ -128,7 +128,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
      */
     private Dataset<Row> dataframeFromSql(String sql) {
         Catalog catalog = sparkSession.catalog();
-        if(catalog.databaseExists("hyshf")){
+        if (catalog.databaseExists("hyshf")) {
             catalog.setCurrentDatabase("hyshf");
         }
 
@@ -161,6 +161,9 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
     }
 
     private static boolean validTableLayer(List<LayerBean> layerByTable) {
+        if (layerByTable == null) {
+            return false;
+        }
         for (LayerBean layerBean : layerByTable) {
             if (Store_type.HIVE.getCode().equals(layerBean.getStore_type()) ||
                     Store_type.HBASE.getCode().equals(layerBean.getStore_type()) ||

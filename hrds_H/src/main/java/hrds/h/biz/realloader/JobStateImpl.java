@@ -51,9 +51,9 @@ public class JobStateImpl implements JobState {
 
         jobStartTime = System.currentTimeMillis();
 
-        logger.info(String.format("[%s] 集市作业开始运行 [%s]: etlDate: %s, isFirstLoad: %s, reRun: %s.",
+        logger.info(String.format("[%s] 集市作业开始运行 [%s]: etlDate: %s, reRun: %s.",
                 DateUtil.getDateTime(DateUtil.DATETIME_ZHCN), conf.getDatatableId(),
-                conf.getEtlDate(), conf.isFirstLoad(), conf.isRerun()));
+                conf.getEtlDate(), conf.isRerun()));
     }
 
     @Override
@@ -68,10 +68,10 @@ public class JobStateImpl implements JobState {
             dmRelationDatatable.update(db);
 
             /*
-             * 如果是首次执行铺底，且未成功的情况下，不更新跑批日期字段
+             * 未成功的情况下，不更新跑批日期字段
              * 下次运行，依然算是首次执行
              */
-            if (!(!isSuccessful && conf.isFirstLoad())) {
+            if (isSuccessful) {
                 dmDatatable.setDatac_date(DateUtil.getSysDate());
                 dmDatatable.setDatac_time(DateUtil.getSysTime());
                 dmDatatable.setEtl_date(conf.getEtlDate());
