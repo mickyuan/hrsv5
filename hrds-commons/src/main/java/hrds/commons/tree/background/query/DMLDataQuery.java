@@ -129,11 +129,9 @@ public class DMLDataQuery {
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         //查询表字段信息
-        asmSql.addSql("select t2.datatable_field_id AS column_id,field_en_name as column_name," +
+        asmSql.addSql("select datatable_field_id AS column_id,field_en_name as column_name," +
                 " field_cn_name as column_ch_name,concat(field_type,'(',field_length,')') AS column_type," +
-                " '0' AS is_primary_key,t1.datatable_create_date AS create_date FROM " + Dm_datatable.TableName + " " +
-                " t1 join " + Datatable_field_info.TableName + " t2 ON t1.datatable_id = t2.datatable_id" +
-                " WHERE t1.datatable_id= ?");
+                " '0' AS is_primary_key FROM " + Datatable_field_info.TableName + " WHERE datatable_id= ?");
         asmSql.addParam(dm_datatable.getDatatable_id());
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
