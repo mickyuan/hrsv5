@@ -260,7 +260,7 @@ public abstract class ProcessingData {
 
 	private List<String> getMoreJdbcResult(String sql, int begin, int end, boolean isCountTotal) {
 		try (DatabaseWrapper db = new DatabaseWrapper.Builder().dbname("Hive").create()) {
-			return getSQLData(sql, db, begin, end, isCountTotal);
+			return getSQLData(sql, db, 0, 0, isCountTotal);//TODO 没有实现分页查询，这里需要对数据进行行数控制
 		} catch (Exception e) {
 			throw new AppSystemException("系统不支持该数据库类型", e);
 		}
