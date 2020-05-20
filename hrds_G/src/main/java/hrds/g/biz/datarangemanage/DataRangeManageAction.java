@@ -103,8 +103,23 @@ public class DataRangeManageAction extends BaseAction {
 				// 4.保存系统登记表使用信息
 				addTableUseInfo(table_note, data_layer, userId, useId, new Table_use_info(),
 						dmDataTable.getDatatable_en_name(), dmDataTable.getDatatable_cn_name());
+				// 查询列信息
+				String[] table_ch_column = tableDataInfo.getTable_ch_column();
+				String[] table_en_column = tableDataInfo.getTable_en_column();
+				if (table_ch_column == null && table_en_column == null) {
+					// 获取所有列
+					List<Datatable_field_info> tableColumns = Dbo.queryList(Datatable_field_info.class,
+							"SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
+									+ " WHERE datatable_id = ?", tableDataInfo.getFile_id());
+					table_ch_column = new String[tableColumns.size()];
+					table_en_column = new String[tableColumns.size()];
+					for (int j = 0; j < tableColumns.size(); j++) {
+						table_ch_column[j] = tableColumns.get(j).getField_cn_name();
+						table_en_column[j] = tableColumns.get(j).getField_en_name();
+					}
+				}
 				// 5.判断列信息是否为空
-				addSysRegParameterInfo(tableDataInfo, useId, userId);
+				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
 			}
 		}
 	}
@@ -129,7 +144,7 @@ public class DataRangeManageAction extends BaseAction {
 	                         TableDataInfo tableDataInfo, long[] user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询贴源层表数据信息
-		Result tableResult = Dbo.queryResult("SELECT hyren_name,meta_info,original_name FROM " +
+		Result tableResult = Dbo.queryResult("SELECT table_id,hyren_name,meta_info,original_name FROM " +
 				Data_store_reg.TableName + " WHERE file_id = ?", tableDataInfo.getFile_id());
 		for (long userId : user_id) {
 			Table_use_info table_use_info = new Table_use_info();
@@ -137,6 +152,7 @@ public class DataRangeManageAction extends BaseAction {
 			for (int i = 0; i < tableResult.getRowCount(); i++) {
 				// 4.获取系统内对应表名
 				String hyren_name = tableResult.getString(i, "hyren_name");
+				long table_id = tableResult.getLong(i, "table_id");
 				// 5.获取原始文件名称
 				String original_name = tableResult.getString(i, "original_name");
 				// 6.根据用户ID、表名查询当前表是否已登记
@@ -151,41 +167,50 @@ public class DataRangeManageAction extends BaseAction {
 				// 9.新增表使用信息
 				addTableUseInfo(table_note, data_layer, userId, useId, table_use_info,
 						hyren_name, original_name);
+				// 查询列信息
+				String[] table_ch_column = tableDataInfo.getTable_ch_column();
+				String[] table_en_column = tableDataInfo.getTable_en_column();
+				if (table_ch_column == null && table_en_column == null) {
+					// 获取所有列
+					List<Table_column> tableColumns = Dbo.queryList(Table_column.class,
+							"select column_name,column_ch_name from " + Table_column.TableName +
+									" where table_id=?", table_id);
+					table_ch_column = new String[tableColumns.size()];
+					table_en_column = new String[tableColumns.size()];
+					for (int j = 0; j < tableColumns.size(); j++) {
+						Table_column table_column = tableColumns.get(j);
+						table_ch_column[j] = table_column.getColumn_ch_name();
+						table_en_column[j] = table_column.getColumn_name();
+					}
+				}
 				// 10.新增系统登记表参数信息
-				addSysRegParameterInfo(tableDataInfo, useId, userId);
+				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
 			}
 		}
 	}
 
 	@Method(desc = "新增系统登记参数表数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			" 2.封装系统登记参数表信息" +
-			"3.元数据并解析" +
-			"4.获取相同的列类型参数信息" +
-			"5.保存系统登记表参数信息")
+			"3.循环保存系统登记表参数信息")
 	@Param(name = "tableDataInfo", desc = "表信息实体对象", range = "无限制")
 	@Param(name = "useId", desc = "表使用ID", range = "新增表使用信息时生成")
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
-	private void addSysRegParameterInfo(TableDataInfo tableDataInfo, String useId,
-	                                    long userId) {
+	@Param(name = "table_ch_column", desc = "列中文名称", range = "无限制")
+	@Param(name = "table_en_column", desc = "列英文名称", range = "无限制")
+	private void addSysRegParameterInfo(String useId,
+	                                    long userId, String[] table_ch_column, String[] table_en_column) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
 		sysreg_parameter_info.setUse_id(useId);
 		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
 		sysreg_parameter_info.setUser_id(userId);
-		// 5.循环保存系统登记表参数信息
-		String[] table_ch_column = tableDataInfo.getTable_ch_column();
-		String[] table_en_column = tableDataInfo.getTable_en_column();
-		if (table_ch_column != null && table_en_column != null) {
-			if (table_ch_column.length != table_en_column.length) {
-				throw new BusinessException("列中文名称与列英文名称不对应，长度不一致");
-			}
-			for (int i = 0; i < table_en_column.length; i++) {
-				sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
-				sysreg_parameter_info.setTable_ch_column(table_ch_column[i]);
-				sysreg_parameter_info.setTable_en_column(table_en_column[i]);
-				sysreg_parameter_info.add(Dbo.db());
-			}
+		// 3.循环保存系统登记表参数信息
+		for (int i = 0; i < table_en_column.length; i++) {
+			sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
+			sysreg_parameter_info.setTable_ch_column(table_ch_column[i]);
+			sysreg_parameter_info.setTable_en_column(table_en_column[i]);
+			sysreg_parameter_info.add(Dbo.db());
 		}
 	}
 
