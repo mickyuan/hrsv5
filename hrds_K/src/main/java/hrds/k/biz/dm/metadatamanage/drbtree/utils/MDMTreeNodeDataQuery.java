@@ -3,6 +3,7 @@ package hrds.k.biz.dm.metadatamanage.drbtree.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.utils.TreeNodeDataQuery;
@@ -31,7 +32,7 @@ public class MDMTreeNodeDataQuery {
         //设置DCL层下数据存储层信息
         List<Data_store_layer> dataStorageLayers = MDMDataQuery.getDCLExistTableDataStorageLayers();
         if (!dataStorageLayers.isEmpty()) {
-            dataList.addAll(MDMDataConvertedNodeData.conversionDataStorageLayers(dataStorageLayers));
+            dataList.addAll(MDMDataConvertedNodeData.conversionDataStorageLayers(dataStorageLayers, DataSourceType.DCL));
             //获取并设置各存储层下的表信息
             dataStorageLayers.forEach(data_store_layer -> {
                 //获取存储层下表信息
@@ -61,7 +62,7 @@ public class MDMTreeNodeDataQuery {
         //设置DML层下数据存储层信息
         List<Data_store_layer> dataStorageLayers = MDMDataQuery.getDMLExistTableDataStorageLayers();
         if (!dataStorageLayers.isEmpty()) {
-            dataList.addAll(MDMDataConvertedNodeData.conversionDataStorageLayers(dataStorageLayers));
+            dataList.addAll(MDMDataConvertedNodeData.conversionDataStorageLayers(dataStorageLayers, DataSourceType.DML));
             dataStorageLayers.forEach(data_store_layer -> {
                 List<Map<String, Object>> dmlStorageLayerTableInfos =
                         MDMDataQuery.getDMLStorageLayerTableInfos(data_store_layer);

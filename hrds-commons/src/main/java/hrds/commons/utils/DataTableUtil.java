@@ -4,17 +4,108 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Dm_datatable;
+import hrds.commons.entity.Dq_index3record;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.query.DCLDataQuery;
+import hrds.commons.tree.background.query.DMLDataQuery;
+import hrds.commons.tree.background.query.DQCDataQuery;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "数据表工具类", author = "BY-HLL", createdate = "2019/11/4 0004 下午 02:35")
 public class DataTableUtil {
+
+    @Method(desc = "获取表信息和表的字段信息",
+            logicStep = "获取表信息和表的字段信息")
+    @Param(name = "data_layer", desc = "数据层", range = "String类型 DCL,DML")
+    @Param(name = "file_id", desc = "表源属性id或表id", range = "String")
+    @Return(desc = "表字段信息Map", range = "表字段信息Map")
+    public static Map<String, Object> getTableInfoAndColumnInfo(String data_layer, String file_id) {
+        //初始化返回结果Map
+        Map<String, Object> data_meta_info = new HashMap<>();
+        //初始化表信息
+        Map<String, Object> table_info_map;
+        //初始化字段解析结果List
+        List<Map<String, String>> column_info_list;
+        String table_id, table_name, table_ch_name, create_date;
+        //根据数据层获取不同层下的数据
+        switch (data_layer) {
+            case "DCL":
+                //获取表信息
+                table_info_map = DCLDataQuery.getDCLBatchTableInfo(file_id);
+                //校验查询结果集
+                if (table_info_map.isEmpty()) {
+                    throw new BusinessException("表登记信息已经不存在!");
+                }
+                table_id = table_info_map.get("table_id").toString();
+                table_name = table_info_map.get("table_name").toString();
+                table_ch_name = table_info_map.get("table_ch_name").toString();
+                create_date = table_info_map.get("original_update_date").toString();
+                //获取并转换字段信息List
+                column_info_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
+                break;
+            case "DML":
+                //获取表信息
+                Dm_datatable dm_datatable = DMLDataQuery.getDMLTableInfo(file_id);
+                //校验查询结果集
+                if (StringUtil.isBlank(dm_datatable.getDatatable_id().toString())) {
+                    throw new BusinessException("表登记信息已经不存在!");
+                }
+                table_id = dm_datatable.getDatatable_id().toString();
+                table_name = dm_datatable.getDatatable_en_name();
+                table_ch_name = dm_datatable.getDatatable_cn_name();
+                create_date = dm_datatable.getDatatable_create_date();
+                column_info_list = DataTableFieldUtil.metaInfoToList(DMLDataQuery.getDMLTableColumns(table_id));
+                break;
+            case "DQC":
+                //获取表信息
+                Dq_index3record dq_index3record = DQCDataQuery.getDQCTableInfo(file_id);
+                table_id = dq_index3record.getRecord_id().toString();
+                table_name = dq_index3record.getTable_name();
+                table_ch_name = dq_index3record.getTable_name();
+                create_date = dq_index3record.getRecord_date();
+                List<Map<String, Object>> table_column_list = new ArrayList<>();
+                String[] columns = dq_index3record.getTable_col().split(",");
+                for (String column : columns) {
+                    Map<String, Object> map = new HashMap<>();
+                    String is_primary_key = IsFlag.Fou.getCode();
+                    map.put("column_id", table_id);
+                    map.put("column_name", column);
+                    map.put("column_ch_name", column);
+                    map.put("column_type", "varchar(--)");
+                    map.put("is_primary_key", is_primary_key);
+                    table_column_list.add(map);
+                }
+                column_info_list = DataTableFieldUtil.metaInfoToList(table_column_list);
+                break;
+            case "ISL":
+            case "DPL":
+            case "SFL":
+            case "AML":
+            case "UDL":
+                throw new BusinessException("获取" + data_layer + "层标结果信息暂未实现!");
+            default:
+                throw new BusinessException("未找到匹配的存储层!");
+        }
+        //设置返回结果map
+        data_meta_info.put("file_id", file_id);
+        data_meta_info.put("table_id", table_id);
+        data_meta_info.put("data_layer", data_layer);
+        data_meta_info.put("table_name", table_name);
+        data_meta_info.put("table_ch_name", table_ch_name);
+        data_meta_info.put("create_date", create_date);
+        data_meta_info.put("column_info_list", column_info_list);
+        return data_meta_info;
+    }
 
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
     @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")

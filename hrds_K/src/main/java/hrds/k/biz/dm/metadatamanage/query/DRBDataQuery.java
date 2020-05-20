@@ -5,10 +5,10 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.web.util.Dbo;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Dq_failure_table;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
 
 import java.util.List;
 import java.util.Map;
@@ -42,8 +42,8 @@ public class DRBDataQuery {
     @Param(name = "dataSourceType", desc = "DataSourceType数据源类型", range = "DataSourceType数据源类型")
     @Return(desc = "数据源列表", range = "无限制")
     public static List<Map<String, Object>> getDCLTableInfos() {
-        return Dbo.queryList("SELECT * FROM " + Dq_failure_table.TableName + " WHERE table_source in ( ?, ?)",
-                Constant.DCL_BATCH, Constant.DCL_REALTIME);
+        return Dbo.queryList("SELECT * FROM " + Dq_failure_table.TableName + " WHERE table_source = ?",
+                DataSourceType.DCL.getCode());
     }
 
     @Method(desc = "数据管控-数据回收站根据表的id获取表信息",
