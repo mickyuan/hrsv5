@@ -48,7 +48,7 @@ public enum AsynType {
 				return asynType.value;
 			}
 		}
-		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
+		return null;
 	}
 
 	/**
@@ -63,7 +63,7 @@ public enum AsynType {
 				return asynType;
 			}
 		}
-		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
+		return null;
 	}
 
 	/**
@@ -80,16 +80,6 @@ public enum AsynType {
 		} else{
 			return false;
 		}
-	}
-
-	/**
-	 * 禁止使用类的tostring()方法
-	 *
-	 * @return
-	 */
-	@Override
-	public String toString() {
-		throw new AppSystemException("There's no need for you to !");
 	}
 
 }

@@ -25,7 +25,8 @@ public class SingleTable {
 	private Integer num;
 	@DocBean(name = "dataType", value = "数据文件类型( json / csv):", dataType = Integer.class, required = true)
 	private String dataType;
-	@DocBean(name = "outType", value = "数据输出形式:( stream / file)只能选择一种", dataType = String.class, required = true)
+	@DocBean(name = "outType", value = "数据输出形式:( stream / file)只能选择一种", dataType = String.class,
+			required = true)
 	private String outType;
 	@DocBean(name = "asynType", value = "异步标识:outType为file时使用", dataType = String.class, required = false)
 	private String asynType;
