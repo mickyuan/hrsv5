@@ -33,7 +33,7 @@ public class WebSqlQueryAction extends BaseAction {
     @Return(desc = "查询返回结果集", range = "无限制")
     public List<Map<String, Object>> queryDataBasedOnTableName(String tableName) {
         //初始化查询sql
-        String sql = "select * from " + tableName + " limit 10";
+        String sql = "select * from " + tableName;
         //获取数据
         List<Map<String, Object>> query_list = new ArrayList<>();
         try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -42,7 +42,7 @@ public class WebSqlQueryAction extends BaseAction {
                 public void dealLine(Map<String, Object> map) {
                     query_list.add(map);
                 }
-            }.getDataLayer(sql, db);
+            }.getPageDataLayer(sql, db, 1, 100);
         }
         return query_list;
     }
@@ -55,7 +55,7 @@ public class WebSqlQueryAction extends BaseAction {
     public List<Map<String, Object>> queryDataBasedOnSql(String querySQL) {
         //初始化查询sql
         querySQL = new DruidParseQuerySql().GetNewSql(querySQL);
-        if (!querySQL.toLowerCase().contains(" limit ")) {
+       /* if (!querySQL.toLowerCase().contains(" limit ")) {
             querySQL += " limit 100";
         } else {
             int limit_num = Integer.parseInt(querySQL.substring(querySQL.indexOf("limit") + 5).trim());
@@ -63,7 +63,7 @@ public class WebSqlQueryAction extends BaseAction {
             if (limit_num > 100) {
                 querySQL += "limit 100";
             }
-        }
+        }*/
         //根据sql语句获取数据
         //获取数据
         List<Map<String, Object>> query_list = new ArrayList<>();
@@ -73,7 +73,7 @@ public class WebSqlQueryAction extends BaseAction {
                 public void dealLine(Map<String, Object> map) {
                     query_list.add(map);
                 }
-            }.getDataLayer(querySQL, db);
+            }.getPageDataLayer(querySQL, db,1,100);
         }
         return query_list;
     }
