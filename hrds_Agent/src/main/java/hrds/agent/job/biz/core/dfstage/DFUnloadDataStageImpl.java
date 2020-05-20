@@ -6,7 +6,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -72,7 +71,9 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			//获取文件所在的路径下，符合正则匹配的文件
 			String filePathPattern = getFilePathPattern(tableBean.getRoot_path(), collectTableBean.getEtlDate(),
 					collectTableBean.getTable_name(), tableBean.getFile_format());
+			//拿到文件所在的文件夹路径
 			String file_path = FileNameUtils.getFullPath(filePathPattern);
+			//拿到匹配文件的规则
 			String regex = FileNameUtils.getName(filePathPattern);
 			String[] file_name_list = new File(file_path).list(new FilenameFilter() {
 				private Pattern pattern = Pattern.compile(regex);
@@ -136,7 +137,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						fd.ng.core.utils.FileUtil.forceMkdir(dir);
 					}
 					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件开始转存");
-					executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+					executorService = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
 					List<Future<String>> futures = new ArrayList<>();
 					for (String fileName : file_name_list) {
 						FileConversionThread thread = new FileConversionThread(tableBean, collectTableBean,
@@ -163,10 +164,10 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					stageParamInfo.setFileNameArr(file_name_list);
 					//将转存之后的文件格式，文件分隔符等重新赋值,给上传阶段的程序使用
 					//列分隔符为默认值
-					tableBean.setColumn_separator(JobConstant.DATADELIMITER);
+					tableBean.setColumn_separator(Constant.DATADELIMITER);
 					tableBean.setIs_header(IsFlag.Fou.getCode());
 					//XXX 换行符默认使用linux的换行符
-					tableBean.setRow_separator(JobConstant.DEFAULTLINESEPARATOR);
+					tableBean.setRow_separator(Constant.DEFAULTLINESEPARATOR);
 					tableBean.setFile_format(FileFormat.FeiDingChang.getCode());
 					tableBean.setFile_code(tableBean.getDbFileArchivedCode());
 				} else {
@@ -211,7 +212,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		//替换表名
 		root_path = root_path.replace("#{table}", table_name);
 		//替换文件格式
-		root_path = root_path.replace("#{文件格式}", JobConstant.fileFormatMap.get(file_format));
+		root_path = root_path.replace("#{文件格式}", Constant.fileFormatMap.get(file_format));
 		return root_path;
 	}
 

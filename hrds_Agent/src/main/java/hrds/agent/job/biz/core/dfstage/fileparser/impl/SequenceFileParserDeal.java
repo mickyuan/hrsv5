@@ -3,7 +3,6 @@ package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
@@ -53,7 +52,7 @@ public class SequenceFileParserDeal extends FileParserAbstract {
 				String str = value.toString();
 				//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 				//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。batch方式使用默认的去解析
-				valueList = StringUtil.split(str, JobConstant.SEQUENCEDELIMITER);
+				valueList = StringUtil.split(str, Constant.SEQUENCEDELIMITER);
 				//校验数据
 				checkData(valueList, fileRowCount);
 				dealLine(valueList);

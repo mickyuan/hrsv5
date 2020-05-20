@@ -1,16 +1,18 @@
 package hrds.commons.utils;
 
 import fd.ng.core.annotation.DocClass;
+import hrds.commons.codes.FileFormat;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
-@DocClass(desc = "项目中经常用到的常量值", author = "", createdate = "2019/12/25 0025 下午 04:28")
+@DocClass(desc = "项目中经常用到的常量值", author = "zxz", createdate = "2019/12/25 0025 下午 04:28")
 public class Constant {
 
 	public static final String SDATENAME = "HYREN_S_DATE";
 	public static final String EDATENAME = "HYREN_E_DATE";
 	public static final String MD5NAME = "HYREN_MD5_VAL";
-	public static final char DATADELIMITER = '\001';//此分隔符为hive的默认分隔符
 	public static final String MAXDATE = "99991231";
 	public static final String SFTP_PORT = "22";
 	public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
@@ -47,7 +49,7 @@ public class Constant {
 	//贴源层下实时数据 02:实时类型数据
 	public static final String DCL_REALTIME = "dcl_realtime";
 	//集市层
-	public static final String DML  = "DML";
+	public static final String DML = "DML";
 	//系统数据表 11:系统数据表
 	public static final String SYS_DATA_TABLE = "sys_data_table";
 	//系统数据备份 12:系统数据备份
@@ -80,4 +82,35 @@ public class Constant {
 	public static final String DELETEDMDATATABLE = "集市删除数据表";
 	//数据库采集，获取元数据信息拼接的分隔符
 	public static final String METAINFOSPLIT = "^";
+	//自定义sql或者自定义并行抽取sql时使用的分隔符
+	public static final String SQLDELIMITER = "`@^";
+	//DB文件转存默认的行分隔符
+	public static final String DEFAULTLINESEPARATOR = "\n";
+	//多线程指定线程池的默认线程数
+	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
+			String.valueOf(Runtime.getRuntime().availableProcessors())));
+	//拼接sql字段的分隔符
+	public static final String COLUMN_SEPARATOR = ",";
+	//此分隔符为拼接MD5的默认分隔符
+	public static final String DATADELIMITER = "`@^";
+	//此分隔符为卸数成SequenceFile时的默认分隔符，SequenceFile不允许页面自定义
+	public static final String SEQUENCEDELIMITER = String.valueOf('\001');
+	//mysql建表语句的转义符
+	public static final String MYSQL_ESCAPES = "`";
+
+	//数据库抽取不同文件格式对应的默认路径名称的映射
+	public static final Map<String, String> fileFormatMap = new HashMap<>();
+
+	/*
+	 * 数据库抽取卸数下来文件格式对应路径的关系
+	 */
+	static {
+		fileFormatMap.put(FileFormat.FeiDingChang.getCode(), "NONFIXEDFILE");
+		fileFormatMap.put(FileFormat.DingChang.getCode(), "FIXEDFILE");
+		fileFormatMap.put(FileFormat.CSV.getCode(), FileFormat.CSV.getValue());
+		fileFormatMap.put(FileFormat.PARQUET.getCode(), FileFormat.PARQUET.getValue());
+		fileFormatMap.put(FileFormat.ORC.getCode(), FileFormat.ORC.getValue());
+		fileFormatMap.put(FileFormat.SEQUENCEFILE.getCode(), FileFormat.SEQUENCEFILE.getValue());
+	}
+
 }

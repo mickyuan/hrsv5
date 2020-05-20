@@ -23,7 +23,7 @@ import java.util.Stack;
 public class TaskJobHelper {
 
     private static final String PARASEPARATOR = "@";    //参数分隔符
-
+    public static final DateTimeFormatter DATETIME_DEFAULT = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss");
     private TaskJobHelper() {}
 
     /**
@@ -323,7 +323,7 @@ public class TaskJobHelper {
     public static LocalDateTime getExecuteTimeByTPlus1(String strDateTime) {
 
         //1.计算T+1时，下一次执行日期时间。
-        return LocalDateTime.parse(strDateTime, DateUtil.DATETIME_DEFAULT)
+        return LocalDateTime.parse(strDateTime, TaskJobHelper.DATETIME_DEFAULT)
                 .plus(1, ChronoUnit.DAYS);
     }
 }

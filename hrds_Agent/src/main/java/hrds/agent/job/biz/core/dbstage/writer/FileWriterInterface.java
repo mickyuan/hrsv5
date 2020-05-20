@@ -4,11 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import hrds.agent.job.biz.bean.CollectTableBean;
-import hrds.agent.job.biz.bean.TableBean;
-import hrds.commons.entity.Data_extraction_def;
-
-import java.sql.ResultSet;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件的接口", author = "WangZhengcheng")
 public interface FileWriterInterface {
@@ -22,11 +17,8 @@ public interface FileWriterInterface {
 			"5、columnCount ：该表的列的数目" +
 			"6、columnCleanRule ：该表每列的清洗规则" +
 			"7、tableCleanRule ：整表清洗规则")
-	@Param(name = "rs", desc = "当前线程执行分页SQL得到的结果集", range = "不为空")
-	@Param(name = "tableName", desc = "表名, 用于大字段数据写avro", range = "不为空")
 	@Return(desc = "生成的数据文件的路径", range = "不会为null")
-	String writeFiles(ResultSet rs, CollectTableBean collectTableBean, int pageNum,
-	                  TableBean tableBean, Data_extraction_def data_extraction_def);
+	String writeFiles();
 
 //	@Method(desc = "将LONGVARCHAR和CLOB类型转换为字节数组，用于写Avro", logicStep = "")
 //	@Param(name = "characterStream", desc = "java.io.Reader形式得到此ResultSet结果集中当前行中指定列的值"

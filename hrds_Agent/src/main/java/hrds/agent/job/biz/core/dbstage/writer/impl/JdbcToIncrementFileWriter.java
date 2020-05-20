@@ -35,9 +35,13 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToIncrementFileWriter.class);
 
+	public JdbcToIncrementFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                                 TableBean tableBean, Data_extraction_def data_extraction_def) {
+		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
+	}
+
 	@Override
-	public String writeFiles(ResultSet rs, CollectTableBean collectTableBean, int pageNum, TableBean tableBean,
-	                         Data_extraction_def data_extraction_def) {
+	public String writeFiles() {
 		DataFileWriter<Object> avroWriter = null;
 		BufferedWriter writer;
 		long counter = 0;
@@ -49,7 +53,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.DingChang.getCode()) + File.separator;
+				+ File.separator + Constant.fileFormatMap.get(FileFormat.DingChang.getCode()) + File.separator;
 		try {
 			String database_code = data_extraction_def.getDatabase_code();
 			midName = FileNameUtils.normalize(midName, true);
@@ -61,7 +65,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 			/* Get result set metadata */
 			List<String> queryColumnList = new ArrayList<>();
 			Map<String, Integer> typeValueMap = new HashMap<>();
-			ResultSetMetaData rsMetaData = rs.getMetaData();
+			ResultSetMetaData rsMetaData = resultSet.getMetaData();
 			//获取查询的列，放到集合中
 			for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
 				queryColumnList.add(rsMetaData.getColumnName(i).toUpperCase());
@@ -75,14 +79,14 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			StringBuilder line = new StringBuilder();//用来写一行数据
 			String operate = tableBean.getOperate();
-			while (rs.next()) {
+			while (resultSet.next()) {
 				//最前面拼接操作方式
 				line.append(operate);
 				counter++;
 				for (int i = 0; i < allColumnList.size(); i++) {
 					if (queryColumnList.contains(allColumnList.get(i))) {
 						//如果是查询的列，取值拼接
-						getOneColumnValue(avroWriter, counter, pageNum, rs,
+						getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 								typeValueMap.get(allColumnList.get(i)), sb_, allColumnList.get(i), hbase_name, midName);
 						line.append(columnToFixed(sb_.toString(), allLengthList.get(i), database_code));
 						sb_.delete(0, sb_.length());

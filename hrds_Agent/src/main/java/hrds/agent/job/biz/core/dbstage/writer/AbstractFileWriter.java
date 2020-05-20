@@ -6,7 +6,10 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.TableBean;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -37,6 +40,20 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
 	private static final GenericRecord record = new GenericData.Record(SCHEMA);
+	protected ResultSet resultSet;
+	protected CollectTableBean collectTableBean;
+	protected int pageNum;
+	protected TableBean tableBean;
+	protected Data_extraction_def data_extraction_def;
+
+	public AbstractFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                          TableBean tableBean, Data_extraction_def data_extraction_def) {
+		this.resultSet = resultSet;
+		this.collectTableBean = collectTableBean;
+		this.pageNum = pageNum;
+		this.tableBean = tableBean;
+		this.data_extraction_def = data_extraction_def;
+	}
 
 	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
 			, logicStep = "1、以流的形式获取此Blob实例指定的BLOB值,并获取BufferedInputStream实例" +
@@ -77,7 +94,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * 解析result一行的值
 	 */
 	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
-	                         int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
+	                                   int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
 			throws SQLException, IOException {
 		String lobs_file_name = "";
 		String reader2String = null;
@@ -148,10 +165,11 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 
 	/**
 	 * 清理掉不规则的数据
+	 *
 	 * @param columnData 单列的数据
 	 * @return 清理之后的数据
 	 */
-	public static String clearIrregularData(String columnData){
+	public static String clearIrregularData(String columnData) {
 		//TODO 目前针对换行符的问题，经过测试，可以通过自定义hive的TextInputFormat能解决自定义表的换行符，
 		//TODO 但是如果页面自定义填写换行符，就导致需要每一个不同的换行符都需要对应一个自定义hive的
 		//TODO TextInputFormat，难以实现，因此需要使用默认的行分隔符，或者提前实现几个TextInputFormat供选择
@@ -222,7 +240,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @throws IOException 获取avro文件输出流异常
 	 */
 	protected DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
-	                                     String midName, long pageNum) throws IOException {
+	                                               String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
 			if (type == Types.BLOB || type == Types.VARBINARY || type == Types.LONGVARBINARY) {
@@ -270,7 +288,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @throws IOException 获取avro文件输出流异常
 	 */
 	protected DataFileWriter<Object> getAvroWriter(Map<String, Integer> typeMap, String hbase_name,
-	                                     String midName, long pageNum) throws IOException {
+	                                               String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (String key : typeMap.keySet()) {
 			Integer type = typeMap.get(key);

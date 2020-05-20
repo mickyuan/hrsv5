@@ -46,7 +46,7 @@ public enum DataType {
 				return dataType.value;
 			}
 		}
-		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
+		return null;
 	}
 
 	/**
@@ -61,7 +61,7 @@ public enum DataType {
 				return dataType;
 			}
 		}
-		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
+		return null;
 	}
 
 	/**
@@ -77,16 +77,6 @@ public enum DataType {
 		} else {
 			return false;
 		}
-	}
-
-	/**
-	 * 禁止使用类的tostring()方法
-	 *
-	 * @return
-	 */
-	@Override
-	public String toString() {
-		throw new AppSystemException("There's no need for you to !");
 	}
 
 }

@@ -5,7 +5,6 @@ import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
@@ -119,30 +118,30 @@ public abstract class FileParserAbstract implements FileParserInterface {
 			//列清洗
 			columnData = cl.cleanColumn(columnData, columnName, null,
 					dictionaryTypeList.get(i), FileFormat.FeiDingChang.getCode(), null,
-					null, JobConstant.DATADELIMITER);
+					null, Constant.DATADELIMITER);
 			//清理不规则的数据
 			columnData = AbstractFileWriter.clearIrregularData(columnData);
-			midStringOther.append(columnData).append(JobConstant.DATADELIMITER);
-			lineSb.append(columnData).append(JobConstant.DATADELIMITER);
+			midStringOther.append(columnData).append(Constant.DATADELIMITER);
+			lineSb.append(columnData).append(Constant.DATADELIMITER);
 		}
 		//如果有列合并处理合并信息
 		if (!mergeIng.isEmpty()) {
 			List<String> arrColString = StringUtil.split(midStringOther.toString(),
-					JobConstant.DATADELIMITER);
+					Constant.DATADELIMITER);
 			String merge = allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 							(new String[0]), null, null, FileFormat.FeiDingChang.getCode(),
-					null, JobConstant.DATADELIMITER);
+					null, Constant.DATADELIMITER);
 			midStringOther.append(merge);
-			lineSb.append(merge).append(JobConstant.DATADELIMITER);
+			lineSb.append(merge).append(Constant.DATADELIMITER);
 		}
 		//追加开始日期
 		lineSb.append(etl_date);
 		if (isMd5) {
 			//根据(是否拉链存储且增量进数)和是否算md5判断是否要追加MD5和结束日期两个字段 追加结束日期和MD5
-			lineSb.append(JobConstant.DATADELIMITER).append(Constant.MAXDATE);
-			lineSb.append(JobConstant.DATADELIMITER).append(MD5Util.md5String(midStringOther.toString()));
+			lineSb.append(Constant.DATADELIMITER).append(Constant.MAXDATE);
+			lineSb.append(Constant.DATADELIMITER).append(MD5Util.md5String(midStringOther.toString()));
 		}
-		lineSb.append(JobConstant.DEFAULTLINESEPARATOR);
+		lineSb.append(Constant.DEFAULTLINESEPARATOR);
 		writer.write(lineSb.toString());
 	}
 

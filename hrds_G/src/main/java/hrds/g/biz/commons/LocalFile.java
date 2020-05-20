@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
@@ -28,7 +29,6 @@ import java.util.Map.Entry;
 public class LocalFile {
 
 	private static final Logger logger = LogManager.getLogger();
-	private static final String PATH = PropertyParaValue.getString("restFilePath", "");
 	private static final Type type = new TypeReference<List<Map<String, String>>>() {
 	}.getType();
 
@@ -76,7 +76,8 @@ public class LocalFile {
 				boolean isWriteSuccess = writeDataFile(filePath, feedback, dataType);
 				// 8.如果文件写成功则保存此次记录
 				if (isWriteSuccess) {
-					if (InterfaceCommon.saveFileInfo(db, user_id, uuid, dataType, outType, PATH) == 1) {
+					if (InterfaceCommon.saveFileInfo(db, user_id, uuid, dataType, outType,
+							CommonVariables.RESTFILEPATH) == 1) {
 						JSONObject obj = new JSONObject();
 						obj.put("uuid", uuid);
 						obj.put("dataType", dataType);
@@ -109,10 +110,10 @@ public class LocalFile {
 	public static File createFile(String uuid, String dataType) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.获取文件的路径
-		String filePath = PATH + File.separator + uuid + '.' + dataType;
+		String filePath = CommonVariables.RESTFILEPATH + File.separator + uuid + '.' + dataType;
 		File writeFile = null;
 		try {
-			File file = new File(PATH);
+			File file = new File(CommonVariables.RESTFILEPATH);
 			// 3.判断文件存放目录是否存在，不存在创建
 			if (!file.exists() && !file.isDirectory()) {
 				file.mkdirs();

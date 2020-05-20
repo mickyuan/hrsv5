@@ -142,7 +142,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 						execSftpToDbServer(dataStoreConfBean, stageParamInfo.getFileArr());
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//不支持外部表的方式
-						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+						executor = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
 						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
 								stageParamInfo.getTableBean());
 					} else {
@@ -154,7 +154,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有hadoop客户端
-						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+						executor = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
 						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
 								stageParamInfo.getTableBean());
 					} else {

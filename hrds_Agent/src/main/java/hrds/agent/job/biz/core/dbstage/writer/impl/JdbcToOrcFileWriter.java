@@ -43,15 +43,19 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 	private static final Log log = LogFactory.getLog(JdbcToOrcFileWriter.class);
 	private OrcSerde serde = new OrcSerde();
 
+	public JdbcToOrcFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                           TableBean tableBean, Data_extraction_def data_extraction_def) {
+		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles() {
 		String eltDate = collectTableBean.getEtlDate();
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.ORC.getCode()) + File.separator;
+				+ File.separator + Constant.fileFormatMap.get(FileFormat.ORC.getCode()) + File.separator;
 		String hbase_name = collectTableBean.getHbase_name();
 		midName = FileNameUtils.normalize(midName, true);
 		String dataDelimiter = data_extraction_def.getDatabase_separatorr();
@@ -70,8 +74,6 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			/* Get result set metadata */
 			//清洗配置
 			final DataCleanInterface allClean = CleanFactory.getInstance().getObjectClean("clean_database");
-			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
@@ -107,7 +109,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 							typeArray[i], sb_, selectColumnList.get(i), hbase_name, midName));
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(JobConstant.DATADELIMITER);
+						midStringOther.append(Constant.DATADELIMITER);
 					}
 					//清洗操作
 					currValue = sb_.toString();
@@ -122,7 +124,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
-							JobConstant.DATADELIMITER);
+							Constant.DATADELIMITER);
 					//字段合并
 					allClean.merge(mergeIng, arrColString.toArray(new String[0]),
 							selectColumnList.toArray(new String[0]), null, lineData, FileFormat.ORC.getCode(),

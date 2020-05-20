@@ -8,7 +8,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
@@ -249,7 +248,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				String str = value.toString();
 				//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 				//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。batch方式使用默认的去解析
-				List<String> valueList = StringUtil.split(str, JobConstant.SEQUENCEDELIMITER);
+				List<String> valueList = StringUtil.split(str, Constant.SEQUENCEDELIMITER);
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));

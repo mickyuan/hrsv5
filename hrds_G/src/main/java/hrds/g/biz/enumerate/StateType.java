@@ -122,11 +122,11 @@ public enum StateType {
 	/**
 	 * 数据类型错误
 	 */
-	DATA_TYPE_ERROR("428", "数据类型错误,未填写或填写错误"),
+	DATA_TYPE_ERROR("428", "数据类型dataType错误,未填写或填写错误"),
 	/**
 	 * 输出类型错误
 	 */
-	OUT_TYPE_ERROR("429", "输出类型错误,未填写或填写错误"),
+	OUT_TYPE_ERROR("429", "输出类型outType错误,未填写或填写错误"),
 	/**
 	 * 索引未建立错误
 	 */
@@ -217,7 +217,7 @@ public enum StateType {
 				return stateType.value;
 			}
 		}
-		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
+		return null;
 	}
 
 	/**
@@ -232,7 +232,7 @@ public enum StateType {
 				return stateType;
 			}
 		}
-		throw new AppSystemException("根据" + code + "没有找到对应的代码项");
+		return null;
 	}
 
 	/**
@@ -262,13 +262,4 @@ public enum StateType {
 		return stateTypeMap;
 	}
 
-	/**
-	 * 禁止使用类的tostring()方法
-	 *
-	 * @return
-	 */
-	@Override
-	public String toString() {
-		throw new AppSystemException("There's no need for you to !");
-	}
 }

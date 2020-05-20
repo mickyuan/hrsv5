@@ -5,9 +5,9 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -38,11 +38,11 @@ public class SQLUtil {
 		for (String s : columnName) {
 			//2-1、如果数据库类型是MySQL,则对每一列用飘号包裹
 			if (typeConstant == DatabaseType.MYSQL) {
-				columnSB.append(JobConstant.CLEAN_SEPARATOR).append(s)
-						.append(JobConstant.CLEAN_SEPARATOR).append(JobConstant.COLUMN_SEPARATOR);
+				columnSB.append(Constant.MYSQL_ESCAPES).append(s)
+						.append(Constant.MYSQL_ESCAPES).append(Constant.COLUMN_SEPARATOR);
 			} else {
 				//2-2、对其他类型的数据库，除了加逗号之外不做特殊处理
-				columnSB.append(s).append(JobConstant.COLUMN_SEPARATOR);
+				columnSB.append(s).append(Constant.COLUMN_SEPARATOR);
 			}
 		}
 		//3、去掉最后一列的最后一个逗号
@@ -50,8 +50,8 @@ public class SQLUtil {
 		//4、组装完整的SQL语句
 		if (typeConstant == DatabaseType.MYSQL) {
 			//4-1、如果数据库类型是MySQL,则对表名用飘号包裹
-			return "select " + column + " from " + JobConstant.CLEAN_SEPARATOR + tableName
-					+ JobConstant.CLEAN_SEPARATOR;
+			return "select " + column + " from " + Constant.MYSQL_ESCAPES + tableName
+					+ Constant.MYSQL_ESCAPES;
 		} else if (typeConstant == DatabaseType.Oracle9i || typeConstant == DatabaseType.Oracle10g) {
 			//4-2、如果数据库类型是Oracle，则进行如下处理
 			return "select " + column + " from " + tableName;

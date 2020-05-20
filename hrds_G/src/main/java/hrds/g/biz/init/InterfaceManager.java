@@ -426,14 +426,18 @@ public class InterfaceManager {
 								+ " where use_id=? and user_id=?", use_id, user_id);
 				StringBuilder chColumns = new StringBuilder();
 				StringBuilder enColumns = new StringBuilder();
-				for (Sysreg_parameter_info parameterInfo : parameterInfos) {
-					chColumns.append(parameterInfo.getTable_ch_column()).append(Constant.METAINFOSPLIT);
-					enColumns.append(parameterInfo.getTable_en_column()).append(Constant.METAINFOSPLIT);
-
+				if (parameterInfos != null && parameterInfos.size() > 0) {
+					for (Sysreg_parameter_info parameterInfo : parameterInfos) {
+						chColumns.append(parameterInfo.getTable_ch_column()).append(Constant.METAINFOSPLIT);
+						enColumns.append(parameterInfo.getTable_en_column()).append(Constant.METAINFOSPLIT);
+					}
+					queryInterfaceInfo.setTable_ch_column(chColumns.deleteCharAt(chColumns.length() - 1).toString());
+					queryInterfaceInfo.setTable_en_column(enColumns.deleteCharAt(enColumns.length() - 1).toString());
+				} else {
+					queryInterfaceInfo.setTable_ch_column("");
+					queryInterfaceInfo.setTable_en_column("");
 				}
 				// 表字段列
-				queryInterfaceInfo.setTable_ch_column(chColumns.deleteCharAt(chColumns.length() - 1).toString());
-				queryInterfaceInfo.setTable_en_column(enColumns.deleteCharAt(enColumns.length() - 1).toString());
 				// 表remark列(其实存的是字段类型对应的json字符串)
 				queryInterfaceInfo.setTable_type_name(tableResult.getString(i, "remark"));
 				// 表中文名

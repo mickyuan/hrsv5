@@ -10,7 +10,6 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
-import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
@@ -169,8 +168,8 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
 			tableBean.setCollectSQL(collectSQL);
 			//抽取sql可能包含分隔符，判断如果包含分隔符，取第一条sql获取meta信息（注：包含分隔符表明并行抽取）
-			if (collectSQL.contains(JobConstant.SQLDELIMITER)) {
-				resultSet = getResultSet(StringUtil.split(collectSQL, JobConstant.SQLDELIMITER).get(0), conn);
+			if (collectSQL.contains(Constant.SQLDELIMITER)) {
+				resultSet = getResultSet(StringUtil.split(collectSQL, Constant.SQLDELIMITER).get(0), conn);
 			} else {
 				resultSet = getResultSet(collectSQL, conn);
 			}

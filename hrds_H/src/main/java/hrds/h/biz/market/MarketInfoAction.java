@@ -65,7 +65,6 @@ public class MarketInfoAction extends BaseAction {
 
     private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
     private static final String Mart_Storage_path = "";
-    private static final String Final_Date = "99991231";
     private static final String Zero = "0";
     private static final String ZeroDate = "00000000";
     private static final String LimitNumber = "10";
@@ -74,10 +73,8 @@ public class MarketInfoAction extends BaseAction {
     private static final String SourceColumn = "sourcecolumn";
     //TODO 由于目前不存在集市分类 所以随便写的一个ID 为了满足入库需求 之后将去除
     private static final String Category_id = "1000025018";
-    private static final String jdbc_url = "jdbc_url";
     // excel文件后缀名
     private static final String xlsxSuffix = ".xlsx";
-    private static final String xlsSuffix = ".xlsx";
     private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
     private static final String[] nolengthcolumntypes = {"string", "text", "bigint"};
 
@@ -278,7 +275,7 @@ public class MarketInfoAction extends BaseAction {
             CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
             dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date());
         } else {
-            dm_datatable.setDatatable_due_date(Final_Date);
+            dm_datatable.setDatatable_due_date(Constant.MAXDATE);
         }
         CheckColummn(dsl_id, "数据存储");
         if (!checkrunstatus(dm_datatable, dsl_id)) {
@@ -376,6 +373,19 @@ public class MarketInfoAction extends BaseAction {
         }
     }
 
+    @Method(desc = "查询与当前datatable_id拥有相同datatable_en_name的另外一组datatable_id",
+            logicStep = "")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "datatable_id")
+    @Return(desc = "查询结果", range = "返回值取值范围")
+    public List<Dm_datatable> getTableIdFromSameNameTableId(String datatable_id) {
+        Map<String, Object> resultmap = new HashMap<>();
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_id  from " + Dm_datatable.TableName + " where datatable_en_name in (select datatable_en_name from "
+                + Dm_datatable.TableName + " where datatable_id = ?) and datatable_id != ? order by datatable_create_date,datatable_create_time", dm_datatable.getDatatable_id(),dm_datatable.getDatatable_id());
+        return dm_datatables;
+    }
+
     @Method(desc = "编辑更新集市添加表页面1的信息，更新集市表",
             logicStep = "1.检查数据合法性" +
                     "3.新增时对Dm_datatable初始化一些非页面传值" +
@@ -399,7 +409,7 @@ public class MarketInfoAction extends BaseAction {
             CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
             dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0, 10).replace("-", ""));
         } else {
-            dm_datatable.setDatatable_due_date(Final_Date);
+            dm_datatable.setDatatable_due_date(Constant.MAXDATE);
         }
         CheckColummn(dsl_id, "数据存储");
 
@@ -454,13 +464,53 @@ public class MarketInfoAction extends BaseAction {
     @Method(desc = "获取集市表的信息",
             logicStep = "根据数据集市表英文名进行查询")
     @Param(name = "datatable_en_name", desc = "datatable_en_name", range = "datatable_en_name")
-    @Return(desc = "当前集市表的信息", range = "返回值取值范围")
-    public List<Map<String, Object>> queryDMDataTableByDataTableName(String datatable_en_name) {
+    @Param(name = "datatable_id", desc = "datatable_id", range = "datatable_id", nullable = true)
+    @Return(desc = "是否重复", range = "返回值取值范围")
+    public Map<String, Object> queryTableNameIfRepeat(String datatable_en_name, String datatable_id) {
+        Map<String, Object> resultmap = new HashMap<>();
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_en_name(datatable_en_name);
-        return Dbo.queryList("select * from " + Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 " +
-                "on t1.datatable_id = t2.datatable_id where t1.datatable_en_name= ?", dm_datatable.getDatatable_en_name());
+        if (StringUtils.isEmpty(datatable_id)) {
+            List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
+            if (!dm_datatables.isEmpty()) {
+                resultmap.put("datatable_id", dm_datatables.get(0).getDatatable_id());
+                resultmap.put("result", true);
+            } else {
+                resultmap.put("result", false);
+            }
+        } else {
+            dm_datatable.setDatatable_id(datatable_id);
+            List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ? and datatable_id != ?",
+                    dm_datatable.getDatatable_en_name(), dm_datatable.getDatatable_id());
+            if (!dm_datatables.isEmpty()) {
+                resultmap.put("datatable_id", dm_datatables.get(0).getDatatable_id());
+                resultmap.put("result", true);
+            } else {
+                resultmap.put("result", false);
+            }
+        }
+        return resultmap;
     }
+
+
+    @Method(desc = "获取集市表的信息",
+            logicStep = "根据数据集市表英文名进行查询")
+    @Param(name = "datatable_id", desc = "datatable_id", range = "datatable_id")
+    @Return(desc = "是否重复", range = "返回值取值范围")
+    public Map<String, Object> queryDataTableIdIfRepeat(String datatable_id) {
+        Map<String, Object> resultmap = new HashMap<>();
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName +
+                " where datatable_en_name in (select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+        if (dm_datatables.size() > 1) {
+            resultmap.put("result", true);
+        } else {
+            resultmap.put("result", false);
+        }
+        return resultmap;
+    }
+
 
     @Method(desc = "根据SQL获取采集数据，默认显示10条",
             logicStep = "1.处理SQL" +
@@ -536,16 +586,6 @@ public class MarketInfoAction extends BaseAction {
         } else {
             throw new BusinessException("目前不支持非JDBC的情况");
         }
-//        List<LayerBean> layerBeanList = allTableIsLayer.getLayerBeanList();
-//        Dm_datatable dm_datatable = new Dm_datatable();
-//        dm_datatable.setDatatable_id(datatable_id);
-//        List<Map<String, Object>> maps = Dbo.queryList("select t1.* from data_store_layer_attr t1 left join dm_relation_datatable t2 on t1.dsl_id = t2.dsl_id " +
-//                "where t2.datatable_id = ? and lower(t1.storage_property_key) = ? and t1.storage_property_val like ?", dm_datatable.getDatatable_id(), jdbc_url, "%oracle%");
-//        if (maps.isEmpty()) {
-//            querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-//        } else {
-//            querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
-//        }
         return querysql;
     }
 

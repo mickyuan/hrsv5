@@ -37,20 +37,24 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcToSequenceFileWriter.class);
 
+	public JdbcToSequenceFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
+	                                TableBean tableBean, Data_extraction_def data_extraction_def) {
+		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public String writeFiles(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                         TableBean tableBean, Data_extraction_def data_extraction_def) {
+	public String writeFiles() {
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
 		//数据抽取指定的目录
 		String plane_url = data_extraction_def.getPlane_url();
 		String midName = plane_url + File.separator + eltDate + File.separator + collectTableBean.getTable_name()
-				+ File.separator + JobConstant.fileFormatMap.get(FileFormat.SEQUENCEFILE.getCode()) + File.separator;
+				+ File.separator + Constant.fileFormatMap.get(FileFormat.SEQUENCEFILE.getCode()) + File.separator;
 		//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 		//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。
-		String dataDelimiter = JobConstant.SEQUENCEDELIMITER;
+		String dataDelimiter = Constant.SEQUENCEDELIMITER;
 		midName = FileNameUtils.normalize(midName, true);
 		DataFileWriter<Object> avroWriter = null;
 		long counter = 0;
@@ -67,8 +71,6 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			writer = writerFile.getSequenceWrite();
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
-			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
@@ -96,7 +98,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 							typeArray[i], sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(JobConstant.DATADELIMITER);
+						midStringOther.append(Constant.DATADELIMITER);
 					}
 					//清洗操作
 					currValue = sb_.toString();
@@ -107,7 +109,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					List<String> arrColString = StringUtil.split(midStringOther.toString(), JobConstant.DATADELIMITER);
+					List<String> arrColString = StringUtil.split(midStringOther.toString(), Constant.DATADELIMITER);
 					String mer = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							selectColumnList.toArray(new String[0]), null, null,
 							FileFormat.SEQUENCEFILE.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
