@@ -178,14 +178,14 @@ public class JobLevelInterventionAction extends BaseAction {
 		etl_job_hand.setEtl_sys_cd(etl_sys_cd);
 		etl_job_hand.setEtl_hand_type(etl_hand_type);
 		etl_job_hand.setEtl_job(etl_job);
-		etl_job_hand.setEvent_id(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
+		etl_job_hand.setEvent_id(DateUtil.getSysDate() + " " +
 				DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
 		etl_job_hand.setSt_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
 				DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
 		etl_job_hand.setHand_status(Meddle_status.TRUE.getCode());
 		etl_job_hand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 		if (curr_bath_date.length() == 10 && curr_bath_date.contains("-")) {
-			StringUtil.replace(curr_bath_date, "-", "");
+			curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 		}
 		etl_job_hand.setPro_para(etl_sys_cd + "," + etl_job + "," + curr_bath_date);
 		// 4.判断工程下是否有作业正在干预
