@@ -25,7 +25,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 		this.collectTableBean = collectTableBean;
 	}
 
-	@Method(desc = "数据库直连采集数据上传阶段处理逻辑，处理完成后，无论成功还是失败，" +
+	@Method(desc = "数据库抽数数据上传阶段处理逻辑，处理完成后，无论成功还是失败，" +
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "" +
 			"1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间" +
 			"2、调用方法，进行文件上传，文件数组和上传目录由构造器传入")
@@ -34,14 +34,14 @@ public class DBUploadStageImpl extends AbstractJobStage {
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		long startTime = System.currentTimeMillis();
 		LOGGER.info("------------------表" + collectTableBean.getTable_name()
-				+ "数据库直连采集上传阶段开始------------------");
+				+ "数据库抽数上传阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
 				StageConstant.UPLOAD.getCode());
 		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 		LOGGER.info("------------------表" + collectTableBean.getTable_name()
-				+ "数据库直连采集上传阶段成功------------------执行时间为："
+				+ "数据库抽数上传阶段成功------------------执行时间为："
 				+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean

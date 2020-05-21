@@ -9,10 +9,10 @@ import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
-import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.StorageTypeKey;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,24 +25,32 @@ public class ConnectionTool {
 			"1、将SourceDataConfBean对象中的内容封装到dbInfo中" +
 			"2、获取数据库类型" +
 			"3、根据数据库类型获取对应数据库的数据库连接")
-	@Param(name = "dbConfigBean", desc = "该对象封装了海云应用服务端发过来的数据库采集连接数据库的信息", range = "DBConfigBean类型对象")
+	@Param(name = "dbConfigBean", desc = "该对象封装了海云应用服务端发过来的数据库采集连接数据库的信息",
+			range = "DBConfigBean类型对象")
 	@Return(desc = "项目中常用的DatabaseWrapper对象", range = "DatabaseWrapper类型对象")
 	public static DatabaseWrapper getDBWrapper(DbConfBean dbConfBean) {
-		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
+		return getDBWrapper(dbConfBean.getDatabase_drive(), dbConfBean.getJdbc_url(), dbConfBean.getUser_name(),
+				dbConfBean.getDatabase_pad(), dbConfBean.getDatabase_type());
+	}
+
+	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
+	                                           String database_pad, String database_type) {
+		return getDBWrapper(database_drive, jdbc_url, user_name, database_pad, database_type, 0);
+	}
+
+	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
+	                                           String database_pad, String database_type, int fetch_size) {
 		Map<String, String> dbConfig = new HashMap<>();
-		dbConfig.put(StorageTypeKey.database_driver, dbConfBean.getDatabase_drive());
-		dbConfig.put(StorageTypeKey.jdbc_url, dbConfBean.getJdbc_url());
-		dbConfig.put(StorageTypeKey.user_name, dbConfBean.getUser_name());
-		dbConfig.put(StorageTypeKey.database_pwd, dbConfBean.getDatabase_pad());
-		dbConfig.put(StorageTypeKey.database_type, dbConfBean.getDatabase_type());
-		return getDBWrapper(dbConfig);
+		dbConfig.put(StorageTypeKey.database_driver, database_drive);
+		dbConfig.put(StorageTypeKey.jdbc_url, jdbc_url);
+		dbConfig.put(StorageTypeKey.user_name, user_name);
+		dbConfig.put(StorageTypeKey.database_pwd, database_pad);
+		dbConfig.put(StorageTypeKey.database_type, database_type);
+		return getDBWrapper(dbConfig, fetch_size);
 	}
 
 	/**
 	 * 直接通过数据库查询出来的List数据
-	 *
-	 * @param dbConfig
-	 * @return
 	 */
 	public static DatabaseWrapper getDBWrapper(List<Map<String, Object>> dbConfig) {
 		return getDBWrapper(getLayerMap(dbConfig));
@@ -50,9 +58,6 @@ public class ConnectionTool {
 
 	/**
 	 * 使用数据库吃信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val
-	 *
-	 * @param dbConfig
-	 * @return
 	 */
 	public static Map<String, String> getLayerMap(List<Map<String, Object>> dbConfig) {
 		Map<String, String> dbConfigMap = new HashMap<>();
@@ -65,6 +70,10 @@ public class ConnectionTool {
 	}
 
 	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig) {
+		return getDBWrapper(dbConfig, 0);
+	}
+
+	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig, int fetch_size) {
 		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
 		DbinfosConf.Dbinfo dbInfo = new DbinfosConf.Dbinfo();
 		dbInfo.setName(DbinfosConf.DEFAULT_DBNAME);
@@ -78,6 +87,9 @@ public class ConnectionTool {
 		if (dbType.equals(Dbtype.HIVE)) {
 			dbInfo.setAutoCommit(false);
 		}
+		if (fetch_size != 0) {
+			dbInfo.setFetch_size(fetch_size);
+		}
 		dbInfo.setDbtype(dbType);
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
@@ -89,17 +101,12 @@ public class ConnectionTool {
 			"1、将database_set对象中的内容封装到dbInfo中" +
 			"2、获取数据库类型" +
 			"3、根据数据库类型获取对应数据库的数据库连接")
-	@Param(name = "database_set", desc = "该对象封装了海云应用服务端发过来的数据库采集连接数据库的信息", range = "database_set")
+	@Param(name = "database_set", desc = "该对象封装了海云应用服务端发过来的数据库采集连接数据库的信息",
+			range = "database_set")
 	@Return(desc = "项目中常用的DatabaseWrapper对象", range = "DatabaseWrapper类型对象")
 	public static DatabaseWrapper getDBWrapper(Database_set database_set) {
-		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
-		Map<String, String> dbConfig = new HashMap<>();
-		dbConfig.put(StorageTypeKey.database_driver, database_set.getDatabase_drive());
-		dbConfig.put(StorageTypeKey.jdbc_url, database_set.getJdbc_url());
-		dbConfig.put(StorageTypeKey.user_name, database_set.getUser_name());
-		dbConfig.put(StorageTypeKey.database_pwd, database_set.getDatabase_pad());
-		dbConfig.put(StorageTypeKey.database_type, database_set.getDatabase_type());
-		return getDBWrapper(dbConfig);
+		return getDBWrapper(database_set.getDatabase_drive(), database_set.getJdbc_url(), database_set.getUser_name(),
+				database_set.getDatabase_pad(), database_set.getDatabase_type());
 	}
 
 	private static Dbtype getDbType(String database_type) {

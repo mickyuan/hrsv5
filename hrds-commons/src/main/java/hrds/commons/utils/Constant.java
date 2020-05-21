@@ -84,9 +84,6 @@ public class Constant {
 	public static final String SQLDELIMITER = "`@^";
 	//DB文件转存默认的行分隔符
 	public static final String DEFAULTLINESEPARATOR = "\n";
-	//多线程指定线程池的默认线程数
-	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
-			String.valueOf(Runtime.getRuntime().availableProcessors())));
 	//拼接sql字段的分隔符
 	public static final String COLUMN_SEPARATOR = ",";
 	//此分隔符为拼接MD5的默认分隔符

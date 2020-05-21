@@ -243,6 +243,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	                                               String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
+			//TODO 哪些是大字段这里要支持配置
 			if (type == Types.BLOB || type == Types.VARBINARY || type == Types.LONGVARBINARY) {
 				createLobsDir(midName);
 				// 生成Avro文件到local
@@ -328,7 +329,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			sb.append(columnValue);
 			if (length >= columnValueLength) {
 				for (int j = 0; j < length - columnValueLength; j++) {
-					sb.append(" ");
+					sb.append(' ');
 				}
 			} else {
 				throw new AppSystemException("定长指定的长度小于源数据长度");

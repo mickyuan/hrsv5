@@ -111,7 +111,6 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 							database_code, database_separatorr);
 					if (splitIng.get(selectColumnList.get(i).toUpperCase()) == null
 							|| splitIng.get(selectColumnList.get(i).toUpperCase()).size() == 0) {
-						//TODO 下面这一行可以优化，TypeTransLength.getLength(typeList.get(i - 1))提出到循环外面
 						sb.append(columnToFixed(currValue, TypeTransLength.getLength(
 								typeList.get(i)), database_code)).append(database_separatorr);
 					} else {
