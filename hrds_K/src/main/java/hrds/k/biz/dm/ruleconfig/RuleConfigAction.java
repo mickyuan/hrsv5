@@ -181,13 +181,11 @@ public class RuleConfigAction extends BaseAction {
     }
 
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
-    @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
-    @Param(name = "data_own_type", desc = "类型标识", range = "dcl_batch:批量数据,dcl_realtime:实时数据", nullable = true)
-    @Param(name = "file_id", desc = "表源属性id", range = "String[]")
+    @Param(name = "table_name", desc = "表名", range = "String")
     @Return(desc = "字段信息列表", range = "字段信息列表")
-    public List<Map<String, Object>> getColumnByFileId(String data_layer, String data_own_type, String file_id) {
+    public List<Map<String, Object>> getColumnsByTableName(String table_name) {
         //数据层获取不同表结构
-        return DataTableUtil.getColumnByFileId(data_layer, data_own_type, file_id);
+        return DataTableUtil.getColumnByTableName(table_name);
     }
 
     @Method(desc = "获取规则类型数据", logicStep = "获取规则类型数据")
@@ -326,7 +324,7 @@ public class RuleConfigAction extends BaseAction {
                     " where task_id=?", dq_index3record.getTask_id()).orElseThrow(() ->
                     (new BusinessException("获取任务指标3存储记录的SQL异常!")));
             //设置查询sql
-            String sql = "select * from " + dq_index3record.getTable_name() + "limit 10";
+            String sql = "select * from " + dq_index3record.getTable_name();
             //设置查询sql:问题数据明细sql,只取10条
             List<Map<String, Object>> check_index3_list = new ArrayList<>();
             //根据指标3存储记录信息获取数据
@@ -336,7 +334,7 @@ public class RuleConfigAction extends BaseAction {
                 public void dealLine(Map<String, Object> map) {
                     check_index3_list.add(map);
                 }
-            }.getDataLayer(sql, db);
+            }.getPageDataLayer(sql, db, 1, 10);
             return check_index3_list;
         }
     }
