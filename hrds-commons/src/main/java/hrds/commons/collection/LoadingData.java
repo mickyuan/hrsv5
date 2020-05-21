@@ -54,7 +54,7 @@ public class LoadingData {
             LayerBean layerBean = allTableIsLayer.getLayerBean();
             Map<String, String> layerAttr = layerBean.getLayerAttr();
             try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(layerAttr)) {
-                SqlOperator.execute(dbDataConn, "insert into " + ldbbean.getTableName() + sql);
+                SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS " + sql);
                 SqlOperator.commitTransaction(dbDataConn);
                 dsl_id = layerBean.getDsl_id();
             }
