@@ -105,6 +105,11 @@ public abstract class AbstractJobStage implements JobStageInterface {
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		if (SQLUtil.checkTable(todayTableName + "b", data_store_connect_attr.get(StorageTypeKey.
 				database_type), data_store_connect_attr.get(StorageTypeKey.database_name), db)) {
+			if (SQLUtil.checkTable(todayTableName, data_store_connect_attr.get(StorageTypeKey.
+					database_type), data_store_connect_attr.get(StorageTypeKey.database_name), db)) {
+				//判断todayTableName表已经创建，删除
+				db.execute("DROP TABLE " + todayTableName);
+			}
 			//如果表存在
 			db.execute("ALTER TABLE " + todayTableName + "b" + " RENAME TO " + todayTableName);
 		}

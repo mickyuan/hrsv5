@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.collection.ConnectionTool;
@@ -441,12 +442,12 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return str;
 	}
 
-	private Object getValue(String type, String tmpValue) {
+	private static Object getValue(String type, String tmpValue) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.trim());
+			str = StringUtil.isEmpty(tmpValue) ? null : Boolean.parseBoolean(tmpValue.trim());
 		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
@@ -454,10 +455,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = tmpValue == null ? null : new BigDecimal(tmpValue.trim());
+			str = StringUtil.isEmpty(tmpValue) ? null : new BigDecimal(tmpValue.trim());
 		} else {
 			// 如果取出的值为null则给空字符串
-			str = tmpValue == null ? "" : tmpValue;
+			str = StringUtil.isEmpty(tmpValue) ? "" : tmpValue;
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
 		return str;
@@ -495,5 +496,26 @@ public class ReadFileToDataBase implements Callable<Long> {
 		}
 		sbAdd.append(")");
 		return sbAdd.toString();
+	}
+
+	public static void main(String[] args) {
+		//自己使用别的库,建表语句create table aaa(a varchar(100),b int,c varchar(100))
+		List<Object[]> arr = new ArrayList<>();
+		Object[] aa = new Object[3];
+		aa[0] = "aaaa,ccc,sss";
+		aa[1] = null;
+		aa[2] = "cccc";
+		arr.add(aa);
+//		try (DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper("oracle.jdbc.OracleDriver",
+//				"jdbc:oracle:thin:@47.103.83.1:1521:hyshf",
+//				"hyshf", "hyshf", DatabaseType.Oracle10g.getCode())) {
+		try (DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper("org.postgresql.Driver",
+				"jdbc:postgresql://47.103.83.1:32001/hrsdxg",
+				"hrsdxg", "hrsdxg", DatabaseType.Postgresql.getCode())) {
+//			String batchSql = "insert into z001_fff_item_1(i_item_sk,i_item_id,i_rec_start_date,i_rec_end_date,i_item_desc,i_current_price,i_wholesale_cost,i_brand_id,i_brand,i_class_id,i_class,i_category_id,i_category,i_manufact_id,i_manufact,i_size,i_formulation,i_color,i_units,i_container,i_manager_id,i_product_name,remark,HYREN_S_DATE) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			String batchSql = "insert into aaa(a,b,c) values (?,?,?)";
+			int[] ints = dbWrapper.execBatch(batchSql, arr);
+			System.out.println("插入" + ints.length + "条");
+		}
 	}
 }
