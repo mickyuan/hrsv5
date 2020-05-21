@@ -1,10 +1,8 @@
 package hrds.h.biz;
 
-import fd.ng.core.utils.JsonUtil;
-import hrds.commons.entity.Dm_relation_datatable;
+import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.config.MarketConfUtils;
 import hrds.h.biz.realloader.*;
-import hrds.h.biz.config.MarketConf;
 
 import java.io.IOException;
 
@@ -27,14 +25,13 @@ public class MainClass {
         JobState jobState = new JobStateImpl(conf);
 
         //选择导入数据 Loader 实现
-        Loader loader = LoaderSwitch.switchLoader(conf);
-
-        try (LoaderExecutor loaderExecutor = new LoaderExecutor()) {
+        try (Loader loader = LoaderSwitch.switchLoader(conf)) {
             //开始执行导数作业
-            loaderExecutor
+            new LoaderExecutor()
                     .setJobState(jobState)
                     .register(loader)
                     .execute();
         }
+
     }
 }
