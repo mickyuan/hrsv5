@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -137,7 +138,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						fd.ng.core.utils.FileUtil.forceMkdir(dir);
 					}
 					LOGGER.info(FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件开始转存");
-					executorService = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
+					executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
 					List<Future<String>> futures = new ArrayList<>();
 					for (String fileName : file_name_list) {
 						FileConversionThread thread = new FileConversionThread(tableBean, collectTableBean,

@@ -1,7 +1,6 @@
 package hrds.g.biz.enumerate;
 
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.exception.AppSystemException;
 
 public enum AsynType {
 
@@ -73,11 +72,11 @@ public enum AsynType {
 	 * @return
 	 */
 	public static boolean isAsynType(String asynType) {
-		if (StringUtil.isNotBlank(asynType) || (AsynType.SYNCHRONIZE != AsynType.ofEnumByCode(asynType)
-				&& AsynType.SYNCHRONIZE != AsynType.ofEnumByCode(asynType)
-				&& AsynType.SYNCHRONIZE != AsynType.ofEnumByCode(asynType))){
+		if (StringUtil.isNotBlank(asynType) && (AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)
+				|| AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)
+				|| AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType))) {
 			return true;
-		} else{
+		} else {
 			return false;
 		}
 	}

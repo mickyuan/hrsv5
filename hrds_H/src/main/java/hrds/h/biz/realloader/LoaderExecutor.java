@@ -12,11 +12,10 @@ import java.io.IOException;
  * @Date:
  * @Since jdk1.8
  */
-public class LoaderExecutor implements Closeable {
+public class LoaderExecutor {
 
     private ILoadBussiness iLoadBussiness;
     private JobState jobState;
-
 
     public LoaderExecutor register(Loader loader) {
         this.iLoadBussiness = new BusinessForStorageType(loader);
@@ -42,13 +41,4 @@ public class LoaderExecutor implements Closeable {
         }
 
     }
-
-
-    @Override
-    public void close() throws IOException {
-        if (iLoadBussiness != null)
-            iLoadBussiness.close();
-    }
-
-
 }

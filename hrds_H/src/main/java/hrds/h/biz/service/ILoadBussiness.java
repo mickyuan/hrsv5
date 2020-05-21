@@ -13,7 +13,7 @@ import java.io.Closeable;
  * @version  
  * @since JDK 1.7
  */
-public interface ILoadBussiness extends Closeable{
+public interface ILoadBussiness {
 
 	/**
 	 * 是否需要执行进数的业务处理

@@ -23,5 +23,8 @@ public class JobConstant {
 	//文件上传到hdfs的顶层目录
 	public static final String PREFIX = PropertyParaUtil.getString("pathprefix", "/hrds");
 
+	//多线程指定线程池的默认线程数
+	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
+			String.valueOf(Runtime.getRuntime().availableProcessors())));
 }
 

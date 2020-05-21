@@ -71,8 +71,8 @@ public enum DataType {
 	 * @return
 	 */
 	public static boolean isDataType(String dataType) {
-		if (StringUtil.isNotBlank(dataType) || (DataType.json != DataType.ofEnumByCode(dataType)
-				&& DataType.csv != DataType.ofEnumByCode(dataType))) {
+		if (StringUtil.isNotBlank(dataType) && (DataType.json == DataType.ofEnumByCode(dataType)
+				|| DataType.csv == DataType.ofEnumByCode(dataType))) {
 			return true;
 		} else {
 			return false;

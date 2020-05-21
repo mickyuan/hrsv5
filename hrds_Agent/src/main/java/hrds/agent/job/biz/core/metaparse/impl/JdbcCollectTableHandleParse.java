@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
@@ -14,12 +15,11 @@ import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -95,12 +95,10 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	private void getSqlSearchColumn(SourceDataConfBean sourceDataConfBean,
 	                                CollectTableBean collectTableBean, TableBean tableBean) {
 		//根据实际sql获取新增、删除、更新查询的列
-		Connection conn = null;
 		ResultSet resultSet = null;
-		try {
-			//获取jdbc连接
-			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
-					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
+				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
+				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type())) {
 			String incrementSql = collectTableBean.getSql();
 			JSONObject incrementSqlObject = JSONObject.parseObject(incrementSql);
 			//遍历json根据json的key执行sql,拼接对应的操作方式,增量抽取是写到同一个文件，因此这里不使用多线程
@@ -111,7 +109,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 					StringBuilder columnMetaInfo = new StringBuilder();
 					//替换掉sql中需要传递的参数
 					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
-					resultSet = getResultSet(sql, conn);
+					resultSet = getResultSet(sql, db);
 					ResultSetMetaData rsMetaData = resultSet.getMetaData();
 					// Write header
 					for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
@@ -140,8 +138,6 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			try {
 				if (resultSet != null)
 					resultSet.close();
-				if (conn != null)
-					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -158,20 +154,18 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	private TableBean getFullAmountExtractTableBean(SourceDataConfBean sourceDataConfBean,
 	                                                CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
-		Connection conn = null;
 		ResultSet resultSet = null;
-		try {
-			//获取jdbc连接
-			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
-					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
+				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
+				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type())) {
 			//1、根据数据源信息和采集表信息获取数据库抽取SQL
-			String collectSQL = getCollectSQL(sourceDataConfBean, collectTableBean);
+			String collectSQL = getCollectSQL(collectTableBean,db);
 			tableBean.setCollectSQL(collectSQL);
 			//抽取sql可能包含分隔符，判断如果包含分隔符，取第一条sql获取meta信息（注：包含分隔符表明并行抽取）
 			if (collectSQL.contains(Constant.SQLDELIMITER)) {
-				resultSet = getResultSet(StringUtil.split(collectSQL, Constant.SQLDELIMITER).get(0), conn);
+				resultSet = getResultSet(StringUtil.split(collectSQL, Constant.SQLDELIMITER).get(0), db);
 			} else {
-				resultSet = getResultSet(collectSQL, conn);
+				resultSet = getResultSet(collectSQL, db);
 			}
 			StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
 			StringBuilder allColumns = new StringBuilder();//要采集的列名
@@ -258,8 +252,6 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			try {
 				if (resultSet != null)
 					resultSet.close();
-				if (conn != null)
-					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

@@ -2,13 +2,12 @@ package hrds.agent.job.biz.core.metaparse;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.ColumnCleanBean;
-import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.metaparse.impl.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.ColumnTool;
-import hrds.agent.job.biz.utils.SQLUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
@@ -20,8 +19,6 @@ import hrds.commons.utils.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.*;
@@ -35,19 +32,19 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	protected final static Logger LOGGER = LoggerFactory.getLogger(JdbcCollectTableHandleParse.class);
 	protected static final String STRSPLIT = Constant.METAINFOSPLIT;
 
-	protected ResultSet getResultSet(String collectSQL, Connection conn) {
+	protected ResultSet getResultSet(String collectSQL, DatabaseWrapper db) {
 		ResultSet columnSet;
 		try {
 			String exeSql = String.format("SELECT * FROM ( %s ) HYREN_WHERE_ALIAS WHERE 1 = 2", collectSQL);
-			PreparedStatement statement = conn.prepareStatement(exeSql);
-			columnSet = statement.executeQuery();
+			columnSet = db.queryGetResultSet(exeSql);
 		} catch (Exception e) {
 			throw new AppSystemException("获取ResultSet异常", e);
 		}
 		return columnSet;
 	}
 
-	protected String getCollectSQL(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+	protected String getCollectSQL(CollectTableBean collectTableBean,
+	                               DatabaseWrapper db) {
 		//获取自定义sql，如果自定义sql的sql语句
 		String collectSQL;
 		//如果是自定义sql,则使用自定义sql
@@ -69,13 +66,13 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 					}
 				} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_customize_sql())) {
 					//指定并行数抽取
-					collectSQL = getCollectSqlByColumn(collectTableBean, sourceDataConfBean);
+					collectSQL = getCollectSqlByColumn(collectTableBean, db);
 				} else {
 					throw new AppSystemException("是否标识参数错误");
 				}
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_parallel())) {
 				//不是并行抽取
-				collectSQL = getCollectSqlByColumn(collectTableBean, sourceDataConfBean);
+				collectSQL = getCollectSqlByColumn(collectTableBean, db);
 			} else {
 				throw new AppSystemException("是否标识参数错误");
 			}
@@ -89,15 +86,13 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	/**
 	 * 获取数据抽取sql,根据页面选择的列
 	 */
-	private String getCollectSqlByColumn(CollectTableBean collectTableBean,
-	                                     SourceDataConfBean sourceDataConfBean) {
+	private String getCollectSqlByColumn(CollectTableBean collectTableBean, DatabaseWrapper db) {
 		String tableName = collectTableBean.getTable_name();
 		//筛选出不是新列的字段
 		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
 				collectTableBean.getCollectTableColumnBeanList());
 		//根据列名和表名获得采集SQL
-		String collectSql = SQLUtil.getCollectSQL(tableName, collectColumnNames,
-				sourceDataConfBean.getDatabase_type());
+		String collectSql = db.getDbtype().ofKeyLableSql(tableName, collectColumnNames);
 		return getCollectSqlAddWhere(collectSql, collectTableBean.getSql());
 		//获取系统的所有日期参数格式定义
 //		if (!StringUtil.isEmpty(selfSql)) {

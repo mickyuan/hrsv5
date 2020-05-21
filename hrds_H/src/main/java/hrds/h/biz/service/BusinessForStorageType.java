@@ -3,13 +3,20 @@ package hrds.h.biz.service;
 
 import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
+import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.realloader.Loader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public final class BusinessForStorageType extends AbstractBusiness {
+public final class BusinessForStorageType implements ILoadBussiness {
+    protected static final Logger logger = LogManager.getLogger(BusinessForStorageType.class);
+
+    protected Loader loader;
+    protected MarketConf conf;
 
     public BusinessForStorageType(Loader loader) {
-
-        super(loader);
+        this.loader = loader;
+        conf = loader.getConf();
     }
 
     /**

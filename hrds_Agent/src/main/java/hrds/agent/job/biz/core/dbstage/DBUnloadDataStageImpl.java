@@ -7,7 +7,9 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
@@ -22,18 +24,16 @@ import hrds.commons.codes.AgentType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		this.collectTableBean = collectTableBean;
 	}
 
-	@Method(desc = "数据库直连采集数据卸数阶段处理逻辑，处理完成后，无论成功还是失败，" +
+	@Method(desc = "数据库抽数卸数阶段处理逻辑，处理完成后，无论成功还是失败，" +
 			"将相关状态信息封装到StageStatusInfo对象中返回", logicStep = "" +
 			"1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间" +
 			"2、解析作业信息，得到表名和表数据量" +
@@ -67,8 +67,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		//开始时间
 		long startTime = System.currentTimeMillis();
+		//TODO 这边所有的注释都叫数据库抽数
 		LOGGER.info("------------------表" + collectTableBean.getTable_name()
-				+ "数据库直连采集卸数阶段开始------------------");
+				+ "数据库抽数卸数阶段开始------------------");
 		//1、创建卸数阶段状态信息，更新作业ID,阶段名，阶段开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, collectTableBean.getTable_id(),
@@ -87,7 +88,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				incrementExtract(stageParamInfo, tableBean);
 			} else {
 				throw new AppSystemException("表" + collectTableBean.getTable_name()
-						+ "数据抽取卸数方式类型不正确");
+						+ "数据库抽数卸数方式类型不正确");
 			}
 			stageParamInfo.setTableBean(tableBean);
 			//数据字典的路径
@@ -103,17 +104,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------表" + collectTableBean.getTable_name()
-					+ "数据库直连采集卸数阶段成功------------------执行时间为："
+					+ "数据库抽数卸数阶段成功------------------执行时间为："
 					+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		} catch (Exception e) {
 			//卸数失败，删除本次卸数的目录，恢复数据
 			try {
 				restoreRenameDir(collectTableBean);
 			} catch (Exception e1) {
-				LOGGER.warn(collectTableBean.getTable_name() + "卸数失败，恢复上次卸数数据失败", e);
+				LOGGER.warn(collectTableBean.getTable_name() + "数据库抽数，恢复上次卸数数据失败", e);
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
-			LOGGER.error(collectTableBean.getTable_name() + "数据库直连采集卸数阶段失败：", e);
+			LOGGER.error(collectTableBean.getTable_name() + "数据库抽数卸数阶段失败：", e);
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
@@ -171,6 +172,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * @param collectTableBean 表存储信息
 	 */
 	private void renameUnloadDir(CollectTableBean collectTableBean) {
+		//TODO 这边为啥不是直接在日期这一层重命名 抽数根据文件格式分为多个作业，所以到文件格式这一层
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
@@ -196,13 +198,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * 增量抽取
 	 */
 	private void incrementExtract(StageParamInfo stageParamInfo, TableBean tableBean) {
-		Connection conn = null;
-		Statement statement = null;
 		ResultSet resultSet = null;
-		try {
-			//获取jdbc连接
-			conn = ConnUtil.getConnection(sourceDataConfBean.getDatabase_drive(), sourceDataConfBean.getJdbc_url(),
-					sourceDataConfBean.getUser_name(), sourceDataConfBean.getDatabase_pad());
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
+				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
+				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(), 4000)) {
 			List<String> fileResult = new ArrayList<>();
 			//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
 			List<Long> pageCountResult = new ArrayList<>();
@@ -218,10 +217,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					long startTime = System.currentTimeMillis();
 					//替换掉sql中需要传递的参数
 					sql = AbstractCollectTableHandle.replaceSqlParam(sql, collectTableBean.getSqlParam());
-					String database_type = sourceDataConfBean.getDatabase_type();
-					statement = CollectPage.setFetchSize(conn, database_type);
-					//查询数据
-					resultSet = statement.executeQuery(sql);
+					resultSet = db.queryGetResultSet(sql);
 					//打印执行查询sql获取的时间
 					LOGGER.info("执行查询sql:" + sql + "成功，执行时间为："
 							+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
@@ -248,10 +244,6 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			try {
 				if (resultSet != null)
 					resultSet.close();
-				if (statement != null)
-					statement.close();
-				if (conn != null)
-					conn.close();
 			} catch (SQLException e) {
 				LOGGER.error(e.getMessage());
 			}
@@ -282,7 +274,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				long singleFileSize = FileUtil.getFileSize(fileArr[i]);
 				fileSize += singleFileSize;
 			} else {
-				throw new AppSystemException("数据库直连采集" + fileArr[i] + "文件不存在");
+				throw new AppSystemException("数据库抽数" + fileArr[i] + "文件不存在");
 			}
 		}
 		stageParamInfo.setFileArr(fileArr);
@@ -325,16 +317,16 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		ExecutorService executorService = null;
 		try {
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
-			long lastPageEnd = Long.MAX_VALUE;
+			int lastPageEnd = Integer.MAX_VALUE;
 			//1、读取并行抽取sql数
 			List<String> parallelSqlList = StringUtil.split(tableBean.getCollectSQL(), Constant.SQLDELIMITER);
 			//2、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 			// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-			executorService = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
+			executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
 			for (int i = 0; i < parallelSqlList.size(); i++) {
 				//直接每个线程都去0到最大值的数据量
 				CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						0, lastPageEnd, i, lastPageEnd, parallelSqlList.get(i));
+						1, lastPageEnd, i, parallelSqlList.get(i));
 				Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
 				futures.add(lastFuture);
 			}
@@ -370,35 +362,35 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		ExecutorService executorService = null;
 		try {
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
-			long lastPageEnd = Long.MAX_VALUE;
+			int lastPageEnd = Integer.MAX_VALUE;
 			//判断是否并行抽取
 			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_parallel())) {
 				//2、解析作业信息，得到表名和表数据量
-				long totalCount = Long.parseLong(collectTableBean.getTable_count());
+				int totalCount = Integer.parseInt(collectTableBean.getTable_count());
 				//获取每日新增数据量，重新计算表的数据总量
 				int days = DateUtil.dateMargin(collectTableBean.getRec_num_date(), collectTableBean.getEtlDate());
 				//跑批日期小于获取数据总量日期，数据总量不变
 				days = days > 0 ? days : 0;
 				totalCount += collectTableBean.getDataincrement() * days;
 				//3、读取并行抽取线程数
-				Integer threadCount = collectTableBean.getPageparallels();
-				long pageRow = totalCount / threadCount;
+				int threadCount = collectTableBean.getPageparallels();
+				int pageRow = totalCount / threadCount;
 				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-				executorService = Executors.newFixedThreadPool(Constant.AVAILABLEPROCESSORS);
+				executorService = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
 				for (int i = 0; i < threadCount; i++) {
-					long start = (i * pageRow);
-					long end = (i + 1) * pageRow;
+					int start = (i * pageRow) + 1;
+					int end = (i + 1) * pageRow;
 					//传入i(分页页码)，pageRow(每页的数据量)，用于写avro时的行号
 					CollectPage page = new CollectPage(sourceDataConfBean, collectTableBean, tableBean
-							, start, end, i, pageRow);
+							, start, end, i);
 					Future<Map<String, Object>> future = executorService.submit(page);
 					futures.add(future);
 				}
-				long lastPageStart = pageRow * threadCount;
+				int lastPageStart = pageRow * threadCount + 1;
 				//最后一个线程的最大条数设为Long.MAX_VALUE
 				CollectPage lastPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						lastPageStart, lastPageEnd, threadCount, pageRow);
+						lastPageStart, lastPageEnd, threadCount);
 				Future<Map<String, Object>> lastFuture = executorService.submit(lastPage);
 				futures.add(lastFuture);
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_parallel())) {
@@ -406,7 +398,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 				executorService = Executors.newFixedThreadPool(1);
 				CollectPage collectPage = new CollectPage(sourceDataConfBean, collectTableBean, tableBean,
-						0, lastPageEnd, 0, lastPageEnd);
+						1, lastPageEnd, 0);
 				Future<Map<String, Object>> lastFuture = executorService.submit(collectPage);
 				futures.add(lastFuture);
 			} else {
