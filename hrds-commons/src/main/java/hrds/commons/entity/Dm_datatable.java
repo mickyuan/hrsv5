@@ -70,6 +70,8 @@ public class Dm_datatable extends ProjectTableEntity
 	private Long category_id;
 	@DocBean(name ="table_storage",value="数据表存储方式(TableStorage):0-数据表<ShuJuBiao> 1-数据视图<ShuJuShiTu> ",dataType = String.class,required = true)
 	private String table_storage;
+	@DocBean(name ="repeat_flag",value="集市表是否可以重复使用(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String repeat_flag;
 
 	/** 取得：数据表id */
 	public Long getDatatable_id(){
@@ -254,5 +256,13 @@ public class Dm_datatable extends ProjectTableEntity
 	/** 设置：数据表存储方式 */
 	public void setTable_storage(String table_storage){
 		this.table_storage=table_storage;
+	}
+	/** 取得：集市表是否可以重复使用 */
+	public String getRepeat_flag(){
+		return repeat_flag;
+	}
+	/** 设置：集市表是否可以重复使用 */
+	public void setRepeat_flag(String repeat_flag){
+		this.repeat_flag=repeat_flag;
 	}
 }

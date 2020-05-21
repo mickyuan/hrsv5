@@ -73,6 +73,7 @@ SQL_ENGINE                                        CHAR(1) NULL, --sql执行引�
 STORAGE_TYPE                                      CHAR(1) NOT NULL, --进数方式
 TABLE_STORAGE                                     CHAR(1) NOT NULL, --数据表存储方式
 REMARK                                            VARCHAR(6000) NULL, --备注
+REPEAT_FLAG                                       CHAR(1) NOT NULL, --集市表是否可以重复使用
 CATEGORY_ID                                       BIGINT default 0 NOT NULL, --集市分类id
 CONSTRAINT DM_DATATABLE_PK PRIMARY KEY(DATATABLE_ID)   );
 
