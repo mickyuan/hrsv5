@@ -94,14 +94,16 @@ public class InterfaceCommon {
 					"3.user_id与user_password不为空，获取token值" +
 					"4.判断获取token值是否成功" +
 					"5.获取token值" +
-					"6. token值存在,检查接口状态,开始日期,结束日期的合法性" +
-					"7.判断接口是否有效" +
-					"8.返回token错误信息")
+					"6.判断token值是否存在" +
+					"6.1 token值存在,检查接口状态,开始日期,结束日期的合法性" +
+					"6.2 判断接口是否有效" +
+					"7.返回token错误信息")
 	@Param(name = "checkParam", desc = "检查接口参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	public static Map<String, Object> checkTokenAndInterface(DatabaseWrapper db, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		String token = checkParam.getToken();
+		Map<String, Object> responseMap;
 		if (StringUtil.isBlank(token)) {
 			// 2.token值为空时检查user_id与user_password是否也为空
 			if (checkParam.getUser_id() == null || StringUtil.isBlank(checkParam.getUser_password())) {
@@ -109,23 +111,26 @@ public class InterfaceCommon {
 						"token值为空时，user_id与user_password不能为空");
 			}
 			// 3.user_id与user_password不为空，获取token值
-			Map<String, Object> tokenMap = getTokenById(checkParam.getUser_id(), checkParam.getUser_password());
+			responseMap = getTokenById(checkParam.getUser_id(),
+					checkParam.getUser_password());
 			// 4.判断获取token值是否成功
-			if (StateType.NORMAL != StateType.ofEnumByCode(tokenMap.get("status").toString())) {
-				return tokenMap;
+			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+				return responseMap;
 			}
 			// 5.获取token值
-			token = tokenMap.get("token").toString();
+			token = responseMap.get("token").toString();
 		}
+		// 6.判断token值是否存在
 		if (InterfaceManager.existsToken(token)) {
-			// 6. token值存在,检查接口状态,开始日期,结束日期的合法性
+			// 6.1 token值存在,检查接口状态,开始日期,结束日期的合法性
 			QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
-			Map<String, Object> responseMap = interfaceInfoCheck(db, userByToken.getUser_id(),
+			// 6.2判断接口是否有效
+			responseMap = interfaceInfoCheck(db, userByToken.getUser_id(),
 					checkParam.getUrl(), checkParam.getInterface_code());
 			responseMap.put("token", token);
 			return responseMap;
 		}
-		// 8.返回token错误信息
+		// 7.返回token错误信息
 		return StateType.getResponseInfo(StateType.TOKEN_ERROR);
 	}
 
@@ -247,12 +252,6 @@ public class InterfaceCommon {
 	public static Map<String, Object> checkTable(DatabaseWrapper db, Long user_id, SingleTable singleTable) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		try {
-			// 2.验证数据输出类型，数据类型是否合法
-			Map<String, Object> checkParamsMap = checkTypeParams(singleTable.getDataType(),
-					singleTable.getOutType());
-			if (StateType.NORMAL != StateType.ofEnumByCode(checkParamsMap.get("status").toString())) {
-				return checkParamsMap;
-			}
 			// 3.判断表名称是否为空
 			if (StringUtil.isBlank(singleTable.getTableName())) {
 				return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
@@ -505,12 +504,9 @@ public class InterfaceCommon {
 				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
 					// 4.输出类型为stream，处理数据并返回
 					dealWithStream(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
-				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
+				} else {
 					// 5.输出类型为file，创建本地文件,准备数据的写入
 					dealWithFile(map, sbCol, sbVal, dataType, createFile);
-				} else {
-					// 6.输出类型错误
-					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 				}
 			}
 		};
@@ -712,55 +708,6 @@ public class InterfaceCommon {
 
 	}
 
-	@Method(desc = "检查输出类型、数据类型是否合法",
-			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
-					"2.判断输出数据类型是否合法" +
-					"3.判断输出类型是否合法" +
-					"4.合法返回正常响应信息")
-	@Param(name = "dataType", desc = "输出数据类型", range = "json/csv")
-	@Param(name = "outType", desc = "输出的数据形式", range = "stream/file")
-	@Return(desc = "接口响应信息", range = "无限制")
-	public static Map<String, Object> checkTypeParams(String dataType, String outType) {
-		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		// 2.判断输出数据类型是否合法
-		if (!DataType.isDataType(dataType)) {
-			return StateType.getResponseInfo(StateType.DATA_TYPE_ERROR);
-		}
-		// 3.判断输出类型是否合法
-		if (!OutType.isOutType(outType)) {
-			return StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
-		}
-		// 4.合法返回正常响应信息
-		return StateType.getResponseInfo(StateType.NORMAL);
-	}
-
-	@Method(desc = "检查是否异步以及token、接口信息",
-			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
-					"2.token，接口权限检查" +
-					"3.如果响应状态不是normal返回错误响应信息" +
-					"4.检查异步响应状态信息" +
-					"5.如果checkasyn不为响应状态不为normal返回错误响应信息" +
-					"6.返回正常响应信息")
-	@Param(name = "outType", desc = "输出数据类型", range = "stream/file二选一")
-	@Param(name = "asynType", desc = "是否异步状态", range = "0：同步返回，1:异步回调，2：异步轮询")
-	@Param(name = "backUrl", desc = "回调utl地址", range = "asynType为1时必传", nullable = true)
-	@Param(name = "fileName", desc = "文件名称", range = "asynType为2时必传", nullable = true)
-	@Param(name = "filepath", desc = "文件路径", range = "asynType为2时必传", nullable = true)
-	@Return(desc = "返回响应状态信息", range = "无限制")
-	public static Map<String, Object> checkAsynAndTokenInterface(DatabaseWrapper db, CheckParam checkParam,
-	                                                             String outTye, String asynType, String backurl,
-	                                                             String fileName, String filePath) {
-		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		// 2.token，接口权限检查
-		Map<String, Object> responseMap = checkTokenAndInterface(db, checkParam);
-		// 3.如果响应状态不是normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
-			return responseMap;
-		}
-		// 4.检查异步响应状态信息
-		return checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
-	}
-
 	@Method(desc = "检查回调url地址是否可以连接",
 			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 					"2.通过回调url请求服务" +
@@ -798,38 +745,41 @@ public class InterfaceCommon {
 	@Param(name = "fileName", desc = "文件名称", range = "asynType为2时必传", nullable = true)
 	@Param(name = "filepath", desc = "文件路径", range = "asynType为2时必传", nullable = true)
 	@Return(desc = "返回响应状态信息", range = "无限制")
-	public static Map<String, Object> checkAsyn(Map<String, Object> responseMap, String outType,
-	                                            String asynType, String backUrl,
-	                                            String fileName, String filepath) {
+	public static Map<String, Object> checkType(String dataType, String outType, String asynType,
+	                                            String backUrl, String fileName, String filepath) {
 
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.判断输出数据形式是否合法
+		// 2.判断输出数据类型是否合法
+		if (!DataType.isDataType(dataType)) {
+			return StateType.getResponseInfo(StateType.DATA_TYPE_ERROR);
+		}
+		// 3.判断输出类型是否合法
 		if (!OutType.isOutType(outType)) {
-			responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
+			return StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
 		}
 		// 3.判断输出数据形式是否为file
 		if (OutType.FILE == OutType.ofEnumByCode(outType)) {
 			// 3.1判断是否为异步状态是否合法
 			if (!AsynType.isAsynType(asynType)) {
-				responseMap = StateType.getResponseInfo(StateType.ASYNTYPE_ERROR);
+				return StateType.getResponseInfo(StateType.ASYNTYPE_ERROR);
 			}
 			// 3.2判断是否为异步回调，如果是判断回调url是否为空
 			if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(asynType)) {
 				if (StringUtil.isBlank(backUrl)) {
-					responseMap = StateType.getResponseInfo(StateType.CALBACK_URL_ERROR);
+					return StateType.getResponseInfo(StateType.CALBACK_URL_ERROR);
 				}
 			}
 			// 3.3判断是否为异步轮询，如果是判断filename,filepath是否为空
 			if (AsynType.ASYNPOLLING == AsynType.ofEnumByCode(asynType)) {
 				if (StringUtil.isBlank(fileName)) {
-					responseMap = StateType.getResponseInfo(StateType.FILENAME_ERROR);
+					return StateType.getResponseInfo(StateType.FILENAME_ERROR);
 				}
 				if (StringUtil.isBlank(filepath)) {
-					responseMap = StateType.getResponseInfo(StateType.FILEPARH_ERROR);
+					return StateType.getResponseInfo(StateType.FILEPARH_ERROR);
 				}
 			}
 		}
-		return responseMap;
+		return StateType.getResponseInfo(StateType.NORMAL);
 	}
 
 	@Method(desc = "按类型操作接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +

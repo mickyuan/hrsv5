@@ -71,8 +71,8 @@ public enum OutType {
 	 * @return
 	 */
 	public static boolean isOutType(String outType) {
-		if (StringUtil.isNotBlank(outType) || (OutType.STREAM != OutType.ofEnumByCode(outType)
-				&& OutType.FILE != OutType.ofEnumByCode(outType))) {
+		if (StringUtil.isNotBlank(outType) && (OutType.STREAM == OutType.ofEnumByCode(outType)
+				|| OutType.FILE == OutType.ofEnumByCode(outType))) {
 			return true;
 		} else {
 			return false;

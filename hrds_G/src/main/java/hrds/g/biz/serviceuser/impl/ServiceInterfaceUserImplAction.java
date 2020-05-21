@@ -12,8 +12,9 @@ import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
+import hrds.commons.utils.CommonVariables;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
-import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.*;
 import hrds.g.biz.commons.FileDownload;
 import hrds.g.biz.commons.LocalFile;
@@ -38,10 +39,6 @@ import java.util.Map;
 public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
-	// 对于SQL的字段是否使用字段验证
-	private static final String AUTHORITY = PropertyParaValue.getString("restAuthority", "");
-	// 有效结束日期
-	public static final String END_DATE = "99991231";
 
 	@Method(desc = "获取token值",
 			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -90,17 +87,22 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 	@Override
 	public Map<String, Object> generalQuery(SingleTable singleTable, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		// 2.token，接口权限检查
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(db, checkParam,
-					singleTable.getOutType(), singleTable.getAsynType(), singleTable.getBackurl(),
-					singleTable.getFilename(), singleTable.getFilepath());
+			// 2.token，接口权限检查
+			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(db, checkParam);
+			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+				return responseMap;
+			}
+			Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+			// 检查参数
+			responseMap = InterfaceCommon.checkType(singleTable.getDataType(), singleTable.getOutType(),
+					singleTable.getAsynType(), singleTable.getBackurl(), singleTable.getFilepath(),
+					singleTable.getFilename());
 			// 3.如果responseMap响应状态不为normal返回错误响应信息
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
 			}
 			// 4.检查表信息
-			Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
 			responseMap = InterfaceCommon.checkTable(db, user_id, singleTable);
 			// 5.返回按类型操作接口响应信息
 			return InterfaceCommon.operateInterfaceByType(singleTable.getDataType(), singleTable.getOutType(),
@@ -146,8 +148,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 							+ Dm_datatable.TableName + " di WHERE dfi.datatable_id=di.datatable_id " +
 							" AND lower(datatable_en_name)=lower(?)", sysreg_name);
 					res.put("field", list);
-				} else if (DataSourceType.DPL == DataSourceType.ofEnumByCode(type)) {
-					// 6.数据源类型为加工 fixme 待开发
 				} else if (DataSourceType.DCL == DataSourceType.ofEnumByCode(type)) {
 					// 7.数据源类型为贴源层，关联查询表对应的字段、数据库对应表、源文件属性表查询字段中英文信息
 					// fixme 这里只是获取批量表结构，实时表结构需要考虑吗？
@@ -158,10 +158,11 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 									" dsr ON dsr.table_name = ti.table_name " +
 									" WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name)=lower(?) "
 									+ " and ti.valid_e_date=? AND tc.is_get=? and is_alive=?",
-							sysreg_name, END_DATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
+							sysreg_name, Constant.MAXDATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
 					res.put("field", list);
 				} else {
-					// 8.数据源类型为其他，查询源文件属性表信息获取字段中英文信息  fixme 待开发
+					// 8.数据源类型为其他，查询源文件属性表信息获取字段中英文信息
+					logger.info("待开发。。。。");
 				}
 				// 9.返回接口响应信息
 				return StateType.getResponseInfo(StateType.NORMAL.getCode(), res);
@@ -317,21 +318,22 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token、接口权限检查
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(db, checkParam,
-					sqlSearch.getOutType(), sqlSearch.getAsynType(), sqlSearch.getBackurl(),
-					sqlSearch.getFilename(), sqlSearch.getFilepath());
-			// 3.如果responseMap响应状态不为normal返回错误响应信息
+			// 2.token，接口权限检查
+			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(db, checkParam);
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
 			}
-			// 4.获取当前用户ID
+			// 3.获取当前用户ID
 			Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
-			// 5.检查datatype，outtype参数是否合法
-			responseMap = InterfaceCommon.checkTypeParams(sqlSearch.getDataType(), sqlSearch.getOutType());
+			// 4.检查参数
+			responseMap = InterfaceCommon.checkType(sqlSearch.getDataType(), sqlSearch.getOutType(),
+					sqlSearch.getAsynType(), sqlSearch.getBackurl(), sqlSearch.getFilepath(),
+					sqlSearch.getFilename());
+			// 5.如果responseMap响应状态不为normal返回错误响应信息
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
 			}
-			// 5.检查sql是否正确
+			// 6.检查sql是否正确
 			if (StringUtil.isBlank(sqlSearch.getSql())) {
 				return StateType.getResponseInfo(StateType.SQL_IS_INCORRECT);
 			}
@@ -349,7 +351,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 				columnList = StringUtil.split(userTableInfo.getTable_en_column().toLowerCase(), ",");
 			}
 			// 10.如果为某些特定的用户,则不做字段的检测
-			if (!AUTHORITY.contains(String.valueOf(user_id))) {
+			if (!CommonVariables.AUTHORITY.contains(String.valueOf(user_id))) {
 				// 11.使用sql解析获取列
 				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSearch.getSql());
 				List<String> sqlColumnList = druidParseQuerySql.parseSelectOriginalField();
@@ -390,8 +392,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 	@Override
 	public Map<String, Object> uuidDownload(String uuid, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		// 2.token、接口权限检查
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			// 2.token、接口权限检查
 			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(db, checkParam);
 			// 3.如果responseMap响应状态不为normal返回错误响应信息
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
@@ -419,11 +421,12 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 
 	@Method(desc = "rowkey查询", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.token、接口权限检查" +
-			"3.如果responseMap响应状态不为normal返回错误响应信息" +
-			"4.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息" +
-			"5.将数据写成对应的数据文件" +
-			"6.判断是同步还是异步回调或者异步轮询" +
-			"7.封装表英文名并返回接口响应信息")
+			"3.获取当前用户ID" +
+			"4.检查参数合法性" +
+			"5.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息" +
+			"6.将数据写成对应的数据文件" +
+			"7.判断是同步还是异步回调或者异步轮询" +
+			"8.封装表英文名并返回接口响应信息")
 	@Param(name = "rowKeySearch", desc = "rowkey查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -432,26 +435,32 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.token、接口权限检查
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			Map<String, Object> responseMap = InterfaceCommon.checkAsynAndTokenInterface(db, checkParam,
-					rowKeySearch.getOutType(), rowKeySearch.getAsynType(), rowKeySearch.getBackurl(),
-					rowKeySearch.getFilename(), rowKeySearch.getFilepath());
-			// 3.如果responseMap响应状态不为normal返回错误响应信息
+			// 2.token，接口权限检查
+			Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(db, checkParam);
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
 			}
-			// 4.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息
+			// 3.获取当前用户ID
+			Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+			// 4.检查参数合法性
+			responseMap = InterfaceCommon.checkType(rowKeySearch.getDataType(), rowKeySearch.getOutType(),
+					rowKeySearch.getAsynType(), rowKeySearch.getBackurl(), rowKeySearch.getFilepath(),
+					rowKeySearch.getFilename());
+			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+				return responseMap;
+			}
+			// 5.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息
 			Query queryByRK = new QueryByRowkey(rowKeySearch.getEnTable(), rowKeySearch.getRowkey(),
 					rowKeySearch.getEnColumn(), rowKeySearch.getVersion());
 			Map<String, Object> feedback = queryByRK.query().feedback();
 			if (StateType.NORMAL != StateType.ofEnumByCode(feedback.get("status").toString())) {
 				return feedback;
 			}
-			Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
-			// 5.将数据写成对应的数据文件
+			// 6.将数据写成对应的数据文件
 			LocalFile.writeFile(db, feedback, rowKeySearch.getDataType(), rowKeySearch.getOutType(),
 					user_id);
 			if (OutType.FILE == OutType.ofEnumByCode(rowKeySearch.getOutType())) {
-				// 6.判断是同步还是异步回调或者异步轮询
+				// 7.判断是同步还是异步回调或者异步轮询
 				if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(rowKeySearch.getAsynType())) {
 					// 异步回调
 					return InterfaceCommon.checkBackUrl(responseMap, rowKeySearch.getBackurl());
@@ -461,7 +470,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 							rowKeySearch.getFilename());
 				}
 			}
-			// 7.封装表英文名并返回接口响应信息
+			// 8.封装表英文名并返回接口响应信息
 			responseMap.put("enTable", rowKeySearch.getEnTable());
 			return responseMap;
 		}
