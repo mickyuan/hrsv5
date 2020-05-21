@@ -19,7 +19,7 @@ public class CheckParam extends ProjectTableEntity {
 	private Long user_id;
 	@DocBean(name = "user_password", value = "密码:与user_id同选", dataType = String.class, required = false)
 	private String user_password;
-	@DocBean(name = "url", value = "请求url地址:", dataType = String.class)
+	@DocBean(name = "url", value = "请求url地址:", dataType = String.class,required = false)
 	private String url;
 	@DocBean(name = "interface_code", value = "接口代码:", dataType = String.class, required = false)
 	private String interface_code;

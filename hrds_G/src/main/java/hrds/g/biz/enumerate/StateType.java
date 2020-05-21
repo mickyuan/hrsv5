@@ -18,6 +18,10 @@ public enum StateType {
 	/**
 	 * 账号或密钥错误
 	 */
+	NOT_REST_USER("400", "该用户非接口用户"),
+	/**
+	 * 账号或密钥错误
+	 */
 	UNAUTHORIZED("401", "账号或密钥错误"),
 	/**
 	 * 接口状态禁用错误
@@ -191,6 +195,10 @@ public enum StateType {
 	 * 创建文件目录失败
 	 */
 	CREATE_DIRECTOR_ERROR("445", "创建文件目录失败"),
+	/**
+	 * url未填或填写错误
+	 */
+	URL_NOT_EXIST("446", "url未填或填写错误"),
 	/**
 	 * 系统错误
 	 */

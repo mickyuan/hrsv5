@@ -378,7 +378,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 				sqlNew = sqlNew.substring(0, sqlNew.length() - 1);
 			}
 			// 16.根据sql获取搜索引擎并根据输出数据类型处理数据
-			return InterfaceCommon.getSqlData(db, sqlSearch.getOutType(), sqlSearch.getDataType(), sqlNew,user_id);
+			return InterfaceCommon.getSqlData(db, sqlSearch.getOutType(), sqlSearch.getDataType(), sqlNew,
+					user_id, null);
 		}
 	}
 
