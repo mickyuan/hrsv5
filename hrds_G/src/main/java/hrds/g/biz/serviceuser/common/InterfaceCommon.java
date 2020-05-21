@@ -382,10 +382,11 @@ public class InterfaceCommon {
 		List<String> columns = StringUtil.split(table_en_column.toLowerCase(), Constant.METAINFOSPLIT);
 		String selectColumn = singleTable.getSelectColumn();
 		// 4.检查需要查询的列名是否存在
-		Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
-		if (userColumn != null) return userColumn;
 		// 5.判断当前表对应登记列名称是否为空，为空查询所有*
-		if (StringUtil.isNotBlank(table_en_column.toLowerCase())) {
+		if (StringUtil.isNotBlank(selectColumn)) {
+			Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
+			if (userColumn != null) return userColumn;
+		} else if (StringUtil.isNotBlank(table_en_column.toLowerCase())) {
 			selectColumn = String.join(",", columns).toLowerCase();
 		} else {
 			selectColumn = " * ";
