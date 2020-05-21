@@ -217,6 +217,8 @@ public class MetaDataManageAction extends BaseAction {
             case "ISL":
             case "DPL":
             case "DML":
+                TableMetaInfoTool.restoreDMLTableInfo(dq_failure_table);
+                break;
             case "SFL":
             case "AML":
             case "DQC":

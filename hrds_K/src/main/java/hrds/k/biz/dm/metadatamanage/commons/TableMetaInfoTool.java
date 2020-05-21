@@ -95,6 +95,28 @@ public class TableMetaInfoTool {
         }
     }
 
+    @Method(desc = "数据管控-恢复 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
+    @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static void restoreDMLTableInfo(Dq_failure_table dq_failure_table) {
+        //转换Mate信息为Data_store_reg实体对象
+        Dm_datatable dm_datatable = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
+                Dm_datatable.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
+        if (null != dm_datatable) {
+            //校验数据DCL层登记信息是否存在
+            boolean boo = Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where " +
+                    "datatable_en_name=?", dm_datatable.getDatatable_en_name())
+                    .orElseThrow(() -> new BusinessException("校验DML表层登记信息的SQL错误")) == 1;
+            //恢复存储层表信息
+            if (boo) {
+                throw new BusinessException("恢复的数据表已经存在!");
+            }
+            DataLayerTableOperation.renameDMLDataLayerTable(dm_datatable, Constant.DM_RESTORE_TABLE);
+            //恢复表元信息
+            dm_datatable.add(Dbo.db());
+        }
+    }
+
     @Method(desc = "修改DCL层下的表元信息",
             logicStep = "修改DCL层批量数据下的表元信息")
     @Param(name = "file_id", desc = "数据表登记信息id", range = "String类型")
