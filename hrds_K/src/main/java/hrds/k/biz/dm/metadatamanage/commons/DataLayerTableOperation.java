@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_reg;
+import hrds.commons.entity.Dm_datatable;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
@@ -20,10 +21,41 @@ public class DataLayerTableOperation {
     @Param(name = "dsr", desc = "Data_store_reg实体", range = "Data_store_reg实体")
     @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
     public static void renameDCLDataLayerTable(Data_store_reg dsr, String operation_type) {
-        //根据 Data_store_reg 查询表的存储层信息,然后重命名(一张表存在多个存储层)
+        //根据 Data_store_reg 查询表的存储层信息
         String tableName = dsr.getHyren_name();
-        String invalid_table_name = Constant.DQC_INVALID_TABLE + tableName + Constant._HYREN;
-        List<Data_store_layer> tableStorageLayers = MDMDataQuery.getTableStorageLayers(dsr);
+        List<Data_store_layer> tableStorageLayers = MDMDataQuery.getDCLTableStorageLayers(dsr);
+        //重命名(一张表存在多个存储层)
+        renameDataLayerTable(tableStorageLayers, tableName, operation_type);
+    }
+
+    @Method(desc = "根据数据表信息重命名对应存储层表", logicStep = "根据数据表信息重命名对应存储层表")
+    @Param(name = "dm_datatable", desc = "Dm_datatable实体", range = "Dm_datatable实体")
+    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
+    public static void renameDMLDataLayerTable(Dm_datatable dm_datatable, String operation_type) {
+        //根据 Data_store_reg 查询表的存储层信息
+        String tableName = dm_datatable.getDatatable_en_name();
+        List<Data_store_layer> tableStorageLayers = MDMDataQuery.getDMLTableStorageLayers(dm_datatable);
+        //重命名(一张表存在多个存储层)
+        renameDataLayerTable(tableStorageLayers, tableName, operation_type);
+    }
+
+    @Method(desc = "彻底删除各存储层下的表", logicStep = "彻底删除各存储层下的表")
+    @Param(name = "dsr", desc = "Data_store_reg实体", range = "Data_store_reg实体")
+    public static void removeDCLDataLayerTable(Data_store_reg dsr) {
+        //根据 Data_store_reg 查询表的存储层信息
+        List<Data_store_layer> tableStorageLayers = MDMDataQuery.getDCLTableStorageLayers(dsr);
+        String invalid_table_name = Constant.DQC_INVALID_TABLE + dsr.getHyren_name();
+        //删除(一张表存在多个存储层)
+        removeDataLayerTable(tableStorageLayers, invalid_table_name);
+    }
+
+    @Method(desc = "重命名对应存储层表", logicStep = "重命名对应存储层表")
+    @Param(name = "tableStorageLayers", desc = "数据层列表", range = "数据层列表")
+    @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
+    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
+    private static void renameDataLayerTable(List<Data_store_layer> tableStorageLayers, String tableName,
+                                             String operation_type) {
+        String invalid_table_name = Constant.DQC_INVALID_TABLE + tableName;
         tableStorageLayers.forEach(data_store_layer -> {
             Store_type store_type = Store_type.ofEnumByCode(data_store_layer.getStore_type());
             //关系型数据
@@ -67,13 +99,10 @@ public class DataLayerTableOperation {
         });
     }
 
-
-    @Method(desc = "彻底删除各存储层下的表", logicStep = "彻底删除各存储层下的表")
-    @Param(name = "dsr", desc = "Data_store_reg实体", range = "Data_store_reg实体")
-    public static void removeDCLDataLayerTable(Data_store_reg dsr) {
-        //根据 Data_store_reg 查询表的存储层信息,然后删除(一张表存在多个存储层)
-        String invalid_table_name = Constant.DQC_INVALID_TABLE + dsr.getHyren_name() + Constant._HYREN;
-        List<Data_store_layer> tableStorageLayers = MDMDataQuery.getTableStorageLayers(dsr);
+    @Method(desc = "重命名对应存储层表", logicStep = "重命名对应存储层表")
+    @Param(name = "tableStorageLayers", desc = "数据层列表", range = "数据层列表")
+    @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
+    private static void removeDataLayerTable(List<Data_store_layer> tableStorageLayers, String invalid_table_name) {
         tableStorageLayers.forEach(data_store_layer -> {
             Store_type store_type = Store_type.ofEnumByCode(data_store_layer.getStore_type());
             //关系型数据

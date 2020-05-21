@@ -13,13 +13,13 @@ public class SqlSearch extends ProjectTableEntity {
 
 	public static final String TableName = "sql_search";
 
-	@DocBean(name = "sql", value = "sql 语句:", dataType = String.class, required = true)
+	@DocBean(name = "sql", value = "sql 语句:", dataType = String.class, required = false)
 	private String sql;
 //	@DocBean(name = "jdbc", value = "决定是否走JDBC直接查询:", dataType = String.class, required = true)
 //	private String jdbc;
-	@DocBean(name = "dataType", value = "数据类型:(json/csv)", dataType = String.class, required = true)
+	@DocBean(name = "dataType", value = "数据类型:(json/csv)", dataType = String.class, required = false)
 	private String dataType;
-	@DocBean(name = "outType", value = "数据输出形式:( stream / file)只能选择一种", dataType = String.class, required = true)
+	@DocBean(name = "outType", value = "数据输出形式:( stream / file)只能选择一种", dataType = String.class, required = false)
 	private String outType;
 	@DocBean(name = "asynType", value = "异步标识:outType为file时使用", dataType = String.class, required = false)
 	private String asynType;

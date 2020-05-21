@@ -9,17 +9,17 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_reg;
+import hrds.commons.entity.Dm_datatable;
 import hrds.commons.entity.Dq_failure_table;
-import hrds.commons.entity.Dq_index3record;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.query.DCLDataQuery;
-import hrds.commons.tree.background.query.DQCDataQuery;
+import hrds.commons.tree.background.query.DMLDataQuery;
 import hrds.commons.tree.background.query.TreeDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.DataTableFieldUtil;
 import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
@@ -29,9 +29,7 @@ import hrds.k.biz.dm.metadatamanage.drbtree.DRBTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.drbtree.MDMTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
-import hrds.commons.utils.DataTableFieldUtil;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,10 +100,9 @@ public class MetaDataManageAction extends BaseAction {
         //初始化字段解析结果List
         List<Map<String, String>> column_info_list;
         //表id
-        String table_id;
+        String table_id, create_date;
         //获取表的来源数据类型(DCL,DPL,实时数据暂不考虑!),并根据数据源类型处理不同数据源下的表信息
         String table_source = dq_failure_table.getTable_source();
-        String create_date;
         switch (table_source) {
             //table_source存储表存在的数据层,如果是DCL层,则存储的是 dcl_batch 或 dcl_realtime
             case "DCL":
@@ -124,6 +121,19 @@ public class MetaDataManageAction extends BaseAction {
             case "ISL":
             case "DPL":
             case "DML":
+                //转  Dm_datatable 对象
+                Dm_datatable dm_datatable = JsonUtil.toObjectSafety(table_meta_info, Dm_datatable.class)
+                        .orElseThrow(() -> new BusinessException("类型转换错误,请检查meta格式的正确性!"));
+                //设置表id
+                table_id = dq_failure_table.getFailure_table_id().toString();
+                //设置表创建日期
+                create_date = dm_datatable.getDatatable_create_date();
+                //获取字段信息列表
+                List<Map<String, Object>> dmlTableColumns =
+                        DMLDataQuery.getDMLTableColumns(dm_datatable.getDatatable_id().toString());
+                //转化字段信息列表为meta_list
+                column_info_list = DataTableFieldUtil.metaInfoToList(dmlTableColumns);
+                break;
             case "SFL":
             case "AML":
             case "DQC":
@@ -207,6 +217,8 @@ public class MetaDataManageAction extends BaseAction {
             case "ISL":
             case "DPL":
             case "DML":
+                TableMetaInfoTool.restoreDMLTableInfo(dq_failure_table);
+                break;
             case "SFL":
             case "AML":
             case "DQC":
@@ -244,6 +256,8 @@ public class MetaDataManageAction extends BaseAction {
             case "ISL":
             case "DPL":
             case "DML":
+                TableMetaInfoTool.setDMLTableInvalid(file_id);
+                break;
             case "SFL":
             case "AML":
             case "DQC":
@@ -326,7 +340,6 @@ public class MetaDataManageAction extends BaseAction {
                 removeCompletelyTable(tableInfo.getTable_source(), tableInfo.getFailure_table_id()));
     }
 
-
     @Method(desc = "数据管控-创建表", logicStep = "数据管控-创建表")
     @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
     @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
@@ -335,8 +348,6 @@ public class MetaDataManageAction extends BaseAction {
         //根据所属数据层创建表
         switch (data_layer) {
             case "DCL":
-                TableMetaInfoTool.createDCLTable(dsl_id);
-                break;
             case "ISL":
             case "DPL":
             case "DML":

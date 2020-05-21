@@ -11,10 +11,8 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
-import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.CommonVariables;
@@ -75,7 +73,7 @@ public class InterfaceCommon {
 		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(user_id);
 		// 3.判断用户信息是否为空，为空返回错误响应信息
 		if (null == queryInterfaceInfo) {
-			return StateType.getResponseInfo(StateType.UNAUTHORIZED);
+			return StateType.getResponseInfo(StateType.NOT_REST_USER);
 		}
 		// 4.检查用户是否存在,密码是否正确
 		if (!user_password.equals(queryInterfaceInfo.getUser_password())) {
@@ -150,7 +148,9 @@ public class InterfaceCommon {
 			File file = new File(filepath);
 			// 2.判断文件是否存在且是否是文件夹，不存在创建目录
 			if (!file.exists() && file.isDirectory()) {
-				file.mkdirs();
+				if (!file.mkdirs()) {
+					return StateType.getResponseInfo(StateType.CREATE_DIRECTOR_ERROR);
+				}
 			}
 			// 3.获取文件路径
 			if (!filepath.endsWith(File.separator)) {
@@ -163,7 +163,9 @@ public class InterfaceCommon {
 			// 4.判断文件是否存在，不存在创建
 			File writeFile = new File(filepath);
 			if (!writeFile.exists()) {
-				writeFile.createNewFile();
+				if (writeFile.createNewFile()) {
+					return StateType.getResponseInfo(StateType.CREATE_FILE_ERROR);
+				}
 			}
 			// 5.开始写文件
 			writer = new BufferedWriter(new FileWriter(writeFile));
@@ -196,6 +198,9 @@ public class InterfaceCommon {
 	public static Map<String, Object> interfaceInfoCheck(DatabaseWrapper db, Long user_id, String url, String
 			interface_code) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		if (StringUtil.isBlank(url)) {
+			return StateType.getResponseInfo(StateType.URL_NOT_EXIST);
+		}
 		// 2.判断接口信息是否存在
 		if (InterfaceManager.existsInterface(db, user_id, url)) {
 			// 3.存在，从内存中获取已加载的接口使用权限信息
@@ -319,7 +324,7 @@ public class InterfaceCommon {
 				if (columns != null && columns.size() != 0) {
 					for (String userColumn : userColumns) {
 						// 5.判断当前列名称是否有权限,没有返回错误响应信息
-						if (!colIsExist(userColumn.toLowerCase(), columns)) {
+						if (columnIsExist(userColumn.toLowerCase(), columns)) {
 							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
 									"请求错误,查询列名" + userColumn + "不存在");
 						}
@@ -337,19 +342,19 @@ public class InterfaceCommon {
 	@Param(name = "col", desc = "需要查询的列信息", range = "无限制")
 	@Param(name = "columns", desc = "权限的列信息集合", range = "无限制")
 	@Return(desc = "返回列是否有权限标志", range = "")
-	public static boolean colIsExist(String col, List<String> columns) {
+	public static boolean columnIsExist(String col, List<String> columns) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 2.判断没有字段查询的列是否为查询记录数
 		if (notCheckFunction.contains(col.toLowerCase())) {
-			return true;
+			return false;
 		}
 		// 3.遍历有权限列，判断当前列是否有权限，有返回true，否则返回false
 		for (String column : columns) {
 			if (column.trim().toLowerCase().equals(col.trim().toLowerCase())) {
-				return true;
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	@Method(desc = "检查列", logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
@@ -378,10 +383,11 @@ public class InterfaceCommon {
 		List<String> columns = StringUtil.split(table_en_column.toLowerCase(), Constant.METAINFOSPLIT);
 		String selectColumn = singleTable.getSelectColumn();
 		// 4.检查需要查询的列名是否存在
-		Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
-		if (userColumn != null) return userColumn;
 		// 5.判断当前表对应登记列名称是否为空，为空查询所有*
-		if (StringUtil.isNotBlank(table_en_column.toLowerCase())) {
+		if (StringUtil.isNotBlank(selectColumn)) {
+			Map<String, Object> userColumn = checkColumnsIsExist(selectColumn, user_id, columns);
+			if (userColumn != null) return userColumn;
+		} else if (StringUtil.isNotBlank(table_en_column.toLowerCase())) {
 			selectColumn = String.join(",", columns).toLowerCase();
 		} else {
 			selectColumn = " * ";
@@ -399,25 +405,25 @@ public class InterfaceCommon {
 		}
 		// 8.获取查询sql
 		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTableName() + condition;
-		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.getTableName(), db);
-		if (layerByTable == null || layerByTable.isEmpty()) {
-			return StateType.getResponseInfo(StateType.STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE.getCode(),
-					"当前表对应的存储层信息不存在");
-		}
-		String database_type = layerByTable.get(0).getLayerAttr().get("database_type");
-		if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle9i) {
-			return StateType.getResponseInfo(StateType.ORACLE9I_NOT_SUPPORT.getCode(),
-					"系统不支持Oracle9i及以下");
-		} else if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle10g) {
-			sqlSb = sqlSb + " where rownum<=" + num;
-		} else {
-			sqlSb = sqlSb + " LIMIT " + num;
-		}
+//		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.getTableName(), db);
+//		if (layerByTable == null || layerByTable.isEmpty()) {
+//			return StateType.getResponseInfo(StateType.STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE.getCode(),
+//					"当前表对应的存储层信息不存在");
+//		}
+//		String database_type = layerByTable.get(0).getLayerAttr().get("database_type");
+//		if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle9i) {
+//			return StateType.getResponseInfo(StateType.ORACLE9I_NOT_SUPPORT.getCode(),
+//					"系统不支持Oracle9i及以下");
+//		} else if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle10g) {
+//			sqlSb = sqlSb + " where rownum<=" + num;
+//		} else {
+//			sqlSb = sqlSb + " LIMIT " + num;
+//		}
 		// 9.获取新sql，判断视图
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
 		String newSql = druidParseQuerySql.GetNewSql(sqlSb);
 		// 10.根据sql获取搜索引擎并根据输出数据类型处理数据
-		return getSqlData(db, singleTable.getOutType(), singleTable.getDataType(), newSql, user_id);
+		return getSqlData(db, singleTable.getOutType(), singleTable.getDataType(), newSql, user_id, num);
 	}
 
 	@Method(desc = "根据sql获取搜索引擎并根据输出数据类型处理数据",
@@ -435,7 +441,7 @@ public class InterfaceCommon {
 	@Param(name = "sqlSb", desc = "需要查询的sql语句", range = "无限制")
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	public static Map<String, Object> getSqlData(DatabaseWrapper db, String outType, String dataType,
-	                                             String sqlSb, Long user_id) {
+	                                             String sqlSb, Long user_id, Integer num) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 数据类型为json时列对应值信息
 		List<Object> streamJson = new ArrayList<>();
@@ -447,26 +453,14 @@ public class InterfaceCommon {
 		String uuid = UUID.randomUUID().toString();
 		File createFile = LocalFile.createFile(uuid, dataType);
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		new ProcessingData() {
-			@Override
-			public void dealLine(Map<String, Object> map) {
-				lineCounter++;
-				// 数据类型为csv的列值集合
-				StringBuffer sbCol = new StringBuffer();
-				StringBuffer sbVal = new StringBuffer();
-				// 3.根据输出数据类型不同处理数据
-				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-					// 4.输出类型为stream，处理数据并返回
-					dealWithStream(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
-				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
-					// 5.输出类型为file，创建本地文件,准备数据的写入
-					dealWithFile(map, sbCol, sbVal, dataType, createFile, uuid);
-				} else {
-					// 6.输出类型错误
-					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
-				}
-			}
-		}.getDataLayer(sqlSb, db);
+		if (num != null) {
+			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+					.getPageDataLayer(sqlSb, db, 1, num);
+		} else {
+			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+					.getDataLayer(sqlSb, db);
+		}
+
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 			return responseMap;
 		}
@@ -497,6 +491,31 @@ public class InterfaceCommon {
 		return responseMap;
 	}
 
+	private static ProcessingData getProcessingData(String outType, String dataType,
+	                                                List<Object> streamJson, List<String> streamCsv,
+	                                                List<String> streamCsvData, File createFile) {
+		return new ProcessingData() {
+			@Override
+			public void dealLine(Map<String, Object> map) {
+				lineCounter++;
+				// 数据类型为csv的列值集合
+				StringBuffer sbCol = new StringBuffer();
+				StringBuffer sbVal = new StringBuffer();
+				// 3.根据输出数据类型不同处理数据
+				if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+					// 4.输出类型为stream，处理数据并返回
+					dealWithStream(map, sbVal, dataType, streamCsv, streamCsvData, streamJson);
+				} else if (OutType.FILE == OutType.ofEnumByCode(outType)) {
+					// 5.输出类型为file，创建本地文件,准备数据的写入
+					dealWithFile(map, sbCol, sbVal, dataType, createFile);
+				} else {
+					// 6.输出类型错误
+					responseMap = StateType.getResponseInfo(StateType.OUT_TYPE_ERROR);
+				}
+			}
+		};
+	}
+
 	@Method(desc = "处理输出数据类型为file的数据",
 			logicStep = "1.数据可访问权限处理方式,该方法不需要进行访问权限限制" +
 					"2.获取UUID" +
@@ -515,7 +534,7 @@ public class InterfaceCommon {
 	@Param(name = "sbVal", desc = "拼接列对应值对象", range = "无限制")
 	@Param(name = "dataType", desc = "输出数据类型", range = "使用（DataType代码项）")
 	private static void dealWithFile(Map<String, Object> map, StringBuffer sbCol, StringBuffer sbVal,
-	                                 String dataType, File createFile, String uuid) {
+	                                 String dataType, File createFile) {
 		// 1.数据可访问权限处理方式,该方法不需要进行访问权限限制
 		// 3.创建存放文件的路径.文件名为UUID+dataType
 		BufferedWriter writer;
@@ -649,7 +668,7 @@ public class InterfaceCommon {
 				symbol = "=";
 			} else {
 				return StateType.getResponseInfo(StateType.CONDITION_ERROR.getCode(),
-						"请求错误,条件符号错误");
+						"请求错误,条件符号错误,暂不支持");
 			}
 			// 3.判断条件列长度是否为2，如果是获取列名、列值
 			if (col_name.length == 2) {
@@ -658,7 +677,7 @@ public class InterfaceCommon {
 				// 列值
 				String colVal = col_name[1];
 				// 4.判断列名是否存在,不存在返回错误响应信息
-				if (!colIsExist(colName.toLowerCase(), columns)) {
+				if (columnIsExist(colName.toLowerCase(), columns)) {
 					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
 							"请求错误,条件列名" + colName + "不存在");
 				}
@@ -739,10 +758,7 @@ public class InterfaceCommon {
 			return responseMap;
 		}
 		// 4.检查异步响应状态信息
-		responseMap = checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
-		// 5.如果checkasyn不为响应状态不为normal返回错误响应信息
-		StateType.ofEnumByCode(responseMap.get("status").toString());
-		return responseMap;
+		return checkAsyn(responseMap, outTye, asynType, backurl, fileName, filePath);
 	}
 
 	@Method(desc = "检查回调url地址是否可以连接",
@@ -846,13 +862,12 @@ public class InterfaceCommon {
 				List<String> columnList = JsonUtil.toObject(message.get("column").toString(), type);
 				StringBuilder sb = new StringBuilder();
 				for (String data : dataList) {
-					sb.append(data).append("\n");
+					sb.append(data).append(System.lineSeparator());
 				}
-				String columnVal = sb.deleteCharAt(sb.length() - 4).toString();
 				String column = String.join(",", columnList);
 				StringBuilder stringBuilder = new StringBuilder();
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						stringBuilder.append(column).append("\n").append(columnVal).toString());
+						stringBuilder.append(column).append(System.lineSeparator()).append(sb.toString()).toString());
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
 			}

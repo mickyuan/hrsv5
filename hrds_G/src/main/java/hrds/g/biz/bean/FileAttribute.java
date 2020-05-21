@@ -16,7 +16,7 @@ public class FileAttribute extends ProjectTableEntity {
 	@DocBean(name = "filename", value = "文件名:", dataType = String.class, required = false)
 	private String filename;
 	@DocBean(name = "filesize", value = "文件大小:数值以字节为单位,例如filesize=1,2000输入范围值以英文逗号隔开",
-			dataType = String.class, required = true)
+			dataType = String.class, required = false)
 	private String filesize;
 	@DocBean(name = "filesuffix", value = "文件后缀:", dataType = String.class, required = false)
 	private String filesuffix;

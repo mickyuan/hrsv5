@@ -1,5 +1,6 @@
 package hrds.agent.job.biz.core.dfstage.fileparser;
 
+import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
@@ -20,11 +21,7 @@ import java.io.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * FileParserAbstract
- * date: 2020/4/21 16:44
- * author: zxz
- */
+@DocClass(desc = "解析文件抽象类",createdate = "2020/4/21 16:44",author = "zxz")
 public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
 	protected TableBean tableBean;

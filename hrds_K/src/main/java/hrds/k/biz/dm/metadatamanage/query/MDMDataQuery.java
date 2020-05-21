@@ -67,35 +67,67 @@ public class MDMDataQuery {
     @Method(desc = "根据表id获取DCL层数据表登记信息", logicStep = "根据表id获取DCL层数据表登记信息")
     @Param(name = "file_id", desc = "表登记id", range = "String字符串,唯一")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static Data_store_reg getDataStoreRegInfo(String file_id) {
+    public static Data_store_reg getDCLDataStoreRegInfo(String file_id) {
         Data_store_reg dsr = new Data_store_reg();
         dsr.setFile_id(file_id);
-        return Dbo.queryOneObject(Data_store_reg.class, "SELECT * from data_store_reg WHERE file_id =?",
+        return Dbo.queryOneObject(Data_store_reg.class, "SELECT * from " + Data_store_reg.TableName + " WHERE file_id =?",
                 dsr.getFile_id()).orElseThrow(() -> (new BusinessException("获取数据登记信息的SQL失败!")));
+    }
+
+    @Method(desc = "根据表id获取DML层数据表登记信息", logicStep = "根据表id获取DML层数据表登记信息")
+    @Param(name = "file_id", desc = "表登记id", range = "String字符串,唯一")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static Dm_datatable getDMLDmDatatableInfo(String datatable_id) {
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        return Dbo.queryOneObject(Dm_datatable.class, "SELECT * from " + Dm_datatable.TableName + " WHERE datatable_id =?",
+                dm_datatable.getDatatable_id()).orElseThrow(() -> (new BusinessException("获取DML数据登记信息的SQL失败!")));
     }
 
     @Method(desc = "根据表id删除DCL层数据表登记信息", logicStep = "根据表id删除DCL层数据表登记信息")
     @Param(name = "file_id", desc = "表登记id", range = "String字符串,唯一")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void deleteDataStoreRegInfo(String file_id) {
+    public static void deleteDCLDataStoreRegInfo(String file_id) {
         Data_store_reg dsr = new Data_store_reg();
         dsr.setFile_id(file_id);
-        int execute = Dbo.execute("DELETE FROM data_store_reg WHERE file_id =?", dsr.getFile_id());
+        int execute = Dbo.execute("DELETE FROM " + Data_store_reg.TableName + " WHERE file_id =?", dsr.getFile_id());
         if (execute != 1) {
-            throw new BusinessException("删除表登记信息失败! file_id=" + file_id);
+            throw new BusinessException("删除采集表登记信息失败! file_id=" + file_id);
         }
     }
 
-    @Method(desc = "获取表存在的存储层信息", logicStep = "获取表存在的存储层信息,一张表有可能存在多个存储层下")
+    @Method(desc = "根据表id删除DML层数据表登记信息", logicStep = "根据表id删除DML层数据表登记信息")
+    @Param(name = "datatable_id", desc = "表登记id", range = "String字符串,唯一")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static void deleteDMLDataStoreRegInfo(String datatable_id) {
+        Dm_datatable dm_datatable = new Dm_datatable();
+        dm_datatable.setDatatable_id(datatable_id);
+        int execute = Dbo.execute("DELETE FROM " + Dm_datatable.TableName + " WHERE datatable_id =?",
+                dm_datatable.getDatatable_id());
+        if (execute != 1) {
+            throw new BusinessException("删除集市表登记信息失败! datatable_id=" + dm_datatable.getDatatable_id());
+        }
+    }
+
+    @Method(desc = "获取DCL表存在的存储层信息", logicStep = "获取DCL表存在的存储层信息,一张表有可能存在多个存储层下")
     @Param(name = "dsr", desc = "Data_store_reg实体对象", range = "Data_store_reg实体对象")
     @Return(desc = "表对应的存储层信息", range = "表对应的存储层信息")
-    public static List<Data_store_layer> getTableStorageLayers(Data_store_reg dsr) {
+    public static List<Data_store_layer> getDCLTableStorageLayers(Data_store_reg dsr) {
         return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM data_store_layer dsl" +
                 " JOIN data_relation_table drt ON dsl.dsl_id = drt.dsl_id" +
                 " JOIN table_storage_info tsi ON drt.storage_id = tsi.storage_id" +
                 " JOIN table_info ti ON ti.table_id = tsi.table_id" +
-                " JOIN data_store_reg dsr ON dsr.table_id = ti.table_id" +
-                " WHERE dsr.file_id = ?", dsr.getFile_id());
+                " WHERE ti.table_id = ?", dsr.getTable_id());
+    }
+
+    @Method(desc = "获取DML表存在的存储层信息", logicStep = "获取DML表存在的存储层信息,一张表有可能存在多个存储层下")
+    @Param(name = "dsr", desc = "Data_store_reg实体对象", range = "Data_store_reg实体对象")
+    @Return(desc = "表对应的存储层信息", range = "表对应的存储层信息")
+    public static List<Data_store_layer> getDMLTableStorageLayers(Dm_datatable dm_datatable) {
+        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
+                " JOIN " + Dm_relation_datatable.TableName + " drd ON dsl.dsl_id = drd.dsl_id" +
+                " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = drd.datatable_id" +
+                " WHERE dd.datatable_id = ?", dm_datatable.getDatatable_id());
     }
 
     @Method(desc = "获取存储层链接配置信息", logicStep = "获取存储层链接配置信息")

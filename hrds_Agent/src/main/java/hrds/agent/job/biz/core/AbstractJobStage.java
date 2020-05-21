@@ -66,8 +66,8 @@ public abstract class AbstractJobStage implements JobStageInterface {
 		//数据进库之后的表名
 		String hbase_name = collectTableBean.getHbase_name();
 		//判断程序最后一次入库日期等于跑批日期，则认为本次执行是重跑
-		if (collectTableBean.getEtlDate().equals(collectTableBean.getStorage_date())) {
-			//重跑，直接删除今天表的备份表
+		if (collectTableBean.getEtlDate().equals(collectTableBean.getStorage_date()) || storage_time == 1) {
+			//重跑，或者数据只保留一天，直接删除今天表的备份表
 			if (SQLUtil.checkTable(hbase_name + "_1b", data_store_connect_attr.get(StorageTypeKey.
 					database_type), data_store_connect_attr.get(StorageTypeKey.database_name), db)) {
 				db.execute("DROP TABLE " + hbase_name + "_1b");

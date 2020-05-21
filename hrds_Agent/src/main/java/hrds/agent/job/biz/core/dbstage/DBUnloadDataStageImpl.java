@@ -232,6 +232,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, 0,
 							tableBean, collectTableBean.getData_extraction_def_list().get(0));
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
+						//返回值为卸数文件全路径拼接卸数文件的条数
 						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);
 						String pageCount = unLoadInfoList.get(unLoadInfoList.size() - 1);
 						unLoadInfoList.remove(unLoadInfoList.size() - 1);
