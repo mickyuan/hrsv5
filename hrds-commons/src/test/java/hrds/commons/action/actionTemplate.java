@@ -4,15 +4,15 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.utils.User;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.ResultSet;
+import java.util.*;
 
 @DocClass(desc = "action注释模版",author = "xchao",createdate = "2019-09-16 10:57")
 public class actionTemplate extends BaseAction {
@@ -61,5 +61,15 @@ public class actionTemplate extends BaseAction {
 
         a.getString(0, "abc");
         return new Result();
+    }
+    public static void main(String[] args) {
+        try(DatabaseWrapper db = new DatabaseWrapper.Builder().dbname("Hive").create()){
+            Set<String> aa = new HashSet<>();
+            aa.add("sdf");
+            aa.add("bb");
+            String testcc = db.getDbtype().ofKeyLableSql("testcc", aa);
+            Result result = SqlOperator.queryResult(db, "select * from testcc");
+            ResultSet resultSet = db.queryPagedGetResultSet("select * from testcc", 1, 1000, false);
+        }
     }
 }

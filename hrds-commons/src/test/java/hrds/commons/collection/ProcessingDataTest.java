@@ -265,8 +265,6 @@ public class ProcessingDataTest {
 				}
 			}.getDataLayer("select * from sys_user a join sys_role b on a.role_id = b.role_id where 1=2", db);
 			assertThat("不等于0就ok", mm.size(), not(0L));
-			System.out.println(mm);
-			System.out.println(dataLayer);
 			//bw.close();
 		} catch (Exception e) {
 			e.printStackTrace();
