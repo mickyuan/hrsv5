@@ -144,14 +144,6 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(mart_name, "集市名称");
 		CheckColummn(mart_number, "集市编号");
 		//2.新增前查询集市编号是否已存在
-		if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ?", mart_number)
-				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-			throw new BusinessException("集市编号重复，请重新填写");
-		}
-		if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? ", mart_name)
-				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-			throw new BusinessException("集市名称重复，请重新填写");
-		}
 		Long data_mart_id = dm_info.getData_mart_id();
 		//如果是更新 就先删除原有的信息
 		if (data_mart_id != null) {
@@ -163,6 +155,14 @@ public class MarketInfoAction extends BaseAction {
 			dm_info.setCreate_date(DateUtil.getSysDate());
 			dm_info.setCreate_time(DateUtil.getSysTime());
 			dm_info.setCreate_id(getUserId());
+		}
+		if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ?", mart_number)
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
+			throw new BusinessException("集市编号重复，请重新填写");
+		}
+		if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? ", mart_name)
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
+			throw new BusinessException("集市名称重复，请重新填写");
 		}
 		//4.保存data_source信息
 		dm_info.add(Dbo.db());
