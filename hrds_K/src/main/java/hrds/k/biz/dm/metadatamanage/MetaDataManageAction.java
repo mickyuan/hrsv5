@@ -6,9 +6,11 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.collection.DeleteDataTable;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Dm_datatable;
@@ -29,6 +31,7 @@ import hrds.k.biz.dm.metadatamanage.drbtree.DRBTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.drbtree.MDMTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
+import hrds.k.biz.dm.metadatamanage.transctrl.IOnWayCtrl;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +49,7 @@ public class MetaDataManageAction extends BaseAction {
         //根据源菜单信息获取节点数据列表 TreePageSource.DATA_MANAGEMENT 数据管控
         List<Map<String, Object>> dataList =
                 MDMTreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_MANAGEMENT, getUser(), treeConf);
+        System.out.println(dataList.toString());
         //转换节点数据列表为分叉树列表
         List<Node> mdmTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
         //定义返回的分叉树结果Map
@@ -269,7 +273,8 @@ public class MetaDataManageAction extends BaseAction {
     }
 
     @Method(desc = "表放入回收站(所有表设置为无效)", logicStep = "表放入回收站(所有表设置为无效)")
-    public void allTableSetToInvalid() {
+    private void allTableSetToInvalid() {
+        //TODO hrsv5.1
         //获取回收站源树菜单列表
         List<Map<String, Object>> sourceTreeInfos = TreeDataQuery.getSourceTreeInfos(TreePageSource.DATA_MANAGEMENT);
         //根据源树菜单逐层处理
@@ -311,39 +316,48 @@ public class MetaDataManageAction extends BaseAction {
     @Method(desc = "数据管控-彻底删除表", logicStep = "数据管控-彻底删除表")
     @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
     @Param(name = "file_id", desc = "回收站表id", range = "long 类型")
-    public void removeCompletelyTable(String data_layer, long file_id) {
-        //根据数据层和表id删除表
-        switch (data_layer) {
-            case "DCL":
-                TableMetaInfoTool.removeDCLTableInfo(file_id);
-                break;
-            case "ISL":
-            case "DPL":
-            case "DML":
-            case "SFL":
-            case "AML":
-            case "DQC":
-            case "UDL":
-                throw new BusinessException("彻底删除" + data_layer + "层表信息暂未实现!");
-            default:
-                throw new BusinessException("未找到匹配的存储层!");
+    public void removeCompletelyTable(long file_id) {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //获取 Dq_failure_table
+            Dq_failure_table dft = DRBDataQuery.getDRBTableInfo(file_id);
+            //数据校验
+            if (StringUtil.isBlank(dft.getFailure_table_id().toString())) {
+                throw new BusinessException("回收站的该表已经不存在!");
+            }
+            //放入回收站前先检查是否被其他表依赖
+            IOnWayCtrl.checkExistsTask(dft.getTable_en_name(), dft.getTable_source(), db);
+            //彻底删除各存储层中表
+            new DeleteDataTable().dropTableByDataLayer(dft.getTable_en_name(), db);
+            //将失效登记表的数据删除
+            DRBDataQuery.deleteDqFailureTableInfo(dft.getFailure_table_id());
+            //提交数据库操作
+            db.commit();
         }
     }
 
     @Method(desc = "数据管控-彻底删除所有表",
             logicStep = "数据管控-彻底删除所有表")
-    public void removeCompletelyAllTable() {
-        //获取回收站所有表信息
-        List<Dq_failure_table> allTableInfos = DRBDataQuery.getAllTableInfos();
-        //循环每一张表逐条删除
-        allTableInfos.forEach(tableInfo ->
-                removeCompletelyTable(tableInfo.getTable_source(), tableInfo.getFailure_table_id()));
+    private void removeCompletelyAllTable() {
+        //TODO hrsv5.1
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //获取回收站所有表信息
+            List<Dq_failure_table> allTableInfos = DRBDataQuery.getAllTableInfos();
+            //循环每一张表逐条删除
+            allTableInfos.forEach(dft -> {
+                //删除数据层下数据表
+                new DeleteDataTable().dropTableByDataLayer(dft.getTable_en_name(), db);
+                //将失效登记表的数据删除
+                DRBDataQuery.deleteDqFailureTableInfo(dft.getFailure_table_id());
+            });
+            //提交数据库操作
+            db.commit();
+        }
     }
 
     @Method(desc = "数据管控-创建表", logicStep = "数据管控-创建表")
     @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
     @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
-    public void createTable(String data_layer, long dsl_id) {
+    private void createTable(String data_layer, long dsl_id) {
         //TODO hrsv5.1
         //根据所属数据层创建表
         switch (data_layer) {
