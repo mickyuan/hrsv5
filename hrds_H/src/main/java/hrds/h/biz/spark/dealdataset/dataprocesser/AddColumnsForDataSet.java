@@ -6,7 +6,6 @@ import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.h.biz.config.MarketConf;
-import org.apache.commons.lang.StringUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -91,15 +90,18 @@ public class AddColumnsForDataSet implements DataSetProcesser {
         String dropColumns = Arrays.stream(originalSqlcolumnName)
                 .filter(s -> !keepColumnName.contains(s))
                 .collect(Collectors.joining(","));
-        dataSet = dataSet.drop(dropColumns);
-
-        dataSet = dataSet.select(sqlColumn);
-
+        //页面选择的字段，跟真实sql查询出来的列有可能不一致
+        dataSet = dataSet.drop(dropColumns).select(sqlColumn);
+        //用于计算MD5的列
         Column[] md5Array = columnForMD5.toArray(new Column[0]);
 
         /*
          * 添加HYREN_S_DATE,HYREN_E_DATE,HYREN_MD5_VAL
          */
+        if (marketConf.isMultipleInput()) {
+            dataSet = dataSet
+                    .withColumn(Constant.TABLE_ID_NAME, functions.lit(marketConf.getDatatableId()));
+        }
         dataSet = dataSet
                 .withColumn(Constant.SDATENAME, functions.lit(marketConf.getEtlDate()))
                 .withColumn(Constant.EDATENAME, functions.lit(Constant.MAXDATE))

@@ -5,6 +5,7 @@ import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -58,6 +59,10 @@ public class MarketConfUtils {
             }
             marketConf.setDmDatatable(dmDatatable.get());
             marketConf.setTableName(dmDatatable.get().getDatatable_en_name());
+            marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.get().getRepeat_flag()) == IsFlag.Shi);
+            System.out.println(IsFlag.ofEnumByCode(dmDatatable.get().getRepeat_flag()).getCode());
+            System.out.println("]]]]]]]]]]]]"+dmDatatable.get().getRepeat_flag());
+            System.out.println("]]]]]]]]]]]]"+marketConf.isMultipleInput());
 
             /*
             根据主键 datatable_id 查询 字段 实体
@@ -69,7 +74,7 @@ public class MarketConfUtils {
                         Datatable_field_info.TableName, "datatable_id", datatableId));
             }
             //添加字段，字段全部转小写
-            handleFields(datatableFields);
+            handleFields(datatableFields, marketConf.isMultipleInput());
             marketConf.setDatatableFields(datatableFields);
 
             /*
@@ -135,9 +140,17 @@ public class MarketConfUtils {
      *
      * @param datatableFields 所有字段实体
      */
-    private static void handleFields(List<Datatable_field_info> datatableFields) {
+    private static void handleFields(List<Datatable_field_info> datatableFields, boolean isMultipleInput) {
         if (datatableFields.size() == 0) {
             throw new AppSystemException("状态错误,字段数量为0");
+        }
+
+        if (isMultipleInput) {
+            //添加 HYREN_MD5_VAL
+            Datatable_field_info tableIdField = new Datatable_field_info();
+            tableIdField.setField_en_name(Constant.TABLE_ID_NAME);
+            tableIdField.setField_type(DEFAULT_STRING_TYPE);
+            datatableFields.add(tableIdField);
         }
 
         //添加 HYREN_S_DATE
@@ -164,6 +177,7 @@ public class MarketConfUtils {
 
     /**
      * 将可能带有集市视图的sql中的视图转换为子查询sql
+     *
      * @param perhapsWithViewSql 能带有集市视图的sql
      * @return 不带有集市视图的sql
      */
@@ -214,7 +228,8 @@ public class MarketConfUtils {
 
         try {
             FileUtil.forceDelete(serializeFile);
-        } catch (IOException ignore) {}
+        } catch (IOException ignore) {
+        }
 
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(serializeFile))) {
             out.writeObject(conf);

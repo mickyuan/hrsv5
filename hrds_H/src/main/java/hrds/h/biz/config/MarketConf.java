@@ -39,6 +39,10 @@ public class MarketConf implements Serializable {
      */
     private String completeSql;
     /**
+     * 多作业导入同一表
+     */
+    private boolean multipleInput;
+    /**
      * 后置作业sql 可为null 可以是多个sql用;;分割
      */
     private String finalSql;
@@ -81,6 +85,14 @@ public class MarketConf implements Serializable {
         MarketConfUtils.checkReRun(conf, etldate);
 
         return conf;
+    }
+
+    public boolean isMultipleInput() {
+        return multipleInput;
+    }
+
+    public void setMultipleInput(boolean multipleInput) {
+        this.multipleInput = multipleInput;
     }
 
     public boolean isRerun() {

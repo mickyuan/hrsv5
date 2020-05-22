@@ -19,9 +19,18 @@ public class SparkHandleArgument {
      * spark 任务是否为增量， 默认为 false
      */
     private boolean increment = false;
+    private boolean isMultipleInput = false;
     private String tableName;
-
+    private String datatableId;
     private String etlDate;
+
+    public String getDatatableId() {
+        return datatableId;
+    }
+
+    public void setDatatableId(String datatableId) {
+        this.datatableId = datatableId;
+    }
 
     public String getEtlDate() {
         return etlDate;
@@ -45,6 +54,14 @@ public class SparkHandleArgument {
 
     public void setOverWrite(boolean overWrite) {
         this.overWrite = overWrite;
+    }
+
+    public boolean isMultipleInput() {
+        return isMultipleInput;
+    }
+
+    public void setMultipleInput(boolean multipleInput) {
+        isMultipleInput = multipleInput;
     }
 
     public String getTableName() {

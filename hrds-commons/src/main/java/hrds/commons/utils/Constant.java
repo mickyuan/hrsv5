@@ -13,6 +13,7 @@ public class Constant {
 	public static final String SDATENAME = "HYREN_S_DATE";
 	public static final String EDATENAME = "HYREN_E_DATE";
 	public static final String MD5NAME = "HYREN_MD5_VAL";
+	public static final String TABLE_ID_NAME = "HYREN_TABLE_ID";
 	public static final String MAXDATE = "99991231";
 	public static final String SFTP_PORT = "22";
 	public static final byte[] HBASE_COLUMN_FAMILY = "F".getBytes();
