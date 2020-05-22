@@ -49,12 +49,12 @@ public class Constant {
 	public static final String DCL_BATCH = "dcl_batch";
 	//贴源层下实时数据 02:实时类型数据
 	public static final String DCL_REALTIME = "dcl_realtime";
-	//集市层
-	public static final String DML = "DML";
-	//系统数据表 11:系统数据表
+	//系统数据表 sys_data_table:系统数据表
 	public static final String SYS_DATA_TABLE = "sys_data_table";
-	//系统数据备份 12:系统数据备份
+	//系统数据备份 sys_data_bak:系统数据备份
 	public static final String SYS_DATA_BAK = "sys_data_bak";
+	//数据管控结果3表名前缀标记
+	public static final String DQC_TABLE = "dqc_";
 	//数据管控失效标记前缀 dqc_invalid_table_
 	public static final String DQC_INVALID_TABLE = "dit_";
 	//数据管控表操作类型 set_invalid:设置为无效,restore:恢复
