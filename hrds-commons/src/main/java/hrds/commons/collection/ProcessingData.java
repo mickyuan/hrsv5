@@ -68,7 +68,7 @@ public abstract class ProcessingData {
 	@Param(name = "tableName", desc = "表名", range = "取值范围说明")
 	@Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
 	@Return(desc = "表的存储位置", range = "表的存储位置")
-	private static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
+	public static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
 		//初始化表的存储位置
 		List<LayerBean> mapTaberLayer = new ArrayList<>();
 		//查询贴元表信息，也就是通过数据采集过来的数据表
