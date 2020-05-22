@@ -1,13 +1,16 @@
-package hrds.agent.job.biz.core.increasement;
+package hrds.agent.job.biz.core.increasement.impl;
 
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +28,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	/**
 	 * 执行事务总方法（包括：创建表，比较增量结果入临时表，将结果入hbase
 	 */
+	@Override
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		sqlList.add(createTableIfNotExists(yesterdayTableName, db, columns, types));
@@ -39,9 +43,80 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		getDeleteDataSql();
 		//7.执行所有sql语句
 		HSqlExecute.executeSql(sqlList, db);
-
 	}
 
+	/**
+	 * 根据临时增量表合并出新的增量表，删除以前的增量表
+	 */
+	@Override
+	public void mergeIncrement() {
+		List<String> list = new ArrayList<>();
+		String tmpDelTa = tableNameInHBase + "hyt";
+		try {
+			dropTableIfExists(tmpDelTa, db, list);
+			//创建临时表
+			list.add(createInvalidDataSql(tmpDelTa));
+			//插入有效数据
+			list.add(insertInvalidDataSql(tmpDelTa));
+			//插入所有数据
+			list.add(insertDeltaDataSql(tmpDelTa, deltaTableName));
+			//删除原始表
+			dropTableIfExists(tableNameInHBase, db, list);
+			//重命名
+			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
+			HSqlExecute.executeSql(list, db);
+		} catch (Exception e) {
+			logger.error("根据临时表对mpp表做增量操作时发生错误！！", e);
+			throw new AppSystemException("根据临时表对mpp表做增量操作时发生错误！！", e);
+		}
+	}
+
+	/**
+	 * 追加
+	 */
+	@Override
+	public void append() {
+		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
+		createTableIfNotExists(yesterdayTableName, db, columns, types);
+		//2.恢复今天的数据，防止重跑
+		restoreAppendData();
+		//3.插入今天新增的数据
+		insertAppendData();
+		//4.执行sql
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 替换
+	 */
+	@Override
+	public void replace() {
+		//临时表存在删除临时表
+		dropTableIfExists(deltaTableName, db, sqlList);
+		//将本次采集的数据复制到临时表
+		sqlList.add("CREATE TABLE " + deltaTableName + " AS SELECT * FROM " + todayTableName);
+		//删除上次采集的数据表
+		dropTableIfExists(yesterdayTableName, db, sqlList);
+		//将临时表改名为进数之后的表
+		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
+		//执行sql
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 关闭连接
+	 */
+	@Override
+	public void close() {
+		dropAllTmpTable();
+		if (db != null) {
+			db.close();
+		}
+	}
+
+	/**
+	 * 重跑恢复数据
+	 */
 	private void restoreData() {
 		sqlList.add("delete from " + yesterdayTableName + " where " + Constant.SDATENAME + "='" + sysDate + "'");
 		sqlList.add("update " + yesterdayTableName + " set " + Constant.EDATENAME + " = "
@@ -106,6 +181,9 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		sqlList.add(deleteDatasql.toString());
 	}
 
+	/**
+	 * 追加插入数据
+	 */
 	private void insertAppendData() {
 		StringBuilder insertDataSql = new StringBuilder(120);
 		//拼接查找增量并插入增量表
@@ -161,49 +239,17 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	}
 
 	/**
-	 * 根据临时增量表合并出新的增量表，删除以前的增量表
+	 * 追加恢复数据
 	 */
-	@Override
-	public void mergeIncrement() {
-		List<String> list = new ArrayList<>();
-		String tmpDelTa = tableNameInHBase + "hyt";
-		try {
-			dropTableIfExists(tmpDelTa, db, list);
-			//创建临时表
-			list.add(createInvalidDataSql(tmpDelTa));
-			//插入有效数据
-			list.add(insertInvalidDataSql(tmpDelTa));
-			//插入所有数据
-			list.add(insertDeltaDataSql(tmpDelTa, deltaTableName));
-			//删除原始表
-			dropTableIfExists(tableNameInHBase, db, list);
-			//重命名
-			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
-			HSqlExecute.executeSql(list, db);
-		} catch (Exception e) {
-			logger.error("根据临时表对mpp表做增量操作时发生错误！！", e);
-			throw new AppSystemException("根据临时表对mpp表做增量操作时发生错误！！", e);
-		}
-	}
-
-	/**
-	 * 追加
-	 */
-	public void append() {
-		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		createTableIfNotExists(yesterdayTableName, db, columns, types);
-		//2.恢复今天的数据，防止重跑
-		restoreAppendData();
-		//3.插入今天新增的数据
-		insertAppendData();
-		//4.执行sql
-		HSqlExecute.executeSql(sqlList, db);
-	}
-
 	private void restoreAppendData() {
 		sqlList.add("DELETE FROM " + yesterdayTableName + " WHERE " + Constant.SDATENAME + "='" + sysDate + "'");
 	}
 
+	/**
+	 * 插入有效数据
+	 * @param tmpDelTa 表名
+	 * @return 插入有效数据sql
+	 */
 	private String insertInvalidDataSql(String tmpDelTa) {
 		StringBuilder insertDataSql = new StringBuilder(120);
 		//拼接查找增量并插入增量表
@@ -236,6 +282,11 @@ public class IncreasementByMpp extends JDBCIncreasement {
 
 	}
 
+	/**
+	 * 创建增量接收数据临时表
+	 * @param tmpDelTa 表名
+	 * @return 建表语句
+	 */
 	private String createInvalidDataSql(String tmpDelTa) {
 		//1  创建临时表
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
@@ -250,4 +301,75 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		return sql.toString();
 	}
 
+	/**
+	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
+	 */
+	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
+		if (Dbtype.ORACLE.equals(db.getDbtype())) {
+			//如果有数据则表明该表存在，创建表
+			if (tableIsExistsOracle(tableName, db)) {
+				sqlList.add("DROP TABLE " + tableName);
+			}
+		} else {
+			sqlList.add("DROP TABLE IF EXISTS " + tableName);
+		}
+	}
+
+	/**
+	 * 创建表，如果表不存在
+	 */
+	private String createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types) {
+		StringBuilder create = new StringBuilder(1024);
+		if (Dbtype.ORACLE.equals(db.getDbtype())) {
+			//如果有数据则表明该表存在，创建表
+			if (!tableIsExistsOracle(tableName, db)) {
+				create.append("CREATE TABLE ");
+			}
+		} else {
+			create.append("CREATE TABLE IF NOT EXISTS ");
+		}
+		//当StringBuilder中有值
+		if (create.length() > 10) {
+			create.append(tableName);
+			create.append("(");
+			for (int i = 0; i < columns.size(); i++) {
+				create.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
+			}
+			//将最后的逗号删除
+			create.deleteCharAt(create.length() - 1);
+			create.append(")");
+			return create.toString();
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * 判断oracle数据库是否存在该表
+	 */
+	private static boolean tableIsExistsOracle(String tableName, DatabaseWrapper db) {
+		ResultSet resultSet;
+		try {
+			resultSet = db.queryGetResultSet("SELECT * FROM user_objects where lower(object_name) = ? "
+					, tableName.toLowerCase());
+			//如果有数据则表明该表存在，创建表
+			if (resultSet.next()) {
+				return true;
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("查询表名是否在oracle数据库中存在出现异常", e);
+		}
+		return false;
+	}
+
+	/**
+	 * 删除临时增量表
+	 */
+	private void dropAllTmpTable() {
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		dropTableIfExists(deltaTableName, db, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
+	}
 }

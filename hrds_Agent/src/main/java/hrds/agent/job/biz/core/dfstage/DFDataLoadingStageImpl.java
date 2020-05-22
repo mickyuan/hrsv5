@@ -12,6 +12,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
+import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -149,7 +150,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				String tmpTodayTableName = todayTableName + "t";
 				if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 					//如果表已存在则删除
-					JDBCIncreasement.dropTableIfExists(tmpTodayTableName, db, sqlList);
+					IncreasementByMpp.dropTableIfExists(tmpTodayTableName, db, sqlList);
 					//固定分隔符的文件
 					//创建外部临时表，这里表名不能超过30个字符，需要
 					sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
@@ -159,7 +160,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							+ "oracle数据库外部表进数目前只支持非定长文件进数");
 				}
 				//如果表已存在则删除
-				JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+				IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
 				sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
 						"AS SELECT * FROM  " + tmpTodayTableName);
 				//4.执行sql语句
@@ -268,11 +269,11 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
 			//oracle数据库只创建了一个临时表
 			//如果表已存在则删除
-			JDBCIncreasement.dropTableIfExists(todayTableName + "t", db, sqlList);
+			IncreasementByMpp.dropTableIfExists(todayTableName + "t", db, sqlList);
 		} else if (DatabaseType.Postgresql.getCode().equals(database_type)) {
 			for (int i = 0; i < fileNameArr.length; i++) {
 				String table_name = todayTableName + "_tmp" + i;
-				JDBCIncreasement.dropTableIfExists(table_name, db, sqlList);
+				IncreasementByMpp.dropTableIfExists(table_name, db, sqlList);
 			}
 		} else {
 			//其他支持外部表的数据库 TODO 这里的逻辑后面可能需要不断补充
@@ -303,11 +304,11 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		createTodayTable.deleteCharAt(createTodayTable.length() - 1); //将最后的逗号删除
 		createTodayTable.append(" )");
-		JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+		IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
 		sqlList.add(createTodayTable.toString());
 		for (int i = 0; i < fileNameArr.length; i++) {
 			String table_name = todayTableName + "_tmp" + i;
-			JDBCIncreasement.dropTableIfExists(table_name, db, sqlList);
+			IncreasementByMpp.dropTableIfExists(table_name, db, sqlList);
 			StringBuilder createExternalTable = new StringBuilder();
 			createExternalTable.append("CREATE FOREIGN TABLE ");
 			createExternalTable.append(table_name);
