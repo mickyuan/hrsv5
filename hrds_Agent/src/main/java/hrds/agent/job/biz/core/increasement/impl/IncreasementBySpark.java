@@ -58,8 +58,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void append() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName);
-		HSqlExecute.executeSql(tableIfNotExistsSql, db);
+		sqlList.add(createTableIfNotExists(yesterdayTableName));
 		//2、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
 		appendRestoreData();
 		//3.插入今天新增的数据

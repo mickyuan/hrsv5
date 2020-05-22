@@ -77,7 +77,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	@Override
 	public void append() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		createTableIfNotExists(yesterdayTableName, db, columns, types);
+		sqlList.add(createTableIfNotExists(yesterdayTableName, db, columns, types));
 		//2.恢复今天的数据，防止重跑
 		restoreAppendData();
 		//3.插入今天新增的数据
