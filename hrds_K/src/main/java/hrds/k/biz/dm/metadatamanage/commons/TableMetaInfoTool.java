@@ -5,18 +5,20 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.collection.RenameDataTable;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.k.biz.dm.metadatamanage.bean.ColumnInfoBean;
-import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
+import hrds.k.biz.dm.metadatamanage.transctrl.IOnWayCtrl;
+
+import java.util.List;
 
 @DocClass(desc = "数据管控-表元信息工具", author = "BY-HLL", createdate = "2020/4/2 0002 下午 04:16")
 public class TableMetaInfoTool {
@@ -28,9 +30,10 @@ public class TableMetaInfoTool {
             //获取 Data_store_reg
             Data_store_reg dsr = MDMDataQuery.getDCLDataStoreRegInfo(file_id);
             //放入回收站前先检查是否被其他表依赖
-            checkDependencies(dsr.getTable_name(), DataSourceType.DCL.getCode());
+            IOnWayCtrl.checkExistsTask(dsr.getTable_name(), DataSourceType.DCL.getCode(), db);
             //重命名数据层表
-            DataLayerTableOperation.renameDCLDataLayerTable(dsr, Constant.DM_SET_INVALID_TABLE);
+            List<String> dsl_id_s = RenameDataTable.renameTableByDataLayer("", dsr.getHyren_name(),
+                    Constant.DM_SET_INVALID_TABLE, db);
             //添加到回收站表
             Dq_failure_table dq_failure_table = new Dq_failure_table();
             dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
@@ -39,6 +42,8 @@ public class TableMetaInfoTool {
             dq_failure_table.setTable_en_name(dsr.getHyren_name());
             dq_failure_table.setTable_source(DataSourceType.DCL.getCode());
             dq_failure_table.setTable_meta_info(JsonUtil.toJson(dsr));
+            //remark字段存储的是该表对应存储层id列表
+            dq_failure_table.setRemark(String.join(",", dsl_id_s));
             dq_failure_table.add(db);
             //删除源表的数据
             MDMDataQuery.deleteDCLDataStoreRegInfo(file_id);
@@ -55,9 +60,10 @@ public class TableMetaInfoTool {
             //获取 Data_store_reg
             Dm_datatable dm_datatable = MDMDataQuery.getDMLDmDatatableInfo(datatable_id);
             //放入回收站前先检查是否被其他表依赖
-            checkDependencies(dm_datatable.getDatatable_en_name(), DataSourceType.DML.getCode());
+            IOnWayCtrl.checkExistsTask(dm_datatable.getDatatable_en_name(), DataSourceType.DML.getCode(), db);
             //重命名数据层表
-            DataLayerTableOperation.renameDMLDataLayerTable(dm_datatable, Constant.DM_SET_INVALID_TABLE);
+            List<String> dsl_id_s = RenameDataTable.renameTableByDataLayer("", dm_datatable.getDatatable_en_name(),
+                    Constant.DM_SET_INVALID_TABLE, db);
             //添加到回收站表
             Dq_failure_table dq_failure_table = new Dq_failure_table();
             dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
@@ -66,6 +72,8 @@ public class TableMetaInfoTool {
             dq_failure_table.setTable_en_name(dm_datatable.getDatatable_en_name());
             dq_failure_table.setTable_source(DataSourceType.DML.getCode());
             dq_failure_table.setTable_meta_info(JsonUtil.toJson(dm_datatable));
+            //remark字段存储的是该表对应存储层id列表
+            dq_failure_table.setRemark(String.join(",", dsl_id_s));
             dq_failure_table.add(db);
             //删除源表的数据
             MDMDataQuery.deleteDMLDataStoreRegInfo(datatable_id);
@@ -78,20 +86,25 @@ public class TableMetaInfoTool {
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static void restoreDCLTableInfo(Dq_failure_table dq_failure_table) {
-        //转换Mate信息为Data_store_reg实体对象
-        Data_store_reg dsr = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
-                Data_store_reg.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
-        if (null != dsr) {
-            //校验数据DCL层登记信息是否存在
-            boolean boo = Dbo.queryNumber("select count(*) from " + Data_store_reg.TableName + " where hyren_name=?",
-                    dsr.getHyren_name()).orElseThrow(() -> new BusinessException("校验DCL表层登记信息的SQL错误")) == 1;
-            //恢复存储层表信息
-            if (boo) {
-                throw new BusinessException("恢复的数据表已经存在!");
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //转换Mate信息为Data_store_reg实体对象
+            Data_store_reg dsr = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
+                    Data_store_reg.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
+            if (null != dsr) {
+                //校验数据DCL层登记信息是否存在
+                boolean boo = Dbo.queryNumber(db, "select count(*) from " + Data_store_reg.TableName + " where hyren_name=?",
+                        dsr.getHyren_name()).orElseThrow(() -> new BusinessException("校验DCL表层登记信息的SQL错误")) == 1;
+                //恢复存储层表信息
+                if (boo) {
+                    throw new BusinessException("恢复的数据表已经存在!");
+                }
+                //根据数据层id恢复 DCL 数据层对应存储层下的数据表
+                restoreTableInfo(dsr.getHyren_name(), dq_failure_table.getRemark().split(","), db);
+                //恢复表元信息
+                dsr.add(db);
+                //提交数据库操作
+                db.commit();
             }
-            DataLayerTableOperation.renameDCLDataLayerTable(dsr, Constant.DM_RESTORE_TABLE);
-            //恢复表元信息
-            dsr.add(Dbo.db());
         }
     }
 
@@ -99,21 +112,26 @@ public class TableMetaInfoTool {
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static void restoreDMLTableInfo(Dq_failure_table dq_failure_table) {
-        //转换Mate信息为Data_store_reg实体对象
-        Dm_datatable dm_datatable = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
-                Dm_datatable.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
-        if (null != dm_datatable) {
-            //校验数据DCL层登记信息是否存在
-            boolean boo = Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where " +
-                    "datatable_en_name=?", dm_datatable.getDatatable_en_name())
-                    .orElseThrow(() -> new BusinessException("校验DML表层登记信息的SQL错误")) == 1;
-            //恢复存储层表信息
-            if (boo) {
-                throw new BusinessException("恢复的数据表已经存在!");
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //转换Mate信息为Data_store_reg实体对象
+            Dm_datatable dm_datatable = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
+                    Dm_datatable.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
+            if (null != dm_datatable) {
+                //校验数据DCL层登记信息是否存在
+                boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dm_datatable.TableName + " where " +
+                        "datatable_en_name=?", dm_datatable.getDatatable_en_name())
+                        .orElseThrow(() -> new BusinessException("校验DML表层登记信息的SQL错误")) == 1;
+                //恢复存储层表信息
+                if (boo) {
+                    throw new BusinessException("恢复的数据表已经存在!");
+                }
+                //根据数据层id恢复 DML 数据层对应存储层下的数据表
+                restoreTableInfo(dm_datatable.getDatatable_en_name(), dq_failure_table.getRemark().split(","), db);
+                //恢复表元信息
+                dm_datatable.add(db);
+                //提交数据库操作
+                db.commit();
             }
-            DataLayerTableOperation.renameDMLDataLayerTable(dm_datatable, Constant.DM_RESTORE_TABLE);
-            //恢复表元信息
-            dm_datatable.add(Dbo.db());
         }
     }
 
@@ -180,37 +198,19 @@ public class TableMetaInfoTool {
         }
     }
 
-    @Method(desc = "完全删除DCL层下表信息", logicStep = "完全删除DCL层下表元信息")
-    @Param(name = "file_id", desc = "回收站表id", range = "long类型")
+    @Method(desc = "根据数据层id列表和表名恢复数据表信息", logicStep = "根据数据层id和表名恢复数据表信息")
+    @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
+    @Param(name = "dsl_id_s", desc = "数据层id列表", range = "String[]类型")
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void removeDCLTableInfo(long file_id) {
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //获取 Dq_failure_table
-            Dq_failure_table dft = DRBDataQuery.getDRBTableInfo(file_id);
-            //数据校验
-            if (StringUtil.isBlank(dft.getFailure_table_id().toString())) {
-                throw new BusinessException("回收站的该表已经不存在!");
-            }
-            //放入回收站前先检查是否被其他表依赖
-            checkDependencies(dft.getTable_en_name(), dft.getTable_source());
-            //转换Mate信息为Data_store_reg实体对象
-            Data_store_reg dsr = JsonUtil.toObjectSafety(dft.getTable_meta_info(),
-                    Data_store_reg.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
-            if (null != dsr) {
-                //彻底删除各存储层中表
-                DataLayerTableOperation.removeDCLDataLayerTable(dsr);
-            }
-            //将失效登记表的数据删除
-            DRBDataQuery.deleteDqFailureTableInfo(dft.getFailure_table_id());
-            //提交数据库操作
-            SqlOperator.commitTransaction(db);
+    private static void restoreTableInfo(String tableName, String[] dsl_id_s, DatabaseWrapper db) {
+        for (String dsl_id : dsl_id_s) {
+            Data_store_layer dsl = new Data_store_layer();
+            dsl.setDsl_id(dsl_id);
+            LayerBean intoLayerBean = Dbo.queryOneObject(db, LayerBean.class, "select * from " +
+                    Data_store_layer.TableName + " where dsl_id = ?", dsl.getDsl_id())
+                    .orElseThrow(() -> new BusinessException("恢复表时,获取存储层信息的SQL失败!"));
+            RenameDataTable.renameTableByDataLayer("", tableName, Constant.DM_RESTORE_TABLE, db, intoLayerBean);
         }
-    }
-
-    @Method(desc = "依赖表检查", logicStep = "依赖表检查")
-    @Param(name = "tableName", desc = "表英文名", range = "String类型")
-    @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
-    private static void checkDependencies(String tableName, String data_layer) {
-        //TODO 表放入回收站时,依赖表检查暂未实现
     }
 }
