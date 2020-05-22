@@ -143,7 +143,6 @@ public class DataTableUtil {
     @Param(name = "table_name", desc = "登记表名", range = "String")
     @Return(desc = "字段信息列表", range = "字段信息列表")
     public static List<Map<String, Object>> getColumnByTableName(String table_name) {
-        List<Map<String, Object>> col_info_s;
         //初始化查询Sql TODO 目前只考虑DCL,DML
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
@@ -167,7 +166,7 @@ public class DataTableUtil {
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "报错(提示在哪个存储层重复) 或者 false: 不存在")
     public static boolean tableIsRepeat(String tableName) {
-        if (tableIsExistInSourceFileAttribute(tableName)) {
+        if (tableIsExistInDataStoreReg(tableName)) {
             throw new BusinessException("表在源文件表中已经存在!" + tableName);
         }
 //		if (tableIsExistInDatatableInfo(tableName)) {
@@ -192,10 +191,10 @@ public class DataTableUtil {
             logicStep = "1.判断表是否在源文件信息表存在")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-    private static boolean tableIsExistInSourceFileAttribute(String tableName) {
+    private static boolean tableIsExistInDataStoreReg(String tableName) {
         //1.判断表是否在源文件信息表存在
-        return Dbo.queryNumber("SELECT count(1) count FROM " + Source_file_attribute.TableName +
-                        " WHERE lower(hbase_name) = ? AND collect_type IN (?,?)", tableName.toLowerCase(),
+        return Dbo.queryNumber("SELECT count(1) count FROM " + Data_store_reg.TableName +
+                        " WHERE lower(hyren_name) = ? AND collect_type IN (?,?)", tableName.toLowerCase(),
                 AgentType.ShuJuKu.getCode(), AgentType.DBWenJian.getCode()).orElseThrow(()
                 -> new BusinessException("检查表名称否重复在源文件信息表的SQL编写错误")) != 0;
     }
