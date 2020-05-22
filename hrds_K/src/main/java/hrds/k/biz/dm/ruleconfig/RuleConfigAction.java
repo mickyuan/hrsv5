@@ -329,12 +329,12 @@ public class RuleConfigAction extends BaseAction {
             List<Map<String, Object>> check_index3_list = new ArrayList<>();
             //根据指标3存储记录信息获取数据
             new ProcessingData() {
-
                 @Override
-                public void dealLine(Map<String, Object> map) {
+                public void dealLine(Map<String, Object> map) throws Exception {
+
                     check_index3_list.add(map);
                 }
-            }.getPageDataLayer(sql, db, 1, 10);
+            }.getPageDataLayer(sql, db, 1, 10, dq_index3record.getDsl_id());
             return check_index3_list;
         }
     }

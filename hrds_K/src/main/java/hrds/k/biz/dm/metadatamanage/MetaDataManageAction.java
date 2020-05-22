@@ -31,7 +31,6 @@ import hrds.k.biz.dm.metadatamanage.drbtree.DRBTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.drbtree.MDMTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
-import hrds.k.biz.dm.metadatamanage.transctrl.IOnWayCtrl;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +48,6 @@ public class MetaDataManageAction extends BaseAction {
         //根据源菜单信息获取节点数据列表 TreePageSource.DATA_MANAGEMENT 数据管控
         List<Map<String, Object>> dataList =
                 MDMTreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_MANAGEMENT, getUser(), treeConf);
-        System.out.println(dataList.toString());
         //转换节点数据列表为分叉树列表
         List<Node> mdmTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
         //定义返回的分叉树结果Map
@@ -314,7 +312,6 @@ public class MetaDataManageAction extends BaseAction {
     }
 
     @Method(desc = "数据管控-彻底删除表", logicStep = "数据管控-彻底删除表")
-    @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
     @Param(name = "file_id", desc = "回收站表id", range = "long 类型")
     public void removeCompletelyTable(long file_id) {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -324,9 +321,7 @@ public class MetaDataManageAction extends BaseAction {
             if (StringUtil.isBlank(dft.getFailure_table_id().toString())) {
                 throw new BusinessException("回收站的该表已经不存在!");
             }
-            //放入回收站前先检查是否被其他表依赖
-            IOnWayCtrl.checkExistsTask(dft.getTable_en_name(), dft.getTable_source(), db);
-            //彻底删除各存储层中表
+            //彻底删除各存储层中表 TODO 根据回收站表信息删除对应存储层下的数据表
             new DeleteDataTable().dropTableByDataLayer(dft.getTable_en_name(), db);
             //将失效登记表的数据删除
             DRBDataQuery.deleteDqFailureTableInfo(dft.getFailure_table_id());
