@@ -1,7 +1,8 @@
-package hrds.agent.job.biz.core.increasement;
+package hrds.agent.job.biz.core.increasement.impl;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
@@ -21,34 +22,13 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		super(tableBean, hbase_name, sysDate, db, dsl_name);
 	}
 
-	/*
-	 * 创建临时表
-	 */
-	private void getCreateDeltaSql() {
-
-		//1、创建临时表
-		StringBuilder sql = new StringBuilder(120); // 拼接创表sql语句
-		sql.append("CREATE TABLE ");
-		sql.append(deltaTableName);
-		sql.append("(");
-		for (int i = 0; i < columns.size(); i++) {
-			sql.append(columns.get(i)).append(' ').append(types.get(i)).append(',');
-		}
-		sql.deleteCharAt(sql.length() - 1);
-		sql.append(") stored as parquet ");
-		// 如果表已存在则删除
-		sqlList.add("DROP TABLE IF EXISTS " + deltaTableName);
-		sqlList.add(sql.toString());
-
-	}
-
 	/**
 	 * 这个方法跑完，带有所有增量数据的完整的表就生成了carbondata
 	 */
 	@Override
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName, db, columns, types);
+		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName);
 		HSqlExecute.executeSql(tableIfNotExistsSql, db);
 		//2、创建增量表
 		getCreateDeltaSql();
@@ -70,7 +50,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void mergeIncrement() {
 		List<String> sqlList = new ArrayList<>();
-		dropTableIfExists(yesterdayTableName, db, sqlList);
+		dropTableIfExists(yesterdayTableName, sqlList);
 		sqlList.add("alter table " + deltaTableName + " rename to " + yesterdayTableName);
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -78,14 +58,80 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void append() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName, db, columns, types);
+		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName);
 		HSqlExecute.executeSql(tableIfNotExistsSql, db);
 		//2、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
 		appendRestoreData();
 		//3.插入今天新增的数据
-		sqlList.add("INSERT INTO " + yesterdayTableName + " select * from " + todayTableName);
+		sqlList.add(insertDeltaDataSql(yesterdayTableName, todayTableName));
 		//4.执行sql
 		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 替换
+	 */
+	@Override
+	public void replace() {
+		//创建临时表存本次采集的数据
+		getCreateDeltaSql();
+		//将本次采集的数据存入临时表
+		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
+		//删除上次采集的数据表
+		dropTableIfExists(yesterdayTableName, sqlList);
+		//将临时表改名为进数之后的表
+		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
+		//执行sql
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 关闭连接
+	 */
+	@Override
+	public void close() {
+		dropAllTmpTable();
+		if (db != null) {
+			db.close();
+		}
+	}
+
+	/*
+	 * 创建临时表
+	 */
+	private void getCreateDeltaSql() {
+		// 如果表已存在则删除
+		sqlList.add("DROP TABLE IF EXISTS " + deltaTableName);
+		sqlList.add(createTableIfNotExists(deltaTableName));
+	}
+
+	/**
+	 * 拼接sql建表语句
+	 *
+	 * @param tableName 表名
+	 * @return sql建表语句
+	 */
+	private String createTableIfNotExists(String tableName) {
+		StringBuilder sql = new StringBuilder(120); // 拼接创表sql语句
+		sql.append("CREATE TABLE IF NOT EXISTS ");
+		sql.append(tableName);
+		sql.append("(");
+		for (int i = 0; i < columns.size(); i++) {
+			sql.append(columns.get(i)).append(' ').append(types.get(i)).append(',');
+		}
+		sql.deleteCharAt(sql.length() - 1);
+		sql.append(") stored as parquet ");
+		return sql.toString();
+	}
+
+	/**
+	 * 删除表如果表存在
+	 *
+	 * @param tableName 表名
+	 * @param sqlList   删除表语句存放list
+	 */
+	private void dropTableIfExists(String tableName, List<String> sqlList) {
+		sqlList.add("DROP TABLE IF EXISTS " + tableName);
 	}
 
 	private void getdeltaDataSql() {
@@ -233,6 +279,17 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		} catch (Exception e) {
 			throw new AppSystemException("执行查询当天增量是否有进数");
 		}
+	}
+
+	/**
+	 * 删除临时增量表
+	 */
+	private void dropAllTmpTable() {
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		dropTableIfExists(deltaTableName, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
 	}
 
 }

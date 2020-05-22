@@ -16,19 +16,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "通过jdbc使用sql算增量", author = "zxz", createdate = "2019/12/24 09:41")
-public abstract class JDBCIncreasement implements Closeable {
+public abstract class JDBCIncreasement implements Closeable, Increasement {
 
-	List<String> columns;// csv中存有的字段
-	List<String> types;// csv中存有的字段类型
-	String sysDate;//任务跑批日期
-	String tableNameInHBase; //hbase的表名
-	String deltaTableName; //增量表的名字
-	List<String> sqlList = new ArrayList<>();
-	String yesterdayTableName;//上次的表
-	DatabaseWrapper db;
-	String todayTableName;
+	protected List<String> columns;// csv中存有的字段
+	protected List<String> types;// csv中存有的字段类型
+	protected String sysDate;//任务跑批日期
+	protected String tableNameInHBase; //hbase的表名
+	protected String deltaTableName; //增量表的名字
+	protected List<String> sqlList = new ArrayList<>();
+	protected String yesterdayTableName;//上次的表
+	protected DatabaseWrapper db;
+	protected String todayTableName;
 
-	JDBCIncreasement(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db, String dsl_name) {
+	protected JDBCIncreasement(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db, String dsl_name) {
 		this.columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		this.types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dsl_name);
@@ -42,124 +42,13 @@ public abstract class JDBCIncreasement implements Closeable {
 	}
 
 	/**
-	 * 比较出所有的增量数据入增量表
-	 */
-	public abstract void calculateIncrement() throws Exception;
-
-	/**
-	 * 根据临时增量表合并出新的增量表，删除以前的增量表
-	 */
-	public abstract void mergeIncrement() throws Exception;
-
-	/**
-	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
-	 */
-	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
-		if (Dbtype.ORACLE.equals(db.getDbtype())) {
-			//如果有数据则表明该表存在，创建表
-			if (tableIsExistsOracle(tableName, db)) {
-				sqlList.add("DROP TABLE " + tableName);
-			}
-		} else {
-			sqlList.add("DROP TABLE IF EXISTS " + tableName);
-		}
-	}
-
-	/**
-	 * 创建表，如果表不存在
-	 */
-	String createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types) {
-		StringBuilder create = new StringBuilder(1024);
-		if (Dbtype.ORACLE.equals(db.getDbtype())) {
-			//如果有数据则表明该表存在，创建表
-			if (!tableIsExistsOracle(tableName, db)) {
-				create.append("CREATE TABLE ");
-			}
-		} else {
-			create.append("CREATE TABLE IF NOT EXISTS ");
-		}
-		//当StringBuilder中有值
-		if (create.length() > 10) {
-			create.append(tableName);
-			create.append("(");
-			for (int i = 0; i < columns.size(); i++) {
-				create.append(columns.get(i)).append(" ").append(types.get(i)).append(",");
-			}
-			//将最后的逗号删除
-			create.deleteCharAt(create.length() - 1);
-			create.append(")");
-			return create.toString();
-		} else {
-			return "";
-		}
-	}
-
-	/**
-	 * 判断oracle数据库是否存在该表
-	 */
-	private static boolean tableIsExistsOracle(String tableName, DatabaseWrapper db) {
-		ResultSet resultSet;
-		try {
-			resultSet = db.queryGetResultSet("SELECT * FROM user_objects where lower(object_name) = ? "
-					, tableName.toLowerCase());
-			//如果有数据则表明该表存在，创建表
-			if (resultSet.next()) {
-				return true;
-			}
-		} catch (Exception e) {
-			throw new AppSystemException("查询表名是否在oracle数据库中存在出现异常", e);
-		}
-		return false;
-	}
-
-	@Override
-	public void close() {
-		dropAllTmpTable();
-		if (db != null) {
-			db.close();
-		}
-	}
-
-	/**
-	 * 删除临时增量表
-	 */
-	private void dropAllTmpTable() {
-		List<String> deleteInfo = new ArrayList<>();
-		//删除临时增量表
-		dropTableIfExists(deltaTableName, db, deleteInfo);
-		//清空表数据
-		HSqlExecute.executeSql(deleteInfo, db);
-	}
-
-	/**
-	 * 追加
-	 */
-	public abstract void append();
-
-	/**
-	 * 替换
-	 */
-	public void replace() {
-		//创建临时表存本次采集的数据
-		sqlList.add(createTableIfNotExists(deltaTableName, db, columns, types));
-		//将本次采集的数据存入临时表
-		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
-		//删除上次采集的数据表
-		dropTableIfExists(yesterdayTableName, db, sqlList);
-		//将临时表改名为进数之后的表
-		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
-		//执行sql
-		HSqlExecute.executeSql(sqlList, db);
-	}
-
-	/**
 	 * 拼接查询表插入到另一张表的sql
 	 *
 	 * @param targetTableName 目标表名
 	 * @param sourceTableName 源表名
 	 * @return 拼接的sql
 	 */
-	String insertDeltaDataSql(String targetTableName, String sourceTableName) {
+	protected String insertDeltaDataSql(String targetTableName, String sourceTableName) {
 		StringBuilder insertDataSql = new StringBuilder(120);
 		//拼接查找增量并插入增量表
 		insertDataSql.append("INSERT INTO ");
