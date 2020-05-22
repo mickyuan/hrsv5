@@ -277,12 +277,6 @@ public class MarketInfoAction extends BaseAction {
 			CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
 		}
 		CheckColummn(dsl_id, "数据存储");
-		//检查运行状态，是否可以修改
-		if (!checkrunstatus(dm_datatable, dsl_id)) {
-			map.put("success", false);
-			map.put("reason", "running");
-			return map;
-		}
 		//2检查表名重复
 		if (Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ?", dm_datatable.getDatatable_en_name())
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
@@ -334,50 +328,33 @@ public class MarketInfoAction extends BaseAction {
 
 	}
 
-	/**
-	 * 检查页面一运行中时 不允许修改页面配置的情况
-	 *
-	 * @param dm_datatable
-	 * @param dsl_id
-	 * @return true 标识可以修改 false 标识不能修改
-	 */
-	private Boolean checkrunstatus(Dm_datatable dm_datatable, String dsl_id) {
+	@Method(desc = "检查集市表状态",
+			logicStep = "检查集市表状态")
+	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
+	@Return(desc = "集市表状态", range = "集市表状态")
+	public Map<String, Object> checkRunStatus(String datatable_id) {
+		Map<String, Object> resultmap = new HashMap<>();
+		Dm_datatable dm_datatable = new Dm_datatable();
+		dm_datatable.setDatatable_id(datatable_id);
 		//新增
-		if (dm_datatable.getDatatable_id() == null) {
-			return true;
+		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select etl_date from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		String etl_date = dm_datatables.get(0).getEtl_date();
+		//是否运行完成过
+		boolean haveRun = !etl_date.equals(ZeroDate);
+		List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		String is_successful = dm_relation_datatables.get(0).getIs_successful();
+		//是否正在运行
+		boolean isrunning = is_successful.equals(JobExecuteState.YunXing.getCode());
+		//如果运行完成过
+		if (haveRun || isrunning) {
+			resultmap.put("status", true);
+			return resultmap;
+		} else {
+			resultmap.put("status", false);
+			return resultmap;
 		}
-		//编辑
-		else {
-			List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select etl_date from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-			String etl_date = dm_datatables.get(0).getEtl_date();
-			//是否运行完成过
-			boolean haveRun = !etl_date.equals(ZeroDate);
-			List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-			String is_successful = dm_relation_datatables.get(0).getIs_successful();
-			//是否正在运行
-			boolean isrunning = is_successful.equals(JobExecuteState.YunXing.getCode());
-			//如果运行完成过
-			if (haveRun) {
-				//根据页面填写的信息 检查库中是否信息一样
-				List<Map<String, Object>> maps = Dbo.queryList("select * from " + Dm_datatable.TableName + " where datatable_id = ? and datatable_en_name = ? and sql_engine = ? and storage_type = ? and table_storage = ? ",
-						dm_datatable.getDatatable_id(), dm_datatable.getDatatable_en_name(), dm_datatable.getSql_engine(), dm_datatable.getStorage_type(), dm_datatable.getTable_storage());
-				if (maps.isEmpty()) {
-					return false;
-				} else {
-					//检查 存储层选择的是否一样
-					Dm_relation_datatable dm_relation_datatable = new Dm_relation_datatable();
-					dm_relation_datatable.setDsl_id(dsl_id);
-					List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_relation_datatable.TableName + " where dsl_id = ? and datatable_id = ?", dm_relation_datatable.getDsl_id(), dm_datatable.getDatatable_id());
-					if (maps1.isEmpty()) {
-						return false;
-					} else {
-						return true;
-					}
-				}
-			} else {
-				return true;
-			}
-		}
+
+
 	}
 
 	@Method(desc = "查询与当前datatable_id拥有相同datatable_en_name的另外一组datatable_id",
@@ -431,12 +408,6 @@ public class MarketInfoAction extends BaseAction {
 			}
 		} else {
 			map.put("ifrepeat", false);
-		}
-		//检查是否可以更新
-		if (!checkrunstatus(dm_datatable, dsl_id)) {
-			map.put("success", false);
-			map.put("reason", "running");
-			return map;
 		}
 		//TODO 目前先全部使用默认 之后在修改
 		dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
