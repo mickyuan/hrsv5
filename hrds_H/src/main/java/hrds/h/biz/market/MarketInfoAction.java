@@ -270,6 +270,7 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(dm_datatable.getTable_storage(), "数据存储方式");
 		CheckColummn(dm_datatable.getStorage_type(), "进数方式");
 		CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
+		CheckColummn(dm_datatable.getRepeat_flag(), "表名可能重复");
 		if (TableLifeCycle.YongJiu.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
 			dm_datatable.setDatatable_due_date(Constant.MAXDATE);
 		} else {
@@ -285,8 +286,11 @@ public class MarketInfoAction extends BaseAction {
 		//2检查表名重复
 		if (Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ?", dm_datatable.getDatatable_en_name())
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-			map.put("ifrepeat", true);
-//            throw new BusinessException("表英文名重复，请重新填写");
+			if (dm_datatable.getRepeat_flag().equals(IsFlag.Shi.getCode())) {
+				map.put("ifrepeat", true);
+			} else {
+				throw new BusinessException("表英文名重复且表名不可能重复，请重新填写");
+			}
 		} else {
 			map.put("ifrepeat", false);
 		}
@@ -370,8 +374,7 @@ public class MarketInfoAction extends BaseAction {
 						return true;
 					}
 				}
-			}
-			else{
+			} else {
 				return true;
 			}
 		}
@@ -409,6 +412,7 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(dm_datatable.getTable_storage(), "数据存储方式");
 		CheckColummn(dm_datatable.getStorage_type(), "进数方式");
 		CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
+		CheckColummn(dm_datatable.getRepeat_flag(), "表名可能重复");
 		if (TableLifeCycle.LinShi.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
 			CheckColummn(dm_datatable.getDatatable_due_date(), "数据表到期日期");
 			dm_datatable.setDatatable_due_date(dm_datatable.getDatatable_due_date().substring(0, 10).replace("-", ""));
@@ -420,8 +424,11 @@ public class MarketInfoAction extends BaseAction {
 		if (Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ? and datatable_id != ?",
 				dm_datatable.getDatatable_en_name(), dm_datatable.getDatatable_id())
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-			map.put("ifrepeat", true);
-//            throw new BusinessException("表英文名重复，请重新填写");
+			if (dm_datatable.getRepeat_flag().equals(IsFlag.Shi.getCode())) {
+				map.put("ifrepeat", true);
+			} else {
+				throw new BusinessException("表英文名重复且表名不可能重复，请重新填写");
+			}
 		} else {
 			map.put("ifrepeat", false);
 		}
@@ -812,8 +819,9 @@ public class MarketInfoAction extends BaseAction {
 	 * @return
 	 */
 	private String transFormColumnType(String column_type, String dsl_id) {
+		//如果dsl_id为空，表示不需要转换，在存储血缘关系的时候，需要调用到该方法。
 		if (StringUtils.isEmpty(dsl_id)) {
-            return column_type;
+			return column_type;
 		}
 		//统一小写
 		column_type = column_type.toLowerCase();
