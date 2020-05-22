@@ -813,8 +813,7 @@ public class MarketInfoAction extends BaseAction {
 	 */
 	private String transFormColumnType(String column_type, String dsl_id) {
 		if (StringUtils.isEmpty(dsl_id)) {
-			throw new BusinessSystemException("字段转换时,没有dsl_id");
-//            return column_type;
+            return column_type;
 		}
 		//统一小写
 		column_type = column_type.toLowerCase();
