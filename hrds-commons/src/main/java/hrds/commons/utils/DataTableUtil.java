@@ -5,12 +5,11 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Dm_datatable;
-import hrds.commons.entity.Dq_index3record;
-import hrds.commons.entity.Source_file_attribute;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.background.query.DMLDataQuery;
@@ -110,7 +109,7 @@ public class DataTableUtil {
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
     @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
     @Param(name = "data_own_type", desc = "类型标识", range = "dcl_batch:批量数据,dcl_realtime:实时数据", nullable = true)
-    @Param(name = "file_id", desc = "表源属性id", range = "String[]")
+    @Param(name = "file_id", desc = "表源属性id", range = "String")
     @Return(desc = "字段信息列表", range = "字段信息列表")
     public static List<Map<String, Object>> getColumnByFileId(String data_layer, String data_own_type, String file_id) {
         //数据层获取不同表结构
@@ -138,6 +137,29 @@ public class DataTableUtil {
                 throw new BusinessException("未找到匹配的存储层!");
         }
         return col_info_s;
+    }
+
+    @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
+    @Param(name = "table_name", desc = "登记表名", range = "String")
+    @Return(desc = "字段信息列表", range = "字段信息列表")
+    public static List<Map<String, Object>> getColumnByTableName(String table_name) {
+        List<Map<String, Object>> col_info_s;
+        //初始化查询Sql TODO 目前只考虑DCL,DML
+        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+        asmSql.clean();
+        //DCL
+        asmSql.addSql("SELECT ti.table_id AS table_id,dsr.hyren_name AS table_name,tc.column_name AS column_name," +
+                " tc.column_ch_name AS column_ch_name, tc.column_type AS column_type FROM " + Data_store_reg.TableName +
+                " dsr JOIN " + Table_info.TableName + " ti ON dsr.database_id = ti.database_id" +
+                " AND dsr.table_name = ti.table_name JOIN " + Table_column.TableName + " tc" +
+                " ON ti.table_id = tc.table_id  WHERE lower(dsr.hyren_name) = lower(?)").addParam(table_name);
+        //DML
+        asmSql.addSql("UNION");
+        asmSql.addSql("SELECT dd.datatable_id AS table_id, dd.datatable_en_name AS table_name, dfi.field_en_name AS" +
+                " column_name,dfi.field_cn_name AS column_ch_name,concat(field_type,'(',field_length,')') AS" +
+                " column_type FROM " + Datatable_field_info.TableName + " dfi JOIN " + Dm_datatable.TableName + " dd ON" +
+                " dd.datatable_id = dfi.datatable_id WHERE LOWER(dd.datatable_en_name) = LOWER(?)").addParam(table_name);
+        return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
     @Method(desc = "获取在所有存储层中是否存在该表",
