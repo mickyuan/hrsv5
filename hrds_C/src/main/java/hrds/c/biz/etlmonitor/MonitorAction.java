@@ -815,13 +815,23 @@ public class MonitorAction extends BaseAction {
 		Etl_sys etl_sys = Dbo.queryOneObject(Etl_sys.class,
 				"select * from " + Etl_sys.TableName + " where user_id=? and etl_sys_cd=?",
 				getUserId(), etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！"));
+		String curr_bath_date = etl_sys.getCurr_bath_date();
+		if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
+			curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
+		}
 		// 5.查询作业信息
-		Etl_job_def etl_job_def = Dbo.queryOneObject(Etl_job_def.class,
-				"select * from " + Etl_job_def.TableName + " where etl_sys_cd=? AND etl_job=?",
-				etl_sys_cd, etl_job).orElseThrow(() -> new BusinessException("sql查询错误！"));
+		List<Object> logDicList = Dbo.queryOneColumnList(
+				"select log_dic from " + Etl_job_disp_his.TableName + " where etl_sys_cd=? AND etl_job=? " +
+						" and curr_bath_date=? order by curr_end_time desc", etl_sys_cd, etl_job, curr_bath_date);
 		// 6.获取日志目录
-		String logDir = etl_job_def.getLog_dic() + etl_job + "_" + etl_sys.getCurr_bath_date().
-				replaceAll("-", "") + ".log";
+		if (logDicList.isEmpty()) {
+			return null;
+		}
+		String log_dic = logDicList.get(0).toString();
+		if (!log_dic.endsWith("/")) {
+			log_dic = log_dic + File.separator;
+		}
+		String logDir = log_dic + etl_job + "_" + curr_bath_date + ".log";
 		// 7.判断查询行数是否超过1000行，最大显示1000行
 		if (readNum > 1000) {
 			readNum = 1000;
@@ -861,17 +871,24 @@ public class MonitorAction extends BaseAction {
 			if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
 				throw new BusinessException("当前用户对应的工程已不存在！");
 			}
-			// 3.获取作业信息
-			Map<String, Object> etlJobByJob = ETLJobUtil.getEtlJobByJob(etl_sys_cd, etl_job);
-			// 4.获取日志目录
-			String logDir = etlJobByJob.get("log_dic").toString();
-			// 5.打包指令
 			if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
 				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 			}
+			// 3.获取作业信息
+			List<Object> logDicList = Dbo.queryOneColumnList("select log_dic FROM "
+					+ Etl_job_disp_his.TableName + " where etl_sys_cd=? AND etl_job=? and " +
+					" curr_bath_date=? order by curr_end_time desc", etl_sys_cd, etl_job, curr_bath_date);
+			if (logDicList.isEmpty()) {
+				return null;
+			}
+			// 4.获取日志目录
+			String logDir = logDicList.get(0).toString();
+			if (!logDir.endsWith("/")) {
+				logDir = logDir + File.separator;
+			}
+			// 5.打包指令
 			String compressCommand = "tar -zvcPf " + logDir + curr_bath_date + "_" + etl_job + ".tar.gz"
-					+ " " + logDir + etl_job + "_" + curr_bath_date + ".log " + logDir + etl_job
-					+ curr_bath_date + "000000error.log ";
+					+ " " + logDir + etl_job + "_" + curr_bath_date + "*.log ";
 			// 6.根据工程编号获取工程信息
 			Map<String, Object> etlSysInfo = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 			// 7.检查工程部署参数是否为空
