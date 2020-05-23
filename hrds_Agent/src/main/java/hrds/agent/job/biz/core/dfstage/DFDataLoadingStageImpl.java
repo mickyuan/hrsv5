@@ -11,7 +11,6 @@ import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
-import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -144,7 +143,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					get(StorageTypeKey.sftp_pwd), data_store_connect_attr.get(StorageTypeKey.sftp_port)), 0);
 			String file_format = tableBean.getFile_format();
 			//备份表上次执行进数的数据
-			backupToDayTable(todayTableName, dataStoreConfBean, db);
+			backupToDayTable(todayTableName, db);
 			if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
 				String tmpTodayTableName = todayTableName + "t";
@@ -204,11 +203,11 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			clearTemporaryLog(database_type, todayTableName,
 					data_store_connect_attr.get(StorageTypeKey.external_root_path), session);
 			//根据表存储期限备份每张表存储期限内进数的数据
-			backupPastTable(collectTableBean, dataStoreConfBean, db);
+			backupPastTable(collectTableBean, db);
 		} catch (Exception e) {
 			if (db != null) {
 				//执行失败，恢复上次进数的数据
-				recoverBackupToDayTable(todayTableName, dataStoreConfBean, db);
+				recoverBackupToDayTable(todayTableName, db);
 			}
 			throw new AppSystemException("表" + collectTableBean.getHbase_name()
 					+ "执行数据库" + dataStoreConfBean.getDsl_name() + "外部表加载数据的sql报错", e);

@@ -26,4 +26,9 @@ public interface Increasement {
 	 */
 	void replace();
 
+	/**
+	 * 重跑，或者当次跑批失败恢复数据
+	 */
+	void restore(String storageType);
+
 }

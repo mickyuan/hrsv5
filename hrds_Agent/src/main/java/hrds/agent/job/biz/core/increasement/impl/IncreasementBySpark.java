@@ -3,10 +3,13 @@ package hrds.agent.job.biz.core.increasement.impl;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
+import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ import java.util.List;
  * Description: 通过spark sql跑增量
  */
 public class IncreasementBySpark extends JDBCIncreasement {
+	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
 
 	public IncreasementBySpark(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
 	                           String dsl_name) {
@@ -34,7 +38,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
-		restoreData();
+		restore(StorageType.ZengLiang.getCode());
 		//5、将比较之后的要insert的结果插入到临时表中
 		getInsertDataSql();
 		//6、将比较之后的要delete(拉链中的闭链)的结果插入到临时表中
@@ -60,7 +64,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		sqlList.add(createTableIfNotExists(yesterdayTableName));
 		//2、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
-		appendRestoreData();
+		restore(StorageType.ZhuiJia.getCode());
 		//3.插入今天新增的数据
 		sqlList.add(insertDeltaDataSql(yesterdayTableName, todayTableName));
 		//4.执行sql
@@ -81,6 +85,50 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		//将临时表改名为进数之后的表
 		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
 		//执行sql
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 恢复数据
+	 *
+	 * @param storageType 拉链算法存储模式
+	 */
+	@Override
+	public void restore(String storageType) {
+		ArrayList<String> sqlList = new ArrayList<>();
+		if (StorageType.ZengLiang.getCode().equals(storageType)) {
+			//增量恢复数据
+			if (!haveTodayData(yesterdayTableName)) {
+				return;
+			}
+			//找出不是今天的数据,来实现恢复数据
+			String after = "case " + Constant.EDATENAME + " when '" + sysDate + "' then '" + Constant.MAXDATE + "' else "
+					+ Constant.EDATENAME + " end " + Constant.EDATENAME;
+			String join = StringUtils.join(columns, ',');
+			join = StringUtils.replace(join, Constant.EDATENAME, after);
+			String sql = "create table " + yesterdayTableName + "_restore as select  " + join + " from " +
+					yesterdayTableName + " where " + Constant.SDATENAME + "<>'" + sysDate + "'";
+			sqlList.add(sql);
+			sqlList.add("drop table if exists " + yesterdayTableName);
+			sqlList.add("alter table " + yesterdayTableName + "_restore rename to " + yesterdayTableName);
+		} else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
+			//追加恢复数据
+			if (!haveAppendTodayData(yesterdayTableName)) {
+				return;
+			}
+			//找出不是今天的数据,来实现恢复数据
+			String join = StringUtils.join(columns, ',');
+			String sql = "create table " + yesterdayTableName + "_restore as select  " + join + " from " +
+					yesterdayTableName + " where " + Constant.SDATENAME + "<>'" + sysDate + "'";
+			sqlList.add(sql);
+			sqlList.add("drop table if exists " + yesterdayTableName);
+			sqlList.add("alter table " + yesterdayTableName + "_restore rename to " + yesterdayTableName);
+		} else if (StorageType.TiHuan.getCode().equals(storageType)) {
+			logger.info("替换，不需要恢复当天数据");
+		} else {
+			throw new AppSystemException("错误的增量拉链参数代码项");
+		}
+		//执行数据恢复
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
@@ -211,42 +259,6 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		deleteDatasql.append(" = '99991231'");
 
 		sqlList.add(deleteDatasql.toString());
-	}
-
-	/**
-	 * 为了支持重跑，如果存在本次任务的增量，则消除，还原到原始的版
-	 */
-	private void restoreData() {
-
-		if (!haveTodayData(yesterdayTableName)) {
-			return;
-		}
-		//找出不是今天的数据,来实现恢复数据
-		String after = "case " + Constant.EDATENAME + " when '" + sysDate + "' then '" + Constant.MAXDATE + "' else "
-				+ Constant.EDATENAME + " end " + Constant.EDATENAME;
-		String join = StringUtils.join(columns, ',');
-		join = StringUtils.replace(join, Constant.EDATENAME, after);
-		String sql = "create table " + yesterdayTableName + "_restore as select  " + join + " from " +
-				yesterdayTableName + " where " + Constant.SDATENAME + "<>'" + sysDate + "'";
-		sqlList.add(sql);
-		sqlList.add("drop table if exists " + yesterdayTableName);
-		sqlList.add("alter table " + yesterdayTableName + "_restore rename to " + yesterdayTableName);
-	}
-
-	/**
-	 * 为了支持重跑，如果存在本次任务的增量，则消除，还原到原始的版
-	 */
-	private void appendRestoreData() {
-		if (!haveAppendTodayData(yesterdayTableName)) {
-			return;
-		}
-		//找出不是今天的数据,来实现恢复数据
-		String join = StringUtils.join(columns, ',');
-		String sql = "create table " + yesterdayTableName + "_restore as select  " + join + " from " +
-				yesterdayTableName + " where " + Constant.SDATENAME + "<>'" + sysDate + "'";
-		sqlList.add(sql);
-		sqlList.add("drop table if exists " + yesterdayTableName);
-		sqlList.add("alter table " + yesterdayTableName + "_restore rename to " + yesterdayTableName);
 	}
 
 	/**

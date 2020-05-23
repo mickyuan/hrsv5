@@ -12,9 +12,9 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.databaseadditinfo.DatabaseAdditInfoOperateInterface;
 import hrds.agent.job.biz.core.databaseadditinfo.impl.OracleAdditInfoOperateImpl;
 import hrds.agent.job.biz.core.databaseadditinfo.impl.PostgresqlAdditInfoOperateImpl;
+import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementBySpark;
-import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
@@ -58,21 +58,25 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 				TableBean tableBean = stageParamInfo.getTableBean();
 				for (DataStoreConfBean dataStoreConf : dataStoreConfBeanList) {
 					//根据存储类型上传到目的地
-					if (Store_type.DATABASE.getCode().equals(dataStoreConf.getStore_type())) {
+					if (Store_type.DATABASE.getCode().equals(dataStoreConf.getStore_type())
+							|| Store_type.HIVE.getCode().equals(dataStoreConf.getStore_type())) {
 						JDBCIncreasement increase = null;
 						try {
 							DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
 							increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
 									collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name());
 							if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+								LOGGER.info("----------------------------增量--------------------------------");
 								//计算增量
 								increase.calculateIncrement();
 								//合并增量表
 								increase.mergeIncrement();
 							} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
+								LOGGER.info("----------------------------追加--------------------------------");
 								//追加
 								increase.append();
 							} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
+								LOGGER.info("----------------------------替换--------------------------------");
 								//替换
 								increase.replace();
 							} else {
@@ -82,39 +86,24 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 							//配置附加属性
 							configureAdditInfo(collectTableBean.getHbase_name(), dataStoreConf.getAdditInfoFieldMap(),
 									dataStoreConf.getData_store_connect_attr().get(StorageTypeKey.database_type), db);
+						} catch (Exception e) {
+							if (increase != null) {
+								//报错删除当次跑批数据
+								increase.restore(dataStoreConf.getStore_type());
+							}
+							throw new AppSystemException("计算增量失败");
 						} finally {
 							if (increase != null)
 								increase.close();
 						}
-					} else if (Store_type.HIVE.getCode().equals(dataStoreConf.getStore_type())) {
-						try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.
-								getData_store_connect_attr()); JDBCIncreasement increasement = new IncreasementBySpark(
-								tableBean, collectTableBean.getHbase_name(), collectTableBean.getEtlDate(),
-								db, dataStoreConf.getDsl_name())) {
-							if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-								//计算增量
-								increasement.calculateIncrement();
-								//合并增量表
-								increasement.mergeIncrement();
-							} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
-								//追加
-								increasement.append();
-							} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
-								//替换
-								increasement.replace();
-							} else {
-								throw new AppSystemException("表" + collectTableBean.getHbase_name()
-										+ "请选择正确的存储方式！");
-							}
-						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
-
+						LOGGER.info("数据进Hbase待实现");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
-
+						LOGGER.info("数据进Solr待实现");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {
-
+						LOGGER.info("数据进ElasticSearch待实现");
 					} else if (Store_type.MONGODB.getCode().equals(dataStoreConf.getStore_type())) {
-
+						LOGGER.info("数据进MONGODB待实现");
 					} else {
 						//TODO 上面的待补充。
 						throw new AppSystemException("表" + collectTableBean.getHbase_name()
