@@ -4,13 +4,13 @@ import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
+import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除掉
-		restoreData();
+		restore(StorageType.ZengLiang.getCode());
 		//5.将比较之后的需要insert的结果插入到临时表中
 		getInsertDataSql();
 		//6.将比较之后的需要delete(拉链中的闭链)的结果插入到临时表中
@@ -79,7 +79,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		sqlList.add(createTableIfNotExists(yesterdayTableName, db, columns, types));
 		//2.恢复今天的数据，防止重跑
-		restoreAppendData();
+		restore(StorageType.ZhuiJia.getCode());
 		//3.插入今天新增的数据
 		insertAppendData();
 		//4.执行sql
@@ -104,6 +104,30 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	}
 
 	/**
+	 * 恢复数据
+	 *
+	 * @param storageType 拉链算法存储模式
+	 */
+	@Override
+	public void restore(String storageType) {
+		ArrayList<String> sqlList = new ArrayList<>();
+		if (StorageType.ZengLiang.getCode().equals(storageType)) {
+			//增量恢复数据
+			sqlList.add("delete from " + yesterdayTableName + " where " + Constant.SDATENAME + "='" + sysDate + "'");
+			sqlList.add("update " + yesterdayTableName + " set " + Constant.EDATENAME + " = "
+					+ Constant.MAXDATE + " where " + Constant.EDATENAME + "='" + sysDate + "'");
+		} else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
+			//追加恢复数据
+			sqlList.add("DELETE FROM " + yesterdayTableName + " WHERE " + Constant.SDATENAME + "='" + sysDate + "'");
+		} else if (StorageType.TiHuan.getCode().equals(storageType)) {
+			logger.info("替换，不需要恢复当天数据");
+		} else {
+			throw new AppSystemException("错误的增量拉链参数代码项");
+		}
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
 	 * 关闭连接
 	 */
 	@Override
@@ -112,15 +136,6 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		if (db != null) {
 			db.close();
 		}
-	}
-
-	/**
-	 * 重跑恢复数据
-	 */
-	private void restoreData() {
-		sqlList.add("delete from " + yesterdayTableName + " where " + Constant.SDATENAME + "='" + sysDate + "'");
-		sqlList.add("update " + yesterdayTableName + " set " + Constant.EDATENAME + " = "
-				+ Constant.MAXDATE + " where " + Constant.EDATENAME + "='" + sysDate + "'");
 	}
 
 	/**
@@ -239,14 +254,8 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	}
 
 	/**
-	 * 追加恢复数据
-	 */
-	private void restoreAppendData() {
-		sqlList.add("DELETE FROM " + yesterdayTableName + " WHERE " + Constant.SDATENAME + "='" + sysDate + "'");
-	}
-
-	/**
 	 * 插入有效数据
+	 *
 	 * @param tmpDelTa 表名
 	 * @return 插入有效数据sql
 	 */
@@ -284,6 +293,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 
 	/**
 	 * 创建增量接收数据临时表
+	 *
 	 * @param tmpDelTa 表名
 	 * @return 建表语句
 	 */
@@ -307,7 +317,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
 		if (Dbtype.ORACLE.equals(db.getDbtype())) {
 			//如果有数据则表明该表存在，创建表
-			if (tableIsExistsOracle(tableName, db)) {
+			if (db.isExistTable(tableName)) {
 				sqlList.add("DROP TABLE " + tableName);
 			}
 		} else {
@@ -322,7 +332,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		StringBuilder create = new StringBuilder(1024);
 		if (Dbtype.ORACLE.equals(db.getDbtype())) {
 			//如果有数据则表明该表存在，创建表
-			if (!tableIsExistsOracle(tableName, db)) {
+			if (!db.isExistTable(tableName)) {
 				create.append("CREATE TABLE ");
 			}
 		} else {
@@ -342,24 +352,6 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		} else {
 			return "";
 		}
-	}
-
-	/**
-	 * 判断oracle数据库是否存在该表
-	 */
-	private static boolean tableIsExistsOracle(String tableName, DatabaseWrapper db) {
-		ResultSet resultSet;
-		try {
-			resultSet = db.queryGetResultSet("SELECT * FROM user_objects where lower(object_name) = ? "
-					, tableName.toLowerCase());
-			//如果有数据则表明该表存在，创建表
-			if (resultSet.next()) {
-				return true;
-			}
-		} catch (Exception e) {
-			throw new AppSystemException("查询表名是否在oracle数据库中存在出现异常", e);
-		}
-		return false;
 	}
 
 	/**

@@ -377,7 +377,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			//获取连接
 			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 			//备份表上次执行进数的数据
-			backupToDayTable(todayTableName, dataStoreConfBean, db);
+			backupToDayTable(todayTableName, db);
 			//先创建表，再多线程batch数据入库，根据数据保留天数做相应调整，成功则删除最早一次进数保留的数据
 			createTodayTable(tableBean, todayTableName, dataStoreConfBean, db);
 			for (String fileAbsolutePath : localFiles) {
@@ -394,13 +394,13 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
 			}
 			//根据表存储期限备份每张表存储期限内进数的数据
-			backupPastTable(collectTableBean, dataStoreConfBean, db);
+			backupPastTable(collectTableBean, db);
 			LOGGER.info("数据成功进入库" + dataStoreConfBean.getDsl_name() + "下的表" + collectTableBean.getHbase_name()
 					+ ",总计进数" + count + "条");
 		} catch (Exception e) {
 			if (db != null) {
 				//执行失败，恢复上次进数的数据
-				recoverBackupToDayTable(todayTableName, dataStoreConfBean, db);
+				recoverBackupToDayTable(todayTableName, db);
 			}
 			throw new AppSystemException("多线程读取文件batch进库" + dataStoreConfBean.getDsl_name() + "下的表"
 					+ collectTableBean.getHbase_name() + "异常", e);

@@ -84,11 +84,14 @@ public class ConnectionTool {
 		dbInfo.setWay(ConnWay.JDBC);
 		//2、获取数据库类型
 		Dbtype dbType = getDbType(dbConfig.get(StorageTypeKey.database_type));
-		if (dbType.equals(Dbtype.HIVE)) {
+		if (dbType == Dbtype.HIVE) {
 			dbInfo.setAutoCommit(false);
 		}
 		if (fetch_size != 0) {
 			dbInfo.setFetch_size(fetch_size);
+			if (dbType == Dbtype.POSTGRESQL) {
+				dbInfo.setAutoCommit(false);
+			}
 		}
 		dbInfo.setDbtype(dbType);
 		dbInfo.setShow_conn_time(true);
