@@ -82,7 +82,8 @@ public class DRBDataQuery {
     public static void deleteDqFailureTableInfo(long failure_table_id) {
         Dq_failure_table dft = new Dq_failure_table();
         dft.setFailure_table_id(failure_table_id);
-        int execute = Dbo.execute("DELETE FROM data_store_reg WHERE failure_table_id=?", dft.getFailure_table_id());
+        int execute = Dbo.execute("DELETE FROM " + Dq_failure_table.TableName + " WHERE failure_table_id=?",
+                dft.getFailure_table_id());
         if (execute != 1) {
             throw new BusinessException("删除回收站表登记信息失败! failure_table_id=" + failure_table_id);
         }
