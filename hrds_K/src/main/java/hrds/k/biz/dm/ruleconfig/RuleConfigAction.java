@@ -8,8 +8,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.db.jdbc.DefaultPageImpl;
-import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -328,13 +326,17 @@ public class RuleConfigAction extends BaseAction {
             //设置查询sql:问题数据明细sql,只取10条
             List<Map<String, Object>> check_index3_list = new ArrayList<>();
             //根据指标3存储记录信息获取数据
-            new ProcessingData() {
-                @Override
-                public void dealLine(Map<String, Object> map) throws Exception {
+            try {
+                new ProcessingData() {
+                    @Override
+                    public void dealLine(Map<String, Object> map) {
 
-                    check_index3_list.add(map);
-                }
-            }.getPageDataLayer(sql, db, 1, 10, dq_index3record.getDsl_id());
+                        check_index3_list.add(map);
+                    }
+                }.getPageDataLayer(sql, db, 1, 10, dq_index3record.getDsl_id());
+            } catch (Exception e) {
+                throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+            }
             return check_index3_list;
         }
     }

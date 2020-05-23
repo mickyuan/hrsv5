@@ -254,7 +254,12 @@ public class DqcExecution {
             LoadingDataBean ldbbean = new LoadingDataBean();
             ldbbean.setTableName(dqc_table_name);
             //插入指标3检查数据到存储层下,和查询的表存储层一致
-            long dsl_id = new LoadingData(ldbbean).intoDataLayer(sql, db);
+            long dsl_id;
+            try {
+                dsl_id = new LoadingData(ldbbean).intoDataLayer(sql, db);
+            } catch (Exception e) {
+                throw new BusinessException("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
+            }
             //记录指标3检测结果表元信息
             Dq_index3record dq_index3record = new Dq_index3record();
             dq_index3record.setRecord_id(PrimayKeyGener.getNextId());
@@ -271,8 +276,6 @@ public class DqcExecution {
             dq_index3record.add(db);
             //提交数据库操作
             db.commit();
-        } catch (Exception e) {
-            throw new BusinessException("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
         }
         return true;
     }
@@ -298,12 +301,16 @@ public class DqcExecution {
                 if (StringUtil.isBlank(sql)) {
                     throw new BusinessException("执行sql的时候,sql为空!");
                 }
-                new ProcessingData() {
-                    @Override
-                    public void dealLine(Map<String, Object> map) {
+                try {
+                    new ProcessingData() {
+                        @Override
+                        public void dealLine(Map<String, Object> map) {
 
-                    }
-                }.getPageDataLayer(sql, db, 1, 10);
+                        }
+                    }.getPageDataLayer(sql, db, 1, 10);
+                } catch (Exception e) {
+                    throw new BusinessException(e.getMessage());
+                }
             }
         }
         return "success";
