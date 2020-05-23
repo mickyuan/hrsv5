@@ -30,7 +30,7 @@ public class Utils {
 
     private static final Logger logger = LogManager.getLogger(Utils.class);
 
-    static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
+    static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase, boolean isMultipleInput) {
         List<String> additionalAttrs;
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             additionalAttrs = getAdditionalAttrs(db, conf.getDatatableId(), StoreLayerAdded.ZhuJian);
@@ -68,6 +68,9 @@ public class Utils {
             s = StringUtil.replaceLast(s, str, "char(32)");
             s = StringUtil.replaceLast(s, str, "char(8)");
             s = StringUtil.replaceLast(s, str, "char(8)");
+
+            if (isMultipleInput) s = StringUtil.replaceLast(s, str, "char(10)");
+
             return s;
         }
         return columnTypes.toString();
@@ -92,11 +95,16 @@ public class Utils {
      *
      * @param db
      */
-    static void restoreDatabaseData(DatabaseWrapper db, String tableName, String etlDate) {
-        if (db.isExistTable(tableName)) {
+    static void restoreDatabaseData(DatabaseWrapper db, String tableName,
+                                    String etlDate, String datatableId, boolean isMultipleInput) {
+        if (isMultipleInput) {
+            db.execute(String.format("DELETE FROM %s WHERE %s = '%s' AND %s = '%s'",
+                    tableName, SDATENAME, etlDate, TABLE_ID_NAME, datatableId));
+            db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s' AND %s = '%s'",
+                    tableName, EDATENAME, MAXDATE, EDATENAME, etlDate, TABLE_ID_NAME, datatableId));
+        } else {
             db.execute(String.format("DELETE FROM %s WHERE %s = '%s'",
                     tableName, SDATENAME, etlDate));
-
             db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s'",
                     tableName, EDATENAME, MAXDATE, EDATENAME, etlDate));
         }

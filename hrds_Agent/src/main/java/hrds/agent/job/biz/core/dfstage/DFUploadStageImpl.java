@@ -17,7 +17,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessInterface;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
-import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
+import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -436,7 +436,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		//将最后的逗号删除
 		sql.deleteCharAt(sql.length() - 1);
 		sql.append(")");
-		JDBCIncreasement.dropTableIfExists(todayTableName, db, sqlList);
+		IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
 		sqlList.add(sql.toString());
 		//执行建表语句
 		HSqlExecute.executeSql(sqlList, db);

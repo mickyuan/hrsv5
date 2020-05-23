@@ -5,7 +5,10 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.*;
+import fd.ng.core.utils.BeanUtil;
+import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -15,8 +18,6 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
-import fd.ng.web.util.RequestUtil;
-import fd.ng.web.util.ResponseUtil;
 import hrds.c.biz.util.ConvertColumnNameToChinese;
 import hrds.c.biz.util.DownloadLogUtil;
 import hrds.c.biz.util.ETLJobUtil;
@@ -55,7 +56,7 @@ public class JobConfiguration extends BaseAction {
 	private static final String yarn = "Yarn";
 	// excel文件后缀名
 	private static final String xlsxSuffix = ".xlsx";
-	private static final String xlsSuffix = ".xlsx";
+	private static final String xlsSuffix = ".xls";
 	// 代码项类型
 	private static final String pro_type = "pro_type";
 	private static final String disp_freq = "disp_freq";

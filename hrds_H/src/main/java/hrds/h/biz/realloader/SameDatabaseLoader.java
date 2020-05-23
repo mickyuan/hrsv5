@@ -21,6 +21,9 @@ import static hrds.commons.utils.Constant.*;
  */
 public class SameDatabaseLoader extends AbstractRealLoader {
 
+
+    boolean MARKET_INCREMENT_TMPTABLE_DELETE =
+            PropertyParaValue.getBoolean("market.increment.tmptable.delete", true);
     private final DatabaseWrapper db;
     private final String sql;
     private final String columns;
@@ -36,7 +39,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         sql = conf.getCompleteSql();
 
         columns = Utils.columns(conf.getDatatableFields());
-        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, true);
+        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
+                true, isMultipleInput);
         databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
         currentTableName = "curr_" + tableName;
         validTableName = "valid_" + tableName;
@@ -78,34 +82,46 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         db.execute(String.format("INSERT INTO %s SELECT * FROM %s",
                 tableName, validTableName));
         // 关链数据
-        db.execute(String.format("UPDATE %s SET %s = '%s' WHERE " +
+        String sql = String.format("UPDATE %s SET %s = '%s' WHERE " +
                         "HYREN_MD5_VAL IN ( SELECT HYREN_MD5_VAL FROM %s )",
-                tableName, EDATENAME, conf.getEtlDate(), invalidTableName));
-
-        if (PropertyParaValue.getBoolean("market.increment.tmptable.delete", true)) {
-            dropTempTable();
+                tableName, EDATENAME, conf.getEtlDate(), invalidTableName);
+        if (isMultipleInput) {
+            sql = sql + " AND " + TABLE_ID_NAME + " = '" + datatableId + "'";
         }
+        db.execute(sql);
 
+        if (MARKET_INCREMENT_TMPTABLE_DELETE) dropTempTable();
 
     }
 
     private void computeValidDataAndInsert() {
-        String validDataSql = "INSERT INTO %s select * from %s WHERE NOT EXISTS " +
-                "( SELECT 1 from %s WHERE %s.%s = %s.%s AND %s.%s = '%s')";
-        db.execute(String.format(validDataSql, validTableName, currentTableName, tableName, currentTableName,
-                MD5NAME, tableName, MD5NAME, tableName, EDATENAME, MAXDATE));
+        String validDataSql = String.format("INSERT INTO %s select * from %s WHERE NOT EXISTS " +
+                        "( SELECT 1 from %s WHERE %s.%s = %s.%s AND %s.%s = '%s')"
+                , validTableName, currentTableName, tableName, currentTableName,
+                MD5NAME, tableName, MD5NAME, tableName, EDATENAME, MAXDATE);
+        if (isMultipleInput) {
+            validDataSql = validDataSql.replace(")", " AND " + TABLE_ID_NAME
+                    + " = '" + datatableId + "')");
+        }
+        db.execute(validDataSql);
     }
 
     private void computeInvalidDataAndInsert() {
-        final String invalidDataSql = "INSERT INTO %s select * from %s WHERE NOT EXISTS " +
-                "( SELECT 1 from %s WHERE %s.%s = %s.%s) AND %s.%s = '%s'";
-        db.execute(String.format(invalidDataSql, invalidTableName, tableName, currentTableName,
-                tableName, MD5NAME, currentTableName, MD5NAME, tableName, EDATENAME, MAXDATE));
+
+        String invalidDataSql = String.format("INSERT INTO %s select * from %s WHERE NOT EXISTS " +
+                        "( SELECT 1 from %s WHERE %s.%s = %s.%s) AND %s.%s = '%s'",
+                invalidTableName, tableName, currentTableName,
+                tableName, MD5NAME, currentTableName, MD5NAME, tableName, EDATENAME, MAXDATE);
+        if (isMultipleInput) {
+            invalidDataSql = invalidDataSql.replace(")", " AND " + TABLE_ID_NAME
+                    + " = '" + datatableId + "')");
+        }
+        db.execute(invalidDataSql);
     }
 
     @Override
     public void restore() {
-        Utils.restoreDatabaseData(db, tableName, conf.getEtlDate());
+        Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(), conf.getDatatableId(), isMultipleInput);
     }
 
     @Override
@@ -191,7 +207,13 @@ public class SameDatabaseLoader extends AbstractRealLoader {
                     selectExpr.append(',');
                 });
         //添加自定义字段
-        selectExpr.append(conf.getEtlDate())
+        if (isMultipleInput) {
+            selectExpr
+                    .append(conf.getDatatableId())
+                    .append(',');
+        }
+        selectExpr
+                .append(conf.getEtlDate())
                 .append(',')
                 .append(MAXDATE)
                 .append(',')

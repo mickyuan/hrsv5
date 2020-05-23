@@ -12,12 +12,11 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
 import hrds.commons.collection.LoadingData;
 import hrds.commons.collection.ProcessingData;
-import hrds.commons.collection.bean.LayerBean;
-import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.collection.bean.LoadingDataBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.BeanUtils;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.k.biz.dm.ruleconfig.bean.SysVarCheckBean;
 import hrds.k.biz.utils.CheckBeanUtil;
@@ -249,12 +248,8 @@ public class DqcExecution {
             for (SysVarCheckBean bean : beans) {
                 sql = sql.replace(bean.getName(), bean.getValue());
             }
-            //去掉limit
-            if (sql.toLowerCase().contains("limit")) {
-                sql = sql.substring(0, sql.toLowerCase().indexOf("limit"));
-            }
             //设置检查结果表名,检查表名+当前时间+当前日期
-            String dqc_table_name = dq_result.getTarget_tab() + DateUtil.getSysDate() + DateUtil.getSysTime();
+            String dqc_table_name = Constant.DQC_TABLE + dq_result.getTask_id();
             //设置数据加载实体Bean
             LoadingDataBean ldbbean = new LoadingDataBean();
             ldbbean.setTableName(dqc_table_name);
@@ -266,14 +261,16 @@ public class DqcExecution {
             dq_index3record.setTable_name(dqc_table_name);
             dq_index3record.setTable_col(dq_result.getTarget_key_fields());
             dq_index3record.setTable_size("0");
-            dq_index3record.setDqc_ts("default");
-            dq_index3record.setFile_type("default");
-            dq_index3record.setFile_path("default");
+            dq_index3record.setDqc_ts("");
+            dq_index3record.setFile_type("");
+            dq_index3record.setFile_path("");
             dq_index3record.setRecord_date(DateUtil.getSysDate());
             dq_index3record.setRecord_time(DateUtil.getSysTime());
             dq_index3record.setTask_id(dq_result.getTask_id());
             dq_index3record.setDsl_id(dsl_id);
             dq_index3record.add(db);
+            //提交数据库操作
+            db.commit();
         } catch (Exception e) {
             throw new BusinessException("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
         }
@@ -292,13 +289,10 @@ public class DqcExecution {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             for (String sql : sql_s) {
                 //处理sql
-                sql = sql.replace("\n", " ");
-                sql = sql.replace("\t", " ");
+                sql = sql.replace("\n", "");
+                sql = sql.replace("\t", "");
                 for (SysVarCheckBean bean : beans) {
                     sql = sql.replace(bean.getName(), bean.getValue());
-                }
-                if (!sql.toLowerCase().contains("limit")) {
-                    sql = sql + "limit 1";
                 }
                 //执行sql
                 if (StringUtil.isBlank(sql)) {
@@ -309,7 +303,7 @@ public class DqcExecution {
                     public void dealLine(Map<String, Object> map) {
 
                     }
-                }.getDataLayer(sql, db);
+                }.getPageDataLayer(sql, db, 1, 10);
             }
         }
         return "success";

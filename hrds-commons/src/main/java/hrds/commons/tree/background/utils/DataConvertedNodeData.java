@@ -145,8 +145,8 @@ public class DataConvertedNodeData {
             map.put("parent_id", DataSourceType.DML.getCode());
             map.put("data_layer", DataSourceType.DML.getCode());
             map.put("description", "" +
-                    "集市编号：" + dmlDataInfo.get("mart_number") +
-                    "集市名称：" + dmlDataInfo.get("mart_name") +
+                    "集市编号：" + dmlDataInfo.get("mart_number") + "\n" +
+                    "集市名称：" + dmlDataInfo.get("mart_name") + "\n" +
                     "集市描述：" + dmlDataInfo.get("mart_desc"));
             dmlDataNodes.add(map);
         }
@@ -169,8 +169,8 @@ public class DataConvertedNodeData {
             map.put("original_name", dmlTableInfo.get("datatable_cn_name"));
             map.put("data_layer", DataSourceType.DML.getCode());
             map.put("description", "" +
-                    "表英文名：" + dmlTableInfo.get("datatable_en_name") +
-                    "表中文名：" + dmlTableInfo.get("datatable_cn_name") +
+                    "表英文名：" + dmlTableInfo.get("datatable_en_name") + "\n" +
+                    "表中文名：" + dmlTableInfo.get("datatable_cn_name") + "\n" +
                     "表描述：" + dmlTableInfo.get("datatable_desc"));
             dmlTableNodes.add(map);
         }

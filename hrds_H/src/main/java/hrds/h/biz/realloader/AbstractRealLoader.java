@@ -18,6 +18,7 @@ public abstract class AbstractRealLoader implements Loader {
     protected final String etlDate;
     protected final String datatableId;
     protected final String finalSql;
+    protected boolean isMultipleInput;
 
     protected AbstractRealLoader(MarketConf conf) {
         this.conf = conf;
@@ -25,6 +26,7 @@ public abstract class AbstractRealLoader implements Loader {
         etlDate = conf.getEtlDate();
         datatableId = conf.getDatatableId();
         finalSql = conf.getFinalSql();
+        isMultipleInput = conf.isMultipleInput();
         initTableLayerProperties();
     }
 

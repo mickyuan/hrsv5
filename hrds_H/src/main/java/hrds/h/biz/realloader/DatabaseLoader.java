@@ -32,13 +32,15 @@ public class DatabaseLoader extends AbstractRealLoader {
         databaseArgs.setUser(tableLayerAttrs.get(user_name));
         databaseArgs.setPassword(tableLayerAttrs.get(database_pwd));
         databaseArgs.setDatabaseType(tableLayerAttrs.get(database_type));
+        databaseArgs.setMultipleInput(isMultipleInput);
+        databaseArgs.setDatatableId(datatableId);
     }
 
     @Override
     public void ensureRelation() {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-            String createTableColumnTypes =
-                    Utils.buildCreateTableColumnTypes(conf, true);
+            String createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
+                    true, databaseArgs.isMultipleInput());
             Utils.softCreateTable(db, tableName, createTableColumnTypes);
         }
     }
@@ -65,7 +67,8 @@ public class DatabaseLoader extends AbstractRealLoader {
     @Override
     public void restore() {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-            Utils.restoreDatabaseData(db, tableName, conf.getEtlDate());
+            Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(),
+                    conf.getDatatableId(), conf.isMultipleInput());
         }
     }
 
