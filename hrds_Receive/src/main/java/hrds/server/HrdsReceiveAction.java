@@ -10,11 +10,9 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Data_store_reg;
-import hrds.commons.entity.Error_info;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PackUtil;
-import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,12 +92,12 @@ public class HrdsReceiveAction extends AgentBaseAction {
 			//新增source_file_attribute表
 			collect.add(Dbo.db());
 			//新增错误信息表，保存到系统
-			Error_info error = new Error_info();
-			error.setError_id(PrimayKeyGener.getNextId());
-			error.setJob_rs_id(job_rs_id);
-			//这个长度之前的程序是做了控制的，这里没有做控制
-			error.setError_msg(msg);
-			error.add(Dbo.db());
+//			Error_info error = new Error_info();
+//			error.setError_id(PrimayKeyGener.getNextId());
+//			error.setJob_rs_id(job_rs_id);
+//			//这个长度之前的程序是做了控制的，这里没有做控制
+//			error.setError_msg(msg);
+//			error.add(Dbo.db());
 		} else {
 			String job_rs_id = result.getString(0, "job_rs_id");
 			collect.setJob_rs_id(job_rs_id);
@@ -107,11 +105,11 @@ public class HrdsReceiveAction extends AgentBaseAction {
 			//更新source_file_attribute表
 			collect.update(Dbo.db());
 			//更新error_info表
-			Error_info error_info = Dbo.queryOneObject(Error_info.class, "SELECT * FROM " + Error_info.TableName
-					+ " WHERE job_rs_id = ?", job_rs_id).orElseThrow(() ->
-					new BusinessException("查询不到error_info表的数据"));
-			error_info.setError_msg(msg);
-			error_info.update(Dbo.db());
+//			Error_info error_info = Dbo.queryOneObject(Error_info.class, "SELECT * FROM " + Error_info.TableName
+//					+ " WHERE job_rs_id = ?", job_rs_id).orElseThrow(() ->
+//					new BusinessException("查询不到error_info表的数据"));
+//			error_info.setError_msg(msg);
+//			error_info.update(Dbo.db());
 		}
 	}
 
