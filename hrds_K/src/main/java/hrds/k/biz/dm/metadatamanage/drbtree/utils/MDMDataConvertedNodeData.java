@@ -5,7 +5,6 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DataSourceType;
-import hrds.commons.entity.Data_store_layer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +23,7 @@ public class MDMDataConvertedNodeData {
         List<Map<String, Object>> storageLayerTableNodes = new ArrayList<>();
         tableInfos.forEach(tableInfo -> {
             Map<String, Object> map = new HashMap<>();
-            map.put("id", tableInfo.get("file_id"));
+            map.put("id", DataSourceType.DCL.getCode() + "_" + tableInfo.get("dsl_id") + "_" + tableInfo.get("file_id"));
             map.put("label", tableInfo.get("hyren_name"));
             map.put("parent_id", DataSourceType.DCL.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
@@ -50,7 +49,7 @@ public class MDMDataConvertedNodeData {
         List<Map<String, Object>> storageLayerTableNodes = new ArrayList<>();
         tableInfos.forEach(tableInfo -> {
             Map<String, Object> map = new HashMap<>();
-            map.put("id", tableInfo.get("datatable_id"));
+            map.put("id", DataSourceType.DML.getCode() + "_" + tableInfo.get("dsl_id") + "_" + tableInfo.get("datatable_id"));
             map.put("label", tableInfo.get("datatable_cn_name"));
             map.put("parent_id", DataSourceType.DML.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
