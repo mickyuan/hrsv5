@@ -52,7 +52,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.lang.StringUtils;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -235,12 +234,6 @@ public class CollTbConfStepAction extends BaseAction {
   // 使用SQL抽取数据页面，保存按钮后台方法
   public long saveAllSQL(String tableInfoArray, long colSetId) {
 
-	/**
-	 * 1: 获取当前数据库连接下的所有表名 2: 获取数据库下存储的表名 3: 将数据库的表和此次数据库连接的表进行对比 3-1:
-	 * 找出删除的表,并将数据库中的表信息,列信息,清洗信息,卸数配置,作业信息删除 3-2: 找出新增的,将此记录保存在数据库中.表信息,列信息 3-3:
-	 * 找出还存在的表,并检查列信息是否有变动 3-3-1: 找出选择表的列和数据库已存在的列进行对比 3-3-1-1: 如果列不存在, 删除列信息,列清洗信息 3-3-1-2: 如果列存在,
-	 * 更新列的信息,列清洗信息 3-3-1-3: 如果列新增, 增加列信息
-	 */
 	// 1、根据databaseId去数据库中查询该数据库采集任务是否存在
 	long dbSetCount =
 		Dbo.queryNumber(
@@ -271,7 +264,7 @@ public class CollTbConfStepAction extends BaseAction {
 	 * 4、如果List集合不为空，遍历list,给每条记录生成ID，设置有效开始日期、有效结束日期、是否自定义SQL采集(是)、是否使用MD5(是)、
 	 *  是否仅登记(是)
 	 * */
-	if (tableInfos != null && tableInfos.size() != 0) { // FIXME 去除
+	if (tableInfos != null && tableInfos.size() != 0) {
 	  for (int i = 0; i < tableInfos.size(); i++) {
 		Table_info tableInfo = tableInfos.get(i);
 
@@ -366,6 +359,8 @@ public class CollTbConfStepAction extends BaseAction {
 		  tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		  // 5、保存数据进库
 		  tableInfo.add(Dbo.db());
+		  // 6、保存数据自定义采集列相关信息进入table_column表
+		  saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
 		}
 		// 如果是修改采集表
 		else {
@@ -375,11 +370,11 @@ public class CollTbConfStepAction extends BaseAction {
 		  tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		  // 5、保存数据进库
 		  tableInfo.add(Dbo.db());
-		  // 调用方法删除脏数据
-		  deleteDirtyDataOfTb(oldID);
+//		  // 调用方法删除脏数据
+//		  deleteDirtyDataOfTb(oldID);
+		  // 6-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
+		  updateTableId(Long.parseLong(newID), oldID);
 		}
-		// 6、保存数据自定义采集列相关信息进入table_column表
-		saveCustomSQLColumnInfoForAdd(tableInfo, colSetId, getUserId());
 	  }
 	}
 	// 7、如果List集合为空，表示使用SQL抽取没有设置，那么就要把当前数据库采集任务中所有的自定义抽取设置作为脏数据全部删除
@@ -754,7 +749,7 @@ public class CollTbConfStepAction extends BaseAction {
 		  tableColumn.setIs_get(IsFlag.Shi.getCode());
 		  // 这里取得的列主键根据在源数据库是否为主键进行设置
 		  if (tableColumn.getIs_primary_key() != null) {
-			if (tableColumn.getIs_primary_key().equals("true")) {
+			if (IsFlag.ofEnumByCode(tableColumn.getIs_primary_key()) == IsFlag.Shi) {
 			  tableColumn.setIs_primary_key(IsFlag.Shi.getCode());
 			} else {
 			  tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
@@ -1371,6 +1366,23 @@ public class CollTbConfStepAction extends BaseAction {
 	  Dbo.execute(tableCleanBuilder.toString(), newID);
 	}
 
+	List<Object> tableColumnIdList =
+		Dbo.queryOneColumnList(
+			" select column_id from " + Table_column.TableName + " where table_id = ? ", oldID);
+	if (!tableColumnIdList.isEmpty()) {
+	  StringBuilder tableCleanBuilder =
+		  new StringBuilder(
+			  "update " + Table_column.TableName + " set table_id = ? where column_id in ( ");
+	  for (int j = 0; j < tableColumnIdList.size(); j++) {
+		tableCleanBuilder.append((long) tableColumnIdList.get(j));
+		if (j != tableColumnIdList.size() - 1) {
+		  tableCleanBuilder.append(",");
+		}
+	  }
+	  tableCleanBuilder.append(" )");
+	  Dbo.execute(tableCleanBuilder.toString(), newID);
+	}
+
 	// 3、更新data_extraction_def表对应条目的table_id，一个table_id在该表中的数据存在情况为0-1
 	List<Object> extractDefIdList =
 		Dbo.queryOneColumnList(
@@ -1431,7 +1443,7 @@ public class CollTbConfStepAction extends BaseAction {
 	  isBean = true)
   @Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
   @Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
-  public void saveCustomSQLColumnInfoForAdd(Table_info tableInfo, long colSetId, long userId) {
+  public void saveCustomSQLColumnInfoForAdd(Table_info tableInfo, long colSetId) {
 
     /*
     　1、根据colSetId和userId去数据库中查出DB连接信息
@@ -1554,7 +1566,7 @@ public class CollTbConfStepAction extends BaseAction {
 	  });
 	}
 	//    1: 循环获取表的列信息
-	Map<String, Boolean> checkPrimaryMap = new HashedMap();
+	Map<String, Boolean> checkPrimaryMap = new HashMap<>();
 	for (String table_name : tableNames) {
 	  if (tableIdMap != null && StringUtil.isNotBlank(String.valueOf(tableIdMap.get(table_name)))) {
 		getCheckPrimaryByTableId(colSetId, table_name, tableIdMap.get(table_name), checkPrimaryMap);
@@ -1562,7 +1574,7 @@ public class CollTbConfStepAction extends BaseAction {
 		tableColumns = getColumnInfoByTableName(colSetId, getUserId(), table_name);
 		//      2: 根据返回的列信息,进行检查是否存在着主键,如果存在就将此表的值设为true然后进行下个表的检查,反之检查完毕设置值为false
 		for (Table_column tableColumn : tableColumns) {
-		  if (tableColumn.getIs_primary_key().equals("true")) {
+		  if (IsFlag.ofEnumByCode(tableColumn.getIs_primary_key()) == IsFlag.Shi) {
 			checkPrimaryMap.put(table_name, true);
 			break;
 		  } else {
