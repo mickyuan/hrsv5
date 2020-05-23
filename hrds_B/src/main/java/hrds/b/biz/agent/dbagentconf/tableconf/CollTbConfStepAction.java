@@ -11,6 +11,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.entity.anno.Table;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -30,6 +31,7 @@ import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Column_storage_info;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Data_relation_table;
+import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Database_set;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.entity.Table_clean;
@@ -46,12 +48,13 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.collections.map.HashedMap;
+import java.util.stream.Collectors;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -230,9 +233,16 @@ public class CollTbConfStepAction extends BaseAction {
 			  + "如果页面上没有数据，则该参数可以不传",
 	  nullable = true,
 	  valueIfNull = "")
+  @Param(
+	  name = "tableColumn",
+	  desc = "表列字符数组集合字符串",
+	  range =
+		  "每张表的列信息集合",
+	  nullable = true,
+	  valueIfNull = "")
   @Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
   // 使用SQL抽取数据页面，保存按钮后台方法
-  public long saveAllSQL(String tableInfoArray, long colSetId) {
+  public long saveAllSQL(String tableInfoArray, long colSetId, String tableColumn) {
 
 	// 1、根据databaseId去数据库中查询该数据库采集任务是否存在
 	long dbSetCount =
@@ -359,8 +369,21 @@ public class CollTbConfStepAction extends BaseAction {
 		  tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		  // 5、保存数据进库
 		  tableInfo.add(Dbo.db());
-		  // 6、保存数据自定义采集列相关信息进入table_column表
-		  saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
+		  // 6、保存数据自定义采集列相关信息进入table_column表,如果未选择,
+		  // 则使用sql中查询的列进行保存,并检查是否选有主键(只针对卸数方式为增量时)
+		  if (StringUtil.isNotBlank(tableColumn)) {
+			Map tableColumnMap = JsonUtil.toObjectSafety(tableColumn, Map.class)
+				.orElseThrow(() -> new BusinessException("解析自定义列信息失败"));
+
+			//如果不存在用户选择的列信息,则使用JDBC的方式获取列信息,并进行检查
+			if (!tableColumnMap.containsKey(tableInfo.getTable_name())) {
+			  saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
+			} else {
+			  saveCustomizeColumn(tableColumnMap.get(tableInfo.getTable_name()).toString(), tableInfo);
+			}
+		  } else {
+			saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
+		  }
 		}
 		// 如果是修改采集表
 		else {
@@ -372,8 +395,16 @@ public class CollTbConfStepAction extends BaseAction {
 		  tableInfo.add(Dbo.db());
 //		  // 调用方法删除脏数据
 //		  deleteDirtyDataOfTb(oldID);
-		  // 6-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
+		  // 6、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
 		  updateTableId(Long.parseLong(newID), oldID);
+		  // 更新设置的新字段信息
+		  if (StringUtil.isNotBlank(tableColumn)) {
+			Map tableColumnMap = JsonUtil.toObjectSafety(tableColumn, Map.class)
+				.orElseThrow(() -> new BusinessException("解析自定义列信息失败"));
+			if (tableColumnMap.containsKey(tableInfo.getTable_name())) {
+			  saveCustomizeColumn(tableColumnMap.get(tableInfo.getTable_name()).toString(), tableInfo);
+			}
+		  }
 		}
 	  }
 	}
@@ -387,6 +418,45 @@ public class CollTbConfStepAction extends BaseAction {
 	}
 	return colSetId;
   }
+
+  @Method(desc = "保存用户自定义的列信息", logicStep = "1: 获取到表的列信息转换为 Table_column实体 "
+	  + "2: 检查选择的列是否设置了主键 "
+	  + "3: 保存列的数据信息")
+  @Param(name = "tableColumn", desc = "表的列数据信息", range = "不可为空")
+  @Param(name = "tableInfo", desc = "表信息", range = "不可为空", isBean = true)
+  private void saveCustomizeColumn(String tableColumn, Table_info tableInfo) {
+	List<Table_column> tableColumnList = JSON.parseObject(tableColumn, new TypeReference<List<Table_column>>() {
+	});
+	//如果表的卸数方式是增量,则校验表的列主键是否选择,否则则抛出异常信息
+	if (UnloadType.ofEnumByCode(tableInfo.getUnload_type()) == UnloadType.ZengLiangXieShu) {
+	  List<Boolean> primary = new ArrayList<>();
+	  tableColumnList.forEach(table_column -> {
+		if (IsFlag.ofEnumByCode(table_column.getIs_primary_key()) == IsFlag.Shi) {
+		  primary.add(true);
+		}
+	  });
+	  if (!primary.contains(true)) {
+		throw new BusinessException("当前表(" + tableInfo.getTable_name() + ")的卸数方式为增量, 未设置主键,请检查");
+	  }
+	}
+	tableColumnList.forEach(table_column -> {
+	  if (table_column.getColumn_id() != null) {
+		Dbo.execute("UPDATE " + Table_column.TableName
+				+ " SET is_get = ?, is_primary_key = ?, column_name = ?, column_type = ?, column_ch_name = ?,"
+				+ "	table_id = ?, valid_s_date = ?, valid_e_date = ?, is_alive = ?, is_new = ?, tc_or = ?,"
+				+ " tc_remark = ? WHERE column_id = ?", table_column.getIs_get(), table_column.getIs_primary_key(),
+			table_column.getColumn_name(), table_column.getColumn_type(), table_column.getColumn_ch_name(),
+			tableInfo.getTable_id(), table_column.getValid_s_date(), table_column.getValid_e_date(),
+			table_column.getIs_alive(), table_column.getIs_new(), table_column.getTc_or(), table_column.getTc_remark(),
+			table_column.getColumn_id());
+	  } else {
+		table_column.setColumn_id(PrimayKeyGener.getNextId());
+		table_column.setTable_id(tableInfo.getTable_id());
+		table_column.add(Dbo.db());
+	  }
+	});
+  }
+
 
   @Method(
 	  desc = "测试并行抽取SQL",
@@ -610,8 +680,8 @@ public class CollTbConfStepAction extends BaseAction {
 	long editCount =
 		Dbo.queryNumber(
 			"select count(1) from "
-				+ Source_file_attribute.TableName
-				+ " where collect_set_id = ?",
+				+ Data_store_reg.TableName
+				+ " where database_id = ?",
 			colSetId)
 			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 	if (editCount > 0) {
@@ -1451,8 +1521,21 @@ public class CollTbConfStepAction extends BaseAction {
     　3、将列信息反序列化为List集合
     */
 	Set<Table_column> tableColumns =
-		getSqlColumnData(colSetId, tableInfo.getUnload_type(), tableInfo.getSql());
+		getSqlColumnData(colSetId, tableInfo.getUnload_type(), tableInfo.getSql(), tableInfo.getTable_id(),
+			tableInfo.getTable_name());
 
+	//如果表的卸数方式是增量,则校验表的列主键是否选择,否则则抛出异常信息
+	if (UnloadType.ofEnumByCode(tableInfo.getUnload_type()) == UnloadType.ZengLiangXieShu) {
+	  List<Boolean> primary = new ArrayList<>();
+	  tableColumns.forEach(table_column -> {
+		if (IsFlag.ofEnumByCode(table_column.getIs_primary_key()) == IsFlag.Shi) {
+		  primary.add(true);
+		}
+	  });
+	  if (!primary.contains(true)) {
+		throw new BusinessException("当前表(" + tableInfo.getTable_name() + ")的卸数方式为增量, 未设置主键,请检查");
+	  }
+	}
 	// 4、遍历List集合，给每个Table_column对象设置主键等信息
 	for (Table_column tableColumn : tableColumns) {
 	  tableColumn.setColumn_id(PrimayKeyGener.getNextId());
@@ -1637,8 +1720,11 @@ public class CollTbConfStepAction extends BaseAction {
   @Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
   @Param(name = "unloadType", desc = "卸数方式(代码项: UnloadType)", range = "不可为空")
   @Param(name = "sql", desc = "获取列的SQL", range = "不可为空")
+  @Param(name = "tableId", desc = "表设置ID", range = "可为空,为空表示未设置过", nullable = true, valueIfNull = "0")
+  @Param(name = "tableName", desc = "表名称", range = "不可为空,为空表示未设置过")
   @Return(desc = "返回检查后的表数据信息", range = "不可为空")
-  public Set<Table_column> getSqlColumnData(long colSetId, String unloadType, String sql) {
+  public Set<Table_column> getSqlColumnData(long colSetId, String unloadType, String sql, long tableId,
+	  String tableName) {
 
 	// 1: 获取任务数据库连接信息
 	Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
@@ -1673,6 +1759,14 @@ public class CollTbConfStepAction extends BaseAction {
 		  });
 	} else {
 	  getTableColumns(colSetId, sql, columnDataSet);
+	}
+
+	if (tableId != 0) {
+	  Map<String, Object> columnInfo = getColumnInfo(tableName, colSetId, tableId);
+	  List<Table_column> tableColumnList = (List<Table_column>) columnInfo.get("columnInfo");
+	  List<String> collect = tableColumnList.stream().map(Table_column::getColumn_name).collect(Collectors.toList());
+	  columnDataSet.removeIf(item -> collect.contains(item.getColumn_name()));
+	  columnDataSet.addAll(tableColumnList);
 	}
 
 	return columnDataSet;
