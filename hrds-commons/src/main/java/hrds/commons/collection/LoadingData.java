@@ -32,7 +32,7 @@ public class LoadingData {
     @Param(name = "sql", desc = "查询数据的sql", range = "String类型")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "存储层id", range = "存储层id")
-    public long intoDataLayer(String sql, DatabaseWrapper db) {
+    public long intoDataLayer(String sql, DatabaseWrapper db) throws Exception {
         return new LoadingData(ldbbean).intoDataLayer(sql, db, null);
     }
 
@@ -42,7 +42,7 @@ public class LoadingData {
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Param(name = "intoLayerBean", desc = "LayerBean对象", range = "LayerBean对象")
     @Return(desc = "存储层id", range = "存储层id")
-    public long intoDataLayer(String sql, DatabaseWrapper db, LayerBean intoLayerBean) {
+    public long intoDataLayer(String sql, DatabaseWrapper db, LayerBean intoLayerBean) throws Exception {
         //初始化返回结果
         long dsl_id = 0;
         //获取sql中解析出来的表属于的存储实体Bean
