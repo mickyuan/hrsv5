@@ -53,7 +53,9 @@ public class FileUtil {
 
 		File file = new File(filePath);
 		if (!file.getParentFile().exists()) {
-			return file.getParentFile().mkdirs();
+			if (!file.getParentFile().mkdirs()) {
+				throw new AppSystemException("创建" + filePath + "父类文件夹失败");
+			}
 		}
 
 		try {

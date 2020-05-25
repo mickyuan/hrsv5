@@ -88,6 +88,8 @@ public class CollectTableBean implements Serializable {
 	private String is_customize_sql;
 	@DocBean(name = "storage_date", value = "最后一次执行成功入库日期", dataType = String.class)
 	private String storage_date;
+	@DocBean(name = "selectFileFormat", value = "作业调度传参的卸数文件格式", dataType = String.class)
+	private String selectFileFormat;
 
 	public List<Column_merge> getColumn_merge_list() {
 		return column_merge_list;
@@ -411,5 +413,13 @@ public class CollectTableBean implements Serializable {
 
 	public void setStorage_date(String storage_date) {
 		this.storage_date = storage_date;
+	}
+
+	public String getSelectFileFormat() {
+		return selectFileFormat;
+	}
+
+	public void setSelectFileFormat(String selectFileFormat) {
+		this.selectFileFormat = selectFileFormat;
 	}
 }

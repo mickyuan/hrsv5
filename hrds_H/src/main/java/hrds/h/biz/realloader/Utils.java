@@ -81,7 +81,7 @@ public class Utils {
     /**
      * 所有字段，以逗号隔开
      *
-     * @return
+     * @return 所有字段，以逗号连接的字符串
      */
     static String columns(List<Datatable_field_info> fields) {
         return fields
@@ -93,7 +93,7 @@ public class Utils {
     /**
      * 恢复关系型数据库的数据到上次跑批结果
      *
-     * @param db
+     * @param db DatabaseWrapper
      */
     static void restoreDatabaseData(DatabaseWrapper db, String tableName,
                                     String etlDate, String datatableId, boolean isMultipleInput) {
@@ -117,9 +117,9 @@ public class Utils {
      * oracle 写存储过程实现MD5函数，函数名为 HYREN_MD5
      * // TODO 未实现从某个数字开始自增
      *
-     * @param db
-     * @param type
-     * @return
+     * @param db   DatabaseWrapper
+     * @param type 数据库类型
+     * @return MD5函数名
      */
     static String registerMd5Function(DatabaseWrapper db, DatabaseType type) {
         if (DatabaseType.Oracle10g.equals(type)) {
@@ -239,5 +239,36 @@ public class Utils {
                 }
             }
         }
+
+    }
+
+    static void softDropTable(DatabaseWrapper db, String tableName) {
+        try {
+            if (db.isExistTable(tableName)) {
+                db.execute("DROP TABLE " + tableName);
+            }
+        } catch (Exception e) {
+            logger.warn("删除临时表 " + tableName + " 失败");
+        }
+    }
+
+    static void dropTable(DatabaseWrapper db, String tableName) {
+        try {
+            if (db.isExistTable(tableName)) {
+                db.execute("DROP TABLE " + tableName);
+            }
+        } catch (Exception e) {
+            throw new AppSystemException("删除表失败：" + tableName, e);
+        }
+    }
+
+    static void renameTable(DatabaseWrapper db, String srcTableName, String destTableName) {
+        if (!db.isExistTable(srcTableName)) {
+            throw new AppSystemException("表" + srcTableName + "不存在，无法重命名成" + destTableName);
+        }
+        if (db.isExistTable(destTableName)) {
+            throw new AppSystemException("表" + destTableName + "已存在，无法重命名成" + destTableName);
+        }
+        db.execute("ALTER TABLE " + srcTableName + " RENAME TO " + destTableName);
     }
 }

@@ -130,16 +130,20 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	private void restoreRenameDir(CollectTableBean collectTableBean) throws Exception {
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator;
 			File file = new File(targetName);
 			if (file.exists()) {
 				fd.ng.core.utils.FileUtil.deleteDirectory(file);
 			}
 			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
 			File sourceFile = new File(sourceName);
 			if (sourceFile.exists()) {
 				if (!sourceFile.renameTo(new File(targetName)))
@@ -156,9 +160,13 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	private void deleteRenameDir(CollectTableBean collectTableBean) throws Exception {
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
 			File file = new File(targetName);
 			if (file.exists()) {
 				fd.ng.core.utils.FileUtil.deleteDirectory(file);
@@ -175,13 +183,17 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//TODO 这边为啥不是直接在日期这一层重命名 抽数根据文件格式分为多个作业，所以到文件格式这一层
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
 			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator;
 			File file = new File(sourceName);
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
 			if (file.exists()) {
 				if (!file.renameTo(new File(targetName)))
 					throw new AppSystemException("重名" + sourceName + "为" + targetName + "失败");

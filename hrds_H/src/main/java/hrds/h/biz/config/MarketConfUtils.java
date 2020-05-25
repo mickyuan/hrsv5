@@ -60,10 +60,8 @@ public class MarketConfUtils {
             marketConf.setDmDatatable(dmDatatable.get());
             marketConf.setTableName(dmDatatable.get().getDatatable_en_name());
             marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.get().getRepeat_flag()) == IsFlag.Shi);
-            System.out.println(IsFlag.ofEnumByCode(dmDatatable.get().getRepeat_flag()).getCode());
-            System.out.println("]]]]]]]]]]]]"+dmDatatable.get().getRepeat_flag());
-            System.out.println("]]]]]]]]]]]]"+marketConf.isMultipleInput());
 
+            // TODO getorelse
             /*
             根据主键 datatable_id 查询 字段 实体
              */

@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 @DocClass(desc = "多线程采集线程类，子线程向主线程返回的有生成的文件路径，当前线程采集到的ResultSet，" +
 		"当前线程采集到的数据量", author = "WangZhengcheng")
 public class CollectPage implements Callable<Map<String, Object>> {
-//	private final static Logger LOGGER = LoggerFactory.getLogger(CollectPage.class);
+	//	private final static Logger LOGGER = LoggerFactory.getLogger(CollectPage.class);
 	private SourceDataConfBean sourceDataConfBean;
 	private CollectTableBean collectTableBean;
 	private TableBean tableBean;
@@ -74,6 +74,10 @@ public class CollectPage implements Callable<Map<String, Object>> {
 			//TODO 抽取这里其实不用返回文件路径，待删除
 			Map<String, Object> map = new HashMap<>();
 			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				//只执行作业调度指定的文件格式
+				if (!collectTableBean.getSelectFileFormat().equals(data_extraction_def.getDbfile_format())) {
+					continue;
+				}
 				//1、执行查询，获取ResultSet
 				ResultSet resultSet = getPageData(db);
 				if (resultSet != null) {

@@ -10,10 +10,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
-import hrds.commons.entity.Department_info;
-import hrds.commons.entity.Etl_resource;
-import hrds.commons.entity.Etl_sys;
-import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
@@ -23,6 +20,7 @@ import org.junit.Test;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,6 +35,8 @@ public class EtlSysActionTest extends WebBaseTestCase {
 	private static final long DepId = 1000011L;
 	// 初始化工程编号
 	private static final String EtlSysCd = "zypzglcs";
+	// 初始化任务编号
+	private static final String SubSysCd = "zypzglrwcs";
 
 	@Before
 	public void before() {
@@ -68,11 +68,14 @@ public class EtlSysActionTest extends WebBaseTestCase {
 			assertThat("测试数据department_info初始化", num, is(1));
 			// 3.构造etl_sys表测试数据
 			Etl_sys etl_sys = new Etl_sys();
-			for (int i = 0; i < 2; i++) {
-				etl_sys.setEtl_sys_cd(EtlSysCd + i);
+			for (int i = 0; i < 3; i++) {
+				if (i == 2) {
+					etl_sys.setEtl_sys_cd(EtlSysCd);
+				} else {
+					etl_sys.setEtl_sys_cd(EtlSysCd + i);
+				}
 				etl_sys.setEtl_sys_name("gccs" + i);
 				etl_sys.setComments("工程测试" + i);
-				etl_sys.setEtl_sys_cd(EtlSysCd + i);
 				etl_sys.setEtl_sys_name("dhwcs" + i);
 				etl_sys.setCurr_bath_date(DateUtil.getSysDate());
 				etl_sys.setSys_run_status(Job_Status.STOP.getCode());
@@ -88,6 +91,26 @@ public class EtlSysActionTest extends WebBaseTestCase {
 				etl_sys.setUser_id(UserId);
 				num = etl_sys.add(db);
 				assertThat("测试数据etl_sys初始化", num, is(1));
+			}
+			Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
+			etl_sub_sys_list.setEtl_sys_cd(EtlSysCd + 1);
+			etl_sub_sys_list.setSub_sys_cd(SubSysCd);
+			etl_sub_sys_list.setSub_sys_desc("任务1");
+			etl_sub_sys_list.setComments("作业调度删除工程测试");
+			num = etl_sub_sys_list.add(db);
+			assertThat("测试数据etl_sub_sys_list初始化", num, is(1));
+			Etl_resource etl_resource = new Etl_resource();
+			for (int i = 0; i < 2; i++) {
+				etl_resource.setEtl_sys_cd(EtlSysCd);
+				if (i == 0) {
+					etl_resource.setResource_type(Pro_Type.Thrift.getCode());
+				} else {
+					etl_resource.setResource_type(Pro_Type.Yarn.getCode());
+				}
+				etl_resource.setResource_used(0);
+				etl_resource.setResource_max(10);
+				etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+				etl_resource.add(db);
 			}
 			// 12.提交事务
 			SqlOperator.commitTransaction(db);
@@ -108,50 +131,25 @@ public class EtlSysActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.测试完成后删除sys_user表测试数据
 			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
-			// 判断sys_user数据是否被删除
-			long num = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName +
-					"  where user_id=?", UserId).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 2.测试完成后删除etl_sys表测试数据
 			for (int i = 0; i < 2; i++) {
 				SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?",
 						EtlSysCd + i);
-				// 判断etl_sys数据是否被删除
-				num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
-						"  where etl_sys_cd=?", EtlSysCd + i).orElseThrow(() ->
-						new RuntimeException("count fail!"));
-				assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			}
+			SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?",
+					EtlSysCd);
 			// 3.测试完删除department_info表测试数据
 			SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?",
 					DepId);
-			// 判断department_info数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName +
-					"  where dep_id=?", DepId).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 4.测试完删除etl_resource表测试数据
-			SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where resource_type=?",
-					Pro_Type.Thrift.getCode());
-			// 判断etl_resource数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName +
-					"  where resource_type=?", Pro_Type.Thrift.getCode()).orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where resource_type=?",
-					Pro_Type.Yarn.getCode());
-			// 判断etl_resource数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName +
-					"  where resource_type=?", Pro_Type.Yarn.getCode()).orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+			// 4.删除任务数据
+			SqlOperator.execute(db, "delete from " + Etl_sub_sys_list.TableName + " where sub_sys_cd=?",
+					SubSysCd);
+			// 5.删除资源定义数据
+			SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where etl_sys_cd=?",
+					EtlSysCd);
 			// 测试完删除新增数据
 			SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?",
 					"addCs1");
-			// 判断etl_sys数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
-					"  where etl_sys_cd=?", "addCs1").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 4.提交事务
 			SqlOperator.commitTransaction(db);
 		}
@@ -292,7 +290,7 @@ public class EtlSysActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "更新工程信息",logicStep = "1.正常的数据访问1，数据都正常" +
+	@Method(desc = "更新工程信息", logicStep = "1.正常的数据访问1，数据都正常" +
 			"2.错误的数据访问1，etl_sys_cd为空" +
 			"3.错误的数据访问2，etl_sys_cd为空格" +
 			"4.错误的数据访问3，etl_sys_cd不存在" +
@@ -440,5 +438,59 @@ public class EtlSysActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Method(desc = "停止工程", logicStep = "1.正常的数据访问1，数据都正常" +
+			"2.正常的数据访问1，etl_sys_cd为空" +
+			"3.正常的数据访问2，etl_sys_cd不存在")
+	@Test
+	public void deleteEtlProject() {
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			// 1.正常的数据访问1，数据都正常
+			// 删除前查询数据库，确认预期删除的数据存在
+			long num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Etl_sys.TableName + " where etl_sys_cd=?", EtlSysCd)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_sys表中的确存在这样一条数据", num, is(1L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Etl_resource.TableName + " where etl_sys_cd=?", EtlSysCd)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_resource表中的确存在这样一条数据", num, is(2L));
+			String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+					.post(getActionUrl("deleteEtlProject"))
+					.getBodyString();
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+			assertThat(ar.isSuccess(), is(true));
+			// 删除后查询数据库，确认预期数据已删除
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName
+					+ " where etl_sys_cd=?", EtlSysCd)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作后，确认这条数据已删除", num, is(0L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName
+					+ " where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作后，确认这条数据已删除", num, is(0L));
+			// 2.错误的数据访问1，etl_sys_cd为空
+			bodyString = new HttpClient().addData("etl_sys_cd", "")
+					.post(getActionUrl("deleteEtlProject"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+			assertThat(ar.isSuccess(), is(false));
+			// 3.错误的数据访问2，etl_sys_cd不存在
+			bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+					.post(getActionUrl("deleteEtlProject"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+			assertThat(ar.isSuccess(), is(false));
+			// 4.错误的数据访问3，工程下还有任务或者作业存在
+			bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+					.post(getActionUrl("deleteEtlProject"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+			assertThat(ar.isSuccess(), is(false));
+		}
 	}
 }
