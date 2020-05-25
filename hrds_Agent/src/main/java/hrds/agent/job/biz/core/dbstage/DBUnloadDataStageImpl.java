@@ -130,6 +130,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	private void restoreRenameDir(CollectTableBean collectTableBean) throws Exception {
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
 					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator;
@@ -156,6 +160,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	private void deleteRenameDir(CollectTableBean collectTableBean) throws Exception {
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
 					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
@@ -175,6 +183,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//TODO 这边为啥不是直接在日期这一层重命名 抽数根据文件格式分为多个作业，所以到文件格式这一层
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
 			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
 					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator;
