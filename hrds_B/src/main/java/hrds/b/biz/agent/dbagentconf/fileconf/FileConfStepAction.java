@@ -1,33 +1,27 @@
 package hrds.b.biz.agent.dbagentconf.fileconf;
 
-import com.alibaba.fastjson.JSONArray;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.datafileconf.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Etl_dependency;
 import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_job_resource_rela;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import org.apache.avro.generic.GenericData.Array;
 
 @DocClass(desc = "定义卸数文件配置", author = "WangZhengcheng")
 public class FileConfStepAction extends BaseAction {
@@ -129,16 +123,20 @@ public class FileConfStepAction extends BaseAction {
 			  + "],有几种抽取方式就有几个值",
 	  isBean = true)
   @Param(name = "colSetId", desc = "数据库采集设置表ID", range = "不为空")
+  @Param(name = "dedId", desc = "表数据抽取定义主键信息", range = "可为空,为空表示没有要删除的表抽取数据信息...不为空时,多个参数使用 ^ 分割", nullable = true, valueIfNull = "")
   @Return(desc = "返回数据库设置ID，方便下一个页面能够通过这个参数加载初始化设置", range = "不为空")
-  public long saveFileConf(Data_extraction_def[] extractionDefString, long colSetId) {
+  public long saveFileConf(Data_extraction_def[] extractionDefString, long colSetId, String dedId) {
 
 	//    1: 检查当前传入的数据是否为空
 	if (extractionDefString == null || extractionDefString.length == 0) {
 	  throw new BusinessException("未获取到卸数文件信息");
 	}
 
-//	//删除抽取作业依赖表信息
-//	Dbo.execute("delete from " + Take_relation_etl.TableName + " WHERE  database_id = ?", colSetId);
+	//如果存在要删除的表数据抽取信息,则删除
+	if (StringUtil.isNotBlank(dedId)) {
+	  List<String> split = StringUtil.split(dedId, "^");
+	  deleteDataExtractionDef(split);
+	}
 
 	// 2: 删除上次任务的卸数配置信息
 	Dbo.execute(
@@ -148,16 +146,18 @@ public class FileConfStepAction extends BaseAction {
 		colSetId);
 
 	//    3: 循环卸数配置信息并进行保存
-	//    verifySeqConf(extractionDefString);
+//	    verifySeqConf(extractionDefString);
 	for (int i = 0; i < extractionDefString.length; i++) {
 
 	  Data_extraction_def def = extractionDefString[i];
 
+	  def.setDed_id(PrimayKeyGener.getNextId());
 	  // 校验保存数据必须关联表
 	  if (def.getTable_id() == null) {
 		throw new BusinessException("保存卸数文件配置，第" + (i + 1) + "数据必须关联表ID");
+	  } else {
+		updateOldDedId(def.getDed_id(), def.getTable_id());
 	  }
-	  def.setDed_id(PrimayKeyGener.getNextId());
 	  // 将卸数分隔符(行，列)转换为unicode码
 	  if (StringUtil.isBlank(def.getDbfile_format())) {
 		throw new BusinessException("第 " + (i + 1) + " 条的数据抽取方式不能为空!");
@@ -209,6 +209,17 @@ public class FileConfStepAction extends BaseAction {
 	}
 	// 4、保存数据
 	return colSetId;
+  }
+
+  @Method(desc = "将旧的ded_id更新为此次新生成的", logicStep = "不关心更新条数,直接进行更新")
+  @Param(name = "table_id", desc = "表的ID", range = "不可为空")
+  @Param(name = "newDedId", desc = "新生成的ded_id", range = "不可为空")
+  private void updateOldDedId(long newDedId, long table_id) {
+	//更新抽数作业关系表的ded_id信息
+	Dbo.execute("UPDATE " + Take_relation_etl.TableName + " SET ded_id = ? WHERE ded_id in("
+		+ "SELECT ded_id FROM "
+		+ Data_extraction_def.TableName
+		+ " WHERE table_id = ?)", newDedId, table_id);
   }
 
   @Method(
@@ -284,5 +295,54 @@ public class FileConfStepAction extends BaseAction {
 	  //        // 3-3、如果是CSV，则不进行校验，即如果用户不填写，就卸成标准CSV，否则，按照用户指定的列分隔符写文件
 	  //      }
 	}
+  }
+
+  @Method(desc = "删除表的抽取定义数据信息", logicStep = "")
+  @Param(name = "dedId", desc = "抽取定义表的主键信息", range = "不可为空")
+  public void deleteDataExtractionDef(List<String> dedId) {
+
+	for (int i = 0; i < dedId.size(); i++) {
+	  long ded_id = Long.parseLong(dedId.get(i));
+	  long countNum = Dbo
+		  .queryNumber("SELECT COUNT(1) FROM " + Data_extraction_def.TableName + " WHERE ded_id = ?",
+			  ded_id)
+		  .orElseThrow(() -> new BusinessException("SQL查询异常"));
+	  if (countNum == 0) {
+		CheckParam.throwErrorMsg("数据抽取定义方式不存在");
+	  }
+
+	  //获取删除表抽取定义的数据信息
+	  Map<String, Object> map = Dbo.queryOneObject("SELECT etl_job,etl_sys_cd,sub_sys_cd FROM "
+			  + Data_extraction_def.TableName
+			  + " t1 join take_relation_etl t2 on t1.ded_id = t2.ded_id WHERE t1.ded_id = ?",
+		  ded_id);
+
+	  //删除表抽取定义的表信息
+	  Dbo.execute("DELETE FROM " + Data_extraction_def.TableName + " WHERE ded_id = ?",
+		  ded_id);
+
+	  //删除表的定义作业数据信息
+	  Dbo.execute("DELETE FROM " + Etl_job_def.TableName + " WHERE etl_job = ( SELECT etl_job FROM "
+			  + Data_extraction_def.TableName
+			  + " t1 join take_relation_etl t2 on t1.ded_id = t2.ded_id WHERE t1.ded_id = ?) AND etl_sys_cd = ?",
+		  ded_id, map.get("etl_sys_cd"));
+
+	  //删除依赖的作业信息
+	  Dbo.execute("DELETE FROM " + Etl_dependency.TableName + " WHERE pre_etl_job = ( SELECT etl_job FROM "
+			  + Data_extraction_def.TableName
+			  + " t1 join take_relation_etl t2 on t1.ded_id = t2.ded_id WHERE t1.ded_id = ?) AND pre_etl_sys_cd = ? ",
+		  ded_id, map.get("etl_sys_cd"));
+
+	  //删除作业的资源信息
+	  Dbo.execute("DELETE FROM " + Etl_job_resource_rela.TableName + " WHERE etl_job = ( SELECT etl_job FROM "
+			  + Data_extraction_def.TableName
+			  + " t1 join take_relation_etl t2 on t1.ded_id = t2.ded_id WHERE t1.ded_id = ?) AND etl_sys_cd = ?",
+		  ded_id, map.get("etl_sys_cd"));
+
+	  //删除抽取定义表的作业配置信息
+	  Dbo.execute("DELETE FROM " + Take_relation_etl.TableName + " WHERE ded_id = ?",
+		  ded_id);
+	}
+
   }
 }
