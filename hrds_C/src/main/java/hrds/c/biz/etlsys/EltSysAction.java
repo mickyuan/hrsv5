@@ -17,7 +17,9 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.Pro_Type;
+import hrds.commons.entity.Etl_job_def;
 import hrds.commons.entity.Etl_resource;
+import hrds.commons.entity.Etl_sub_sys_list;
 import hrds.commons.entity.Etl_sys;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
@@ -94,7 +96,7 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
 		// 跑批日期默认为当天
 		etl_sys.setCurr_bath_date(DateUtil.getSysDate());
-		// 4.检查工程编号是否已存在，存在不能新增,这里user_id传值为空，因为不管是什么用户工程编号都不能为空
+		// 4.检查工程编号是否已存在，存在不能新增,这里user_id传值为空，因为不管是什么用户工程编号都不能重复
 		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd(), null)) {
 			throw new BusinessException("工程编号已存在，不能新增！");
 		}
@@ -111,6 +113,7 @@ public class EltSysAction extends BaseAction {
 			resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 			// 默认分配最大资源为10
 			resource.setResource_max(10);
+			resource.setResource_used(0);
 			// 8.循环新增保存资源
 			resource.add(Dbo.db());
 		}
@@ -505,5 +508,32 @@ public class EltSysAction extends BaseAction {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.下载文件
 		DownloadLogUtil.downloadFile(fileName);
+	}
+
+	@Method(desc = "删除作业调度工程", logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+			"2.验证当前用户对应的工程是否已不存在" +
+			"3.判断该工程下是否还有任务" +
+			"4.判断该工程下是否还有作业" +
+			"5.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程")
+	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
+	public void deleteEtlProject(String etl_sys_cd) {
+		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		// 2.验证当前用户对应的工程是否已不存在
+		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前用户对应的工程已不存在！");
+		}
+		// 3.判断该工程下是否还有任务
+		if (Dbo.queryNumber("select count(1) from " + Etl_sub_sys_list.TableName + "  WHERE etl_sys_cd=?"
+				, etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+			throw new BusinessException("该工程下还有任务，不能删除！");
+		}
+		// 4.判断该工程下是否还有作业
+		if (Dbo.queryNumber("select count(1) from " + Etl_job_def.TableName + "  WHERE etl_sys_cd=?"
+				, etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+			throw new BusinessException("该工程下还有作业，不能删除！");
+		}
+		// 5.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
+		Dbo.execute("delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		Dbo.execute("delete from " + Etl_sys.TableName + " where etl_sys_cd=?", etl_sys_cd);
 	}
 }
