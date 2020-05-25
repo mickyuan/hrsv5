@@ -132,14 +132,14 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator;
 			File file = new File(targetName);
 			if (file.exists()) {
 				fd.ng.core.utils.FileUtil.deleteDirectory(file);
 			}
 			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
 			File sourceFile = new File(sourceName);
 			if (sourceFile.exists()) {
 				if (!sourceFile.renameTo(new File(targetName)))
@@ -158,7 +158,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
 			File file = new File(targetName);
 			if (file.exists()) {
 				fd.ng.core.utils.FileUtil.deleteDirectory(file);
@@ -177,11 +177,11 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			String sourceName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator;
 			File file = new File(sourceName);
 			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
 					+ File.separator + collectTableBean.getTable_name() + File.separator +
-					FileFormat.ofValueByCode(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + "_BAK" + File.separator;
 			if (file.exists()) {
 				if (!file.renameTo(new File(targetName)))
 					throw new AppSystemException("重名" + sourceName + "为" + targetName + "失败");
