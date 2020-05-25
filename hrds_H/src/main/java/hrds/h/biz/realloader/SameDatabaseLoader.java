@@ -21,7 +21,7 @@ import static hrds.commons.utils.Constant.*;
  */
 public class SameDatabaseLoader extends AbstractRealLoader {
 
-
+    // TODO 注释
     boolean MARKET_INCREMENT_TMPTABLE_DELETE =
             PropertyParaValue.getBoolean("market.increment.tmptable.delete", true);
     private final DatabaseWrapper db;
@@ -57,10 +57,19 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         insertData(tableName);
     }
 
+    /**
+     * 1.创建临时表
+     * 2.把数据导入到临时表
+     * 3.删除最终表
+     * 4.把临时表重命名成最终表
+     */
     @Override
     public void replace() {
-        Utils.truncateTable(db, tableName);
-        insertData(tableName);
+        String replaceTempTable = tableName + "_hyren_r";
+        forceCreateTable(replaceTempTable);
+        insertData(replaceTempTable);
+        Utils.dropTable(db, tableName);
+        Utils.renameTable(db, replaceTempTable, tableName);
     }
 
     @Override
@@ -136,14 +145,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     private void dropTempTable() {
-        try {
-            db.execute("DROP TABLE " + currentTableName);
-            db.execute("DROP TABLE " + validTableName);
-            db.execute("DROP TABLE " + invalidTableName);
-        } catch (Exception e) {
-            logger.warn("删除临时表 " + currentTableName + "," + validTableName +
-                    "," + invalidTableName + " 失败");
-        }
+        Utils.softDropTable(db, currentTableName);
+        Utils.softDropTable(db, validTableName);
+        Utils.softDropTable(db, invalidTableName);
     }
 
     /**

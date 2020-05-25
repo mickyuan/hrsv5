@@ -41,10 +41,22 @@ public class JobStateImpl implements JobState {
         }
 
         //设置作业状态的运行中
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = null;
+        try {
+            db = new DatabaseWrapper();
+            db.beginTrans();
             dmRelationDatatable.setIs_successful(JobExecuteState.YunXing.getCode());
             dmRelationDatatable.update(db);
             db.commit();
+        } catch (Exception e) {
+            if (db != null) {
+                db.rollback();
+            }
+            throw e;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
         }
 
         Runtime.getRuntime().addShutdownHook(shutdownThread);
@@ -62,25 +74,29 @@ public class JobStateImpl implements JobState {
         //根据返回结果，将数据库中的运行状态改为相应状态 完成 or 失败
         String jobCode = isSuccessful ?
                 JobExecuteState.WanCheng.getCode() : JobExecuteState.ShiBai.getCode();
-
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = null;
+        try {
+            db = new DatabaseWrapper();
+            db.beginTrans();
+            //更新运行状态
             dmRelationDatatable.setIs_successful(jobCode);
             dmRelationDatatable.update(db);
-
-            /*
-             * 未成功的情况下，不更新跑批日期字段
-             * 下次运行，依然算是首次执行
-             */
-            if (isSuccessful) {
-                dmDatatable.setDatac_date(DateUtil.getSysDate());
-                dmDatatable.setDatac_time(DateUtil.getSysTime());
-                dmDatatable.setEtl_date(conf.getEtlDate());
-                dmDatatable.update(db);
-            }
-
+            // 更新跑批日期
+            dmDatatable.setDatac_date(DateUtil.getSysDate());
+            dmDatatable.setDatac_time(DateUtil.getSysTime());
+            dmDatatable.setEtl_date(conf.getEtlDate());
+            dmDatatable.update(db);
             db.commit();
+        } catch (Exception e) {
+            if (db != null) {
+                db.rollback();
+            }
+            throw e;
         } finally {
             Runtime.getRuntime().removeShutdownHook(shutdownThread);
+            if (db != null) {
+                db.close();
+            }
             logger.info(String.format("[%s] 集市作业运行结束 [%s]: successful: %s, lastTime: %s s.",
                     DateUtil.getDateTime(DateUtil.DATETIME_ZHCN), conf.getDatatableId(),
                     isSuccessful, (System.currentTimeMillis() - jobStartTime) / 1000F));

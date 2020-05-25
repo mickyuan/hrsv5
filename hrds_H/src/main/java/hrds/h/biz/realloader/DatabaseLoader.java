@@ -17,10 +17,13 @@ import static hrds.commons.utils.StorageTypeKey.*;
 public class DatabaseLoader extends AbstractRealLoader {
 
     private final DatabaseArgs databaseArgs = new DatabaseArgs();
+    private final String createTableColumnTypes;
 
     DatabaseLoader(MarketConf conf) {
         super(conf);
         initArgs();
+        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
+                true, databaseArgs.isMultipleInput());
     }
 
     private void initArgs() {
@@ -39,8 +42,6 @@ public class DatabaseLoader extends AbstractRealLoader {
     @Override
     public void ensureRelation() {
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-            String createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
-                    true, databaseArgs.isMultipleInput());
             Utils.softCreateTable(db, tableName, createTableColumnTypes);
         }
     }
@@ -52,10 +53,23 @@ public class DatabaseLoader extends AbstractRealLoader {
 
     }
 
+    /**
+     * 1.创建临时表
+     * 2.把数据导入到临时表
+     * 3.删除最终表
+     * 4.把临时表重命名成最终表
+     */
     @Override
     public void replace() {
-        databaseArgs.setOverWrite(true);
-        SparkJobRunner.runJob(datatableId, databaseArgs);
+        try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
+            String replaceTempTable = tableName + "_hyren_r";
+            Utils.forceCreateTable(db, replaceTempTable, createTableColumnTypes);
+            databaseArgs.setOverWrite(true);
+            databaseArgs.setTableName(replaceTempTable);
+            SparkJobRunner.runJob(datatableId, databaseArgs);
+            Utils.dropTable(db, tableName);
+            Utils.renameTable(db, replaceTempTable, tableName);
+        }
     }
 
     @Override
