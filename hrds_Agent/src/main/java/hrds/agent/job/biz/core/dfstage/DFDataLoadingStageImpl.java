@@ -242,8 +242,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					external_root_path);
 		}
 		//删除数据文件
-		SFTPChannel.execCommandByJSch(session,
-				"rm -rf " + external_root_path + past_hbase_name + "*");
+		for (String fileName : fileNameArr) {
+			SFTPChannel.execCommandByJSch(session,
+					"rm -rf " + external_root_path + fileName);
+		}
 	}
 
 	private void clearTemporaryLog(String database_type, String todayTableName,
