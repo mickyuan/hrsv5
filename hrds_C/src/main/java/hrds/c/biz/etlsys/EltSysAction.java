@@ -164,7 +164,7 @@ public class EltSysAction extends BaseAction {
 	@Method(desc = "部署作业调度工程",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
 					+ "2.验证当前用户对应的工程是否已不存在"
-					+ "3.获取系统参数"
+					+ "3.判断系统是否正在运行中，如果正在运行中不允许部署"
 					+ "4.部署ETL"
 					+ "5.部署成功，更新用户信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
@@ -174,13 +174,16 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "user_pwd", desc = "ETL部署Agent服务器密码", range = "无限制")
 	public void deployEtlJobScheduleProject(String etl_sys_cd, String etl_serv_ip, String serv_file_path,
 	                                        String user_name, String user_pwd) {
-		// fixme jsch对响应结果返回数字进行判断还未修改
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.验证当前用户对应的工程是否已不存在
 		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
-		// 3.获取系统参数
+		// 3.判断系统是否正在运行中，如果正在运行中不允许部署
+		Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
+			throw new BusinessException("系统不是停止状态不能部署");
+		}
 		// 4.部署ETL
 		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, Constant.SFTP_PORT, user_name, user_pwd,
 				serv_file_path);
@@ -205,7 +208,8 @@ public class EltSysAction extends BaseAction {
 					+ "4.判断工程是否已部署"
 					+ "5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
 					+ "6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
-					+ "7.调用脚本启动启动Control")
+					+ "7.调用脚本启动启动Control"
+					+ "8.判断control是否已启动，再次查询系统运行状态")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
@@ -239,6 +243,11 @@ public class EltSysAction extends BaseAction {
 				etlSys.get("etl_serv_ip").toString(), etlSys.get("etl_serv_port").toString(),
 				etlSys.get("user_name").toString(), etlSys.get("user_pwd").toString(),
 				etlSys.get("serv_file_path").toString());
+		// 8.判断control是否已启动，再次查询系统运行状态
+		etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		if (Job_Status.RUNNING != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
+			throw new BusinessException("启动control失败，请查看control日志");
+		}
 	}
 
 	@Method(
