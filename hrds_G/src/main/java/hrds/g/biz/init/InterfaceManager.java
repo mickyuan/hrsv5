@@ -369,7 +369,7 @@ public class InterfaceManager {
 				queryInterfaceInfo.setInterface_use_id(useResult.getString(i, "interface_use_id"));
 				// 接口代码
 				String interface_code = useResult.getString(i, "interface_code");
-				// 3.4判断报表接口代码是否存在，如果存在，替换，不存在新增，封装报表的编码信息
+				// 3.4判断当前用户报表接口代码是否存在，如果存在，替换，不存在新增，封装报表的编码信息
 				if (reportGraphicMap.containsKey(user_id)) {
 					reportGraphicMap.get(user_id).add(interface_code);
 				} else {
@@ -379,12 +379,13 @@ public class InterfaceManager {
 				}
 				// 3.5为了确保key唯一，接口与用户是多对多关系，封装接口信息
 				interfaceMap.put(String.valueOf(user_id).concat(url), queryInterfaceInfo);
+				// 3.6判断当前用户接口请求地址是否存在，如果存在替换，不存在新增
 				if (urlMap.containsKey(String.valueOf(user_id))) {
 					urlMap.get(String.valueOf(user_id)).add(url);
 				} else {
 					urlList = new ArrayList<>();
 					urlList.add(url);
-					reportGraphicMap.put(user_id, urlList);
+					urlMap.put(String.valueOf(user_id), urlList);
 				}
 			}
 		}
