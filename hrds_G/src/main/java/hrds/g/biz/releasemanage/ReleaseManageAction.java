@@ -17,6 +17,7 @@ import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.g.biz.bean.InterfaceUseInfo;
+import hrds.g.biz.init.InterfaceManager;
 
 import java.util.List;
 
@@ -58,7 +59,8 @@ public class ReleaseManageAction extends BaseAction {
 			"5.根据接口ID查找对应的接口信息" +
 			"6.判断当前用户接口使用信息是否已存在，如果不存在新增，存在更新" +
 			"6.1 新增接口用户信息" +
-			"6.2 更新接口用户信息")
+			"6.2 更新接口用户信息" +
+			"7.重新更新接口使用信息")
 	@Param(name = "interfaceUseInfos", desc = "保存接口使用信息实体对象", range = "无限制", isBean = true)
 	@Param(name = "user_id", desc = "保存接口使用信息实体对象", range = "无限制")
 	@Param(name = "interface_note", desc = "保存接口使用信息实体对象", range = "无限制", nullable = true)
@@ -135,5 +137,7 @@ public class ReleaseManageAction extends BaseAction {
 				}
 			}
 		}
+		// 7.重新更新接口使用信息
+		InterfaceManager.initInterface(Dbo.db());
 	}
 }
