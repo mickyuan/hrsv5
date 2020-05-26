@@ -21,7 +21,7 @@ import java.util.Base64;
 @DocClass(desc = "下载日志工具类", author = "dhw", createdate = "2019/12/19 16:50")
 public class DownloadLogUtil {
 
-	private static final Logger logger = LogManager.getLogger(DownloadLogUtil.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "通过SFTP删除日志文件",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
