@@ -25,4 +25,4 @@ done
 libjars
 # export CLASSPATH
 echo $CLASSPATH
-java -Xms16m -Xmx48m -Dproject.dir="$PROJECTDIR" -cp $CLASSPATH $MAIN "$@"
+java -Xms256m -Xmx2048m -Dproject.dir="$PROJECTDIR" -cp $CLASSPATH $MAIN "$@"
