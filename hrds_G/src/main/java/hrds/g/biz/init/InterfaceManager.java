@@ -343,6 +343,7 @@ public class InterfaceManager {
 			reportGraphicMap.clear();
 			// 3.2清空上次的接口信息
 			interfaceMap.clear();
+			urlMap.clear();
 			QueryInterfaceInfo queryInterfaceInfo;
 			List<String> interfaceCodeList;
 			List<String> urlList;
