@@ -31,7 +31,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	@Override
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		sqlList.add(createTableIfNotExists(yesterdayTableName, db, columns, types));
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName, db, columns, types), db);
 		//2、创建增量临时表
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
@@ -77,7 +77,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	@Override
 	public void append() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		sqlList.add(createTableIfNotExists(yesterdayTableName, db, columns, types));
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName, db, columns, types), db);
 		//2.恢复今天的数据，防止重跑
 		restore(StorageType.ZhuiJia.getCode());
 		//3.插入今天新增的数据
