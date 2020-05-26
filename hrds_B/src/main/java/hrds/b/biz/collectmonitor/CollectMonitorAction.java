@@ -118,7 +118,7 @@ public class CollectMonitorAction extends BaseAction {
                 + "collect_e_date,collect_e_time,cc_remark FROM "
                 + Collect_case.TableName
                 + " WHERE collect_set_id = ?"
-                + " AND collect_s_date = (select max(collect_s_date) FROM collect_case WHERE "
+                + " AND etl_date = (select max(etl_date) FROM collect_case WHERE "
                 + "collect_set_id = ? ) ORDER BY task_classify",
             database_id,
             database_id);
