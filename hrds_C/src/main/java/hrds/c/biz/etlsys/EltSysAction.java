@@ -51,9 +51,7 @@ public class EltSysAction extends BaseAction {
 		// 2.查询工程信息
 		return Dbo.queryResult(
 				"select etl_sys_cd,etl_sys_name,comments,curr_bath_date,sys_run_status from "
-						+ Etl_sys.TableName
-						+ " where user_id=? order by sys_run_status,etl_sys_cd",
-				getUserId());
+						+ Etl_sys.TableName + " where user_id=? order by etl_sys_cd", getUserId());
 	}
 
 	@Method(desc = "根据工程编号查询作业调度工程信息",
