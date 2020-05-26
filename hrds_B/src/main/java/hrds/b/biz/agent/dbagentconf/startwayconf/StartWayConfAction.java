@@ -80,7 +80,7 @@ public class StartWayConfAction extends BaseAction {
   @Return(desc = "返回工程信息集合", range = "为空表示没有工程信息")
   public List<Etl_sys> getEtlSysData() {
 	// 获取作业调度工程信息,然后返回到前端
-	return Dbo.queryList(Etl_sys.class, "SELECT * FROM " + Etl_sys.TableName);
+	return Dbo.queryList(Etl_sys.class, "SELECT * FROM " + Etl_sys.TableName + " WHERE user_id = ?", getUserId());
   }
 
   @Method(desc = "根据工程编号获取任务列表", logicStep = "1 : 判断工程编号是否存在, 2 : 根据工程编号返回任务信息")
@@ -91,7 +91,8 @@ public class StartWayConfAction extends BaseAction {
 	//    1 : 判断工程编号是否存在
 	long countNum =
 		Dbo.queryNumber(
-			"SELECT COUNT(1) FROM " + Etl_sys.TableName + " WHERE etl_sys_cd = ?", etl_sys_cd)
+			"SELECT COUNT(1) FROM " + Etl_sys.TableName + " WHERE etl_sys_cd = ? AND user_id = ?", etl_sys_cd,
+			getUserId())
 			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 	if (countNum != 1) {
 	  throw new BusinessException("当前工程编号 :" + etl_sys_cd + " 不存在");
