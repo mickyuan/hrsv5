@@ -74,6 +74,7 @@ public class MarketInfoAction extends BaseAction {
 	// excel文件后缀名
 	private static final String xlsxSuffix = ".xlsx";
 	private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
+	//不需要长度的字段类型们
 	private static final String[] nolengthcolumntypes = {"string", "text", "bigint"};
 
 	/**
@@ -746,7 +747,13 @@ public class MarketInfoAction extends BaseAction {
 					////如果是来自帖源的话 就需要做两次转换
 					column_type = transFormColumnType(column_type, DCLdsl_id);
 					column_type = transFormColumnType(column_type, dsl_id);
-					resultmap.put("targettype", column_type.toLowerCase());
+					if (column_type.contains("(")) {
+						String field_length = column_type.substring(column_type.indexOf("(") + 1, column_type.indexOf(")"));
+						resultmap.put("field_length", field_length);
+						resultmap.put("targettype", column_type.substring(0, column_type.indexOf("(")).toLowerCase());
+					} else {
+						resultmap.put("targettype", column_type.toLowerCase());
+					}
 					return resultmap;
 				}
 			}
@@ -764,12 +771,21 @@ public class MarketInfoAction extends BaseAction {
 					String DMLfield_type = maps.get(0).get("field_type").toString();
 					//集市层原始字段长度
 					String DMLfield_length = maps.get(0).get("field_length").toString();
+					if(!StringUtils.isEmpty(DMLfield_length)){
+						resultmap.put("field_length", DMLfield_length);
+						DMLfield_type = DMLfield_type+"("+DMLfield_length+")";
+					}
 					//记录原始类型
 					resultmap.put("sourcetype", DMLfield_type.toLowerCase());
 					//转换
 					DMLfield_type = transFormColumnType(DMLfield_type, dsl_id);
-					resultmap.put("targettype", DMLfield_type.toLowerCase());
-					resultmap.put("field_length", DMLfield_length);
+					if (DMLfield_type.contains("(")) {
+						String field_length = DMLfield_type.substring(DMLfield_type.indexOf("(") + 1, DMLfield_type.indexOf(")"));
+						resultmap.put("field_length", field_length);
+						resultmap.put("targettype", DMLfield_type.substring(0, DMLfield_type.indexOf("(")).toLowerCase());
+					} else {
+						resultmap.put("targettype", DMLfield_type.toLowerCase());
+					}
 					return resultmap;
 				}
 			} else {
@@ -790,34 +806,45 @@ public class MarketInfoAction extends BaseAction {
 	 * @return
 	 */
 	private String transFormColumnType(String column_type, String dsl_id) {
+		Data_store_layer data_store_layer = new Data_store_layer();
+		data_store_layer.setDsl_id(dsl_id);
 		//如果dsl_id为空，表示不需要转换，在存储血缘关系的时候，需要调用到该方法。
 		if (StringUtils.isEmpty(dsl_id)) {
 			return column_type;
 		}
 		//统一小写
 		column_type = column_type.toLowerCase();
-		//去除（
-		if (column_type.contains("(")) {
-			column_type = column_type.substring(0, column_type.indexOf("("));
-		}
-		Data_store_layer data_store_layer = new Data_store_layer();
-		data_store_layer.setDsl_id(dsl_id);
-		//根据原始字段类型 查询目标类型 去除所有的（）和大小写问题
+		//直接将类型进行转换
 		List<Map<String, Object>> maps = Dbo.queryList("select target_type from " + Type_contrast.TableName + " t1 left join " + Data_store_layer.TableName + " t2 on t1.dtcs_id = t2.dtcs_id " +
-				"where t2.dsl_id = ? and  LOWER(  CASE  WHEN position ('(' IN t1.source_type) !=0  THEN substring(t1.source_type,0,position ('(' IN t1.source_type)) " +
-				"  ELSE t1.source_type  END ) = ?", data_store_layer.getDsl_id(), column_type);
-		//如果为空，标识没有记录改字段类型的转换 则返回原有字段类型
-		if (maps.isEmpty()) {
-			return column_type;
-		} else {
+				"where t2.dsl_id = ? and  LOWER( t1.source_type ) = ?", data_store_layer.getDsl_id(), column_type);
+		//如果找到直接的类型转换了 则返回结果
+		if (!maps.isEmpty()) {
 			String target_type = maps.get(0).get("target_type").toString();
 			//统一小写
 			target_type = target_type.toLowerCase();
-			//去除（
-			if (target_type.contains("(")) {
-				target_type = target_type.substring(0, target_type.indexOf("("));
-			}
 			return target_type.toLowerCase();
+		}
+		//如果没有找到带括号的，则使用去除括号的进行查询
+		else if (column_type.contains("(")) {
+			//去除（
+			column_type = column_type.substring(0, column_type.indexOf("("));
+			//根据原始字段类型 查询目标类型 去除所有的（）和大小写问题
+			maps = Dbo.queryList("select target_type from " + Type_contrast.TableName + " t1 left join " + Data_store_layer.TableName + " t2 on t1.dtcs_id = t2.dtcs_id " +
+					"where t2.dsl_id = ? and  LOWER(  CASE  WHEN position ('(' IN t1.source_type) !=0  THEN substring(t1.source_type,0,position ('(' IN t1.source_type)) " +
+					"  ELSE t1.source_type  END ) = ?", data_store_layer.getDsl_id(), column_type);
+			//如果为空，标识没有记录改字段类型的转换 则返回原有字段类型
+			if (maps.isEmpty()) {
+				return column_type;
+			} else {
+				String target_type = maps.get(0).get("target_type").toString();
+				//统一小写
+				target_type = target_type.toLowerCase();
+				return target_type;
+			}
+		}
+		//
+		else {
+			return column_type;
 		}
 	}
 
@@ -1343,7 +1370,7 @@ public class MarketInfoAction extends BaseAction {
 			out.write(bye);
 			out.flush();
 			out.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new BusinessException("集市工程下载错误");
 		}
 	}
@@ -1854,8 +1881,8 @@ public class MarketInfoAction extends BaseAction {
 			//创建的输入流
 			String path = uploadedFile.toPath().toString();
 			fis = new FileInputStream(path);
+			//判断文件后缀名
 			if (path.toLowerCase().endsWith(xlsxSuffix)) {
-				// 4.1读取2007版，以.xlsx结尾
 				try {
 					workBook = new XSSFWorkbook(fis);
 				} catch (IOException e) {
@@ -2070,6 +2097,7 @@ public class MarketInfoAction extends BaseAction {
 				logger.error(e.getMessage());
 				throw e;
 			} else {
+				logger.error(e);
 				throw new BusinessSystemException("上传的excel模板存在问题，请确认填写正确");
 			}
 		}
