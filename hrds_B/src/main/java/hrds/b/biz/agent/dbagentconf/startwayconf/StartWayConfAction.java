@@ -472,23 +472,6 @@ public class StartWayConfAction extends BaseAction {
 			  + " "
 			  + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
 
-	  long countNum =
-		  Dbo.queryNumber(
-			  "SELECT COUNT(1) FROM "
-				  + Etl_job_def.TableName
-				  + " WHERE etl_job = ? AND etl_sys_cd = ? AND sub_sys_cd = ?",
-			  etl_job_def.getEtl_job(),
-			  etl_job_def.getEtl_sys_cd(),
-			  etl_job_def.getSub_sys_cd())
-			  .orElseThrow(() -> new BusinessException("SQL查询异常!!!"));
-
-	  if (countNum != 0) {
-		CheckParam.throwErrorMsg("当前工程编号(%s),工程任务(%s),已存在作业(%s)",
-			etl_job_def.getEtl_sys_cd(),
-			etl_job_def.getSub_sys_cd(),
-			etl_job_def.getEtl_job());
-	  }
-
 	  // 检查表名是否存在
 	  if (etlJobList.contains(etl_job_def.getEtl_job())) {
 		etl_job_def.update(Dbo.db());
