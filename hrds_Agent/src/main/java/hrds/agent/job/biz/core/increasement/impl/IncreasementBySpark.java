@@ -32,8 +32,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void calculateIncrement() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		String tableIfNotExistsSql = createTableIfNotExists(yesterdayTableName);
-		HSqlExecute.executeSql(tableIfNotExistsSql, db);
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName), db);
 		//2、创建增量表
 		getCreateDeltaSql();
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
@@ -62,13 +61,11 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void append() {
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
-		sqlList.add(createTableIfNotExists(yesterdayTableName));
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName), db);
 		//2、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
 		restore(StorageType.ZhuiJia.getCode());
-		//3.插入今天新增的数据
-		sqlList.add(insertDeltaDataSql(yesterdayTableName, todayTableName));
-		//4.执行sql
-		HSqlExecute.executeSql(sqlList, db);
+		//3.插入今天新增的数据,执行sql
+		HSqlExecute.executeSql(insertDeltaDataSql(yesterdayTableName, todayTableName), db);
 	}
 
 	/**
