@@ -37,7 +37,7 @@ public class SCPFileSender {
 		try {
 			String source_path = sftpDetails.getSource_path(); // 本地文件路径
 			String localFileName = sftpDetails.getAgent_gz(); // 本地文件名称
-			String hadoopConf = sftpDetails.getHADOOP_CONF(); // 集群conf配置文件
+//			String hadoopConf = sftpDetails.getHADOOP_CONF(); // 集群conf配置文件
 			String targetDir = sftpDetails.getTarget＿dir(); // 目标路径
 			String tmp_conf_path = sftpDetails.getTmp_conf_path(); // 存放临时文件路径
 			if (!source_path.endsWith(SEPARATOR)) {

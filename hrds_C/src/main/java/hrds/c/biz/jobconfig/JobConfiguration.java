@@ -51,9 +51,6 @@ public class JobConfiguration extends BaseAction {
 	private static final String txDate = "#txdate";
 	private static final String txDateNext = "#dtxdate_next";
 	private static final String txDatePre = "#txdate_pre";
-	// 系统默认资源类型
-	private static final String thrift = "Thrift";
-	private static final String yarn = "Yarn";
 	// excel文件后缀名
 	private static final String xlsxSuffix = ".xlsx";
 	private static final String xlsSuffix = ".xls";
@@ -1924,7 +1921,8 @@ public class JobConfiguration extends BaseAction {
 						Etl_resource etlResource = new Etl_resource();
 						etlResource = (Etl_resource) setFields(mapInfo, etlResource);
 						String resource_type = etlResource.getResource_type();
-						if (!thrift.equals(resource_type) && !yarn.equals(resource_type)) {
+						if (Pro_Type.Thrift != Pro_Type.ofEnumByCode(resource_type) &&
+								Pro_Type.Yarn != Pro_Type.ofEnumByCode(resource_type)) {
 							etlResource.add(Dbo.db());
 						}
 						break;
@@ -1950,7 +1948,7 @@ public class JobConfiguration extends BaseAction {
 						etlDependency.add(Dbo.db());
 						break;
 					default:
-						throw new BusinessException("导入的数据不知道是什么表的信息!");
+						throw new BusinessException("导入的数据不知道是什么表的信息，目前只支持数据库表作为表名!");
 				}
 			}
 		}
