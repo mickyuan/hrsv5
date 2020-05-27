@@ -501,10 +501,8 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.停止工程信息
-		Etl_sys etl_sys = new Etl_sys();
-		etl_sys.setEtl_sys_cd(etl_sys_cd);
-		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
-		etl_sys.update(Dbo.db());
+		DboExecute.updatesOrThrow("停止工程更新系统运行状态失败", "update " + Etl_sys.TableName
+				+ " set sys_run_status=? where etl_sys_cd=?", Job_Status.STOP.getCode(), etl_sys_cd);
 	}
 
 	@Method(desc = "下载文件",
@@ -540,7 +538,9 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("该工程下还有作业，不能删除！");
 		}
 		// 5.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
-		Dbo.execute("delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
-		Dbo.execute("delete from " + Etl_sys.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		DboExecute.deletesOrThrow("删除系统资源定义默认信息失败", "delete from "
+				+ Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		DboExecute.deletesOrThrow("删除工程失败", "delete from " + Etl_sys.TableName +
+				" where etl_sys_cd=?", etl_sys_cd);
 	}
 }
