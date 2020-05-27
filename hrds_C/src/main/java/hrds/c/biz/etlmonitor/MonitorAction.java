@@ -890,9 +890,9 @@ public class MonitorAction extends BaseAction {
 			String compressCommand = "tar -zvcPf " + logDir + curr_bath_date + "_" + etl_job + ".tar.gz"
 					+ " " + logDir + etl_job + "_" + curr_bath_date + "*.log ";
 			// 6.根据工程编号获取工程信息
-			Map<String, Object> etlSysInfo = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+			Etl_sys etlSysInfo = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 			// 7.检查工程部署参数是否为空
-			checkEtlDeployParam(etlSysInfo);
+			ETLJobUtil.isETLDeploy(etlSysInfo);
 			SFTPDetails sftpDetails = new SFTPDetails();
 			// 8.与ETLAgent服务交互
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSysInfo, sftpDetails);
@@ -917,19 +917,6 @@ public class MonitorAction extends BaseAction {
 			throw new BusinessException("与远端服务器进行交互，建立连接失败！");
 		} catch (IOException e) {
 			throw new BusinessException("下载日志文件失败！");
-		}
-	}
-
-	@Method(desc = "检查工程部署参数是否为空",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-					"2.检查工程部署参数是否为空")
-	@Param(name = "etlSysInfo", desc = "工程参数", range = "不为空")
-	private void checkEtlDeployParam(Map<String, Object> etlSysInfo) {
-		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.检查工程部署参数是否为空
-		if (etlSysInfo.get("etl_serv_ip") == null || etlSysInfo.get("etl_serv_port") == null
-				|| etlSysInfo.get("user_name") == null || etlSysInfo.get("user_pwd") == null) {
-			throw new BusinessException("工程服务部署参数不能为空，服务可能未部署，请检查！");
 		}
 	}
 

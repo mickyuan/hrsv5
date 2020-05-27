@@ -74,6 +74,42 @@ public class ETLJobUtil {
 		}
 	}
 
+	@Method(
+			desc = "判断作业调度工程是否已部署",
+			logicStep =
+					"1.数据可访问权限处理方式，通过user_id进行权限控制"
+							+ " 2.验证服务器IP是否为空"
+							+ "3.服务器端口是否为空"
+							+ "4.服务器端口是否为空"
+							+ "5.服务器端口是否为空"
+							+ "6.服务器部署目录是否为空")
+	@Param(name = "参数名称", desc = "参数描述", range = "取值范围")
+	@Return(desc = "返回内容描述", range = "取值范围")
+	public static void isETLDeploy(Etl_sys etlSys) {
+		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		// 2.验证服务器IP是否为空
+		if (StringUtil.isBlank(etlSys.getEtl_serv_ip())) {
+			throw new BusinessException("服务器IP为空，请检查工程是否已部署！");
+		}
+		// 3.服务器端口是否为空
+		if (StringUtil.isBlank(etlSys.getEtl_serv_port())) {
+			throw new BusinessException("服务器端口为空，请检查工程是否已部署！");
+		}
+		// 4.服务器端口是否为空
+		if (StringUtil.isBlank(etlSys.getUser_name())) {
+			throw new BusinessException("服务器用户名为空，请检查工程是否已部署！");
+		}
+		// 5.服务器端口是否为空
+		if (StringUtil.isBlank(etlSys.getUser_pwd())) {
+			throw new BusinessException("服务器密码为空，请检查工程是否已部署！");
+		}
+		// 6.服务器部署目录是否为空
+		if (StringUtil.isBlank(etlSys.getServ_file_path())) {
+			throw new BusinessException("服务器部署目录为空，请检查工程是否已部署！");
+		}
+
+	}
+
 	@Method(desc = "新增作业判断作业名称是否已存在，存在不能新增",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
 					"2.新增作业判断作业名称是否已存在，存在不能新增")
@@ -249,19 +285,20 @@ public class ETLJobUtil {
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成")
 	@Return(desc = "返回当前用户对应工程信息", range = "不能为空")
-	public static Map<String, Object> getEtlSysByCd(String etl_sys_cd, long user_id) {
+	public static Etl_sys getEtlSysByCd(String etl_sys_cd, long user_id) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限验证
-		Map<String, Object> etlSys = Dbo.queryOneObject("select * from " + Etl_sys.TableName
-				+ " where user_id=? and etl_sys_cd=?", user_id, etl_sys_cd);
+		return Dbo.queryOneObject(Etl_sys.class, "select * from " + Etl_sys.TableName
+				+ " where user_id=? and etl_sys_cd=?", user_id, etl_sys_cd).orElseThrow(()
+				-> new BusinessException("sql查询错误或映射实体失败"));
 		// 2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
-		Object remarks = etlSys.get("remarks");
-		if (remarks != null && StringUtil.isNotBlank(remarks.toString()) && !remarks.toString().contains(":")) {
-			String[] ip_port = remarks.toString().split(":");
-			etlSys.put("redisIp", ip_port[0]);
-			etlSys.put("redisPort", ip_port[1]);
-		}
+//		Object remarks = etlSys.get("remarks");
+//		if (remarks != null && StringUtil.isNotBlank(remarks.toString()) && !remarks.toString().contains(":")) {
+//			String[] ip_port = remarks.toString().split(":");
+//			etlSys.put("redisIp", ip_port[0]);
+//			etlSys.put("redisPort", ip_port[1]);
+//		}
 		// 3.返回当前用户对应工程信息
-		return etlSys;
+//		return etlSys;
 	}
 
 	@Method(desc = "根据工程编号作业名称获取作业信息",
@@ -285,14 +322,14 @@ public class ETLJobUtil {
 	@Param(name = "compressCommand", desc = "压缩命令", range = "不为空")
 	@Param(name = "etlSysInfo", desc = "工程参数", range = "不为空")
 	@Param(name = "sftpDetails", desc = "sftp参数对象", range = "无限制")
-	public static void interactingWithTheAgentServer(String compressCommand, Map<String, Object> etlSysInfo,
+	public static void interactingWithTheAgentServer(String compressCommand, Etl_sys etlSysInfo,
 	                                                 SFTPDetails sftpDetails) throws JSchException, IOException {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.封装与远端服务器进行交互所需参数
-		sftpDetails.setHost(etlSysInfo.get("etl_serv_ip").toString());
-		sftpDetails.setPort(Integer.parseInt(etlSysInfo.get("etl_serv_port").toString()));
-		sftpDetails.setUser_name(etlSysInfo.get("user_name").toString());
-		sftpDetails.setPwd(etlSysInfo.get("user_pwd").toString());
+		sftpDetails.setHost(etlSysInfo.getEtl_serv_ip());
+		sftpDetails.setPort(Integer.parseInt(etlSysInfo.getEtl_serv_port()));
+		sftpDetails.setUser_name(etlSysInfo.getUser_name());
+		sftpDetails.setPwd(etlSysInfo.getUser_pwd());
 		// 3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据
 		Session shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
 		// 4.执行压缩日志命令
