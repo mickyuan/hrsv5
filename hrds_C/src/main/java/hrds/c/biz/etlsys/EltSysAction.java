@@ -236,13 +236,17 @@ public class EltSysAction extends BaseAction {
 			curr_bath_date = curr_bath_date.replaceAll("-", "");
 		}
 		// 7.调用脚本启动启动Control
-		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
-				etlSys.getEtl_serv_ip(), etlSys.getEtl_serv_port(), etlSys.getUser_name(),
-				etlSys.getUser_pwd(), etlSys.getServ_file_path());
-		// 8.判断control是否已启动，再次查询系统运行状态
-		etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-		if (Job_Status.RUNNING != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
-			throw new BusinessException("启动control失败，请查看control日志");
+		try {
+			ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
+					etlSys.getEtl_serv_ip(), etlSys.getEtl_serv_port(), etlSys.getUser_name(),
+					etlSys.getUser_pwd(), etlSys.getServ_file_path());
+		} catch (Exception e) {
+			logger.error(e);
+			// 8.判断control是否已启动，再次查询系统运行状态
+			etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+			if (Job_Status.RUNNING != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
+				throw new BusinessException("启动control失败，请查看control日志");
+			}
 		}
 	}
 
