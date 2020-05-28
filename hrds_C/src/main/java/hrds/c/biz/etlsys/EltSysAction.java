@@ -33,7 +33,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +60,7 @@ public class EltSysAction extends BaseAction {
 					+ "4.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Return(desc = "返回根据工程编号查询的工程信息", range = "无限制")
-	public Map<String, Object> searchEtlSysById(String etl_sys_cd) {
+	public Etl_sys searchEtlSysById(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// 2.验证当前工程是否存在
 		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
@@ -178,8 +177,8 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.判断系统是否正在运行中，如果正在运行中不允许部署
-		Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
+		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能部署");
 		}
 		// 4.部署ETL
@@ -220,9 +219,9 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.根据工程编号获取工程信息
-		Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 		// 4.判断工程是否已部署
-		isETLDeploy(etlSys);
+		ETLJobUtil.isETLDeploy(etlSys);
 		// 5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(isAutoShift)) {
 			if (!ETLJobUtil.isEtlJObDefExistBySysCd(etl_sys_cd)) {
@@ -230,56 +229,24 @@ public class EltSysAction extends BaseAction {
 			}
 		}
 		// 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
-		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
+		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能启动control");
 		}
 		if (curr_bath_date.contains("-")) {
 			curr_bath_date = curr_bath_date.replaceAll("-", "");
 		}
 		// 7.调用脚本启动启动Control
-		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
-				etlSys.get("etl_serv_ip").toString(), etlSys.get("etl_serv_port").toString(),
-				etlSys.get("user_name").toString(), etlSys.get("user_pwd").toString(),
-				etlSys.get("serv_file_path").toString());
-		// 8.判断control是否已启动，再次查询系统运行状态
-		etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-		if (Job_Status.RUNNING != (Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString()))) {
-			throw new BusinessException("启动control失败，请查看control日志");
-		}
-	}
-
-	@Method(
-			desc = "判断作业调度工程是否已部署",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ " 2.验证服务器IP是否为空"
-							+ "3.服务器端口是否为空"
-							+ "4.服务器端口是否为空"
-							+ "5.服务器端口是否为空"
-							+ "6.服务器部署目录是否为空")
-	@Param(name = "参数名称", desc = "参数描述", range = "取值范围")
-	@Return(desc = "返回内容描述", range = "取值范围")
-	private void isETLDeploy(Map<String, Object> etlSys) {
-		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证服务器IP是否为空
-		if (etlSys.get("etl_serv_ip") == null) {
-			throw new BusinessException("服务器IP为空，请检查工程是否已部署！");
-		}
-		// 3.服务器端口是否为空
-		if (etlSys.get("etl_serv_port") == null) {
-			throw new BusinessException("服务器端口为空，请检查工程是否已部署！");
-		}
-		// 4.服务器端口是否为空
-		if (etlSys.get("user_name") == null) {
-			throw new BusinessException("服务器用户名为空，请检查工程是否已部署！");
-		}
-		// 5.服务器端口是否为空
-		if (etlSys.get("user_pwd") == null) {
-			throw new BusinessException("服务器密码为空，请检查工程是否已部署！");
-		}
-		// 6.服务器部署目录是否为空
-		if (etlSys.get("serv_file_path").toString() == null) {
-			throw new BusinessException("服务器部署目录为空，请检查工程是否已部署！");
+		try {
+			ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
+					etlSys.getEtl_serv_ip(), etlSys.getEtl_serv_port(), etlSys.getUser_name(),
+					etlSys.getUser_pwd(), etlSys.getServ_file_path());
+		} catch (Exception e) {
+			logger.error(e);
+			// 8.判断control是否已启动，再次查询系统运行状态
+			etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+			if (Job_Status.RUNNING != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
+				throw new BusinessException("启动control失败，请查看control日志");
+			}
 		}
 	}
 
@@ -296,19 +263,15 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.根据工程编号获取工程信息
-		Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 		// 4.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER
-		if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.get("sys_run_status").toString())) {
+		if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.getSys_run_status())) {
 			throw new BusinessException("CONTROL还未启动，不能启动TRIGGER");
 		}
 		// 5.调用脚本启动启动Trigger
-		ETLAgentDeployment.startEngineBatchTrigger(
-				etl_sys_cd,
-				etlSys.get("etl_serv_ip").toString(),
-				etlSys.get("etl_serv_port").toString(),
-				etlSys.get("user_name").toString(),
-				etlSys.get("user_pwd").toString(),
-				etlSys.get("serv_file_path").toString());
+		ETLAgentDeployment.startEngineBatchTrigger(etl_sys_cd, etlSys.getEtl_serv_ip(),
+				etlSys.getEtl_serv_port(), etlSys.getUser_name(), etlSys.getUser_pwd(),
+				etlSys.getServ_file_path());
 	}
 
 	@Method(
@@ -335,14 +298,14 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.根据工程编号获取工程信息
-		Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 		// 4.判断工程是否已部署
-		isETLDeploy(etlSys);
+		ETLJobUtil.isETLDeploy(etlSys);
 		// 5.获取当前日期
 		String sysDate = DateUtil.getSysDate();
 		// 6.获取control或trigger日志路径
 		String logDir =
-				FilenameUtils.normalize(etlSys.get("serv_file_path").toString())
+				FilenameUtils.normalize(etlSys.getServ_file_path())
 						+ separator
 						+ etl_sys_cd
 						+ separator;
@@ -377,10 +340,10 @@ public class EltSysAction extends BaseAction {
 		}
 		// 8.读取control或trigger日志信息
 		SFTPDetails sftpDetails = new SFTPDetails();
-		sftpDetails.setUser_name(etlSys.get("user_name").toString());
-		sftpDetails.setPwd(etlSys.get("user_pwd").toString());
-		sftpDetails.setHost(etlSys.get("etl_serv_ip").toString());
-		sftpDetails.setPort(Integer.parseInt(etlSys.get("etl_serv_port").toString()));
+		sftpDetails.setUser_name(etlSys.getUser_name());
+		sftpDetails.setPwd(etlSys.getUser_pwd());
+		sftpDetails.setHost(etlSys.getEtl_serv_ip());
+		sftpDetails.setPort(Integer.parseInt(etlSys.getEtl_serv_port()));
 		return ReadLog.readAgentLog(logDir, sftpDetails, readNum);
 	}
 
@@ -412,16 +375,16 @@ public class EltSysAction extends BaseAction {
 				throw new BusinessException("当前用户对应的工程已不存在！");
 			}
 			// 3.根据工程编号获取工程信息
-			Map<String, Object> etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+			Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
 			// 4.判断工程是否已部署
-			isETLDeploy(etlSys);
+			ETLJobUtil.isETLDeploy(etlSys);
 			// 5.修改批量日期格式
 			if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
 				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 			}
 			// 6.获取control或trigger日志路径
 			String logDir =
-					FilenameUtils.normalize(etlSys.get("serv_file_path").toString())
+					FilenameUtils.normalize(etlSys.getServ_file_path())
 							+ separator
 							+ etl_sys_cd
 							+ separator;
@@ -501,10 +464,8 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("当前用户对应的工程已不存在！");
 		}
 		// 3.停止工程信息
-		Etl_sys etl_sys = new Etl_sys();
-		etl_sys.setEtl_sys_cd(etl_sys_cd);
-		etl_sys.setSys_run_status(Job_Status.STOP.getCode());
-		etl_sys.update(Dbo.db());
+		DboExecute.updatesOrThrow("停止工程更新系统运行状态失败", "update " + Etl_sys.TableName
+				+ " set sys_run_status=? where etl_sys_cd=?", Job_Status.STOP.getCode(), etl_sys_cd);
 	}
 
 	@Method(desc = "下载文件",
@@ -540,7 +501,9 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("该工程下还有作业，不能删除！");
 		}
 		// 5.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
-		Dbo.execute("delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
-		Dbo.execute("delete from " + Etl_sys.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		DboExecute.deletesOrThrow("删除系统资源定义默认信息失败", "delete from "
+				+ Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		DboExecute.deletesOrThrow("删除工程失败", "delete from " + Etl_sys.TableName +
+				" where etl_sys_cd=?", etl_sys_cd);
 	}
 }

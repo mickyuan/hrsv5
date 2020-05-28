@@ -3,6 +3,7 @@ package hrds.h.biz;
 import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.config.MarketConfUtils;
 import hrds.h.biz.realloader.*;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.IOException;
 
@@ -33,5 +34,16 @@ public class MainClass {
                     .execute();
         }
 
+    }
+
+    public static void main(String[] args) throws IOException {
+        if (args.length == 2) {
+            run(args[0], args[1], "");
+        } else if (args.length == 3) {
+            run(args[0], args[1], args[2]);
+        } else {
+            LogManager.getLogger().error("参数应为 datatableId etlDate [sqlParams]");
+            System.exit(-1);
+        }
     }
 }

@@ -16,6 +16,8 @@ import com.alibaba.druid.stat.TableStat.Name;
 import com.alibaba.druid.util.JdbcConstants;
 import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.TableStorage;
 import hrds.commons.entity.Dm_datatable;
@@ -697,11 +699,13 @@ public class DruidParseQuerySql {
     public String GetNewSql(String sql) {
         String dbType = JdbcConstants.ORACLE;
         List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
-        for (SQLStatement stmt : stmtList) {
-            SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
-            SQLSelect sqlSelect = sqlSelectStatement.getSelect();
-            SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
-            setFrom(sqlSelectQuery);
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            for (SQLStatement stmt : stmtList) {
+                SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
+                SQLSelect sqlSelect = sqlSelectStatement.getSelect();
+                SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
+                setFrom(sqlSelectQuery, db);
+            }
         }
         return sql;
     }
@@ -711,15 +715,15 @@ public class DruidParseQuerySql {
      *
      * @param sqlSelectQuery
      */
-    private void setFrom(SQLSelectQuery sqlSelectQuery) {
+    private void setFrom(SQLSelectQuery sqlSelectQuery, DatabaseWrapper db) {
         if (sqlSelectQuery instanceof SQLUnionQuery) {
             SQLUnionQuery sqlUnionQuery = (SQLUnionQuery) sqlSelectQuery;
-            setFrom(sqlUnionQuery.getLeft());
-            setFrom(sqlUnionQuery.getRight());
+            setFrom(sqlUnionQuery.getLeft(), db);
+            setFrom(sqlUnionQuery.getRight(), db);
             // 因为选择的是oracle的datatype 所以只考虑unionquery和oraclequeryblock这两种
         } else if (sqlSelectQuery instanceof OracleSelectQueryBlock) {
             OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlSelectQuery;
-            handleSetFrom(oracleSelectQueryBlock.getFrom());
+            handleSetFrom(oracleSelectQueryBlock.getFrom(), db);
         } else {
             String message;
             if (sqlSelectQuery == null) {
@@ -735,23 +739,23 @@ public class DruidParseQuerySql {
      *
      * @param sqlTableSource
      */
-    private void handleSetFrom(SQLTableSource sqlTableSource) {
+    private void handleSetFrom(SQLTableSource sqlTableSource, DatabaseWrapper db) {
         // 如果是join的形式 就递归继续拆分
         if (sqlTableSource instanceof OracleSelectJoin) {
             OracleSelectJoin oracleSelectJoin = (OracleSelectJoin) sqlTableSource;
-            handleSetFrom(oracleSelectJoin.getLeft());
-            handleSetFrom(oracleSelectJoin.getRight());
+            handleSetFrom(oracleSelectJoin.getLeft(), db);
+            handleSetFrom(oracleSelectJoin.getRight(), db);
         }
         // 如果是子查询，继续拆分from
         else if (sqlTableSource instanceof OracleSelectSubqueryTableSource) {
             OracleSelectSubqueryTableSource oracleSelectSubqueryTableSource = (OracleSelectSubqueryTableSource) sqlTableSource;
             SQLSelect sqlSelect = oracleSelectSubqueryTableSource.getSelect();
             SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
-            setFrom(sqlSelectQuery);
+            setFrom(sqlSelectQuery, db);
         } else if (sqlTableSource instanceof OracleSelectTableReference) {
             OracleSelectTableReference oracleSelectTableReference = (OracleSelectTableReference) sqlTableSource;
             String tablename = oracleSelectTableReference.getExpr().toString();
-            List<Map<String, Object>> maps = Dbo.queryList("select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join " + Dm_operation_info.TableName +
+            List<Map<String, Object>> maps = SqlOperator.queryList(db, "select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join " + Dm_operation_info.TableName +
                             " t2 on t1.datatable_id = t2.datatable_id where lower(t1.datatable_en_name) = ? and t1.table_storage = ?",
                     tablename.toLowerCase(), TableStorage.ShuJuShiTu.getCode());
             if (!maps.isEmpty()) {

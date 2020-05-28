@@ -1921,8 +1921,8 @@ public class JobConfiguration extends BaseAction {
 						Etl_resource etlResource = new Etl_resource();
 						etlResource = (Etl_resource) setFields(mapInfo, etlResource);
 						String resource_type = etlResource.getResource_type();
-						if (Pro_Type.Thrift != Pro_Type.ofEnumByCode(resource_type) &&
-								Pro_Type.Yarn != Pro_Type.ofEnumByCode(resource_type)) {
+						if (!Pro_Type.Thrift.getCode().equals(resource_type) &&
+								Pro_Type.Yarn.getCode().equals(resource_type)) {
 							etlResource.add(Dbo.db());
 						}
 						break;
@@ -2149,7 +2149,7 @@ public class JobConfiguration extends BaseAction {
 		// 2.判断是否为作业调度系统参数表，根据不同情况获取表信息
 		if (Etl_para.TableName.equalsIgnoreCase(tableName)) {
 			// 2.1查询系统参数表信息
-			return Dbo.queryList("select * from " + tableName + " where 1=1 and etl_sys_cd in(?,?)",
+			return Dbo.queryList("select * from " + tableName + " where etl_sys_cd in(?,?)",
 					etl_sys_cd, EtlSysCd);
 		} else {
 			// 2.2查询表信息
