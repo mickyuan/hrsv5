@@ -89,7 +89,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 						} catch (Exception e) {
 							if (increase != null) {
 								//报错删除当次跑批数据
-								increase.restore(dataStoreConf.getStore_type());
+								increase.restore(collectTableBean.getStorage_type());
 							}
 							throw new AppSystemException("计算增量失败");
 						} finally {
