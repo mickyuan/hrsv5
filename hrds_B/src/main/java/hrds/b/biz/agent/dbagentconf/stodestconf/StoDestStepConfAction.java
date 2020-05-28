@@ -11,6 +11,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.bean.DataStoRelaParam;
+import hrds.b.biz.agent.datafileconf.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.DatabaseType;
@@ -605,138 +606,6 @@ public class StoDestStepConfAction extends BaseAction {
    * 保存表存储属性配置，仅保存抽取方式为<抽取并入库>的表
    * */
   @Method(
-	  desc = "保存表存储属性配置，仅保存抽取方式为<抽取并入库>的表",
-	  logicStep =
-		  ""
-			  + "1、将tbStoInfoString反序列化为List集合，这个集合中的内容是用来保存进入表存储信息表"
-			  + "2、将dslIdString反序列化为List集合，这个集合中的内容是用来保存进入数据存储关系表"
-			  + "3、校验，每张入库的表都必须有其对应的存储目的地"
-			  + "4: 获取储存层配置的信息"
-			  + "5、开始执行保存操作"
-			  + "5-1、如果是修改表的存储信息，则删除该表原有的存储配置，重新插入新的数据"
-			  + "5-2、对待保存的数据设置主键等信息"
-			  + "5-3、在数据抽取定义表中，根据表ID把数据文件格式查询出来存入Table_storage_info对象中"
-			  + "5-4、获取当前保存表的ID"
-			  + "5-5、遍历dataStoRelaParams集合，找到表ID相同的对象"
-			  + "5-6、保存表存储信息"
-			  + "5-7: 如果选择的存储层有Oracle的,则判断表名的长度不能大于27个字符"
-			  + "5、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息")
-  @Param(name = "tbStoInfoString", desc = "存放待保存表存储配置信息的json串", range = "不为空")
-  @Param(name = "colSetId", desc = "数据库采集设置表ID", range = "不为空")
-  @Param(
-	  name = "dslIdString",
-	  desc = "Json格式字符串，json对象中携带的是采集表ID和存储目的地ID，" + "注意，一张表抽取并入库的表可以保存到多个目的地中",
-	  range = "不为空")
-  @Return(desc = "本次数据库采集设置表ID，方便下一个页面可以根据这个ID找到之前的配置", range = "不为空")
-  public long saveTbStoInfo(String tbStoInfoString, long colSetId, String dslIdString) {
-	// 1、将tbStoInfoString反序列化为List集合，这个集合中的内容是用来保存进入表存储信息表
-	List<Table_storage_info> tableStorageInfos =
-		JSONArray.parseArray(tbStoInfoString, Table_storage_info.class);
-	if (tableStorageInfos == null || tableStorageInfos.isEmpty()) {
-	  throw new BusinessException("未获取到表存储信息");
-	}
-	verifyTbStoConf(tableStorageInfos);
-	// 2、将dslIdString反序列化为List集合，这个集合中的内容是用来保存进入数据存储关系表
-	List<DataStoRelaParam> dataStoRelaParams =
-		JSONArray.parseArray(dslIdString, DataStoRelaParam.class);
-	if (dataStoRelaParams == null || dataStoRelaParams.isEmpty()) {
-	  throw new BusinessException("未获取到表存储目的地信息");
-	}
-	// 3、校验，每张入库的表都必须有其对应的存储目的地
-	if (tableStorageInfos.size() != dataStoRelaParams.size()) {
-	  throw new BusinessException("保存表存储信息失败，请确保入库的表都选择了存储目的地");
-	}
-
-	//    4: 获取储存层配置的信息
-	List<Object> storeLayerDataByOracle = getStoreLayerDataByOracle();
-	// 5、开始执行保存操作
-	for (Table_storage_info storageInfo : tableStorageInfos) {
-
-	  // 5-1、删除该表原有的存储配置，重新插入新的数据
-	  long count =
-		  Dbo.queryNumber(
-			  "select count(1) from " + Table_storage_info.TableName + " where table_id = ?",
-			  storageInfo.getTable_id())
-			  .orElseThrow(() -> new BusinessException("SQL查询错误"));
-	  if (count == 1) {
-		// 在table_storage_info表中查询到了数据，表示修改该表的存储信息
-		/*
-		 * 在每保存一张表的数据存储关系前，先尝试在data_relation_table表中使用storage_id删除记录，
-		 * 由于一张表可以选择多个目的地进行存储，所以不关心删除的数目
-		 * */
-		Dbo.execute(
-			"delete from "
-				+ Data_relation_table.TableName
-				+ " where storage_id in "
-				+ "(select storage_id from "
-				+ Table_storage_info.TableName
-				+ " where table_id = ?)",
-			storageInfo.getTable_id());
-		/*
-		 * 在每保存一张表的存储目的地前，先尝试在table_storage_info表中使用table_id删除记录，
-		 * 因为一张需要入库的表在table_storage_info表中只保存一条记录，所以只能删除掉一条
-		 * */
-		DboExecute.deletesOrThrow(
-			"删除表存储信息异常，一张表入库信息只能在表存储信息表中出现一条记录",
-			"delete from " + Table_storage_info.TableName + " where table_id = ?",
-			storageInfo.getTable_id());
-	  }
-	  // 5-2、对待保存的数据设置主键等信息
-	  String storageId = PrimayKeyGener.getNextId();
-	  storageInfo.setStorage_id(storageId);
-	  // 5-3、在数据抽取定义表中，根据表ID把数据文件格式查询出来存入Table_storage_info对象中
-	  List<Object> list =
-		  Dbo.queryOneColumnList(
-			  "select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
-			  storageInfo.getTable_id());
-	  if (list.isEmpty()) {
-		throw new BusinessException("获取采集表卸数文件格式失败");
-	  }
-	  if (list.size() > 1) {
-		throw new BusinessException("获取采集表卸数文件格式失败");
-	  }
-	  storageInfo.setFile_format((String) list.get(0));
-	  // 5-4、获取当前保存表的ID
-	  Long tableIdFromTSI = storageInfo.getTable_id();
-
-	  // 5-5、遍历dataStoRelaParams集合，找到表ID相同的对象
-	  for (DataStoRelaParam param : dataStoRelaParams) {
-		if (StringUtil.isBlank(param.getHyren_name())) {
-		  throw new BusinessException("落地表名未填写");
-		}
-		Long tableIdFromParam = param.getTableId();
-		if (tableIdFromTSI.equals(tableIdFromParam)) {
-		  // 将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
-		  long[] dslIds = param.getDslIds();
-		  if (dslIds == null || !(dslIds.length > 0)) {
-			throw new BusinessException("请检查配置信息，并为每张入库的表选择至少一个存储目的地");
-		  }
-		  for (long dslId : dslIds) {
-			if (storeLayerDataByOracle.contains(dslId)) {
-			  if (param.getHyren_name().length() > 27) {
-				throw new BusinessException(
-					"表名称(" + storageInfo.getHyren_name() + "),长度超过了27个字符请修改!!!");
-			  }
-			}
-			storageInfo.setHyren_name(param.getHyren_name());
-
-			Data_relation_table relationTable = new Data_relation_table();
-			relationTable.setStorage_id(storageId);
-			relationTable.setDsl_id(dslId);
-
-			relationTable.add(Dbo.db());
-		  }
-		}
-	  }
-	  // 4-6、保存表存储信息
-	  storageInfo.add(Dbo.db());
-	}
-
-	// 5、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息
-	return colSetId;
-  }
-
-  @Method(
 	  desc = "在配置表存储信息时，更新表中文名和表名",
 	  logicStep =
 		  "" + "1、将传过来的json串反序列化为List集合" + "2、对集合的长度进行校验，如果集合为空，抛出异常" + "3、遍历集合，更新每张表的中文名和表名")
@@ -815,6 +684,156 @@ public class StoDestStepConfAction extends BaseAction {
 	}
   }
 
+  @Method(
+	  desc = "保存表存储属性配置，仅保存抽取方式为<抽取并入库>的表",
+	  logicStep =
+		  ""
+			  + "1、将tbStoInfoString反序列化为List集合，这个集合中的内容是用来保存进入表存储信息表"
+			  + "2、将dslIdString反序列化为List集合，这个集合中的内容是用来保存进入数据存储关系表"
+			  + "3、校验，每张入库的表都必须有其对应的存储目的地"
+			  + "4: 获取储存层配置的信息"
+			  + "	4-1: 获取任务的分类和数据源信息"
+			  + "	4-2: 获取每张表最终落地的表名信息"
+			  + "5、开始执行保存操作"
+			  + "5-1、如果是修改表的存储信息，则删除该表原有的存储配置，重新插入新的数据"
+			  + "5-2、对待保存的数据设置主键等信息"
+			  + "5-3、在数据抽取定义表中，根据表ID把数据文件格式查询出来存入Table_storage_info对象中"
+			  + "5-4、获取当前保存表的ID"
+			  + "5-5、遍历dataStoRelaParams集合，找到表ID相同的对象"
+			  + "5-6: 如果选择的存储层有Oracle的,则判断表名的长度不能大于27个字符"
+			  + "5-7: 检查每个最终的表名是否被使用过,如果有则抛出异常信息"
+			  + "5-8、保存表存储信息"
+			  + "6、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息")
+  @Param(name = "tbStoInfoString", desc = "存放待保存表存储配置信息的json串", range = "不为空")
+  @Param(name = "colSetId", desc = "数据库采集设置表ID", range = "不为空")
+  @Param(
+	  name = "dslIdString",
+	  desc = "Json格式字符串，json对象中携带的是采集表ID和存储目的地ID，" + "注意，一张表抽取并入库的表可以保存到多个目的地中",
+	  range = "不为空")
+  @Return(desc = "本次数据库采集设置表ID，方便下一个页面可以根据这个ID找到之前的配置", range = "不为空")
+  public long saveTbStoInfo(String tbStoInfoString, long colSetId, String dslIdString) {
+	// 1、将tbStoInfoString反序列化为List集合，这个集合中的内容是用来保存进入表存储信息表
+	List<Table_storage_info> tableStorageInfos =
+		JSONArray.parseArray(tbStoInfoString, Table_storage_info.class);
+	if (tableStorageInfos == null || tableStorageInfos.isEmpty()) {
+	  throw new BusinessException("未获取到表存储信息");
+	}
+	verifyTbStoConf(tableStorageInfos);
+	// 2、将dslIdString反序列化为List集合，这个集合中的内容是用来保存进入数据存储关系表
+	List<DataStoRelaParam> dataStoRelaParams =
+		JSONArray.parseArray(dslIdString, DataStoRelaParam.class);
+	if (dataStoRelaParams == null || dataStoRelaParams.isEmpty()) {
+	  throw new BusinessException("未获取到表存储目的地信息");
+	}
+	// 3、校验，每张入库的表都必须有其对应的存储目的地
+	if (tableStorageInfos.size() != dataStoRelaParams.size()) {
+	  throw new BusinessException("保存表存储信息失败，请确保入库的表都选择了存储目的地");
+	}
+
+	//    4: 获取储存层配置的信息
+	List<Object> storeLayerDataByOracle = getStoreLayerDataByOracle();
+
+	//4-1: 获取任务的分类和数据源信息
+	Map<String, Object> classifyAndSourceData = getClassifyAndSourceData(colSetId);
+
+	//4-2: 获取每张表最终落地的表名信息
+	List<Object> hyrenNameList = getHyrenNameList(classifyAndSourceData.get("classify_id"));
+
+	// 5、开始执行保存操作
+	for (Table_storage_info storageInfo : tableStorageInfos) {
+
+	  // 5-1、删除该表原有的存储配置，重新插入新的数据
+	  long count =
+		  Dbo.queryNumber(
+			  "select count(1) from " + Table_storage_info.TableName + " where table_id = ?",
+			  storageInfo.getTable_id())
+			  .orElseThrow(() -> new BusinessException("SQL查询错误"));
+	  if (count == 1) {
+		// 在table_storage_info表中查询到了数据，表示修改该表的存储信息
+		/*
+		 * 在每保存一张表的数据存储关系前，先尝试在data_relation_table表中使用storage_id删除记录，
+		 * 由于一张表可以选择多个目的地进行存储，所以不关心删除的数目
+		 * */
+		Dbo.execute(
+			"delete from "
+				+ Data_relation_table.TableName
+				+ " where storage_id in "
+				+ "(select storage_id from "
+				+ Table_storage_info.TableName
+				+ " where table_id = ?)",
+			storageInfo.getTable_id());
+		/*
+		 * 在每保存一张表的存储目的地前，先尝试在table_storage_info表中使用table_id删除记录，
+		 * 因为一张需要入库的表在table_storage_info表中只保存一条记录，所以只能删除掉一条
+		 * */
+		DboExecute.deletesOrThrow(
+			"删除表存储信息异常，一张表入库信息只能在表存储信息表中出现一条记录",
+			"delete from " + Table_storage_info.TableName + " where table_id = ?",
+			storageInfo.getTable_id());
+	  }
+	  // 5-2、对待保存的数据设置主键等信息
+	  String storageId = PrimayKeyGener.getNextId();
+	  storageInfo.setStorage_id(storageId);
+	  // 5-3、在数据抽取定义表中，根据表ID把数据文件格式查询出来存入Table_storage_info对象中
+	  List<Object> list =
+		  Dbo.queryOneColumnList(
+			  "select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
+			  storageInfo.getTable_id());
+	  if (list.isEmpty()) {
+		throw new BusinessException("获取采集表卸数文件格式失败");
+	  }
+	  if (list.size() > 1) {
+		throw new BusinessException("获取采集表卸数文件格式失败");
+	  }
+	  storageInfo.setFile_format((String) list.get(0));
+	  // 5-4、获取当前保存表的ID
+	  Long tableIdFromTSI = storageInfo.getTable_id();
+
+	  // 5-5、遍历dataStoRelaParams集合，找到表ID相同的对象
+	  for (DataStoRelaParam param : dataStoRelaParams) {
+		if (StringUtil.isBlank(param.getHyren_name())) {
+		  throw new BusinessException("落地表名未填写");
+		}
+		Long tableIdFromParam = param.getTableId();
+		if (tableIdFromTSI.equals(tableIdFromParam)) {
+		  // 将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
+		  long[] dslIds = param.getDslIds();
+		  if (dslIds == null || !(dslIds.length > 0)) {
+			throw new BusinessException("请检查配置信息，并为每张入库的表选择至少一个存储目的地");
+		  }
+		  for (long dslId : dslIds) {
+			if (storeLayerDataByOracle.contains(dslId)) {
+//			  5-6: 如果选择的存储层有Oracle的,则判断表名的长度不能大于27个字符
+			  if (param.getHyren_name().length() > 27) {
+				throw new BusinessException(
+					"表名称(" + storageInfo.getHyren_name() + "),长度超过了27个字符请修改!!!");
+			  }
+			}
+
+//			5-7: 检查每个最终的表名是否被使用过,如果有则抛出异常信息
+			if (hyrenNameList.contains(param.getHyren_name())) {
+			  CheckParam.throwErrorMsg("数据源%s(%s)下的分类%s(%s)下,已存在此表名(%s)", classifyAndSourceData.get("datasource_name"),
+				  classifyAndSourceData.get("datasource_number"), classifyAndSourceData.get("classify_name"),
+				  classifyAndSourceData.get("classify_num"), param.getHyren_name());
+			}
+			storageInfo.setHyren_name(param.getHyren_name());
+
+			Data_relation_table relationTable = new Data_relation_table();
+			relationTable.setStorage_id(storageId);
+			relationTable.setDsl_id(dslId);
+
+			relationTable.add(Dbo.db());
+		  }
+		}
+	  }
+	  // 5-8、保存表存储信息
+	  storageInfo.add(Dbo.db());
+	}
+
+	// 6、返回数据库设置ID，目的是下一个页面可以找到上一个页面配置的信息
+	return colSetId;
+  }
+
   @Method(desc = "获取系统配置的存储层配置信息", logicStep = "1: 这里获取关系型数据库的配置信息为Oracle的数据")
   @Return(desc = "返回储存配置的结果集", range = "不可为空,否则将无法配置存储目的地配置")
   private List<Object> getStoreLayerDataByOracle() {
@@ -826,5 +845,41 @@ public class StoDestStepConfAction extends BaseAction {
 		StorageTypeKey.database_type,
 		DatabaseType.Oracle10g.getCode(),
 		DatabaseType.Oracle9i.getCode());
+  }
+
+  @Method(desc = "获取数据源和分类信息",
+	  logicStep = "使用任务采集ID获取该任务所属数据源和分类的信息..1: 检查任务的信息是否存在,2: 如果任务存在那么必然存在分类信息,查询并返回")
+  @Param(name = "colSetId", desc = "采集任务的ID", range = "不可为空")
+  @Return(desc = "返回当前任务所属数据源及分类的信息", range = "返回数据源和分类信息")
+  private Map<String, Object> getClassifyAndSourceData(long colSetId) {
+	//1: 检查任务的信息是否存在
+	long countNum = Dbo
+		.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
+		.orElseThrow(() -> new BusinessException("查询异常"));
+	if (countNum == 0) {
+	  throw new BusinessException("检测到任务(" + colSetId + ")不存在");
+	}
+//	2: 如果任务存在那么必然存在分类信息,查询并返回
+	return Dbo.queryOneObject(
+		"SELECT t1.classify_id,t1.classify_num,t1.classify_name,t4.datasource_number,t4.datasource_name  FROM "
+			+ Collect_job_classify.TableName
+			+ " t1 JOIN " + Database_set.TableName
+			+ " t2 ON t1.classify_id = t2.classify_id JOIN " + Agent_info.TableName
+			+ " t3 ON t3.agent_id = t1.agent_id JOIN " + Data_source.TableName
+			+ " t4 ON t3.source_id = t4.source_id WHERE t2.database_id = ?", colSetId);
+  }
+
+  @Method(desc = "获取分类下已经发送完成且是DB数据文件的表数据信息",
+	  logicStep = "使用分类ID查询已经配置完成的表数据信息,这里的分类ID其实就是当前任务使用的分类")
+  @Param(name = "classify_id", desc = "采集任务的分类ID", range = "不可为空")
+  @Return(desc = "返回分类下的最终表名称集合", range = "可为空")
+  private List<Object> getHyrenNameList(Object classify_id) {
+	//使用分类ID查询已经配置完成的表数据信息,这里的分类ID其实就是当前任务使用的分类
+	return Dbo.queryOneColumnList(
+		"SELECT hyren_name FROM " + Table_info.TableName
+			+ " t1 LEFT JOIN " + Table_storage_info.TableName + " t2 ON t1.table_id = t2.table_id JOIN "
+			+ Database_set.TableName
+			+ " t3 ON t1.database_id = t3.database_id WHERE t3.is_sendok = ? AND t3.db_agent = ? AND t3.classify_id = ?",
+		IsFlag.Shi.getCode(), IsFlag.Shi.getCode(), classify_id);
   }
 }
