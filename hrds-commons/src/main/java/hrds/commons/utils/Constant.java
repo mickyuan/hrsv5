@@ -60,10 +60,6 @@ public class Constant {
 	//数据管控表操作类型 set_invalid:设置为无效,restore:恢复
 	public static final String DM_SET_INVALID_TABLE = "set_invalid";
 	public static final String DM_RESTORE_TABLE = "restore";
-	//oracle外部表，采集操作的目录对象名称
-	// XXX 需要强制要求oracle数据库创建目录对象，存储配置external_root_path的文件夹路径必须为数据库创建对象的parent文件夹
-	public static final String HYSHF_DCL = "HYSHF_DCL";
-
 	//solr自定义的handler
 	public static final String HANDLER = "/reloadDictionary";
 	//solr自定义的分隔符
@@ -86,13 +82,13 @@ public class Constant {
 	//DB文件转存默认的行分隔符
 	public static final String DEFAULTLINESEPARATOR = "\n";
 	//拼接sql字段的分隔符
-	public static final String COLUMN_SEPARATOR = ",";
+//	public static final String COLUMN_SEPARATOR = ",";
 	//此分隔符为拼接MD5的默认分隔符
 	public static final String DATADELIMITER = "`@^";
 	//此分隔符为卸数成SequenceFile时的默认分隔符，SequenceFile不允许页面自定义
 	public static final String SEQUENCEDELIMITER = String.valueOf('\001');
 	//mysql建表语句的转义符
-	public static final String MYSQL_ESCAPES = "`";
+//	public static final String MYSQL_ESCAPES = "`";
 	//作业程序参数默认拼接分隔符
 	public static final String ETLPARASEPARATOR = "@";
 

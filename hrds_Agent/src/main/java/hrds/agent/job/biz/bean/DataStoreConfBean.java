@@ -2,7 +2,10 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.FileNameUtils;
+import hrds.commons.utils.StorageTypeKey;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
@@ -45,6 +48,20 @@ public class DataStoreConfBean implements Serializable {
 	}
 
 	public Map<String, String> getData_store_connect_attr() {
+		if (data_store_connect_attr != null && !data_store_connect_attr.isEmpty()) {
+			//处理路径
+			String external_root_path = data_store_connect_attr.get(StorageTypeKey.external_root_path);
+			if (external_root_path != null) {
+				if (external_root_path.endsWith("/") || external_root_path.endsWith("\\")) {
+					data_store_connect_attr.put(StorageTypeKey.external_root_path,
+							FileNameUtils.normalize(external_root_path, true));
+				} else {
+					external_root_path = external_root_path + File.separator;
+					data_store_connect_attr.put(StorageTypeKey.external_root_path,
+							FileNameUtils.normalize(external_root_path, true));
+				}
+			}
+		}
 		return data_store_connect_attr;
 	}
 
