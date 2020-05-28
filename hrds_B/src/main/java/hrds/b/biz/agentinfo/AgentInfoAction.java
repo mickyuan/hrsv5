@@ -225,8 +225,8 @@ public class AgentInfoAction extends BaseAction {
 			throw new BusinessException("agent_name不为空且不为空格，agent_name=" + agent_name);
 		}
 		// 4.判断agent_ip是否是一个合法的ip
-		Pattern pattern = Pattern.compile("^(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}" +
-				"|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])\\.(\\d|[1-9]\\d|1\\d{2}|2[0-5][0-5])$");
+		Pattern pattern = Pattern.compile("(?=(\\b|\\D))(((\\d{1,2})|(1\\d{1,2})|(2[0-4]\\d)|(25[0-5]))\\.)" +
+				"{3}((\\d{1,2})|(1\\d{1,2})|(2[0-4]\\d)|(25[0-5]))(?=(\\b|\\D))");
 		Matcher matcher = pattern.matcher(agent_ip);
 		if (!matcher.matches()) {
 			throw new BusinessException("agent_ip不是一个有效的ip地址,agent_ip=" + agent_ip);

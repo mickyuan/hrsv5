@@ -93,6 +93,8 @@ public class Constant {
 	public static final String SEQUENCEDELIMITER = String.valueOf('\001');
 	//mysql建表语句的转义符
 	public static final String MYSQL_ESCAPES = "`";
+	//作业程序参数默认拼接分隔符
+	public static final String ETLPARASEPARATOR = "@";
 
 	//数据库抽取不同文件格式对应的默认路径名称的映射
 	public static final Map<String, String> fileFormatMap = new HashMap<>();
