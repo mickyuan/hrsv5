@@ -28,8 +28,17 @@ import static hrds.commons.utils.Constant.*;
  */
 public class Utils {
 
-    private static final Logger logger = LogManager.getLogger(Utils.class);
+    private static final Logger logger = LogManager.getLogger();
 
+    /**
+     * 获取字段名，字段类型组合 大概像这样：
+     * a string, b double, c long
+     * 这样的字符串
+     * @param conf 集市配置类实体
+     * @param isDatabase 是否是关系型数据库
+     * @param isMultipleInput 是否是多集市输入
+     * @return 字段名，字段类型组合
+     */
     static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase, boolean isMultipleInput) {
         List<String> additionalAttrs;
         try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -69,13 +78,13 @@ public class Utils {
             s = StringUtil.replaceLast(s, str, "char(8)");
             s = StringUtil.replaceLast(s, str, "char(8)");
 
-            if (isMultipleInput) s = StringUtil.replaceLast(s, str, "char(10)");
-
+            //多集市输入会多个字段
+            if (isMultipleInput) {
+                s = StringUtil.replaceLast(s, str, "char(10)");
+            }
             return s;
         }
         return columnTypes.toString();
-
-
     }
 
     /**
@@ -169,15 +178,9 @@ public class Utils {
      * 如果表不存在就创建
      */
     static void softCreateTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
-        if (!db.isExistTable(tableName))
+        if (!db.isExistTable(tableName)) {
             createTable(db, tableName, createTableColumnTypes);
-    }
-
-    /**
-     * 清空表数据
-     */
-    static void truncateTable(DatabaseWrapper db, String tableName) {
-        db.execute("TRUNCATE TABLE " + tableName);
+        }
     }
 
     /**
@@ -189,7 +192,10 @@ public class Utils {
      * @return 符合附加属性的表名集合
      */
     static List<String> getAdditionalAttrs(DatabaseWrapper db, String datatableId, StoreLayerAdded added) {
-        String sql = "select dfi.field_en_name from datatable_field_info dfi join dm_column_storage dcs on dfi.datatable_field_id = dcs.datatable_field_id join data_store_layer_added dsla on dcs.dslad_id = dsla.dslad_id where dfi.datatable_id = ? and dsla.dsla_storelayer = ?";
+        String sql = "select dfi.field_en_name from datatable_field_info dfi " +
+                "join dm_column_storage dcs on dfi.datatable_field_id = dcs.datatable_field_id " +
+                "join data_store_layer_added dsla on dcs.dslad_id = dsla.dslad_id " +
+                "where dfi.datatable_id = ? and dsla.dsla_storelayer = ?";
         ResultSet resultSet = db.queryGetResultSet(sql, Long.parseLong(datatableId), added.getCode());
         List<String> addAttrCols = new ArrayList<>();
         try {
@@ -217,7 +223,15 @@ public class Utils {
         return Optional.of(sqlList);
     }
 
+    /**
+     * 后置作业为多个sql
+     * 确保这些sql之间的业务
+     *
+     * @param sqlsJoined 多个sql，以 ;; 隔开
+     * @param dbConf db配置map
+     */
     static void finalWorkWithinTrans(String sqlsJoined, Map<String, String> dbConf) {
+        //把sql字符串转换成sql的list
         Optional<List<String>> OptionSqls = getFinalWorkSqls(sqlsJoined);
         if (OptionSqls.isPresent()) {
             DatabaseWrapper db = null;

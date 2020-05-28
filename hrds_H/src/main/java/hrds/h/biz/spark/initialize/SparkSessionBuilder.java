@@ -17,6 +17,10 @@ import org.apache.spark.sql.types.DataTypes;
 
 import java.util.Iterator;
 
+/**
+ * 初始化SparkSession对象
+ * @Author: mick
+ */
 public class SparkSessionBuilder {
 
     private static final Log logger = LogFactory.getLog(SparkSessionBuilder.class);

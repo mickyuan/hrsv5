@@ -90,8 +90,9 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
 
     private Dataset<Row> processDataSet(Dataset<Row> dataSet) {
 
-        if (processer == null)
+        if (processer == null) {
             return dataSet;
+        }
         return processer.process(dataSet);
 
     }
@@ -99,8 +100,9 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
     @Override
     public void close() {
 
-        if (sparkSession != null)
+        if (sparkSession != null) {
             sparkSession.close();
+        }
 
     }
 

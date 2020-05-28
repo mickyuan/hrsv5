@@ -45,8 +45,9 @@ public class MarketSparkMain implements Closeable {
 
     @Override
     public void close() {
-        if (spark != null)
+        if (spark != null) {
             spark.close();
+        }
     }
 
     public static void main(String[] args) {

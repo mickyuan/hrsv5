@@ -3,6 +3,7 @@ package hrds.h.biz.config;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.IsFlag;
@@ -26,18 +27,22 @@ import java.util.Optional;
  */
 public class MarketConfUtils {
     private static final Logger log = LogManager.getLogger(MarketConfUtils.class);
+    /**
+     * 自添加HYREN字段类型
+     */
     public static final String DEFAULT_STRING_TYPE = "string";
+    /**
+     * 查询为空后异常格式化语句
+     */
+    private static final String nullQueryExceptString = "无法从 %s 表中查询出 %s = %s 的记录";
 
     static void checkArguments(String datatableId, String etldate) {
-        if (StringUtil.isBlank(datatableId)) {
-            throw new IllegalArgumentException(String.format("集市信息id不可为空: %s", datatableId));
-        }
+        Validator.notBlank(datatableId, String.format("集市信息id不可为空: %s", datatableId));
         if (!DateUtil.validDateStr(etldate)) {
             throw new IllegalArgumentException(String.format("批量日期不合法: %s", etldate));
         }
     }
 
-    private static final String nullQueryExceptString = "无法从 %s 表中查询出 %s = %s 的记录";
 
     /**
      * 从元数据库中查出所有相关的实体信息
@@ -51,15 +56,14 @@ public class MarketConfUtils {
             /*
              根据主键 datatable_id 查询 Dm_datatable 实体
              */
-            Optional<Dm_datatable> dmDatatable = SqlOperator.queryOneObject(db, Dm_datatable.class,
-                    "select * from dm_datatable where datatable_id = ?", datatableId);
-            if (!dmDatatable.isPresent()) {
-                throw new AppSystemException(String.format(nullQueryExceptString,
-                        Dm_datatable.TableName, "datatable_id", datatableId));
-            }
-            marketConf.setDmDatatable(dmDatatable.get());
-            marketConf.setTableName(dmDatatable.get().getDatatable_en_name());
-            marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.get().getRepeat_flag()) == IsFlag.Shi);
+            Dm_datatable dmDatatable = SqlOperator.queryOneObject(db, Dm_datatable.class,
+                    "select * from dm_datatable where datatable_id = ?", datatableId)
+                    .orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+                            Dm_datatable.TableName, "datatable_id", datatableId)));
+
+            marketConf.setDmDatatable(dmDatatable);
+            marketConf.setTableName(dmDatatable.getDatatable_en_name());
+            marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.getRepeat_flag()) == IsFlag.Shi);
 
             // TODO getorelse
             /*
@@ -67,59 +71,55 @@ public class MarketConfUtils {
              */
             List<Datatable_field_info> datatableFields = SqlOperator.queryList(db, Datatable_field_info.class,
                     "select * from datatable_field_info where datatable_id = ?", datatableId);
-            if (datatableFields.isEmpty()) {
-                throw new AppSystemException(String.format(nullQueryExceptString,
-                        Datatable_field_info.TableName, "datatable_id", datatableId));
-            }
-            //添加字段，字段全部转小写
+            Validator.notEmpty(String.format(nullQueryExceptString,
+                    Datatable_field_info.TableName, "datatable_id", datatableId));
+
+            //添加自定义HYREN字段，字段全部转小写
             handleFields(datatableFields, marketConf.isMultipleInput());
             marketConf.setDatatableFields(datatableFields);
 
             /*
               根据主键 datatable_id 查询 需要执行的sql，并进行替换
              */
-            Optional<Dm_operation_info> dmOperationInfo = SqlOperator.queryOneObject(db, Dm_operation_info.class,
-                    "select * from dm_operation_info where datatable_id = ?", datatableId);
-            if (!dmOperationInfo.isPresent()) {
-                throw new AppSystemException(String.format(nullQueryExceptString,
-                        Dm_operation_info.TableName, "datatable_id", datatableId));
-            }
-            marketConf.setCompleteSql(replaceView(fillSqlWithParams(dmOperationInfo.get().getExecute_sql()
+            Dm_operation_info dmOperationInfo = SqlOperator.queryOneObject(db, Dm_operation_info.class,
+                    "select * from dm_operation_info where datatable_id = ?", datatableId)
+                    .orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+                            Dm_operation_info.TableName, "datatable_id", datatableId)));
+
+            marketConf.setCompleteSql(replaceView(fillSqlWithParams(dmOperationInfo.getExecute_sql()
                     , marketConf.getSqlParams())));
 
             /*
               根据主键 datatable_id 查询出 集市表存储关系表
              */
-            Optional<Dm_relation_datatable> dmRelationDatatable = SqlOperator.queryOneObject(db, Dm_relation_datatable.class,
-                    "select * from dm_relation_datatable where datatable_id = ?", datatableId);
-            if (!dmRelationDatatable.isPresent()) {
-                throw new AppSystemException(String.format(nullQueryExceptString,
-                        Dm_relation_datatable.TableName, "datatable_id", datatableId));
-            }
-            marketConf.setDmRelationDatatable(dmRelationDatatable.get());
+            Dm_relation_datatable dmRelationDatatable = SqlOperator.queryOneObject(db, Dm_relation_datatable.class,
+                    "select * from dm_relation_datatable where datatable_id = ?", datatableId)
+                    .orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+                            Dm_relation_datatable.TableName, "datatable_id", datatableId)));
+
+            marketConf.setDmRelationDatatable(dmRelationDatatable);
 
             //存储层配置id
-            Long dslId = dmRelationDatatable.get().getDsl_id();
+            Long dslId = dmRelationDatatable.getDsl_id();
             /*
               根据 存储层配置id 查询出 数据存储层配置表
              */
-            Optional<Data_store_layer> dataStoreLayer = SqlOperator.queryOneObject(db, Data_store_layer.class,
-                    "select * from data_store_layer where dsl_id = ?", dslId);
-            if (!dataStoreLayer.isPresent()) {
-                throw new AppSystemException(String.format(nullQueryExceptString,
-                        Data_store_layer.TableName, "dsl_id", datatableId));
-            }
-            marketConf.setDataStoreLayer(dataStoreLayer.get());
+            Data_store_layer dataStoreLayer = SqlOperator.queryOneObject(db, Data_store_layer.class,
+                    "select * from data_store_layer where dsl_id = ?", dslId)
+                    .orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+                            Data_store_layer.TableName, "dsl_id", datatableId)));
+
+            marketConf.setDataStoreLayer(dataStoreLayer);
 
             /*
             根据主键 存储层配置id 查询 数据存储层配置属性表
              */
             List<Data_store_layer_attr> dataStoreLayerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
                     "select * from data_store_layer_attr where dsl_id = ?", dslId);
-            if (dataStoreLayerAttrs.isEmpty()) {
-                throw new AppSystemException(String.format(nullQueryExceptString,
-                        Data_store_layer_attr.TableName, "dsl_id", dslId));
-            }
+
+            Validator.notEmpty(dataStoreLayerAttrs, String.format(nullQueryExceptString,
+                    Data_store_layer_attr.TableName, "dsl_id", dslId));
+
             marketConf.setDataStoreLayerAttrs(dataStoreLayerAttrs);
 
             /*
@@ -191,24 +191,34 @@ public class MarketConfUtils {
      * @param sqlParams     sql的动态参数
      */
     private static String fillSqlWithParams(String incompleteSql, String sqlParams) {
+        log.info(String.format("SQL动态参数： [%s]", sqlParams));
         String sql = incompleteSql;
         if (StringUtil.isBlank(sqlParams)) {
-            log.info(String.format("SQL动态参数： [%s]", sqlParams));
             return sql;
         }
         for (String param : StringUtil.split(sqlParams, ";")) {
-            List<String> paramKV = StringUtil.split(param, "=");
-            if (paramKV.size() > 1) {
-                sql = StringUtil.replace(sql, "#{" + paramKV.get(0).trim() + "}", paramKV.get(1));
+            List<String> params = StringUtil.split(param, "=");
+            if (params.size() != 2) {
+                throw new IllegalArgumentException("自定义动态参数键值对错误：" + params);
             }
+            sql = StringUtil.replace(sql, "#{" + params.get(0).trim() + "}", params.get(1));
         }
         return sql;
     }
 
+    /**
+     * 当前跑批日期等同于元数据库存储的上次的跑批日期
+     *
+     * @param conf    集市作业配置类实体
+     * @param etlDate 跑批日期
+     */
     static void checkReRun(MarketConf conf, String etlDate) {
         conf.setRerun(etlDate.equals(conf.getDmDatatable().getEtl_date()));
     }
 
+    /**
+     * 集市作业配置类实体序列化路径前缀
+     */
     private static final String MARKET_CONF_SERIALIZATION_PATH = FileUtil.TEMP_DIR_NAME +
             "market-serialize" + FileUtil.PATH_SEPARATOR_CHAR;
 
@@ -226,7 +236,8 @@ public class MarketConfUtils {
 
         try {
             FileUtil.forceDelete(serializeFile);
-        } catch (IOException ignore) {
+        } catch (IOException warn) {
+            log.warn("删除之前序列化文件失败", warn);
         }
 
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(serializeFile))) {

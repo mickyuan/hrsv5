@@ -9,11 +9,12 @@ import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 
 /**
+ * 作业上下文对象
  * @Author: Mick Yuan
  * @Date:
  * @Since jdk1.8
  */
-public class JobStateImpl implements JobState {
+public class JobContextImpl implements JobContext {
 
     MarketConf conf;
     private final Dm_relation_datatable dmRelationDatatable;
@@ -24,7 +25,7 @@ public class JobStateImpl implements JobState {
      */
     final Thread shutdownThread;
 
-    public JobStateImpl(MarketConf conf) {
+    public JobContextImpl(MarketConf conf) {
         this.conf = conf;
         this.dmRelationDatatable = conf.getDmRelationDatatable();
         this.dmDatatable = conf.getDmDatatable();
