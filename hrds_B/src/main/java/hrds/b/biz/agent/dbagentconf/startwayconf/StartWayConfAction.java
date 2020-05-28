@@ -35,6 +35,7 @@ import hrds.commons.entity.Etl_sys;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.jsch.ChineseUtil;
 import java.io.File;
@@ -68,12 +69,8 @@ public class StartWayConfAction extends BaseAction {
   private static final String PARA_HYRENBIN = "!HYSHELLBIN";
   // 作业调度系统参数定义日志变量名称
   private static final String PARA_HYRENLOG = "!HYLOG";
-  // 采集程序的默认脚本名称
-  private static final String SHELLCOMMAND = "shellCommand.sh";
   // 作业名称/描述之间的分割符
   private static final String SPLITTER = "_";
-  //作业参数之间的分隔符
-  private static final String JOB_SPLITTER = "@";
 
 
   @Method(desc = "获取工程信息", logicStep = "获取作业调度工程信息,然后返回到前端")
@@ -195,13 +192,13 @@ public class StartWayConfAction extends BaseAction {
 	// 作业参数
 	String pro_para =
 		colSetId
-			+ JOB_SPLITTER
+			+ Constant.ETLPARASEPARATOR
 			+ tableItemMap.get("table_name")
-			+ JOB_SPLITTER
+			+ Constant.ETLPARASEPARATOR
 			+ tableItemMap.get("agent_type")
-			+ JOB_SPLITTER
+			+ Constant.ETLPARASEPARATOR
 			+ BATCH_DATE
-			+ JOB_SPLITTER
+			+ Constant.ETLPARASEPARATOR
 			+ tableItemMap.get("dbfile_format");
 	tableItemMap.put("pro_para", pro_para);
 
@@ -277,12 +274,9 @@ public class StartWayConfAction extends BaseAction {
 		.collect(Collectors.toList());
 	//上次存在的表数据作业信息
 	List<Object> etlJobData = etlJobList.stream().map(item -> item.get("etl_job")).collect(Collectors.toList());
-	System.out.println(databaseDefaultEtlJob);
-	System.out.println(etlJobData);
 
 	Map<String, List<Object>> differenceInfo = getDifferenceInfo(databaseDefaultEtlJob, etlJobData);
-	//获取删除的作业
-	List<Object> delete = differenceInfo.get("delete");
+
 	//获取新增的作业
 	List<Object> addEtlJob = differenceInfo.get("add");
 	previewJob.removeIf(item -> !addEtlJob.contains(item.get("etl_job")));
@@ -299,6 +293,8 @@ public class StartWayConfAction extends BaseAction {
 	//获取已存在表的作业名称信息
 //	  List<Object> etl_job = previewJob.stream()
 //		  .map(itemMap -> itemMap.get("etl_job")).collect(Collectors.toList());
+	//获取删除的作业
+	List<Object> delete = differenceInfo.get("delete");
 	etlJobList.removeIf(itemMap -> {
 	  if (delete.contains(itemMap.get("etl_job"))) {
 		Dbo.execute("DELETE FROM " + Take_relation_etl.TableName + " WHERE etl_job = ?", itemMap.get("etl_job"));
@@ -349,7 +345,7 @@ public class StartWayConfAction extends BaseAction {
 				+ " WHERE t1.database_id = ? LIMIT 1",
 			colSetId);
 	map.put("pro_type", Pro_Type.SHELL.getCode());
-	map.put("pro_name", SHELLCOMMAND);
+	map.put("pro_name", Constant.SHELLCOMMAND);
 
 	// 3: 获取任务存在着抽取作业关系.. 如果存在就获取一条信息就可以... 因为同个任务的作业工程编号,任务编号是一个
 	map.putAll(
