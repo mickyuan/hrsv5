@@ -7,9 +7,9 @@ INSERT INTO keytable (key_name,key_value) VALUES ('hrds',20);
 INSERT INTO keytable (key_name,key_value) VALUES ('paldbcount',0);
 
 delete from etl_para;
-INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('SYS', '#txdate', '#txdate', 'param', '当前跑批日,格式yyyyMMdd');
-INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('SYS', '#txdate_next', '#txdate_next', 'param', '后一跑批日,格式yyyyMMdd');
-INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('SYS', '#txdate_pre', '#txdate_pre', 'param', '前一跑批日,格式yyyyMMdd');
+INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate', '#txdate', 'param', '当前跑批日,格式yyyyMMdd');
+INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate_next', '#txdate_next', 'param', '后一跑批日,格式yyyyMMdd');
+INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate_pre', '#txdate_pre', 'param', '前一跑批日,格式yyyyMMdd');
 
 delete from sys_role;
 INSERT INTO sys_role (role_id,role_name) VALUES ('1001','管理员');
