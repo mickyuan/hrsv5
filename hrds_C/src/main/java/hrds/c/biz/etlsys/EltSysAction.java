@@ -62,12 +62,8 @@ public class EltSysAction extends BaseAction {
 	@Return(desc = "返回根据工程编号查询的工程信息", range = "无限制")
 	public Etl_sys searchEtlSysById(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
-		// 2.验证当前工程是否存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前工程已不存在，可能被删除！");
-		}
-		// 3.根据工程编号查询工程信息
-		return ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		// 2.根据工程编号查询工程信息
+		return ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
 	}
 
 	@Method(
@@ -94,7 +90,7 @@ public class EltSysAction extends BaseAction {
 		// 跑批日期默认为当天
 		etl_sys.setCurr_bath_date(DateUtil.getSysDate());
 		// 4.检查工程编号是否已存在，存在不能新增,这里user_id传值为空，因为不管是什么用户工程编号都不能重复
-		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd(), null)) {
+		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd())) {
 			throw new BusinessException("工程编号已存在，不能新增！");
 		}
 		// 5.新增保存工程
@@ -137,22 +133,14 @@ public class EltSysAction extends BaseAction {
 
 	@Method(
 			desc = "更新保存作业调度工程",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ "2.验证当前用户对应的工程是否已不存在"
-							+ "3.更新保存工程"
-							+ "4.部署ETL"
-							+ "5.部署成功，更新用户信息")
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+					+ "2.更新保存工程")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "etl_sys_name", desc = "工程名称", range = "新增工程时生成")
 	@Param(name = "comments", desc = "工程描述", range = "无限制", nullable = true)
 	public void updateEtlSys(String etl_sys_cd, String etl_sys_name, String comments) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.更新保存工程
+		// 2.更新保存工程
 		DboExecute.updatesOrThrow("更新保存失败!", "update " + Etl_sys.TableName
 						+ " set etl_sys_name=?,comments=? where etl_sys_cd=? and user_id=?",
 				etl_sys_name, comments, etl_sys_cd, getUserId());
@@ -160,10 +148,9 @@ public class EltSysAction extends BaseAction {
 
 	@Method(desc = "部署作业调度工程",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "2.验证当前用户对应的工程是否已不存在"
-					+ "3.判断系统是否正在运行中，如果正在运行中不允许部署"
-					+ "4.部署ETL"
-					+ "5.部署成功，更新用户信息")
+					+ "2.判断系统是否正在运行中，如果正在运行中不允许部署"
+					+ "3.部署作业工程"
+					+ "4.部署成功，更新用户信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "etl_serv_ip", desc = "ETL部署Agent服务器IP", range = "新增工程时生成")
 	@Param(name = "serv_file_path", desc = "ETL部署Agent服务器部署路径", range = "无限制")
@@ -172,19 +159,14 @@ public class EltSysAction extends BaseAction {
 	public void deployEtlJobScheduleProject(String etl_sys_cd, String etl_serv_ip, String serv_file_path,
 	                                        String user_name, String user_pwd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.判断系统是否正在运行中，如果正在运行中不允许部署
-		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
+		// 2.判断系统是否正在运行中，如果正在运行中不允许部署
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能部署");
 		}
-		// 4.部署ETL
+		// 3.部署作业工程
 		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, Constant.SFTP_PORT, user_name, user_pwd,
 				serv_file_path);
-		// 5.部署成功，更新用户信息
 		String redisIP = PropertyParaValue.getString("redis_ip", "172.168.0.61");
 		String redisPort = PropertyParaValue.getString("redis_port", "56379");
 		Etl_sys etl_sys = new Etl_sys();
@@ -195,96 +177,81 @@ public class EltSysAction extends BaseAction {
 		etl_sys.setServ_file_path(serv_file_path);
 		etl_sys.setRemarks(redisIP + ':' + redisPort);
 		etl_sys.setEtl_serv_port(Constant.SFTP_PORT);
+		// 4.部署成功，更新用户信息
 		etl_sys.update(Dbo.db());
 	}
 
 	@Method(desc = "启动CONTROL",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "2.验证当前用户对应的工程是否已不存在"
-					+ "3.根据工程编号获取工程信息"
-					+ "4.判断工程是否已部署"
-					+ "5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
-					+ "6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
-					+ "7.调用脚本启动启动Control"
-					+ "8.判断control是否已启动，再次查询系统运行状态")
+					+ "2.根据工程编号获取工程信息"
+					+ "3.判断工程是否已部署"
+					+ "4.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
+					+ "5.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
+					+ "6.调用脚本启动启动Control"
+					+ "7.判断control是否已启动，再次查询系统运行状态")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
-	public void startControl(
-			String etl_sys_cd, String isResumeRun, String isAutoShift, String curr_bath_date) {
+	public void startControl(String etl_sys_cd, String isResumeRun, String isAutoShift, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.根据工程编号获取工程信息
-		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-		// 4.判断工程是否已部署
+		// 2.根据工程编号获取工程信息
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		// 3.判断工程是否已部署
 		ETLJobUtil.isETLDeploy(etlSys);
-		// 5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
+		// 4.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(isAutoShift)) {
 			if (!ETLJobUtil.isEtlJObDefExistBySysCd(etl_sys_cd)) {
 				throw new BusinessException("如果日切方式不是自动日切且工程下作业列表为空，则不能启动!");
 			}
 		}
-		// 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
+		// 5.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能启动control");
 		}
 		if (curr_bath_date.contains("-")) {
 			curr_bath_date = curr_bath_date.replaceAll("-", "");
 		}
-		// 7.调用脚本启动启动Control
-		try {
-			ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
-					etlSys.getEtl_serv_ip(), etlSys.getEtl_serv_port(), etlSys.getUser_name(),
-					etlSys.getUser_pwd(), etlSys.getServ_file_path());
-		} catch (Exception e) {
-			logger.error(e);
-			// 8.判断control是否已启动，再次查询系统运行状态
-			etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-			if (Job_Status.RUNNING != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
-				throw new BusinessException("启动control失败，请查看control日志");
-			}
+		// 6.调用脚本启动启动Control
+		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
+				etlSys.getEtl_serv_ip(), etlSys.getEtl_serv_port(), etlSys.getUser_name(),
+				etlSys.getUser_pwd(), etlSys.getServ_file_path());
+		// 7.判断control是否已启动
+		etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.getSys_run_status())) {
+			throw new BusinessException("control启动失败，请查看日志");
 		}
+//		String controlStop = ETLAgentDeployment.isControlStop(etlSys);
 	}
 
 	@Method(desc = "启动TRIGGER",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "3.根据工程编号获取工程信息"
-					+ "4.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER"
-					+ "6.调用脚本启动启动Trigger")
+					+ "2.根据工程编号获取工程信息"
+					+ "3.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER"
+					+ "4.调用脚本启动启动Trigger")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	public void startTrigger(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.根据工程编号获取工程信息
-		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-		// 4.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER
+		// 2.根据工程编号获取工程信息
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		// 3.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER
 		if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.getSys_run_status())) {
 			throw new BusinessException("CONTROL还未启动，不能启动TRIGGER");
 		}
-		// 5.调用脚本启动启动Trigger
+		// 4.调用脚本启动启动Trigger
 		ETLAgentDeployment.startEngineBatchTrigger(etl_sys_cd, etlSys.getEtl_serv_ip(),
 				etlSys.getEtl_serv_port(), etlSys.getUser_name(), etlSys.getUser_pwd(),
 				etlSys.getServ_file_path());
 	}
 
-	@Method(
-			desc = "读取Control或Trigger日志信息",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ "2.验证当前用户对应的工程是否已不存在"
-							+ "3.根据工程编号获取工程信息"
-							+ "4.判断工程是否已部署"
-							+ "5.获取当前日期"
-							+ "6.获取control或trigger日志路径"
-							+ "7.日志读取行数最大为1000行"
-							+ "8.读取control或trigger日志信息")
+	@Method(desc = "读取Control或Trigger日志信息",
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+					+ "2.根据工程编号获取工程信息"
+					+ "3.判断工程是否已部署"
+					+ "4.获取当前日期"
+					+ "5.获取control或trigger日志路径"
+					+ "6.日志读取行数最大为1000行"
+					+ "7.读取control或trigger日志信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "readNum", desc = "查看日志行数", range = "最多显示1000行,大于0的正整数", valueIfNull = "100")
 	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），0代表control，" +
@@ -293,76 +260,50 @@ public class EltSysAction extends BaseAction {
 	public String readControlOrTriggerLog(String etl_sys_cd, Integer readNum, String isControl) {
 
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.根据工程编号获取工程信息
-		Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-		// 4.判断工程是否已部署
+		// 2.根据工程编号获取工程信息
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		// 3.判断工程是否已部署
 		ETLJobUtil.isETLDeploy(etlSys);
-		// 5.获取当前日期
+		// 4.获取当前日期
 		String sysDate = DateUtil.getSysDate();
-		// 6.获取control或trigger日志路径
-		String logDir =
-				FilenameUtils.normalize(etlSys.getServ_file_path())
-						+ separator
-						+ etl_sys_cd
-						+ separator;
+		// 5.获取control或trigger日志路径
+		String logDir = FilenameUtils.normalize(etlSys.getServ_file_path())
+				+ separator + etl_sys_cd + separator;
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 			// CONTROL日志目录
-			logDir =
-					logDir
-							+ "control"
-							+ separator
-							+ sysDate.substring(0, 4)
-							+ separator
-							+ sysDate.substring(0, 6)
-							+ separator
-							+ sysDate
-							+ "ControlOut.log";
+			logDir = logDir + "control" + separator + sysDate.substring(0, 4) + separator
+					+ sysDate.substring(0, 6) + separator + sysDate + "ControlOut.log";
 		} else {
 			// TRIGGER日志目录
-			logDir =
-					logDir
-							+ "trigger"
-							+ separator
-							+ sysDate.substring(0, 4)
-							+ separator
-							+ sysDate.substring(0, 6)
-							+ separator
-							+ sysDate
-							+ "TriggerOut.log";
+			logDir = logDir + "trigger" + separator + sysDate.substring(0, 4) + separator
+					+ sysDate.substring(0, 6) + separator + sysDate + "TriggerOut.log";
 		}
-		// 7.日志读取行数最大为1000行
+		// 6.日志读取行数最大为1000行
 		if (readNum > 1000) {
 			readNum = 1000;
 		}
-		// 8.读取control或trigger日志信息
 		SFTPDetails sftpDetails = new SFTPDetails();
 		sftpDetails.setUser_name(etlSys.getUser_name());
 		sftpDetails.setPwd(etlSys.getUser_pwd());
 		sftpDetails.setHost(etlSys.getEtl_serv_ip());
 		sftpDetails.setPort(Integer.parseInt(etlSys.getEtl_serv_port()));
+		// 7.读取control或trigger日志信息
 		return ReadLog.readAgentLog(logDir, sftpDetails, readNum);
 	}
 
-	@Method(
-			desc = "下载Control或Trigger日志",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ "2.验证当前用户对应的工程是否已不存在"
-							+ "3.根据工程编号获取工程信息"
-							+ "4.判断工程是否已部署"
-							+ "5.修改批量日期格式"
-							+ "6.获取control或trigger日志路径"
-							+ "7.获取压缩日志命令"
-							+ "8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令"
-							+ "9.与工程部署服务器进行交互"
-							+ "10.获取文件下载路径"
-							+ "11.从服务器下载文件到本地"
-							+ "12.下载完删除压缩包"
-							+ "13.返回CONTROL或TRIGGER下载日志文件名")
+	@Method(desc = "下载Control或Trigger日志",
+			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+					+ "2.根据工程编号获取工程信息"
+					+ "3.判断工程是否已部署"
+					+ "4.修改批量日期格式"
+					+ "5.获取control或trigger日志路径"
+					+ "6.获取压缩日志命令"
+					+ "7.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令"
+					+ "8.与工程部署服务器进行交互压缩日志文件"
+					+ "9.获取文件下载路径"
+					+ "10.从服务器下载文件到本地"
+					+ "11.下载完删除压缩包"
+					+ "12.返回CONTROL或TRIGGER下载日志文件名")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日，如：20191219")
 	@Param(name = "isControl", desc = "是否读取Control日志", range = "使用（IsFlag代码项），" +
@@ -370,61 +311,40 @@ public class EltSysAction extends BaseAction {
 	public String downloadControlOrTriggerLog(String etl_sys_cd, String curr_bath_date, String isControl) {
 		try {
 			// 1.数据可访问权限处理方式，通过user_id进行权限控制
-			// 2.验证当前用户对应的工程是否已不存在
-			if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-				throw new BusinessException("当前用户对应的工程已不存在！");
-			}
-			// 3.根据工程编号获取工程信息
-			Etl_sys etlSys = ETLJobUtil.getEtlSysByCd(etl_sys_cd, getUserId());
-			// 4.判断工程是否已部署
+			// 2.根据工程编号获取工程信息
+			Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+			// 3.判断工程是否已部署
 			ETLJobUtil.isETLDeploy(etlSys);
-			// 5.修改批量日期格式
+			// 4.修改批量日期格式
 			if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
 				curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 			}
-			// 6.获取control或trigger日志路径
-			String logDir =
-					FilenameUtils.normalize(etlSys.getServ_file_path())
-							+ separator
-							+ etl_sys_cd
-							+ separator;
-			// 7.获取压缩日志命令
+			// 5.获取control或trigger日志路径
+			String logDir = FilenameUtils.normalize(etlSys.getServ_file_path())
+					+ separator + etl_sys_cd + separator;
+			// 6.获取压缩日志命令
 			String compressCommand;
-			// 8.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令
+			// 7.判断是control日志还是trigger日志,获取日志目录以及压缩日志目录命令
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志目录
-				logDir =
-						logDir
-								+ "control"
-								+ separator
-								+ curr_bath_date.substring(0, 4)
-								+ separator
-								+ curr_bath_date.substring(0, 6)
-								+ separator
-								+ curr_bath_date;
+				logDir = logDir + "control" + separator + curr_bath_date.substring(0, 4)
+						+ separator + curr_bath_date.substring(0, 6) + separator + curr_bath_date;
 				// 压缩CONTROL日志命令
 				compressCommand = "tar -zvcPf " + logDir + "_ControlLog.tar.gz" + " " + logDir + "*.log";
 			} else {
 				// TRIGGER日志目录
-				logDir =
-						logDir
-								+ "trigger"
-								+ separator
-								+ curr_bath_date.substring(0, 4)
-								+ separator
-								+ curr_bath_date.substring(0, 6)
-								+ separator
-								+ curr_bath_date;
+				logDir = logDir + "trigger" + separator + curr_bath_date.substring(0, 4)
+						+ separator + curr_bath_date.substring(0, 6) + separator + curr_bath_date;
 				// 压缩TRIGGER日志命令
 				compressCommand = "tar -zvcPf " + logDir + "_TriggerLog.tar.gz" + " " + logDir + "*.log";
 			}
 			SFTPDetails sftpDetails1 = new SFTPDetails();
-			// 9.与工程部署服务器进行交互
+			// 8.与工程部署服务器进行交互压缩日志文件
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
-			// 10.获取文件下载路径
+			// 9.获取文件下载路径
 			String localPath = ETLJobUtil.getFilePath(null);
 			logger.info("==========control/trigger文件下载本地路径=========" + localPath);
-			// 11.从服务器下载文件到本地
+			// 10.从服务器下载文件到本地
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
 				logDir = logDir + "_ControlLog.tar.gz";
@@ -433,12 +353,12 @@ public class EltSysAction extends BaseAction {
 				logDir = logDir + "_TriggerLog.tar.gz";
 			}
 			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails1);
-			// 12.下载完删除压缩包
+			// 11.下载完删除压缩包
 			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
 			if (curr_bath_date.contains("-")) {
 				curr_bath_date = curr_bath_date.replaceAll("-", "");
 			}
-			// 13.返回CONTROL或TRIGGER下载日志文件名
+			// 12.返回CONTROL或TRIGGER下载日志文件名
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 				// CONTROL日志文件名称
 				return curr_bath_date + "_ControlLog.tar.gz";
@@ -459,12 +379,8 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	public void stopEtlProject(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.停止工程信息
-		DboExecute.updatesOrThrow("停止工程更新系统运行状态失败", "update " + Etl_sys.TableName
+		// 2.停止工程信息
+		DboExecute.updatesOrThrow("停止工程，更新系统运行状态失败", "update " + Etl_sys.TableName
 				+ " set sys_run_status=? where etl_sys_cd=?", Job_Status.STOP.getCode(), etl_sys_cd);
 	}
 
@@ -486,23 +402,19 @@ public class EltSysAction extends BaseAction {
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	public void deleteEtlProject(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证当前用户对应的工程是否已不存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前用户对应的工程已不存在！");
-		}
-		// 3.判断该工程下是否还有任务
+		// 2.判断该工程下是否还有任务
 		if (Dbo.queryNumber("select count(1) from " + Etl_sub_sys_list.TableName + "  WHERE etl_sys_cd=?"
 				, etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("该工程下还有任务，不能删除！");
 		}
-		// 4.判断该工程下是否还有作业
+		// 3.判断该工程下是否还有作业
 		if (Dbo.queryNumber("select count(1) from " + Etl_job_def.TableName + "  WHERE etl_sys_cd=?"
 				, etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("该工程下还有作业，不能删除！");
 		}
-		// 5.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
-		DboExecute.deletesOrThrow("删除系统资源定义默认信息失败", "delete from "
-				+ Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		// 4.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
+		DboExecute.deletesOrThrow(2, "删除系统资源定义默认信息失败",
+				"delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
 		DboExecute.deletesOrThrow("删除工程失败", "delete from " + Etl_sys.TableName +
 				" where etl_sys_cd=?", etl_sys_cd);
 	}
