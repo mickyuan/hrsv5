@@ -51,7 +51,8 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "dsl_remark", desc = "数据存储层配置表备注", range = "无限制", nullable = true)
 	@Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
 	@Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "storage_property_key，" +
-			"storage_property_val,dsla_remark,is_file代表key，对应的值为value的json字符串(文件属性这里不需要）")
+			"storage_property_val,dsla_remark,is_file(0代表非文件，1代表文件）代表key，" +
+			"对应的值为value的json字符串(文件属性这里不需要）")
 	@Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
 	@Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
 	@Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
@@ -181,16 +182,20 @@ public class DataStoreAction extends BaseAction {
 		// 3.循环获取数据存储配置属性的key,value值
 		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
 		for (Map<String, String> layerAttr : layerAttrList) {
-			data_store_layer_attr.setDsla_id(PrimayKeyGener.getNextId());
-			data_store_layer_attr.setDsl_id(dsl_id);
-			data_store_layer_attr.setDsla_remark(layerAttr.get("dsla_remark"));
-			data_store_layer_attr.setIs_file(layerAttr.get("is_file"));
-			data_store_layer_attr.setStorage_property_key(layerAttr.get("storage_property_key"));
-			data_store_layer_attr.setStorage_property_val(layerAttr.get("storage_property_val"));
-			// 4.检查数据存储层配置属性字段合法性
-			checkDataStoreLayerAttrField(data_store_layer_attr);
-			// 5.循环新增保存数据存储层配置属性信息
-			data_store_layer_attr.add(Dbo.db());
+			String is_file = layerAttr.get("is_file");
+			// 只存非文件上传的
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(is_file)) {
+				data_store_layer_attr.setDsla_id(PrimayKeyGener.getNextId());
+				data_store_layer_attr.setDsl_id(dsl_id);
+				data_store_layer_attr.setDsla_remark(layerAttr.get("dsla_remark"));
+				data_store_layer_attr.setIs_file(is_file);
+				data_store_layer_attr.setStorage_property_key(layerAttr.get("storage_property_key"));
+				data_store_layer_attr.setStorage_property_val(layerAttr.get("storage_property_val"));
+				// 4.检查数据存储层配置属性字段合法性
+				checkDataStoreLayerAttrField(data_store_layer_attr);
+				// 5.循环新增保存数据存储层配置属性信息
+				data_store_layer_attr.add(Dbo.db());
+			}
 		}
 	}
 
