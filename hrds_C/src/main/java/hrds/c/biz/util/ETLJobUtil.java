@@ -7,7 +7,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.core.utils.Validator;
 import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.*;
@@ -24,49 +24,46 @@ import java.util.Map;
 public class ETLJobUtil {
 
 	@Method(desc = "判断当前工程是否还存在",
-			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
-					"2.判断user_id是否为空，为空添加条件" +
-					"3.判断当前工程是否还存在，存在返回true,不存在返回false")
+			logicStep = "1.判断当前工程是否还存在，存在返回true,不存在返回false")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成", nullable = true)
 	@Return(desc = "返回工程是否存在标志", range = "true代表存在，false代表不存在")
-	public static boolean isEtlSysExist(String etl_sys_cd, Long user_id) {
-		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.clean();
-		asmSql.addSql("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?");
-		asmSql.addParam(etl_sys_cd);
-		// 2.判断user_id是否为空，为空添加条件
-		if (user_id != null) {
-			asmSql.addSql(" and user_id=?").addParam(user_id);
-		}
-		// 3.判断当前工程是否还存在，存在返回true,不存在返回false
-		return Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
+	public static boolean isEtlSysExist(String etl_sys_cd) {
+		// 1.判断当前工程是否还存在，存在返回true,不存在返回false
+		return Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?",
+				etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
+	}
+
+	@Method(desc = "根据用户判断当前工程是否还存在",
+			logicStep = "1.判断当前用户下该工程是否已存在")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+	@Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成", nullable = true)
+	@Return(desc = "返回工程是否存在标志", range = "true代表存在，false代表不存在")
+	public static boolean isEtlSysExistById(String etl_sys_cd, Long user_id) {
+		// 1.判断当前用户下该工程是否已存在
+		return Dbo.queryNumber("select count(*) from " + Etl_sys.TableName + " where etl_sys_cd=?" +
+				" and user_id=?", etl_sys_cd, user_id).orElseThrow(() ->
 				new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "确定该工程下对应的任务确实存在",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-					"2.确定该工程下对应的任务是否存在,存在返回true,不存在返回false")
+			logicStep = "1.确定该工程下对应的任务是否存在，存在返回true,不存在返回false")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
 	@Param(name = "sub_sys_cd", desc = "任务编号", range = "无限制")
 	@Return(desc = "该工程下对应的任务是否存在的标志", range = "true代表存在，false代表不存在")
 	public static boolean isEtlSubSysExist(String etl_sys_cd, String sub_sys_cd) {
-		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.确定该工程下对应的任务是否存在，存在返回true,不存在返回false
+		// 1.确定该工程下对应的任务是否存在，存在返回true,不存在返回false
 		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_sub_sys_list.TableName + " WHERE etl_sys_cd=?"
 				+ " AND sub_sys_cd=?", etl_sys_cd, sub_sys_cd).orElseThrow(() ->
 				new BusinessException("sql查询错误")) == 1;
 	}
 
 	@Method(desc = "判断该工程对应的任务下是否还有作业",
-			logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
-					"2.判断该工程对应的任务下是否还有作业，有作业则不能删除")
+			logicStep = "1.判断该工程对应的任务下是否还有作业，有作业则不能删除")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
 	public static void isEtlJobDefExistUnderEtlSubSys(String etl_sys_cd, String sub_sys_cd) {
-		// 1.数据可访问权限处理方式，通过user_id关联进行权限控制
-		// 2.判断该工程对应的任务下是否还有作业，有作业则不能删除
+		// 1.判断该工程对应的任务下是否还有作业，有作业则不能删除
 		if (Dbo.queryNumber("select count(1) from " + Etl_job_def.TableName + "  WHERE etl_sys_cd=? "
 				+ " AND sub_sys_cd=?", etl_sys_cd, sub_sys_cd).
 				orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
@@ -74,78 +71,60 @@ public class ETLJobUtil {
 		}
 	}
 
-	@Method(
-			desc = "判断作业调度工程是否已部署",
-			logicStep =
-					"1.数据可访问权限处理方式，通过user_id进行权限控制"
-							+ " 2.验证服务器IP是否为空"
-							+ "3.服务器端口是否为空"
-							+ "4.服务器端口是否为空"
-							+ "5.服务器端口是否为空"
-							+ "6.服务器部署目录是否为空")
-	@Param(name = "参数名称", desc = "参数描述", range = "取值范围")
-	@Return(desc = "返回内容描述", range = "取值范围")
+	@Method(desc = "判断作业调度工程是否已部署",
+			logicStep = "1.验证服务器IP是否为空"
+					+ "2.服务器端口是否为空"
+					+ "3.服务器用户名为空"
+					+ "4.服务器密码是否为空"
+					+ "5.服务器部署目录是否为空")
+	@Param(name = "etlSys", desc = "作业工程实体对象", range = "与数据对应字段规则一致")
 	public static void isETLDeploy(Etl_sys etlSys) {
-		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.验证服务器IP是否为空
-		if (StringUtil.isBlank(etlSys.getEtl_serv_ip())) {
-			throw new BusinessException("服务器IP为空，请检查工程是否已部署！");
-		}
-		// 3.服务器端口是否为空
-		if (StringUtil.isBlank(etlSys.getEtl_serv_port())) {
-			throw new BusinessException("服务器端口为空，请检查工程是否已部署！");
-		}
-		// 4.服务器端口是否为空
-		if (StringUtil.isBlank(etlSys.getUser_name())) {
-			throw new BusinessException("服务器用户名为空，请检查工程是否已部署！");
-		}
-		// 5.服务器端口是否为空
-		if (StringUtil.isBlank(etlSys.getUser_pwd())) {
-			throw new BusinessException("服务器密码为空，请检查工程是否已部署！");
-		}
-		// 6.服务器部署目录是否为空
-		if (StringUtil.isBlank(etlSys.getServ_file_path())) {
-			throw new BusinessException("服务器部署目录为空，请检查工程是否已部署！");
-		}
+		// 1.验证服务器IP是否为空
+		Validator.notBlank(etlSys.getEtl_serv_ip(), "服务器IP为空，请检查工程是否已部署！");
+		// 2.服务器端口是否为空
+		Validator.notBlank(etlSys.getEtl_serv_port(), "服务器端口是否为空，请检查工程是否已部署！");
+		// 3.服务器用户名为空
+		Validator.notBlank(etlSys.getUser_name(), "服务器用户名为空，请检查工程是否已部署！");
+		// 4.服务器密码是否为空
+		Validator.notBlank(etlSys.getUser_pwd(), "服务器密码为空，请检查工程是否已部署！");
+		// 5.服务器部署目录是否为空
+		Validator.notBlank(etlSys.getServ_file_path(), "服务器部署目录为空，请检查工程是否已部署！");
 
 	}
 
-	@Method(desc = "新增作业判断作业名称是否已存在，存在不能新增",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-					"2.新增作业判断作业名称是否已存在，存在不能新增")
+	@Method(desc = "判断作业名称是否已存在",
+			logicStep = "1.判断作业名称是否已存在，存在返回true，不存在返回false")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
 	@Return(desc = "作业名称是否已存在标志", range = "true代表已存在，false代表不存在")
 	public static boolean isEtlJobDefExist(String etl_sys_cd, String etl_job) {
-		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		// 2.新增作业判断作业名称是否已存在，存在不能新增
+		// 1.判断作业名称是否已存在，存在返回true，不存在返回false
 		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_job=? " +
 				" AND etl_sys_cd=?", etl_job, etl_sys_cd).orElseThrow(() ->
 				new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "判断当前工程下是否有作业",
-			logicStep = "方法步骤")
+			logicStep = "1.判断当前工程下是否有作业，存在返回true，不存在返回false")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	public static boolean isEtlJObDefExistBySysCd(String etl_sys_cd) {
+		// 1.判断当前工程下是否有作业，存在返回true，不存在返回false
 		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd=?",
 				etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误")) != 0;
 	}
 
 	@Method(desc = "判断是否资源需求过大",
-			logicStep = "1.数据可访问权限处理方式，此方法不需要权限控制" +
-					"2.判断资源是否存在" +
-					"3.检测当前作业分配的占用资源数是否过大")
+			logicStep = "1.判断资源是否存在" +
+					"2.检测当前作业分配的占用资源数是否过大")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "resource_type", desc = "参数类型", range = "新增资源定义时生成")
-	@Param(name = "resource_seq", desc = "资源需求数", range = "无限制")
+	@Param(name = "resource_seq", desc = "资源需求数", range = "不能大于最大阈值")
 	public static void isResourceDemandTooLarge(String etl_sys_cd, String resource_type, Integer resource_seq) {
-		// 1.数据可访问权限处理方式，此方法不需要权限控制
-		// 2.判断资源是否存在
+		// 1.判断资源是否存在
 		if (!isEtlResourceExist(etl_sys_cd, resource_type)) {
 			throw new BusinessException("当前工程对应的资源已不存在！");
 		}
-		// 3.检测当前作业分配的占用资源数是否过大
+		// 2.检测当前作业分配的占用资源数是否过大
 		List<Integer> resource_max = Dbo.queryOneColumnList("select resource_max from "
 						+ Etl_resource.TableName + " where etl_sys_cd=? AND resource_type=?",
 				etl_sys_cd, resource_type);
@@ -155,28 +134,24 @@ public class ETLJobUtil {
 	}
 
 	@Method(desc = "判断当前工程对应作业资源分配信息是否存在",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-					"2.判断当前工程对应作业资源分配信息是否存在")
+			logicStep = "1.判断当前工程对应作业资源分配信息是否存在")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
 	@Return(desc = "当前工程对应作业资源分配信息是否存在标志", range = "true代表存在，false代表不存在")
 	public static boolean isEtlJobResourceRelaExist(String etl_sys_cd, String etl_job) {
-		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		// 2.判断当前工程对应作业资源分配信息是否存在
+		// 1.判断当前工程对应作业资源分配信息是否存在
 		return Dbo.queryNumber("select count(*) from " + Etl_job_resource_rela.TableName +
 				" where etl_sys_cd=? and etl_job=?", etl_sys_cd, etl_job).orElseThrow(() ->
 				new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "判断资源是否存在",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-					"2.判断资源是否存在")
+			logicStep = "1.判断资源是否存在")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "无限制")
 	@Param(name = "resource_type", desc = "资源类型", range = "无限制")
 	@Return(desc = "资源是否存在标志", range = "true代表存在，false代表不存在")
 	public static boolean isEtlResourceExist(String etl_sys_cd, String resource_type) {
-		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.判断资源是否存在
+		// 1.判断资源是否存在
 		return Dbo.queryNumber("SELECT count(1) FROM " + Etl_resource.TableName + " WHERE resource_type=?"
 				+ " AND etl_sys_cd=?", resource_type, etl_sys_cd)
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0;
@@ -193,12 +168,11 @@ public class ETLJobUtil {
 	@Return(desc = "当前工程对应作业依赖作业是否存在标志", range = "true代表存在，false代表不存在")
 	public static boolean isEtlDependencyExist(String etl_sys_cd, String pre_etl_sys_cd, String etl_job,
 	                                           String pre_etl_job) {
-		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		// 2.判断作业名称与上游作业名称是否相同，相同则不能依赖
+		// 1.判断作业名称与上游作业名称是否相同，相同则不能依赖
 		if (etl_job.equals(pre_etl_job)) {
 			throw new BusinessException("作业名称与上游作业名称相同不能依赖！");
 		}
-		// 3.判断当前工程对应作业依赖作业是否存在
+		// 2.判断当前工程对应作业依赖作业是否存在
 		return Dbo.queryNumber("select count(*) from " + Etl_dependency.TableName + " where etl_sys_cd=?" +
 						" And etl_job=? AND pre_etl_sys_cd=? AND pre_etl_job=?", etl_sys_cd, etl_job,
 				pre_etl_sys_cd, pre_etl_job).orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
@@ -219,41 +193,25 @@ public class ETLJobUtil {
 	}
 
 	@Method(desc = "判断工程下是否有作业正在干预",
-			logicStep = "1.数据可访问权限处理方式，此方法不需要权限认证" +
-					"2.判断工程下是否有作业正在干预")
+			logicStep = "1.判断工程下是否有作业正在干预")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
+	@Return(desc = "工程下是否有作业正在干预标志", range = "true代表存在，false代表不存在")
+	public static boolean isEtlJobHandExist(String etl_sys_cd) {
+		// 1.判断工程下是否有作业正在干预
+		return Dbo.queryNumber("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
+				etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0;
+	}
+
+	@Method(desc = "根据作业名称判断工程下当前作业是否正在被干预",
+			logicStep = "1.判断工程下当前作业是否正在被干预")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成", nullable = true)
 	@Return(desc = "工程下是否有作业正在干预标志", range = "true代表存在，false代表不存在")
-	public static boolean isEtlJobHandExist(String etl_sys_cd, String etl_job) {
-		// 1.数据可访问权限处理方式，此方法不需要权限认证
-		// 2.判断工程下是否有作业正在干预
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.clean();
-		asmSql.addSql("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?");
-		asmSql.addParam(etl_sys_cd);
-		if (StringUtil.isNotBlank(etl_job)) {
-			asmSql.addSql(" and etl_job=?");
-			asmSql.addParam(etl_job);
-		}
-		return Dbo.queryNumber(asmSql.sql(), asmSql.params()).orElseThrow(() ->
-				new BusinessException("sql查询错误！")) > 0;
-	}
-
-	@Method(desc = "根据工程编号查询工程名称",
-			logicStep = "1.数据可访问权限处理方式，根据user_id进行权限验证" +
-					"2.根据工程编号查询工程名称")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-	@Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成")
-	@Return(desc = "返回工程名称", range = "不能为空")
-	public static String getEtlSysName(String etl_sys_cd, long user_id) {
-		// 1.数据可访问权限处理方式，根据user_id进行权限验证
-		// 2.判断当前工程是否还存在
-		if (!ETLJobUtil.isEtlSysExist(etl_sys_cd, user_id)) {
-			throw new BusinessException("当前工程已不存在！");
-		}
-		// 3.根据工程编号查询工程名称,工程存在，工程名称肯定存在，所以不需要判断结果集是否为空
-		return Dbo.queryOneColumnList("select etl_sys_name from " + Etl_sys.TableName +
-				" where etl_sys_cd=? and user_id=?", etl_sys_cd, user_id).get(0).toString();
+	public static boolean isEtlJobHandExistByJob(String etl_sys_cd, String etl_job) {
+		// 1.根据作业名称判断工程下当前作业是否正在被干预
+		return Dbo.queryNumber("select count(*) from " + Etl_job_hand.TableName + " where etl_sys_cd=?"
+				+ " and etl_job=?", etl_sys_cd, etl_job)
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0;
 	}
 
 	@Method(desc = "获取文件全路径",
@@ -279,26 +237,15 @@ public class ETLJobUtil {
 	}
 
 	@Method(desc = "查询当前用户对应工程信息",
-			logicStep = "1.数据可访问权限处理方式，根据user_id进行权限验证" +
-					"2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回" +
-					"3.返回当前用户对应工程信息")
+			logicStep = "1.返回当前用户对应工程信息")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "user_id", desc = "创建工程用户ID", range = "新增用户时生成")
 	@Return(desc = "返回当前用户对应工程信息", range = "不能为空")
-	public static Etl_sys getEtlSysByCd(String etl_sys_cd, long user_id) {
-		// 1.数据可访问权限处理方式，根据user_id进行权限验证
+	public static Etl_sys getEtlSysById(String etl_sys_cd, long user_id) {
+		// 2.返回当前用户对应工程信息
 		return Dbo.queryOneObject(Etl_sys.class, "select * from " + Etl_sys.TableName
 				+ " where user_id=? and etl_sys_cd=?", user_id, etl_sys_cd).orElseThrow(()
 				-> new BusinessException("sql查询错误或映射实体失败"));
-		// 2.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回
-//		Object remarks = etlSys.get("remarks");
-//		if (remarks != null && StringUtil.isNotBlank(remarks.toString()) && !remarks.toString().contains(":")) {
-//			String[] ip_port = remarks.toString().split(":");
-//			etlSys.put("redisIp", ip_port[0]);
-//			etlSys.put("redisPort", ip_port[1]);
-//		}
-		// 3.返回当前用户对应工程信息
-//		return etlSys;
 	}
 
 	@Method(desc = "根据工程编号作业名称获取作业信息",
@@ -314,7 +261,7 @@ public class ETLJobUtil {
 				" where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
 	}
 
-	@Method(desc = "与ETLAgent服务交互",
+	@Method(desc = "与ETLAgent服务交互压缩日志文件",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
 					"2.封装与远端服务器进行交互所需参数" +
 					"3.与远端服务器进行交互，建立连接，发送数据到远端并且接收远端发来的数据" +
