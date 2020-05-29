@@ -22,7 +22,6 @@ import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
-import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
@@ -53,7 +52,6 @@ public class JobConfiguration extends BaseAction {
 	private static final String DefaultEtlSysCd = "HRSYS";
 	// 不同版本excel文件后缀名
 	private static final String xlsxSuffix = ".xlsx";
-	private static final String xlsSuffix = ".xls";
 	// 数据库存储代码项对应字段名称，下面是要用这个去匹配是使用哪个代码项获取代码项信息
 	private static final String pro_type = "pro_type";
 	private static final String disp_freq = "disp_freq";
@@ -1539,7 +1537,6 @@ public class JobConfiguration extends BaseAction {
 			// 3.获取页数
 			int numberOfSheets = Objects.requireNonNull(workBook).getNumberOfSheets();
 			List<Map<String, String>> listMap = new ArrayList<>();
-			List<ProjectTableEntity> entityList = new ArrayList<>();
 			// 4.循环页数
 			for (int sheetNum = 0; sheetNum < numberOfSheets; sheetNum++) {
 				// 5.得到工作薄的第N个sheet表
@@ -1593,8 +1590,6 @@ public class JobConfiguration extends BaseAction {
 			throw new BusinessException("导入excel文件数据失败！");
 		} catch (IOException e) {
 			throw new BusinessException("获取excel对象失败，文件类型错误");
-		} catch (Exception e) {
-			throw new BusinessException("实体Bean通用属性值转换转换失败");
 		} finally {
 			try {
 				if (workBook != null) {
