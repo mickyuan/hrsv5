@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.c.biz.util.DownloadLogUtil;
@@ -120,9 +121,7 @@ public class EltSysAction extends BaseAction {
 	private void checkEtlSysField(String etl_sys_cd, String etl_sys_name) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.验证工程名称是否为空
-		if (StringUtil.isBlank(etl_sys_name)) {
-			throw new BusinessException("作业调度工程名不能为空！");
-		}
+		Validator.notBlank(etl_sys_name, "作业调度工程名不能为空！");
 		// 3.验证工程编号是否为数字英文下划线
 		Pattern pattern = Pattern.compile("^[0-9a-zA-Z_]+$");
 		Matcher matcher = pattern.matcher(etl_sys_cd);
@@ -185,10 +184,10 @@ public class EltSysAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
 					+ "2.根据工程编号获取工程信息"
 					+ "3.判断工程是否已部署"
-					+ "4.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
-					+ "5.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
-					+ "6.调用脚本启动启动Control"
-					+ "7.判断control是否已启动，再次查询系统运行状态")
+					+ "4.判断是否续跑，如果续跑日期从数据库查询当前批量日期，因为续跑是续跑当前跑批的"
+					+ "5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动"
+					+ "6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control"
+					+ "7.调用脚本启动启动Control")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "isResumeRun", desc = "是否续跑", range = "使用（IsFlag）代码项，1代表是，0代表否")
 	@Param(name = "isAutoShift", desc = "是否自动日切", range = "使用（IsFlag）代码项，1代表是，0代表否")
@@ -199,29 +198,28 @@ public class EltSysAction extends BaseAction {
 		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
 		// 3.判断工程是否已部署
 		ETLJobUtil.isETLDeploy(etlSys);
-		// 4.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
+		// 4.判断是否续跑，如果续跑日期从数据库查询当前批量日期，因为续跑是续跑当前跑批的
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isResumeRun)) {
+			curr_bath_date = etlSys.getCurr_bath_date();
+			Validator.notBlank(curr_bath_date, "当前批量日期不能为空");
+		}
+		// 5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(isAutoShift)) {
 			if (!ETLJobUtil.isEtlJObDefExistBySysCd(etl_sys_cd)) {
 				throw new BusinessException("如果日切方式不是自动日切且工程下作业列表为空，则不能启动!");
 			}
 		}
-		// 5.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
+		// 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能启动control");
 		}
 		if (curr_bath_date.contains("-")) {
 			curr_bath_date = curr_bath_date.replaceAll("-", "");
 		}
-		// 6.调用脚本启动启动Control
+		// 7.调用脚本启动启动Control
 		ETLAgentDeployment.startEngineBatchControl(curr_bath_date, etl_sys_cd, isResumeRun, isAutoShift,
 				etlSys.getEtl_serv_ip(), etlSys.getEtl_serv_port(), etlSys.getUser_name(),
 				etlSys.getUser_pwd(), etlSys.getServ_file_path());
-		// 7.判断control是否已启动
-		etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
-		if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.getSys_run_status())) {
-			throw new BusinessException("control启动失败，请查看日志");
-		}
-//		String controlStop = ETLAgentDeployment.isControlStop(etlSys);
 	}
 
 	@Method(desc = "启动TRIGGER",

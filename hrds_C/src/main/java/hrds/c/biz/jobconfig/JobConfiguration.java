@@ -1462,9 +1462,8 @@ public class JobConfiguration extends BaseAction {
 	@Method(desc = "更新保存作业依赖",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
 					"2.验证作业依赖实体字段的合法性" +
-					"3.验证当前用户下的工程是否存在" +
-					"4.判断更改依赖前后作业名称是否相同，依赖作业名称不能修改" +
-					"5.更新作业依赖")
+					"3.判断更改依赖后依赖是否已存在" +
+					"4.更新作业依赖")
 	@Param(name = "etlDependency", desc = "作业依赖实体对象", range = "与数据库对应表字段规则一致", isBean = true)
 	@Param(name = "oldEtlJob", desc = "更新前作业名称", range = "新增作业时生成")
 	@Param(name = "oldPreEtlJob", desc = "更新前上游作业名称", range = "新增作业时生成")
@@ -1472,11 +1471,12 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		// 2.验证作业依赖实体字段的合法性
 		checkEtlDependencyField(etlDependency);
-		// 3.判断更改依赖前后作业名称是否相同，依赖作业名称不能修改
-		if (!etlDependency.getEtl_job().equals(oldEtlJob)) {
-			throw new BusinessException("更改依赖时作业名称不能修改！");
+		// 3.判断更改依赖后依赖是否已存在
+		if (ETLJobUtil.isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
+				oldEtlJob, etlDependency.getPre_etl_job())) {
+			throw new BusinessException("当前依赖已存在");
 		}
-		// 5.更新作业依赖，用实体更新,实体更新是用该表的联合主键去更新的，只会改非主键字段
+		// 4.更新作业依赖，用实体更新,实体更新是用该表的联合主键去更新的，只会改非主键字段
 		DboExecute.updatesOrThrow("更新作业依赖失败", "update " + Etl_dependency.TableName
 						+ " set etl_job=?,pre_etl_sys_cd=?,pre_etl_job=?,"
 						+ "status=? where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
