@@ -518,7 +518,7 @@ public class DataStoreAction extends BaseAction {
 		deleteDataStoreLayerAdded(dsl_id);
 		// 5.更新数据存储附加信息
 		addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
-		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除要放在删除
+		// 6.判断文件是否存在，如果存在则先删除原配置文件再上传最新的
 		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
 			uploadConfFile(files, dsl_id);
@@ -595,7 +595,8 @@ public class DataStoreAction extends BaseAction {
 	private void deleteDataStoreLayerAttr(long dsl_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.删除数据存储层配置属性信息,,不关心删除几条数据
-		Dbo.execute("delete from " + Data_store_layer_attr.TableName + " where dsl_id=?", dsl_id);
+		Dbo.execute("delete from " + Data_store_layer_attr.TableName + " where dsl_id=? and is_file=?",
+				dsl_id, IsFlag.Fou.getCode());
 	}
 
 	@Method(desc = "删除数据存储附加信息",
