@@ -21,7 +21,6 @@ import hrds.commons.utils.datastorage.syspara.SysPara;
 import hrds.commons.utils.deployentity.HttpYaml;
 import hrds.commons.utils.yaml.Yaml;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +118,8 @@ public class AgentDeploy {
 	  /* 开始将本地写好的文件SCP到Agent目下, */
 	  return sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
 
-	} catch (FileNotFoundException e) {
+	} catch (Exception e) {
+	  logger.error(e);
 	  throw new BusinessException(e.getMessage());
 	}
   }
