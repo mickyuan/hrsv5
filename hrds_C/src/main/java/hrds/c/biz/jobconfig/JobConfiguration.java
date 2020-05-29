@@ -1553,7 +1553,6 @@ public class JobConfiguration extends BaseAction {
 					// 7.循环行数
 					row = sheet.getRow(i);
 					// 8.存放列数据的集合
-					ProjectTableEntity projectTableEntity = new ProjectTableEntity();
 					Map<String, String> map = new HashMap<>();
 					// 9.获取不为空的列个数
 					int physicalNumberOfCells = row.getPhysicalNumberOfCells();
@@ -1579,19 +1578,14 @@ public class JobConfiguration extends BaseAction {
 								throw new BusinessException("excel表格格式有问题，表头单元格个数应该与表身单元格个数相同");
 							}
 							// 13.2.第二行之后是表的值，如果第二行的列值不存在,则不添加
-							projectTableEntity.addNullValueField(cellVal.trim());
 							map.put(columnList.get(j).trim(), cellVal.trim());
 						}
 					}
 					// 14.不为空时放入List
 					if (!map.isEmpty()) {
 						listMap.add(map);
-						entityList.add(projectTableEntity);
 					}
 				}
-			}
-			for (ProjectTableEntity tableEntity : entityList) {
-				tableEntity.add(Dbo.db());
 			}
 			// 16.将excel数据导入数据库  fixme 使用bean处理
 			insertData(listMap, table_name);
