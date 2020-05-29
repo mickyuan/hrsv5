@@ -66,7 +66,8 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	public Map<String, Object> call() {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
-				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(), 4000)) {
+				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
+				sourceDataConfBean.getDatabase_name(), 4000)) {
 			//获得数据抽取文件格式
 			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 			//抽取这里可以同时抽成多种文件格式，遍历，执行卸数。

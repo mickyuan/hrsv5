@@ -30,17 +30,18 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 */
 	@Override
 	public void calculateIncrement() {
+		ArrayList<String> sqlList = new ArrayList<>();
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName, db, columns, types), db);
 		//2、创建增量临时表
-		getCreateDeltaSql();
+		getCreateDeltaSql(sqlList);
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除掉
 		restore(StorageType.ZengLiang.getCode());
 		//5.将比较之后的需要insert的结果插入到临时表中
-		getInsertDataSql();
+		getInsertDataSql(sqlList);
 		//6.将比较之后的需要delete(拉链中的闭链)的结果插入到临时表中
-		getDeleteDataSql();
+		getDeleteDataSql(sqlList);
 		//7.执行所有sql语句
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -76,12 +77,13 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 */
 	@Override
 	public void append() {
+		ArrayList<String> sqlList = new ArrayList<>();
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName, db, columns, types), db);
 		//2.恢复今天的数据，防止重跑
 		restore(StorageType.ZhuiJia.getCode());
 		//3.插入今天新增的数据
-		insertAppendData();
+		insertAppendData(sqlList);
 		//4.执行sql
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -91,6 +93,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 */
 	@Override
 	public void replace() {
+		ArrayList<String> sqlList = new ArrayList<>();
 		//临时表存在删除临时表
 		dropTableIfExists(deltaTableName, db, sqlList);
 		//将本次采集的数据复制到临时表
@@ -141,7 +144,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	/**
 	 * 创建增量表
 	 */
-	private void getCreateDeltaSql() {
+	private void getCreateDeltaSql(ArrayList<String> sqlList) {
 		//1  创建增量表
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
 		sql.append("CREATE TABLE ");
@@ -160,7 +163,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	/**
 	 * 调用deleteData的sql，在增量表中插入增量数据
 	 */
-	private void getDeleteDataSql() {
+	private void getDeleteDataSql(ArrayList<String> sqlList) {
 
 		StringBuilder deleteDatasql = new StringBuilder(120);
 		//拼接查找增量并插入增量表
@@ -199,7 +202,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	/**
 	 * 追加插入数据
 	 */
-	private void insertAppendData() {
+	private void insertAppendData(ArrayList<String> sqlList) {
 		StringBuilder insertDataSql = new StringBuilder(120);
 		//拼接查找增量并插入增量表
 		insertDataSql.append("INSERT INTO ");
@@ -223,7 +226,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	/**
 	 * 调用insertData的sql，在增量表中插入增量数据
 	 */
-	private void getInsertDataSql() {
+	private void getInsertDataSql(ArrayList<String> sqlList) {
 		StringBuilder insertDataSql = new StringBuilder(120);
 		//拼接查找增量并插入增量表
 		insertDataSql.append("INSERT INTO ");

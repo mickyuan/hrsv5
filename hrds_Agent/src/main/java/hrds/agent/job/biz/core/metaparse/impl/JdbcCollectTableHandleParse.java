@@ -157,9 +157,10 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
-				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type())) {
+				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
+				sourceDataConfBean.getDatabase_name())) {
 			//1、根据数据源信息和采集表信息获取数据库抽取SQL
-			String collectSQL = getCollectSQL(collectTableBean,db);
+			String collectSQL = getCollectSQL(collectTableBean, db, sourceDataConfBean.getDatabase_name());
 			tableBean.setCollectSQL(collectSQL);
 			//抽取sql可能包含分隔符，判断如果包含分隔符，取第一条sql获取meta信息（注：包含分隔符表明并行抽取）
 			if (collectSQL.contains(Constant.SQLDELIMITER)) {
