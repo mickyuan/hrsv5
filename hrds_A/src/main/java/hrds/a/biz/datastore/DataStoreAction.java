@@ -51,8 +51,7 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "dsl_remark", desc = "数据存储层配置表备注", range = "无限制", nullable = true)
 	@Param(name = "dslad_remark", desc = "数据存储附加信息表备注", range = "无限制", nullable = true)
 	@Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合", range = "storage_property_key，" +
-			"storage_property_val,dsla_remark,is_file(0代表非文件，1代表文件）代表key，" +
-			"对应的值为value的json字符串(文件属性这里不需要）")
+			"storage_property_val,dsla_remark,is_file代表key，对应的值为value的json字符串(文件属性这里不需要）")
 	@Param(name = "dsla_storelayer", desc = "配置附加属性信息数组", range = "使用代码项（StoreLayerAdded）", nullable = true)
 	@Param(name = "dtcs_id", desc = "数据类型对照主表ID", range = "新增数据类型对照主表时生成")
 	@Param(name = "dlcs_id", desc = "数据类型长度对照主表ID", range = "新增数据类型长度对照主表时生成")
@@ -518,7 +517,7 @@ public class DataStoreAction extends BaseAction {
 		deleteDataStoreLayerAdded(dsl_id);
 		// 5.更新数据存储附加信息
 		addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
-		// 6.判断文件是否存在，如果存在则先删除原配置文件再上传最新的
+		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除要放在删除
 		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
 			uploadConfFile(files, dsl_id);
@@ -542,7 +541,7 @@ public class DataStoreAction extends BaseAction {
 					"select * from " + Data_store_layer_attr.TableName +
 							" where dsl_id=? and is_file=? and storage_property_key=?", dsl_id,
 					IsFlag.Shi.getCode(), fileName);
-			// 3.遍历获取属性value值，判断文件是否存在，是则删除
+			// 3.遍历获取属性value值，判断文件是否存在，存在则删除
 			if (dataStoreLayerAttr.isPresent()) {
 				Data_store_layer_attr storeLayerAttr = dataStoreLayerAttr.get();
 				if (fileName.equals(storeLayerAttr.getStorage_property_key())) {
