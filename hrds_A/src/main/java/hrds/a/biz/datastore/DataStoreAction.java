@@ -564,7 +564,9 @@ public class DataStoreAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
 					"2.删除数据存储层配置信息，,不关心删除几条数据" +
 					"3.删除数据存储附加信息" +
-					"4.删除数据存储层配置属性信息")
+					"4.删除数据存储层配置属性信息" +
+					"5.删除配置文件" +
+					"6.删除配置文件信息(数据库数据）")
 	@Param(name = "dsl_id", desc = "存储层配置ID.数据存储层配置表主键", range = "新增存储层配置信息时生成")
 	public void deleteDataStore(long dsl_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
@@ -579,12 +581,17 @@ public class DataStoreAction extends BaseAction {
 		List<String> storagePropertyValList = Dbo.queryOneColumnList("select storage_property_val from "
 				+ Data_store_layer_attr.TableName + " where is_file=? and dsl_id=?", IsFlag.Shi.getCode(), dsl_id);
 		for (String storagePropertyVal : storagePropertyValList) {
-			try {
-				Files.delete(new File(storagePropertyVal).toPath());
-			} catch (IOException e) {
-				throw new BusinessException("删除文件失败！");
+			if (new File(storagePropertyVal).exists()) {
+				try {
+					Files.delete(new File(storagePropertyVal).toPath());
+				} catch (IOException e) {
+					throw new BusinessException("删除文件失败！");
+				}
 			}
 		}
+		// 6.删除配置文件信息
+		Dbo.execute("delete from " + Data_store_layer_attr.TableName + " where dsl_id=?" +
+				" and is_file=?", dsl_id, IsFlag.Shi.getCode());
 	}
 
 	@Method(desc = "删除数据存储层配置属性信息",
