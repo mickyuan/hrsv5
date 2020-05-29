@@ -9,19 +9,14 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.xlstoxml.XmlCreater;
-
-import java.io.File;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Element;
+
+import java.io.File;
+import java.sql.Types;
+import java.util.*;
 
 public class Platform {
 
@@ -168,45 +163,51 @@ public class Platform {
 	 * @param scale     {@link String} 数据精度
 	 */
 	public static String getColType(int dataType, String typeName, int precision, int scale) {
-		if (Types.CLOB == dataType || Types.BLOB == dataType) {
-			return typeName;
-		} else {
-			// TODO 各数据库不同遇到在修改
-			typeName = StringUtil.replace(typeName, "UNSIGNED", "");
-			// 考虑到有些类型在数据库中获取到就会带有(),同时还能获取到数据的长度，修改方式为如果本事类型带有长度，去掉长度，使用数据库读取的长度
-			if (precision != 0) {
-				int ic = typeName.indexOf("(");
-				if (ic != -1) {
-					typeName = typeName.substring(0, ic);
-				}
+		// TODO 各数据库不同遇到在修改
+		typeName = StringUtil.replace(typeName, "UNSIGNED", "");
+		// 考虑到有些类型在数据库中获取到就会带有(),同时还能获取到数据的长度，修改方式为如果本事类型带有长度，去掉长度，使用数据库读取的长度
+		if (precision != 0) {
+			int ic = typeName.indexOf("(");
+			if (ic != -1) {
+				typeName = typeName.substring(0, ic);
 			}
-			String column_type;
-			if (Types.INTEGER == dataType
-					|| Types.TINYINT == dataType
-					|| Types.SMALLINT == dataType
-					|| Types.BIGINT == dataType) {
-				column_type = typeName;
-			} else if (Types.NUMERIC == dataType
-					|| Types.FLOAT == dataType
-					|| Types.DOUBLE == dataType
-					|| Types.DECIMAL == dataType) {
-				// 1、当一个数的整数部分的长度 > p-s 时，Oracle就会报错
-				// 2、当一个数的小数部分的长度 > s 时，Oracle就会舍入。
-				// 3、当s(scale)为负数时，Oracle就对小数点左边的s个数字进行舍入。
-				// 4、当s > p 时, p表示小数点后第s位向左最多可以有多少位数字，如果大于p则Oracle报错，小数点后s位向右的数字被舍入
-				if (precision > precision - Math.abs(scale) || scale > precision || precision == 0) {
-					precision = 38;
-					scale = 15;
-				}
-				column_type = typeName + "(" + precision + "," + scale + ")";
-			} else {
-				if ("char".equalsIgnoreCase(typeName) && precision > 255) {
-					typeName = "varchar";
-				}
-				column_type = typeName + "(" + precision + ")";
-			}
-			return column_type;
 		}
+		String column_type;
+		if (Types.INTEGER == dataType
+				|| Types.TINYINT == dataType
+				|| Types.SMALLINT == dataType
+				|| Types.BIGINT == dataType
+				|| Types.CLOB == dataType
+				|| Types.BLOB == dataType
+				|| Types.NCLOB == dataType
+				|| Types.DATE == dataType
+				|| Types.TIME == dataType
+				|| Types.TIMESTAMP == dataType
+				|| Types.TIME_WITH_TIMEZONE == dataType
+				|| Types.TIMESTAMP_WITH_TIMEZONE == dataType
+				|| Types.BINARY == dataType
+				|| Types.BOOLEAN == dataType) {
+			column_type = typeName;
+		} else if (Types.NUMERIC == dataType
+				|| Types.FLOAT == dataType
+				|| Types.DOUBLE == dataType
+				|| Types.DECIMAL == dataType) {
+			// 1、当一个数的整数部分的长度 > p-s 时，Oracle就会报错
+			// 2、当一个数的小数部分的长度 > s 时，Oracle就会舍入。
+			// 3、当s(scale)为负数时，Oracle就对小数点左边的s个数字进行舍入。
+			// 4、当s > p 时, p表示小数点后第s位向左最多可以有多少位数字，如果大于p则Oracle报错，小数点后s位向右的数字被舍入
+			if (0 > precision - Math.abs(scale) || scale > precision || precision == 0) {
+				precision = 38;
+				scale = 12;
+			}
+			column_type = typeName + "(" + precision + "," + scale + ")";
+		} else {
+			if ("char".equalsIgnoreCase(typeName) && precision > 255) {
+				typeName = "varchar";
+			}
+			column_type = typeName + "(" + precision + ")";
+		}
+		return column_type;
 	}
 
 	public static List<Map<String, String>> getSqlColumnMeta(String sql, DatabaseWrapper db) {
