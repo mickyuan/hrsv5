@@ -224,11 +224,7 @@ public class ETLJobUtil {
 	public static String getFilePath(String fileName) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.获取文件默认上传路径
-		String savedDir = WebinfoConf.FileUpload_SavedDirName;
-		// 3.判断文件是否以文件分隔符结尾,不是则拼接分隔符
-		if (!savedDir.endsWith(File.separator)) {
-			savedDir = savedDir + File.separator;
-		}
+		String savedDir = WebinfoConf.FileUpload_SavedDirName + File.separator;
 		// 4.如果文件名为空则返回文件默认路径
 		if (StringUtil.isNotBlank(fileName)) {
 			savedDir = savedDir + fileName;

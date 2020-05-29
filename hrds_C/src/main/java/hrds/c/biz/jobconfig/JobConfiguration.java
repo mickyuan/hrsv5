@@ -6,10 +6,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
-import fd.ng.core.utils.Validator;
+import fd.ng.core.utils.*;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -25,19 +22,23 @@ import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.ExcelUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -1471,10 +1472,10 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		// 2.验证作业依赖实体字段的合法性
 		checkEtlDependencyField(etlDependency);
-		// 3.判断更改依赖后依赖是否已存在
+		// 3.判断更新前作业名称对应更新后上游作业名称对应依赖是否已存在
 		if (ETLJobUtil.isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
 				oldEtlJob, etlDependency.getPre_etl_job())) {
-			throw new BusinessException("当前依赖已存在");
+			throw new BusinessException("更新前作业名称对应更新后上游作业名称对应依赖已存在");
 		}
 		// 4.更新作业依赖，用实体更新,实体更新是用该表的联合主键去更新的，只会改非主键字段
 		DboExecute.updatesOrThrow("更新作业依赖失败", "update " + Etl_dependency.TableName
@@ -1527,7 +1528,6 @@ public class JobConfiguration extends BaseAction {
 	@UploadFile
 	public void uploadExcelFile(String file, String table_name) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		FileInputStream fis = null;
 		Workbook workBook = null;
 		try {
 			// 2.获取文件
@@ -1535,89 +1535,73 @@ public class JobConfiguration extends BaseAction {
 			if (!uploadedFile.exists()) {
 				throw new BusinessException("上传文件不存在！");
 			}
-			// 3.从xlsx/xls文件创建的输入流
-			String path = uploadedFile.toPath().toString();
-			fis = new FileInputStream(path);
-			// 4.根据文件后缀名创建不同的工作薄Workbook
-			if (path.toLowerCase().endsWith(xlsxSuffix)) {
-				// 4.1读取2007版，以.xlsx结尾
-				try {
-					workBook = new XSSFWorkbook(fis);
-				} catch (IOException e) {
-					throw new BusinessException("定义XSSFWorkbook失败");
-				}
-			} else if (path.toLowerCase().endsWith(xlsSuffix)) {
-				// 4.2读取2003版，以.xls结尾
-				try {
-					workBook = new HSSFWorkbook(fis);
-				} catch (IOException e) {
-					throw new BusinessException("定义HSSFWorkbook失败");
-				}
-			} else {
-				throw new BusinessException("文件格式不正确，不是excel文件");
-			}
-			// 5.获取页数
+			workBook = ExcelUtil.getWorkbookFromExcel(uploadedFile);
+			// 3.获取页数
 			int numberOfSheets = Objects.requireNonNull(workBook).getNumberOfSheets();
 			List<Map<String, String>> listMap = new ArrayList<>();
-			// 6.循环页数
+			List<ProjectTableEntity> entityList = new ArrayList<>();
+			// 4.循环页数
 			for (int sheetNum = 0; sheetNum < numberOfSheets; sheetNum++) {
-				// 7.得到工作薄的第N个sheet表
+				// 5.得到工作薄的第N个sheet表
 				Sheet sheet = workBook.getSheetAt(sheetNum);
 				Row row;
 				String cellVal;
 				List<String> columnList = new ArrayList<>();
-				// 8.获取不包括那些空行（隔行）的情况的行数
+				// 6.获取不包括那些空行（隔行）的情况的行数
 				int physicalNumberOfRows = sheet.getPhysicalNumberOfRows();
 				for (int i = sheet.getFirstRowNum(); i < physicalNumberOfRows; i++) {
-					// 9.循环行数
+					// 7.循环行数
 					row = sheet.getRow(i);
-					// 10.存放列数据的集合
+					// 8.存放列数据的集合
+					ProjectTableEntity projectTableEntity = new ProjectTableEntity();
 					Map<String, String> map = new HashMap<>();
-					// 11.获取不为空的列个数
+					// 9.获取不为空的列个数
 					int physicalNumberOfCells = row.getPhysicalNumberOfCells();
 					for (int j = row.getFirstCellNum(); j < physicalNumberOfCells; j++) {
-						// 12.如果获取的列数是-1则表示为无效行的单元格,直接跳过
+						// 10.如果获取的列数是-1则表示为无效行的单元格,直接跳过
 						if (j == -1) {
 							continue;
 						}
-						// 13.获取单元格信息，如果为null则设置为空字符串
+						// 11.获取单元格信息，如果为null则设置为空字符串
 						Cell cell = row.getCell(j);
 						if (null == cell) {
 							cellVal = "";
 						} else {
 							cellVal = cell.toString();
 						}
-						// 14.循环列数
+						// 12.循环列数
 						if (i == 0) {
-							// 14.1第一行是表头，获取列名称
+							// 13.1第一行是表头，获取列名称
 							String[] columnArray = cellVal.split("-");
 							columnList.add(columnArray[0]);
 						} else {
 							if (physicalNumberOfCells > columnList.size()) {
 								throw new BusinessException("excel表格格式有问题，表头单元格个数应该与表身单元格个数相同");
 							}
-							// 14.2.第二行之后是表的值，如果第二行的列值不存在,则不添加
+							// 13.2.第二行之后是表的值，如果第二行的列值不存在,则不添加
+							projectTableEntity.addNullValueField(cellVal.trim());
 							map.put(columnList.get(j).trim(), cellVal.trim());
 						}
 					}
-					// 15.不为空时放入List
+					// 14.不为空时放入List
 					if (!map.isEmpty()) {
 						listMap.add(map);
+						entityList.add(projectTableEntity);
 					}
 				}
+			}
+			for (ProjectTableEntity tableEntity : entityList) {
+				tableEntity.add(Dbo.db());
 			}
 			// 16.将excel数据导入数据库  fixme 使用bean处理
 			insertData(listMap, table_name);
 		} catch (FileNotFoundException e) {
 			throw new BusinessException("导入excel文件数据失败！");
+		} catch (IOException e) {
+			throw new BusinessException("获取excel对象失败，文件类型错误");
+		} catch (Exception e) {
+			throw new BusinessException("实体Bean通用属性值转换转换失败");
 		} finally {
-			try {
-				if (fis != null) {
-					fis.close();
-				}
-			} catch (IOException e) {
-				logger.error(e);
-			}
 			try {
 				if (workBook != null) {
 					workBook.close();
@@ -1643,8 +1627,6 @@ public class JobConfiguration extends BaseAction {
 				switch (tableName.toLowerCase()) {
 					// 作业表
 					case Etl_job_def.TableName:
-						// fixme  map转实体
-						// fixme 这里导入是要原来库里有的数据就不导入还是更新或者直接报错
 						// 将map转为对应实体
 						Etl_job_def etl_job_def = JSON.parseObject(JSON.toJSONString(mapInfo), Etl_job_def.class);
 						// 如果当前作业已存在则不入库，只有库里没有的作业才会入库
@@ -1763,11 +1745,9 @@ public class JobConfiguration extends BaseAction {
 			// 5.得到上传文件的保存目录
 			String savePath = ETLJobUtil.getFilePath(tableName) + xlsxSuffix;
 			File file = new File(savePath);
-			// 6.判断文件是否存在
-			if (!file.exists()) {
-				if (!file.createNewFile()) {
-					throw new BusinessException("创建文件失败，文件目录可能不存在！");
-				}
+			// 6.判断文件是否存在不存在创建
+			if (FileUtil.createFileIfAbsent(tableName + xlsxSuffix, savePath)) {
+				throw new BusinessException("创建文件失败，文件目录可能不存在！");
 			}
 			// 7.创建输出流
 			out = new FileOutputStream(file);
@@ -1839,13 +1819,7 @@ public class JobConfiguration extends BaseAction {
 			} catch (IOException e) {
 				logger.error(e);
 			}
-			try {
-				if (workbook != null) {
-					workbook.close();
-				}
-			} catch (IOException e) {
-				logger.error(e);
-			}
+			ExcelUtil.close(workbook);
 		}
 	}
 
