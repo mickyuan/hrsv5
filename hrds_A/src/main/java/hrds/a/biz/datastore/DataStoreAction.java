@@ -7,7 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
@@ -24,6 +24,8 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.key.PrimayKeyGener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -31,10 +33,10 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @DocClass(desc = "数据存储层配置管理", author = "dhw", createdate = "2019/11/22 11:25")
 public class DataStoreAction extends BaseAction {
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "新增数据存储层、数据存储附加、数据存储层配置属性信息",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
@@ -115,9 +117,7 @@ public class DataStoreAction extends BaseAction {
 	private void checkDataStorageField(Data_store_layer dataStoreLayer) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.检查配置属性名称是否为空
-		if (StringUtil.isBlank(dataStoreLayer.getDsl_name())) {
-			throw new BusinessException("配置属性名称不能为空！");
-		}
+		Validator.notBlank(dataStoreLayer.getDsl_name(), "配置属性名称不能为空！");
 		// 3.检查存储类型是否合法
 		Store_type.ofEnumByCode(dataStoreLayer.getStore_type());
 		// 4.检查是否有hadoop客户端字段是否合法
@@ -135,16 +135,18 @@ public class DataStoreAction extends BaseAction {
 	private void addDataStoreLayerAdded(long dsl_id, String dslad_remark, String[] dsla_storelayer) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.循环获取配置附加属性dslaStorelayer
-		for (String dslaStorelayer : dsla_storelayer) {
-			Data_store_layer_added dataStoreLayerAdded = new Data_store_layer_added();
-			dataStoreLayerAdded.setDsl_id(dsl_id);
-			dataStoreLayerAdded.setDslad_remark(dslad_remark);
-			dataStoreLayerAdded.setDslad_id(PrimayKeyGener.getNextId());
-			dataStoreLayerAdded.setDsla_storelayer(dslaStorelayer);
-			// 3.检查配置附加属性信息合法性
-			checkDataStoreLayerAddedField(dataStoreLayerAdded);
-			// 4.新增保存数据存储附加信息
-			dataStoreLayerAdded.add(Dbo.db());
+		if (dsla_storelayer != null && dsla_storelayer.length > 0) {
+			for (String dslaStorelayer : dsla_storelayer) {
+				Data_store_layer_added dataStoreLayerAdded = new Data_store_layer_added();
+				dataStoreLayerAdded.setDsl_id(dsl_id);
+				dataStoreLayerAdded.setDslad_remark(dslad_remark);
+				dataStoreLayerAdded.setDslad_id(PrimayKeyGener.getNextId());
+				dataStoreLayerAdded.setDsla_storelayer(dslaStorelayer);
+				// 3.检查配置附加属性信息合法性
+				checkDataStoreLayerAddedField(dataStoreLayerAdded);
+				// 4.新增保存数据存储附加信息
+				dataStoreLayerAdded.add(Dbo.db());
+			}
 		}
 	}
 
@@ -156,13 +158,9 @@ public class DataStoreAction extends BaseAction {
 	private void checkDataStoreLayerAddedField(Data_store_layer_added dataStoreLayerAdded) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.检查存储层配置ID是否为空
-		if (StringUtil.isBlank(String.valueOf(dataStoreLayerAdded.getDsl_id()))) {
-			throw new BusinessException("存储层配置ID不能为空");
-		}
+		Validator.notNull(dataStoreLayerAdded.getDsl_id(), "存储层配置ID不能为空");
 		// 3.检查配置附加属性信息是否为空
-		if (StringUtil.isBlank(dataStoreLayerAdded.getDsla_storelayer())) {
-			throw new BusinessException("配置附加属性信息不能为空");
-		}
+		Validator.notNull(dataStoreLayerAdded.getDsla_storelayer(), "配置附加属性信息不能为空");
 	}
 
 	@Method(desc = "新增保存数据存储层配置属性信息",
@@ -202,20 +200,13 @@ public class DataStoreAction extends BaseAction {
 					"3.循环更新保存数据存储层配置属性信息")
 	@Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合)",
 			range = "key,value类型的json字符串")
-	private void updateDataStorageLayerAttr(String dataStoreLayerAttr) {
+	@Param(name = "dsl_id", desc = "数据存储层配置表主键ID", range = "新增数据存储层配置时生成")
+	private void updateDataStorageLayerAttr(String dataStoreLayerAttr, long dsl_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.获取存放数据存储配置属性的key,value值
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> layerAttrList = JsonUtil.toObject(dataStoreLayerAttr, type);
-		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
-		for (Map<String, String> layerAttr : layerAttrList) {
-			data_store_layer_attr.setDsla_id(layerAttr.get("dsla_id"));
-			data_store_layer_attr.setDsla_remark(layerAttr.get("dsla_remark"));
-			data_store_layer_attr.setStorage_property_val(layerAttr.get("storage_property_val"));
-			// 3.循环更新保存数据存储层配置属性信息
-			data_store_layer_attr.update(Dbo.db());
-		}
+		// 2.先删除原数据存储层配置属性关系
+		deleteDataStoreLayerAttr(dsl_id);
+		// 3.新增数据存储层配置属性关系
+		addDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
 	}
 
 	@Method(desc = "新增存储层数据类型对照信息",
@@ -306,15 +297,14 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "map", desc = "存放字段长度，字段类型的集合", range = "无限制")
 	private void checkLengthContrastField(Map<String, String> map) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
+		Validator.notBlank(map.get("dlc_length"), "字段长度不能为空");
 		// 2.验证dlc_length为正整数
 		Matcher matcher = Pattern.compile("^[0-9]*[1-9][0-9]*$").matcher(map.get("dlc_length"));
-		if (StringUtil.isBlank(map.get("dlc_length")) || !matcher.matches()) {
+		if (!matcher.matches()) {
 			throw new BusinessException("字段长度必须为正整数，dlc_length=" + map.get("dlc_length"));
 		}
 		// 3.验证字段类型是否为空以及空格
-		if (StringUtil.isBlank(map.get("dlc_type"))) {
-			throw new BusinessException("字段类型不能为空以及空格");
-		}
+		Validator.notBlank(map.get("dlc_type"), "字段类型不能为空以及空格");
 	}
 
 	@Method(desc = "更新存储层数据类型对比信息",
@@ -453,9 +443,7 @@ public class DataStoreAction extends BaseAction {
 	private void checkLengthContrastSumField(Length_contrast_sum length_contrast_sum) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.判断长度对照名称是否为空
-		if (StringUtil.isBlank(length_contrast_sum.getDlcs_name())) {
-			throw new BusinessException("长度对照名称不能为空");
-		}
+		Validator.notBlank(length_contrast_sum.getDlcs_name(), "长度对照名称不能为空");
 	}
 
 	@Method(desc = "检查存储层数据类型对照表与数据类型对照主表字段信息是否合法",
@@ -465,9 +453,7 @@ public class DataStoreAction extends BaseAction {
 	private void checkTypeContrastField(Type_contrast_sum type_contrast_sum) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.判断类型对照名称是否为空
-		if (StringUtil.isBlank(type_contrast_sum.getDtcs_name())) {
-			throw new BusinessException("类型对照名称不能为空");
-		}
+		Validator.notBlank(type_contrast_sum.getDtcs_name(), "类型对照名称不能为空");
 	}
 
 	@Method(desc = "检查数据存储层配置属性字段合法性",
@@ -479,17 +465,11 @@ public class DataStoreAction extends BaseAction {
 	private void checkDataStoreLayerAttrField(Data_store_layer_attr dataStoreLayerAttr) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.检查存储层配置ID是否为空
-		if (StringUtil.isBlank(String.valueOf(dataStoreLayerAttr.getDsl_id()))) {
-			throw new BusinessException("存储层配置ID不能为空");
-		}
+		Validator.notNull(dataStoreLayerAttr.getDsl_id(), "存储层配置ID不能为空");
 		// 3.检查属性key是否为空
-		if (StringUtil.isBlank(dataStoreLayerAttr.getStorage_property_key())) {
-			throw new BusinessException("属性key不能为空");
-		}
+		Validator.notNull(dataStoreLayerAttr.getStorage_property_key(), "属性key不能为空");
 		// 4.检查属性value是否为空
-		if (StringUtil.isBlank(dataStoreLayerAttr.getStorage_property_val())) {
-			throw new BusinessException("属性value不能为空");
-		}
+		Validator.notBlank(dataStoreLayerAttr.getStorage_property_val(), "属性value不能为空");
 	}
 
 	@Method(desc = "更新保存数据存储层信息",
@@ -539,7 +519,7 @@ public class DataStoreAction extends BaseAction {
 			uploadConfFile(files, dsl_id);
 		}
 		// 7.更新数据存储层配置属性信息
-		updateDataStorageLayerAttr(dataStoreLayerAttr);
+		updateDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
 	}
 
 	@Method(desc = "删除配置文件",
@@ -693,7 +673,7 @@ public class DataStoreAction extends BaseAction {
 		// 2.查询数据存储层数据类型对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select distinct * from " + Type_contrast_sum.TableName + " t1 , "
+		asmSql.addSql("select * from " + Type_contrast_sum.TableName + " t1 , "
 				+ Type_contrast.TableName + " t2 where t1.dtcs_id=t2.dtcs_id ");
 		if (dtcs_id != null) {
 			asmSql.addSql(" and t1.dtcs_id=?").addParam(dtcs_id);
@@ -790,6 +770,21 @@ public class DataStoreAction extends BaseAction {
 			throw new BusinessException("文件不存在，可能目录不存在！");
 		} catch (IOException e) {
 			throw new BusinessException("下载文件失败！");
+		} finally {
+			try {
+				if (out != null) {
+					out.close();
+				}
+			} catch (Exception e) {
+				logger.error(e);
+			}
+			try {
+				if (in != null) {
+					in.close();
+				}
+			} catch (Exception e) {
+				logger.error(e);
+			}
 		}
 	}
 
