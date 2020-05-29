@@ -31,19 +31,20 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	 */
 	@Override
 	public void calculateIncrement() {
+		ArrayList<String> sqlList = new ArrayList<>();
 		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
 		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName), db);
 		//2、创建增量表
-		getCreateDeltaSql();
+		getCreateDeltaSql(sqlList);
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
 		restore(StorageType.ZengLiang.getCode());
 		//5、将比较之后的要insert的结果插入到临时表中
-		getInsertDataSql();
+		getInsertDataSql(sqlList);
 		//6、将比较之后的要delete(拉链中的闭链)的结果插入到临时表中
-		getDeleteDataSql();
+		getDeleteDataSql(sqlList);
 		//7、把全量数据中的除了有效数据且关链的数据以外的所有数据插入到临时表中
-		getdeltaDataSql();
+		getdeltaDataSql(sqlList);
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
@@ -73,8 +74,9 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	 */
 	@Override
 	public void replace() {
+		ArrayList<String> sqlList = new ArrayList<>();
 		//创建临时表存本次采集的数据
-		getCreateDeltaSql();
+		getCreateDeltaSql(sqlList);
 		//将本次采集的数据存入临时表
 		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
 		//删除上次采集的数据表
@@ -143,7 +145,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	/*
 	 * 创建临时表
 	 */
-	private void getCreateDeltaSql() {
+	private void getCreateDeltaSql(ArrayList<String> sqlList) {
 		// 如果表已存在则删除
 		sqlList.add("DROP TABLE IF EXISTS " + deltaTableName);
 		sqlList.add(createTableIfNotExists(deltaTableName));
@@ -178,7 +180,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		sqlList.add("DROP TABLE IF EXISTS " + tableName);
 	}
 
-	private void getdeltaDataSql() {
+	private void getdeltaDataSql(ArrayList<String> sqlList) {
 		String deltaDatasql = "insert into " + deltaTableName;
 		deltaDatasql += " select * from " + yesterdayTableName;
 		deltaDatasql += " where ";
@@ -200,7 +202,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	/*
 	 * 调用insertData的sql，在临时表中插入增量数据
 	 */
-	private void getInsertDataSql() {
+	private void getInsertDataSql(ArrayList<String> sqlList) {
 		String insertDataSql = "";
 		// 拼接查找增量并插入增量表
 		insertDataSql += "INSERT INTO ";
@@ -232,7 +234,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	/*
 	 * 调用deleteData的sql，在增量表中插入增量数据
 	 */
-	private void getDeleteDataSql() {
+	private void getDeleteDataSql(ArrayList<String> sqlList) {
 
 		StringBuilder deleteDatasql = new StringBuilder(120);
 

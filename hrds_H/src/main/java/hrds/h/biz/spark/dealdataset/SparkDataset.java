@@ -16,10 +16,15 @@ import org.apache.spark.sql.SparkSession;
  * @since JDK 1.7
  */
 public interface SparkDataset {
-	/*
-	 * 获取处理过的dataset
+	/**
+	 * 获取处理后的dataset对象
+	 * @return 处理后的dataset对象
 	 */
 	Dataset<Row> getDataset();
-	
+
+	/**
+	 * 获取SparkSession对象
+	 * @return SparkSession对象
+	 */
 	SparkSession getSparkSession();
 }

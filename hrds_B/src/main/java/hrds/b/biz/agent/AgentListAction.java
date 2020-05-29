@@ -1210,7 +1210,7 @@ public class AgentListAction extends BaseAction {
                   + " left join "
                   + Length_contrast_sum.TableName
                   + " lcs on dsl.dlcs_id = lcs.dlcs_id"
-                  + " where dsl.dsl_id = (select drt.dsl_id from "
+                  + " where dsl.dsl_id in (select drt.dsl_id from "
                   + Data_relation_table.TableName
                   + " drt where drt.storage_id = "
                   + " (select storage_id from "

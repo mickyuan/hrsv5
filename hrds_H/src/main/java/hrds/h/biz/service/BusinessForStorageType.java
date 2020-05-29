@@ -8,8 +8,13 @@ import hrds.h.biz.realloader.Loader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * 根据存储类型来运行的程序逻辑
+ * 是loader基础实现的业务包装类
+ * @author mick
+ */
 public final class BusinessForStorageType implements ILoadBussiness {
-    protected static final Logger logger = LogManager.getLogger(BusinessForStorageType.class);
+    static final Logger logger = LogManager.getLogger();
 
     protected Loader loader;
     protected MarketConf conf;
@@ -20,7 +25,7 @@ public final class BusinessForStorageType implements ILoadBussiness {
     }
 
     /**
-     *
+     * 实际需要调用的方法
      */
     @Override
     public void eventLoad() {

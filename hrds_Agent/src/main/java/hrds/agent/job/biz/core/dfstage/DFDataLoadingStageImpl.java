@@ -27,7 +27,6 @@ import hrds.commons.utils.jsch.SFTPDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -94,13 +93,13 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 									+ "错误的是否标识");
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-						continue;
+						LOGGER.warn("DB文件采集数据加载进HBASE没有实现");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-						continue;
+						LOGGER.warn("DB文件采集数据加载进SOLR没有实现");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
-						continue;
+						LOGGER.warn("DB文件采集数据加载进ElasticSearch没有实现");
 					} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
-						continue;
+						LOGGER.warn("DB文件采集数据加载进MONGODB没有实现");
 					} else {
 						//TODO 上面的待补充。
 						throw new AppSystemException("表" + collectTableBean.getHbase_name()
@@ -153,7 +152,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					//固定分隔符的文件
 					//创建外部临时表，这里表名不能超过30个字符，需要
 					sqlList.add(createOracleExternalTable(tmpTodayTableName, tableBean, fileNameArr,
-							dataStoreConfBean.getDsl_name()));
+							dataStoreConfBean.getDsl_name(), data_store_connect_attr.get(StorageTypeKey.external_directory)));
 				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
 							+ "oracle数据库外部表进数目前只支持非定长文件进数");
@@ -166,9 +165,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				HSqlExecute.executeSql(sqlList, db);
 				//判断是否有bad文件，有则抛异常
 				String bad_files = SFTPChannel.execCommandByJSch(session,
-						"ls " + data_store_connect_attr.get(StorageTypeKey.external_root_path) +
-								File.separator + Constant.HYSHF_DCL + File.separator +
-								tmpTodayTableName.toUpperCase() + "*bad");
+						"ls " + data_store_connect_attr.get(StorageTypeKey.external_root_path)
+								+ tmpTodayTableName.toUpperCase() + "*bad");
 				if (!StringUtil.isEmpty(bad_files)) {
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
 							+ "你所生成的文件无法load到Oracle数据库，请查看数据库服务器下的bad文件"
@@ -231,7 +229,6 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
-			external_root_path = external_root_path + File.separator + Constant.HYSHF_DCL + File.separator;
 			//删除大字段文件
 			String lobs_file = "find " + external_root_path + " -name \"LOBs_" + past_hbase_name
 					+ "_*\" | xargs rm -rf 'LOBs_" + past_hbase_name + "_*'";
@@ -256,7 +253,6 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		String tmpTodayTableName = todayTableName + "t";
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
-			external_root_path = external_root_path + File.separator + Constant.HYSHF_DCL + File.separator;
 			//删除数据文件
 			SFTPChannel.execCommandByJSch(session,
 					"rm -rf " + external_root_path + tmpTodayTableName.toUpperCase() + "*log");
@@ -332,7 +328,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	 *拼接创建oracle外部表的sql
 	 */
 	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean,
-	                                         String[] fileNameArr, String dsl_name) {
+	                                         String[] fileNameArr, String dsl_name, String external_directory) {
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo().toUpperCase(),
 				Constant.METAINFOSPLIT), dsl_name);
@@ -346,13 +342,14 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		sql.append(" )ORGANIZATION external ");
 		sql.append(" ( ");
 		sql.append(" type oracle_loader ");
-		sql.append(" DEFAULT DIRECTORY ").append(Constant.HYSHF_DCL);
+		sql.append(" DEFAULT DIRECTORY ").append(external_directory);
 		sql.append(" ACCESS PARAMETERS( ");
 		sql.append(" records delimited by newline");
 		sql.append(" fields terminated by '").append(tableBean.getColumn_separator()).append("' ");
 //            sql.append(" optionally enclosed by '\"' ");
 		sql.append(" missing field values are null  ");
-		sql.append(getTransformsSqlForLobs(columnList, typeList, dsl_name));//有大字段加类型转换取大字段的值
+		//有大字段加类型转换取大字段的值
+		sql.append(getTransformsSqlForLobs(columnList, typeList, dsl_name, external_directory));
 		sql.append(" ) ");
 		sql.append(" location ");
 		sql.append(" ( ");
@@ -364,7 +361,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return sql.toString();
 	}
 
-	private String getTransformsSqlForLobs(List<String> columns, List<String> types, String dsl_name) {
+	private String getTransformsSqlForLobs(List<String> columns, List<String> types,
+	                                       String dsl_name, String external_directory) {
 		StringBuilder sb = new StringBuilder(1024);
 		if (types.contains("BLOB") || types.contains("CLOB")) {
 			sb.append("(");
@@ -386,7 +384,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					if ("BLOB".equals(types.get(i))) {
 						sb.append(columns.get(i)).append(" from ").append(" LOBFILE (").append(columns.get(i))
 								.append("_hylobs").append(")");
-						sb.append(" from (").append(Constant.HYSHF_DCL).append(")").append(" BLOB ").append(",");
+						sb.append(" from (").append(external_directory).append(")").append(" BLOB ").append(",");
 					}
 				}
 				sb.deleteCharAt(sb.length() - 1); //将最后的逗号删除

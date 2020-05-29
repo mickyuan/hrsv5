@@ -7,9 +7,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @Author: Mick Yuan
- * @Date: 20-3-31 下午5:34
- * @Since jdk1.8
+ * 集市作业配置类
+ * @Author: Mick
  */
 public class MarketConf implements Serializable {
 
@@ -74,6 +73,14 @@ public class MarketConf implements Serializable {
         this.sqlParams = sqlParams;
     }
 
+    /**
+     * 获取 集市配置
+     * 包括参数检查与初始化
+     * @param datatableId 集市主表主键
+     * @param etldate 跑批日期
+     * @param sqlParams sql动态参数
+     * @return 集市配置实体
+     */
     public static MarketConf getConf(String datatableId, String etldate, String sqlParams) {
 
         //验证输入参数合法性

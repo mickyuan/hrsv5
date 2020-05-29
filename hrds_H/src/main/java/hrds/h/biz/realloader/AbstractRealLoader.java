@@ -7,17 +7,41 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 所有Loader实现的基类
+ * 目的：
+ * 1.基础参数初始化
+ * 2.为子类可能无法实现接口的方法做基础实现
+ *
  * @Author: Mick Yuan
- * @Date:
- * @Since jdk1.8
  */
 public abstract class AbstractRealLoader implements Loader {
-    final Map<String, String> tableLayerAttrs = new HashMap<>();
+    /**
+     * 最终输出表的存储层配置Map
+     */
+    protected final Map<String, String> tableLayerAttrs = new HashMap<>();
+    /**
+     * 集市作业配置类实体
+     */
     protected final MarketConf conf;
+    /**
+     * 最终输出的表名
+     */
     protected final String tableName;
+    /**
+     * 跑批日期
+     */
     protected final String etlDate;
+    /**
+     * 集市配置表主键
+     */
     protected final String datatableId;
+    /**
+     * 用户需要执行的最终sql
+     */
     protected final String finalSql;
+    /**
+     * 是否是多集市输入同表
+     */
     protected boolean isMultipleInput;
 
     protected AbstractRealLoader(MarketConf conf) {

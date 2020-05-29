@@ -31,6 +31,7 @@ public class DatabaseHandle extends Handle {
         connProperties.setProperty("password", databaseArgs.getPassword());
     }
 
+    @Override
     public void insert() {
 
         DataFrameWriter<Row> dataFrameWriter = dataset

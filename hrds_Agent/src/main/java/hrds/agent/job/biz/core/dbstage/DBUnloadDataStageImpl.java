@@ -21,7 +21,6 @@ import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.collection.ConnectionTool;
@@ -213,7 +212,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
-				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(), 4000)) {
+				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
+				sourceDataConfBean.getDatabase_name(), 4000)) {
 			List<String> fileResult = new ArrayList<>();
 			//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
 			List<Long> pageCountResult = new ArrayList<>();

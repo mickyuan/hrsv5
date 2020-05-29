@@ -4,14 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * 作业上下文对象接口
  * @author mick
- * @title: JobState
- * @projectName hrsv5
- * @description: TODO
  * @date 20-4-9下午4:50
  */
-public interface JobState {
-    Logger logger = LogManager.getLogger(JobState.class);
+public interface JobContext {
+    Logger logger = LogManager.getLogger();
     /**
      * 启动作业
      */

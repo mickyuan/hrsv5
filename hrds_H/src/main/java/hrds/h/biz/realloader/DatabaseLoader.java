@@ -10,13 +10,19 @@ import hrds.h.biz.spark.running.SparkJobRunner;
 import static hrds.commons.utils.StorageTypeKey.*;
 
 /**
+ * 异配置关系型数据进行数据交互的实现
+ *
  * @Author: Mick Yuan
- * @Date:
  * @Since jdk1.8
  */
 public class DatabaseLoader extends AbstractRealLoader {
-
+    /**
+     * spark 作业的配置类
+     */
     private final DatabaseArgs databaseArgs = new DatabaseArgs();
+    /**
+     * 创建表的 列名 列类型，以逗号隔开
+     */
     private final String createTableColumnTypes;
 
     DatabaseLoader(MarketConf conf) {

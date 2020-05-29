@@ -44,7 +44,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	}
 
 	protected String getCollectSQL(CollectTableBean collectTableBean,
-	                               DatabaseWrapper db) {
+	                               DatabaseWrapper db, String database_name) {
 		//获取自定义sql，如果自定义sql的sql语句
 		String collectSQL;
 		//如果是自定义sql,则使用自定义sql
@@ -66,13 +66,13 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 					}
 				} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_customize_sql())) {
 					//指定并行数抽取
-					collectSQL = getCollectSqlByColumn(collectTableBean, db);
+					collectSQL = getCollectSqlByColumn(collectTableBean, db, database_name);
 				} else {
 					throw new AppSystemException("是否标识参数错误");
 				}
 			} else if (IsFlag.Fou.getCode().equals(collectTableBean.getIs_parallel())) {
 				//不是并行抽取
-				collectSQL = getCollectSqlByColumn(collectTableBean, db);
+				collectSQL = getCollectSqlByColumn(collectTableBean, db, database_name);
 			} else {
 				throw new AppSystemException("是否标识参数错误");
 			}
@@ -86,13 +86,13 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	/**
 	 * 获取数据抽取sql,根据页面选择的列
 	 */
-	private String getCollectSqlByColumn(CollectTableBean collectTableBean, DatabaseWrapper db) {
+	private String getCollectSqlByColumn(CollectTableBean collectTableBean, DatabaseWrapper db, String database_name) {
 		String tableName = collectTableBean.getTable_name();
 		//筛选出不是新列的字段
 		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
 				collectTableBean.getCollectTableColumnBeanList());
 		//根据列名和表名获得采集SQL
-		String collectSql = db.getDbtype().ofKeyLableSql(tableName, collectColumnNames);
+		String collectSql = db.getDbtype().ofKeyLableSql(tableName, collectColumnNames, database_name);
 		return getCollectSqlAddWhere(collectSql, collectTableBean.getSql());
 		//获取系统的所有日期参数格式定义
 //		if (!StringUtil.isEmpty(selfSql)) {

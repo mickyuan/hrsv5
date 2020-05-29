@@ -13,9 +13,9 @@ public class SparkJobRunner {
 
     private static final String SPARK_MAIN_CLASS =
             "hrds.h.biz.spark.running.MarketSparkMain";
-    //    private static final String SPARK_CLASSPATH =
+//        private static final String SPARK_CLASSPATH =
 //            ".:hrds_H/build/libs/hrds_H-5.0.jar:hrds_H/src/main/resources/:" +
-//                    "../spark/jars/*:libs/lib/fd-*:libs/lib/hrds-commons-5.0.jar";
+//                    "../spark/jars/*:lib/fd-*:lib/hrds-commons-5.0.jar";
     private static final String SPARK_CLASSPATH =
             ".:hrds_H-5.0.jar:resources/:" +
                     "../spark/jars/*:../lib/fd-*:../lib/hrds-commons-5.0.jar";

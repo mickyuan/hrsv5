@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.conf.ConnWay;
 import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
@@ -39,13 +40,25 @@ public class ConnectionTool {
 	}
 
 	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
+	                                           String database_pad, String database_type, String database_name) {
+		return getDBWrapper(database_drive, jdbc_url, user_name, database_pad, database_type, database_name, 0);
+	}
+
+	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
 	                                           String database_pad, String database_type, int fetch_size) {
+		return getDBWrapper(database_drive, jdbc_url, user_name, database_pad, database_type,
+				"", fetch_size);
+	}
+
+	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
+	                                           String database_pad, String database_type, String database_name, int fetch_size) {
 		Map<String, String> dbConfig = new HashMap<>();
 		dbConfig.put(StorageTypeKey.database_driver, database_drive);
 		dbConfig.put(StorageTypeKey.jdbc_url, jdbc_url);
 		dbConfig.put(StorageTypeKey.user_name, user_name);
 		dbConfig.put(StorageTypeKey.database_pwd, database_pad);
 		dbConfig.put(StorageTypeKey.database_type, database_type);
+		dbConfig.put(StorageTypeKey.database_name, database_name);
 		return getDBWrapper(dbConfig, fetch_size);
 	}
 
@@ -93,6 +106,9 @@ public class ConnectionTool {
 				dbInfo.setAutoCommit(false);
 			}
 		}
+		if (!StringUtil.isEmpty(dbConfig.get(StorageTypeKey.database_name))) {
+			dbInfo.setDataBaseName(dbConfig.get(StorageTypeKey.database_name));
+		}
 		dbInfo.setDbtype(dbType);
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
@@ -109,7 +125,7 @@ public class ConnectionTool {
 	@Return(desc = "项目中常用的DatabaseWrapper对象", range = "DatabaseWrapper类型对象")
 	public static DatabaseWrapper getDBWrapper(Database_set database_set) {
 		return getDBWrapper(database_set.getDatabase_drive(), database_set.getJdbc_url(), database_set.getUser_name(),
-				database_set.getDatabase_pad(), database_set.getDatabase_type());
+				database_set.getDatabase_pad(), database_set.getDatabase_type(), database_set.getDatabase_name());
 	}
 
 	private static Dbtype getDbType(String database_type) {

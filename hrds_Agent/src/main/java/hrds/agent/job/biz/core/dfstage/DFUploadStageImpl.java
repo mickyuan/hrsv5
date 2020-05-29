@@ -161,13 +161,13 @@ public class DFUploadStageImpl extends AbstractJobStage {
 						throw new AppSystemException("错误的是否标识");
 					}
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					LOGGER.warn("DB文件采集数据上传进SOLR没有实现");
 				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					LOGGER.warn("DB文件采集数据上传进ElasticSearch没有实现");
 				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					LOGGER.warn("DB文件采集数据上传进MONGODB没有实现");
 				} else {
 					//TODO 上面的待补充。
 					throw new AppSystemException("不支持的存储类型");
@@ -273,11 +273,6 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					DatabaseType.Oracle9i.getCode().equals(database_type)) {
 				//oracle数据库采集外部表文件所在目录
 				targetPath = data_store_connect_attr.get(StorageTypeKey.external_root_path);
-				if (targetPath.endsWith("/") || targetPath.endsWith("\\")) {
-					targetPath = targetPath + Constant.HYSHF_DCL;
-				} else {
-					targetPath = targetPath + File.separator + Constant.HYSHF_DCL;
-				}
 				//使用Oracle则不能删除再创建
 				String mkdirShell = "mkdir -p " + targetPath;
 				SFTPChannel.execCommandByJSch(session, mkdirShell);
@@ -454,7 +449,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * 获取上传到服务器所在机器的目录
 	 */
 	static String getUploadServerPath(CollectTableBean collectTableBean, String rootPath) {
-		return FileNameUtils.normalize(rootPath + File.separator + collectTableBean.getDatabase_id()
+		return FileNameUtils.normalize(rootPath + collectTableBean.getDatabase_id()
 				+ File.separator + collectTableBean.getHbase_name() + File.separator, true);
 	}
 

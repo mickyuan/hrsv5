@@ -23,7 +23,6 @@ public abstract class JDBCIncreasement implements Closeable, Increasement {
 	protected String sysDate;//任务跑批日期
 	protected String tableNameInHBase; //hbase的表名
 	protected String deltaTableName; //增量表的名字
-	protected List<String> sqlList = new ArrayList<>();
 	protected String yesterdayTableName;//上次的表
 	protected DatabaseWrapper db;
 	protected String todayTableName;

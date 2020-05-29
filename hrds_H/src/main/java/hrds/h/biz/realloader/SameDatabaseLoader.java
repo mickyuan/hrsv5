@@ -99,7 +99,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         }
         db.execute(sql);
 
-        if (MARKET_INCREMENT_TMPTABLE_DELETE) dropTempTable();
+        if (MARKET_INCREMENT_TMPTABLE_DELETE) {
+            dropTempTable();
+        }
 
     }
 
@@ -140,8 +142,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void close() {
-        if (db != null)
+        if (db != null) {
             db.close();
+        }
     }
 
     private void dropTempTable() {

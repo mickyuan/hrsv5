@@ -12,6 +12,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.datastorage.QueryContrast;
 import hrds.commons.utils.datastorage.httpserver.HttpServer;
@@ -307,7 +308,7 @@ public class AgentDeploy {
 	  SFTPDetails sftpDetails = new SFTPDetails();
 	  sftpDetails.setHost(down_info.getAgent_ip());
 	  logger.info("IP : " + down_info.getAgent_ip());
-	  sftpDetails.setPort(22);
+	  sftpDetails.setPort(Integer.parseInt(Constant.SFTP_PORT));
 	  sftpDetails.setUser_name(down_info.getUser_name());
 	  logger.info("user_name : " + down_info.getUser_name());
 	  sftpDetails.setPwd(down_info.getPasswd());
