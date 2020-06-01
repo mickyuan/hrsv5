@@ -778,7 +778,7 @@ public class JobConfiguration extends BaseAction {
 
 	@Method(desc = "更新作业时保存所有依赖",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
-					"2.判断修改前的上游作业名称的数组是否为空" +
+					"2.判断修改前的上游作业名称的数组是否为空,如果为空先删除" +
 					"3.先删除原依赖关系" +
 					"4.循环保存依赖")
 	@Param(name = "etl_job_def", desc = "作业定义实体对象", range = "与数据库对应表字段规则一致", isBean = true)
@@ -789,13 +789,13 @@ public class JobConfiguration extends BaseAction {
 	private void updateDependencyFromEtlJobDef(Etl_dependency etl_dependency,
 	                                           String[] old_pre_etl_job, String[] pre_etl_job) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
-		// 2.判断修改前的上游作业名称的数组是否为空
+		// 2.判断修改前的上游作业名称的数组是否为空,如果为空先删除
 		if (old_pre_etl_job != null && old_pre_etl_job.length != 0) {
 			// 3.先删除原依赖关系
 			deleteOldDependency(etl_dependency, old_pre_etl_job);
-			// 4.循环保存依赖
-			saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
 		}
+		// 4.循环保存依赖
+		saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
 	}
 
 	@Method(desc = "新增或修改作业时保存作业依赖",
