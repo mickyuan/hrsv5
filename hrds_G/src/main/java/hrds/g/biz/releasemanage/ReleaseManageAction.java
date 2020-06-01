@@ -5,7 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -78,15 +78,9 @@ public class ReleaseManageAction extends BaseAction {
 				String use_valid_date = interfaceUseInfo.getUse_valid_date();
 				Long interface_id = interfaceUseInfo.getInterface_id();
 				// 2.判断接口ID，用户ID，开始日期，结束日期是否为空
-				if (StringUtil.isBlank(start_use_date)) {
-					throw new BusinessException("开始日期不能为空");
-				}
-				if (StringUtil.isBlank(use_valid_date)) {
-					throw new BusinessException("结束日期不能为空");
-				}
-				if (interfaceUseInfo.getInterface_id() == null) {
-					throw new BusinessException("接口ID不能为空");
-				}
+				Validator.notBlank(start_use_date, "开始日期不能为空");
+				Validator.notBlank(use_valid_date, "结束日期不能为空");
+				Validator.notNull(interfaceUseInfo.getInterface_id(), "接口ID不能为空");
 				long startUseDate = Long.parseLong(start_use_date);
 				long useValidDate = Long.parseLong(use_valid_date);
 				long todayDate = Long.parseLong(DateUtil.getSysDate());

@@ -6,7 +6,10 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.*;
+import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -751,7 +754,7 @@ public class JobConfiguration extends BaseAction {
 					updateDependencyFromEtlJobDef(etl_dependency, old_pre_etl_job, pre_etl_job);
 				} else {
 					// 5.1.2修改前的调度触发方式是依赖,修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
-					if (old_pre_etl_job.length != 0) {
+					if (old_pre_etl_job != null && old_pre_etl_job.length != 0) {
 						deleteOldDependency(etl_dependency, old_pre_etl_job);
 					}
 				}
@@ -818,7 +821,11 @@ public class JobConfiguration extends BaseAction {
 				}
 				// 5.循环保存作业依赖
 				etl_dependency.setPre_etl_job(preEtlJob);
-				etl_dependency.add(Dbo.db());
+				if (!ETLJobUtil.isEtlDependencyExist(etl_dependency.getEtl_sys_cd(),
+						etl_dependency.getPre_etl_sys_cd(), etl_dependency.getEtl_job(),
+						etl_dependency.getPre_etl_job())) {
+					etl_dependency.add(Dbo.db());
+				}
 			}
 		}
 	}
@@ -1735,8 +1742,10 @@ public class JobConfiguration extends BaseAction {
 			String savePath = ETLJobUtil.getFilePath(tableName) + xlsxSuffix;
 			File file = new File(savePath);
 			// 6.判断文件是否存在不存在创建
-			if (FileUtil.createFileIfAbsent(tableName + xlsxSuffix, savePath)) {
-				throw new BusinessException("创建文件失败，文件目录可能不存在！");
+			if (!file.exists()) {
+				if (!file.createNewFile()) {
+					throw new BusinessException("创建文件失败，文件目录可能不存在！");
+				}
 			}
 			// 7.创建输出流
 			out = new FileOutputStream(file);

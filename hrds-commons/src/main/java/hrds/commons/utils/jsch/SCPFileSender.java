@@ -159,8 +159,8 @@ public class SCPFileSender {
 			logger.error("网络异常，请确认网络正常", e);
 			throw new BusinessException("网络异常，请确认网络正常" + e.getMessage());
 		} catch (SftpException e) {
-			logger.error("数据传输失败，请联系管理员", e);
-			throw new BusinessException("数据传输失败，请联系管理员" + e.getMessage());
+			logger.error("数据传输失败，请检查数据目录是否有权限，请联系管理员", e);
+			throw new BusinessException("数据传输失败，请检查数据目录是否有权限，请联系管理员" + e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new BusinessException("部署失败，请重新部署" + e);
