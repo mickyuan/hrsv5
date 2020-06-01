@@ -806,7 +806,7 @@ public class StoDestStepConfAction extends BaseAction {
 //			  5-6: 如果选择的存储层有Oracle的,则判断表名的长度不能大于27个字符
 			  if (param.getHyren_name().length() > 27) {
 				throw new BusinessException(
-					"表名称(" + storageInfo.getHyren_name() + "),长度超过了27个字符请修改!!!");
+					"表名称(" + param.getHyren_name() + "),长度超过了27个字符请修改!!!");
 			  }
 			}
 
