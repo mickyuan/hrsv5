@@ -8,10 +8,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.exception.BusinessSystemException;
-import fd.ng.core.utils.CodecUtil;
+import fd.ng.core.utils.*;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.annotation.UploadFile;
@@ -25,6 +23,7 @@ import hrds.commons.codes.fdCode.WebCodesItem;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
@@ -37,9 +36,11 @@ import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
 import hrds.main.AppMain;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
@@ -63,17 +64,20 @@ import java.util.*;
  */
 public class MarketInfoAction extends BaseAction {
 
-	private static final SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-	private static final String Mart_Storage_path = "";
+	//新增完集市表source_size（集市表的大小）存储大小为0
 	private static final String Zero = "0";
+	//新增完集市表的日期
 	private static final String ZeroDate = "00000000";
+	//统一命名：目标字段 作为may当中的key值
 	private static final String TargetColumn = "targecolumn";
+	//统一命名：来源字段 作为may当中的key值
 	private static final String SourceColumn = "sourcecolumn";
-	//TODO 由于目前不存在集市分类 所以随便写的一个ID 为了满足入库需求 之后将去除
-	private static final String Category_id = "1000025018";
 	// excel文件后缀名
 	private static final String xlsxSuffix = ".xlsx";
-	private static final Logger logger = LogManager.getLogger(AppMain.class.getName());
+	private static final String xlsSuffix = ".xls";
+	private static final Logger logger = LogManager.getLogger();
+	//不需要长度的字段类型们
+	//FIXME 提出公共方法
 	private static final String[] nolengthcolumntypes = {"string", "text", "bigint"};
 
 	/**
@@ -83,8 +87,21 @@ public class MarketInfoAction extends BaseAction {
 	 * @param columname
 	 */
 	private void CheckColummn(String column, String columname) {
-		if (StringUtil.isBlank(column)) {
-			throw new BusinessException(columname + "不为空且不为空格，" + columname + "=" + column);
+		Validator.notBlank(column, "不为空且不为空格，" + columname + "=" + column);
+	}
+
+	/**
+	 * 封装一个update方法
+	 *
+	 * @param bean
+	 */
+	private void updatebean(ProjectTableEntity bean) {
+		try {
+			bean.update(Dbo.db());
+		} catch (ProjectTableEntity.EntityDealZeroException e) {
+			logger.info("更新表" + bean.getClass().getName() + "数据为0条，无误");
+		} catch (Exception e) {
+			throw e;
 		}
 	}
 
@@ -145,27 +162,35 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(mart_number, "集市编号");
 		//2.新增前查询集市编号是否已存在
 		Long data_mart_id = dm_info.getData_mart_id();
-		//如果是更新 就先删除原有的信息
+		//如果是更新
 		if (data_mart_id != null) {
-			Dbo.execute("delete from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ? and data_mart_id != ?", mart_number, data_mart_id)
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
+				throw new BusinessException("集市编号重复，请重新填写");
+			}
+			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? and data_mart_id != ?", mart_name, data_mart_id)
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
+				throw new BusinessException("集市名称重复，请重新填写");
+			}
+			updatebean(dm_info);
 		} else {
+			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ? ", mart_number)
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
+				throw new BusinessException("集市编号重复，请重新填写");
+			}
+			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? ", mart_name)
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
+				throw new BusinessException("集市名称重复，请重新填写");
+			}
 			//3.对dm_info初始化一些非页面传值
 			dm_info.setData_mart_id(PrimayKeyGener.getNextId());
-			dm_info.setMart_storage_path(Mart_Storage_path);
+			dm_info.setMart_storage_path("");
 			dm_info.setCreate_date(DateUtil.getSysDate());
 			dm_info.setCreate_time(DateUtil.getSysTime());
 			dm_info.setCreate_id(getUserId());
+			//4.保存data_source信息
+			dm_info.add(Dbo.db());
 		}
-		if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ?", mart_number)
-				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-			throw new BusinessException("集市编号重复，请重新填写");
-		}
-		if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? ", mart_name)
-				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-			throw new BusinessException("集市名称重复，请重新填写");
-		}
-		//4.保存data_source信息
-		dm_info.add(Dbo.db());
 	}
 
 	@Method(desc = "获取集市工程的具体信息",
@@ -186,15 +211,28 @@ public class MarketInfoAction extends BaseAction {
 	public List<Map<String, Object>> queryDMDataTableByDataMartID(String data_mart_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setData_mart_id(data_mart_id);
-		List<Map<String, Object>> maps = Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
+		return Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " + Datatable_field_info.TableName + ") then true else false end as isadd from "
 				+ Dm_datatable.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.datatable_id = t2.datatable_id where data_mart_id = ? order by " + "t1.datatable_id asc", dm_datatable.getData_mart_id());
-		for (Map<String, Object> map : maps) {
-			String etl_date = map.get("etl_date").toString();
-			if (etl_date.equalsIgnoreCase(ZeroDate)) {
-				map.put("etl_date", "--------");
-			}
+	}
+
+
+	/**
+	 * 封装一个删除SQL的方法
+	 *
+	 * @param sql       开头为from的SQL
+	 * @param param     接收一个参数 可以为 任意类型
+	 * @param tablename 要删除的单一目标表的名称
+	 */
+	private void deletesql(String sql, Object param, String tablename) {
+		long number = 0L;
+		OptionalLong optionalLong = Dbo.queryNumber("select count(*) from (select * " + sql + ") as a", param);
+		if (optionalLong.isPresent()) {
+			number = optionalLong.getAsLong();
 		}
-		return maps;
+		int execute = Dbo.execute("delete" + sql, param);
+		if (execute != number) {
+			throw new BusinessSystemException("删除表" + tablename + "失败，查询结果与删除结果存在差异");
+		}
 	}
 
 	@Method(desc = "删除集市表及其相关的所有信息",
@@ -207,30 +245,45 @@ public class MarketInfoAction extends BaseAction {
 					"7、删除集市表存储关系表" +
 					"8、删除集市字段存储信息")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
+	//提供给管控的接口 用于删除集市表
 	public void deleteDMDataTable(String datatable_id) {
-		//TODO 等管控这边上来要增加判断 表是否正在使用
+		//FIXME 增加判断select的count和delete的count一致
+		Boolean runStatus = checkRunStatus(datatable_id);
+		if (runStatus) {
+			throw new BusinessSystemException("该表已经生成，不能删除");
+		}
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		//5、删除数据源表字段
-		Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
-				"(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+		String sql = " from " + Own_source_field.TableName + " where own_dource_table_id in " +
+				"(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )";
+		deletesql(sql, dm_datatable.getDatatable_id(), Own_source_field.TableName);
 		//8、删除集市字段存储信息
-		Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in " +
-				"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
+
+		sql = " from " + Dm_column_storage.TableName + " where datatable_field_id in " +
+				"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)";
+		deletesql(sql, dm_datatable.getDatatable_id(), Own_source_field.TableName);
 		//1、删除数据表信息
-		Dbo.execute("delete from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Dm_datatable.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Dm_datatable.TableName);
 		//2、删除数据操作信息表
-		Dbo.execute("delete from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Dm_operation_info.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Dm_operation_info.TableName);
 		//3、删除数据表已选数据源信息
-		Dbo.execute("delete from " + Dm_datatable_source.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Dm_datatable_source.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Dm_datatable_source.TableName);
 		//4、删除结果映射信息表
-		Dbo.execute("delete from " + Dm_etlmap_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Dm_etlmap_info.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Dm_etlmap_info.TableName);
 		//6、删除数据表字段信息
-		Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Datatable_field_info.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Datatable_field_info.TableName);
 		//7、删除集市表存储关系表
-		Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Dm_relation_datatable.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Dm_relation_datatable.TableName);
 		//删除前后置处理关系表
-		Dbo.execute("delete from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		sql = " from " + Dm_relevant_info.TableName + " where datatable_id = ?";
+		deletesql(sql, dm_datatable.getDatatable_id(), Dm_relevant_info.TableName);
 	}
 
 	@Method(desc = "集市查询存储配置表",
@@ -264,6 +317,7 @@ public class MarketInfoAction extends BaseAction {
 	public Map<String, Object> addDMDataTable(Dm_datatable dm_datatable, String dsl_id) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		//1检查数据合法性
+		//FIXME 优化 提取checkcolumn为公共方法
 		CheckColummn(dm_datatable.getDatatable_en_name(), "表英文名");
 		CheckColummn(dm_datatable.getDatatable_cn_name(), "表中文名");
 		CheckColummn(dm_datatable.getSql_engine(), "Sql执行引擎");
@@ -297,12 +351,9 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDdlc_time(DateUtil.getSysTime());
 		dm_datatable.setDatac_date(DateUtil.getSysDate());
 		dm_datatable.setDatac_time(DateUtil.getSysTime());
-		//TODO 目前先全部使用默认 之后在修改
-		dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
 		dm_datatable.setSoruce_size(Zero);
 		dm_datatable.setEtl_date(ZeroDate);
-		//TODO 见Category_id处的注释
-		dm_datatable.setCategory_id(Category_id);
+		dm_datatable.setCategory_id(datatable_id);
 		//4.保存dm_datatable信息
 		dm_datatable.add(Dbo.db());
 		//5.新增数据至dm_relation_datatable
@@ -313,48 +364,42 @@ public class MarketInfoAction extends BaseAction {
 		dm_relation_datatable.add(Dbo.db());
 		//6 返回主键datatable_id
 		map.put("datatable_id", datatable_id);
-		map.put("success", true);
 		return map;
 	}
 
-	@Method(desc = "查询所有集市表",
-			logicStep = "根据用户查看所有的集市表")
+	@Method(desc = "根据用户所属的部门查询所有集市表",
+			logicStep = "根据用户所属的部门查询所有集市表")
 	@Return(desc = "查询结果", range = "返回值取值范围")
 	public List<Dm_datatable> getAllDatatable_En_Name() {
-		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select distinct t1.datatable_en_name from " + Dm_datatable.TableName + " t1 left join " +
+		return Dbo.queryList(Dm_datatable.class, "select distinct t1.datatable_en_name from " + Dm_datatable.TableName + " t1 left join " +
 				Dm_info.TableName + " t2 on t1.data_mart_id = t2.data_mart_id left join " + Sys_user.TableName + " t3 on t2.create_id = t3.user_id " +
 				" where t3.dep_id = ?", getUser().getDepId());
-		return dm_datatables;
-
 	}
 
 	@Method(desc = "检查集市表状态",
 			logicStep = "检查集市表状态")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
 	@Return(desc = "集市表状态", range = "集市表状态")
-	public Map<String, Object> checkRunStatus(String datatable_id) {
+	//FIXME
+	public Boolean checkRunStatus(String datatable_id) {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		//新增
-		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select etl_date from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		String etl_date = dm_datatables.get(0).getEtl_date();
+		Map<String, Object> stringObjectMap = Dbo.queryOneObject("select etl_date from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
 		//是否运行完成过
-		boolean haveRun = !etl_date.equals(ZeroDate);
-		List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		String is_successful = dm_relation_datatables.get(0).getIs_successful();
+		boolean haveRun = !stringObjectMap.get("etl_date").equals(ZeroDate);
+		Map<String, Object> stringObjectMap2 = Dbo.queryOneObject("select is_successful from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
 		//是否正在运行
-		boolean isrunning = is_successful.equals(JobExecuteState.YunXing.getCode());
-		//如果运行完成过
-		if (haveRun || isrunning) {
-			resultmap.put("status", true);
-			return resultmap;
+		boolean isrunning = stringObjectMap2.get("is_successful").equals(JobExecuteState.YunXing.getCode());
+		boolean isdengdai = stringObjectMap2.get("is_successful").equals(JobExecuteState.DengDai.getCode());
+		//如果是等待 则返回false 表示页面不用上锁
+		if (isdengdai) {
+			return false;
+		} else if (haveRun) {
+			return true;
 		} else {
-			resultmap.put("status", false);
-			return resultmap;
+			return true;
 		}
-
-
 	}
 
 	@Method(desc = "查询与当前datatable_id拥有相同datatable_en_name的另外一组datatable_id",
@@ -365,9 +410,8 @@ public class MarketInfoAction extends BaseAction {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_id  from " + Dm_datatable.TableName + " where datatable_en_name in (select datatable_en_name from "
+		return Dbo.queryList(Dm_datatable.class, "select datatable_id  from " + Dm_datatable.TableName + " where datatable_en_name in (select datatable_en_name from "
 				+ Dm_datatable.TableName + " where datatable_id = ?) and datatable_id != ? order by datatable_create_date,datatable_create_time", dm_datatable.getDatatable_id(), dm_datatable.getDatatable_id());
-		return dm_datatables;
 	}
 
 	@Method(desc = "编辑更新集市添加表页面1的信息，更新集市表",
@@ -397,7 +441,6 @@ public class MarketInfoAction extends BaseAction {
 			dm_datatable.setDatatable_due_date(Constant.MAXDATE);
 		}
 		CheckColummn(dsl_id, "数据存储");
-
 		if (Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ? and datatable_id != ?",
 				dm_datatable.getDatatable_en_name(), dm_datatable.getDatatable_id())
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
@@ -409,24 +452,19 @@ public class MarketInfoAction extends BaseAction {
 		} else {
 			map.put("ifrepeat", false);
 		}
-		//TODO 目前先全部使用默认 之后在修改
-		dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
-		//TODO 见Category_id处的注释
-		dm_datatable.setCategory_id(PrimayKeyGener.getNextId());
 		//4.dm_datatable
-		dm_datatable.update(Dbo.db());
-		//更新dm_relation_datatable库中的数据
-		List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id = ?",
+		updatebean(dm_datatable);
+		//查询记录
+		Optional<Dm_relation_datatable> dm_relation_datatableOptional = Dbo.queryOneObject(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id = ?",
 				dm_datatable.getDatatable_id());
-		Dm_relation_datatable dm_relation_datatable = dm_relation_datatables.get(0);
-		if (!dsl_id.equals(dm_relation_datatable.getDsl_id())) {
-			Dbo.execute("delete from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_relation_datatable.getDatatable_id());
+		//更新dm_relation_datatable库中的数据
+		if (dm_relation_datatableOptional.isPresent()) {
+			Dm_relation_datatable dm_relation_datatable = dm_relation_datatableOptional.get();
 			dm_relation_datatable.setDsl_id(dsl_id);
-			dm_relation_datatable.add(Dbo.db());
+			updatebean(dm_relation_datatable);
 		}
 		//6 返回主键datatable_id
 		map.put("datatable_id", String.valueOf(dm_datatable.getDatatable_id()));
-		map.put("success", true);
 		return map;
 
 	}
@@ -451,27 +489,25 @@ public class MarketInfoAction extends BaseAction {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_en_name(datatable_en_name);
+		Optional<Dm_datatable> dm_datatableOptional = null;
 		//如果是新增集市表
 		if (StringUtils.isEmpty(datatable_id)) {
-			List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
-			if (!dm_datatables.isEmpty()) {
-				resultmap.put("datatable_id", dm_datatables.get(0).getDatatable_id());
-				resultmap.put("result", true);
-			} else {
-				resultmap.put("result", false);
-			}
+			//查询相同表名的表
+			dm_datatableOptional = Dbo.queryOneObject(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
 		}
 		//更新 SQL多增加一个不包括当前ID
 		else {
 			dm_datatable.setDatatable_id(datatable_id);
-			List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ? and datatable_id != ?",
+			//查询相同表名的表
+			dm_datatableOptional = Dbo.queryOneObject(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ? and datatable_id != ?",
 					dm_datatable.getDatatable_en_name(), dm_datatable.getDatatable_id());
-			if (!dm_datatables.isEmpty()) {
-				resultmap.put("datatable_id", dm_datatables.get(0).getDatatable_id());
-				resultmap.put("result", true);
-			} else {
-				resultmap.put("result", false);
-			}
+		}
+		if (dm_datatableOptional.isPresent()) {
+			dm_datatable = dm_datatableOptional.get();
+			resultmap.put("datatable_id", dm_datatable.getDatatable_id());
+			resultmap.put("result", true);
+		} else {
+			resultmap.put("result", false);
 		}
 		return resultmap;
 	}
@@ -481,18 +517,22 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "根据数据集市表ID进行查询")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
 	@Return(desc = "是否重复", range = "返回值取值范围")
-	public Map<String, Object> queryDataTableIdIfRepeat(String datatable_id) {
+	public Boolean queryDataTableIdIfRepeat(String datatable_id) {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName +
+		OptionalLong optionalLong = Dbo.queryNumber("select * from " + Dm_datatable.TableName +
 				" where datatable_en_name in (select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
-		if (dm_datatables.size() > 1) {
-			resultmap.put("result", true);
+		if (optionalLong.isPresent()) {
+			long asLong = optionalLong.getAsLong();
+			if (asLong > 1) {
+				return true;
+			} else {
+				return false;
+			}
 		} else {
-			resultmap.put("result", false);
+			throw new BusinessSystemException("查询是否集市重复错误");
 		}
-		return resultmap;
 	}
 
 	@Method(desc = "根据SQL获取采集数据，默认显示10条",
@@ -502,7 +542,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID ")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public Map<String, Object> getDataBySQL(String querysql, String sqlparameter, String datatable_id) {
+	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter, String datatable_id) {
 		Map<String, Object> resultmap = new HashMap<String, Object>();
 		//1.处理SQL
 		try {
@@ -539,40 +579,12 @@ public class MarketInfoAction extends BaseAction {
 					}
 				}.getPageDataLayer(querysql, db, 1, 10);
 			}
-			resultmap.put("result", maps);
-			resultmap.put("success", true);
+			return maps;
 		} catch (Exception e) {
-			resultmap.put("success", false);
-			resultmap.put("message", e.getMessage());
 			logger.info(e.getMessage());
+			throw e;
 		}
-		return resultmap;
 	}
-
-//    /**
-//     * 处理oracle部分的limit问题
-//     *
-//     * @param querysql
-//     * @param datatable_id
-//     * @return
-//     */
-//    private String getlimitsql(String querysql, String datatable_id) {
-//        LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(querysql, Dbo.db());
-//        LayerTypeBean.ConnType connType = allTableIsLayer.getConnType();
-//        if (connType == LayerTypeBean.ConnType.oneJdbc) {
-//            String dsl_name = allTableIsLayer.getLayerBean().getDsl_name();
-//            if (dsl_name.equalsIgnoreCase("ORACLE")) {
-//                querysql = "select * from (" + querysql + ") " + alias + " where rownum <  " + LimitNumber;
-//            } else {
-//                querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-//            }
-//        } else if (connType == LayerTypeBean.ConnType.moreJdbc) {
-//            querysql = "select * from (" + querysql + ") as " + alias + " limit " + LimitNumber;
-//        } else {
-//            throw new BusinessException("目前不支持非JDBC的情况");
-//        }
-//        return querysql;
-//    }
 
 	@Method(desc = "根据数据表ID,获取数据库类型，获取选中数据库的附加属性字段",
 			logicStep = "查询数据库，返回结果")
@@ -620,15 +632,13 @@ public class MarketInfoAction extends BaseAction {
 			DruidParseQuerySql dpqs = new DruidParseQuerySql();
 			bloodRelationMap = dpqs.getBloodRelationMap(querysql);
 		} catch (Exception e) {
-			String message = e.getMessage();
-			if (!StringUtils.isEmpty(message)) {
-				resultmap.put("success", false);
-				resultmap.put("message", e.getMessage());
-				return resultmap;
+			if (!StringUtils.isEmpty(e.getMessage())) {
+				logger.error(e.getMessage());
+				throw e;
 			}
 			//如果druid解析错误 并且没有返回信息 说明sql存在问题 用获取sql查询结果的方法返回错误信息
 			else {
-				return getDataBySQL(querysql, sqlparameter, datatable_id);
+				getDataBySQL(querysql, sqlparameter, datatable_id);
 			}
 		}
 		String targetfield_type = "";
@@ -671,9 +681,6 @@ public class MarketInfoAction extends BaseAction {
 			map.put("field_type", targetfield_type);
 			map.put("field_length", field_length);
 			//默认提供varchar 长度为100
-//            if (targetfield_type.equals("varchar") && field_length.isEmpty()) {
-//                map.put("field_length", 100);
-//            }
 			map.put("field_process", ProcessType.YingShe.getCode());
 			//将所有勾选的 附加字段属性 默认选为不勾选
 			List<Map<String, Object>> dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
@@ -693,7 +700,6 @@ public class MarketInfoAction extends BaseAction {
 			columnlist.add(map);
 		}
 		resultmap.put("columnlist", columnlist);
-		resultmap.put("success", true);
 		return resultmap;
 	}
 
@@ -723,7 +729,7 @@ public class MarketInfoAction extends BaseAction {
 				List<Map<String, Object>> maps = Dbo.queryList("select t2.column_type,t4.dsl_id from " + Data_store_reg.TableName + " t1 left join " + Table_column.TableName + " t2 on t1.table_id = t2.table_id" +
 								" left join " + Table_storage_info.TableName + " t3 on t1.table_id = t3.table_id left join " +
 								Data_relation_table.TableName + " t4 on t4.storage_id = t3.storage_id " +
-								"where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? limit 1",
+								"where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? ",
 						sourcecolumn.toLowerCase(), sourcetable.toLowerCase());
 				//如果为空，说明字段不存在
 				if (maps.isEmpty()) {
@@ -764,12 +770,15 @@ public class MarketInfoAction extends BaseAction {
 					String DMLfield_type = maps.get(0).get("field_type").toString();
 					//集市层原始字段长度
 					String DMLfield_length = maps.get(0).get("field_length").toString();
+					if (!StringUtils.isEmpty(DMLfield_length)) {
+						resultmap.put("field_length", DMLfield_length);
+						DMLfield_type = DMLfield_type + "(" + DMLfield_length + ")";
+					}
 					//记录原始类型
 					resultmap.put("sourcetype", DMLfield_type.toLowerCase());
 					//转换
 					DMLfield_type = transFormColumnType(DMLfield_type, dsl_id);
 					resultmap.put("targettype", DMLfield_type.toLowerCase());
-					resultmap.put("field_length", DMLfield_length);
 					return resultmap;
 				}
 			} else {
@@ -779,7 +788,6 @@ public class MarketInfoAction extends BaseAction {
 			}
 			//TODO 之后层级加入 还需要补充
 		}
-
 	}
 
 	/**
@@ -789,6 +797,7 @@ public class MarketInfoAction extends BaseAction {
 	 * @param dsl_id
 	 * @return
 	 */
+	//FIXME 修改map.get(0) 判断是否为一条
 	private String transFormColumnType(String column_type, String dsl_id) {
 		//如果dsl_id为空，表示不需要转换，在存储血缘关系的时候，需要调用到该方法。
 		if (StringUtils.isEmpty(dsl_id)) {
@@ -803,24 +812,23 @@ public class MarketInfoAction extends BaseAction {
 		Data_store_layer data_store_layer = new Data_store_layer();
 		data_store_layer.setDsl_id(dsl_id);
 		//根据原始字段类型 查询目标类型 去除所有的（）和大小写问题
-		List<Map<String, Object>> maps = Dbo.queryList("select target_type from " + Type_contrast.TableName + " t1 left join " + Data_store_layer.TableName + " t2 on t1.dtcs_id = t2.dtcs_id " +
+		Optional<Type_contrast> type_contrastOptional = Dbo.queryOneObject(Type_contrast.class, "select target_type from " + Type_contrast.TableName + " t1 left join " + Data_store_layer.TableName + " t2 on t1.dtcs_id = t2.dtcs_id " +
 				"where t2.dsl_id = ? and  LOWER(  CASE  WHEN position ('(' IN t1.source_type) !=0  THEN substring(t1.source_type,0,position ('(' IN t1.source_type)) " +
 				"  ELSE t1.source_type  END ) = ?", data_store_layer.getDsl_id(), column_type);
 		//如果为空，标识没有记录改字段类型的转换 则返回原有字段类型
-		if (maps.isEmpty()) {
-			return column_type;
-		} else {
-			String target_type = maps.get(0).get("target_type").toString();
-			//统一小写
+		if (type_contrastOptional.isPresent()) {
+			Type_contrast type_contrast = type_contrastOptional.get();
+			String target_type = type_contrast.getTarget_type();
 			target_type = target_type.toLowerCase();
 			//去除（
 			if (target_type.contains("(")) {
 				target_type = target_type.substring(0, target_type.indexOf("("));
 			}
 			return target_type.toLowerCase();
+		} else {
+			return column_type;
 		}
 	}
-
 
 	@Method(desc = "回显新增集市页面2中记录在数据库中的字段信息",
 			logicStep = "1.查询所有字段" +
@@ -866,12 +874,11 @@ public class MarketInfoAction extends BaseAction {
 	public List<Map<String, Object>> getFromColumnList(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		//如果是新增，则没有记录
-		if (dm_operation_infos.isEmpty()) {
-			return null;
-		} else {
-			String execute_sql = dm_operation_infos.get(0).getExecute_sql();
+		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		//如果有数据就回显
+		if (dm_operation_infoOptional.isPresent()) {
+			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
+			String execute_sql = dm_operation_info.getExecute_sql();
 			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
 			List<String> columnNameList = druidParseQuerySql.parseSelectAliasField();
 			List<Map<String, Object>> columnlist = new ArrayList<>();
@@ -883,6 +890,9 @@ public class MarketInfoAction extends BaseAction {
 				columnlist.add(map);
 			}
 			return columnlist;
+		} else {
+			//如果是新增，则没有记录
+			return null;
 		}
 	}
 
@@ -897,22 +907,26 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		//查看存储层目的地
-		List<Map<String, Object>> storeTypeList = Dbo.queryList("select store_type from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
+		Optional<Data_store_layer> data_store_layerOptional = Dbo.queryOneObject(Data_store_layer.class, "select store_type from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
 				"where t2.datatable_id = ? ", dm_datatable.getDatatable_id());
-		String storeType = storeTypeList.get(0).get("store_type").toString();
-		String field_type = getDefaultFieldType(storeType);
-		//根据存储目的地 查看所有字段类型
-		List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
-				"FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
-				"LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
-				" WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
-		Map<String, Object> resultmap = new HashMap<>();
-		resultmap.put("target_type", field_type);
-		//判断 如果list中没有当前类型 则加入
-		if (!targetTypeList.contains(resultmap)) {
-			targetTypeList.add(resultmap);
+		if (data_store_layerOptional.isPresent()) {
+			Data_store_layer data_store_layer = data_store_layerOptional.get();
+			String storeType = data_store_layer.toString();
+			String field_type = getDefaultFieldType(storeType);
+			//根据存储目的地 查看所有字段类型
+			List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
+					"FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
+					"LEFT JOIN " + Dm_relation_datatable.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
+					" WHERE t3.datatable_id = ?", dm_datatable.getDatatable_id());
+			Map<String, Object> resultmap = new HashMap<>();
+			resultmap.put("target_type", field_type);
+			//判断 如果list中没有当前类型 则加入
+			if (!targetTypeList.contains(resultmap)) {
+				targetTypeList.add(resultmap);
+			}
+			return targetTypeList;
 		}
-		return targetTypeList;
+		throw new BusinessSystemException("选择的数据目的地不包含字段类型，请检查");
 
 	}
 
@@ -923,7 +937,7 @@ public class MarketInfoAction extends BaseAction {
 	 * @return
 	 */
 	private String getDefaultFieldType(String storeType) {
-		//TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况
+		//TODO 分类讨论 目前只考虑关系性数据库、hive、hbase这三种情况 提出去
 		String field_type = "";
 		if (storeType.equals(Store_type.DATABASE.getCode())) {
 			field_type = "varchar";
@@ -959,72 +973,66 @@ public class MarketInfoAction extends BaseAction {
 		}
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		//检查
-//        List<Dm_relation_datatable> dm_relation_datatables = Dbo.queryList(Dm_relation_datatable.class, "select * from " + Dm_relation_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-//        String is_successful = dm_relation_datatables.get(0).getIs_successful();
-//        if (is_successful.equals(JobExecuteState.YunXing.getCode())) {
-//            resultmap.put("success", false);
-//            resultmap.put("reason", "running");
-//            return resultmap;
-//        }
 		//新增时判断SQL是否存在
-		List<Map<String, Object>> maps2 = Dbo.queryList("select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		if (maps2.isEmpty()) {
+		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		//设置标签 判断是新增 还是 更新
+		//没有数据 表示新增 增加sql创建时间
+		if (!dm_operation_infoOptional.isPresent()) {
 			dm_datatable.setDdlc_date(DateUtil.getSysDate());
 			dm_datatable.setDdlc_time(DateUtil.getSysTime());
 			dm_datatable.update(Dbo.db());
+			Dm_operation_info dm_operation_info = new Dm_operation_info();
+			dm_operation_info.setId(PrimayKeyGener.getNextId());
+			dm_operation_info.setDatatable_id(datatable_id);
+			dm_operation_info.setExecute_sql(querysql);
+			dm_operation_info.add(Dbo.db());
+			//保存血缘关系的表，进入数据库
+			saveBloodRelationToPGTable(querysql, datatable_id);
 		}
 		//更新时判断SQL是否一致
 		else {
-			Object object_execute_sql = maps2.get(0).get("execute_sql");
-			String execute_sql = object_execute_sql.toString();
+			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
+			String execute_sql = dm_operation_info.getExecute_sql();
 			//如果不一致 修改 更新SQL 时间
 			if (!execute_sql.equals(querysql)) {
 				dm_datatable.setDdlc_date(DateUtil.getSysDate());
 				dm_datatable.setDdlc_time(DateUtil.getSysTime());
+				//更新集市表的SQL修改时间字段
 				dm_datatable.update(Dbo.db());
+				//更新SQL
+				dm_operation_info.setExecute_sql(querysql);
+				dm_operation_info.add(Dbo.db());
+				//保存血缘关系的表，进入数据库
+				saveBloodRelationToPGTable(querysql, datatable_id);
 			}
 		}
-		//删除原有数据
+		//删除原有数据 因为页面可能会存在修改sql 导致的字段大幅度变动 所以针对更新的逻辑会特别复杂 故采用全删全增的方式
 		Dbo.execute("delete from " + Dm_column_storage.TableName + " where datatable_field_id in (select datatable_field_id from " +
 				Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
 		Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		Dbo.execute("delete from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
-				"(select own_dource_table_id from dm_datatable_source where datatable_id =  ?)", dm_datatable.getDatatable_id());
-		Dbo.execute("delete from " + Dm_datatable_source.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		Dbo.execute("delete from " + Dm_etlmap_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
 		List<String> columnnames = new ArrayList<>();
-		//查找表英文名 用以检查是否重复
-//        List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-//        Dm_datatable dm_datatable1 = dm_datatables.get(0);
-//        if (Boolean.parseBoolean(ifrepeat)) {
-//            List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select field_en_name from " + Datatable_field_info.TableName + " t1 left join " + Dm_datatable.TableName + " t2 on t1.datatable_id =t2.datatable_id \n" +
-//                    "where t2.datatable_en_name = ?", dm_datatable1.getDatatable_en_name());
-//            for (Datatable_field_info everydatatable_field_info : datatable_field_infos) {
-//                columnnames.add(everydatatable_field_info.getField_en_name());
-//            }
-//        }
 		//新增字段表
 		for (int i = 0; i < datatable_field_info.length; i++) {
 			Datatable_field_info df_info = datatable_field_info[i];
-//            if (Boolean.parseBoolean(ifrepeat) && !columnnames.contains(df_info.getField_en_name())) {
-//                throw new BusinessSystemException("填写的字段 " + df_info.getField_en_name() + " 不存在于现有表 " + dm_datatable1.getDatatable_en_name() + " 中，请确认");
-//            }
 			String datatable_field_id = PrimayKeyGener.getNextId();
 			df_info.setDatatable_field_id(datatable_field_id);
 			df_info.setDatatable_id(datatable_id);
 			df_info.setField_seq(String.valueOf(i));
 			df_info.add(Dbo.db());
 		}
-		//新增 字段存储关系表 即字段勾选了什么附加属性的表
+		//新增 字段存储关系表 即字段勾选了什么附加属性
 		for (int i = 0; i < dm_column_storage.length; i++) {
 			Dm_column_storage dc_storage = dm_column_storage[i];
-			dc_storage.setDatatable_field_id(datatable_field_info[dc_storage.getCsi_number().intValue()].getDatatable_field_id());
+			//FIXME
+			//通过csi_number 来确定字段的位置
+			Datatable_field_info datatable_field_info1 = datatable_field_info[dc_storage.getCsi_number().intValue()];
+			//设置datatable_field_id 为字段的那个ID
+			dc_storage.setDatatable_field_id(datatable_field_info1.getDatatable_field_id());
 			dc_storage.add(Dbo.db());
 		}
 		//排序dc_storage
 		JSONArray jsonarray = JSONArray.parseArray(hbasesort);
+		//
 		List<Map<String, Object>> maps = Dbo.queryList("select distinct t1.dslad_id,t2.dsla_storelayer from " + Dm_column_storage.TableName
 				+ " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dslad_id = t2.dslad_id where datatable_field_id in " +
 				"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
@@ -1040,42 +1048,33 @@ public class MarketInfoAction extends BaseAction {
 					String field_en_name = jsonObject.getString("field_en_name");
 					Datatable_field_info datatable_field_info1 = new Datatable_field_info();
 					datatable_field_info1.setField_en_name(field_en_name);
-					List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_column_storage.TableName + " where datatable_field_id = " +
+					Optional<Dm_column_storage> dm_column_storageOptional = Dbo.queryOneObject(Dm_column_storage.class, "select * from " + Dm_column_storage.TableName + " where datatable_field_id = " +
 									"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? and field_en_name = ? )" +
 									" and dslad_id = ? ",
 							dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(), dcs.getDslad_id());
-					Map<String, Object> everymap1 = maps1.get(0);
-					Dm_column_storage dc_storage = new Dm_column_storage();
-					dc_storage.setDatatable_field_id(everymap1.get("datatable_field_id").toString());
-					dc_storage.setDslad_id(everymap1.get("dslad_id").toString());
-					dc_storage.setCsi_number(String.valueOf(i));
-					dc_storage.update(Dbo.db());
+					//如果有数据
+					if (dm_column_storageOptional.isPresent()) {
+						Dm_column_storage dc_storage = dm_column_storageOptional.get();
+						dc_storage.setCsi_number(String.valueOf(i));
+						updatebean(dc_storage);
+					} else {
+						throw new BusinessSystemException("查询Dm_column_storage表不存在数据，错误，请检查");
+					}
 				}
 			}
 			//如果不是rowkey 那么排序的时候 只需简单排序即可
 			else {
-				List<Map<String, Object>> maps1 = Dbo.queryList("select * from " + Dm_column_storage.TableName + " where datatable_field_id in " +
+				List<Dm_column_storage> dm_column_storages = Dbo.queryList(Dm_column_storage.class, "select * from " + Dm_column_storage.TableName + " where datatable_field_id in " +
 								"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? ) and dslad_id = ? order by csi_number",
 						dm_datatable.getDatatable_id(), dcs.getDslad_id());
-				for (int i = 0; i < maps1.size(); i++) {
-					Map<String, Object> everymap1 = maps1.get(i);
-					Dm_column_storage dc_storage = new Dm_column_storage();
-					dc_storage.setDatatable_field_id(everymap1.get("datatable_field_id").toString());
-					dc_storage.setDslad_id(everymap1.get("dslad_id").toString());
+				for (int i = 0; i < dm_column_storages.size(); i++) {
+					Dm_column_storage dc_storage = dm_column_storages.get(i);
 					dc_storage.setCsi_number(String.valueOf(i));
 					dc_storage.update(Dbo.db());
 				}
 			}
 		}
-		//保存sql进入pgsql
-		Dm_operation_info dm_operation_info = new Dm_operation_info();
-		dm_operation_info.setId(PrimayKeyGener.getNextId());
-		dm_operation_info.setDatatable_id(datatable_id);
-		dm_operation_info.setExecute_sql(querysql);
-		dm_operation_info.add(Dbo.db());
-		//保存血缘关系的表，进入数据库
-		saveBloodRelationToPGTable(querysql, datatable_id);
-		resultmap.put("success", true);
+//		saveBloodRelationToPGTable(querysql, datatable_id);
 		return resultmap;
 	}
 
@@ -1085,7 +1084,12 @@ public class MarketInfoAction extends BaseAction {
 	 * @param querysql
 	 */
 	private void saveBloodRelationToPGTable(String querysql, String datatable_id) {
-
+		Dm_datatable dm_datatable = new Dm_datatable();
+		dm_datatable.setDatatable_id(datatable_id);
+		Dbo.execute("delete from " + Own_source_field.TableName + " where own_dource_table_id in " +
+				"(select own_dource_table_id from dm_datatable_source where datatable_id =  ?)", dm_datatable.getDatatable_id());
+		Dbo.execute("delete from " + Dm_datatable_source.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		Dbo.execute("delete from " + Dm_etlmap_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
 		DruidParseQuerySql dpqs = new DruidParseQuerySql();
 		HashMap<String, Object> bloodRelationMap = dpqs.getBloodRelationMap(querysql);
 		Iterator<Map.Entry<String, Object>> iterator = bloodRelationMap.entrySet().iterator();
@@ -1123,6 +1127,7 @@ public class MarketInfoAction extends BaseAction {
 			} else {
 				dataSourceType = layerByTable.get(0).getDst();
 			}
+			//存储血缘关系表1
 			Dm_datatable_source dm_datatable_source = new Dm_datatable_source();
 			String own_dource_table_id = PrimayKeyGener.getNextId();
 			dm_datatable_source.setOwn_dource_table_id(own_dource_table_id);
@@ -1132,7 +1137,9 @@ public class MarketInfoAction extends BaseAction {
 			dm_datatable_source.add(Dbo.db());
 			List<Map<String, Object>> templist = (ArrayList<Map<String, Object>>) tableMap.get(tablename.toLowerCase());
 			for (Map<String, Object> map : templist) {
+				//获取目标字段名
 				String targetcolumn = map.get(TargetColumn).toString();
+				//获取来源字段名
 				String sourcecolumn = map.get(SourceColumn).toString();
 				Dm_etlmap_info dm_etlmap_info = new Dm_etlmap_info();
 				dm_etlmap_info.setEtl_id(PrimayKeyGener.getNextId());
@@ -1140,15 +1147,17 @@ public class MarketInfoAction extends BaseAction {
 				dm_etlmap_info.setOwn_dource_table_id(own_dource_table_id);
 				dm_etlmap_info.setSourcefields_name(sourcecolumn);
 				dm_etlmap_info.setTargetfield_name(targetcolumn);
+				//循环存储血缘关系表2
 				dm_etlmap_info.add(Dbo.db());
 				Own_source_field own_source_field = new Own_source_field();
 				own_source_field.setOwn_dource_table_id(own_dource_table_id);
 				own_source_field.setOwn_field_id(PrimayKeyGener.getNextId());
 				own_source_field.setField_name(sourcecolumn);
-				String target_type = "string";
+				String target_type = getDefaultFieldType(Store_type.DATABASE.getCode());
 				Map<String, String> fieldType = getFieldType(tablename, sourcecolumn, target_type, "");
 				String sourcetype = fieldType.get("sourcetype");
 				own_source_field.setField_type(sourcetype);
+				//循环存储血缘关系表3
 				own_source_field.add(Dbo.db());
 			}
 		}
@@ -1158,29 +1167,33 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "返回查询结果")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Map<String, Object>> getQuerySql(String datatable_id) {
+	public String getQuerySql(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		return Dbo.queryList("select execute_sql as querysql from " + Dm_operation_info.TableName + " t1 where " +
+		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " t1 where " +
 				"datatable_id = ?", dm_datatable.getDatatable_id());
+		if (dm_operation_infoOptional.isPresent()) {
+			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
+			return dm_operation_info.getExecute_sql();
+		} else {
+			return null;
+		}
 	}
 
 	@Method(desc = "根据集市表ID，判断是否是进入Hbase的目的地",
 			logicStep = "判断目的地是否为hbase")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
 	@Return(desc = "返回true或者false", range = "无限制")
-	public Map<String, Object> getIfHbase(String datatable_id) {
+	public Boolean getIfHbase(String datatable_id) {
 		Map<String, Object> map = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		List<Map<String, Object>> maps = Dbo.queryList("select * from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 " +
+		OptionalLong optionalLong = Dbo.queryNumber("select count(*) from " + Data_store_layer.TableName + " t1 left join " + Dm_relation_datatable.TableName + " t2 " +
 				"on t1.dsl_id = t2.dsl_id where t2.datatable_id = ? and t1.store_type = ? ", dm_datatable.getDatatable_id(), Store_type.HBASE.getCode());
-		if (!maps.isEmpty()) {
-			map.put("result", true);
-			return map;
+		if (optionalLong.isPresent() && optionalLong.getAsLong() > 0) {
+			return true;
 		} else {
-			map.put("result", false);
-			return map;
+			return false;
 		}
 	}
 
@@ -1191,9 +1204,11 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
 	@Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
 	@Return(desc = "排序完成后的hbasesort", range = "无限制")
+	//FIXME 加注释
 	public List<Map<String, Object>> sortHbae(String datatable_id, String hbasesort) {
 		JSONArray jsonArray = JSONArray.parseArray(hbasesort);
 		List<String> enNameList = new ArrayList<>();
+		//获取页面传来的 勾选中的rowkey的值，并将其放入list中
 		for (int i = 0; i < jsonArray.size(); i++) {
 			JSONObject jsonObject = jsonArray.getJSONObject(i);
 			String field_en_name = jsonObject.getString("field_en_name");
@@ -1201,29 +1216,34 @@ public class MarketInfoAction extends BaseAction {
 		}
 		Datatable_field_info datatable_field_info = new Datatable_field_info();
 		datatable_field_info.setDatatable_id(datatable_id);
-		List<Map<String, Object>> list = Dbo.queryList("SELECT t1.csi_number , t3.field_en_name FROM " + Dm_column_storage.TableName +
+		//利用list.add的有序性 将页面选中的与数据库中记录的rowkey顺序相结合 回显选中的rowkey
+		//查询数据库中已有的选中的rowkey字段 并根据序号进行排序
+		List<Object> objects = Dbo.queryOneColumnList("SELECT t3.field_en_name FROM " + Dm_column_storage.TableName +
 				" t1 LEFT JOIN " + Data_store_layer_added.TableName + " t2 ON t1.dslad_id = t2.dslad_id " +
 				" LEFT JOIN " + Datatable_field_info.TableName + " t3 ON t1.datatable_field_id = t3.datatable_field_id " +
 				" WHERE t2.dsla_storelayer = ? AND t1.datatable_field_id IN " +
 				" ( SELECT datatable_field_id FROM Datatable_field_info WHERE datatable_id = ?) " +
 				" order by csi_number", StoreLayerAdded.RowKey.getCode(), datatable_field_info.getDatatable_id());
-
 		List<Map<String, Object>> resultlist = new ArrayList<>();
-		for (Map<String, Object> map : list) {
+		//遍历库中已有的rowkey字段
+		for (Object object : objects) {
 			Map<String, Object> resultmap = new HashMap<>();
-			String field_en_name = map.get("field_en_name").toString();
-			String csi_number = map.get("csi_number").toString();
+			//获取字段名称
+			String field_en_name = object.toString();
+			//如果页面选中的字段，包含库中存储的字段 就将改字段加入
 			if (enNameList.contains(field_en_name)) {
 				resultmap.put("field_en_name", field_en_name);
 				resultlist.add(resultmap);
+				//从页面选中的rowkey list中去除改字段
 				enNameList.remove(field_en_name);
 			}
 		}
+		//再循环页面选中的字段 加入到resultlist的最后
 		for (String field_en_name : enNameList) {
 			Map<String, Object> resultmap = new HashMap<>();
 			resultmap.put("field_en_name", field_en_name);
 			resultlist.add(resultmap);
-			enNameList.remove(field_en_name);
+//			enNameList.remove(field_en_name);
 		}
 		return resultlist;
 	}
@@ -1256,6 +1276,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "source", desc = "source", range = "String类型表来源")
 	@Param(name = "id", desc = "id", range = "String类型id")
 	@Return(desc = "查询返回结果集", range = "无限制")
+	//FIXME 公共方法
 	public Map<String, Object> queryAllColumnOnTableName(String source, String id) {
 		Map<String, Object> resultmap = new HashMap<>();
 		if (source.equals(DataSourceType.DCL.getCode())) {
@@ -1298,8 +1319,8 @@ public class MarketInfoAction extends BaseAction {
 	@Method(desc = "查询所有作业调度工程",
 			logicStep = "返回查询结果g")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Map<String, Object>> queryAllEtlSys() {
-		return Dbo.queryList("SELECT * from " + Etl_sys.TableName);
+	public List<Etl_sys> queryAllEtlSys() {
+		return Dbo.queryList(Etl_sys.class, "SELECT * from " + Etl_sys.TableName);
 	}
 
 
@@ -1307,10 +1328,10 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "返回查询结果")
 	@Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度工程主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Map<String, Object>> queryEtlTaskByEtlSys(String etl_sys_cd) {
+	public List<Etl_sub_sys_list> queryEtlTaskByEtlSys(String etl_sys_cd) {
 		Etl_sys etl_sys = new Etl_sys();
 		etl_sys.setEtl_sys_cd(etl_sys_cd);
-		return Dbo.queryList("select distinct * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?", etl_sys.getEtl_sys_cd());
+		return Dbo.queryList(Etl_sub_sys_list.class, "select * from " + Etl_sub_sys_list.TableName + " where etl_sys_cd = ?", etl_sys.getEtl_sys_cd());
 	}
 
 	@Method(desc = "控制响应头下载工程的hrds信息",
@@ -1319,7 +1340,7 @@ public class MarketInfoAction extends BaseAction {
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public void downloadMart(String data_mart_id) {
 		String fileName = data_mart_id + ".hrds";
-		try {
+		try (OutputStream out = ResponseUtil.getResponse().getOutputStream()) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -1333,7 +1354,6 @@ public class MarketInfoAction extends BaseAction {
 			}
 			ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
 			// 6.创建输出流
-			OutputStream out = ResponseUtil.getResponse().getOutputStream();
 			//2.通过文件id获取文件的 byte
 			byte[] bye = getdownloadFile(data_mart_id);
 			if (bye == null) {
@@ -1342,8 +1362,7 @@ public class MarketInfoAction extends BaseAction {
 			//3.写入输出流，返回结果
 			out.write(bye);
 			out.flush();
-			out.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new BusinessException("集市工程下载错误");
 		}
 	}
@@ -1355,7 +1374,8 @@ public class MarketInfoAction extends BaseAction {
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
-		try {
+		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
+			 XSSFWorkbook workbook = new XSSFWorkbook();) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -1368,16 +1388,9 @@ public class MarketInfoAction extends BaseAction {
 						+ Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
 			}
 			ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
-			// 6.创建输出流
-//            File file = new File(System.getProperty("user.dir") + File.separator + datatable_id + ".xlsx");
-//            file.createNewFile();
-			OutputStream out = ResponseUtil.getResponse().getOutputStream();
-			XSSFWorkbook workbook = new XSSFWorkbook();
 			generatexlsx(workbook, datatable_id);
 			workbook.write(out);
 			out.flush();
-			out.close();
-			workbook.close();
 		} catch (Exception e) {
 			throw new BusinessException("集市数据表下载错误");
 		}
@@ -1730,19 +1743,18 @@ public class MarketInfoAction extends BaseAction {
 					"2.删除集市工程")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "String类型集市工程主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public Map<String, Object> deleteMart(String data_mart_id) {
-		Map<String, Object> resultmap = new HashMap<>();
+	public void deleteMart(String data_mart_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setData_mart_id(data_mart_id);
-		List<Map<String, Object>> maps = Dbo.queryList("select * from " + Dm_datatable.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id());
+		OptionalLong optionalLong = Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id());
 		//判断是否工程下还有表
-		if (!maps.isEmpty()) {
-			resultmap.put("status", false);
-			return resultmap;
-		} else {
-			Dbo.execute("delete from " + Dm_info.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id());
-			resultmap.put("status", true);
-			return resultmap;
+		if (optionalLong.isPresent()) {
+			long asLong = optionalLong.getAsLong();
+			if (asLong > 0) {
+				throw new BusinessSystemException("工程下还存在表，请先删除表");
+			} else {
+				deletesql(" from " + Dm_info.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id(), Dm_info.TableName);
+			}
 		}
 	}
 
@@ -1760,10 +1772,10 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "根据表主键查询表名")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Map<String, Object>> getTableName(String datatable_id) {
+	public List<Dm_datatable> getTableName(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		return Dbo.queryList("select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		return Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
 	}
 
 	@Method(desc = "保存前置作业",
@@ -1779,6 +1791,9 @@ public class MarketInfoAction extends BaseAction {
 		Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
 		dm_relevant_info.setDatatable_id(datatable_id);
 		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
+		if (dm_datatables.isEmpty()) {
+			throw new BusinessSystemException("没有查询到表英文名，请检查");
+		}
 		String datatable_en_name = dm_datatables.get(0).getDatatable_en_name();
 		//判空
 		if (pre_work != null) {
@@ -1818,12 +1833,18 @@ public class MarketInfoAction extends BaseAction {
 				}
 			}
 		}
-		//保存
 		dm_relevant_info.setPre_work(pre_work);
 		dm_relevant_info.setPost_work(post_work);
-		dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
-		Dbo.execute(Dbo.db(), "Delete from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
-		dm_relevant_info.add(Dbo.db());
+		Optional<Dm_relevant_info> dm_relevant_infoOptional = Dbo.queryOneObject(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
+		//如果存在就更新
+		if (dm_relevant_infoOptional.isPresent()) {
+			updatebean(dm_relevant_info);
+		}
+		//如果不存在 就新增
+		else {
+			dm_relevant_info.add(Dbo.db());
+		}
+		//保存
 	}
 
 	@Method(desc = "前后置处理SQL回显",
@@ -1854,10 +1875,17 @@ public class MarketInfoAction extends BaseAction {
 			//创建的输入流
 			String path = uploadedFile.toPath().toString();
 			fis = new FileInputStream(path);
+			//判断文件后缀名
+			//FIXME 增加支持xls类型
 			if (path.toLowerCase().endsWith(xlsxSuffix)) {
-				// 4.1读取2007版，以.xlsx结尾
 				try {
 					workBook = new XSSFWorkbook(fis);
+				} catch (IOException e) {
+					throw new BusinessException("定义XSSFWorkbook失败");
+				}
+			} else if (path.toLowerCase().endsWith(xlsSuffix)) {
+				try {
+					workBook = new HSSFWorkbook(fis);
 				} catch (IOException e) {
 					throw new BusinessException("定义XSSFWorkbook失败");
 				}
@@ -1867,7 +1895,7 @@ public class MarketInfoAction extends BaseAction {
 			saveimportexcel(workBook, data_mart_id);
 			workBook.close();
 			fis.close();
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new BusinessException("导入excel文件数据失败！");
 		}
 	}
@@ -1879,8 +1907,12 @@ public class MarketInfoAction extends BaseAction {
 	 * @param data_mart_id
 	 */
 	private void saveimportexcel(Workbook workBook, String data_mart_id) {
+		int numberOfSheets = workBook.getNumberOfSheets();
+		if (numberOfSheets == 0) {
+			throw new BusinessSystemException("没有获取到sheet页，请检查文件");
+		}
+		Sheet sheetAt = workBook.getSheetAt(0);
 		try {
-			Sheet sheetAt = workBook.getSheetAt(0);
 			//获取并记录dm_datatable表信息
 			Dm_datatable dm_datatable = new Dm_datatable();
 			String datatable_en_name = sheetAt.getRow(1).getCell(1).getStringCellValue();
@@ -1922,8 +1954,7 @@ public class MarketInfoAction extends BaseAction {
 			dm_datatable.setDatac_date(DateUtil.getSysDate());
 			dm_datatable.setDatac_time(DateUtil.getSysTime());
 			dm_datatable.setEtl_date(ZeroDate);
-			//TODO 这里导入的时候 分类ID 也需要修改 要从导出的excelm模板开始修改
-			dm_datatable.setCategory_id(Category_id);
+			dm_datatable.setCategory_id(datatable_id);
 			dm_datatable.add(Dbo.db());
 			//获取并记录数据目的地
 			String destinationname = "";
@@ -2066,8 +2097,12 @@ public class MarketInfoAction extends BaseAction {
 			}
 			saveBloodRelationToPGTable(sql, datatable_id);
 		} catch (Exception e) {
+//			logger.info(sheetAt);
+			logger.info(sheetAt.getLastRowNum());
+			//FIXME 哪一行有问题
+			logger.error(e);
+			e.printStackTrace();
 			if (e.getMessage() != null) {
-				logger.error(e.getMessage());
 				throw e;
 			} else {
 				throw new BusinessSystemException("上传的excel模板存在问题，请确认填写正确");
