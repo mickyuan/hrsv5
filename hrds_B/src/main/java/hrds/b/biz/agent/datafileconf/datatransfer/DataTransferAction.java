@@ -77,7 +77,7 @@ public class DataTransferAction extends BaseAction {
 			colSetId);
 
 	// 获取xml的数据结果集
-	List<Map<String, Object>> dataTransfer = getDataTransfer(colSetId);
+	List<Map<String, Object>> xmlDataTransfer = getDataTransfer(colSetId);
 
 	// 获取数据库存在的表对应抽取配置信息
 	dataBaseTransDataList.forEach(
@@ -99,7 +99,7 @@ public class DataTransferAction extends BaseAction {
           /*
            这里的如果和数据字典里面定义的相同,则优先将数据库定义的放在第一个位置
           */
-		  dataTransfer.forEach(
+		  xmlDataTransfer.forEach(
 			  itemMap -> {
 				// 如果数据库表名在数据字典的xml中出现,则处理抽取定义的数据
 				if (itemMap.get("table_name").equals(databaseItemMap.get("table_name"))) {
@@ -151,7 +151,7 @@ public class DataTransferAction extends BaseAction {
 			  });
 		});
 
-	return dataTransfer;
+	return xmlDataTransfer;
 	//    }
   }
 
