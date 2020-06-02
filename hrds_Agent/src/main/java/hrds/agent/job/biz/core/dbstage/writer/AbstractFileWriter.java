@@ -79,6 +79,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			return bytes;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
+			throw new AppSystemException("jdbc获取blob的数据转为byte异常");
 		} finally {
 			try {
 				if (is != null) {
@@ -88,7 +89,6 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 				LOGGER.error(e.getMessage());
 			}
 		}
-		return null;
 	}
 
 	/**
@@ -98,29 +98,29 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	                                   int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
 			throws SQLException, IOException {
 		String lobs_file_name = "";
-		String reader2String = null;
+		String reader2String = "";
 		byte[] readerToByte = null;
 		if (type == java.sql.Types.BLOB || type == Types.LONGVARBINARY) {
 			Blob blob = resultSet.getBlob(column_name);
 			if (null != blob) {
 				readerToByte = blobToBytes(blob);
-				lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
-						+ lineCounter + "_BLOB_" + avroWriter.sync();
-				sb_.append(lobs_file_name);
-				if (readerToByte != null) {
+				if (readerToByte != null && readerToByte.length > 0) {
+					lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
+							+ lineCounter + "_BLOB_" + avroWriter.sync();
+					sb_.append(lobs_file_name);
 					reader2String = new String(readerToByte);
-				} else {
-					reader2String = "";
 				}
 			}
 		} else if (type == Types.VARBINARY) {
 			InputStream binaryStream = resultSet.getBinaryStream(column_name);
 			if (null != binaryStream) {
 				readerToByte = IOUtils.toByteArray(binaryStream);
-				lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
-						+ lineCounter + "_VARBINARY_" + avroWriter.sync();
-				sb_.append(lobs_file_name);
-				reader2String = new String(readerToByte);
+				if (readerToByte != null && readerToByte.length > 0) {
+					lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
+							+ lineCounter + "_VARBINARY_" + avroWriter.sync();
+					sb_.append(lobs_file_name);
+					reader2String = new String(readerToByte);
+				}
 			}
 		} else if (type == Types.CLOB) {
 			Object obj = resultSet.getClob(column_name);
@@ -129,8 +129,6 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 				reader2String = readerStreamToString(characterStream);
 				//清理不能处理的数据  TODO 这里其实修改了数据，需要讨论
 				reader2String = clearIrregularData(reader2String);
-			} else {
-				reader2String = "";
 			}
 			sb_.append(reader2String);
 		} else {
@@ -149,12 +147,10 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 				}
 				//清理数据  TODO 这里其实修改了数据，需要讨论
 				reader2String = clearIrregularData(reader2String);
-			} else {
-				reader2String = "";
 			}
 			sb_.append(reader2String);
 		}
-		if (readerToByte != null) {
+		if (readerToByte != null && readerToByte.length > 0) {
 			record.put("currValue", lobs_file_name);
 			record.put("readerToByte", ByteBuffer.wrap(readerToByte));
 			avroWriter.append(record);//往avro文件中写入信息（每行）

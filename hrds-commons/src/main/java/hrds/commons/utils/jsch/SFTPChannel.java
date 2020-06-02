@@ -2,6 +2,7 @@ package hrds.commons.utils.jsch;
 
 import com.jcraft.jsch.*;
 import fd.ng.core.utils.FileNameUtils;
+import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -114,8 +115,9 @@ public class SFTPChannel {
 	 */
 	public static void executeLocalShell(String executeShell) {
 		try {
+			logger.info("执行命令为 ：" + executeShell);
 			//executeShell linux命令  多个命令可用 " ; " 隔开
-			Process ps = Runtime.getRuntime().exec(executeShell);
+			Process ps = Runtime.getRuntime().exec((new String[]{"sh", "-l", "-c", executeShell}));
 			ps.waitFor();
 			BufferedReader br = new BufferedReader(new InputStreamReader(ps.getErrorStream()));
 			StringBuilder sb = new StringBuilder();
@@ -123,7 +125,9 @@ public class SFTPChannel {
 			while ((line = br.readLine()) != null) {
 				sb.append(line).append(System.lineSeparator());
 			}
-			logger.info("执行命令" + executeShell + "---" + sb.toString());
+			if (!StringUtil.isEmpty(sb.toString())) {
+				throw new AppSystemException("Linux命令" + executeShell + "执行失败，" + sb.toString());
+			}
 		} catch (Exception e) {
 			throw new AppSystemException("Linux命令" + executeShell + "执行失败");
 		}
