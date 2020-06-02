@@ -952,9 +952,13 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.批量删除作业资源分配信息
 		// 目前这张表本身就是以工程编号与作业名称作为主键
-		DboExecute.deletesOrThrow(etl_job.length, "删除资源分配信息失败", "delete from "
-				+ Etl_job_resource_rela.TableName + " where etl_sys_cd =? " +
-				" and etl_job in(" + String.join(",", etl_job), etl_sys_cd);
+		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		assembler.clean();
+		assembler.addSql("delete from " + Etl_job_resource_rela.TableName + " where etl_sys_cd =? ")
+				.addParam(etl_sys_cd);
+		assembler.addORParam("etl_job", etl_job);
+		DboExecute.deletesOrThrow(etl_job.length, "删除资源分配信息失败",
+				assembler.sql(), assembler.params());
 	}
 
 	@Method(desc = "根据工程编号，作业名称删除Etl作业资源关系",
