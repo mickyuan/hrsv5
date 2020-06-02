@@ -94,7 +94,7 @@ public class DataRangeManageAction extends BaseAction {
 		for (long userId : user_id) {
 			List<Dm_datatable> dmDataTables = Dbo.queryList(Dm_datatable.class,
 					"SELECT datatable_en_name,datatable_cn_name FROM " + Dm_datatable.TableName +
-							" WHERE datatable_id = ?", tableDataInfo.getFile_id());
+							" WHERE datatable_id = ?", Long.parseLong(tableDataInfo.getFile_id()));
 			for (Dm_datatable dmDataTable : dmDataTables) {
 				// 3.删除接口表信息
 				deleteInterfaceTableInfo(userId, dmDataTable.getDatatable_en_name());
@@ -110,7 +110,7 @@ public class DataRangeManageAction extends BaseAction {
 					// 获取所有列
 					List<Datatable_field_info> tableColumns = Dbo.queryList(Datatable_field_info.class,
 							"SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
-									+ " WHERE datatable_id = ?", tableDataInfo.getFile_id());
+									+ " WHERE datatable_id = ?", Long.parseLong(tableDataInfo.getFile_id()));
 					table_ch_column = new String[tableColumns.size()];
 					table_en_column = new String[tableColumns.size()];
 					for (int j = 0; j < tableColumns.size(); j++) {
