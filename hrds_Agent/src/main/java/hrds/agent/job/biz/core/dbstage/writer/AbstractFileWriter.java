@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
@@ -210,7 +211,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		FileOutputStream fos = null;
 		BufferedOutputStream output = null;
 		try {
-			File file = new File(lobs_path + lobs_file_name);
+			File file = new File(FileNameUtils.normalize(lobs_path + File.separator
+					+ lobs_file_name, true));
 			fos = new FileOutputStream(file);
 			// 实例化OutputStream 对象
 			output = new BufferedOutputStream(fos);
