@@ -132,9 +132,9 @@ public class AgentActionUtil {
 			agent_down_info.setAgent_pattern(agent_down_info.getAgent_pattern().substring(0,
 					agent_down_info.getAgent_pattern().length() - 2));
 		}
-		if (agent_down_info.getAgent_pattern().endsWith("/")) {
-			agent_down_info.setAgent_pattern(agent_down_info.getAgent_pattern().substring(0,
-					agent_down_info.getAgent_pattern().length() - 1));
+		if (agent_down_info.getAgent_context().endsWith("/")) {
+			agent_down_info.setAgent_context(agent_down_info.getAgent_context().substring(0,
+					agent_down_info.getAgent_context().length() - 1));
 		}
 		//3.拼接调用需要的url
 		return "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port()
