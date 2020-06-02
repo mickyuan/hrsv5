@@ -856,7 +856,8 @@ public class JobConfiguration extends BaseAction {
 					"2.批量删除作业" +
 					"3.遍历所有要删除的作业名称" +
 					"4.作业被删除的同时删除作业的资源分配情况,只有有资源分配才需要删除" +
-					"5.作业被删除的同时删除依赖作业，只有有作业依赖关系才需要删除")
+					"5.作业被删除的同时删除依赖作业，只有有作业依赖关系才需要删除" +
+					"6.删除抽数作业关系表take_relation_etl数据,不关心删除几条数据")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称的数组", range = "无限制")
 	public void batchDeleteEtlJobDef(String etl_sys_cd, String[] etl_job) {
@@ -866,13 +867,18 @@ public class JobConfiguration extends BaseAction {
 		assembler.addSql("delete from " + Etl_job_def.TableName + " where etl_sys_cd=? ").addParam(etl_sys_cd);
 		assembler.addORParam("etl_job", etl_job);
 		// 2.批量删除作业
-		DboExecute.deletesOrThrow(etl_job.length, "删除作业信息失败", assembler.sql(), assembler.params());
+		DboExecute.deletesOrThrow(etl_job.length, "删除作业信息失败",
+				assembler.sql(), assembler.params());
 		// 3.遍历所有要删除的作业名称
 		for (String etlJob : etl_job) {
 			// 4.作业被删除的同时删除作业的资源分配情况,只有有资源分配才需要删除
 			deleteJobResourceRelationIfExist(etl_sys_cd, etlJob);
 			// 5.作业被删除的同时删除依赖作业，只有有作业依赖关系才需要删除
 			deleteJobDependencyIfExist(etl_sys_cd, etlJob);
+			// 6.删除抽数作业关系表take_relation_etl数据,不关心删除几条数据
+			Dbo.execute("删除抽数作业依赖关系表作业失败",
+					"delete from " + Take_relation_etl.TableName + " where etl_sys_cd=? and etl_job=?",
+					etl_sys_cd, etlJob);
 		}
 	}
 
@@ -880,7 +886,8 @@ public class JobConfiguration extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
 					"2.删除作业信息" +
 					"3.作业被删除的同时删除作业的资源分配情况，只有有资源分配的作业才需要删除" +
-					"4.作业被删除的同时删除依赖作业，只有有依赖关系的作业才需要删除")
+					"4.作业被删除的同时删除依赖作业，只有有依赖关系的作业才需要删除" +
+					"5.删除抽数作业关系表take_relation_etl数据,不关心删除几条数据")
 	@Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
 	public void deleteEtlJobDef(String etl_sys_cd, String etl_job) {
@@ -893,6 +900,10 @@ public class JobConfiguration extends BaseAction {
 		deleteJobResourceRelationIfExist(etl_sys_cd, etl_job);
 		// 4.作业被删除的同时删除依赖作业，只有有依赖关系的作业才需要删除
 		deleteJobDependencyIfExist(etl_sys_cd, etl_job);
+		// 5.删除抽数作业关系表take_relation_etl数据,不关心删除几条数据
+		Dbo.execute("删除抽数作业依赖关系表作业失败",
+				"delete from " + Take_relation_etl.TableName + " where etl_sys_cd=? and etl_job=?",
+				etl_sys_cd, etl_job);
 	}
 
 	@Method(desc = "如果依赖存在先删除",
