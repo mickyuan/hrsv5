@@ -320,7 +320,7 @@ public class DataRangeManageAction extends BaseAction {
 		} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
 			// 2.2集市层
 			return Dbo.queryResult("SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
-					+ " WHERE datatable_id = ?");
+					+ " WHERE datatable_id = ?", Long.parseLong(file_id));
 		} else {
 			throw new BusinessException("待开发，目前只支持贴源层与集市层");
 		}

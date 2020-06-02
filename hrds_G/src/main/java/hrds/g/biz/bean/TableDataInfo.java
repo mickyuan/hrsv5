@@ -14,7 +14,7 @@ public class TableDataInfo extends ProjectTableEntity {
 	public static final String TableName = "table_data_info";
 
 	@DocBean(name = "file_id", value = "表ID:", dataType = Long.class, required = true)
-	private String file_id;
+	private Long file_id;
 	@DocBean(name = "table_ch_column", value = "字段中文名称:", dataType = String.class, required = true)
 	private String[] table_ch_column;
 	@DocBean(name = "table_en_column", value = "字段英文名称:", dataType = String.class, required = true)
@@ -36,11 +36,11 @@ public class TableDataInfo extends ProjectTableEntity {
 		this.table_en_column = table_en_column;
 	}
 
-	public String getFile_id() {
+	public Long getFile_id() {
 		return file_id;
 	}
 
-	public void setFile_id(String file_id) {
+	public void setFile_id(Long file_id) {
 		this.file_id = file_id;
 	}
 
