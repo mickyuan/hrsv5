@@ -860,10 +860,12 @@ public class JobConfiguration extends BaseAction {
 	@Param(name = "etl_job", desc = "作业名称的数组", range = "无限制")
 	public void batchDeleteEtlJobDef(String etl_sys_cd, String[] etl_job) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		assembler.clean();
+		assembler.addSql("delete from " + Etl_job_def.TableName + " where etl_sys_cd=? ").addParam(etl_sys_cd);
+		assembler.addORParam("etl_job", etl_job);
 		// 2.批量删除作业
-		DboExecute.deletesOrThrow(etl_job.length, "删除作业信息失败",
-				"delete from " + Etl_job_def.TableName + " where etl_sys_cd=? " +
-						"and etl_job in (" + String.join(",", etl_job) + ")", etl_sys_cd);
+		DboExecute.deletesOrThrow(etl_job.length, "删除作业信息失败", assembler.sql(), assembler.params());
 		// 3.遍历所有要删除的作业名称
 		for (String etlJob : etl_job) {
 			// 4.作业被删除的同时删除作业的资源分配情况,只有有资源分配才需要删除
