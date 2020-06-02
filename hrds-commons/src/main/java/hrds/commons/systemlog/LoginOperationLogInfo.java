@@ -3,6 +3,7 @@ package hrds.commons.systemlog;
 import eu.bitwalker.useragentutils.Browser;
 import eu.bitwalker.useragentutils.OperatingSystem;
 import eu.bitwalker.useragentutils.UserAgent;
+import eu.bitwalker.useragentutils.Version;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -69,7 +70,12 @@ public class LoginOperationLogInfo {
 				login_operation_info.setSystem_type(operatingSystem.getName());
 			}
 			// 7.获取浏览器版本
-			login_operation_info.setBrowser_version(userAgent.getBrowserVersion().getVersion());
+			Version browserVersion = userAgent.getBrowserVersion();
+			if (browserVersion == null) {
+				login_operation_info.setBrowser_version(headerStr);
+			} else {
+				login_operation_info.setBrowser_version(browserVersion.getVersion());
+			}
 			// 8.请求方式
 			login_operation_info.setRequest_mode(request.getMethod());
 			// 9.客户端的IP

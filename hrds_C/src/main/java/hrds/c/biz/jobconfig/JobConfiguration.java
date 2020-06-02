@@ -25,6 +25,7 @@ import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
@@ -1808,16 +1809,20 @@ public class JobConfiguration extends BaseAction {
 			workbook.write(out);
 			return tableName + xlsxSuffix;
 		} catch (FileNotFoundException e) {
+			logger.error(e);
 			throw new BusinessException("文件不存在！");
 		} catch (IOException e) {
+			logger.error(e);
 			throw new BusinessException("生成excel文件失败！");
+		} catch (Exception e) {
+			throw new AppSystemException(e);
 		} finally {
 			try {
 				if (out != null) {
 					out.close();
 				}
 			} catch (IOException e) {
-				logger.error(e);
+				logger.error("关闭输出流失败", e);
 			}
 			ExcelUtil.close(workbook);
 		}

@@ -706,8 +706,8 @@ public class DataStoreAction extends BaseAction {
 		// 2.查询数据类型长度对照表信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
-		asmSql.addSql("select distinct * from " + Length_contrast_sum.TableName + " t1, "
-				+ Length_contrast.TableName + " t2 where t1.dlcs_id=t2.dlcs_id ");
+		asmSql.addSql("select * from " + Length_contrast_sum.TableName
+				+ " t1, " + Length_contrast.TableName + " t2 where t1.dlcs_id=t2.dlcs_id ");
 		if (dlcs_id != null) {
 			asmSql.addSql(" and t1.dlcs_id=?").addParam(dlcs_id);
 		}
@@ -727,9 +727,9 @@ public class DataStoreAction extends BaseAction {
 		// 2.验证存储层配置存储类型是否合法
 		Store_type.ofEnumByCode(store_type);
 		// 3.返回根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息
-		return Dbo.queryResult("select t2.* from " + Data_store_layer.TableName + " t1 left join "
-				+ Data_store_layer_attr.TableName + " t2 on t1.dsl_id=t2.dsl_id where t1.dsl_id=?" +
-				" and t1.store_type=?", dsl_id, store_type);
+		return Dbo.queryResult("select t2.* from " + Data_store_layer.TableName
+				+ " t1 left join " + Data_store_layer_attr.TableName + " t2 on t1.dsl_id=t2.dsl_id "
+				+ " where t1.dsl_id=? and t1.store_type=?", dsl_id, store_type);
 	}
 
 	@Method(desc = "下载配置文件",
@@ -835,5 +835,36 @@ public class DataStoreAction extends BaseAction {
 		keyMap.put("jdbcKey", jdbcKey);
 		keyMap.put("fileKey", fileKey);
 		return keyMap;
+	}
+
+	@Method(desc = "根据存储层类型、是否支持外部表、数据库类型获取数据存储层配置属性key",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
+					"2.获取到存储层配置存储类型的所有key" +
+					"3.判断是否支持外部表，如果支持返回外部表对应的属性key" +
+					"4.不支持外部表，返回不支持外部表对应的属性key")
+	@Param(name = "store_type", desc = "存储层配置存储类型", range = "使用（Store_type）代码项")
+	@Param(name = "is_hadoopclient", desc = "是否支持外部表", range = "使用（IsFlag）代码项")
+	@Param(name = "database_type", desc = "数据库类型", range = "使用（DatabaseType）代码项")
+	@Return(desc = "返回根据存储层类型获取数据存储层配置属性key", range = "无限制")
+	public List<String> getAttrKeyIsSupportExternalTable(String store_type, String is_hadoopclient,
+	                                                     String database_type) {
+		// 1.数据可访问权限处理方式，该方法不需要权限验证
+		// 2.获取到存储层配置存储类型的所有key
+		Map<String, List<String>> storageKeys = StorageTypeKey.getFinallyStorageKeys();
+		try {
+			Store_type.ofEnumByCode(store_type);
+		} catch (Exception e) {
+			throw new BusinessException("根据该值找不到对应代码项值，请检查，store_type=" + store_type);
+		}
+		// 3.判断是否支持外部表，如果支持返回外部表对应的属性key
+		List<String> jdbcKey = null;
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(is_hadoopclient)) {
+			jdbcKey = storageKeys.get(database_type + "_" + IsFlag.Shi.getCode());
+		}
+		// 4.不支持外部表，返回不支持外部表对应的属性key
+		if (jdbcKey == null) {
+			jdbcKey = storageKeys.get(store_type);
+		}
+		return jdbcKey;
 	}
 }
