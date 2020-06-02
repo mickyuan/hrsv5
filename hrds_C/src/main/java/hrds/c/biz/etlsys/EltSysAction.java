@@ -411,8 +411,7 @@ public class EltSysAction extends BaseAction {
 			throw new BusinessException("该工程下还有作业，不能删除！");
 		}
 		// 4.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
-		DboExecute.deletesOrThrow(2, "删除系统资源定义默认信息失败",
-				"delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		Dbo.execute("delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
 		DboExecute.deletesOrThrow("删除工程失败", "delete from " + Etl_sys.TableName +
 				" where etl_sys_cd=?", etl_sys_cd);
 	}

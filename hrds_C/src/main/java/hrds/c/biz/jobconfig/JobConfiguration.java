@@ -876,8 +876,7 @@ public class JobConfiguration extends BaseAction {
 			// 5.作业被删除的同时删除依赖作业，只有有作业依赖关系才需要删除
 			deleteJobDependencyIfExist(etl_sys_cd, etlJob);
 			// 6.删除抽数作业关系表take_relation_etl数据,不关心删除几条数据
-			Dbo.execute("删除抽数作业依赖关系表作业失败",
-					"delete from " + Take_relation_etl.TableName + " where etl_sys_cd=? and etl_job=?",
+			Dbo.execute("delete from " + Take_relation_etl.TableName + " where etl_sys_cd=? and etl_job=?",
 					etl_sys_cd, etlJob);
 		}
 	}
@@ -901,8 +900,7 @@ public class JobConfiguration extends BaseAction {
 		// 4.作业被删除的同时删除依赖作业，只有有依赖关系的作业才需要删除
 		deleteJobDependencyIfExist(etl_sys_cd, etl_job);
 		// 5.删除抽数作业关系表take_relation_etl数据,不关心删除几条数据
-		Dbo.execute("删除抽数作业依赖关系表作业失败",
-				"delete from " + Take_relation_etl.TableName + " where etl_sys_cd=? and etl_job=?",
+		Dbo.execute("delete from " + Take_relation_etl.TableName + " where etl_sys_cd=? and etl_job=?",
 				etl_sys_cd, etl_job);
 	}
 
