@@ -65,7 +65,7 @@ public class DatabaseInfo extends AgentBaseAction {
 					Platform.readModelFromDatabase(db, xmlName, search);
 				}
 				//5.读取xml，获取数据库下所有表的信息
-				table_List = ConnUtil.getTable(xmlName);
+				table_List = ConnUtil.getTable(xmlName,search);
 			} catch (Exception e) {
 				throw new BusinessException("获取数据库的表信息失败" + e.getMessage());
 			}
