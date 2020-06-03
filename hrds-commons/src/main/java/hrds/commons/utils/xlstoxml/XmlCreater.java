@@ -1,5 +1,6 @@
 package hrds.commons.utils.xlstoxml;
 
+import fd.ng.core.utils.StringUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
@@ -92,8 +93,11 @@ public class XmlCreater {
 		NodeList table_list = doc.getElementsByTagName("table");
 		for (int i = 0; i < table_list.getLength(); i++) {
 			Node item = table_list.item(i);
-			String name = item.getAttributes().getNamedItem("name").getNodeValue().toLowerCase();
-			if (taName.equalsIgnoreCase(name)) {
+			Node node = item.getAttributes().getNamedItem("table_name");
+			if (node == null) {
+				continue;
+			}
+			if (taName.equalsIgnoreCase(node.getNodeValue().toLowerCase())) {
 				root.removeChild(item);
 			}
 		}

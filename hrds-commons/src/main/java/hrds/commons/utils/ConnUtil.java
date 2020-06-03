@@ -5,18 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -25,9 +17,22 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  * 标 题: 海云数服务
@@ -65,7 +70,7 @@ public class ConnUtil {
 			jdbcObj.put("jdbcPort", '/');
 			jdbcObj.put("jdbcBase", "?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull");
 		} else if (DatabaseType.Oracle9i.getCode().equals(type)
-				|| DatabaseType.Oracle10g.getCode().equals(type)) {
+			|| DatabaseType.Oracle10g.getCode().equals(type)) {
 			//			conn_url = "jdbc:oracle:thin:@" + database_ip + ":" + database_port + ":" +
 			// database_name;
 			jdbcObj.put("jdbcPrefix", "jdbc:oracle:thin:@");
@@ -162,14 +167,15 @@ public class ConnUtil {
 
 	/**
 	 * 获取jdbc连接
+	 *
 	 * @param database_drive 驱动
-	 * @param jdbc_url jdbc连接url
-	 * @param user_name 用户名
-	 * @param database_pad 密码
+	 * @param jdbc_url       jdbc连接url
+	 * @param user_name      用户名
+	 * @param database_pad   密码
 	 * @return jdbc连接
 	 */
 	public static Connection getConnection(
-			String database_drive, String jdbc_url, String user_name, String database_pad) {
+		String database_drive, String jdbc_url, String user_name, String database_pad) {
 		Connection conn;
 		try {
 			logger.info("开始连接 :" + jdbc_url);
@@ -208,13 +214,13 @@ public class ConnUtil {
 	public static List<String> getJDBCUrlInfo(String jdbcUrl, String jdbcType) {
 
 		String[] regx = {
-				"(\\d+\\.\\d+\\.\\d+\\.\\d+|\\w+):\\d+",
-				".*:(\\d+)",
-				"DBS_PORT=(\\d+)",
-				"\\d+:\\d+:(.*)",
-				";DatabaseName=(.*)",
-				":\\d+/(\\w+)",
-				"DATABASE=(\\w+)"
+			"(\\d+\\.\\d+\\.\\d+\\.\\d+|\\w+):\\d+",
+			".*:(\\d+)",
+			"DBS_PORT=(\\d+)",
+			"\\d+:\\d+:(.*)",
+			";DatabaseName=(.*)",
+			":\\d+/(\\w+)",
+			"DATABASE=(\\w+)"
 		};
 		List<String> list = new ArrayList<>();
 		if (DatabaseType.TeraData.getCode().equals(jdbcType)) {
@@ -294,7 +300,7 @@ public class ConnUtil {
   	return db;
   }*/
 	public static String getDataBaseFile(
-			String database_ip, String database_port, String database_name, String user_name) {
+		String database_ip, String database_port, String database_name, String user_name) {
 
 		return Math.abs((database_name + database_ip + database_port + user_name).hashCode()) + ".xml";
 	}
@@ -395,9 +401,31 @@ public class ConnUtil {
 	 * @param filename 文件名
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<Object> getTable(String filename) {
+	public static List<Object> getTable(String filename, String searchTableName) {
+		//读取xml的表数据信息
 		Map<String, Object> retMap = loadStoreInfo(filename);
-		return (List<Object>) retMap.get("tableNameList");
+		//获取的表名称集合
+		List<Object> xmlTableNameList = (List<Object>) retMap.get("tableNameList");
+		/*
+		 *如果搜索的表名存在,将表名进行分割,然后从xml的结果集中删除掉和搜索表名不一致的表
+		 */
+		if (StringUtil.isNotBlank(searchTableName)) {
+			//处理的表数据信息集合
+			List<Object> processTableList = new ArrayList<>();
+			List<String> searchTableNames = StringUtil.split(searchTableName, "|");
+			for (String searchTable : searchTableNames) {
+				for (Object xmlTable : xmlTableNameList) {
+					if (xmlTable.toString().contains(searchTable)) {
+						//防止有重复的表名出现
+						if (!processTableList.contains(xmlTable)) {
+							processTableList.add(xmlTable);
+						}
+					}
+				}
+			}
+			return processTableList;
+		}
+		return xmlTableNameList;
 	}
 
 	private static Map<String, Object> loadStoreInfo(String filename) {
@@ -562,7 +590,7 @@ public class ConnUtil {
 			throw new BusinessException(resultobject.getString("ErrorMessage"));
 		}
 		List<File> files =
-				new ArrayList<File>(Arrays.asList(Objects.requireNonNull(new File(filepath).listFiles())));
+			new ArrayList<File>(Arrays.asList(Objects.requireNonNull(new File(filepath).listFiles())));
 		if (files.size() == 0) {
 			resultobject.put("ErrorMessage", "数据路径的日期目录：" + filepath + " 下没有文件");
 			throw new BusinessException(resultobject.getString("ErrorMessage"));
