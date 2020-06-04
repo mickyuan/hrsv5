@@ -26,7 +26,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "作业调度配置管理测试类", author = "dhw", createdate = "2019/11/8 9:18")
@@ -353,7 +352,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 				} else if (i == 2) {
 					etlDependency.setEtl_job("测试作业5");
 					etlDependency.setPre_etl_job("测试作业8");
-				} else if (i == 3) {
+				} else {
 					etlDependency.setEtl_job("测试作业8");
 					etlDependency.setPre_etl_job("测试作业1");
 				}
@@ -370,7 +369,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 				.buildSession()
 				.addData("user_id", UserId)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
 				.getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
 		assertThat("用户登录", ar.get().isSuccess(), is(true));
@@ -3229,17 +3228,18 @@ public class JobConfigurationTest extends WebBaseTestCase {
 
 	@Method(desc = "删除Etl作业定义信息",
 			logicStep = "1.正常的数据访问1，数据都正常" +
-					"2.错误的数据访问1，etl_sys_cd不存在" +
-					"3.错误的数据访问2，etl_job不存在")
+					"2.正常的数据访问2，作业有依赖" +
+					"3.错误的数据访问1，etl_sys_cd不存在" +
+					"4.错误的数据访问2，etl_job不存在")
 	@Test
 	public void deleteEtlJobDef() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.正常的数据访问1，数据都正常
 			// 删除前查询数据库，确认预期删除的数据存在
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Etl_job_def.TableName + " where etl_sys_cd=? and etl_job=?", EtlSysCd, "测试作业0");
-			assertThat("删除操作前，Etl_job_def表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(1L));
+			long num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_def.TableName + " where etl_sys_cd=? and etl_job=?",
+					EtlSysCd, "测试作业0").orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_job_def表中的确存在这样一条数据", num, is(1L));
 			String bodyString = new HttpClient()
 					.addData("etl_sys_cd", EtlSysCd)
 					.addData("etl_job", "测试作业0")
@@ -3249,10 +3249,51 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 			assertThat(ar.isSuccess(), is(true));
 			// 删除后查询数据库，确认预期删除的数据删除成功
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Etl_job_def.TableName + " where etl_sys_cd=? and etl_job=?", EtlSysCd, "测试作业0");
-			assertThat("删除操作后，确认这条数据已删除", optionalLong.orElse(Long.MIN_VALUE), is(0L));
-			// 2.错误的数据访问1，etl_sys_cd不存在
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_def.TableName + " where etl_sys_cd=? and etl_job=?",
+					EtlSysCd, "测试作业0").orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作后，确认这条数据已删除", num, is(0L));
+			// 2.正常的数据访问2，作业有依赖
+			// 删除前确认删除的数据存在
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_def.TableName + " where etl_sys_cd=? and etl_job=?",
+					EtlSysCd, "测试作业8").orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_job_def表中的确存在这样一条数据", num, is(1L));
+			// 当前作业作为上游作业
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=?",
+					EtlSysCd, "测试作业8").orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_dependency表中的确存在这样1条数据", num, is(1L));
+			// 当前作业作为上游作业
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_dependency.TableName + " where etl_sys_cd=? " +
+							" and pre_etl_job=?", EtlSysCd, "测试作业8")
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_dependency表中的确存在这样1条数据", num, is(1L));
+			bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+					.addData("etl_job", "测试作业8")
+					.post(getActionUrl("deleteEtlJobDef"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+			assertThat(ar.isSuccess(), is(true));
+			// 删除后确认数据已不存在
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_def.TableName + " where etl_sys_cd=? and etl_job=?",
+					EtlSysCd, "测试作业8").orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_job_def表中的确存在这样一条数据", num, is(0L));
+			// 当前作业作为上游作业
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_dependency.TableName + " where etl_sys_cd=? and etl_job=?",
+					EtlSysCd, "测试作业8").orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_dependency表中的确存在这样1条数据", num, is(0L));
+			// 当前作业作为上游作业
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_dependency.TableName + " where etl_sys_cd=? " +
+							" and pre_etl_job=?", EtlSysCd, "测试作业8")
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat("删除操作前，Etl_dependency表中的确存在这样1条数据", num, is(0L));
+			// 3.错误的数据访问1，etl_sys_cd不存在
 			bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
 					.addData("etl_job", "测试作业3")
 					.post(getActionUrl("deleteEtlJobDef"))
@@ -3260,7 +3301,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 			assertThat(ar.isSuccess(), is(false));
-			// 3.错误的数据访问2，etl_job不存在
+			// 4.错误的数据访问2，etl_job不存在
 			bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
 					.addData("etl_job", "cssczy")
 					.post(getActionUrl("deleteEtlJobDef"))
@@ -5745,12 +5786,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getData().toString(),is("etl_sub_sys_list.xlsx"));
+		assertThat(ar.getData().toString(), is("etl_sub_sys_list.xlsx"));
 		// 2.错误的数据访问1，etl_sys_cd不存在
 		bodyString = new HttpClient().addData("etl_sys_cd", "dlfsjl")
 				.addData("tableName", "etl_sub_sys_list")
 				.post(getActionUrl("generateExcel")).getBodyString();
-		 ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(false));
 		// 3.错误的数据访问2，tableName不存在
