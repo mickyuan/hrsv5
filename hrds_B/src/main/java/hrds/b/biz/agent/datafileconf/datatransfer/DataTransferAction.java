@@ -276,7 +276,7 @@ public class DataTransferAction extends BaseAction {
 		// 1: 检查当前任务是否存在,如果不存在则抛出异常
 		long countNum =
 			Dbo.queryNumber(
-				"SELECT * FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
+				"SELECT count(*) FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if (countNum == 0) {
 			CheckParam.throwErrorMsg("采集任务ID(%s), 不存在", colSetId);
