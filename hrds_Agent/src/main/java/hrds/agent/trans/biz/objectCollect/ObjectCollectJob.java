@@ -34,8 +34,6 @@ public class ObjectCollectJob extends AgentBaseAction {
 	private static final Type TYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
 
-	private static final String DICTIONARYFILENAME = "dd_data.json";
-
 	@Method(desc = "object采集和前端交互的接口",
 			logicStep = "1.获取json数组转成ObjectCollectParamBean的集合" +
 					"2.校验对象的值是否正确" +
@@ -138,9 +136,9 @@ public class ObjectCollectJob extends AgentBaseAction {
 				}
 			}
 			// 6.写数据字典文件
-			String pathname = dictionaryFilepath + DateUtil.getSysDate()
-					+ DateUtil.getSysTime() + DICTIONARYFILENAME;
-			dictionaryFile = new File(pathname);
+			String pathName = dictionaryFilepath + DateUtil.getSysDate() + DateUtil.getSysTime()
+					+ "_dd_data.json";
+			dictionaryFile = new File(pathName);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(dictionaryFile));
 			writer.write(jsonArray);
 			writer.close();

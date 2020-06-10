@@ -21,7 +21,6 @@ import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.noggit.JSONUtil;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -140,7 +139,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect.setS_date(DateUtil.getSysDate());
 				object_collect.setE_date(DateUtil.getSysDate());
 				object_collect.setDatabase_code(DataBaseCode.UTF_8.getCode());
-				object_collect.setRun_way(ExecuteWay.MingLingChuFa.getCode());
 				object_collect.setFile_path(DICTINARYFILE.getAbsolutePath());
 				object_collect.setIs_sendok(IsFlag.Fou.getCode());
 				object_collect.setAgent_id(AGENT_ID);
@@ -177,17 +175,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				}
 				assertThat("初始化数据成功", object_collect_task.add(db), is(1));
 			}
-			//6.造object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
-			for (int i = 0; i < OBJECT_STORAGE_ROWS; i++) {
-				Object_storage object_storage = new Object_storage();
-				object_storage.setObj_stid(OBJ_STID + i);
-				object_storage.setIs_hbase(IsFlag.Fou.getCode());
-				object_storage.setIs_hdfs(IsFlag.Shi.getCode());
-				object_storage.setOcs_id(OCS_ID + i + 3);
-				object_storage.setRemark("zxz测试用例清除表object_storage专用");
-				object_storage.setIs_solr(IsFlag.Fou.getCode());
-				assertThat("初始化数据成功", object_storage.add(db), is(1));
-			}
 			//7.造object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
 			for (int i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
 				Object_collect_struct object_collect_struct = new Object_collect_struct();
@@ -198,43 +185,18 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 				object_collect_struct.setColumn_type("decimal(18,32)");
 				object_collect_struct.setColumnposition("columns." + "testcol" + i);
 				if (i == 5) {
-					object_collect_struct.setIs_hbase(IsFlag.Fou.getCode());
-					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
 					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				} else if (i == 6) {
-					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_key(IsFlag.Fou.getCode());
 					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				} else if (i == 7) {
-					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
 					object_collect_struct.setIs_operate(IsFlag.Fou.getCode());
-					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				} else if (i == 8) {
-					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
 					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_rowkey(IsFlag.Fou.getCode());
-					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				} else if (i == 9) {
-					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
 					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_solr(IsFlag.Fou.getCode());
 				} else {
-					object_collect_struct.setIs_hbase(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_key(IsFlag.Shi.getCode());
 					object_collect_struct.setIs_operate(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_rowkey(IsFlag.Shi.getCode());
-					object_collect_struct.setIs_solr(IsFlag.Shi.getCode());
 				}
-				object_collect_struct.setCol_seq(Long.valueOf(i + 1));
 				assertThat("初始化数据成功", object_collect_struct.add(db), is(1));
 			}
 			// 8.构造object_handle_type表数据，默认30条object_handle_id为6000001-600000030
@@ -972,128 +934,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	/**
-	 * saveObject_storage保存对象采集存储设置表测试用例
-	 * <p>
-	 * 1.保存对象采集存储设置表，obj_stid不为空，走编辑逻辑，更新数据
-	 * 2.保存对象采集存储设置表，obj_stid为空，走新增逻辑，插入数据
-	 * 3.保存对象采集存储设置表，is_hbase格式不正确
-	 * 4.更新对象采集存储设置表，is_hdfs格式不正确
-	 */
-	@Test
-	public void saveObjectStorageTest() {
-		//1.保存对象采集存储设置表，obj_stid不为空，走编辑逻辑，更新数据
-		JSONArray array = new JSONArray();
-		for (int i = 0; i < OBJECT_STORAGE_ROWS; i++) {
-			JSONObject object = new JSONObject();
-			object.put("obj_stid", OBJ_STID + i);
-			object.put("is_hbase", IsFlag.Shi.getCode());
-			object.put("is_hdfs", IsFlag.Fou.getCode());
-			object.put("is_solr", IsFlag.Fou.getCode());
-			object.put("remark", "zxz测试用例清除表object_storage专用");
-			object.put("ocs_id", OCS_ID + i);
-			array.add(object);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", array.toJSONString())
-				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(true));
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
-							+ Object_storage.TableName + " where remark = ?"
-					, "zxz测试用例清除表object_storage专用").orElseThrow(() ->
-					new BusinessException("查询得到的数据必须有且只有一条"));
-			assertThat("校验数据量正确", optionalLong, is(OBJECT_STORAGE_ROWS));
-			Result result = SqlOperator.queryResult(db, "select * from " +
-							Object_storage.TableName + " where remark = ? "
-					, "zxz测试用例清除表object_storage专用");
-			assertThat("校验Object_storage表数据正确", result.getString(0
-					, "is_hbase"), is(IsFlag.Shi.getCode()));
-			assertThat("校验Object_storage表数据正确", result.getString(0
-					, "is_hdfs"), is(IsFlag.Fou.getCode()));
-			Result result2 = SqlOperator.queryResult(db, "select * from " +
-					Object_collect.TableName + " where odc_id = ? ", ODC_ID);
-			assertThat("校验Object_collect表数据正确", result2.getString(0
-					, "is_sendok"), is(IsFlag.Shi.getCode()));
-		}
-
-		//2.保存对象采集存储设置表，obj_stid为空，走新增逻辑，插入数据
-		array.clear();
-		JSONObject obj = new JSONObject();
-		obj.put("is_hbase", IsFlag.Shi.getCode());
-		obj.put("is_hdfs", IsFlag.Shi.getCode());
-		obj.put("is_solr", IsFlag.Fou.getCode());
-		obj.put("remark", "zxz测试用例清除表object_storage专用");
-		obj.put("ocs_id", 77666111L);
-		array.add(obj);
-		bodyString = new HttpClient()
-				.addData("object_storage_array", array.toJSONString())
-				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(true));
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			long optionalLong = SqlOperator.queryNumber(db, "select count(1) count from "
-							+ Object_storage.TableName + " where remark = ?"
-					, "zxz测试用例清除表object_storage专用").orElseThrow(() ->
-					new BusinessException("查询得到的数据必须有且只有一条"));
-			assertThat("校验数据量正确", optionalLong, is(OBJECT_STORAGE_ROWS + 1));
-			Result result = SqlOperator.queryResult(db, "select * from " +
-							Object_storage.TableName + " where remark = ? AND ocs_id = ?"
-					, "zxz测试用例清除表object_storage专用", 77666111L);
-			assertThat("校验Object_storage表数据正确", result.getString(0
-					, "is_hbase"), is(IsFlag.Shi.getCode()));
-			assertThat("校验Object_storage表数据正确", result.getString(0
-					, "is_hdfs"), is(IsFlag.Shi.getCode()));
-			Result result2 = SqlOperator.queryResult(db, "select * from " +
-					Object_collect.TableName + " where odc_id = ? ", ODC_ID);
-			assertThat("校验Object_collect表数据正确", result2.getString(0
-					, "is_sendok"), is(IsFlag.Shi.getCode()));
-		}
-
-		//3.保存对象采集存储设置表，is_hbase格式不正确
-		array.clear();
-		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
-			JSONObject object = new JSONObject();
-			object.put("is_hbase", "shi");
-			object.put("is_hdfs", IsFlag.Fou.getCode());
-			object.put("is_solr", IsFlag.Fou.getCode());
-			object.put("remark", "zxz测试用例清除表object_storage专用");
-			object.put("ocs_id", OCS_ID + i);
-			array.add(object);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", array.toJSONString())
-				.addData("odc_id", ODC_ID)
-				.post(getActionUrl("saveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(false));
-
-//		//4.更新对象采集存储设置表，is_hdfs格式不正确
-//		array.clear();
-//		for (int i = 20; i < OBJECT_COLLECT_STRUCT_ROWS + 20; i++) {
-//			JSONObject object = new JSONObject();
-//			object.put("obj_stid", OBJ_STID + i);
-//			object.put("is_hbase", IsFlag.Shi.getCode());
-//			object.put("is_hdfs", "fou");
-//			object.put("remark", "zxz测试用例清除表object_storage专用");
-//			object.put("ocs_id", OCS_ID + i);
-//			array.add(object);
-//		}
-//		bodyString = new HttpClient()
-//				.addData("object_storage_array", array.toJSONString())
-//				.addData("odc_id", ODC_ID)
-//				.post(getActionUrl("saveObject_storage")).getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-//				-> new BusinessException("连接失败！"));
-//		assertThat(ar.isSuccess(), is(false));
-	}
-
 	@Method(desc = "获取当前表的码表信息", logicStep = "1.正确的数据访问1，数据有效" +
 			"2.错误的数据访问1，ocs_id不存在" +
 			"此方法没有写到四个及以上的测试用例是因为此方法只是一个查询方法，只有正确和错误两种情况")
@@ -1331,12 +1171,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			assertThat(collectStructs.get(0).getOcs_id(), is(Long.parseLong("10001")));
 			assertThat(collectStructs.get(0).getColumn_type(), is("decimal(38,18)"));
 			assertThat(collectStructs.get(0).getColumnposition(), is("columns,column_id"));
-			assertThat(collectStructs.get(0).getIs_hbase(), is(IsFlag.Shi.getCode()));
-			assertThat(collectStructs.get(0).getIs_rowkey(), is(IsFlag.Shi.getCode()));
-			assertThat(collectStructs.get(0).getIs_solr(), is(IsFlag.Fou.getCode()));
-			assertThat(collectStructs.get(0).getCol_seq(), is(0L));
 			assertThat(collectStructs.get(0).getIs_operate(), is(IsFlag.Shi.getCode()));
-			assertThat(collectStructs.get(0).getIs_key(), is(IsFlag.Shi.getCode()));
 		}
 		// 2.正确的数据访问，数据有效，struct_id不为空，走更新路线
 		List<Map<String, Object>> list2 = new ArrayList<>();
@@ -1397,12 +1232,7 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 			assertThat(collectStructs.get(0).getOcs_id(), is(Long.parseLong("10001")));
 			assertThat(collectStructs.get(0).getColumn_type(), is("int(8)"));
 			assertThat(collectStructs.get(0).getColumnposition(), is("columns,column_id"));
-			assertThat(collectStructs.get(0).getIs_hbase(), is(IsFlag.Shi.getCode()));
-			assertThat(collectStructs.get(0).getIs_rowkey(), is(IsFlag.Fou.getCode()));
-			assertThat(collectStructs.get(0).getIs_solr(), is(IsFlag.Fou.getCode()));
-			assertThat(collectStructs.get(0).getCol_seq(), is(0L));
 			assertThat(collectStructs.get(0).getIs_operate(), is(IsFlag.Shi.getCode()));
-			assertThat(collectStructs.get(0).getIs_key(), is(IsFlag.Shi.getCode()));
 		}
 		// 3.错误的数据访问1，collectStruct数据格式有误
 		bodyString = new HttpClient()
@@ -1564,98 +1394,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "检查保存对象存储的字段",
-			logicStep = "1.正确的数据访问1，数据都有效" +
-					"2.错误的数据访问1，objColTask数据格式错误" +
-					"3.错误的数据访问2，objColTask数据格式正确，英文名为空" +
-					"4.错误的数据访问3，objColTask数据格式正确，采集列结构为空" +
-					"5.错误的数据访问4，objColTask数据格式正确，操作码表为空")
-	@Test
-	public void checkFieldsForSaveObjectStorageTest() {
-		// 1.正确的数据访问1，数据都有效
-		List<Object_storage> list = new ArrayList<>();
-		for (int i = 0; i < 3; i++) {
-			Object_storage object_storage = new Object_storage();
-			object_storage.setObj_stid(OBJ_STID + i);
-			object_storage.setIs_hbase(IsFlag.Shi.getCode());
-			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
-			object_storage.setOcs_id(OCS_ID + i);
-			object_storage.setRemark("zxz测试用例清除表object_storage专用");
-			object_storage.setIs_solr(IsFlag.Fou.getCode());
-			list.add(object_storage);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", JsonUtil.toJson(list))
-				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(true));
-		// 2.错误的数据访问1，object_storage_array数据格式错误
-		bodyString = new HttpClient()
-				.addData("object_storage_array", "aaa")
-				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(false));
-		// 3.错误的数据访问2，object_storage_array数据格式正确，入solr表未选择进入hbase
-		List<Object_storage> list2 = new ArrayList<>();
-		for (int i = 0; i < 3; i++) {
-			Object_storage object_storage = new Object_storage();
-			object_storage.setObj_stid(OBJ_STID + i);
-			object_storage.setIs_hbase(IsFlag.Fou.getCode());
-			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
-			object_storage.setOcs_id(OCS_ID + i);
-			object_storage.setRemark("zxz测试用例清除表object_storage专用");
-			object_storage.setIs_solr(IsFlag.Shi.getCode());
-			list2.add(object_storage);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", JsonUtil.toJson(list2))
-				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(false));
-		// 4.错误的数据访问3，object_storage_array数据格式正确，未选择进入hbase
-		List<Object_storage> list3 = new ArrayList<>();
-		for (int i = 0; i < 6; i++) {
-			Object_storage object_storage = new Object_storage();
-			object_storage.setObj_stid(OBJ_STID + i);
-			object_storage.setIs_hbase(IsFlag.Shi.getCode());
-			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
-			object_storage.setOcs_id(OCS_ID + i);
-			object_storage.setRemark("zxz测试用例清除表object_storage专用");
-			object_storage.setIs_solr(IsFlag.Fou.getCode());
-			list3.add(object_storage);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", JsonUtil.toJson(list3))
-				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(false));
-		// 4.错误的数据访问3，object_storage_array数据格式正确，未选择rowkey
-		List<Object_storage> list4 = new ArrayList<>();
-		for (int i = 0; i < 4; i++) {
-			Object_storage object_storage = new Object_storage();
-			object_storage.setObj_stid(OBJ_STID + i);
-			object_storage.setIs_hbase(IsFlag.Shi.getCode());
-			object_storage.setIs_hdfs(IsFlag.Fou.getCode());
-			object_storage.setOcs_id(OCS_ID + i);
-			if (i == 3) {
-				object_storage.setOcs_id(OCS_ID + 8);
-			}
-			object_storage.setRemark("zxz测试用例清除表object_storage专用");
-			object_storage.setIs_solr(IsFlag.Fou.getCode());
-			list4.add(object_storage);
-		}
-		bodyString = new HttpClient()
-				.addData("object_storage_array", JsonUtil.toJson(list4))
-				.post(getActionUrl("checkFieldsForSaveObjectStorage")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(false));
-	}
-
 
 	/**
 	 * 测试用例清理数据
@@ -1685,9 +1423,6 @@ public class ObjectCollectActionTest extends WebBaseTestCase {
 					, AGENT_ID);
 			SqlOperator.execute(db, "DELETE FROM " + Object_collect_task.TableName
 					+ " WHERE agent_id = ?", AGENT_ID);
-			//6.删除测试用例造的object_storage表数据，默认为10条,OBJ_STID为40000001---40000010
-			SqlOperator.execute(db, "DELETE FROM " + Object_storage.TableName
-					+ " WHERE remark = ?", "zxz测试用例清除表object_storage专用");
 			//7.删除测试用例造的object_collect_struct表数据，默认为10条,STRUCT_ID为50000001---50000010
 			for (long i = 0; i < OBJECT_COLLECT_STRUCT_ROWS; i++) {
 				SqlOperator.execute(db, "DELETE FROM " + Object_collect_struct.TableName
