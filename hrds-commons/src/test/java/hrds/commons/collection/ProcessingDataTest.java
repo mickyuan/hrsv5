@@ -4,6 +4,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
@@ -27,13 +28,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 
 public class ProcessingDataTest {
-	public Long idL1 = 1999998876L;
+	public Long idL1 = -1999998876L;
 	private String idS1 = String.valueOf(idL1);
 
-	public Long idL2 = 1999998879L;
+	public Long idL2 = -1999998879L;
 	private String idS2 = String.valueOf(idL2);
 
-	public Long idL3 = 2999998879L;
+	public Long idL3 = -2999998879L;
 	private String idS3 = String.valueOf(idL3);
 
 	private static final Logger logger = LogManager.getLogger();
@@ -61,9 +62,9 @@ public class ProcessingDataTest {
 			dst.setCollect_type(AgentType.DBWenJian.getCode());
 			dst.setOriginal_update_date(DateUtil.getSysDate());
 			dst.setOriginal_update_time(DateUtil.getSysTime());
-			dst.setOriginal_name("xc_CODE_INFO");
-			dst.setTable_name("xc_CODE_INFO");
-			dst.setHyren_name("xc_CODE_INFO");
+			dst.setOriginal_name("XC_CODE_INFO");
+			dst.setTable_name("XC_CODE_INFO");
+			dst.setHyren_name("XC_CODE_INFO");
 			dst.setStorage_date(DateUtil.getSysDate());
 			dst.setStorage_time(DateUtil.getSysTime());
 			dst.setFile_size(20L);
@@ -91,6 +92,8 @@ public class ProcessingDataTest {
 			add = dst.add(db);
 
 			Table_storage_info tsi = new Table_storage_info();
+			tsi.setHyren_name("sys_user");
+
 			tsi.setStorage_id(idL1);
 			tsi.setFile_format("0");
 			tsi.setStorage_type("1");
@@ -105,6 +108,7 @@ public class ProcessingDataTest {
 			tsi.setIs_zipper("1");
 			tsi.setStorage_time("0");
 			tsi.setTable_id(idL2);
+			tsi.setHyren_name("sys_role");
 			add1 = tsi.add(db);
 
 			tsi.setStorage_id(idL3);
@@ -112,19 +116,22 @@ public class ProcessingDataTest {
 			tsi.setStorage_type("1");
 			tsi.setIs_zipper("1");
 			tsi.setStorage_time("0");
+			tsi.setHyren_name("XC_CODE_INFO");
 			tsi.setTable_id(idL3);
 			add1 = tsi.add(db);
 
-			Data_relation_table drt = new Data_relation_table();
-			drt.setStorage_id(idL1);
+			Dtab_relation_store drt = new Dtab_relation_store();
+			drt.setData_source(StoreLayerDataSource.DB.getCode());
+
+			drt.setDrs_id(idL1);
 			drt.setDsl_id(idL1);
 			int add2 = drt.add(db);
 
-			drt.setStorage_id(idL2);
+			drt.setDrs_id(idL2);
 			drt.setDsl_id(idL1);//关系
 			add2 = drt.add(db);
 
-			drt.setStorage_id(idL3);
+			drt.setDrs_id(idL3);
 			drt.setDsl_id(idL1);//关系
 			add2 = drt.add(db);
 
@@ -143,14 +150,14 @@ public class ProcessingDataTest {
 			add3 = dsl.add(db);
 
 			Data_store_layer_attr dsla = new Data_store_layer_attr();
-			dsla.setDsla_id("1234567890");
+			dsla.setDsla_id("-1234567890");
 			dsla.setStorage_property_key(StorageTypeKey.database_driver);
 			dsla.setStorage_property_val("org.postgresql.Driver");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			int add4 = dsla.add(db);
 
-			dsla.setDsla_id("2234567890");
+			dsla.setDsla_id("-2234567890");
 			dsla.setStorage_property_key(StorageTypeKey.database_driver);
 			dsla.setStorage_property_val("org.postgresql.Driver");
 			dsla.setIs_file("0");
@@ -158,56 +165,56 @@ public class ProcessingDataTest {
 			add4 = dsla.add(db);
 
 
-			dsla.setDsla_id("1234567891");
+			dsla.setDsla_id("-1234567891");
 			dsla.setStorage_property_key(StorageTypeKey.jdbc_url);
 			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			add4 = dsla.add(db);
 
-			dsla.setDsla_id("2234567891");
+			dsla.setDsla_id("-2234567891");
 			dsla.setStorage_property_key(StorageTypeKey.jdbc_url);
 			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
 			add4 = dsla.add(db);
 
-			dsla.setDsla_id("1234567892");
+			dsla.setDsla_id("-1234567892");
 			dsla.setStorage_property_key(StorageTypeKey.user_name);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			add4 = dsla.add(db);
 
-			dsla.setDsla_id("2234567892");
+			dsla.setDsla_id("-2234567892");
 			dsla.setStorage_property_key(StorageTypeKey.user_name);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
 			add4 = dsla.add(db);
 
-			dsla.setDsla_id("1234567893");
+			dsla.setDsla_id("-1234567893");
 			dsla.setStorage_property_key(StorageTypeKey.database_pwd);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 
 			add4 = dsla.add(db);
-			dsla.setDsla_id("2234567893");
+			dsla.setDsla_id("-2234567893");
 			dsla.setStorage_property_key(StorageTypeKey.database_pwd);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
 			add4 = dsla.add(db);
 
-			dsla.setDsla_id("1234567894");
+			dsla.setDsla_id("-1234567894");
 			dsla.setStorage_property_key(StorageTypeKey.database_type);
 			dsla.setStorage_property_val("11");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
 			add4 = dsla.add(db);
 
-			dsla.setDsla_id("2234567894");
+			dsla.setDsla_id("-2234567894");
 			dsla.setStorage_property_key(StorageTypeKey.database_type);
 			dsla.setStorage_property_val("11");
 			dsla.setIs_file("0");
@@ -231,9 +238,9 @@ public class ProcessingDataTest {
 					"  where storage_id in(?,?,?)", idL1, idL2,idL3).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where storage_id in(?,?,?)", idL1, idL2,idL3);
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_relation_table.TableName +
-					"  where storage_id in(?,?,?)", idL1, idL2,idL3).orElseThrow(() -> new RuntimeException("count fail!"));
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where drs_id in(?,?,?)", idL1, idL2,idL3);
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName +
+					"  where drs_id in(?,?,?)", idL1, idL2,idL3).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 
 			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id in(?,?,?)", idL1, idL2,idL3);
@@ -284,7 +291,7 @@ public class ProcessingDataTest {
 				public void dealLine(Map<String, Object> map) throws Exception {
 					dataPro(map, bw);
 				}
-			}.getDataLayer("select * from xc_CODE_INFO ", db);
+			}.getDataLayer("select * from XC_CODE_INFO ", db);
 			assertThat("不等于0就ok", mm.size(), not(0L));
 			bw.close();
 		} catch (Exception e) {
@@ -342,22 +349,23 @@ public class ProcessingDataTest {
 			assertThat(allTableIsLayer.getConnType(), is(LayerTypeBean.ConnType.oneJdbc));
 		}
 	}
+	@Test
 	public void batchData(){
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			/*db.ExecDDL("DROP TABLE IF EXISTS xc_CODE_INFO ;\n" +
-					"CREATE TABLE xc_CODE_INFO(\n" +
+			db.ExecDDL("DROP TABLE IF EXISTS XC_CODE_INFO ;\n" +
+					"CREATE TABLE XC_CODE_INFO(\n" +
 					"CI_SP_CODE                                        VARCHAR(20) NOT NULL, --代码值\n" +
 					"CI_SP_CLASS                                       VARCHAR(20) NOT NULL, --所属类别号\n" +
 					"CI_SP_CLASSNAME                                   VARCHAR(80) NOT NULL, --类别名称\n" +
 					"CI_SP_NAME                                        VARCHAR(255) NOT NULL, --代码名称\n" +
 					"CI_SP_REMARK                                      VARCHAR(512) NULL --备注\n" +
-					");");*/
+					");");
 			List<Object[]> para = new ArrayList<>();
 			for (int i = 0; i < 1000000; i++) {
 				Object[] aa = new Object[]{"80", "MAN", "数据质量执行方式", "手工", "DqcExecMode"};
 				para.add(aa);
 			}
-			SqlOperator.executeBatch(db, "INSERT INTO xc_CODE_INFO  VALUES (?,?,?, ?,?); ",para);
+			SqlOperator.executeBatch(db, "INSERT INTO XC_CODE_INFO  VALUES (?,?,?, ?,?); ",para);
 			SqlOperator.commitTransaction(db);
 		}
 	}
@@ -369,7 +377,7 @@ public class ProcessingDataTest {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			List<LayerBean> sys_user = ProcessingData.getLayerByTable("sys_user", db);
 			for (LayerBean layerBean : sys_user) {
-				assertThat(layerBean.getDsl_id(), is(1999998876L));
+				assertThat(layerBean.getDsl_id(), is(-1999998876L));
 				assertThat(layerBean.getLayerAttr().get("user_name"), is("hrsdxg"));
 			}
 		}
@@ -387,7 +395,7 @@ public class ProcessingDataTest {
 			Map<String, List<LayerBean>> layerByTable = ProcessingData.getLayerByTable(table, db);
 			List<LayerBean> list = layerByTable.get("sys_user");
 			for (LayerBean layerBean : list) {
-				assertThat(layerBean.getDsl_id(), is(1999998876L));
+				assertThat(layerBean.getDsl_id(), is(-1999998876L));
 				assertThat(layerBean.getLayerAttr().get("user_name"), is("hrsdxg"));
 			}
 		}

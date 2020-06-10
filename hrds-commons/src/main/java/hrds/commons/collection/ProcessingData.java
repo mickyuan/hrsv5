@@ -8,6 +8,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
@@ -133,9 +134,9 @@ public abstract class ProcessingData {
             Long table_id = dsr.getTable_id();
             List<LayerBean> maps = SqlOperator.queryList(db, LayerBean.class,
                     "select dsl.dsl_id,dsl.dsl_name,dsl.store_type,'" + DataSourceType.DCL.getCode() + "'  as dst from "
-                            + Table_storage_info.TableName + " tsi join " + Data_relation_table.TableName + " drt "
-                            + "on tsi.storage_id = drt.storage_id join " + Data_store_layer.TableName + " dsl "
-                            + "on drt.dsl_id = dsl.dsl_id where tsi.table_id = ?", table_id);
+                            + Table_storage_info.TableName + " tsi join " + Dtab_relation_store.TableName + " dtrs "
+                            + "on tsi.storage_id = dtrs.drs_id join " + Data_store_layer.TableName + " dsl "
+                            + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", table_id, StoreLayerDataSource.DB.getCode());
             //记录数据表在哪个系统存储层
             for (LayerBean map : maps) {
                 map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
@@ -146,9 +147,10 @@ public abstract class ProcessingData {
         //查询集市表信息，通过数据集市产生的数表
         List<LayerBean> dslMap = SqlOperator.queryList(db, LayerBean.class,
                 "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.DML.getCode() + "' as dst from "
-                        + Dm_datatable.TableName + " dd join  " + Dm_relation_datatable.TableName + " drd " +
-                        "on dd.datatable_id = drd.datatable_id join " + Data_store_layer.TableName + " dsl " +
-                        "on drd.dsl_id = dsl.dsl_id where lower(datatable_en_name) = ?", tableName.toLowerCase());
+                        + Dm_datatable.TableName + " dd join  " + Dtab_relation_store.TableName + " dtrs " +
+                        "on dd.datatable_id = dtrs.drs_id join " + Data_store_layer.TableName + " dsl " +
+                        "on dtrs.dsl_id = dsl.dsl_id where lower(datatable_en_name) = ? and dtrs.data_source = ?",
+		                tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
         if (dslMap.size() != 0) {
             for (LayerBean map : dslMap) {
                 map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
