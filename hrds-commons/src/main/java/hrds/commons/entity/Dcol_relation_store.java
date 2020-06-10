@@ -9,14 +9,14 @@ import java.util.HashSet;
 import java.util.Collections;
 
 /**
- * 集市字段存储信息
+ * 数据字段存储关系表
  */
-@Table(tableName = "dm_column_storage")
-public class Dm_column_storage extends ProjectTableEntity
+@Table(tableName = "dcol_relation_store")
+public class Dcol_relation_store extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "dm_column_storage";
+	public static final String TableName = "dcol_relation_store";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字
@@ -24,19 +24,21 @@ public class Dm_column_storage extends ProjectTableEntity
 	*/
 	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
 	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
-	/** 集市字段存储信息 */
+	/** 数据字段存储关系表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("dslad_id");
-		__tmpPKS.add("datatable_field_id");
+		__tmpPKS.add("dcs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="csi_number",value="序号位置:",dataType = Long.class,required = true)
 	private Long csi_number;
 	@DocBean(name ="dslad_id",value="附加信息ID:",dataType = Long.class,required = true)
 	private Long dslad_id;
-	@DocBean(name ="datatable_field_id",value="数据表字段id:",dataType = Long.class,required = true)
-	private Long datatable_field_id;
+	@DocBean(name ="dcs_id",value="结构信息id:",dataType = Long.class,required = true)
+	private Long dcs_id;
+	@DocBean(name ="data_source",value="存储层-数据来源(DataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = true)
+	private String data_source;
 
 	/** 取得：序号位置 */
 	public Long getCsi_number(){
@@ -66,18 +68,26 @@ public class Dm_column_storage extends ProjectTableEntity
 			this.dslad_id=new Long(dslad_id);
 		}
 	}
-	/** 取得：数据表字段id */
-	public Long getDatatable_field_id(){
-		return datatable_field_id;
+	/** 取得：结构信息id */
+	public Long getDcs_id(){
+		return dcs_id;
 	}
-	/** 设置：数据表字段id */
-	public void setDatatable_field_id(Long datatable_field_id){
-		this.datatable_field_id=datatable_field_id;
+	/** 设置：结构信息id */
+	public void setDcs_id(Long dcs_id){
+		this.dcs_id=dcs_id;
 	}
-	/** 设置：数据表字段id */
-	public void setDatatable_field_id(String datatable_field_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(datatable_field_id)){
-			this.datatable_field_id=new Long(datatable_field_id);
+	/** 设置：结构信息id */
+	public void setDcs_id(String dcs_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dcs_id)){
+			this.dcs_id=new Long(dcs_id);
 		}
+	}
+	/** 取得：存储层-数据来源 */
+	public String getData_source(){
+		return data_source;
+	}
+	/** 设置：存储层-数据来源 */
+	public void setData_source(String data_source){
+		this.data_source=data_source;
 	}
 }

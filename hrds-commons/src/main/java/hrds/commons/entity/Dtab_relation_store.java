@@ -9,14 +9,14 @@ import java.util.HashSet;
 import java.util.Collections;
 
 /**
- * 对象表存储关系表
+ * 数据表存储关系表
  */
-@Table(tableName = "obj_relation_table")
-public class Obj_relation_table extends ProjectTableEntity
+@Table(tableName = "dtab_relation_store")
+public class Dtab_relation_store extends ProjectTableEntity
 {
 	private static final long serialVersionUID = 321566870187324L;
 	private transient static final Set<String> __PrimaryKeys;
-	public static final String TableName = "obj_relation_table";
+	public static final String TableName = "dtab_relation_store";
 	/**
 	* 检查给定的名字，是否为主键中的字段
 	* @param name String 检验是否为主键的名字
@@ -24,19 +24,21 @@ public class Obj_relation_table extends ProjectTableEntity
 	*/
 	public static boolean isPrimaryKey(String name) { return __PrimaryKeys.contains(name); } 
 	public static Set<String> getPrimaryKeyNames() { return __PrimaryKeys; } 
-	/** 对象表存储关系表 */
+	/** 数据表存储关系表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("dsl_id");
-		__tmpPKS.add("ocs_id");
+		__tmpPKS.add("drs_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="is_successful",value="是否入库成功(JobExecuteState):100-等待<DengDai> 101-运行<YunXing> 102-暂停<ZanTing> 103-中止<ZhongZhi> 104-完成<WanCheng> 105-失败<ShiBai> ",dataType = String.class,required = false)
 	private String is_successful;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;
-	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
-	private Long ocs_id;
+	@DocBean(name ="drs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
+	private Long drs_id;
+	@DocBean(name ="data_source",value="存储层-数据来源(DataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = true)
+	private String data_source;
 
 	/** 取得：是否入库成功 */
 	public String getIs_successful(){
@@ -61,17 +63,25 @@ public class Obj_relation_table extends ProjectTableEntity
 		}
 	}
 	/** 取得：对象采集任务编号 */
-	public Long getOcs_id(){
-		return ocs_id;
+	public Long getDrs_id(){
+		return drs_id;
 	}
 	/** 设置：对象采集任务编号 */
-	public void setOcs_id(Long ocs_id){
-		this.ocs_id=ocs_id;
+	public void setDrs_id(Long drs_id){
+		this.drs_id=drs_id;
 	}
 	/** 设置：对象采集任务编号 */
-	public void setOcs_id(String ocs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
-			this.ocs_id=new Long(ocs_id);
+	public void setDrs_id(String drs_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(drs_id)){
+			this.drs_id=new Long(drs_id);
 		}
+	}
+	/** 取得：存储层-数据来源 */
+	public String getData_source(){
+		return data_source;
+	}
+	/** 设置：存储层-数据来源 */
+	public void setData_source(String data_source){
+		this.data_source=data_source;
 	}
 }

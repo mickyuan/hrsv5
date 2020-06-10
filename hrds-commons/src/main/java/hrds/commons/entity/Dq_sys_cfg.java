@@ -31,49 +31,19 @@ public class Dq_sys_cfg extends ProjectTableEntity
 		__tmpPKS.add("var_name");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="sys_var_id",value="系统变量编号:",dataType = Long.class,required = true)
-	private Long sys_var_id;
-	@DocBean(name ="var_name",value="变量名:",dataType = String.class,required = true)
-	private String var_name;
-	@DocBean(name ="var_value",value="变量值:",dataType = String.class,required = false)
-	private String var_value;
 	@DocBean(name ="app_updt_dt",value="更新日期:",dataType = String.class,required = true)
 	private String app_updt_dt;
 	@DocBean(name ="app_updt_ti",value="更新时间:",dataType = String.class,required = true)
 	private String app_updt_ti;
 	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
+	@DocBean(name ="sys_var_id",value="系统变量编号:",dataType = Long.class,required = true)
+	private Long sys_var_id;
+	@DocBean(name ="var_name",value="变量名:",dataType = String.class,required = true)
+	private String var_name;
+	@DocBean(name ="var_value",value="变量值:",dataType = String.class,required = false)
+	private String var_value;
 
-	/** 取得：系统变量编号 */
-	public Long getSys_var_id(){
-		return sys_var_id;
-	}
-	/** 设置：系统变量编号 */
-	public void setSys_var_id(Long sys_var_id){
-		this.sys_var_id=sys_var_id;
-	}
-	/** 设置：系统变量编号 */
-	public void setSys_var_id(String sys_var_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(sys_var_id)){
-			this.sys_var_id=new Long(sys_var_id);
-		}
-	}
-	/** 取得：变量名 */
-	public String getVar_name(){
-		return var_name;
-	}
-	/** 设置：变量名 */
-	public void setVar_name(String var_name){
-		this.var_name=var_name;
-	}
-	/** 取得：变量值 */
-	public String getVar_value(){
-		return var_value;
-	}
-	/** 设置：变量值 */
-	public void setVar_value(String var_value){
-		this.var_value=var_value;
-	}
 	/** 取得：更新日期 */
 	public String getApp_updt_dt(){
 		return app_updt_dt;
@@ -103,5 +73,35 @@ public class Dq_sys_cfg extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
 			this.user_id=new Long(user_id);
 		}
+	}
+	/** 取得：系统变量编号 */
+	public Long getSys_var_id(){
+		return sys_var_id;
+	}
+	/** 设置：系统变量编号 */
+	public void setSys_var_id(Long sys_var_id){
+		this.sys_var_id=sys_var_id;
+	}
+	/** 设置：系统变量编号 */
+	public void setSys_var_id(String sys_var_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(sys_var_id)){
+			this.sys_var_id=new Long(sys_var_id);
+		}
+	}
+	/** 取得：变量名 */
+	public String getVar_name(){
+		return var_name;
+	}
+	/** 设置：变量名 */
+	public void setVar_name(String var_name){
+		this.var_name=var_name;
+	}
+	/** 取得：变量值 */
+	public String getVar_value(){
+		return var_value;
+	}
+	/** 设置：变量值 */
+	public void setVar_value(String var_value){
+		this.var_value=var_value;
 	}
 }

@@ -1,4 +1,4 @@
---　系统的引用值个数:60
+--　系统的引用值个数:61
 --　本引用值的代码个数:2 -------i==1
 delete from code_info where ci_sp_class='76';
 INSERT INTO CODE_INFO  VALUES ('0', '76', '数据质量规则级别', '警告', 'EdRuleLevel');
@@ -409,3 +409,10 @@ INSERT INTO CODE_INFO  VALUES ('4', '72', '接口类型', '监控类', 'Interfac
 delete from code_info where ci_sp_class='73';
 INSERT INTO CODE_INFO  VALUES ('1', '73', '接口状态', '启用', 'InterfaceState');
 INSERT INTO CODE_INFO  VALUES ('2', '73', '接口状态', '禁用', 'InterfaceState');
+--　本引用值的代码个数:5 -------i==61
+delete from code_info where ci_sp_class='93';
+INSERT INTO CODE_INFO  VALUES ('1', '93', '存储层关系-数据来源', 'db采集', 'DataSource');
+INSERT INTO CODE_INFO  VALUES ('2', '93', '存储层关系-数据来源', '数据库采集', 'DataSource');
+INSERT INTO CODE_INFO  VALUES ('3', '93', '存储层关系-数据来源', '对象采集', 'DataSource');
+INSERT INTO CODE_INFO  VALUES ('4', '93', '存储层关系-数据来源', '数据集市', 'DataSource');
+INSERT INTO CODE_INFO  VALUES ('5', '93', '存储层关系-数据来源', '数据管控', 'DataSource');

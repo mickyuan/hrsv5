@@ -127,6 +127,8 @@ public class CodesItem{
 	protected static final String interfaceType=new String("InterfaceType");
 	/**接口状态   */
 	protected static final String interfaceState=new String("InterfaceState");
+	/**存储层关系-数据来源   */
+	protected static final String dataSource=new String("DataSource");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -191,6 +193,7 @@ public class CodesItem{
 		mapCat.put(updateType,UpdateType.class);
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
+		mapCat.put(dataSource,DataSource.class);
 	}
 
 
