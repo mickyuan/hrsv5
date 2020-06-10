@@ -573,8 +573,6 @@ public class DataSourceAction extends BaseAction {
 		Map<String, String> odcMap = addObjectCollect(collectMap, agentIdMap);
 		// 12.将对象采集对应信息object_collect_task表数据插入数据库并返回新旧对象采集任务编号的集合
 		Map<Long, String> ocsIdMap = addObjectCollectTask(collectMap, odcMap);
-		// 13.将对象采集存储设置object_storage表数据插入数据库
-		addObjectStorage(collectMap, ocsIdMap);
 		// 14.将对象采集结构信息object_collect_struct表数据插入数据库
 		addObjectCollectStruct(collectMap, ocsIdMap);
 		// 15.将数据库设置database_set表数据插入数据库
@@ -1110,43 +1108,6 @@ public class DataSourceAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "将object_storage表数据插入数据库",
-			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
-					"2.判断map中的key值是否为object_storage对应表数据" +
-					"3.获取tp采集设置object_storage信息" +
-					"4.遍历object_storage表数据" +
-					"5.用新的对象采集任务编号替换新的对象采集任务编号,保证关联关系不变" +
-					"6.将object_storage表数据循环入数据库")
-	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "不能为空")
-	@Param(name = "ocsIdMap", desc = "存放新旧对象采集任务编号(key为旧的ID，value为新的ID）的集合", range = "不能为空")
-	private void addObjectStorage(Map<String, Object> collectMap, Map<Long, String> ocsIdMap) {
-		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
-		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
-			// 2.判断map中的key值是否为object_storage对应表数据
-			// map中key的值，也是下载数据源时对应表信息封装入map的key值
-			if (Object_storage.TableName.equals(entry.getKey())) {
-				Type osType = new TypeReference<List<Object_storage>>() {
-				}.getType();
-				// 3.获取对象采集存储设置object_storage信息
-				List<Object_storage> objStorageList = JsonUtil.toObject(entry.getValue().toString(), osType);
-				if (!objStorageList.isEmpty()) {
-					// 4.遍历object_storage表数据
-					for (Object_storage object_storage : objStorageList) {
-						for (Map.Entry<Long, String> ocsIdEntry : ocsIdMap.entrySet()) {
-							// 5.用新的对象采集任务编号替换新的对象采集任务编号
-							if (ocsIdEntry.getKey().longValue() == object_storage.getOcs_id().longValue()) {
-								object_storage.setObj_stid(PrimayKeyGener.getNextId());
-								object_storage.setOcs_id(ocsIdEntry.getValue());
-								// 6.将object_storage表数据循环入数据库
-								object_storage.add(Dbo.db());
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
 	@Method(desc = "将object_collect_task表数据插入数据库",
 			logicStep = "1.数据权限处理方式，此方法是私有方法，不需要做权限验证" +
 					"2.判断map中的key值是否为object_collect_task对应表数据" +
@@ -1654,8 +1615,6 @@ public class DataSourceAction extends BaseAction {
 			Result objectCollectResult = getObjectCollectResult(collectionMap, agentInfoList);
 			// 12.对象采集对应信息object_collect_task,获取object_collect_task表信息集合入map
 			Result objectCollectTaskResult = getObjectCollectTaskResult(collectionMap, objectCollectResult);
-			// 13.对象采集存储设置object_storage,获取object_storage表信息集合入map
-			addObjectStorageToMap(collectionMap, objectCollectTaskResult);
 			// 14.对象采集结构信息object_collect_struct,获取object_collect_struct表信息集合入map
 			addObjectCollectStructResultToMap(collectionMap, objectCollectTaskResult);
 			// 15.数据库设置database_set,获取database_set表信息集合入map
@@ -2058,31 +2017,6 @@ public class DataSourceAction extends BaseAction {
 		}
 		// 5.将object_collect_struct表集合信息存入map
 		collectionMap.put(Object_collect_struct.TableName, objectCollectStructResult.toList());
-	}
-
-	@Method(desc = "将object_storage表数据集合存入map",
-			logicStep = "1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证" +
-					"2.创建存放object_storage信息结果集" +
-					"3.遍历object_collect_task结果集获取ocs_id（对象采集任务id），通过ocs_id查询object_storage表信息" +
-					"4.将查询到的信息封装入集合" +
-					"5.将object_storage集合信息存入map")
-	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是object_storage表数据集合）",
-			range = "不能为空,key唯一")
-	@Param(name = "objectCollectTaskResult", desc = "object_collect_task表数据结果集", range = "不为空")
-	private void addObjectStorageToMap(Map<String, Object> collectionMap, Result
-			objectCollectTaskResult) {
-		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
-		// 2.创建存放object_storage信息的结果集
-		Result objectStorageResult = new Result();
-		// 3.遍历object_collect_task结果集获取ocs_id（对象采集任务编号），通过ocs_id查询object_storage表信息
-		for (int i = 0; i < objectCollectTaskResult.getRowCount(); i++) {
-			Result result = Dbo.queryResult("select * from " + Object_storage.TableName +
-					" where ocs_id =?", objectCollectTaskResult.getLong(i, "ocs_id"));
-			// 4.将查询到的信息封装入集合
-			objectStorageResult.add(result);
-		}
-		// 5.将object_storage集合信息存入map
-		collectionMap.put(Object_storage.TableName, objectStorageResult.toList());
 	}
 
 	@Method(desc = "封装object_collect_task表信息入map并返回object_collect_task表信息",

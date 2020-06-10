@@ -23,7 +23,8 @@ import org.junit.Test;
 import java.io.File;
 import java.util.*;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -411,7 +412,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					+ DateUtil.parseStr2TimeWith6Char(SysTime));
 			objectCollect.setObj_collect_name("对象采集测试");
 			objectCollect.setObj_number("dxcj01");
-			objectCollect.setRun_way(ExecuteWay.AnShiQiDong.getCode());
 			objectCollect.setS_date(SysDate);
 			objectCollect.setServer_date(DateUtil.parseStr2DateWith8Char(SysDate) + " "
 					+ DateUtil.parseStr2TimeWith6Char(SysTime));
@@ -432,14 +432,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			objectCollectTask.setOdc_id(OdcId);
 			objectCollectTask.setUpdatetype(UpdateType.DirectUpdate.getCode());
 			objectCollectTask.add(db);
-			// 13.构造object_storage表测试数据
-			Object_storage objectStorage = new Object_storage();
-			objectStorage.setObj_stid(ObjStid);
-			objectStorage.setOcs_id(OcsId);
-			objectStorage.setIs_hbase(IsFlag.Shi.getCode());
-			objectStorage.setIs_hdfs(IsFlag.Fou.getCode());
-			objectStorage.setIs_solr(IsFlag.Fou.getCode());
-			objectStorage.add(db);
 			// 14.构造object_collect_struct表测试数据
 			Object_collect_struct objectCollectStruct = new Object_collect_struct();
 			objectCollectStruct.setStruct_id(StructId);
@@ -447,14 +439,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			objectCollectStruct.setColumn_name("对象采集结构");
 			objectCollectStruct.setColumn_type(ObjectDataType.ZiFuChuan.getCode());
 			objectCollectStruct.setData_desc("测试");
-			objectCollectStruct.setIs_hbase(IsFlag.Fou.getCode());
-			objectCollectStruct.setIs_solr(IsFlag.Fou.getCode());
-			objectCollectStruct.setIs_rowkey(IsFlag.Fou.getCode());
 			objectCollectStruct.setIs_operate(IsFlag.Fou.getCode());
 			objectCollectStruct.setColumnposition("columns");
 			objectCollectStruct.setIs_operate(IsFlag.Fou.getCode());
-			objectCollectStruct.setCol_seq(1L);
-			objectCollectStruct.setIs_key(IsFlag.Fou.getCode());
 			objectCollectStruct.add(db);
 			// 15.构造file_collect_set表测试数据
 			File_collect_set fileCollectSet = new File_collect_set();
@@ -1890,7 +1877,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(objectCollect.getObj_collect_name(), is("对象采集测试"));
 			assertThat(objectCollect.getSystem_name(), is("windows"));
 			assertThat(objectCollect.getIs_sendok(), is(IsFlag.Shi.getCode()));
-			assertThat(objectCollect.getRun_way(), is(ExecuteWay.AnShiQiDong.getCode()));
 			assertThat(objectCollect.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
 			assertThat(objectCollect.getObj_number(), is("dxcj01"));
 			assertThat(objectCollect.getHost_name(), is("10.71.4.52"));
@@ -1902,11 +1888,6 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(collectTask.getCollect_data_type(), is(CollectDataType.JSON.getCode()));
 			assertThat(collectTask.getDatabase_code(), is(DataBaseCode.UTF_8.getCode()));
 			assertThat(collectTask.getZh_name(), is("对象采集任务名称"));
-			Object_storage storage = SqlOperator.queryOneObject(db, Object_storage.class,
-					"select * from " + Object_storage.TableName + " where ocs_id=?",
-					collectTask.getOcs_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
-			assertThat(storage.getIs_hbase(), is(IsFlag.Shi.getCode()));
-			assertThat(storage.getIs_hdfs(), is(IsFlag.Fou.getCode()));
 			Object_collect_struct collectStruct = SqlOperator.queryOneObject(db, Object_collect_struct.class,
 					"select * from " + Object_collect_struct.TableName + " where ocs_id=?",
 					collectTask.getOcs_id()).orElseThrow(() -> new RuntimeException("sql执行错误!"));
