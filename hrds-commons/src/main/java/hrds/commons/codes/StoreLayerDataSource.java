@@ -3,7 +3,7 @@ package hrds.commons.codes;
 import hrds.commons.exception.AppSystemException;
 /**Created by automatic  */
 /**代码类型名：存储层关系-数据来源  */
-public enum DataSource {
+public enum StoreLayerDataSource {
 	/**db采集<DB>  */
 	DB("1","db采集","93","存储层关系-数据来源"),
 	/**数据库采集<DBA>  */
@@ -20,7 +20,7 @@ public enum DataSource {
 	private final String catCode;
 	private final String catValue;
 
-	DataSource(String code,String value,String catCode,String catValue){
+	StoreLayerDataSource(String code,String value,String catCode,String catValue){
 		this.code = code;
 		this.value = value;
 		this.catCode = catCode;
@@ -30,14 +30,14 @@ public enum DataSource {
 	public String getValue(){return value;}
 	public String getCatCode(){return catCode;}
 	public String getCatValue(){return catValue;}
-	public static final String CodeName = "DataSource";
+	public static final String CodeName = "StoreLayerDataSource";
 
 	/**根据指定的代码值转换成中文名字
 	* @param code   本代码的代码值
 	* @return
 	*/
 	public static String ofValueByCode(String code) {
-		for (DataSource typeCode : DataSource.values()) {
+		for (StoreLayerDataSource typeCode : StoreLayerDataSource.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode.value;
 			}
@@ -49,8 +49,8 @@ public enum DataSource {
 	* @param code   本代码的代码值
 	* @return
 	*/
-	public static DataSource ofEnumByCode(String code) {
-		for (DataSource typeCode : DataSource.values()) {
+	public static StoreLayerDataSource ofEnumByCode(String code) {
+		for (StoreLayerDataSource typeCode : StoreLayerDataSource.values()) {
 			if (typeCode.getCode().equals(code)) {
 				return typeCode;
 			}
@@ -63,7 +63,7 @@ public enum DataSource {
 	* @return
 	*/
 	public static String ofCatValue(){
-		return DataSource.values()[0].getCatValue();
+		return StoreLayerDataSource.values()[0].getCatValue();
 	}
 
 	/**
@@ -71,7 +71,7 @@ public enum DataSource {
 	* @return
 	*/
 	public static String ofCatCode(){
-		return DataSource.values()[0].getCatCode();
+		return StoreLayerDataSource.values()[0].getCatCode();
 	}
 
 	/**

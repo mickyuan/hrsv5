@@ -37,7 +37,7 @@ public class Dcol_relation_store extends ProjectTableEntity
 	private Long dslad_id;
 	@DocBean(name ="dcs_id",value="结构信息id:",dataType = Long.class,required = true)
 	private Long dcs_id;
-	@DocBean(name ="data_source",value="存储层-数据来源(DataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = true)
+	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = true)
 	private String data_source;
 
 	/** 取得：序号位置 */
