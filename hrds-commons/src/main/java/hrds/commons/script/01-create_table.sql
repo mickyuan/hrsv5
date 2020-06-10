@@ -607,17 +607,6 @@ REMARK                                            VARCHAR(512) NULL, --备注
 DUMP_ID                                           BIGINT default 0 NOT NULL, --备份id
 CONSTRAINT SYS_RECOVER_PK PRIMARY KEY(RE_ID)   );
 
---对象采集存储设置
-DROP TABLE IF EXISTS OBJECT_STORAGE ;
-CREATE TABLE OBJECT_STORAGE(
-OBJ_STID                                          BIGINT default 0 NOT NULL, --存储编号
-IS_HBASE                                          CHAR(1) NOT NULL, --是否进hbase
-IS_HDFS                                           CHAR(1) NOT NULL, --是否进hdfs
-IS_SOLR                                           CHAR(1) NOT NULL, --是否进solr
-REMARK                                            VARCHAR(512) NULL, --备注
-OCS_ID                                            BIGINT default 0 NULL, --对象采集任务编号
-CONSTRAINT OBJECT_STORAGE_PK PRIMARY KEY(OBJ_STID)   );
-
 --采集情况信息表
 DROP TABLE IF EXISTS COLLECT_CASE ;
 CREATE TABLE COLLECT_CASE(
@@ -1006,7 +995,6 @@ SERVER_DATE                                       CHAR(20) NOT NULL, --服务器
 S_DATE                                            CHAR(8) NOT NULL, --开始日期
 E_DATE                                            CHAR(8) NOT NULL, --结束日期
 DATABASE_CODE                                     CHAR(1) NOT NULL, --采集编码
-RUN_WAY                                           CHAR(1) NOT NULL, --启动方式
 FILE_PATH                                         VARCHAR(512) NOT NULL, --采集文件路径
 IS_DICTIONARY                                     CHAR(1) NOT NULL, --是否存在数据字典
 IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
@@ -1435,16 +1423,11 @@ DROP TABLE IF EXISTS OBJECT_COLLECT_STRUCT ;
 CREATE TABLE OBJECT_COLLECT_STRUCT(
 STRUCT_ID                                         BIGINT default 0 NOT NULL, --结构信息id
 OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
-COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段名称
-IS_ROWKEY                                         CHAR(1) NOT NULL, --是否rowkey
-IS_KEY                                            CHAR(1) NOT NULL, --是否主键
-IS_SOLR                                           CHAR(1) NOT NULL, --是否solr
-IS_HBASE                                          CHAR(1) NOT NULL, --是否hbase
+COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段英文名称
+DATA_DESC                                         VARCHAR(200) NULL, --字段中文描述信息
 IS_OPERATE                                        CHAR(1) NOT NULL, --是否操作标识字段
-COL_SEQ                                           BIGINT default 0 NOT NULL, --字段序号
 COLUMNPOSITION                                    VARCHAR(100) NOT NULL, --字段位置
 COLUMN_TYPE                                       VARCHAR(100) NOT NULL, --字段类型
-DATA_DESC                                         VARCHAR(200) NULL, --中文描述信息
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT OBJECT_COLLECT_STRUCT_PK PRIMARY KEY(STRUCT_ID)   );
 
@@ -1671,4 +1654,30 @@ REQ_ID                                            BIGINT default 0 NOT NULL, --�
 TASK_ID                                           BIGINT default 0 NOT NULL, --任务编号
 DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
 CONSTRAINT DQ_EXE_LOG_PK PRIMARY KEY(REQ_ID)   );
+
+--对象字段存储信息
+DROP TABLE IF EXISTS OBJ_COLUMN_STORAGE ;
+CREATE TABLE OBJ_COLUMN_STORAGE(
+DSLAD_ID                                          BIGINT default 0 NOT NULL, --附加信息ID
+STRUCT_ID                                         BIGINT default 0 NOT NULL, --结构信息id
+CSI_NUMBER                                        BIGINT default 0 NOT NULL, --序号位置
+CONSTRAINT OBJ_COLUMN_STORAGE_PK PRIMARY KEY(DSLAD_ID,STRUCT_ID)   );
+
+--对象表存储关系表
+DROP TABLE IF EXISTS OBJ_RELATION_TABLE ;
+CREATE TABLE OBJ_RELATION_TABLE(
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+IS_SUCCESSFUL                                     CHAR(3) NULL, --是否入库成功
+CONSTRAINT OBJ_RELATION_TABLE_PK PRIMARY KEY(DSL_ID,OCS_ID)   );
+
+--对象作业关系表
+DROP TABLE IF EXISTS OBJ_RELATION_ETL ;
+CREATE TABLE OBJ_RELATION_ETL(
+OCS_ID                                            BIGINT default 0 NOT NULL, --对象采集任务编号
+ETL_SYS_CD                                        VARCHAR(100) NOT NULL, --工程代码
+SUB_SYS_CD                                        VARCHAR(100) NOT NULL, --子系统代码
+ETL_JOB                                           VARCHAR(512) NOT NULL, --作业名
+ODC_ID                                            BIGINT default 0 NOT NULL, --对象采集id
+CONSTRAINT OBJ_RELATION_ETL_PK PRIMARY KEY(OCS_ID)   );
 

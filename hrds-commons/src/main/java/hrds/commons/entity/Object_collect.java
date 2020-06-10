@@ -50,8 +50,6 @@ public class Object_collect extends ProjectTableEntity
 	private String e_date;
 	@DocBean(name ="database_code",value="采集编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ",dataType = String.class,required = true)
 	private String database_code;
-	@DocBean(name ="run_way",value="启动方式(ExecuteWay):1-按时启动<AnShiQiDong> 2-命令触发<MingLingChuFa> 3-信号文件触发<QianZhiTiaoJian> ",dataType = String.class,required = true)
-	private String run_way;
 	@DocBean(name ="file_path",value="采集文件路径:",dataType = String.class,required = true)
 	private String file_path;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
@@ -154,14 +152,6 @@ public class Object_collect extends ProjectTableEntity
 	/** 设置：采集编码 */
 	public void setDatabase_code(String database_code){
 		this.database_code=database_code;
-	}
-	/** 取得：启动方式 */
-	public String getRun_way(){
-		return run_way;
-	}
-	/** 设置：启动方式 */
-	public void setRun_way(String run_way){
-		this.run_way=run_way;
 	}
 	/** 取得：采集文件路径 */
 	public String getFile_path(){
