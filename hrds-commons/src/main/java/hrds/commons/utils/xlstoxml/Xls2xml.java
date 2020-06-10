@@ -145,7 +145,7 @@ public class Xls2xml {
 	public static void jsonToXmlForObjectCollect(String json_path, String xml_path) {
 		// 调用方法生成xml文件
 		createXml(xml_path);
-		BufferedReader br;
+		BufferedReader br = null;
 		try {
 			StringBuilder result = new StringBuilder();
 			// 构造一个BufferedReader类来读取文件
@@ -163,10 +163,10 @@ public class Xls2xml {
 				// 中文表名
 				String table_ch_name = json.getString("table_ch_name");
 				// 数据更新方式
-				String updatetype = json.getString("updatetype");
+				String update_type = json.getString("update_type");
 				// 表信息处理
-				addTable(table_name.toLowerCase(), table_ch_name, updatetype);
-				JSONObject handleType = json.getJSONObject("handletype");
+				addTable(table_name.toLowerCase(), table_ch_name, update_type);
+				JSONObject handleType = json.getJSONObject("handle_type");
 				// 数据处理类型
 				addHandleType(handleType.getString("insert"), handleType.getString("update"),
 						handleType.getString("delete"));
@@ -179,7 +179,7 @@ public class Xls2xml {
 					// 字段名
 					String column_name = column.getString("column_name").toLowerCase();
 					// 字段中文名
-					String column_cn_name = column.getString("column_cn_name");
+					String column_ch_name = column.getString("column_ch_name");
 					// 字段类型
 					String column_type = column.getString("column_type");
 					// 是否为主键
@@ -194,33 +194,41 @@ public class Xls2xml {
 					String is_rowkey = column.getString("is_rowkey");
 					// 是否进solr
 					String is_solr = column.getString("is_solr");
-					// 是否为操作标识字段
-					String is_operate = column.getString("is_operate");
+					// 是否操作标识表
+					String is_operate = json.getString("is_operate");
 					int length = getLength(column_type);
 					// 列信息封装
-					addColumnForObjectCollect(column_id, column_name, column_cn_name, column_type, length,
-							column_remark, is_key, columnposition, is_hbase, is_rowkey, is_solr, is_operate);
+					addColumnToSemiStructuredCollect(column_id, column_name, column_ch_name, column_type,
+							length, column_remark, is_key, columnposition, is_hbase, is_rowkey, is_solr, is_operate);
 				}
 			}
 			// 生成xml文档
 			xmlCreater.buildXmlFile();
-			br.close();
 		} catch (FileNotFoundException e) {
 			throw new BusinessException("文件不存在," + e.getMessage());
 		} catch (IOException e) {
 			throw new BusinessException("读取文件失败," + e.getMessage());
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					logger.error(e);
+				}
+			}
 		}
 	}
 
-	public static void addColumnForObjectCollect(String column_id, String column_name, String column_cn_name,
-	                                             String column_type, int length, String column_remark,
-	                                             String is_key, String columnposition, String is_hbase,
-	                                             String is_rowkey, String is_solr, String is_operate) {
+	public static void addColumnToSemiStructuredCollect(String column_id, String column_name,
+	                                                    String column_ch_name, String column_type, int length,
+	                                                    String column_remark, String is_key,
+	                                                    String columnposition, String is_hbase,
+	                                                    String is_rowkey, String is_solr, String is_operate) {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "column_id", column_id);
 		xmlCreater.createAttribute(column, "column_name", column_name);
-		xmlCreater.createAttribute(column, "column_cn_name", column_cn_name);
+		xmlCreater.createAttribute(column, "column_ch_name", column_ch_name);
 		xmlCreater.createAttribute(column, "column_type", column_type);
 		xmlCreater.createAttribute(column, "length", String.valueOf(length));
 		xmlCreater.createAttribute(column, "is_key", is_key);
@@ -234,7 +242,7 @@ public class Xls2xml {
 
 	public static void addHandleType(String insert, String update, String delete) {
 
-		handleType = xmlCreater.createElement(table, "handletype");
+		handleType = xmlCreater.createElement(table, "handle_type");
 		xmlCreater.createAttribute(handleType, "insert", insert);
 		xmlCreater.createAttribute(handleType, "update", update);
 		xmlCreater.createAttribute(handleType, "delete", delete);
