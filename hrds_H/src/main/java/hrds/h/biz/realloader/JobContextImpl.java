@@ -4,7 +4,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.JobExecuteState;
 import hrds.commons.entity.Dm_datatable;
-import hrds.commons.entity.Dm_relation_datatable;
+import hrds.commons.entity.Dtab_relation_store;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 
@@ -17,7 +17,7 @@ import hrds.h.biz.config.MarketConf;
 public class JobContextImpl implements JobContext {
 
     MarketConf conf;
-    private final Dm_relation_datatable dmRelationDatatable;
+    private final Dtab_relation_store dtabRelationStore;
     private final Dm_datatable dmDatatable;
     private long jobStartTime;
     /**
@@ -27,7 +27,7 @@ public class JobContextImpl implements JobContext {
 
     public JobContextImpl(MarketConf conf) {
         this.conf = conf;
-        this.dmRelationDatatable = conf.getDmRelationDatatable();
+        this.dtabRelationStore = conf.getDtabRelationStore();
         this.dmDatatable = conf.getDmDatatable();
         shutdownThread = new Thread(() -> endJob(false));
     }
@@ -36,7 +36,7 @@ public class JobContextImpl implements JobContext {
     public void startJob() {
 
         //如果该作业的数据库状态是运行中的话，则异常退出
-        String jobStateCode = dmRelationDatatable.getIs_successful();
+        String jobStateCode = dtabRelationStore.getIs_successful();
         if (JobExecuteState.YunXing.getCode().equals(jobStateCode)) {
             throw new AppSystemException("作业正在运行中，请勿重复提交。");
         }
@@ -46,8 +46,8 @@ public class JobContextImpl implements JobContext {
         try {
             db = new DatabaseWrapper();
             db.beginTrans();
-            dmRelationDatatable.setIs_successful(JobExecuteState.YunXing.getCode());
-            dmRelationDatatable.update(db);
+            dtabRelationStore.setIs_successful(JobExecuteState.YunXing.getCode());
+            dtabRelationStore.update(db);
             db.commit();
         } catch (Exception e) {
             if (db != null) {
@@ -80,8 +80,8 @@ public class JobContextImpl implements JobContext {
             db = new DatabaseWrapper();
             db.beginTrans();
             //更新运行状态
-            dmRelationDatatable.setIs_successful(jobCode);
-            dmRelationDatatable.update(db);
+            dtabRelationStore.setIs_successful(jobCode);
+            dtabRelationStore.update(db);
             // 更新跑批日期
             dmDatatable.setDatac_date(DateUtil.getSysDate());
             dmDatatable.setDatac_time(DateUtil.getSysTime());
