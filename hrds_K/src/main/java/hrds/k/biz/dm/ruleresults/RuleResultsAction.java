@@ -24,8 +24,6 @@ import java.util.Map;
 public class RuleResultsAction extends BaseAction {
 
     @Method(desc = "获取规则检查结果信息", logicStep = "获取规则检查结果信息")
-    @Param(name = "currPage", desc = "分页当前页", range = "大于0的正整数", valueIfNull = "1")
-    @Param(name = "pageSize", desc = "分页查询每页显示条数", range = "大于0的正整数", valueIfNull = "10")
     @Return(desc = "规则检查结果信息", range = "规则检查结果信息")
     public Map<String, Object> getRuleResultInfos() {
         //初始化执行sql
