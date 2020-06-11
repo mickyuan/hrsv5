@@ -4,11 +4,9 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.JobExecuteState;
-import hrds.commons.collection.ConnectionTool;
+import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 
@@ -22,11 +20,13 @@ public class MDMDataQuery {
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Data_store_layer> getDCLExistTableDataStorageLayers() {
         //获取数据存储层信息列表
-        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM table_info ti" +
-                " JOIN table_storage_info dsi ON dsi.table_id = ti.table_id" +
-                " JOIN data_relation_table drt ON drt.storage_id = dsi.storage_id" +
-                " JOIN data_store_layer dsl ON dsl.dsl_id = drt.dsl_id" +
-                " GROUP BY dsl.dsl_id");
+        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Table_info.TableName + " ti" +
+                        " JOIN " + Table_storage_info.TableName + " tsi ON tsi.table_id = ti.table_id" +
+                        " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.tab_id = tsi.storage_id" +
+                        " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
+                        " WHERE dtrs.data_source in (?,?,?) GROUP BY dsl.dsl_id",
+                StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode(),
+                StoreLayerDataSource.OBJ.getCode());
     }
 
     @Method(desc = "数据管控-源数据列表获取DCL数据存储层下的表信息",
@@ -34,12 +34,14 @@ public class MDMDataQuery {
     @Param(name = "data_store_layer", desc = "Data_store_layer实体对象", range = "Data_store_layer实体对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getDCLStorageLayerTableInfos(Data_store_layer data_store_layer) {
-        return Dbo.queryList("SELECT dsl.*,dsr.* FROM data_store_layer dsl" +
-                " JOIN data_relation_table drt ON dsl.dsl_id = drt.dsl_id" +
-                " JOIN table_storage_info tsi ON drt.storage_id = tsi.storage_id" +
-                " JOIN table_info ti ON ti.table_id = tsi.table_id" +
-                " JOIN data_store_reg dsr ON dsr.table_id = ti.table_id" +
-                " WHERE dsl.dsl_id = ?", data_store_layer.getDsl_id());
+        return Dbo.queryList("SELECT dsl.*,dsr.* FROM " + Data_store_layer.TableName + " dsl" +
+                        " JOIN " + Dtab_relation_store.TableName + " dtrs ON dsl.dsl_id = dtrs.dsl_id" +
+                        " JOIN " + Table_storage_info.TableName + " tsi ON dtrs.tab_id = tsi.storage_id" +
+                        " JOIN " + Table_info.TableName + " ti ON ti.table_id = tsi.table_id" +
+                        " JOIN " + Data_store_reg.TableName + " dsr ON dsr.table_id = ti.table_id" +
+                        " WHERE dsl.dsl_id = ? and dtrs.data_source in (?,?,?)",
+                data_store_layer.getDsl_id(), StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode(),
+                StoreLayerDataSource.OBJ.getCode());
     }
 
     @Method(desc = "数据管控-源数据列表获取DML数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
@@ -47,9 +49,9 @@ public class MDMDataQuery {
     public static List<Data_store_layer> getDMLExistTableDataStorageLayers() {
         //获取数据存储层信息列表
         return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
-                " JOIN " + Dm_relation_datatable.TableName + " drd ON drd.dsl_id = dsl.dsl_id" +
-                " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = drd.datatable_id" +
-                " GROUP BY dsl.dsl_id");
+                " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.dsl_id = dsl.dsl_id" +
+                " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = dtrs.tab_id" +
+                " WHERE dtrs.data_source in (?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DM.getCode());
     }
 
     @Method(desc = "数据管控-源数据列表获取DML数据存储层下的表信息",
@@ -58,10 +60,10 @@ public class MDMDataQuery {
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getDMLStorageLayerTableInfos(Data_store_layer data_store_layer) {
         return Dbo.queryList("SELECT dsl.*,dd.* FROM " + Dm_datatable.TableName + " dd" +
-                        " JOIN " + Dm_relation_datatable.TableName + " drd ON drd.datatable_id = dd.datatable_id" +
-                        " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = drd.dsl_id" +
-                        " WHERE dsl.dsl_id = ? and is_successful = ?",
-                data_store_layer.getDsl_id(), JobExecuteState.WanCheng.getCode());
+                        " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.tab_id = dd.datatable_id" +
+                        " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
+                        " WHERE dsl.dsl_id = ? and is_successful = ? and dtrs.data_source = ?",
+                data_store_layer.getDsl_id(), JobExecuteState.WanCheng.getCode(), StoreLayerDataSource.DM.getCode());
     }
 
     @Method(desc = "根据表id获取DCL层数据表登记信息", logicStep = "根据表id获取DCL层数据表登记信息")
@@ -107,34 +109,5 @@ public class MDMDataQuery {
         if (execute != 1) {
             throw new BusinessException("删除集市表登记信息失败! datatable_id=" + dm_datatable.getDatatable_id());
         }
-    }
-
-    @Method(desc = "获取DCL表存在的存储层信息", logicStep = "获取DCL表存在的存储层信息,一张表有可能存在多个存储层下")
-    @Param(name = "dsr", desc = "Data_store_reg实体对象", range = "Data_store_reg实体对象")
-    @Return(desc = "表对应的存储层信息", range = "表对应的存储层信息")
-    public static List<Data_store_layer> getDCLTableStorageLayers(Data_store_reg dsr) {
-        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM data_store_layer dsl" +
-                " JOIN data_relation_table drt ON dsl.dsl_id = drt.dsl_id" +
-                " JOIN table_storage_info tsi ON drt.storage_id = tsi.storage_id" +
-                " JOIN table_info ti ON ti.table_id = tsi.table_id" +
-                " WHERE ti.table_id = ?", dsr.getTable_id());
-    }
-
-    @Method(desc = "获取DML表存在的存储层信息", logicStep = "获取DML表存在的存储层信息,一张表有可能存在多个存储层下")
-    @Param(name = "dsr", desc = "Data_store_reg实体对象", range = "Data_store_reg实体对象")
-    @Return(desc = "表对应的存储层信息", range = "表对应的存储层信息")
-    public static List<Data_store_layer> getDMLTableStorageLayers(Dm_datatable dm_datatable) {
-        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
-                " JOIN " + Dm_relation_datatable.TableName + " drd ON dsl.dsl_id = drd.dsl_id" +
-                " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = drd.datatable_id" +
-                " WHERE dd.datatable_id = ?", dm_datatable.getDatatable_id());
-    }
-
-    @Method(desc = "获取存储层链接配置信息", logicStep = "获取存储层链接配置信息")
-    @Param(name = "data_store_layer", desc = "Data_store_layer实体对象", range = "Data_store_layer实体对象")
-    @Return(desc = "存储层链接配置信息", range = "存储层链接配置信息")
-    public static List<Map<String, Object>> getDataStoreLayerAttrList(Data_store_layer data_store_layer) {
-        return Dbo.queryList("select storage_property_key,storage_property_val from "
-                + Data_store_layer_attr.TableName + " where dsl_id = ?", data_store_layer.getDsl_id());
     }
 }
