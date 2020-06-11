@@ -72,12 +72,12 @@ public class StartWayConfAction extends BaseAction {
 	// 作业名称/描述之间的分割符
 	private static final String SPLITTER = "_";
 
-
 	@Method(desc = "获取工程信息", logicStep = "获取作业调度工程信息,然后返回到前端")
 	@Return(desc = "返回工程信息集合", range = "为空表示没有工程信息")
 	public List<Etl_sys> getEtlSysData() {
 		// 获取作业调度工程信息,然后返回到前端
-		return Dbo.queryList(Etl_sys.class, "SELECT * FROM " + Etl_sys.TableName + " WHERE user_id = ?", getUserId());
+		return Dbo.queryList(
+			Etl_sys.class, "SELECT * FROM " + Etl_sys.TableName + " WHERE user_id = ?", getUserId());
 	}
 
 	@Method(desc = "根据工程编号获取任务列表", logicStep = "1 : 判断工程编号是否存在, 2 : 根据工程编号返回任务信息")
@@ -88,7 +88,10 @@ public class StartWayConfAction extends BaseAction {
 		//    1 : 判断工程编号是否存在
 		long countNum =
 			Dbo.queryNumber(
-				"SELECT COUNT(1) FROM " + Etl_sys.TableName + " WHERE etl_sys_cd = ? AND user_id = ?", etl_sys_cd,
+				"SELECT COUNT(1) FROM "
+					+ Etl_sys.TableName
+					+ " WHERE etl_sys_cd = ? AND user_id = ?",
+				etl_sys_cd,
 				getUserId())
 				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if (countNum != 1) {
@@ -159,8 +162,8 @@ public class StartWayConfAction extends BaseAction {
 	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
 	@Param(name = "tableItemMap", desc = "采集表数据信息", range = "不可为空")
 	@Param(name = "databaseMap", desc = "采集任务配置信息", range = "不可为空")
-	private void setCollectDataBaseParam(long colSetId, Map<String, Object> tableItemMap,
-		Map<String, Object> databaseMap) {
+	private void setCollectDataBaseParam(
+		long colSetId, Map<String, Object> tableItemMap, Map<String, Object> databaseMap) {
 		// 作业采集文件类型
 		String dbfile_format =
 			ChineseUtil.getPingYin(
@@ -267,47 +270,54 @@ public class StartWayConfAction extends BaseAction {
 				itemMap.put("pre_etl_job", preJobList);
 			});
 
-		//获取任务表作业名称全部集合
+		// 获取任务表作业名称全部集合
 		List<Map<String, Object>> previewJob = getPreviewJob(colSetId);
-		//此次任务的采集作业表信息
-		List<Object> databaseDefaultEtlJob = previewJob.stream().map(item -> item.get("etl_job"))
-			.collect(Collectors.toList());
-		//上次存在的表数据作业信息
-		List<Object> etlJobData = etlJobList.stream().map(item -> item.get("etl_job")).collect(Collectors.toList());
+		// 此次任务的采集作业表信息
+		List<Object> databaseDefaultEtlJob =
+			previewJob.stream().map(item -> item.get("etl_job")).collect(Collectors.toList());
+		// 上次存在的表数据作业信息
+		List<Object> etlJobData =
+			etlJobList.stream().map(item -> item.get("etl_job")).collect(Collectors.toList());
 
 		Map<String, List<Object>> differenceInfo = getDifferenceInfo(databaseDefaultEtlJob, etlJobData);
 
-		//获取新增的作业
+		// 获取新增的作业
 		List<Object> addEtlJob = differenceInfo.get("add");
 		previewJob.removeIf(item -> !addEtlJob.contains(item.get("etl_job")));
-//	//删除上次存在的表信息并删除,留下新增的
-//	if (previewJob.size() >= etlJobList.size()) {
-//	  //获取已存在表的作业名称信息
-//	  List<Object> etl_job = etlJobList.stream()
-//		  .map(itemMap -> itemMap.get("etl_job")).collect(Collectors.toList());
-//	  previewJob.removeIf(itemMap -> etl_job.contains(itemMap.get("etl_job")));
-//
-//	  etlJobList.addAll(previewJob);
-//
-//	} else {
-		//获取已存在表的作业名称信息
-//	  List<Object> etl_job = previewJob.stream()
-//		  .map(itemMap -> itemMap.get("etl_job")).collect(Collectors.toList());
-		//获取删除的作业
+		//	//删除上次存在的表信息并删除,留下新增的
+		//	if (previewJob.size() >= etlJobList.size()) {
+		//	  //获取已存在表的作业名称信息
+		//	  List<Object> etl_job = etlJobList.stream()
+		//		  .map(itemMap -> itemMap.get("etl_job")).collect(Collectors.toList());
+		//	  previewJob.removeIf(itemMap -> etl_job.contains(itemMap.get("etl_job")));
+		//
+		//	  etlJobList.addAll(previewJob);
+		//
+		//	} else {
+		// 获取已存在表的作业名称信息
+		//	  List<Object> etl_job = previewJob.stream()
+		//		  .map(itemMap -> itemMap.get("etl_job")).collect(Collectors.toList());
+		// 获取删除的作业
 		List<Object> delete = differenceInfo.get("delete");
-		etlJobList.removeIf(itemMap -> {
-			if (delete.contains(itemMap.get("etl_job"))) {
-				Dbo.execute("DELETE FROM " + Take_relation_etl.TableName + " WHERE etl_job = ?",
-					itemMap.get("etl_job"));
-				Dbo.execute(
-					"DELETE FROM " + Etl_job_def.TableName + " WHERE etl_job = ? AND etl_sys_cd = ? AND sub_sys_cd = ?",
-					itemMap.get("etl_job"), itemMap.get("etl_sys_cd"), itemMap.get("sub_sys_cd"));
-				return true;
-			} else {
-				return false;
-			}
-		});
-//	}
+		etlJobList.removeIf(
+			itemMap -> {
+				if (delete.contains(itemMap.get("etl_job"))) {
+					Dbo.execute(
+						"DELETE FROM " + Take_relation_etl.TableName + " WHERE etl_job = ?",
+						itemMap.get("etl_job"));
+					Dbo.execute(
+						"DELETE FROM "
+							+ Etl_job_def.TableName
+							+ " WHERE etl_job = ? AND etl_sys_cd = ? AND sub_sys_cd = ?",
+						itemMap.get("etl_job"),
+						itemMap.get("etl_sys_cd"),
+						itemMap.get("sub_sys_cd"));
+					return true;
+				} else {
+					return false;
+				}
+			});
+		//	}
 		etlJobList.addAll(previewJob);
 		return etlJobList;
 	}
@@ -406,8 +416,9 @@ public class StartWayConfAction extends BaseAction {
 			throw new BusinessException("卸数文件的数量与作业的数量不一致!!!");
 		}
 
-		//删除当前任务的全部作业信息
-		Dbo.execute("DELETE FROM "
+		// 删除当前任务的全部作业信息
+		Dbo.execute(
+			"DELETE FROM "
 				+ Etl_job_def.TableName
 				+ " WHERE etl_job in (SELECT t2.etl_job from "
 				+ Take_relation_etl.TableName
@@ -475,7 +486,6 @@ public class StartWayConfAction extends BaseAction {
 			} else {
 				// 新增
 				etl_job_def.add(Dbo.db());
-
 			}
 
 			// 解析出作业上游的关系数据
@@ -507,17 +517,20 @@ public class StartWayConfAction extends BaseAction {
 		}
 
 		// 5，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
-		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
+		DboExecute.updatesOrThrow(
+			"此次采集任务配置完成,更新状态失败",
 			"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
-			IsFlag.Shi.getCode(), colSetId);
+			IsFlag.Shi.getCode(),
+			colSetId);
 	}
 
 	@Method(desc = "保存作业所需的资源信息", logicStep = "1: 判断当前的作业信息是否存在,如果不存在则添加")
 	@Param(name = "etl_sys_cd", desc = "作业工程编号", range = "不可为空")
 	@Param(name = "etl_job_def", desc = "作业资源的信息集合", range = "不可为空", isBean = true)
 	@Param(name = "jobResource", desc = "作业资源的信息名称集合", range = "可为空")
-	private void setEtl_job_resource_rela(String etl_sys_cd, Etl_job_def etl_job_def, List<Object> jobResource) {
-//    1: 判断当前的作业信息是否存在,如果不存在则添加
+	private void setEtl_job_resource_rela(
+		String etl_sys_cd, Etl_job_def etl_job_def, List<Object> jobResource) {
+		//    1: 判断当前的作业信息是否存在,如果不存在则添加
 		if (!jobResource.contains(etl_job_def.getEtl_job())) {
 			Etl_job_resource_rela etl_job_resource_rela = new Etl_job_resource_rela();
 			etl_job_resource_rela.setEtl_sys_cd(etl_sys_cd);
@@ -532,8 +545,12 @@ public class StartWayConfAction extends BaseAction {
 	@Param(name = "etl_sys_cd", desc = "作业工程编号", range = "不可为空")
 	@Param(name = "etl_job_def", desc = "作业资源的信息集合", range = "不可为空", isBean = true)
 	@Param(name = "relationEtl", desc = "抽数作业关系表信息集合", range = "可为空")
-	private void setTake_relation_etl(long colSetId, Etl_job_def etl_job_def, List<Object> relationEtl,
-		List<String> dedList, int index) {
+	private void setTake_relation_etl(
+		long colSetId,
+		Etl_job_def etl_job_def,
+		List<Object> relationEtl,
+		List<String> dedList,
+		int index) {
 		if (!relationEtl.contains(etl_job_def.getEtl_job())) {
 			Take_relation_etl take_relation_etl = new Take_relation_etl();
 			take_relation_etl.setDed_id(dedList.get(index));

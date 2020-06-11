@@ -18,17 +18,18 @@ import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
 import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Column_storage_info;
 import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.entity.Data_relation_table;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_layer_added;
 import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Dcol_relation_store;
+import hrds.commons.entity.Dtab_relation_store;
 import hrds.commons.entity.Table_column;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Table_storage_info;
@@ -166,7 +167,7 @@ public class StoDestStepConfAction extends BaseAction {
 			List<Object> list =
 				Dbo.queryOneColumnList(
 					"select drt.dsl_id from "
-						+ Data_relation_table.TableName
+						+ Dtab_relation_store.TableName
 						+ " drt"
 						+ " where drt.storage_id = (select storage_id from "
 						+ Table_storage_info.TableName
@@ -325,10 +326,10 @@ public class StoDestStepConfAction extends BaseAction {
 				"SELECT t2.dsl_id,t1.hyren_name FROM "
 					+ Table_storage_info.TableName
 					+ " t1 JOIN "
-					+ Data_relation_table.TableName
+					+ Dtab_relation_store.TableName
 					+ " t2 ON "
-					+ " t1.storage_id = t2.storage_id WHERE t1.table_id = ?",
-				tableId);
+					+ " t1.storage_id = t2.storage_id WHERE t1.table_id = ? AND t2.data_source = ?",
+				tableId, StoreLayerDataSource.DB.getCode());
 		// 4、如果获取不到，说明之前该表未定义过存储目的地，则直接返回结果集
 		if (tbStoRela.isEmpty()) {
 			resultMap.put("hyren_name", "");
@@ -479,16 +480,16 @@ public class StoDestStepConfAction extends BaseAction {
 		Result resultThree =
 			Dbo.queryResult(
 				"select csi.column_id, dsla.dsla_storelayer, csi_number from "
-					+ Column_storage_info.TableName
+					+ Dcol_relation_store.TableName
 					+ " csi left join "
 					+ Data_store_layer_added.TableName
 					+ " dsla"
 					+ " on dsla.dslad_id = csi.dslad_id"
-					+ " where csi.column_id in (select column_id from "
+					+ " where csi.col_id in (select column_id from "
 					+ Table_column.TableName
-					+ " where table_id = ?) and dsla.dsl_id = ?",
+					+ " where table_id = ?) and dsla.dsl_id = ? AND  csi.data_source = ? ",
 				tableId,
-				dslId);
+				dslId, StoreLayerDataSource.DB.getCode());
 		for (int i = 0; i < resultThree.getRowCount(); i++) {
 			long columnIdFromCSI = resultThree.getLong(i, "column_id");
 			for (int j = 0; j < resultOne.getRowCount(); j++) {
@@ -530,12 +531,12 @@ public class StoDestStepConfAction extends BaseAction {
 		// 2、在每保存一个字段的存储目的地前，先尝试在column_storage_info表中删除该表所有列的信息，不关心删除的数据
 		Dbo.execute(
 			"delete from "
-				+ Column_storage_info.TableName
-				+ " where column_id in (select column_id "
+				+ Dcol_relation_store.TableName
+				+ " where col_id in (select column_id "
 				+ " from "
 				+ Table_column.TableName
-				+ " where table_id = ?)",
-			tableId);
+				+ " where table_id = ? ) AND data_source = ?",
+			tableId, StoreLayerDataSource.DB.getCode());
 		if (!colStoParams.isEmpty()) {
 			// 3、如果反序列化得到的List集合不为空，则遍历集合
 			for (ColStoParam param : colStoParams) {
@@ -545,8 +546,8 @@ public class StoDestStepConfAction extends BaseAction {
 					throw new BusinessException("请检查配置信息，并为待保存的字段选择其是否具有特殊性质");
 				}
 				for (long dsladId : dsladIds) {
-					Column_storage_info columnStorageInfo = new Column_storage_info();
-					columnStorageInfo.setColumn_id(columnId);
+					Dcol_relation_store columnStorageInfo = new Dcol_relation_store();
+					columnStorageInfo.setCol_id(columnId);
 					columnStorageInfo.setDslad_id(dsladId);
 					// 根据数据存储附加信息ID获取存储目的地类型
 					List<Object> list =
@@ -756,12 +757,12 @@ public class StoDestStepConfAction extends BaseAction {
 				 * */
 				Dbo.execute(
 					"delete from "
-						+ Data_relation_table.TableName
-						+ " where storage_id in "
+						+ Dtab_relation_store.TableName
+						+ " where tab_id in "
 						+ "(select storage_id from "
 						+ Table_storage_info.TableName
-						+ " where table_id = ?)",
-					storageInfo.getTable_id());
+						+ " where table_id = ?) AND data_source = ?",
+					storageInfo.getTable_id(), StoreLayerDataSource.DB.getCode());
 				/*
 				 * 在每保存一张表的存储目的地前，先尝试在table_storage_info表中使用table_id删除记录，
 				 * 因为一张需要入库的表在table_storage_info表中只保存一条记录，所以只能删除掉一条
@@ -820,8 +821,8 @@ public class StoDestStepConfAction extends BaseAction {
 						}
 						storageInfo.setHyren_name(param.getHyren_name());
 
-						Data_relation_table relationTable = new Data_relation_table();
-						relationTable.setStorage_id(storageId);
+						Dtab_relation_store relationTable = new Dtab_relation_store();
+						relationTable.setTab_id(storageId);
 						relationTable.setDsl_id(dslId);
 
 						relationTable.add(Dbo.db());
