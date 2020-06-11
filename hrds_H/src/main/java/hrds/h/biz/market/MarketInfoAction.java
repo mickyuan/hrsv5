@@ -457,8 +457,8 @@ public class MarketInfoAction extends BaseAction {
 		//4.dm_datatable
 		updatebean(dm_datatable);
 		//查询记录
-		Optional<Dtab_relation_store> dm_relation_datatableOptional = Dbo.queryOneObject(Dtab_relation_store.class, "select * from " + Dtab_relation_store.TableName + " where tab_id = ?",
-				dm_datatable.getDatatable_id());
+		Optional<Dtab_relation_store> dm_relation_datatableOptional = Dbo.queryOneObject(Dtab_relation_store.class, "select * from " + Dtab_relation_store.TableName + " where tab_id = ? and data_source = ?",
+				dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 		//更新dm_relation_datatable库中的数据
 		if (dm_relation_datatableOptional.isPresent()) {
 			Dtab_relation_store dm_relation_datatable = dm_relation_datatableOptional.get();
@@ -479,7 +479,7 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		return Dbo.queryList("select * from " + Dm_datatable.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 " +
-				"on t1.datatable_id = t2.tab_id where t1.datatable_id= ?", dm_datatable.getDatatable_id());
+				"on t1.datatable_id = t2.tab_id where t1.datatable_id= ? and t2.data_source = ?", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 	}
 
 	@Method(desc = "根据数据集市表英文名 检查表名是否重复",
@@ -618,8 +618,9 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		//获取当前集市选择的存储目的地
-		List<Map<String, Object>> storeTypeList = Dbo.queryList("select store_type,t1.dsl_id from " + Data_store_layer.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
-				"where t2.tab_id = ? ", dm_datatable.getDatatable_id());
+		List<Map<String, Object>> storeTypeList = Dbo.queryList("select store_type,t1.dsl_id from " + Data_store_layer.TableName + " t1 left join "
+				+ Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
+				"where t2.tab_id = ? and t2.data_source = ?", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 		String storeType = storeTypeList.get(0).get("store_type").toString();
 		String dsl_id = storeTypeList.get(0).get("dsl_id").toString();
 		//根据存储目的地 设置默认的字段类型
@@ -687,7 +688,7 @@ public class MarketInfoAction extends BaseAction {
 			//将所有勾选的 附加字段属性 默认选为不勾选
 			List<Map<String, Object>> dslaStorelayerList = Dbo.queryList("select dslad_id,dsla_storelayer from " + Data_store_layer_added.TableName + " t1 " +
 					"left join " + Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
-					"where t2.tab_id = ? order by dsla_storelayer", dm_datatable.getDatatable_id());
+					"where t2.tab_id = ? and t2.data_source = ? order by dsla_storelayer", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 			for (Map<String, Object> dslaStorelayeMap : dslaStorelayerList) {
 				map.put(StoreLayerAdded.ofValueByCode(dslaStorelayeMap.get("dsla_storelayer").toString()), false);
 			}
@@ -731,8 +732,8 @@ public class MarketInfoAction extends BaseAction {
 				List<Map<String, Object>> maps = Dbo.queryList("select t2.column_type,t4.dsl_id from " + Data_store_reg.TableName + " t1 left join " + Table_column.TableName + " t2 on t1.table_id = t2.table_id" +
 								" left join " + Table_storage_info.TableName + " t3 on t1.table_id = t3.table_id left join " +
 								Dtab_relation_store.TableName + " t4 on t4.tab_id = t3.storage_id " +
-								"where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? ",
-						sourcecolumn.toLowerCase(), sourcetable.toLowerCase());
+								"where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? and t4.data_source = ?",
+						sourcecolumn.toLowerCase(), sourcetable.toLowerCase(),DataSourceType.DML.getCode());
 				//如果为空，说明字段不存在
 				if (maps.isEmpty()) {
 					resultmap.put("sourcetype", field_type);
@@ -857,8 +858,8 @@ public class MarketInfoAction extends BaseAction {
 			datatable_field_info.setDatatable_field_id(datatable_field_id);
 			//查看 附件属性的字段的勾选情况
 			List<Map<String, Object>> list2 = Dbo.queryList("select dsla_storelayer from " + Data_store_layer_added.TableName + "" +
-							" t1 left join " + Dcol_relation_store.TableName + " t2 on t1.dslad_id = t2.dslad_id where t2.col_id = ?",
-					datatable_field_info.getDatatable_field_id());
+							" t1 left join " + Dcol_relation_store.TableName + " t2 on t1.dslad_id = t2.dslad_id where t2.col_id = ? and t2.data_source = ?",
+					datatable_field_info.getDatatable_field_id(),DataSourceType.DML.getCode());
 			if (list2 != null) {
 				for (Map<String, Object> everymap : list2) {
 					String dsla_storelayer = everymap.get("dsla_storelayer").toString();
@@ -909,8 +910,9 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		//查看存储层目的地
-		Optional<Data_store_layer> data_store_layerOptional = Dbo.queryOneObject(Data_store_layer.class, "select store_type from " + Data_store_layer.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
-				"where t2.tab_id = ? ", dm_datatable.getDatatable_id());
+		Optional<Data_store_layer> data_store_layerOptional = Dbo.queryOneObject(Data_store_layer.class, "select store_type from " + Data_store_layer.TableName + " t1 left join " +
+				Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
+				"where t2.tab_id = ? and t2.data_source = ?", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 		if (data_store_layerOptional.isPresent()) {
 			Data_store_layer data_store_layer = data_store_layerOptional.get();
 			String storeType = data_store_layer.toString();
@@ -919,7 +921,7 @@ public class MarketInfoAction extends BaseAction {
 			List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
 					"FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
 					"LEFT JOIN " + Dtab_relation_store.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
-					" WHERE t3.tab_id = ?", dm_datatable.getDatatable_id());
+					" WHERE t3.tab_id = ? and t3.data_source = ?", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 			Map<String, Object> resultmap = new HashMap<>();
 			resultmap.put("target_type", field_type);
 			//判断 如果list中没有当前类型 则加入
@@ -1010,7 +1012,7 @@ public class MarketInfoAction extends BaseAction {
 		}
 		//删除原有数据 因为页面可能会存在修改sql 导致的字段大幅度变动 所以针对更新的逻辑会特别复杂 故采用全删全增的方式
 		Dbo.execute("delete from " + Dcol_relation_store.TableName + " where col_id in (select datatable_field_id from " +
-				Datatable_field_info.TableName + " where datatable_id = ?)", dm_datatable.getDatatable_id());
+				Datatable_field_info.TableName + " where datatable_id = ?) and data_source = ?", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 		Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
 		List<String> columnnames = new ArrayList<>();
 		//新增字段表
@@ -1038,7 +1040,7 @@ public class MarketInfoAction extends BaseAction {
 		//
 		List<Map<String, Object>> maps = Dbo.queryList("select distinct t1.dslad_id,t2.dsla_storelayer from " + Dcol_relation_store.TableName
 				+ " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dslad_id = t2.dslad_id where col_id in " +
-				"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+				"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? ) and t1.data_source = ?", dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 		for (Map<String, Object> everymap : maps) {
 			String dslad_id = everymap.get("dslad_id").toString();
 			String dsla_storelayer = everymap.get("dsla_storelayer").toString();
@@ -1053,8 +1055,8 @@ public class MarketInfoAction extends BaseAction {
 					datatable_field_info1.setField_en_name(field_en_name);
 					Optional<Dcol_relation_store> dm_column_storageOptional = Dbo.queryOneObject(Dcol_relation_store.class, "select * from " + Dcol_relation_store.TableName + " where col_id = " +
 									"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? and field_en_name = ? )" +
-									" and dslad_id = ? ",
-							dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(), dcs.getDslad_id());
+									" and dslad_id = ? and data_source = ?",
+							dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(), dcs.getDslad_id(),DataSourceType.DML.getCode());
 					//如果有数据
 					if (dm_column_storageOptional.isPresent()) {
 						Dcol_relation_store dc_storage = dm_column_storageOptional.get();
@@ -1068,8 +1070,8 @@ public class MarketInfoAction extends BaseAction {
 			//如果不是rowkey 那么排序的时候 只需简单排序即可
 			else {
 				List<Dcol_relation_store> dm_column_storages = Dbo.queryList(Dcol_relation_store.class, "select * from " + Dcol_relation_store.TableName + " where col_id in " +
-								"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? ) and dslad_id = ? order by csi_number",
-						dm_datatable.getDatatable_id(), dcs.getDslad_id());
+								"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ? ) and dslad_id = ? and data_source = ? order by csi_number",
+						dm_datatable.getDatatable_id(), dcs.getDslad_id(),DataSourceType.DML.getCode());
 				for (int i = 0; i < dm_column_storages.size(); i++) {
 					Dcol_relation_store dc_storage = dm_column_storages.get(i);
 					dc_storage.setCsi_number(String.valueOf(i));
@@ -1225,8 +1227,8 @@ public class MarketInfoAction extends BaseAction {
 				" t1 LEFT JOIN " + Data_store_layer_added.TableName + " t2 ON t1.dslad_id = t2.dslad_id " +
 				" LEFT JOIN " + Datatable_field_info.TableName + " t3 ON t1.col_id = t3.datatable_field_id " +
 				" WHERE t2.dsla_storelayer = ? AND t1.col_id IN " +
-				" ( SELECT datatable_field_id FROM Datatable_field_info WHERE datatable_id = ?) " +
-				" order by csi_number", StoreLayerAdded.RowKey.getCode(), datatable_field_info.getDatatable_id());
+				" ( SELECT datatable_field_id FROM Datatable_field_info WHERE datatable_id = ?) and t1.data_source = ?" +
+				" order by csi_number", StoreLayerAdded.RowKey.getCode(), datatable_field_info.getDatatable_id(),DataSourceType.DML.getCode());
 		List<Map<String, Object>> resultlist = new ArrayList<>();
 		//遍历库中已有的rowkey字段
 		for (Object object : objects) {
@@ -1498,8 +1500,8 @@ public class MarketInfoAction extends BaseAction {
 			dm_relation_datatable.setDsl_id(dsl_id);
 			//查询是否当前单元格为是
 			//这里本来想弄一个单选框的，但是查看了apache.poi 到2020.4.26，没有发现有提供单选框的组件，于是放弃
-			List<Dtab_relation_store> dm_relation_datatables = Dbo.queryList(Dtab_relation_store.class, "select * from " + Dtab_relation_store.TableName + " where dsl_id = ? and tab_id = ?"
-					, dm_relation_datatable.getDsl_id(), dm_datatable.getDatatable_id());
+			List<Dtab_relation_store> dm_relation_datatables = Dbo.queryList(Dtab_relation_store.class, "select * from " + Dtab_relation_store.TableName + " where dsl_id = ? and tab_id = ? and data_source=?"
+					, dm_relation_datatable.getDsl_id(), dm_datatable.getDatatable_id(),DataSourceType.DML.getCode());
 			if (dm_relation_datatables.isEmpty()) {
 				sheet1.createRow(12 + i).createCell(0).setCellValue(IsFlag.Fou.getValue());
 			} else {
@@ -1567,8 +1569,9 @@ public class MarketInfoAction extends BaseAction {
 		for (int i = 0; i < datatable_field_infos.size(); i++) {
 			Datatable_field_info datatable_field_info = datatable_field_infos.get(i);
 			//查询字段的附加属性是否为是
-			List<Data_store_layer_added> data_store_layer_addeds = Dbo.queryList(Data_store_layer_added.class, "select dsla_storelayer from " + Data_store_layer_added.TableName + " t1 left join " + Dcol_relation_store.TableName +
-					" t2 on t1.dslad_id = t2.dslad_id where col_id = ?", datatable_field_info.getDatatable_field_id());
+			List<Data_store_layer_added> data_store_layer_addeds = Dbo.queryList(Data_store_layer_added.class, "select dsla_storelayer from " + Data_store_layer_added.TableName + " t1 left join "
+					+ Dcol_relation_store.TableName +
+					" t2 on t1.dslad_id = t2.dslad_id where col_id = ? and t2.data_source = ?", datatable_field_info.getDatatable_field_id(),DataSourceType.DML.getCode());
 			List<String> dsla_storelayers = new ArrayList<>();
 			for (Data_store_layer_added data_store_layer_added : data_store_layer_addeds) {
 				dsla_storelayers.add(data_store_layer_added.getDsla_storelayer());
@@ -1653,10 +1656,10 @@ public class MarketInfoAction extends BaseAction {
 		List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class, "select * from " + Datatable_field_info.TableName + " where datatable_id in " +
 				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
 		List<Dtab_relation_store> dm_relation_datatables = Dbo.queryList(Dtab_relation_store.class, "select * from " + Dtab_relation_store.TableName + " where tab_id in " +
-				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
+				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? ) and data_source =?", dm_info.getData_mart_id(),DataSourceType.DML.getCode());
 		List<Dcol_relation_store> dm_column_storages = Dbo.queryList(Dcol_relation_store.class, "select * from " + Dcol_relation_store.TableName + " where col_id in (" +
 				"select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id in " +
-				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? ))", dm_info.getData_mart_id());
+				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )) and data_source = ?", dm_info.getData_mart_id(),DataSourceType.DML.getCode());
 		//前后置作业表
 		List<Dm_relevant_info> dm_relevant_infos = Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id in " +
 				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
