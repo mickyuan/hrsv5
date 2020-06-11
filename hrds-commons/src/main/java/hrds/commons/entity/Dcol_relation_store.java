@@ -28,15 +28,15 @@ public class Dcol_relation_store extends ProjectTableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("dslad_id");
-		__tmpPKS.add("dcs_id");
+		__tmpPKS.add("col_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="csi_number",value="序号位置:",dataType = Long.class,required = true)
 	private Long csi_number;
 	@DocBean(name ="dslad_id",value="附加信息ID:",dataType = Long.class,required = true)
 	private Long dslad_id;
-	@DocBean(name ="dcs_id",value="结构信息id:",dataType = Long.class,required = true)
-	private Long dcs_id;
+	@DocBean(name ="col_id",value="结构信息id:",dataType = Long.class,required = true)
+	private Long col_id;
 	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = true)
 	private String data_source;
 
@@ -69,17 +69,17 @@ public class Dcol_relation_store extends ProjectTableEntity
 		}
 	}
 	/** 取得：结构信息id */
-	public Long getDcs_id(){
-		return dcs_id;
+	public Long getCol_id(){
+		return col_id;
 	}
 	/** 设置：结构信息id */
-	public void setDcs_id(Long dcs_id){
-		this.dcs_id=dcs_id;
+	public void setCol_id(Long col_id){
+		this.col_id=col_id;
 	}
 	/** 设置：结构信息id */
-	public void setDcs_id(String dcs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(dcs_id)){
-			this.dcs_id=new Long(dcs_id);
+	public void setCol_id(String col_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(col_id)){
+			this.col_id=new Long(col_id);
 		}
 	}
 	/** 取得：存储层-数据来源 */

@@ -123,15 +123,15 @@ public class ProcessingDataTest {
 			Dtab_relation_store drt = new Dtab_relation_store();
 			drt.setData_source(StoreLayerDataSource.DB.getCode());
 
-			drt.setDrs_id(idL1);
+			drt.setTab_id(idL1);
 			drt.setDsl_id(idL1);
 			int add2 = drt.add(db);
 
-			drt.setDrs_id(idL2);
+			drt.setTab_id(idL2);
 			drt.setDsl_id(idL1);//关系
 			add2 = drt.add(db);
 
-			drt.setDrs_id(idL3);
+			drt.setTab_id(idL3);
 			drt.setDsl_id(idL1);//关系
 			add2 = drt.add(db);
 
@@ -238,9 +238,9 @@ public class ProcessingDataTest {
 					"  where storage_id in(?,?,?)", idL1, idL2,idL3).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 
-			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where drs_id in(?,?,?)", idL1, idL2,idL3);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where tab_id in(?,?,?)", idL1, idL2,idL3);
 			num = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName +
-					"  where drs_id in(?,?,?)", idL1, idL2,idL3).orElseThrow(() -> new RuntimeException("count fail!"));
+					"  where tab_id in(?,?,?)", idL1, idL2,idL3).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 
 			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id in(?,?,?)", idL1, idL2,idL3);

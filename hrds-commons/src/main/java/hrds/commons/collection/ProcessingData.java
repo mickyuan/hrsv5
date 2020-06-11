@@ -135,7 +135,7 @@ public abstract class ProcessingData {
             List<LayerBean> maps = SqlOperator.queryList(db, LayerBean.class,
                     "select dsl.dsl_id,dsl.dsl_name,dsl.store_type,'" + DataSourceType.DCL.getCode() + "'  as dst from "
                             + Table_storage_info.TableName + " tsi join " + Dtab_relation_store.TableName + " dtrs "
-                            + "on tsi.storage_id = dtrs.drs_id join " + Data_store_layer.TableName + " dsl "
+                            + "on tsi.storage_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl "
                             + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", table_id, StoreLayerDataSource.DB.getCode());
             //记录数据表在哪个系统存储层
             for (LayerBean map : maps) {
@@ -148,7 +148,7 @@ public abstract class ProcessingData {
         List<LayerBean> dslMap = SqlOperator.queryList(db, LayerBean.class,
                 "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.DML.getCode() + "' as dst from "
                         + Dm_datatable.TableName + " dd join  " + Dtab_relation_store.TableName + " dtrs " +
-                        "on dd.datatable_id = dtrs.drs_id join " + Data_store_layer.TableName + " dsl " +
+                        "on dd.datatable_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl " +
                         "on dtrs.dsl_id = dsl.dsl_id where lower(datatable_en_name) = ? and dtrs.data_source = ?",
 		                tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
         if (dslMap.size() != 0) {

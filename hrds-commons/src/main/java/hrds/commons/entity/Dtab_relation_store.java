@@ -28,15 +28,15 @@ public class Dtab_relation_store extends ProjectTableEntity
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
 		__tmpPKS.add("dsl_id");
-		__tmpPKS.add("drs_id");
+		__tmpPKS.add("tab_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
 	@DocBean(name ="is_successful",value="是否入库成功(JobExecuteState):100-等待<DengDai> 101-运行<YunXing> 102-暂停<ZanTing> 103-中止<ZhongZhi> 104-完成<WanCheng> 105-失败<ShiBai> ",dataType = String.class,required = false)
 	private String is_successful;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;
-	@DocBean(name ="drs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
-	private Long drs_id;
+	@DocBean(name ="tab_id",value="对象采集任务编号:",dataType = Long.class,required = true)
+	private Long tab_id;
 	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = true)
 	private String data_source;
 
@@ -63,17 +63,17 @@ public class Dtab_relation_store extends ProjectTableEntity
 		}
 	}
 	/** 取得：对象采集任务编号 */
-	public Long getDrs_id(){
-		return drs_id;
+	public Long getTab_id(){
+		return tab_id;
 	}
 	/** 设置：对象采集任务编号 */
-	public void setDrs_id(Long drs_id){
-		this.drs_id=drs_id;
+	public void setTab_id(Long tab_id){
+		this.tab_id=tab_id;
 	}
 	/** 设置：对象采集任务编号 */
-	public void setDrs_id(String drs_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(drs_id)){
-			this.drs_id=new Long(drs_id);
+	public void setTab_id(String tab_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(tab_id)){
+			this.tab_id=new Long(tab_id);
 		}
 	}
 	/** 取得：存储层-数据来源 */

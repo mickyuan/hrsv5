@@ -31,49 +31,19 @@ public class Dq_sys_cfg extends ProjectTableEntity
 		__tmpPKS.add("var_name");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="app_updt_dt",value="更新日期:",dataType = String.class,required = true)
-	private String app_updt_dt;
-	@DocBean(name ="app_updt_ti",value="更新时间:",dataType = String.class,required = true)
-	private String app_updt_ti;
-	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
-	private Long user_id;
 	@DocBean(name ="sys_var_id",value="系统变量编号:",dataType = Long.class,required = true)
 	private Long sys_var_id;
 	@DocBean(name ="var_name",value="变量名:",dataType = String.class,required = true)
 	private String var_name;
 	@DocBean(name ="var_value",value="变量值:",dataType = String.class,required = false)
 	private String var_value;
+	@DocBean(name ="app_updt_dt",value="更新日期:",dataType = String.class,required = true)
+	private String app_updt_dt;
+	@DocBean(name ="app_updt_ti",value="更新时间:",dataType = String.class,required = true)
+	private String app_updt_ti;
+	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
+	private Long user_id;
 
-	/** 取得：更新日期 */
-	public String getApp_updt_dt(){
-		return app_updt_dt;
-	}
-	/** 设置：更新日期 */
-	public void setApp_updt_dt(String app_updt_dt){
-		this.app_updt_dt=app_updt_dt;
-	}
-	/** 取得：更新时间 */
-	public String getApp_updt_ti(){
-		return app_updt_ti;
-	}
-	/** 设置：更新时间 */
-	public void setApp_updt_ti(String app_updt_ti){
-		this.app_updt_ti=app_updt_ti;
-	}
-	/** 取得：用户ID */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
-		}
-	}
 	/** 取得：系统变量编号 */
 	public Long getSys_var_id(){
 		return sys_var_id;
@@ -103,5 +73,35 @@ public class Dq_sys_cfg extends ProjectTableEntity
 	/** 设置：变量值 */
 	public void setVar_value(String var_value){
 		this.var_value=var_value;
+	}
+	/** 取得：更新日期 */
+	public String getApp_updt_dt(){
+		return app_updt_dt;
+	}
+	/** 设置：更新日期 */
+	public void setApp_updt_dt(String app_updt_dt){
+		this.app_updt_dt=app_updt_dt;
+	}
+	/** 取得：更新时间 */
+	public String getApp_updt_ti(){
+		return app_updt_ti;
+	}
+	/** 设置：更新时间 */
+	public void setApp_updt_ti(String app_updt_ti){
+		this.app_updt_ti=app_updt_ti;
+	}
+	/** 取得：用户ID */
+	public Long getUser_id(){
+		return user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(Long user_id){
+		this.user_id=user_id;
+	}
+	/** 设置：用户ID */
+	public void setUser_id(String user_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
+			this.user_id=new Long(user_id);
+		}
 	}
 }
