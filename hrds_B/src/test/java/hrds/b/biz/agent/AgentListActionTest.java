@@ -1,5 +1,8 @@
 package hrds.b.biz.agent;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
@@ -12,21 +15,52 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.*;
-import hrds.commons.entity.*;
+import hrds.commons.codes.AgentStatus;
+import hrds.commons.codes.AgentType;
+import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CountNum;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataExtractType;
+import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.FillingType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.ObjectCollectType;
+import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.Store_type;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Column_clean;
+import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_added;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Dcol_relation_store;
+import hrds.commons.entity.Department_info;
+import hrds.commons.entity.Dtab_relation_store;
+import hrds.commons.entity.File_collect_set;
+import hrds.commons.entity.File_source;
+import hrds.commons.entity.Ftp_collect;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.entity.Orig_code_info;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_info;
+import hrds.commons.entity.Table_storage_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 //TODO 日志文件下载的测试用例暂无
 //TODO 调用工具类生成作业/发送任务测试用例暂无
@@ -263,7 +297,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			objectCollect.setS_date("20190918");
 			objectCollect.setE_date("20190918");
 			objectCollect.setDatabase_code(DataBaseCode.UTF_8.getCode());
-			objectCollect.setRun_way(runWay);
+//			objectCollect.setRun_way(runWay);
 			objectCollect.setFile_path("wzcTestFilePath" + i);
 			objectCollect.setIs_sendok(IsFlag.Shi.getCode());
 			objectCollect.setAgent_id(HALF_STRUCT_AGENT_ID);
@@ -1619,10 +1653,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4399L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4400L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4402L);
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4400L);
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ?", 2001);
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ?", 3001);
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ?", 3002);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4400L);
+			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " where column_id = ?", 2001);
+			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " where column_id = ?", 3001);
+			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " where column_id = ?", 3002);
 
 			SqlOperator.commitTransaction(db);
 		}
@@ -2181,7 +2215,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			}
 
 			//构造data_relation_table表数据，构造user_id、ci_sp_code、ci_sp_class为主键
-			List<Data_relation_table> relationTables = new ArrayList<>();
+			List<Dtab_relation_store> relationTables = new ArrayList<>();
 			for(int i = 0; i < 2; i++){
 				long storageId;
 				long dslId;
@@ -2198,15 +2232,15 @@ public class AgentListActionTest extends WebBaseTestCase {
 						storageId = UNEXPECTED_ID;
 						dslId = UNEXPECTED_ID;
 				}
-				Data_relation_table relationTable = new Data_relation_table();
-				relationTable.setStorage_id(storageId);
+				Dtab_relation_store relationTable = new Dtab_relation_store();
+				relationTable.setTab_id(storageId);
 				relationTable.setDsl_id(dslId);
 
 				relationTables.add(relationTable);
 			}
 
 			//构造column_storage_info表数据
-			List<Column_storage_info> columnStorageInfos = new ArrayList<>();
+			List<Dcol_relation_store> columnStorageInfos = new ArrayList<>();
 			for(int i = 0; i < 3; i++){
 				long dsladId;
 				long columnId;
@@ -2227,8 +2261,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 						dsladId = UNEXPECTED_ID;
 						columnId = UNEXPECTED_ID;
 				}
-				Column_storage_info storageInfo = new Column_storage_info();
-				storageInfo.setColumn_id(columnId);
+				Dcol_relation_store storageInfo = new Dcol_relation_store();
+				storageInfo.setCol_id(columnId);
 				storageInfo.setDslad_id(dsladId);
 
 				columnStorageInfos.add(storageInfo);
@@ -2351,14 +2385,14 @@ public class AgentListActionTest extends WebBaseTestCase {
 			assertThat("数据存储附加信息表测试数据初始化", layerAddedsCount, is(3));
 
 			int relationTablesCount = 0;
-			for(Data_relation_table relationTable : relationTables){
+			for(Dtab_relation_store relationTable : relationTables){
 				int count = relationTable.add(db);
 				relationTablesCount += count;
 			}
 			assertThat("数据存储关系表测试数据初始化", relationTablesCount, is(2));
 
 			int columnStorageInfosCount = 0;
-			for(Column_storage_info storageInfo : columnStorageInfos){
+			for(Dcol_relation_store storageInfo : columnStorageInfos){
 				int count = storageInfo.add(db);
 				columnStorageInfosCount += count;
 			}

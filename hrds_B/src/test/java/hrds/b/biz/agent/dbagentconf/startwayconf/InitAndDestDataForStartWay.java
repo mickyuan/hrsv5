@@ -26,15 +26,15 @@ import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Column_clean;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Column_split;
-import hrds.commons.entity.Column_storage_info;
 import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.entity.Data_relation_table;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_layer_added;
 import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Dcol_relation_store;
 import hrds.commons.entity.Department_info;
+import hrds.commons.entity.Dtab_relation_store;
 import hrds.commons.entity.Orig_code_info;
 import hrds.commons.entity.Orig_syso_info;
 import hrds.commons.entity.Sys_user;
@@ -80,7 +80,7 @@ public class InitAndDestDataForStartWay {
 	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
 
-	public static void before(){
+	public static void before() {
 		//1、构造sys_user表测试数据
 		Sys_user user = BaseInitData.buildSysUserData();
 
@@ -101,7 +101,7 @@ public class InitAndDestDataForStartWay {
 
 		//7、构建table_info测试数据
 		List<Table_info> tableInfos = new ArrayList<>();
-		for(int i = 1; i <= 4; i++){
+		for (int i = 1; i <= 4; i++) {
 			long tableId;
 			String tableName;
 			String tableChName;
@@ -152,7 +152,8 @@ public class InitAndDestDataForStartWay {
 					tableName = "data_source";
 					tableChName = "数据源表";
 					//自定义采集
-					customizeSQL = "select source_id, datasource_number, datasource_name from data_source where source_id = " + SOURCE_ID;
+					customizeSQL = "select source_id, datasource_number, datasource_name from data_source where source_id = "
+						+ SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -192,84 +193,84 @@ public class InitAndDestDataForStartWay {
 
 		//8、构建table_column表测试数据
 		List<Table_column> sysUsers = new ArrayList<>();
-		for(int i = 1; i <= 11; i++){
+		for (int i = 1; i <= 11; i++) {
 			String primaryKeyFlag;
 			String columnName;
 			String columnType;
 			String columnChName;
 			String remark;
-			switch (i){
-				case 1 :
+			switch (i) {
+				case 1:
 					primaryKeyFlag = IsFlag.Shi.getCode();
 					columnName = "user_id";
 					columnType = "int8";
 					columnChName = "主键";
 					remark = "1";
 					break;
-				case 2 :
+				case 2:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "create_id";
 					columnType = "int8";
 					columnChName = "创建用户者ID";
 					remark = "2";
 					break;
-				case 3 :
+				case 3:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "dep_id";
 					columnType = "int8";
 					columnChName = "部门ID";
 					remark = "3";
 					break;
-				case 4 :
+				case 4:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "role_id";
 					columnType = "int8";
 					columnChName = "角色ID";
 					remark = "4";
 					break;
-				case 5 :
+				case 5:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "user_name";
 					columnType = "varchar";
 					columnChName = "用户名";
 					remark = "5";
 					break;
-				case 6 :
+				case 6:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "user_password";
 					columnType = "varchar";
 					columnChName = "密码";
 					remark = "6";
 					break;
-				case 7 :
+				case 7:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "user_email";
 					columnType = "varchar";
 					columnChName = "邮箱";
 					remark = "7";
 					break;
-				case 8 :
+				case 8:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "user_mobile";
 					columnType = "varchar";
 					columnChName = "电话";
 					remark = "8";
 					break;
-				case 9 :
+				case 9:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "useris_admin";
 					columnType = "char";
 					columnChName = "是否管理员";
 					remark = "9";
 					break;
-				case 10 :
+				case 10:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "user_type";
 					columnType = "char";
 					columnChName = "用户类型";
 					remark = "10";
 					break;
-				case 11 :
+				case 11:
 					primaryKeyFlag = IsFlag.Fou.getCode();
 					columnName = "login_date";
 					columnType = "char";
@@ -309,7 +310,7 @@ public class InitAndDestDataForStartWay {
 
 		//9、构造table_clean表测试数据
 		List<Table_clean> tableCleans = new ArrayList<>();
-		for(int i = 1; i <= 2; i++){
+		for (int i = 1; i <= 2; i++) {
 			long tbCleanId;
 			String compleType;
 			String cleanType;
@@ -318,8 +319,8 @@ public class InitAndDestDataForStartWay {
 			long length;
 			String oriField;
 			String newField;
-			switch (i){
-				case 1 :
+			switch (i) {
+				case 1:
 					tbCleanId = 11111L;
 					compleType = FillingType.QianBuQi.getCode();
 					cleanType = CleanType.ZiFuBuQi.getCode();
@@ -329,7 +330,7 @@ public class InitAndDestDataForStartWay {
 					oriField = "";
 					newField = "";
 					break;
-				case 2 :
+				case 2:
 					tbCleanId = 111111L;
 					compleType = "";
 					cleanType = CleanType.ZiFuTiHuan.getCode();
@@ -362,10 +363,9 @@ public class InitAndDestDataForStartWay {
 			tableCleans.add(tableClean);
 		}
 
-
 		//10、构造column_clean表测试数据，给create_id和dep_id设置字符补齐
 		List<Column_clean> colComples = new ArrayList<>();
-		for(int i = 0; i < 2; i++){
+		for (int i = 0; i < 2; i++) {
 			long colCleanId = i % 2 == 0 ? 22222L : 33333L;
 			String cleanType = CleanType.ZiFuBuQi.getCode();
 			String compleType = i % 2 == 0 ? FillingType.QianBuQi.getCode() : FillingType.HouBuQi.getCode();
@@ -422,7 +422,7 @@ public class InitAndDestDataForStartWay {
 
 		//13、clean_parameter表测试数据
 		List<Clean_parameter> cleanParameters = new ArrayList<>();
-		for(int i = 0; i < 2 ;i++){
+		for (int i = 0; i < 2; i++) {
 			long cId = i % 2 == 0 ? 666666L : 777777L;
 			String cleanType = i % 2 == 0 ? CleanType.ZiFuBuQi.getCode() : CleanType.ZiFuTiHuan.getCode();
 			String complChar;
@@ -430,8 +430,8 @@ public class InitAndDestDataForStartWay {
 			String complType = null;
 			String oriField;
 			String newField;
-			switch (i){
-				case 0 :
+			switch (i) {
+				case 0:
 					complChar = "cleanparameter";
 					compLength = 14;
 					complType = "1";
@@ -465,7 +465,7 @@ public class InitAndDestDataForStartWay {
 
 		//14、构造column_spilt表测试数据，按照偏移量拆分ci_sp_name
 		List<Column_split> offsetSpilts = new ArrayList<>();
-		for(int i = 0; i < 2; i++){
+		for (int i = 0; i < 2; i++) {
 			long colSplitId = i % 2 == 0 ? 1111111L : 2222222L;
 			String offset = i % 2 == 0 ? "3" : "0";
 			String columnName = i % 2 == 0 ? "ci_sp" : "_name";
@@ -492,7 +492,7 @@ public class InitAndDestDataForStartWay {
 
 		//15、构造column_spilt表测试数据，按照下划线拆分ci_sp_classname
 		List<Column_split> underLintSpilts = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
+		for (int i = 0; i < 3; i++) {
 			long colSplitId = 0;
 			String columnName = null;
 			String spiltType = "2";
@@ -502,20 +502,20 @@ public class InitAndDestDataForStartWay {
 			long columnId = 3003L;
 			String splitSep = "_";
 			long seq = 0;
-			switch (i){
-				case 0 :
+			switch (i) {
+				case 0:
 					colSplitId = 101010103L;
 					columnName = "ci";
 					columnChName = "ci_ch";
 					seq = 1;
 					break;
-				case 1 :
+				case 1:
 					colSplitId = 101010104L;
 					columnName = "sp";
 					columnChName = "sp_ch";
 					seq = 2;
 					break;
-				case 2 :
+				case 2:
 					colSplitId = 101010105L;
 					columnName = "classname";
 					columnChName = "classname_ch";
@@ -540,7 +540,7 @@ public class InitAndDestDataForStartWay {
 
 		//16、由于配置了列拆分，所以要构造模拟数据将拆分后的列加入Table_column表中
 		List<Table_column> splitOne = new ArrayList<>();
-		for(int i = 0; i < 2; i++){
+		for (int i = 0; i < 2; i++) {
 			long columnId = i % 2 == 0 ? 121212L : 232323L;
 			String columnName = i % 2 == 0 ? "ci_sp" : "_name";
 			String columnChName = i % 2 == 0 ? "ci_sp_ch" : "_name_ch";
@@ -560,23 +560,23 @@ public class InitAndDestDataForStartWay {
 		}
 
 		List<Table_column> splitTwo = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
+		for (int i = 0; i < 3; i++) {
 			long columnId = 0;
 			String columnName = null;
 			String columnChName = null;
 
-			switch (i){
-				case 0 :
+			switch (i) {
+				case 0:
 					columnId = 141414L;
 					columnName = "ci";
 					columnChName = "ci_ch";
 					break;
-				case 1 :
+				case 1:
 					columnId = 151515L;
 					columnName = "sp";
 					columnChName = "sp_ch";
 					break;
-				case 2 :
+				case 2:
 					columnId = 161616L;
 					columnName = "classname";
 					columnChName = "classname_ch";
@@ -627,7 +627,7 @@ public class InitAndDestDataForStartWay {
 
 		//20、构造数据抽取定义相关测试数据
 		List<Data_extraction_def> extractionDefs = new ArrayList<>();
-		for(int i = 0; i < 4; i++){
+		for (int i = 0; i < 4; i++) {
 			long tableId;
 			String extractType;
 			String rowSeparator;
@@ -635,7 +635,7 @@ public class InitAndDestDataForStartWay {
 			String fileFormat;
 			String planeUrl;
 			switch (i) {
-				case 0 :
+				case 0:
 					tableId = SYS_USER_TABLE_ID;
 					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
@@ -643,7 +643,7 @@ public class InitAndDestDataForStartWay {
 					databaseSeparatorr = "|";
 					planeUrl = "/root";
 					break;
-				case 1 :
+				case 1:
 					tableId = CODE_INFO_TABLE_ID;
 					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.DingChang.getCode();
@@ -651,7 +651,7 @@ public class InitAndDestDataForStartWay {
 					databaseSeparatorr = "";
 					planeUrl = "/home";
 					break;
-				case 2 :
+				case 2:
 					tableId = AGENT_INFO_TABLE_ID;
 					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.ORC.getCode();
@@ -659,7 +659,7 @@ public class InitAndDestDataForStartWay {
 					databaseSeparatorr = "";
 					planeUrl = "";
 					break;
-				case 3 :
+				case 3:
 					tableId = DATA_SOURCE_TABLE_ID;
 					extractType = DataExtractType.ShuJuKuChouQuLuoDi.getCode();
 					fileFormat = FileFormat.FeiDingChang.getCode();
@@ -691,7 +691,7 @@ public class InitAndDestDataForStartWay {
 
 		//21、构造table_storage_info表测试数据
 		List<Table_storage_info> tableStorageInfos = new ArrayList<>();
-		for(int i = 0; i < 2; i++){
+		for (int i = 0; i < 2; i++) {
 			long id = i % 2 == 0 ? BASE_TB_STORAGE_ID : BASE_TB_STORAGE_ID + 1;
 			String fileFormat = i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.FeiDingChang.getCode();
 			String storageType = i % 2 == 0 ? StorageType.ZengLiang.getCode() : StorageType.ZhuiJia.getCode();
@@ -712,27 +712,27 @@ public class InitAndDestDataForStartWay {
 
 		//22、构造data_store_layer表测试数据
 		List<Data_store_layer> storeLayers = new ArrayList<>();
-		for(int i = 0; i < 5; i++){
+		for (int i = 0; i < 5; i++) {
 			String dslName;
 			String storeType;
-			switch (i){
-				case 0 :
+			switch (i) {
+				case 0:
 					dslName = "SOLR";
 					storeType = Store_type.SOLR.getCode();
 					break;
-				case 1 :
+				case 1:
 					dslName = "Oralce";
 					storeType = Store_type.DATABASE.getCode();
 					break;
-				case 2 :
+				case 2:
 					dslName = "ElasticSearch";
 					storeType = Store_type.ElasticSearch.getCode();
 					break;
-				case 3 :
+				case 3:
 					dslName = "HBASE";
 					storeType = Store_type.HBASE.getCode();
 					break;
-				case 4 :
+				case 4:
 					dslName = "MONGODB";
 					storeType = Store_type.MONGODB.getCode();
 					break;
@@ -750,62 +750,62 @@ public class InitAndDestDataForStartWay {
 
 		//23、构造data_store_layer_attr表测试数据
 		List<Data_store_layer_attr> layerAttrs = new ArrayList<>();
-		for(int i = 0; i < 11; i++){
+		for (int i = 0; i < 11; i++) {
 			String propertyKey;
 			String propertyVal;
 			long dslId;
-			switch (i){
-				case 0 :
+			switch (i) {
+				case 0:
 					propertyKey = "database_name";
 					propertyVal = "coll_sto_dest_test_dbname";
 					dslId = 4400L;
 					break;
-				case 1 :
+				case 1:
 					propertyKey = "database_pwd";
 					propertyVal = "coll_sto_dest_test_pwd";
 					dslId = 4400L;
 					break;
-				case 2 :
+				case 2:
 					propertyKey = "database_drive";
 					propertyVal = "coll_sto_dest_test_driver";
 					dslId = 4400L;
 					break;
-				case 3 :
+				case 3:
 					propertyKey = "user_name";
 					propertyVal = "coll_sto_dest_test_username";
 					dslId = 4400L;
 					break;
-				case 4 :
+				case 4:
 					propertyKey = "database_ip";
 					propertyVal = "coll_sto_dest_test_ip";
 					dslId = 4400L;
 					break;
-				case 5 :
+				case 5:
 					propertyKey = "database_port";
 					propertyVal = "coll_sto_dest_test_port";
 					dslId = 4400L;
 					break;
-				case 6 :
+				case 6:
 					propertyKey = "jdbc_url";
 					propertyVal = "coll_sto_dest_test_jdbc_url";
 					dslId = 4400L;
 					break;
-				case 7 :
+				case 7:
 					propertyKey = "SolarUrl";
 					propertyVal = "https://SolarUrl";
 					dslId = 4399L;
 					break;
-				case 8 :
+				case 8:
 					propertyKey = "Hbase-site-path";
 					propertyVal = "Hbase-site.xml";
 					dslId = 4402L;
 					break;
-				case 9 :
+				case 9:
 					propertyKey = "Core-site-path";
 					propertyVal = "Core-site.xml";
 					dslId = 4402L;
 					break;
-				case 10 :
+				case 10:
 					propertyKey = "Hdfs-site-path";
 					propertyVal = "Hdfs-site.xml";
 					dslId = 4402L;
@@ -826,19 +826,19 @@ public class InitAndDestDataForStartWay {
 
 		//24、构造data_store_layer_added表测试数据
 		List<Data_store_layer_added> layerAddeds = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
+		for (int i = 0; i < 3; i++) {
 			long dslId;
 			String dslaStorelayer;
 			switch (i) {
-				case 0 :
+				case 0:
 					dslId = 4400L;
 					dslaStorelayer = StoreLayerAdded.ZhuJian.getCode();
 					break;
-				case 1 :
+				case 1:
 					dslId = 4399L;
 					dslaStorelayer = StoreLayerAdded.SuoYinLie.getCode();
 					break;
-				case 2 :
+				case 2:
 					dslId = 4402L;
 					dslaStorelayer = StoreLayerAdded.RowKey.getCode();
 					break;
@@ -855,20 +855,20 @@ public class InitAndDestDataForStartWay {
 		}
 
 		//25、构造column_storage_info表测试数据
-		List<Column_storage_info> columnStorageInfos = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
+		List<Dcol_relation_store> columnStorageInfos = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
 			long dsladId;
 			long columnId;
 			switch (i) {
-				case 0 :
+				case 0:
 					dsladId = 439999L;
 					columnId = 3112L;
 					break;
-				case 1 :
+				case 1:
 					dsladId = 440001L;
 					columnId = 3112L;
 					break;
-				case 2 :
+				case 2:
 					dsladId = 440000L;
 					columnId = 5112L;
 					break;
@@ -876,28 +876,28 @@ public class InitAndDestDataForStartWay {
 					dsladId = UNEXPECTED_ID;
 					columnId = UNEXPECTED_ID;
 			}
-			Column_storage_info storageInfo = new Column_storage_info();
-			storageInfo.setColumn_id(columnId);
+			Dcol_relation_store storageInfo = new Dcol_relation_store();
+			storageInfo.setCol_id(columnId);
 			storageInfo.setDslad_id(dsladId);
 
 			columnStorageInfos.add(storageInfo);
 		}
 
 		//26、构造data_relation_table表测试数据
-		List<Data_relation_table> relationTables = new ArrayList<>();
-		for(int i = 0; i < 3; i++){
+		List<Dtab_relation_store> relationTables = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
 			long storageId;
 			long dslId;
 			switch (i) {
-				case 0 :
+				case 0:
 					storageId = 10669588L;
 					dslId = 4400L;
 					break;
-				case 1 :
+				case 1:
 					storageId = 10669588L;
 					dslId = 4402L;
 					break;
-				case 2 :
+				case 2:
 					storageId = 10669589L;
 					dslId = 4399L;
 					break;
@@ -905,8 +905,8 @@ public class InitAndDestDataForStartWay {
 					storageId = UNEXPECTED_ID;
 					dslId = UNEXPECTED_ID;
 			}
-			Data_relation_table relationTable = new Data_relation_table();
-			relationTable.setStorage_id(storageId);
+			Dtab_relation_store relationTable = new Dtab_relation_store();
+			relationTable.setTab_id(storageId);
 			relationTable.setDsl_id(dslId);
 
 			relationTables.add(relationTable);
@@ -928,7 +928,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入Agent信息表(agent_info)测试数据
 			int agentInfoCount = 0;
-			for(Agent_info agentInfo : agents){
+			for (Agent_info agentInfo : agents) {
 				int count = agentInfo.add(db);
 				agentInfoCount += count;
 			}
@@ -936,7 +936,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入database_set表测试数据
 			int databaseSetCount = 0;
-			for(Database_set databaseSet : databases){
+			for (Database_set databaseSet : databases) {
 				int count = databaseSet.add(db);
 				databaseSetCount += count;
 			}
@@ -944,7 +944,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入collect_job_classify表测试数据
 			int classifyCount = 0;
-			for(Collect_job_classify classify : classifies){
+			for (Collect_job_classify classify : classifies) {
 				int count = classify.add(db);
 				classifyCount += count;
 			}
@@ -952,7 +952,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入table_info测试数据
 			int tableInfoCount = 0;
-			for(Table_info tableInfo : tableInfos){
+			for (Table_info tableInfo : tableInfos) {
 				int count = tableInfo.add(db);
 				tableInfoCount += count;
 			}
@@ -960,25 +960,25 @@ public class InitAndDestDataForStartWay {
 
 			//插入table_column测试数据
 			int sysUserCount = 0;
-			for(Table_column tableColumn : sysUsers){
+			for (Table_column tableColumn : sysUsers) {
 				int count = tableColumn.add(db);
 				sysUserCount += count;
 			}
 			assertThat("sys_user表对应字段表测试数据初始化", sysUserCount, is(11));
 			int codeInfoCount = 0;
-			for(Table_column tableColumn : codeInfos){
+			for (Table_column tableColumn : codeInfos) {
 				int count = tableColumn.add(db);
 				codeInfoCount += count;
 			}
 			assertThat("code_info表对应字段表测试数据初始化", codeInfoCount, is(5));
 			int agentInfosCount = 0;
-			for(Table_column tableColumn : agentInfos){
+			for (Table_column tableColumn : agentInfos) {
 				int count = tableColumn.add(db);
 				agentInfosCount += count;
 			}
 			assertThat("agent_info表对应字段表测试数据初始化", agentInfosCount, is(3));
 			int dataSourcesCount = 0;
-			for(Table_column tableColumn : dataSources){
+			for (Table_column tableColumn : dataSources) {
 				int count = tableColumn.add(db);
 				dataSourcesCount += count;
 			}
@@ -986,7 +986,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入table_clean测试数据
 			int tableCleanCount = 0;
-			for(Table_clean tableClean : tableCleans){
+			for (Table_clean tableClean : tableCleans) {
 				int count = tableClean.add(db);
 				tableCleanCount += count;
 			}
@@ -994,7 +994,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入column_clean测试数据
 			int columnCleanCount = 0;
-			for(Column_clean colComple : colComples){
+			for (Column_clean colComple : colComples) {
 				int count = colComple.add(db);
 				columnCleanCount += count;
 			}
@@ -1012,7 +1012,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入clean_parameter表测试数据
 			int cleanParameterCount = 0;
-			for(Clean_parameter cleanParameter : cleanParameters){
+			for (Clean_parameter cleanParameter : cleanParameters) {
 				int count = cleanParameter.add(db);
 				cleanParameterCount += count;
 			}
@@ -1020,11 +1020,11 @@ public class InitAndDestDataForStartWay {
 
 			//插入column_spilt表测试数据
 			int columnSpiltCount = 0;
-			for(Column_split columnSplit : offsetSpilts){
+			for (Column_split columnSplit : offsetSpilts) {
 				int count = columnSplit.add(db);
 				columnSpiltCount += count;
 			}
-			for(Column_split columnSplit : underLintSpilts){
+			for (Column_split columnSplit : underLintSpilts) {
 				int count = columnSplit.add(db);
 				columnSpiltCount += count;
 			}
@@ -1032,11 +1032,11 @@ public class InitAndDestDataForStartWay {
 
 			//将列拆分信息加入Table_column表
 			int spiltColumnCount = 0;
-			for(Table_column tableColumn : splitOne){
+			for (Table_column tableColumn : splitOne) {
 				int count = tableColumn.add(db);
 				spiltColumnCount += count;
 			}
-			for(Table_column tableColumn : splitTwo){
+			for (Table_column tableColumn : splitTwo) {
 				int count = tableColumn.add(db);
 				spiltColumnCount += count;
 			}
@@ -1052,7 +1052,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入orig_syso_info表测试数据
 			int origSysoInfoCount = 0;
-			for(Orig_syso_info origSysoInfo : origSysoInfos){
+			for (Orig_syso_info origSysoInfo : origSysoInfos) {
 				int count = origSysoInfo.add(db);
 				origSysoInfoCount += count;
 			}
@@ -1060,7 +1060,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入orig_code_info表测试数据
 			int origCodeInfoCount = 0;
-			for(Orig_code_info origCodeInfo : origCodeInfos){
+			for (Orig_code_info origCodeInfo : origCodeInfos) {
 				int count = origCodeInfo.add(db);
 				origCodeInfoCount += count;
 			}
@@ -1068,7 +1068,7 @@ public class InitAndDestDataForStartWay {
 
 			//插入data_extraction_def表数据
 			int extractionDefCount = 0;
-			for(Data_extraction_def def : extractionDefs){
+			for (Data_extraction_def def : extractionDefs) {
 				int count = def.add(db);
 				extractionDefCount += count;
 			}
@@ -1076,42 +1076,42 @@ public class InitAndDestDataForStartWay {
 
 			//插入table_storage_info表测试数据
 			int tsiCount = 0;
-			for(Table_storage_info storageInfo : tableStorageInfos){
+			for (Table_storage_info storageInfo : tableStorageInfos) {
 				int count = storageInfo.add(db);
 				tsiCount += count;
 			}
 			assertThat("插入table_storage_info表测试数据成功", tsiCount, is(2));
 			//插入column_storage_info表测试数据
 			int csiCount = 0;
-			for(Column_storage_info storageInfo : columnStorageInfos){
+			for (Dcol_relation_store storageInfo : columnStorageInfos) {
 				int count = storageInfo.add(db);
 				csiCount += count;
 			}
 			assertThat("插入column_storage_info表测试数据成功", csiCount, is(3));
 			//插入data_store_layer表测试数据
 			int dslCount = 0;
-			for(Data_store_layer layer : storeLayers){
+			for (Data_store_layer layer : storeLayers) {
 				int count = layer.add(db);
 				dslCount += count;
 			}
 			assertThat("插入data_store_layer表测试数据成功", dslCount, is(5));
 			//插入data_store_layer_attr表测试数据
 			int dslaCount = 0;
-			for(Data_store_layer_attr layerAttr : layerAttrs){
+			for (Data_store_layer_attr layerAttr : layerAttrs) {
 				int count = layerAttr.add(db);
 				dslaCount += count;
 			}
 			assertThat("插入data_store_layer_attr表测试数据成功", dslaCount, is(11));
 			//插入data_relation_table表测试数据
 			int drtCount = 0;
-			for(Data_relation_table relationTable : relationTables){
+			for (Dtab_relation_store relationTable : relationTables) {
 				int count = relationTable.add(db);
 				drtCount += count;
 			}
 			assertThat("插入data_relation_table表测试数据成功", drtCount, is(3));
 			//插入data_store_layer_added表测试数据
 			int dsladCount = 0;
-			for(Data_store_layer_added added : layerAddeds){
+			for (Data_store_layer_added added : layerAddeds) {
 				int count = added.add(db);
 				dsladCount += count;
 			}
@@ -1121,7 +1121,7 @@ public class InitAndDestDataForStartWay {
 		}
 	}
 
-	public static void after(){
+	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1、删除用户表(sys_user)测试数据
 			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
@@ -1154,31 +1154,41 @@ public class InitAndDestDataForStartWay {
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3003L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2010L);
 			//11、删除clean_parameter表测试数据
-			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
+			SqlOperator
+				.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
 			//12、删除column_spilt表测试数据
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3004L);
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
 			//13、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			//14、删除orig_syso_info表数据
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_two");
-			SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_three");
+			SqlOperator
+				.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
+			SqlOperator
+				.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_two");
+			SqlOperator
+				.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_three");
 			//15、删除orig_code_info表数据
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6001L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6002L);
 			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
 			//16、删除data_extraction_def表数据
-			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
-			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
-			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
-			SqlOperator.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
+			SqlOperator
+				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
+			SqlOperator
+				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
+			SqlOperator
+				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator
+				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//17、删除table_storage_info表数据
-			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
-			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
+			SqlOperator
+				.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
+			SqlOperator
+				.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//18、删除column_storage_info表数据
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 3112L);
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 5112L);
+			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " where column_id = ? ", 3112L);
+			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " where column_id = ? ", 5112L);
 			//19、删除data_store_layer表数据
 			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id = ? ", 4399L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id = ? ", 4400L);
@@ -1190,9 +1200,9 @@ public class InitAndDestDataForStartWay {
 			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id = ? ", 4400L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id = ? ", 4402L);
 			//21、删除data_relation_table表数据
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4402L);
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4399L);
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4400L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4402L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4399L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4400L);
 			//22、删除data_store_layer_added表数据
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4402L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4399L);

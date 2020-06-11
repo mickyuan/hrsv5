@@ -829,7 +829,7 @@ public class InitAndDestDataForStoDest {
 		}
 
 		//25、构造column_storage_info表测试数据
-		List<Column_storage_info> columnStorageInfos = new ArrayList<>();
+		List<Dcol_relation_store> columnStorageInfos = new ArrayList<>();
 		for(int i = 0; i < 3; i++){
 			long dsladId;
 			long columnId;
@@ -850,15 +850,15 @@ public class InitAndDestDataForStoDest {
 					dsladId = UNEXPECTED_ID;
 					columnId = UNEXPECTED_ID;
 			}
-			Column_storage_info storageInfo = new Column_storage_info();
-			storageInfo.setColumn_id(columnId);
+			Dcol_relation_store storageInfo = new Dcol_relation_store();
+			storageInfo.setCol_id(columnId);
 			storageInfo.setDslad_id(dsladId);
 
 			columnStorageInfos.add(storageInfo);
 		}
 
 		//26、构造data_relation_table表测试数据
-		List<Data_relation_table> relationTables = new ArrayList<>();
+		List<Dtab_relation_store> relationTables = new ArrayList<>();
 		for(int i = 0; i < 3; i++){
 			long storageId;
 			long dslId;
@@ -879,8 +879,8 @@ public class InitAndDestDataForStoDest {
 					storageId = UNEXPECTED_ID;
 					dslId = UNEXPECTED_ID;
 			}
-			Data_relation_table relationTable = new Data_relation_table();
-			relationTable.setStorage_id(storageId);
+			Dtab_relation_store relationTable = new Dtab_relation_store();
+			relationTable.setTab_id(storageId);
 			relationTable.setDsl_id(dslId);
 
 			relationTables.add(relationTable);
@@ -1057,7 +1057,7 @@ public class InitAndDestDataForStoDest {
 			assertThat("插入table_storage_info表测试数据成功", tsiCount, is(2));
 			//插入column_storage_info表测试数据
 			int csiCount = 0;
-			for(Column_storage_info storageInfo : columnStorageInfos){
+			for(Dcol_relation_store storageInfo : columnStorageInfos){
 				int count = storageInfo.add(db);
 				csiCount += count;
 			}
@@ -1078,7 +1078,7 @@ public class InitAndDestDataForStoDest {
 			assertThat("插入data_store_layer_attr表测试数据成功", dslaCount, is(11));
 			//插入data_relation_table表测试数据
 			int drtCount = 0;
-			for(Data_relation_table relationTable : relationTables){
+			for(Dtab_relation_store relationTable : relationTables){
 				int count = relationTable.add(db);
 				drtCount += count;
 			}
@@ -1151,8 +1151,8 @@ public class InitAndDestDataForStoDest {
 			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
 			//18、删除column_storage_info表数据
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 3112L);
-			SqlOperator.execute(db, "delete from " + Column_storage_info.TableName + " where column_id = ? ", 5112L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where column_id = ? ", 3112L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where column_id = ? ", 5112L);
 			//19、删除data_store_layer表数据
 			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id = ? ", 4399L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id = ? ", 4400L);
@@ -1164,9 +1164,9 @@ public class InitAndDestDataForStoDest {
 			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id = ? ", 4400L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id = ? ", 4402L);
 			//21、删除data_relation_table表数据
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4402L);
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4399L);
-			SqlOperator.execute(db, "delete from " + Data_relation_table.TableName + " where dsl_id = ? ", 4400L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4402L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4399L);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where dsl_id = ? ", 4400L);
 			//22、删除data_store_layer_added表数据
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4402L);
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dsl_id = ? ", 4399L);
