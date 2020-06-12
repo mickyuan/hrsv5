@@ -50,7 +50,7 @@ public class PrimayKeyGener {
 
 	public static String getNextId() {
 		SnowflakeImpl idgen = getCaller();
-		return Long.toString(idgenB.nextId());
+		return Long.toString(idgen.nextId());
 	}
 
 	/**
