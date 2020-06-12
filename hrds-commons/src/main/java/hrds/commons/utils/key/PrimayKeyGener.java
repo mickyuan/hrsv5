@@ -26,6 +26,7 @@ public class PrimayKeyGener {
 	private static final SnowflakeImpl idgenG = new SnowflakeImpl(6, 6);
 	private static final SnowflakeImpl idgenH = new SnowflakeImpl(7, 7);
 	private static final SnowflakeImpl idgenI = new SnowflakeImpl(8, 8);
+	private static final SnowflakeImpl idgenK = new SnowflakeImpl(9, 9);
 
 	private PrimayKeyGener() {
 	}
@@ -35,7 +36,6 @@ public class PrimayKeyGener {
 		for (int i = 0; i < stack.length; i++) {
 			StackTraceElement ste = stack[i];
 			String className = ste.getClassName();
-			System.out.println(className);
 			if (className.contains("hrds.a.")) return idgenA;
 			else if (className.contains("hrds.b.")) return idgenB;
 			else if (className.contains("hrds.c.")) return idgenC;
@@ -43,14 +43,14 @@ public class PrimayKeyGener {
 			else if (className.contains("hrds.e.")) return idgenE;
 			else if (className.contains("hrds.f.")) return idgenF;
 			else if (className.contains("hrds.g.")) return idgenG;
-			else if (className.contains("hrds.H.")) return idgenH;
+			else if (className.contains("hrds.h.")) return idgenH;
+			else if (className.contains("hrds.k.")) return idgenK;
 		}
 		return idgenDef;
 	}
 
 	public static String getNextId() {
-		SnowflakeImpl idgen = getCaller();
-		return Long.toString(idgen.nextId());
+		return Long.toString(getCaller().nextId());
 	}
 
 	/**
