@@ -166,13 +166,13 @@ public class StoDestStepConfAction extends BaseAction {
 			Map<String, Object> returnMap = new HashMap<>();
 			List<Object> list =
 				Dbo.queryOneColumnList(
-					"select drt.dsl_id from "
+					"SELECT drt.dsl_id FROM "
 						+ Dtab_relation_store.TableName
 						+ " drt"
-						+ " where drt.storage_id = (select storage_id from "
+						+ " WHERE drt.storage_id = (SELECT storage_id FROM "
 						+ Table_storage_info.TableName
-						+ " where table_id = ?)",
-					(long) tableId);
+						+ " WHERE table_id = ?) AND drt.data_source = ?",
+					(long) tableId, StoreLayerDataSource.DB.getCode());
 			returnMap.put("tableId", tableId);
 			returnMap.put("dslIds", list);
 			if (list.isEmpty()) {
@@ -549,6 +549,7 @@ public class StoDestStepConfAction extends BaseAction {
 					Dcol_relation_store columnStorageInfo = new Dcol_relation_store();
 					columnStorageInfo.setCol_id(columnId);
 					columnStorageInfo.setDslad_id(dsladId);
+					columnStorageInfo.setData_source(StoreLayerDataSource.DB.getCode());
 					// 根据数据存储附加信息ID获取存储目的地类型
 					List<Object> list =
 						Dbo.queryOneColumnList(
@@ -559,7 +560,7 @@ public class StoDestStepConfAction extends BaseAction {
 								+ " dsla where dsl.dsl_id = dsla.dsl_id and dsla.dslad_id = ?",
 							dsladId);
 					// 如果获取不到或者获取到的值有多个，则抛出异常
-					if (list.isEmpty() || list.size() > 1) {
+					if (list.size() != 1) {
 						throw new BusinessException("通过字段存储附加信息获得存储目的地信息出错");
 					}
 					// 如果获取到的存储目的地为HBASE并且csiNumber不为空，则说明该列是作为hbase的rowkey
@@ -824,7 +825,7 @@ public class StoDestStepConfAction extends BaseAction {
 						Dtab_relation_store relationTable = new Dtab_relation_store();
 						relationTable.setTab_id(storageId);
 						relationTable.setDsl_id(dslId);
-
+						relationTable.setData_source(StoreLayerDataSource.DB.getCode());
 						relationTable.add(Dbo.db());
 					}
 				}
