@@ -125,12 +125,11 @@ public class Xls2xml {
 		}
 	}
 
-	public static void toXmlForObjectCollect(String db_path, String xml_path) {
+	public static void toXml2(String db_path, String xml_path) {
 
-		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
-		File file = FileUtils.getFile(path_cd);
+		File file = FileUtils.getFile(db_path);
 		if (file.exists()) {
-			jsonToXmlForObjectCollect(path_cd, xml_path);
+			jsonToXml2(db_path, xml_path);
 		} else {
 			throw new BusinessException("没有找到相应的数据字典定义文件！");
 		}
@@ -142,7 +141,7 @@ public class Xls2xml {
 	 * @param json_path json格式数据字典目录
 	 * @param xml_path  生成xml文件目录
 	 */
-	public static void jsonToXmlForObjectCollect(String json_path, String xml_path) {
+	public static void jsonToXml2(String json_path, String xml_path) {
 		// 调用方法生成xml文件
 		createXml(xml_path);
 		BufferedReader br = null;
@@ -163,9 +162,9 @@ public class Xls2xml {
 				// 中文表名
 				String table_ch_name = json.getString("table_ch_name");
 				// 数据更新方式
-				String update_type = json.getString("update_type");
+				String updatetype = json.getString("updatetype");
 				// 表信息处理
-				addTable(table_name.toLowerCase(), table_ch_name, update_type);
+				addTable(table_name.toLowerCase(), table_ch_name, updatetype);
 				JSONObject handleType = json.getJSONObject("handle_type");
 				// 数据处理类型
 				addHandleType(handleType.getString("insert"), handleType.getString("update"),
@@ -182,24 +181,16 @@ public class Xls2xml {
 					String column_ch_name = column.getString("column_ch_name");
 					// 字段类型
 					String column_type = column.getString("column_type");
-					// 是否为主键
-					String is_key = column.getString("is_key");
 					// 备注信息
 					String column_remark = column.getString("column_remark");
 					// 字段位置
 					String columnposition = column.getString("columnposition");
-					// 是否进入hbase
-					String is_hbase = column.getString("is_hbase");
-					// 是否为rowkey
-					String is_rowkey = column.getString("is_rowkey");
-					// 是否进solr
-					String is_solr = column.getString("is_solr");
 					// 是否操作标识表
-					String is_operate = json.getString("is_operate");
+					String is_operate = column.getString("is_operate");
 					int length = getLength(column_type);
 					// 列信息封装
 					addColumnToSemiStructuredCollect(column_id, column_name, column_ch_name, column_type,
-							length, column_remark, is_key, columnposition, is_hbase, is_rowkey, is_solr, is_operate);
+							column_remark, columnposition, is_operate);
 				}
 			}
 			// 生成xml文档
@@ -220,23 +211,17 @@ public class Xls2xml {
 	}
 
 	public static void addColumnToSemiStructuredCollect(String column_id, String column_name,
-	                                                    String column_ch_name, String column_type, int length,
-	                                                    String column_remark, String is_key,
-	                                                    String columnposition, String is_hbase,
-	                                                    String is_rowkey, String is_solr, String is_operate) {
+	                                                    String column_ch_name, String column_type,
+	                                                    String column_remark, String columnposition,
+	                                                    String is_operate) {
 
-		column = xmlCreater.createElement(table, "column");
+		column = xmlCreater.createElement(table, "columns");
 		xmlCreater.createAttribute(column, "column_id", column_id);
 		xmlCreater.createAttribute(column, "column_name", column_name);
 		xmlCreater.createAttribute(column, "column_ch_name", column_ch_name);
 		xmlCreater.createAttribute(column, "column_type", column_type);
-		xmlCreater.createAttribute(column, "length", String.valueOf(length));
-		xmlCreater.createAttribute(column, "is_key", is_key);
 		xmlCreater.createAttribute(column, "column_remark", column_remark);
 		xmlCreater.createAttribute(column, "columnposition", columnposition);
-		xmlCreater.createAttribute(column, "is_hbase", is_hbase);
-		xmlCreater.createAttribute(column, "is_rowkey", is_rowkey);
-		xmlCreater.createAttribute(column, "is_solr", is_solr);
 		xmlCreater.createAttribute(column, "is_operate", is_operate);
 	}
 
