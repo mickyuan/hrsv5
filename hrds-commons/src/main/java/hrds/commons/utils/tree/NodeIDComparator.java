@@ -9,6 +9,6 @@ public class NodeIDComparator implements Comparator<Node> {
 
     // 按照节点id的Unicode值排序
     public int compare(Node n1, Node n2) {
-        return -n1.id.compareTo(n2.id);
+        return -n1.getId().compareTo(n2.getId());
     }
 }
