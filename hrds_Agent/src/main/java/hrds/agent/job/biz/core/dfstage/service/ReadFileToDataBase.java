@@ -8,6 +8,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.DatabaseType;
@@ -152,7 +153,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
-			int limit = 50000;
 			String line;
 			Object[] objs;
 			while ((line = reader.readLine()) != null) {
@@ -163,7 +163,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}
 				pool.add(objs);
-				if (num % limit == 0) {
+				if (num % JobConstant.BUFFER_ROW == 0) {
 					doBatch(batchSql, pool, num, db);
 				}
 			}
@@ -197,7 +197,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				database_code))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
-			int limit = 50000;
 			String line;
 			Object[] objs;
 			List<String> lengthStrList = StringUtil.split(tableBean.getColLengthInfo(),
@@ -214,7 +213,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}
 				pool.add(objs);
-				if (num % limit == 0) {
+				if (num % JobConstant.BUFFER_ROW == 0) {
 					doBatch(batchSql, pool, num, db);
 				}
 			}
@@ -243,7 +242,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 			NullWritable key = NullWritable.get();
 			Text value = new Text();
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
-			int limit = 50000;
 			Object[] objs;
 			while (sfr.next(key, value)) {
 				String str = value.toString();
@@ -256,7 +254,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				}
 				num++;
 				pool.add(objs);
-				if (num % limit == 0) {
+				if (num % JobConstant.BUFFER_ROW == 0) {
 					doBatch(batchSql, pool, num, db);
 				}
 			}
@@ -324,7 +322,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 			build = reader.build();
 			Group line;
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
-			int limit = 50000;
 			Object[] objs;
 			while ((line = build.read()) != null) {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
@@ -333,7 +330,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				}
 				num++;
 				pool.add(objs);
-				if (num % limit == 0) {
+				if (num % JobConstant.BUFFER_ROW == 0) {
 					doBatch(batchSql, pool, num, db);
 				}
 			}
@@ -390,7 +387,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 		     CsvListReader csvReader = new CsvListReader(reader,
 				     CsvPreference.EXCEL_PREFERENCE)) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
-			int limit = 50000;
 			List<String> lineList;
 			Object[] objs;
 			if (IsFlag.Shi.getCode().equals(is_header)) {
@@ -407,7 +403,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				}
 				num++;
 				pool.add(objs);
-				if (num % limit == 0) {
+				if (num % JobConstant.BUFFER_ROW == 0) {
 					doBatch(batchSql, pool, num, db);
 				}
 			}
