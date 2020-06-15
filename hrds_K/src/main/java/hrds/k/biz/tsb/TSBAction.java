@@ -211,7 +211,7 @@ public class TSBAction extends BaseAction {
             //如果是人工对标则保存人工对标结果
             else if (dbm_normbmd_info.get("is_artificial").equals(IsFlag.Shi.getCode())) {
                 Dbm_normbmd_result dbm_normbmd_result = new Dbm_normbmd_result();
-                dbm_normbmd_result.setResult_id(PrimayKeyGener.getNextId());
+                dbm_normbmd_result.setResult_id(String.valueOf(PrimayKeyGener.getNextId()));
                 //如果是人工对标,字段相识度和描述相似度都为1
                 dbm_normbmd_result.setCol_similarity(IsFlag.Shi.getCode());
                 dbm_normbmd_result.setRemark_similarity(IsFlag.Shi.getCode());
@@ -264,7 +264,7 @@ public class TSBAction extends BaseAction {
         }
         //设置 Dbm_normbm_detect
         Dbm_normbm_detect dbm_normbm_detect = new Dbm_normbm_detect();
-        dbm_normbm_detect.setDetect_id(PrimayKeyGener.getNextId());
+        dbm_normbm_detect.setDetect_id(String.valueOf(PrimayKeyGener.getNextId()));
         dbm_normbm_detect.setDetect_name(dbm_normbm_detect.getDetect_id());
         dbm_normbm_detect.setSource_type(data_layer);
         dbm_normbm_detect.setIs_import(IsFlag.Fou.getCode());
@@ -361,7 +361,7 @@ public class TSBAction extends BaseAction {
         dbm_normbmd_info_list.forEach(dbm_normbmd_info -> {
             //设置对标检测结果对象
             Dbm_normbmd_result dbm_normbmd_result = new Dbm_normbmd_result();
-            dbm_normbmd_result.setResult_id(PrimayKeyGener.getNextId());
+            dbm_normbmd_result.setResult_id(String.valueOf(PrimayKeyGener.getNextId()));
             dbm_normbmd_result.setCol_similarity(dbm_normbmd_info.get("col_similarity"));
             dbm_normbmd_result.setRemark_similarity("0");
             dbm_normbmd_result.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());

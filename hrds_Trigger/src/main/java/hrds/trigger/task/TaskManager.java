@@ -267,7 +267,7 @@ public class TaskManager {
 		TaskSqlHelper.updateEtlJobHandle(etlJobHand);
 		//2.调度作业干预历史表（etl_job_hand_his）中新增一条记录。
 		Etl_job_hand_his etlJobHandHis = new Etl_job_hand_his();
-		etlJobHandHis.setEvent_id(PrimayKeyGener.getNextId());
+		etlJobHandHis.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 		etlJobHandHis.setEtl_sys_cd(etlJobHand.getEtl_sys_cd());
 		etlJobHandHis.setEtl_job(etlJobHand.getEtl_job());
 		etlJobHandHis.setEtl_hand_type(etlJobHand.getEtl_hand_type());

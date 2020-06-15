@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.commons.exception.AppSystemException;
@@ -24,6 +25,7 @@ import java.util.List;
  */
 public class ParquetFileParserDeal extends FileParserAbstract {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ParquetFileParserDeal.class);
+
 	public ParquetFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {
 		super(tableBean, collectTableBean, readFile);
@@ -50,7 +52,7 @@ public class ParquetFileParserDeal extends FileParserAbstract {
 				//处理每一行的数据
 				dealLine(valueList);
 				//每50000行flash一次
-				if (fileRowCount % 50000 == 0) {
+				if (fileRowCount % JobConstant.BUFFER_ROW == 0) {
 					writer.flush();
 					LOGGER.info("正在处理转存文件，已写入" + fileRowCount + "行");
 				}

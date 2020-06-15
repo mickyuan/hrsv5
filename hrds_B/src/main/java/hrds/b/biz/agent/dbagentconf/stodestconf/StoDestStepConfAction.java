@@ -772,7 +772,7 @@ public class StoDestStepConfAction extends BaseAction {
 					storageInfo.getTable_id());
 			}
 			// 5-2、对待保存的数据设置主键等信息
-			String storageId = PrimayKeyGener.getNextId();
+			long storageId = PrimayKeyGener.getNextId();
 			storageInfo.setStorage_id(storageId);
 			// 5-3、在数据抽取定义表中，根据表ID把数据文件格式查询出来存入Table_storage_info对象中
 			List<Object> list =

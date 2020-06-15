@@ -748,7 +748,7 @@ public class DataSourceAction extends BaseAction {
 							// 5.用新的字段ID替换旧的字段ID，保证关联关系不变
 							if (columnIdEntry.getKey().longValue() == columnClean.getColumn_id().longValue()) {
 								columnClean.setColumn_id(columnIdEntry.getValue());
-								String colCleanId = PrimayKeyGener.getNextId();
+								long colCleanId = PrimayKeyGener.getNextId();
 								// 6.保存新旧字段ID与列清洗参数编号（key为旧的字段ID与列清洗参数编号，value为新值）
 								columnAndColIdMap.put(columnIdEntry.getKey() + "," + columnClean.getCol_clean_id(),
 										columnIdEntry.getValue() + "," + colCleanId);
@@ -793,7 +793,7 @@ public class DataSourceAction extends BaseAction {
 						for (Map.Entry<Long, String> tableIdEntry : tableIdMap.entrySet()) {
 							// 5.用新的数据库设置ID替换旧的数据库设置ID，保证关联关系不变
 							if (tableIdEntry.getKey().longValue() == tableColumn.getTable_id().longValue()) {
-								String column_id = PrimayKeyGener.getNextId();
+								String column_id = String.valueOf(PrimayKeyGener.getNextId());
 								// 6.保存新旧字段ID（key为旧的字段ID，value为新的字段ID）
 								columnIdMap.put(tableColumn.getColumn_id(), column_id);
 								tableColumn.setColumn_id(column_id);
@@ -876,7 +876,7 @@ public class DataSourceAction extends BaseAction {
 						for (Map.Entry<Long, String> databaseIdEntry : databaseIdMap.entrySet()) {
 							if (databaseIdEntry.getKey().longValue() == tableInfo.getDatabase_id().longValue()) {
 								tableInfo.setDatabase_id(databaseIdEntry.getValue());
-								String table_id = PrimayKeyGener.getNextId();
+								String table_id = String.valueOf(PrimayKeyGener.getNextId());
 								// 6.将新旧表ID保存，（key为表旧ID，value为表新ID）
 								tableIdMap.put(tableInfo.getTable_id(), table_id);
 								tableInfo.setTable_id(table_id);
@@ -1001,7 +1001,7 @@ public class DataSourceAction extends BaseAction {
 						for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
 							// 5.用新的agent ID替换旧的agent ID，保证关联关系不变
 							if (agentIdEntry.getKey().longValue() == file_collect_set.getAgent_id().longValue()) {
-								String fcs_id = PrimayKeyGener.getNextId();
+								long fcs_id = PrimayKeyGener.getNextId();
 								// 6.将新旧agent与文件采集系统ID（key为agent与文件采集系统旧ID，value为新ID）保存
 								agentAndFcsIdMap.put(agentIdEntry.getKey() + "," + file_collect_set.getFcs_id(),
 										agentIdEntry.getValue() + "," + fcs_id);
@@ -1057,7 +1057,7 @@ public class DataSourceAction extends BaseAction {
 									&& oldId[1].equals(String.valueOf(database_set.getClassify_id()))) {
 								database_set.setAgent_id(newId[0]);
 								database_set.setClassify_id(newId[1]);
-								String database_id = PrimayKeyGener.getNextId();
+								String database_id = String.valueOf(PrimayKeyGener.getNextId());
 								// 7.将新旧数据库设置ID（key为旧值，value为新值）保存
 								databaseIdMap.put(database_set.getDatabase_id(), database_id);
 								database_set.setDatabase_id(database_id);
@@ -1181,7 +1181,7 @@ public class DataSourceAction extends BaseAction {
 							// 6.用新的对象采集与agent ID替换旧的对象采集与agent ID
 							if (oldOdcAndAgentId[0].equals(String.valueOf(octTask.getOdc_id())) &&
 									oldOdcAndAgentId[1].equals(String.valueOf(octTask.getAgent_id()))) {
-								String ocs_id = PrimayKeyGener.getNextId();
+								String ocs_id = String.valueOf(PrimayKeyGener.getNextId());
 								// 7.将新旧对象采集任务编号保存
 								ocsIdMap.put(octTask.getOcs_id(), ocs_id);
 								octTask.setOcs_id(ocs_id);
@@ -1229,7 +1229,7 @@ public class DataSourceAction extends BaseAction {
 						for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
 							// 5.用新的agent ID替换旧的agent ID,,保证关联关系不变
 							if (agentIdEntry.getKey().longValue() == objCollect.getAgent_id().longValue()) {
-								String odc_id = PrimayKeyGener.getNextId();
+								long odc_id = PrimayKeyGener.getNextId();
 								// 6.存放新旧对象采集ID（key为旧的ID，value为新的采集ID）的集合
 								odcMap.put(objCollect.getOdc_id() + "," + agentIdEntry.getKey(),
 										odc_id + "," + agentIdEntry.getValue());
@@ -1273,7 +1273,7 @@ public class DataSourceAction extends BaseAction {
 						for (Map.Entry<Long, String> ftpIdEntry : ftpIdMap.entrySet()) {
 							// 5.用重新生成的ftp_id替换旧的ftp_id,保证关联关系不变
 							if (ftpIdEntry.getKey().longValue() == ftp_transfered.getFtp_id().longValue()) {
-								ftp_transfered.setFtp_transfered_id(PrimayKeyGener.getNextId());
+								ftp_transfered.setFtp_transfered_id(String.valueOf(PrimayKeyGener.getNextId()));
 								ftp_transfered.setFtp_id(ftpIdEntry.getValue());
 								// 6.将ftp_transfered表数据循环入数据库
 								ftp_transfered.add(Dbo.db());
@@ -1315,7 +1315,7 @@ public class DataSourceAction extends BaseAction {
 						// 5.用重新生成的agent ID替换旧的agent ID
 						for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
 							if (agentIdEntry.getKey().longValue() == ftp_collect.getAgent_id().longValue()) {
-								String ftp_id = PrimayKeyGener.getNextId();
+								String ftp_id = String.valueOf(PrimayKeyGener.getNextId());
 								// 6.将重新生成的ftp采集ID作为value,旧的ftp采集ID作为key保存
 								ftpIdMap.put(ftp_collect.getFtp_id(), ftp_id);
 								ftp_collect.setFtp_id(ftp_id);
@@ -1407,7 +1407,7 @@ public class DataSourceAction extends BaseAction {
 						// 5.用重新生成的agent ID替换旧的agent ID
 						for (Map.Entry<Long, String> agentIdEntry : agentIdMap.entrySet()) {
 							if (classify.getAgent_id().longValue() == agentIdEntry.getKey().longValue()) {
-								String classify_id = PrimayKeyGener.getNextId();
+								long classify_id = PrimayKeyGener.getNextId();
 								// 6.将新旧agent与分类ID保存（key为agent与分类旧ID，value为agent与分类新ID）
 								classifyAndAgentIdMap.put(agentIdEntry.getKey() + "," +
 										classify.getClassify_id(), agentIdEntry.getValue() + "," + classify_id);
@@ -1461,7 +1461,7 @@ public class DataSourceAction extends BaseAction {
 							// 6.1相同，获取现在的dep_id作为新的部门ID,保存新旧部门主键ID
 							depMap.put(department_info.getDep_id(), depInfo.get("dep_id").toString());
 						} else {
-							String dep_id = PrimayKeyGener.getNextId();
+							String dep_id = String.valueOf(PrimayKeyGener.getNextId());
 							// 6.2.不相同，将新旧主键ID保存，新增department_info表数据入数据库
 							depMap.put(department_info.getDep_id(), dep_id);
 							department_info.setDep_id(dep_id);
@@ -1529,7 +1529,7 @@ public class DataSourceAction extends BaseAction {
 	private String getDataSource(long userId, Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		// 2.导入数据源需要重新生成主键ID，获取新的数据源ID
-		String source_id = PrimayKeyGener.getNextId();
+		String source_id = String.valueOf(PrimayKeyGener.getNextId());
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
 			// 3.判断map中的key值是否为对应data_source表数据
 			// map中key的值，也是下载数据源时对应表信息封装入map的key值
@@ -1578,7 +1578,7 @@ public class DataSourceAction extends BaseAction {
 				// 4.判断结果集是否为空，不为空循环入库agent_info
 				if (!agentInfoList.isEmpty()) {
 					for (Agent_info agent_info : agentInfoList) {
-						String agent_id = PrimayKeyGener.getNextId();
+						String agent_id = String.valueOf(PrimayKeyGener.getNextId());
 						// 5.保存新旧agent ID（key为旧的agent ID，value为新值）
 						agentIdMap.put(agent_info.getAgent_id(), agent_id);
 						agent_info.setAgent_id(agent_id);

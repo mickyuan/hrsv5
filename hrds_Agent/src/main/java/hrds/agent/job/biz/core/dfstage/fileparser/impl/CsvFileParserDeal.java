@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dfstage.fileparser.impl;
 
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
@@ -50,7 +51,7 @@ public class CsvFileParserDeal extends FileParserAbstract {
 				checkData(valueList, fileRowCount);
 				dealLine(valueList);
 				//每50000行flash一次
-				if (fileRowCount % 50000 == 0) {
+				if (fileRowCount % JobConstant.BUFFER_ROW == 0) {
 					writer.flush();
 					LOGGER.info("正在处理转存文件，已写入" + fileRowCount + "行");
 				}
