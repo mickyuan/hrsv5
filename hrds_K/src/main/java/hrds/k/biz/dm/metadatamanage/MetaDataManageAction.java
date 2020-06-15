@@ -170,11 +170,11 @@ public class MetaDataManageAction extends BaseAction {
         if (dataSourceType == DataSourceType.ISL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DCL) {
-            TableMetaInfoTool.updateDCLTableMetaInfo(file_id, table_id, table_ch_name, columnInfoBeans);
+            TableMetaInfoTool.updateDCLTableMetaInfo(file_id, table_id, table_ch_name, columnInfoBeans, Dbo.db());
         } else if (dataSourceType == DataSourceType.DPL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DML) {
-            TableMetaInfoTool.updateDMLTableMetaInfo(table_id, table_ch_name, columnInfoBeans);
+            TableMetaInfoTool.updateDMLTableMetaInfo(table_id, table_ch_name, columnInfoBeans, Dbo.db());
         } else if (dataSourceType == DataSourceType.SFL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.AML) {
@@ -206,11 +206,11 @@ public class MetaDataManageAction extends BaseAction {
         if (dataSourceType == DataSourceType.ISL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DCL) {
-            TableMetaInfoTool.restoreDCLTableInfo(dq_failure_table);
+            TableMetaInfoTool.restoreDCLTableInfo(dq_failure_table, Dbo.db());
         } else if (dataSourceType == DataSourceType.DPL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DML) {
-            TableMetaInfoTool.restoreDMLTableInfo(dq_failure_table);
+            TableMetaInfoTool.restoreDMLTableInfo(dq_failure_table, Dbo.db());
         } else if (dataSourceType == DataSourceType.SFL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.AML) {
@@ -248,11 +248,11 @@ public class MetaDataManageAction extends BaseAction {
         if (dataSourceType == DataSourceType.ISL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DCL) {
-            TableMetaInfoTool.setDCLTableInvalid(file_id);
+            TableMetaInfoTool.setDCLTableInvalid(file_id, Dbo.db());
         } else if (dataSourceType == DataSourceType.DPL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DML) {
-            TableMetaInfoTool.setDMLTableInvalid(file_id);
+            TableMetaInfoTool.setDMLTableInvalid(file_id, Dbo.db());
         } else if (dataSourceType == DataSourceType.SFL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.AML) {

@@ -1652,3 +1652,11 @@ DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结�
 DND_REMARK                                        VARCHAR(512) NULL, --备注
 CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
 
+--snowflake主键生成表
+DROP TABLE IF EXISTS KEYTABLE_SNOWFLAKE ;
+CREATE TABLE KEYTABLE_SNOWFLAKE(
+PROJECT_ID                                        VARCHAR(80) NOT NULL, --project_id
+DATACENTER_ID                                     INTEGER default 0 NULL, --datacenter_id
+MACHINE_ID                                        INTEGER default 0 NULL, --machine_id
+CONSTRAINT KEYTABLE_SNOWFLAKE_PK PRIMARY KEY(PROJECT_ID)   );
+

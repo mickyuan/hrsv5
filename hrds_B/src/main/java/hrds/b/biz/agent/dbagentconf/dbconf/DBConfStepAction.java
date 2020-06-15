@@ -424,7 +424,7 @@ public class DBConfStepAction extends BaseAction {
 				throw new BusinessException("作业编号重复，请重新定义作业编号");
 			}
 
-			String id = PrimayKeyGener.getNextId();
+			long id = PrimayKeyGener.getNextId();
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());

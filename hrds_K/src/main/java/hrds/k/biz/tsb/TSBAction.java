@@ -20,8 +20,8 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
-import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.DataTableFieldUtil;
 import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -30,7 +30,6 @@ import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.dbm.normbasic.DbmNormbasicAction;
 import hrds.k.biz.tsb.bean.DbmColInfo;
 import hrds.k.biz.tsb.bean.TSBConf;
-import hrds.commons.utils.DataTableFieldUtil;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -42,19 +41,15 @@ public class TSBAction extends BaseAction {
 
     @Method(desc = "获取表结构对标树", logicStep = "获取表结构对标树")
     @Return(desc = "表结构对标树信息", range = "表结构对标树信息")
-    public Map<String, Object> getTSBTreeData() {
+    public List<Node> getTSBTreeData() {
         //配置树不显示文件采集的数据
         TreeConf treeConf = new TreeConf();
         treeConf.setShowFileCollection(Boolean.FALSE);
         //根据源菜单信息获取节点数据列表
-        List<Map<String, Object>> dataList =
-                TreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_BENCHMARKING, getUser(), treeConf);
+        List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_BENCHMARKING, getUser()
+                , treeConf);
         //转换节点数据列表为分叉树列表
-        List<Node> tsbTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
-        //定义返回的分叉树结果Map
-        Map<String, Object> tsbTreeDataMap = new HashMap<>();
-        tsbTreeDataMap.put("tsbTreeList", JsonUtil.toObjectSafety(tsbTreeList.toString(), List.class));
-        return tsbTreeDataMap;
+        return NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
     }
 
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
@@ -66,7 +61,7 @@ public class TSBAction extends BaseAction {
         //设置 Dbm_normbm_detect 对象
         setDbmNormbmDetect(data_layer);
         //设置 Dbm_dtable_info 对象
-        setDbmDtableInfo(file_id);
+        setDbmDtableInfo(file_id, data_layer);
         //数据层获取不同表结构
         return DataTableUtil.getColumnByFileId(data_layer, data_own_type, file_id);
     }
@@ -216,7 +211,7 @@ public class TSBAction extends BaseAction {
             //如果是人工对标则保存人工对标结果
             else if (dbm_normbmd_info.get("is_artificial").equals(IsFlag.Shi.getCode())) {
                 Dbm_normbmd_result dbm_normbmd_result = new Dbm_normbmd_result();
-                dbm_normbmd_result.setResult_id(PrimayKeyGener.getNextId());
+                dbm_normbmd_result.setResult_id(String.valueOf(PrimayKeyGener.getNextId()));
                 //如果是人工对标,字段相识度和描述相似度都为1
                 dbm_normbmd_result.setCol_similarity(IsFlag.Shi.getCode());
                 dbm_normbmd_result.setRemark_similarity(IsFlag.Shi.getCode());
@@ -232,7 +227,8 @@ public class TSBAction extends BaseAction {
             }
         });
         //结果存入数据库
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = new DatabaseWrapper();
+        try {
             //设置检测结束时间
             Dbm_normbm_detect dbm_normbm_detect = tsbConf.getDbm_normbm_detect();
             dbm_normbm_detect.setDetect_edate(DateUtil.getSysDate());
@@ -253,6 +249,8 @@ public class TSBAction extends BaseAction {
             tsbConf.setDbm_dtable_info(new Dbm_dtable_info());
             tsbConf.getDbm_dtcol_info_list().clear();
             tsbConf.getDbm_normbmd_result_list().clear();
+        } catch (Exception e) {
+            db.rollback();
         }
     }
 
@@ -266,7 +264,7 @@ public class TSBAction extends BaseAction {
         }
         //设置 Dbm_normbm_detect
         Dbm_normbm_detect dbm_normbm_detect = new Dbm_normbm_detect();
-        dbm_normbm_detect.setDetect_id(PrimayKeyGener.getNextId());
+        dbm_normbm_detect.setDetect_id(String.valueOf(PrimayKeyGener.getNextId()));
         dbm_normbm_detect.setDetect_name(dbm_normbm_detect.getDetect_id());
         dbm_normbm_detect.setSource_type(data_layer);
         dbm_normbm_detect.setIs_import(IsFlag.Fou.getCode());
@@ -280,29 +278,42 @@ public class TSBAction extends BaseAction {
 
     @Method(desc = "设置对标检测表信息表", logicStep = "设置对标检测表信息表")
     @Param(name = "file_id", desc = "表源属性id", range = "String类型")
-    private void setDbmDtableInfo(String file_id) {
+    @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
+    private void setDbmDtableInfo(String file_id, String data_layer) {
         //根据表源属性id获取表信息
-        Map<String, Object> dclBatchTableInfo = DCLDataQuery.getDCLBatchTableInfo(file_id);
-        if (dclBatchTableInfo.isEmpty()) {
+        Map<String, Object> tableInfo = DataTableUtil.getTableInfoAndColumnInfo(data_layer, file_id);
+        if (tableInfo.isEmpty()) {
             throw new BusinessException("查询的表信息已经不存在!");
         }
         //设置 Dbm_dtable_info
         Dbm_dtable_info dbm_dtable_info = new Dbm_dtable_info();
         dbm_dtable_info.setDbm_tableid(PrimayKeyGener.getNextId());
-        dbm_dtable_info.setTable_cname(dclBatchTableInfo.get("table_ch_name").toString());
-        dbm_dtable_info.setTable_ename(dclBatchTableInfo.get("table_name").toString());
+        dbm_dtable_info.setTable_cname(tableInfo.get("table_ch_name").toString());
+        dbm_dtable_info.setTable_ename(tableInfo.get("table_name").toString());
         dbm_dtable_info.setIs_external(IsFlag.Fou.getCode());
         //如果源表的描述为null,则设置为""
-        if (null == dclBatchTableInfo.get("remark")) {
+        if (null == tableInfo.get("remark")) {
             dbm_dtable_info.setTable_remark("");
         } else {
-            dbm_dtable_info.setTable_remark(dclBatchTableInfo.get("remark").toString());
+            dbm_dtable_info.setTable_remark(tableInfo.get("remark").toString());
         }
         dbm_dtable_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
-        dbm_dtable_info.setTable_id(dclBatchTableInfo.get("table_id").toString());
-        dbm_dtable_info.setSource_id(dclBatchTableInfo.get("source_id").toString());
-        dbm_dtable_info.setAgent_id(dclBatchTableInfo.get("agent_id").toString());
-        dbm_dtable_info.setDatabase_id(dclBatchTableInfo.get("database_id").toString());
+        dbm_dtable_info.setTable_id(tableInfo.get("table_id").toString());
+        if (null == tableInfo.get("source_id")) {
+            dbm_dtable_info.setSource_id("");
+        } else {
+            dbm_dtable_info.setSource_id(tableInfo.get("source_id").toString());
+        }
+        if (null == tableInfo.get("agent_id")) {
+            dbm_dtable_info.setAgent_id("");
+        } else {
+            dbm_dtable_info.setAgent_id(tableInfo.get("agent_id").toString());
+        }
+        if (null == tableInfo.get("database_id")) {
+            dbm_dtable_info.setDatabase_id("");
+        } else {
+            dbm_dtable_info.setDatabase_id(tableInfo.get("database_id").toString());
+        }
         tsbConf.setDbm_dtable_info(dbm_dtable_info);
     }
 
@@ -350,7 +361,7 @@ public class TSBAction extends BaseAction {
         dbm_normbmd_info_list.forEach(dbm_normbmd_info -> {
             //设置对标检测结果对象
             Dbm_normbmd_result dbm_normbmd_result = new Dbm_normbmd_result();
-            dbm_normbmd_result.setResult_id(PrimayKeyGener.getNextId());
+            dbm_normbmd_result.setResult_id(String.valueOf(PrimayKeyGener.getNextId()));
             dbm_normbmd_result.setCol_similarity(dbm_normbmd_info.get("col_similarity"));
             dbm_normbmd_result.setRemark_similarity("0");
             dbm_normbmd_result.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());

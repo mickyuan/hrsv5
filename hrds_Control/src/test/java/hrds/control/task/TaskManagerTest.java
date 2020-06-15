@@ -566,7 +566,7 @@ public class TaskManagerTest {
 					e.printStackTrace();
 				}
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(errorEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorEtlJob + "," + currBathDate);
@@ -732,7 +732,7 @@ public class TaskManagerTest {
 				}
 
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(handleEtlJob);
 				etlJobHand.setPro_para(syscode + "," + handleEtlJob + "," + currBathDate);
@@ -742,18 +742,18 @@ public class TaskManagerTest {
 				etlJobHand.add(db);
 
 				//错误的数据访问1、干预不存在的作业。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(noExitEtlJob);
 				etlJobHand.setPro_para(syscode + "," + noExitEtlJob + "," + currBathDate);
 				etlJobHand.add(db);
 
 				//错误的数据访问2、干预设置错误的作业，不允许对已执行完成的作业进行干预
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(errorStatusEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorStatusEtlJob + "," + currBathDate);
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(errorParaEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorParaEtlJob + "," + currBathDate + ",1");
 				etlJobHand.add(db);
@@ -860,7 +860,7 @@ public class TaskManagerTest {
 					e.printStackTrace();
 				}
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(failEtlJobDef.getEtl_job());
 				etlJobHand.setPro_para(syscode + "," + failEtlJobDef.getEtl_job() + "," + currBathDate);
@@ -881,18 +881,18 @@ public class TaskManagerTest {
 			etlJobHand.setEtl_job(errorStatusHandleEtlJob);
 			etlJobHand.setEtl_sys_cd(syscode);
 			etlJobHand.setEtl_hand_type("SO");
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+			etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
 			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 			etlJobHand.add(db);
 
 			//正确的数据访问1、进行干预时，系统暂停，干预会成功。
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+			etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 			etlJobHand.setEtl_job(handleEtlJob);
 			etlJobHand.setEtl_hand_type("SP");
 			etlJobHand.add(db);
 
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+			etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 			etlJobHand.setEtl_hand_type("SO");
 			etlJobHand.add(db);
 
@@ -1017,7 +1017,7 @@ public class TaskManagerTest {
 				}
 
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(handleEtlJob);
 				etlJobHand.setEtl_hand_type("SP");
@@ -1026,12 +1026,12 @@ public class TaskManagerTest {
 				etlJobHand.add(db);
 
 				//错误的数据访问1、进行干预时，若系统已经暂停，干预将会失败。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(errorStatusHandleEtlJob);
 				etlJobHand.setEtl_hand_type("SP");
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(handleEtlJob);
 				etlJobHand.setEtl_hand_type("SR");
 				etlJobHand.add(db);
@@ -1179,7 +1179,7 @@ public class TaskManagerTest {
 
 				//错误的数据访问1、进行干预时，若系统不是暂停状态，干预将会失败。
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(errorStatusHandleEtlJob);
 				etlJobHand.setEtl_hand_type("SR");
@@ -1189,12 +1189,12 @@ public class TaskManagerTest {
 
 				//正确的数据访问1、进行干预时，系统已是暂停状态（等价于没有未完成或未停止的作业），
 				// 此时能运行1分钟的作业及执行失败的作业，干预能看到效果并干预成功。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(handleEtlJob);
 				etlJobHand.setEtl_hand_type("SP");
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(handleEtlJob);
 				etlJobHand.setEtl_hand_type("SR");
 				etlJobHand.add(db);
@@ -1210,7 +1210,7 @@ public class TaskManagerTest {
 					e.printStackTrace();
 				}
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(failureEtlJob);
 				etlJobHand.setPro_para(syscode + "," + failureEtlJob + "," + currBathDate);
@@ -1346,7 +1346,7 @@ public class TaskManagerTest {
 				}
 
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(handleEtlJob);
 				etlJobHand.setEtl_hand_type("SS");
@@ -1496,7 +1496,7 @@ public class TaskManagerTest {
 
 				//错误的数据访问1、进行干预时，干预参数信息错误，干预将会失败。
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(errorParaEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorParaEtlJob + "," + currBathDate +
@@ -1507,27 +1507,27 @@ public class TaskManagerTest {
 				etlJobHand.add(db);
 
 				//正确的数据访问1、进行干预时，干预能运行1分钟的作业、T+1的作业，干预能看到效果并干预成功。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(waitLongTimeEtlJob);
 				etlJobHand.setPro_para(syscode + "," + waitLongTimeEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JS");
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(t1EtlJob);
 				etlJobHand.setPro_para(syscode + "," + t1EtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JS");
 				etlJobHand.add(db);
 
 				//错误的数据访问2、进行干预时，干预已经运行失败或停止的作业，干预将会失败。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(failureEtlJob);
 				etlJobHand.setPro_para(syscode + "," + failureEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JS");
 				etlJobHand.add(db);
 
 				//错误的数据访问3、进行干预时，干预已经运行成功的作业，干预将会失败。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(doneEtlJob);
 				etlJobHand.setPro_para(syscode + "," + doneEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JS");
@@ -1543,7 +1543,7 @@ public class TaskManagerTest {
 				}
 
 				//借助[作业跳过]干预，以退出程序。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(failureEtlJob);
 				etlJobHand.setPro_para(syscode + "," + failureEtlJob + "," + currBathDate);
@@ -1745,7 +1745,7 @@ public class TaskManagerTest {
 				//正确的数据访问1、进行干预时，干预已经停止的、已经失败的、已经结束的作业，干预能看到效果并干预成功。
 				//配合[作业停止]干预来实现“已经停止”的作业
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(stopedEtlJob);
 				etlJobHand.setPro_para(syscode + "," + stopedEtlJob + "," + currBathDate);
@@ -1754,40 +1754,40 @@ public class TaskManagerTest {
 				etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(failureEtlJob);
 				etlJobHand.setPro_para(syscode + "," + failureEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JR");
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(doneEtlJob);
 				etlJobHand.setPro_para(syscode + "," + doneEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JR");
 				etlJobHand.add(db);
 
 				//错误的数据访问1、进行干预时，干预参数信息错误，干预将会失败；
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(errorParaEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorParaEtlJob);
 				etlJobHand.setEtl_hand_type("JR");
 				etlJobHand.add(db);
 
 				//错误的数据访问2、进行干预时，干预运行中的、挂起的作业，干预将会失败；
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(waitLongTimeEtlJob);
 				etlJobHand.setPro_para(syscode + "," + waitLongTimeEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JR");
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(t1EtlJob);
 				etlJobHand.setPro_para(syscode + "," + t1EtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JR");
 				etlJobHand.add(db);
 
 				//错误的数据访问3、进行干预时，干预不存在的作业，干预将会失败。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(noExitEtlJob);
 				etlJobHand.setPro_para(syscode + "," + noExitEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JR");
@@ -1801,7 +1801,7 @@ public class TaskManagerTest {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(stopedEtlJob);
 				etlJobHand.setPro_para(syscode + "," + stopedEtlJob + "," + currBathDate);
 				etlJobHand.setEtl_hand_type("JR");
@@ -1817,7 +1817,7 @@ public class TaskManagerTest {
 				}
 
 				//借助[系统停止]干预，以退出程序。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(failureEtlJob);
 				etlJobHand.setPro_para(syscode + "," + failureEtlJob + "," + currBathDate);
@@ -2003,7 +2003,7 @@ public class TaskManagerTest {
 
 				//正确的数据访问1、进行干预时，干预调度状态不为[运行中]的作业，干预能看到效果并干预成功。
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(t1EtlJob);
 				etlJobHand.setPro_para(syscode + "," + t1EtlJob + "," + currBathDate + "," + priority_right);
@@ -2012,21 +2012,21 @@ public class TaskManagerTest {
 				etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(doneEtlJob);
 				etlJobHand.setPro_para(syscode + "," + doneEtlJob + "," + currBathDate + ","
 						+ priority_right);
 				etlJobHand.add(db);
 
 				//错误的数据访问1、进行干预时，干预优先级超出范围，干预将会失败；
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(errorParaEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorParaEtlJob + "," + currBathDate + ","
 						+ priority_failure);
 				etlJobHand.add(db);
 
 				//错误的数据访问2、进行干预时，干预调度状态为[运行中]的作业，干预将会失败；
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(waitLongTimeEtlJob);
 				etlJobHand.setPro_para(syscode + "," + waitLongTimeEtlJob + "," + currBathDate + ","
 						+ priority_right);
@@ -2042,7 +2042,7 @@ public class TaskManagerTest {
 				}
 
 				//借助[作业跳过]干预，以退出程序。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(t1EtlJob);
 				etlJobHand.setPro_para(syscode + "," + t1EtlJob + "," + currBathDate);
@@ -2204,7 +2204,7 @@ public class TaskManagerTest {
 
 				//正确的数据访问1、进行干预时，干预调度状态不为[运行中、已完成]的作业，干预能看到效果并干预成功。
 				Etl_job_hand etlJobHand = new Etl_job_hand();
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_sys_cd(syscode);
 				etlJobHand.setEtl_job(t1EtlJob);
 				etlJobHand.setPro_para(syscode + "," + t1EtlJob + "," + currBathDate);
@@ -2213,24 +2213,24 @@ public class TaskManagerTest {
 				etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(failureEtlJob);
 				etlJobHand.setPro_para(syscode + "," + failureEtlJob + "," + currBathDate);
 				etlJobHand.add(db);
 
 				//错误的数据访问1、进行干预时，干预调度状态为[运行中、已完成]的作业，干预将会失败。
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(waitLongTimeEtlJob);
 				etlJobHand.setPro_para(syscode + "," + waitLongTimeEtlJob + "," + currBathDate);
 				etlJobHand.add(db);
 
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(doneEtlJob);
 				etlJobHand.setPro_para(syscode + "," + doneEtlJob + "," + currBathDate);
 				etlJobHand.add(db);
 
 				//错误的数据访问2、进行干预时，干预参数错误，干预将会失败；
-				etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+				etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 				etlJobHand.setEtl_job(errorParaEtlJob);
 				etlJobHand.setPro_para(syscode + "," + errorParaEtlJob);
 				etlJobHand.add(db);
@@ -2322,7 +2322,7 @@ public class TaskManagerTest {
 //			etlJobHand.setEtl_job(handleEtlJob);
 //			etlJobHand.setPro_para(syscode + "," + handleEtlJob + "," + currBathDate);
 //			etlJobHand.setEtl_hand_type("SF");
-//			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+//			etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 //			etlJobHand.setHand_status(Meddle_status.TRUE.getCode());
 //			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 //			etlJobHand.add(db);
