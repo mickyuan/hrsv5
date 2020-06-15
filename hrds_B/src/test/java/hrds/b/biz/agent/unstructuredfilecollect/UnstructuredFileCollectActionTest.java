@@ -72,58 +72,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	@Before
 	public void beforeTest() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//1.造sys_user表数据，用于模拟用户登录。
-//			Sys_user user = new Sys_user();
-//			user.setUser_id(USER_ID);
-//			user.setCreate_id(USER_ID);
-//			user.setRole_id(USER_ID);
-//			user.setUser_name("测试用户(9001)");
-//			user.setUser_password("1");
-//			user.setUseris_admin(IsFlag.Shi.getCode());
-//			user.setUser_state(IsFlag.Shi.getCode());
-//			user.setCreate_date(DateUtil.getSysDate());
-//			user.setCreate_time(DateUtil.getSysTime());
-//			user.setToken("0");
-//			user.setValid_time("0");
-//			user.setDep_id(DEPT_ID);
-//			assertThat("初始化数据成功", user.add(db), is(1));
-//			//2.造部门表数据，用于模拟用户登录
-//			Department_info deptInfo = new Department_info();
-//			deptInfo.setDep_id(DEPT_ID);
-//			deptInfo.setDep_name("测试系统参数类部门init-zxz");
-//			deptInfo.setCreate_date(DateUtil.getSysDate());
-//			deptInfo.setCreate_time(DateUtil.getSysTime());
-//			deptInfo.setDep_remark("测试系统参数类部门init-zxz");
-//			assertThat("初始化数据成功", deptInfo.add(db), is(1));
-			//3.造agent_info表的数据，初始化数据可调整，默认为2条，agent_id为10000001和10000002
-//			Agent_down_info agent_down_info = new Agent_down_info();
-//			agent_down_info.setDown_id(PrimayKeyGener.getNextId());
-//			agent_down_info.setUser_id(USER_ID);
-//			agent_down_info.setAgent_id(AGENT_ID);
-//			agent_down_info.setAgent_ip(AGENT_IP);
-//			agent_down_info.setAgent_port(AGENT_PORT);
-//			agent_down_info.setAgent_type(AgentType.ShuJuKu.getCode());
-//			agent_down_info.setAgent_name("非结构化采集Agent");
-//			agent_down_info.setSave_dir("/aaa/ccc/");
-//			agent_down_info.setLog_dir("/aaa/ccc/log");
-//			agent_down_info.setDeploy(IsFlag.Shi.getCode());
-//			agent_down_info.setAgent_context("/agent");
-//			agent_down_info.setAgent_pattern("/receive/*");
-//			agent_down_info.setRemark("测试用例清除数据专用列");
-//			assertThat("初始化数据成功", agent_down_info.add(db), is(1));
-//			Agent_info agent_info = new Agent_info();
-//			agent_info.setUser_id(USER_ID);
-//			agent_info.setAgent_id(AGENT_ID);
-//			agent_info.setAgent_ip(AGENT_IP);
-//			agent_info.setAgent_port(AGENT_PORT);
-//			agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-//			agent_info.setAgent_name("非结构化采集Agent");
-//			agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
-//			agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
-//			agent_info.setSource_id(SOURCE_ID);
-//			agent_info.setCreate_date(DateUtil.getSysDate());
-//			agent_info.setCreate_time(DateUtil.getSysTime());
-//			assertThat("初始化数据成功", agent_info.add(db), is(1));
 			//4.造file_collect_set表数据，初始化条数可调整，默认为2条，fcs_id为20000001和20000002
 			for (int i = 0; i < FILE_COLLECT_SET_ROWS; i++) {
 				File_collect_set file_collect_set = new File_collect_set();
