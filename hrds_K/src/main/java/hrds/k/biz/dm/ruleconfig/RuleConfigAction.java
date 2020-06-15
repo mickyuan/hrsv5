@@ -7,7 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -55,9 +55,7 @@ public class RuleConfigAction extends BaseAction {
     @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象", isBean = true)
     public void addDqDefinition(Dq_definition dq_definition) {
         //数据校验
-        if (StringUtil.isBlank(dq_definition.getCase_type())) {
-            throw new BusinessException("规则类型为空!");
-        }
+        Validator.notBlank(dq_definition.getCase_type(), "规则类型为空!");
         //设置数据对象
         dq_definition.setReg_num(PrimayKeyGener.getNextId());
         dq_definition.setApp_updt_dt(DateUtil.getSysDate());
@@ -112,9 +110,7 @@ public class RuleConfigAction extends BaseAction {
     @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象")
     public void updateDqDefinition(Dq_definition dq_definition) {
         //数据校验
-        if (StringUtil.isBlank(dq_definition.getReg_num().toString())) {
-            throw new BusinessException("修改规则编号为空!");
-        }
+        Validator.notBlank(dq_definition.getReg_num().toString(), "修改规则编号为空!");
         if (!checkRegNumIsExist(dq_definition.getReg_num())) {
             throw new BusinessException("修改的规则已经不存在!");
         }
@@ -183,6 +179,7 @@ public class RuleConfigAction extends BaseAction {
     @Return(desc = "字段信息列表", range = "字段信息列表")
     public List<Map<String, Object>> getColumnsByTableName(String table_name) {
         //数据层获取不同表结构
+        Validator.notBlank(table_name, "获取表字段信息的表名为空!");
         return DataTableUtil.getColumnByTableName(table_name);
     }
 
@@ -316,29 +313,27 @@ public class RuleConfigAction extends BaseAction {
         if (StringUtil.isBlank(dq_index3record.getTask_id().toString())) {
             throw new BusinessException("获取指标3结果时,任务标号为空!");
         }
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //获取指标3存储记录信息
-            dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
-                    " where task_id=?", dq_index3record.getTask_id()).orElseThrow(() ->
-                    (new BusinessException("获取任务指标3存储记录的SQL异常!")));
-            //设置查询sql
-            String sql = "select * from " + dq_index3record.getTable_name();
-            //设置查询sql:问题数据明细sql,只取10条
-            List<Map<String, Object>> check_index3_list = new ArrayList<>();
-            //根据指标3存储记录信息获取数据
-            try {
-                new ProcessingData() {
-                    @Override
-                    public void dealLine(Map<String, Object> map) {
+        //获取指标3存储记录信息
+        dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
+                " where task_id=?", dq_index3record.getTask_id()).orElseThrow(() ->
+                (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+        //设置查询sql
+        String sql = "select * from " + dq_index3record.getTable_name();
+        //设置查询sql:问题数据明细sql,只取10条
+        List<Map<String, Object>> check_index3_list = new ArrayList<>();
+        //根据指标3存储记录信息获取数据
+        try {
+            new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) {
 
-                        check_index3_list.add(map);
-                    }
-                }.getPageDataLayer(sql, db, 1, 10, dq_index3record.getDsl_id());
-            } catch (Exception e) {
-                throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
-            }
-            return check_index3_list;
+                    check_index3_list.add(map);
+                }
+            }.getPageDataLayer(sql, Dbo.db(), 1, 10, dq_index3record.getDsl_id());
+        } catch (Exception e) {
+            throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
         }
+        return check_index3_list;
     }
 
     @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
@@ -352,6 +347,8 @@ public class RuleConfigAction extends BaseAction {
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "String类型")
     @Return(desc = "工程下的任务信息", range = "工程下的任务信息")
     public List<Etl_sub_sys_list> getTaskInfo(String etl_sys_cd) {
+        //数据校验
+        Validator.notBlank(etl_sys_cd, "工程id为空!");
         return EtlJobUtil.getTaskInfo(etl_sys_cd);
     }
 
@@ -419,7 +416,7 @@ public class RuleConfigAction extends BaseAction {
     public Map<String, Object> errDataSqlCheck(Dq_definition dq_definition) {
         //数据校验
         if (StringUtil.isBlank(dq_definition.getErr_data_sql())) {
-            throw new BusinessException("指定SQL为空!");
+            throw new BusinessException("异常数据SQL为空!");
         }
         //系统变量对应结果
         Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
@@ -435,20 +432,8 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "检查规则reg_num是否存在", logicStep = "检查规则reg_num是否存在")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
     @Return(desc = "规则否存在", range = "true：不存在，false：存在")
-
     private boolean checkRegNumIsExist(long reg_num) {
         return Dbo.queryNumber("SELECT COUNT(reg_num) FROM " + Dq_definition.TableName + " WHERE reg_num = ?",
                 reg_num).orElseThrow(() -> new BusinessException("检查规则reg_num否存在的SQL错误")) == 1;
-    }
-
-    @Method(desc = "list转Map", logicStep = "result转Map")
-    @Param(name = "list", desc = "结果list", range = "list类型")
-    @Param(name = "colOfKey", desc = "作为key的字段名", range = "String类型")
-    @Param(name = "colOfValue", desc = "作为value的字段名", range = "String类型")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
-    private Map<String, Object> listToMap(List<Map<String, Object>> list, String colOfKey, String colOfValue) {
-        Map<String, Object> map = new HashMap<>();
-        list.forEach(l -> map.put(l.get(colOfKey).toString(), l.get(colOfValue).toString()));
-        return map;
     }
 }
