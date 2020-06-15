@@ -139,7 +139,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				}
 				value.set(sb.toString());
 				writer.append(NullWritable.get(), value);
-				if (counter % 50000 == 0) {
+				if (counter % JobConstant.BUFFER_ROW == 0) {
 					log.info(hbase_name + "文件已写入一次,目前写到" + counter + "行");
 					writer.hflush();
 				}

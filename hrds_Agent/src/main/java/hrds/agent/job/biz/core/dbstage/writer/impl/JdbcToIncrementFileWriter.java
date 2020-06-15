@@ -111,7 +111,7 @@ public class JdbcToIncrementFileWriter extends AbstractFileWriter {
 					}
 				}
 				writer.write(line.toString());
-				if (counter % 50000 == 0) {
+				if (counter % JobConstant.BUFFER_ROW == 0) {
 					log.info("正在写入文件，已写入" + counter + "行");
 					writer.flush();
 				}
