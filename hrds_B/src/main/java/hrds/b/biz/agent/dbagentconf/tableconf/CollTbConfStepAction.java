@@ -385,7 +385,7 @@ public class CollTbConfStepAction extends BaseAction {
 		// 如果是修改采集表
 		else {
 		  long oldID = tableInfo.getTable_id();
-		  String newID = PrimayKeyGener.getNextId();
+		  long newID = PrimayKeyGener.getNextId();
 		  tableInfo.setTable_id(newID);
 		  tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		  // 5、保存数据进库
@@ -393,7 +393,7 @@ public class CollTbConfStepAction extends BaseAction {
 //		  // 调用方法删除脏数据
 //		  deleteDirtyDataOfTb(oldID);
 		  // 6、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
-		  updateTableId(Long.parseLong(newID), oldID);
+		  updateTableId(newID, oldID);
 		  // 更新设置的新字段信息
 		  if (StringUtil.isNotBlank(tableColumn)) {
 			Map tableColumnMap = JsonUtil.toObjectSafety(tableColumn, Map.class)
@@ -1184,13 +1184,13 @@ public class CollTbConfStepAction extends BaseAction {
 		else {
 		  // 6-1、保留原有的table_id，为当前数据设置新的table_id
 		  long oldID = tableInfo.getTable_id();
-		  String newID = PrimayKeyGener.getNextId();
+		  long newID = PrimayKeyGener.getNextId();
 		  tableInfo.setTable_id(newID);
 		  tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		  // 6-2、保存Table_info对象
 		  tableInfo.add(Dbo.db());
 		  // 6-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
-		  updateTableId(Long.parseLong(newID), oldID);
+		  updateTableId(newID, oldID);
 		  // 6-4、编辑采集表，将该表要采集的列信息保存到相应的表里面
 		  saveTableColumnInfoForUpdate(tableInfo, collColumn);
 		}

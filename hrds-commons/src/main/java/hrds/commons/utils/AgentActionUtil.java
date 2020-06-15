@@ -58,12 +58,9 @@ public class AgentActionUtil {
 	public static final String BATCHADDFTPTRANSFER = "/hrds/server/batchAddFtpTransfer";
 	//向agent端发送一个ftp采集的任务
 	public static final String SENDFTPCOLLECTTASKINFO = "/hrds/agent/trans/biz/ftpcollect/execute";
-	//向agent发送一个半结构化直连解析数据字典获取表信息
-	public static final String GETDICTABLE = "/hrds/agent/trans/biz/objectCollect/getDicTable";
-	//向agent发送一个半结构化直连解析数据字典根据表名获取列信息
-	public static final String GETDICALLCOLUMN = "/hrds/agent/trans/biz/objectCollect/getDicAllColumn";
-	//向agent发送一个半结构化直连解析数据字典根据表名获取数据处理方式信息
-	public static final String GETHANDLETYPEBYTABLE = "/hrds/agent/trans/biz/objectCollect/getHandleTypeByTable";
+	//向agent发送一个半结构化直连解析数据字典任务
+	public static final String PARSEDATADICTIONARY = "/hrds/agent/trans/biz/objectCollect" +
+			"/parseObjectCollectDataDictionary";
 	//向agent发送一个半结构化直连重写数据字典任务
 	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/objectCollect/writeDictionary";
 
@@ -87,9 +84,7 @@ public class AgentActionUtil {
 		list.add(SENDDBCOLLECTTASKINFO);
 		list.add(BATCHADDFTPTRANSFER);
 		list.add(SENDFTPCOLLECTTASKINFO);
-		list.add(GETDICTABLE);
-		list.add(GETDICALLCOLUMN);
-		list.add(GETHANDLETYPEBYTABLE);
+		list.add(PARSEDATADICTIONARY);
 		list.add(WRITEDICTIONARY);
 		list.add(ADDDATASTOREREG);
 		list.add(GETAlLLTABLECOLUMN);

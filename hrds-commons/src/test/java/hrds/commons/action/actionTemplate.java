@@ -67,7 +67,7 @@ public class actionTemplate extends BaseAction {
             Set<String> aa = new HashSet<>();
             aa.add("sdf");
             aa.add("bb");
-            String testcc = db.getDbtype().ofKeyLableSql("testcc", aa);
+            String testcc = db.getDbtype().ofKeyLableSql("testcc", aa,"aa");
             Result result = SqlOperator.queryResult(db, "select * from testcc");
             ResultSet resultSet = db.queryPagedGetResultSet("select * from testcc", 1, 1000, false);
         }
