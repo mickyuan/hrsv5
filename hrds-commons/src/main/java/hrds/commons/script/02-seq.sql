@@ -6,6 +6,20 @@ INSERT INTO keytable (key_name,key_value) VALUES ('batchno',20);
 INSERT INTO keytable (key_name,key_value) VALUES ('hrds',20);
 INSERT INTO keytable (key_name,key_value) VALUES ('paldbcount',0);
 
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('A',0,0);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('B',0,1);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('C',0,2);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('D',0,3);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('E',0,4);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('F',0,5);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('G',0,6);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('H',0,7);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('I',0,8);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('J',0,9);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('K',0,10);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('Cont',0,11);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('trig',0,12);
+
 delete from etl_para;
 INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate', '#txdate', 'param', '当前跑批日,格式yyyyMMdd');
 INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate_next', '#txdate_next', 'param', '后一跑批日,格式yyyyMMdd');

@@ -1,8 +1,23 @@
 package hrds.commons.utils.key;
 
+import fd.ng.core.conf.ConfFileLoader;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.key.SnowflakeImpl;
+import fd.ng.core.yaml.YamlFactory;
+import fd.ng.core.yaml.YamlMap;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
+import hrds.commons.exception.BusinessException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.spark.sql.sources.In;
 
+import javax.xml.crypto.Data;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -16,41 +31,26 @@ import java.util.Random;
  * @version 1.0 UuidGener
  */
 public class PrimayKeyGener {
-	private static final SnowflakeImpl idgenDef = new SnowflakeImpl(30, 30);
-	private static final SnowflakeImpl idgenA = new SnowflakeImpl(0, 0);
-	private static final SnowflakeImpl idgenB = new SnowflakeImpl(1, 1);
-	private static final SnowflakeImpl idgenC = new SnowflakeImpl(2, 2);
-	private static final SnowflakeImpl idgenD = new SnowflakeImpl(3, 3);
-	private static final SnowflakeImpl idgenE = new SnowflakeImpl(4, 4);
-	private static final SnowflakeImpl idgenF = new SnowflakeImpl(5, 5);
-	private static final SnowflakeImpl idgenG = new SnowflakeImpl(6, 6);
-	private static final SnowflakeImpl idgenH = new SnowflakeImpl(7, 7);
-	private static final SnowflakeImpl idgenI = new SnowflakeImpl(8, 8);
-	private static final SnowflakeImpl idgenK = new SnowflakeImpl(9, 9);
+	private static final Logger logger = LogManager.getLogger();
 
-	private PrimayKeyGener() {
-	}
-
-	private static SnowflakeImpl getCaller() {
-		StackTraceElement stack[] = (new Throwable()).getStackTrace();
-		for (int i = 0; i < stack.length; i++) {
-			StackTraceElement ste = stack[i];
-			String className = ste.getClassName();
-			if (className.contains("hrds.a.")) return idgenA;
-			else if (className.contains("hrds.b.")) return idgenB;
-			else if (className.contains("hrds.c.")) return idgenC;
-			else if (className.contains("hrds.d.")) return idgenD;
-			else if (className.contains("hrds.e.")) return idgenE;
-			else if (className.contains("hrds.f.")) return idgenF;
-			else if (className.contains("hrds.g.")) return idgenG;
-			else if (className.contains("hrds.h.")) return idgenH;
-			else if (className.contains("hrds.k.")) return idgenK;
+	private static SnowflakeImpl idgen = null;
+	static {
+		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("appinfo")).asMap();
+		String projectId = rootConfig.getString("projectId");
+		try(DatabaseWrapper db = new DatabaseWrapper()) {
+			Result rs = SqlOperator.queryResult(db, "SELECT * FROM keytable_snowflake WHERE project_id = ?",
+					projectId);
+			if (rs == null || rs.getRowCount() != 1) {
+				throw new BusinessException("DB data select exception: keytable_snowflake select fail!");
+			}
+			Integer datacenterId = rs.getInteger(0, "datacenter_id");
+			Integer machineId = rs.getInteger(0, "machine_id");
+			idgen = new SnowflakeImpl(datacenterId,machineId);
 		}
-		return idgenDef;
 	}
 
-	public static String getNextId() {
-		return Long.toString(getCaller().nextId());
+	public static Long getNextId() {
+		return idgen.nextId();
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class PrimayKeyGener {
 	 */
 	public static String getOperId() {
 
-		hrds.commons.utils.key.KeyGenerator keygen = KeyGenerator.getInstance();
+		KeyGenerator keygen = KeyGenerator.getInstance();
 		long val = keygen.getNextKey("tellers");
 		long number = 5000L + val;
 		StringBuffer str = new StringBuffer();
@@ -93,11 +93,26 @@ public class PrimayKeyGener {
 	 */
 	public static String getRole() {
 
-		hrds.commons.utils.key.KeyGenerator keygen = hrds.commons.utils.key.KeyGenerator.getInstance();
+		KeyGenerator keygen = KeyGenerator.getInstance();
 		long roleid = keygen.getNextKey("roleid"); //从KeyTable生成组编码
 		long number = 100L + roleid;
 		StringBuffer str = new StringBuffer();
 		str.append(number);
 		return str.toString();
+	}
+
+
+	private static String getMACAddress() throws Exception {
+		InetAddress ia = InetAddress.getLocalHost();
+		byte[] mac = NetworkInterface.getByInetAddress(ia).getHardwareAddress();
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < mac.length; i++) {
+			if (i != 0) {
+				sb.append("-");
+			}
+			String s = Integer.toHexString(mac[i] & 0xFF);
+			sb.append(s.length() == 1 ? 0 + s : s);
+		}
+		return sb.toString().toUpperCase();
 	}
 }
