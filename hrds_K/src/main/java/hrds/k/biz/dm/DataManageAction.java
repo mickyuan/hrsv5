@@ -18,7 +18,7 @@ import java.util.Map;
 public class DataManageAction extends BaseAction {
 
     @Method(desc = "获取表统计信息", logicStep = "获取表统计信息")
-    @Param(name = "query_num", desc = "数据层数据表统计层数",
+    @Param(name = "statistics_layer_num", desc = "数据层数据表统计层数",
             range = "int类型值,为空默认为表最多的前5个存储层,为0或者小于0获取所有存储层", valueIfNull = "5")
     @Return(desc = "表统计信息Map", range = "表统计信息Map")
     public List<Map<String, Object>> getTableStatistics(int statistics_layer_num) {

@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -28,15 +29,9 @@ public class BloodAnalysisAction extends BaseAction {
     public Map<String, Object> getTableBloodRelationship(String table_name, String search_type,
                                                          String search_relationship) {
         //数据校验
-        if (StringUtil.isBlank(table_name)) {
-            throw new BusinessException("搜索表名称为空!");
-        }
-        if (StringUtil.isBlank(search_type)) {
-            throw new BusinessException("搜索类型为空!");
-        }
-        if (StringUtil.isBlank(search_relationship)) {
-            throw new BusinessException("搜索关系为空!");
-        }
+        Validator.notBlank(table_name, "搜索表名称为空!");
+        Validator.notBlank(search_type, "搜索类型为空!");
+        Validator.notBlank(search_relationship, "搜索关系为空!");
         //搜索关系 0:影响,1:血缘 IsFlag代码项设置
         IsFlag is_sr = IsFlag.ofEnumByCode(search_relationship);
         //初始化返回结果
@@ -62,9 +57,7 @@ public class BloodAnalysisAction extends BaseAction {
     @Return(desc = "搜索结果List", range = "搜索结果List")
     public List<String> fuzzySearchTableName(String table_name, String search_relationship) {
         //数据校验
-        if (StringUtil.isBlank(search_relationship)) {
-            throw new BusinessException("搜索类型为空!");
-        }
+        Validator.notBlank(search_relationship, "搜索关系为空!");
         //初始化执行sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         //根据搜索类型检索表名 0:影响,1:血缘 IsFlag代码项设置
@@ -121,6 +114,8 @@ public class BloodAnalysisAction extends BaseAction {
     @Param(name = "search_type", desc = "搜索类型", range = "String类型, 0:表查看,1:字段查看,IsFlag代码项设置")
     @Return(desc = "影响关系数据", range = "影响关系数据")
     private Map<String, Object> influencesDataInfo(String table_name, String search_type) {
+        //数据校验
+        Validator.notBlank(search_type, "搜索关系为空!");
         //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
