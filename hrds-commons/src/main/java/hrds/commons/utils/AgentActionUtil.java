@@ -3,7 +3,6 @@ package hrds.commons.utils;
 import fd.ng.netserver.conf.HttpServerConfBean;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
 import hrds.commons.exception.BusinessException;
 
 import java.util.ArrayList;
@@ -59,9 +58,12 @@ public class AgentActionUtil {
 	public static final String BATCHADDFTPTRANSFER = "/hrds/server/batchAddFtpTransfer";
 	//向agent端发送一个ftp采集的任务
 	public static final String SENDFTPCOLLECTTASKINFO = "/hrds/agent/trans/biz/ftpcollect/execute";
-	//向agent发送一个半结构化直连解析数据字典任务
-	public static final String PARSEDATADICTIONARY = "/hrds/agent/trans/biz/objectCollect" +
-			"/parseObjectCollectDataDictionary";
+	//向agent发送一个半结构化直连解析数据字典获取表信息
+	public static final String GETDICTABLE = "/hrds/agent/trans/biz/objectCollect/getDicTable";
+	//向agent发送一个半结构化直连解析数据字典根据表名获取列信息
+	public static final String GETDICALLCOLUMN = "/hrds/agent/trans/biz/objectCollect/getDicAllColumn";
+	//向agent发送一个半结构化直连解析数据字典根据表名获取数据处理方式信息
+	public static final String GETHANDLETYPEBYTABLE = "/hrds/agent/trans/biz/objectCollect/getHandleTypeByTable";
 	//向agent发送一个半结构化直连重写数据字典任务
 	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/objectCollect/writeDictionary";
 
@@ -85,7 +87,9 @@ public class AgentActionUtil {
 		list.add(SENDDBCOLLECTTASKINFO);
 		list.add(BATCHADDFTPTRANSFER);
 		list.add(SENDFTPCOLLECTTASKINFO);
-		list.add(PARSEDATADICTIONARY);
+		list.add(GETDICTABLE);
+		list.add(GETDICALLCOLUMN);
+		list.add(GETHANDLETYPEBYTABLE);
 		list.add(WRITEDICTIONARY);
 		list.add(ADDDATASTOREREG);
 		list.add(GETAlLLTABLECOLUMN);
@@ -116,15 +120,10 @@ public class AgentActionUtil {
 		if (!list.contains(methodName)) {
 			throw new BusinessException("被调用的agent接口" + methodName + "没有登记");
 		}
-		//2.数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限，根据agent_id获取信息
-		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class, "SELECT * FROM "
-						+ Agent_info.TableName + " WHERE agent_id = ?  AND user_id = ?",
-				agent_id, user_id).orElseThrow(() ->
-				new BusinessException("根据Agent_id:" + agent_id + "查询不到agent_info表信息"));
-
-		Agent_down_info agent_down_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM "
-						+ Agent_down_info.TableName + " WHERE agent_ip = ?  AND agent_port = ?",
-				agent_info.getAgent_ip(), agent_info.getAgent_port()).orElseThrow(() ->
+		//2.数据可访问权限处理方式，传入用户需要有Agent对应数据的访问权限，根据agent_id和user_id获取信息
+		Agent_down_info agent_down_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM " +
+				"agent_down_info t1 join agent_info t2 on t1.agent_ip = t2.agent_ip and t1.agent_port=" +
+				"t2.agent_port where  t2.agent_id= ? and t2.user_id = ?", agent_id, user_id).orElseThrow(() ->
 				new BusinessException("根据Agent_id:" + agent_id + "查询不到agent_down_info表信息"));
 		//XXX 这里无法判断页面是规定按照配置文件里面一样填/action/*还是/action/还是/action
 		//XXX 因此这里就判断如果是/*或者/结尾的就将结尾的那个字符去掉，保证拼接的url没有多余的字符
@@ -137,7 +136,7 @@ public class AgentActionUtil {
 					agent_down_info.getAgent_context().length() - 1));
 		}
 		//3.拼接调用需要的url
-		return "http://" + agent_info.getAgent_ip() + ":" + agent_info.getAgent_port()
+		return "http://" + agent_down_info.getAgent_ip() + ":" + agent_down_info.getAgent_port()
 				+ agent_down_info.getAgent_context() + agent_down_info.getAgent_pattern() + methodName;
 	}
 

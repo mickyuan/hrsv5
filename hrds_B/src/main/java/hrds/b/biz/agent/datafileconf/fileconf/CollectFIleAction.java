@@ -92,7 +92,7 @@ public class CollectFIleAction extends BaseAction {
       CheckParam.throwErrorMsg("采集任务名称(%s),已经存在", database_set.getTask_name());
     }
     //    2: 设置此次任务的ID
-    String database_id = PrimayKeyGener.getNextId();
+    String database_id = String.valueOf(PrimayKeyGener.getNextId());
     // 设置是否为DB文件为是
     database_set.setDb_agent(IsFlag.Shi.getCode());
     database_set.setDatabase_id(database_id);

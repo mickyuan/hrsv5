@@ -238,7 +238,7 @@ public class TaskManagerTest {
 			etlJobDispHis.add(db);
 
 			Etl_job_hand etlJobHand = new Etl_job_hand();
-			etlJobHand.setEvent_id(PrimayKeyGener.getNextId());
+			etlJobHand.setEvent_id(String.valueOf(PrimayKeyGener.getNextId()));
 			etlJobHand.setEtl_sys_cd(etlSysCode);
 			etlJobHand.setEtl_job(handledEtlJob);
 			etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
