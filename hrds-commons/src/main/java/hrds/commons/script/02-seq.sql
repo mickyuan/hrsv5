@@ -6,6 +6,22 @@ INSERT INTO keytable (key_name,key_value) VALUES ('batchno',20);
 INSERT INTO keytable (key_name,key_value) VALUES ('hrds',20);
 INSERT INTO keytable (key_name,key_value) VALUES ('paldbcount',0);
 
+
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('A',0,0);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('B',0,1);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('C',0,2);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('D',0,3);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('E',0,4);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('F',0,5);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('G',0,6);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('H',0,7);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('I',0,8);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('J',0,9);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('K',0,10);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('Cont',0,11);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('trig',0,12);
+
+
 delete from etl_para;
 INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate', '#txdate', 'param', '当前跑批日,格式yyyyMMdd');
 INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate_next', '#txdate_next', 'param', '后一跑批日,格式yyyyMMdd');
@@ -283,17 +299,4 @@ INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('
 INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('t7', '指标类型', '可选择基础和派生基础为直接从业务系统取数，派生为数据仓库加工');
 INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('t8', '是否落地', '选择是时，则校验存储表信息选择否时，则校验技术含义SQL');
 INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('t9', '指标主体', '用户可选择对应的指标主体，技术指标只有一个指标主体。用户可新增和删除指标主体。');
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('targTab', '需要检测的表名', '用户可以变量名加表名的形式填写，格式如!{PDATA}.T01_PARTY。注意：#{TX_DATE10}和#{TX_DATE}变量不可以被填写!');
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tCd', '技术指标代码', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tDsc', '指标名称', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tFld', '指标存储字段', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('time', '设定调度触发时间', '当调度触发方式为定时触发时，可用。格式为HH:MM:SS，例如19:20:30');
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tLvl', '指标级别', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tRmrk', '备注', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tRngDc', '技术口径描述', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tSQL', '技术含义SQL', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tSrc', '指标来源', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('tUpCd', '上级指标代码', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('unitCd', '指标单位代码', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('unitDsc', '指标单位名称', null);
-INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('usr', '数据库的用户名和密码', '请填写数据库的用户名和密码');
+INSERT INTO dq_help_info (help_info_id, help_info_desc, help_info_dtl) VALUES ('targTab', '需要检测的表名', '用户可以变量名加表名的形式填写，格式如!{PDATA}.T01_PARTY。注意：#{TX_DATE10}和#{TX_DATE}变量不可以

@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -23,14 +24,10 @@ public class VariableConfigAction extends BaseAction {
     @Param(name = "dq_sys_cfg", desc = "Dq_sys_cfg实体", range = "Dq_sys_cfg实体", isBean = true)
     public void addVariableConfigDat(Dq_sys_cfg dq_sys_cfg) {
         //数据校验
-        if (StringUtil.isBlank(dq_sys_cfg.getVar_name())) {
-            throw new BusinessException("变量名为空!");
-        }
+        Validator.notBlank(dq_sys_cfg.getVar_name(), "变量名为空!");
+        Validator.notBlank(dq_sys_cfg.getVar_value(), "变量值为空!");
         if (checkVarNameIsRepeat(dq_sys_cfg.getVar_name())) {
             throw new BusinessException("变量名重复!");
-        }
-        if (StringUtil.isBlank(dq_sys_cfg.getVar_value())) {
-            throw new BusinessException("变量值为空!");
         }
         //设置属性
         dq_sys_cfg.setSys_var_id(PrimayKeyGener.getNextId());
@@ -58,15 +55,9 @@ public class VariableConfigAction extends BaseAction {
     @Param(name = "dq_sys_cfg", desc = "Dq_sys_cfg实体", range = "Dq_sys_cfg实体", isBean = true)
     public void updateVariableConfigData(Dq_sys_cfg dq_sys_cfg) {
         //数据校验
-        if (StringUtil.isBlank(dq_sys_cfg.getSys_var_id().toString())) {
-            throw new BusinessException("变量id为空!");
-        }
-        if (StringUtil.isBlank(dq_sys_cfg.getVar_name())) {
-            throw new BusinessException("变量名为空!");
-        }
-        if (StringUtil.isBlank(dq_sys_cfg.getVar_value())) {
-            throw new BusinessException("变量值为空!");
-        }
+        Validator.notBlank(dq_sys_cfg.getSys_var_id().toString(), "变量id为空!");
+        Validator.notBlank(dq_sys_cfg.getVar_name(), "变量名为空!");
+        Validator.notBlank(dq_sys_cfg.getVar_value(), "变量值为空!");
         //设置属性
         dq_sys_cfg.setApp_updt_dt(DateUtil.getSysDate());
         dq_sys_cfg.setApp_updt_ti(DateUtil.getSysTime());
@@ -104,10 +95,10 @@ public class VariableConfigAction extends BaseAction {
         asmSql.addSql("select * from " + Dq_sys_cfg.TableName + " where user_id = ?");
         asmSql.addParam(getUserId());
         if (StringUtil.isNotBlank(var_name)) {
-            asmSql.addLikeParam(" and var_name", '%' + var_name + '%', "");
+            asmSql.addLikeParam(" var_name", '%' + var_name + '%');
         }
         if (StringUtil.isNotBlank(var_value)) {
-            asmSql.addLikeParam(" and var_value", '%' + var_value + '%', "");
+            asmSql.addLikeParam(" var_value", '%' + var_value + '%');
         }
         if (StringUtil.isNotBlank(start_date)) {
             asmSql.addSql(" and app_updt_dt >= ?").addParam(start_date);

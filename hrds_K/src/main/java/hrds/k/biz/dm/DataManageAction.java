@@ -16,28 +16,12 @@ import java.util.Map;
 
 @DocClass(desc = "数据管控-首页", author = "BY-HLL", createdate = "2020/3/27 0027 下午 04:29")
 public class DataManageAction extends BaseAction {
-    @Method(desc = "获取统计信息", logicStep = "获取统计信息")
-    @Param(name = "statistics_layer_num", desc = "数据层数据表统计层数",
-            range = "int类型值,为空默认获取表最多的前5个存储层,为0或者小于0获取所有存储层", valueIfNull = "5")
-    @Return(desc = "统计信息", range = "统计信息")
-    public Map<String, Object> getDMStatistics(int statistics_layer_num) {
-        //初始化统计信息Map
-        Map<String, Object> dmStatisticsMap = new HashMap<>();
-        //获取各种表数的统计结果
-        List<Map<String, Object>> tableStatistics = getTableStatistics(statistics_layer_num);
-        dmStatisticsMap.put("tableStatistics", tableStatistics);
-        //获取各种规则统计结果
-        Map<String, Object> ruleStatistics = getRuleStatistics();
-        dmStatisticsMap.put("ruleStatistics", ruleStatistics);
-        //返回统计结果
-        return dmStatisticsMap;
-    }
 
     @Method(desc = "获取表统计信息", logicStep = "获取表统计信息")
-    @Param(name = "query_num", desc = "数据层数据表统计层数",
+    @Param(name = "statistics_layer_num", desc = "数据层数据表统计层数",
             range = "int类型值,为空默认为表最多的前5个存储层,为0或者小于0获取所有存储层", valueIfNull = "5")
     @Return(desc = "表统计信息Map", range = "表统计信息Map")
-    private List<Map<String, Object>> getTableStatistics(int statistics_layer_num) {
+    public List<Map<String, Object>> getTableStatistics(int statistics_layer_num) {
         //初始化查询 SqlOperator
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         //设置查询sql
@@ -53,10 +37,9 @@ public class DataManageAction extends BaseAction {
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
-
     @Method(desc = "获取各种规则统计结果", logicStep = "获取各种规则统计结果")
     @Return(desc = "规则统计结果Map", range = "规则统计结果Map")
-    private Map<String, Object> getRuleStatistics() {
+    public Map<String, Object> getRuleStatistics() {
         //初始化规则统计结果
         Map<String, Object> ruleStatisticsMap = new HashMap<>();
         //初始化查询 SqlOperator

@@ -1672,3 +1672,12 @@ TASK_ID                                           BIGINT default 0 NOT NULL, --�
 DL_TIME                                           VARCHAR(32) NOT NULL, --处理时间
 CONSTRAINT DQ_EXE_LOG_PK PRIMARY KEY(REQ_ID)   );
 
+
+--snowflake主键生成表
+DROP TABLE IF EXISTS KEYTABLE_SNOWFLAKE ;
+CREATE TABLE KEYTABLE_SNOWFLAKE(
+PROJECT_ID                                        VARCHAR(80) NOT NULL, --project_id
+DATACENTER_ID                                     INTEGER default 0 NULL, --datacenter_id
+MACHINE_ID                                        INTEGER default 0 NULL, --machine_id
+CONSTRAINT KEYTABLE_SNOWFLAKE_PK PRIMARY KEY(PROJECT_ID)   );
+
