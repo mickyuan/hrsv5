@@ -1,5 +1,6 @@
 package hrds.commons.utils.key;
 
+import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.conf.ConfFileLoader;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.key.SnowflakeImpl;
@@ -35,8 +36,7 @@ public class PrimayKeyGener {
 
 	private static SnowflakeImpl idgen = null;
 	static {
-		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("appinfo")).asMap();
-		String projectId = rootConfig.getString("projectId");
+		String projectId = AppinfoConf.ProjectId;
 		try(DatabaseWrapper db = new DatabaseWrapper()) {
 			Result rs = SqlOperator.queryResult(db, "SELECT * FROM keytable_snowflake WHERE project_id = ?",
 					projectId);
@@ -46,6 +46,8 @@ public class PrimayKeyGener {
 			Integer datacenterId = rs.getInteger(0, "datacenter_id");
 			Integer machineId = rs.getInteger(0, "machine_id");
 			idgen = new SnowflakeImpl(datacenterId,machineId);
+		}catch (Exception e){
+			throw new BusinessException("DB data select exception: keytable_snowflake select fail!");
 		}
 	}
 
