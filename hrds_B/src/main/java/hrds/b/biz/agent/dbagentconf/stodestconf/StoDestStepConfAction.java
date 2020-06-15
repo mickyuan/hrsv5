@@ -169,7 +169,7 @@ public class StoDestStepConfAction extends BaseAction {
 					"SELECT drt.dsl_id FROM "
 						+ Dtab_relation_store.TableName
 						+ " drt"
-						+ " WHERE drt.storage_id = (SELECT storage_id FROM "
+						+ " WHERE drt.tab_id = (SELECT storage_id FROM "
 						+ Table_storage_info.TableName
 						+ " WHERE table_id = ?) AND drt.data_source = ?",
 					(long) tableId, StoreLayerDataSource.DB.getCode());
