@@ -8,7 +8,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.web.util.Dbo;
 import hrds.commons.entity.Login_operation_info;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -47,58 +47,55 @@ public class LoginOperationLogInfo {
 	@Param(name = "user_name", desc = "用户名", range = "不能为空的字符串")
 	public static void saveLoginLog(HttpServletRequest request, String user_id, String user_name,
 	                                String operation_type) {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-			// 2.获取请求头
-			String header = request.getHeader("User-Agent");
-			// 3.解析请求头
-			UserAgent userAgent = UserAgent.parseUserAgentString(header);
-			Login_operation_info login_operation_info = new Login_operation_info();
-			// 4.获取浏览器类型
-			Browser browser = userAgent.getBrowser();
-			// 5.获取系统类型
-			OperatingSystem operatingSystem = userAgent.getOperatingSystem();
-			String headerStr = header.substring(0, header.indexOf('/')).toUpperCase();
-			// 6.判断是HttpClient请求还是浏览器请求
-			if ("UNKNOWN".equalsIgnoreCase(browser.getName())) {
-				// 6.1 HttpClient请求
-				login_operation_info.setBrowser_type(headerStr);
-				login_operation_info.setSystem_type(headerStr);
-			} else {
-				// 6.2 浏览器请求
-				login_operation_info.setBrowser_type(browser.getName());
-				login_operation_info.setSystem_type(operatingSystem.getName());
-			}
-			// 7.获取浏览器版本
-			Version browserVersion = userAgent.getBrowserVersion();
-			if (browserVersion == null) {
-				login_operation_info.setBrowser_version(headerStr);
-			} else {
-				login_operation_info.setBrowser_version(browserVersion.getVersion());
-			}
-			// 8.请求方式
-			login_operation_info.setRequest_mode(request.getMethod());
-			// 9.客户端的IP
-			login_operation_info.setRemoteaddr(request.getRemoteAddr());
-			// 10.超文本传输协议版本
-			login_operation_info.setProtocol(request.getProtocol());
-			// 11.请求日期
-			login_operation_info.setRequest_date(DateUtil.getSysDate());
-			// 12.请求时间
-			login_operation_info.setRequest_time(DateUtil.getSysTime());
-			// 13.请求类型
-			login_operation_info.setRequest_type(request.getMethod());
-			// 13.用户ID
-			login_operation_info.setUser_id(user_id);
-			// 14.用户名称
-			login_operation_info.setUser_name(user_name);
-			// 15.操作类型
-			login_operation_info.setOperation_type(operation_type);
-			// 16.保存日志信息
-			login_operation_info.setLog_id(PrimayKeyGener.getNextId());
-			login_operation_info.add(db);
-			db.commit();
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		// 2.获取请求头
+		String header = request.getHeader("User-Agent");
+		// 3.解析请求头
+		UserAgent userAgent = UserAgent.parseUserAgentString(header);
+		Login_operation_info login_operation_info = new Login_operation_info();
+		// 4.获取浏览器类型
+		Browser browser = userAgent.getBrowser();
+		// 5.获取系统类型
+		OperatingSystem operatingSystem = userAgent.getOperatingSystem();
+		String headerStr = header.substring(0, header.indexOf('/')).toUpperCase();
+		// 6.判断是HttpClient请求还是浏览器请求
+		if ("UNKNOWN".equalsIgnoreCase(browser.getName())) {
+			// 6.1 HttpClient请求
+			login_operation_info.setBrowser_type(headerStr);
+			login_operation_info.setSystem_type(headerStr);
+		} else {
+			// 6.2 浏览器请求
+			login_operation_info.setBrowser_type(browser.getName());
+			login_operation_info.setSystem_type(operatingSystem.getName());
 		}
+		// 7.获取浏览器版本
+		Version browserVersion = userAgent.getBrowserVersion();
+		if (browserVersion == null) {
+			login_operation_info.setBrowser_version(headerStr);
+		} else {
+			login_operation_info.setBrowser_version(browserVersion.getVersion());
+		}
+		// 8.请求方式
+		login_operation_info.setRequest_mode(request.getMethod());
+		// 9.客户端的IP
+		login_operation_info.setRemoteaddr(request.getRemoteAddr());
+		// 10.超文本传输协议版本
+		login_operation_info.setProtocol(request.getProtocol());
+		// 11.请求日期
+		login_operation_info.setRequest_date(DateUtil.getSysDate());
+		// 12.请求时间
+		login_operation_info.setRequest_time(DateUtil.getSysTime());
+		// 13.请求类型
+		login_operation_info.setRequest_type(request.getMethod());
+		// 13.用户ID
+		login_operation_info.setUser_id(user_id);
+		// 14.用户名称
+		login_operation_info.setUser_name(user_name);
+		// 15.操作类型
+		login_operation_info.setOperation_type(operation_type);
+		// 16.保存日志信息
+		login_operation_info.setLog_id(PrimayKeyGener.getNextId());
+		login_operation_info.add(Dbo.db());
 	}
 
 	@Method(desc = "保存用户操作日志的信息(比如用户的登入,登出(在登陆,登出生成数据),数据的删除,新增)",

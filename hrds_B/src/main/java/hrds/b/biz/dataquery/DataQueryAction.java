@@ -147,7 +147,7 @@ public class DataQueryAction extends BaseAction {
         searchInfo.setWord_name(queryKeyword);
         //2.获取不到文件计数信息则添加一条计数信息,获取到则修改文件计数信息
         if (siResult.isEmpty()) {
-            String nextId = PrimayKeyGener.getNextId();
+            long nextId = PrimayKeyGener.getNextId();
             searchInfo.setFile_id(fileId);
             searchInfo.setSi_id(nextId);
             if (searchInfo.add(Dbo.db()) != 1) {

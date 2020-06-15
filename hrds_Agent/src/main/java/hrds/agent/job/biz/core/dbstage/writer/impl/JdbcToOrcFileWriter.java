@@ -152,7 +152,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					}
 				}
 				writer.write(NullWritable.get(), serde.serialize(lineData, inspector));
-				if (counter % 50000 == 0) {
+				if (counter % JobConstant.BUFFER_ROW == 0) {
 					log.info("正在写入文件，已写入" + counter + "行");
 				}
 			}

@@ -148,7 +148,7 @@ public class ImportData {
         }
         //设置代码类的id
         codeTypeInfoIdAndNameMap.forEach((code_type_name, code_type_id) ->
-                codeTypeInfoIdAndNameMap.put(code_type_name, PrimayKeyGener.getNextId()));
+                codeTypeInfoIdAndNameMap.put(code_type_name, String.valueOf(PrimayKeyGener.getNextId())));
         List<Object[]> dbm_code_type_info_pool = new ArrayList<>();
         Dbm_code_type_info dbm_code_type_info = new Dbm_code_type_info();
         codeTypeInfoIdAndNameMap.forEach((code_type_name, code_type_id) -> {

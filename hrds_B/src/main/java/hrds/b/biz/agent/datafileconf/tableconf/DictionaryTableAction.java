@@ -280,7 +280,7 @@ public class DictionaryTableAction extends BaseAction {
 	  // 3: 如果没有table_id的主键,则表示为新增数据信息
 	  if (tableInfo.getTable_id() == null) {
 		// 设置新增数据的主键信息
-		String table_id = PrimayKeyGener.getNextId();
+		long table_id = PrimayKeyGener.getNextId();
 		tableInfo.setTable_id(table_id);
 		// 设置任务主键
 		tableInfo.setDatabase_id(colSetId);
@@ -297,7 +297,7 @@ public class DictionaryTableAction extends BaseAction {
 		  // 2: 获取数据字典表的全部列信息
 		  Map<String, List<Table_column>> dicTableAllColumnMap = getDicTableAllColumn(colSetId);
 		  setColumnDefaultData(
-			  dicTableAllColumnMap.get(tableInfo.getTable_name()), Long.parseLong(table_id));
+			  dicTableAllColumnMap.get(tableInfo.getTable_name()), table_id);
 		} else {
 		  // 3-2: 如果是点击查看列进行了保存,则使用自定义的字段类型进行保存,并设置默认的数据参数
 		  Map<String, List<Table_column>> tableColumnList =
@@ -308,7 +308,7 @@ public class DictionaryTableAction extends BaseAction {
 			CheckParam.throwErrorMsg("为获取到表的列信息");
 		  }
 		  setColumnDefaultData(
-			  tableColumnList.get(tableInfo.getTable_name()), Long.parseLong(table_id));
+			  tableColumnList.get(tableInfo.getTable_name()), table_id);
 		}
 	  } else {
 

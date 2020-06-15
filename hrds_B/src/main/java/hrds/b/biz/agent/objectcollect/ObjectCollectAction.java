@@ -599,7 +599,7 @@ public class ObjectCollectAction extends BaseAction {
 		// 2.解析json为对象采集结构信息
 		List<Object_collect_struct> collectStructList = JsonUtil.toObject(collectStruct, type);
 		List<Long> structIdList = new ArrayList<>();
-		String struct_id;
+		long struct_id;
 		// 3.循环保存对象采集结构信息入库，获取结构信息id
 		for (Object_collect_struct object_collect_struct : collectStructList) {
 			if (null == object_collect_struct.getStruct_id()) {
