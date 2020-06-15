@@ -344,7 +344,7 @@ public class MarketInfoAction extends BaseAction {
 			map.put("ifrepeat", false);
 		}
 		//3.对Dm_datatable初始化一些非页面传值
-		String datatable_id = PrimayKeyGener.getNextId();
+		long datatable_id = PrimayKeyGener.getNextId();
 		dm_datatable.setDatatable_id(datatable_id);
 		dm_datatable.setDatatable_create_date(DateUtil.getSysDate());
 		dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
@@ -1019,7 +1019,7 @@ public class MarketInfoAction extends BaseAction {
 		//新增字段表
 		for (int i = 0; i < datatable_field_info.length; i++) {
 			Datatable_field_info df_info = datatable_field_info[i];
-			String datatable_field_id = PrimayKeyGener.getNextId();
+			long datatable_field_id = PrimayKeyGener.getNextId();
 			df_info.setDatatable_field_id(datatable_field_id);
 			df_info.setDatatable_id(datatable_id);
 			df_info.setField_seq(String.valueOf(i));
@@ -1134,7 +1134,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 			//存储血缘关系表1
 			Dm_datatable_source dm_datatable_source = new Dm_datatable_source();
-			String own_dource_table_id = PrimayKeyGener.getNextId();
+			long own_dource_table_id = PrimayKeyGener.getNextId();
 			dm_datatable_source.setOwn_dource_table_id(own_dource_table_id);
 			dm_datatable_source.setDatatable_id(datatable_id);
 			dm_datatable_source.setOwn_source_table_name(tablename);
@@ -1992,7 +1992,7 @@ public class MarketInfoAction extends BaseAction {
 			row = 8;
 			String datatable_due_date = sheetAt.getRow(row).getCell(1).getStringCellValue();
 			dm_datatable.setDatatable_due_date(datatable_due_date);
-			String datatable_id = PrimayKeyGener.getNextId();
+			String datatable_id = String.valueOf(PrimayKeyGener.getNextId());
 			dm_datatable.setDatatable_id(datatable_id);
 			dm_datatable.setDatatable_create_date(DateUtil.getSysDate());
 			dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
@@ -2099,7 +2099,7 @@ public class MarketInfoAction extends BaseAction {
 				//存储datatable_field_info表
 				Datatable_field_info datatable_field_info = new Datatable_field_info();
 				datatable_field_info.setDatatable_id(datatable_id);
-				String datatable_field_id = PrimayKeyGener.getNextId();
+				long datatable_field_id = PrimayKeyGener.getNextId();
 				datatable_field_info.setDatatable_field_id(datatable_field_id);
 				if (sheetAt.getRow(row + count + columncount) == null || sheetAt.getRow(row + count + columncount).getCell(1) == null
 						|| StringUtils.isEmpty(sheetAt.getRow(row + count + columncount).getCell(1).getStringCellValue())) {

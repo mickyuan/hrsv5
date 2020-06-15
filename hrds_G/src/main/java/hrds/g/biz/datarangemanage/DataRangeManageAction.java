@@ -99,7 +99,7 @@ public class DataRangeManageAction extends BaseAction {
 				// 3.删除接口表信息
 				deleteInterfaceTableInfo(userId, dmDataTable.getDatatable_en_name());
 				// 生成主键,并记录
-				String useId = PrimayKeyGener.getNextId();
+				String useId = String.valueOf(PrimayKeyGener.getNextId());
 				// 4.保存系统登记表使用信息
 				addTableUseInfo(table_note, data_layer, userId, useId, new Table_use_info(),
 						dmDataTable.getDatatable_en_name(), dmDataTable.getDatatable_cn_name());
@@ -158,7 +158,7 @@ public class DataRangeManageAction extends BaseAction {
 				// 6.根据用户ID、表名查询当前表是否已登记
 				boolean flag = getUserTableInfo(userId, hyren_name);
 				// 7.生成表使用ID
-				String useId = PrimayKeyGener.getNextId();
+				String useId = String.valueOf(PrimayKeyGener.getNextId());
 				// 8.判断当前用户对应表是否已登记做不同处理
 				if (flag) {
 					// 8.1已登记,根据用户ID、表名删除接口表数据
