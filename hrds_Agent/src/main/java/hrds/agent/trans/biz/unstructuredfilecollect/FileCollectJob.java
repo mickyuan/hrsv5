@@ -5,19 +5,14 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
-import hrds.agent.job.biz.bean.JobStatusInfo;
-import hrds.agent.job.biz.core.FileCollectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
-import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.entity.File_source;
-import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @DocClass(desc = "接收页面参数，执行非结构化文件采集作业", author = "zxz", createdate = "2019/10/28 14:26")
 public class FileCollectJob extends AgentBaseAction {
@@ -38,39 +33,39 @@ public class FileCollectJob extends AgentBaseAction {
 		//将页面传递过来的压缩信息解压写文件
 		FileUtil.createFile(Constant.MESSAGEFILE + fileCollectParamBean.getFcs_id(),
 				PackUtil.unpackMsg(fileCollectTaskInfo).get("msg"));
-		ThreadPoolExecutor executor = null;
-		try {
-			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.MAPDBPATH, Constant.JOBINFOPATH, Constant.FILEUNLOADFOLDER};
-			FileUtil.initPath(fileCollectParamBean.getFcs_id(), paths);
-			//1.获取json数组转成File_source的集合
-			List<File_source> fileSourceList = fileCollectParamBean.getFile_sourceList();
-			//使用多线程按照文件夹采集，核心线程5个，最大线程10个，队列里面50个，超出会报错
-			executor = new ThreadPoolExecutor(5, 10,
-					5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(50));
-			List<Future<JobStatusInfo>> list = new ArrayList<>();
-			//2.校验对象的值是否正确
-			for (File_source file_source : fileSourceList) {
-				//为了确保两个线程之间的值不互相干涉，复制对象的值。
-				FileCollectParamBean fileCollectParamBean1 = JSONObject.parseObject(
-						JSONObject.toJSONString(fileCollectParamBean), FileCollectParamBean.class);
-				//XXX 多线程执行
-				//TODO 使用公共方法校验所有传入参数的对象的值的合法性
-				//TODO Agent这个参数该怎么接，是统一封装成工厂需要的参数吗？
-				//XXX 程序运行存储信息。
-				FileCollectJobImpl fileCollectJob = new FileCollectJobImpl(fileCollectParamBean1, file_source);
-				//TODO 这个状态是不是可以在这里
-				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
-				list.add(submit);
-			}
-			//3.打印每个线程执行情况
-			JobStatusInfoUtil.printJobStatusInfo(list);
-		} catch (Exception e) {
-			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!", e);
-		} finally {
-			if (executor != null)
-				executor.shutdown();
-		}
+//		ThreadPoolExecutor executor = null;
+//		try {
+//			//初始化当前任务需要保存的文件的根目录
+//			String[] paths = {Constant.MAPDBPATH, Constant.JOBINFOPATH, Constant.FILEUNLOADFOLDER};
+//			FileUtil.initPath(fileCollectParamBean.getFcs_id(), paths);
+//			//1.获取json数组转成File_source的集合
+//			List<File_source> fileSourceList = fileCollectParamBean.getFile_sourceList();
+//			//使用多线程按照文件夹采集，核心线程5个，最大线程10个，队列里面50个，超出会报错
+//			executor = new ThreadPoolExecutor(5, 10,
+//					5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(50));
+//			List<Future<JobStatusInfo>> list = new ArrayList<>();
+//			//2.校验对象的值是否正确
+//			for (File_source file_source : fileSourceList) {
+//				//为了确保两个线程之间的值不互相干涉，复制对象的值。
+//				FileCollectParamBean fileCollectParamBean1 = JSONObject.parseObject(
+//						JSONObject.toJSONString(fileCollectParamBean), FileCollectParamBean.class);
+//				//XXX 多线程执行
+//				//TODO 使用公共方法校验所有传入参数的对象的值的合法性
+//				//TODO Agent这个参数该怎么接，是统一封装成工厂需要的参数吗？
+//				//XXX 程序运行存储信息。
+//				FileCollectJobImpl fileCollectJob = new FileCollectJobImpl(fileCollectParamBean1, file_source);
+//				//TODO 这个状态是不是可以在这里
+//				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
+//				list.add(submit);
+//			}
+//			//3.打印每个线程执行情况
+//			JobStatusInfoUtil.printJobStatusInfo(list);
+//		} catch (Exception e) {
+//			throw new AppSystemException("采集选择文件夹个数大于最大线程个数和队列个数的和!", e);
+//		} finally {
+//			if (executor != null)
+//				executor.shutdown();
+//		}
 	}
 
 }
