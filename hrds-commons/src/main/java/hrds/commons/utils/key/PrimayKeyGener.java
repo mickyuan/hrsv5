@@ -1,13 +1,16 @@
 package hrds.commons.utils.key;
 
+import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.conf.ConfFileLoader;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.key.SnowflakeImpl;
 import fd.ng.core.yaml.YamlFactory;
 import fd.ng.core.yaml.YamlMap;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,18 +37,21 @@ public class PrimayKeyGener {
 	private static final Logger logger = LogManager.getLogger();
 
 	private static SnowflakeImpl idgen = null;
+
 	static {
-		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("appinfo")).asMap();
-		String projectId = rootConfig.getString("projectId");
-		try(DatabaseWrapper db = new DatabaseWrapper()) {
+		String projectId = AppinfoConf.ProjectId;
+		if (StringUtil.isEmpty(projectId)) throw new AppSystemException("ProjectId Can't be empty");
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			Result rs = SqlOperator.queryResult(db, "SELECT * FROM keytable_snowflake WHERE project_id = ?",
 					projectId);
 			if (rs == null || rs.getRowCount() != 1) {
-				throw new BusinessException("DB data select exception: keytable_snowflake select fail!");
+				throw new AppSystemException("DB data select exception: keytable_snowflake select fail!");
 			}
 			Integer datacenterId = rs.getInteger(0, "datacenter_id");
 			Integer machineId = rs.getInteger(0, "machine_id");
-			idgen = new SnowflakeImpl(datacenterId,machineId);
+			idgen = new SnowflakeImpl(datacenterId, machineId);
+		} catch (Exception e) {
+			throw new AppSystemException("DB data select exception: keytable_snowflake select fail!");
 		}
 	}
 

@@ -175,6 +175,28 @@ public class Constant {
    */
   public static final String SHELLCOMMAND = "shellCommand.sh";
 
+  /**
+   * 采集定义启动方式默认配置
+   */
+  // 默认前一天跑批日期
+  public static final String BATCH_DATE = "#{txdate_pre}";
+  // 默认增加一个资源类型
+  public static final String RESOURCE_THRESHOLD = "XS_ZT";
+  // 资源类默认的阈值
+  public static final int RESOURCE_NUM = 15;
+  // 单个作业的所需资源数
+  public static final int JOB_RESOURCE_NUM = 1;
+  // 程序目录的工程系统参数名
+  public static final String HYRENBIN = "!{HYSHELLBIN}";
+  // 程序日志的工程系统参数名
+  public static final String HYRENLOG = "!{HYLOG}";
+  // 作业调度系统参数定义程序变量名称
+  public static final String PARA_HYRENBIN = "!HYSHELLBIN";
+  // 作业调度系统参数定义日志变量名称
+  public static final String PARA_HYRENLOG = "!HYLOG";
+  // 作业名称/描述之间的分割符
+  public static final String SPLITTER = "_";
+
   /*
    * 数据库抽取卸数下来文件格式对应路径的关系
    */

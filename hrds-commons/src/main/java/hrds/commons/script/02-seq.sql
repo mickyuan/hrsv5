@@ -18,7 +18,8 @@ INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('I'
 INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('J',0,9);
 INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('K',0,10);
 INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('Cont',0,11);
-INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('trig',0,12);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('Trig',0,12);
+INSERT INTO KEYTABLE_SNOWFLAKE (project_id,datacenter_id,machine_id) VALUES ('Rec',0,13);
 
 delete from etl_para;
 INSERT INTO etl_para (etl_sys_cd, para_cd, para_val, para_type, para_desc) VALUES ('HRSYS', '#txdate', '#txdate', 'param', '当前跑批日,格式yyyyMMdd');

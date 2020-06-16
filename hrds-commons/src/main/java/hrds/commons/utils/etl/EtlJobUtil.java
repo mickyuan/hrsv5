@@ -13,6 +13,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.PinyinUtil;
 import hrds.commons.utils.PropertyParaValue;
 
@@ -429,8 +430,11 @@ public class EtlJobUtil {
 
 	@Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
 	@Return(desc = "作业工程信息", range = "作业工程信息")
-	public static List<Etl_sys> getProInfo() {
-		return Dbo.queryList(Etl_sys.class, "select * from " + Etl_sys.TableName + " order by etl_sys_cd");
+	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
+	public static List<Etl_sys> getProInfo(long user_id) {
+		return Dbo.queryList(Etl_sys.class,
+				"select * from " + Etl_sys.TableName + " where user_id=? order by etl_sys_cd",
+				user_id);
 	}
 
 	@Method(desc = "获取作业某个工程下的任务信息",
@@ -441,4 +445,85 @@ public class EtlJobUtil {
 		return Dbo.queryList(Etl_sub_sys_list.class, "select * from " + Etl_sub_sys_list.TableName + " where" +
 				" etl_sys_cd =? order by sub_sys_cd", etl_sys_cd);
 	}
+
+	@Method(desc = "对程序作业的作业系统参数经行检查添加", logicStep = "1: 检查当前的作业系统参数是否存在" +
+			"2: 如果不存在则添加")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不能为空")
+	@Param(name = "para_cd", desc = "工程系统参数变量名称", range = "不能为空")
+	@Param(name = "pro_val", desc = "工程系统参数变量值", range = "不能为空")
+	public static void setDefaultEtlParaConf(String etl_sys_cd, String para_cd, String pro_val) {
+		// 1: 检查当前的作业系统参数是否存在
+		long resourceNum = Dbo.queryNumber(
+				"SELECT COUNT(1) FROM " + Etl_para.TableName
+						+ " WHERE etl_sys_cd = ? AND para_cd = ?",
+				etl_sys_cd, para_cd)
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+		// 2: 如果不存在则添加
+		if (resourceNum == 0) {
+			Etl_para etl_para = new Etl_para();
+			etl_para.setEtl_sys_cd(etl_sys_cd);
+			etl_para.setPara_cd(para_cd);
+			etl_para.setPara_val(pro_val);
+			etl_para.setPara_type(ParamType.LuJing.getCode());
+			etl_para.add(Dbo.db());
+		}
+	}
+
+	@Method(desc = "设置资源登记信息", logicStep = "1.查询资源类型是否存在" +
+			"2.不存在默认增加一个资源")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
+	public static void setDefaultEtlResource(String etl_sys_cd) {
+		// 1.查询资源类型是否存在
+		long resourceNum = Dbo.queryNumber(
+				"SELECT COUNT(1) FROM " + Etl_resource.TableName
+						+ " WHERE resource_type = ? AND etl_sys_cd = ?",
+				Constant.RESOURCE_THRESHOLD, etl_sys_cd)
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+		// 2.不存在默认增加一个资源
+		if (resourceNum == 0) {
+			Etl_resource etl_resource = new Etl_resource();
+			etl_resource.setEtl_sys_cd(etl_sys_cd);
+			etl_resource.setResource_type(Constant.RESOURCE_THRESHOLD);
+			etl_resource.setResource_max(Constant.RESOURCE_NUM);
+			etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+			etl_resource.add(Dbo.db());
+		}
+	}
+
+	@Method(desc = "获取作业信息", logicStep = "")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
+	@Param(name = "sub_sys_cd", desc = "任务编号", range = "不可为空")
+	@Return(desc = "返回作业定义下的作业名称集合", range = "可以为空.为空表示没有作业信息存在")
+	public static List<String> getEtlJob(String etl_sys_cd, String sub_sys_cd) {
+		return Dbo.queryOneColumnList(
+				"SELECT etl_job FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
+				etl_sys_cd, sub_sys_cd);
+	}
+
+	@Method(desc = "获取作业资源分配的作业信息", logicStep = "")
+	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
+	@Return(desc = "返回作业资源下的作业名称集合", range = "可以为空.为空表示没有作业资源信息存在")
+	public static List<String> getJobResource(String etl_sys_cd) {
+		return Dbo.queryOneColumnList(
+				"SELECT etl_job FROM " + Etl_job_resource_rela.TableName + " WHERE etl_sys_cd = ? ",
+				etl_sys_cd);
+	}
+
+	@Method(desc = "保存作业所需的资源信息", logicStep = "1: 判断当前的作业信息是否存在,如果不存在则添加")
+	@Param(name = "etl_sys_cd", desc = "作业工程编号", range = "不可为空")
+	@Param(name = "etl_job_def", desc = "作业资源的信息集合", range = "不可为空", isBean = true)
+	@Param(name = "jobResource", desc = "作业资源的信息名称集合", range = "可为空")
+	public static void setEtl_job_resource_rela(
+			String etl_sys_cd, Etl_job_def etl_job_def, List<String> jobResource) {
+		//    1: 判断当前的作业信息是否存在,如果不存在则添加
+		if (!jobResource.contains(etl_job_def.getEtl_job())) {
+			Etl_job_resource_rela etl_job_resource_rela = new Etl_job_resource_rela();
+			etl_job_resource_rela.setEtl_sys_cd(etl_sys_cd);
+			etl_job_resource_rela.setEtl_job(etl_job_def.getEtl_job());
+			etl_job_resource_rela.setResource_type(Constant.RESOURCE_THRESHOLD);
+			etl_job_resource_rela.setResource_req(Constant.JOB_RESOURCE_NUM);
+			etl_job_resource_rela.add(Dbo.db());
+		}
+	}
+
 }
