@@ -124,7 +124,7 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 	 * addFtp_collect新增ftp采集测试
 	 * 1.添加一个正确的ftp采集
 	 * 2.添加一个ftp采集，但ftp采集任务名称重复
-	 * 3.添加一个ftp采集，但是ftp_dir格式不正确
+	 * 3.添加一个ftp采集，但是ftp_name为空
 	 * 4.添加一个ftp采集，但是ftp_ip格式不正确
 	 */
 	@Test
@@ -206,17 +206,17 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(false));
 
-			//3.添加一个ftp采集，但是ftp_dir格式不正确
+			//3.添加一个ftp采集，但是ftp_name为空
 			bodyString = new HttpClient()
 					.addData("ftp_number", id + "zxzftpcj_csylzybs_direrror")
-					.addData("ftp_name", id + "zxzwjcj_csylzync_direrror")
+					.addData("ftp_name", "")
 					.addData("start_date", DateUtil.getSysDate())
 					.addData("end_date", DateUtil.getSysDate())
 					.addData("ftp_ip", "127.0.0.1")
 					.addData("ftp_port", "33333")
 					.addData("ftp_username", "zzzz")
 					.addData("ftp_password", "1111111")
-					.addData("ftp_dir", "sajdlsakdj,asdw,,.www")
+					.addData("ftp_dir", "/uuu/ddd/")
 					.addData("local_path", "/uuu/ddd/")
 					.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
 					.addData("child_file_path", "/aaa/bbb/")
@@ -270,7 +270,7 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 	 * 1.更新ftp_id为20000002的ftp采集
 	 * 2.更新一个ftp采集，但ftp采集任务名称重复
 	 * 3.更新一个ftp采集，但是ftp_port格式不正确
-	 * 4.更新一个ftp采集，但是is_unzip格式不正确
+	 * 4.更新一个ftp采集，但是ftp_number为空
 	 */
 	@Test
 	public void updateFtp_collectTest() {
@@ -410,10 +410,10 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(false));
 
-			//4.更新一个ftp采集，但是is_unzip格式不正确
+			//4.更新一个ftp采集，但是ftp_number为空
 			bodyString = new HttpClient()
 					.addData("ftp_id", FTP_ID)
-					.addData("ftp_number", id + "zxzftpcj_csylzybs_unziperror")
+					.addData("ftp_number", "")
 					.addData("ftp_name", id + "zxzwjcj_csylzync_unziperror")
 					.addData("start_date", DateUtil.getSysDate())
 					.addData("end_date", DateUtil.getSysDate())

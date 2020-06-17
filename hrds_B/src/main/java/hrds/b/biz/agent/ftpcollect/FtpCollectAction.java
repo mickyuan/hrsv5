@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -15,7 +16,6 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
-import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +46,8 @@ public class FtpCollectAction extends BaseAction {
 	public void addFtp_collect(Ftp_collect ftp_collect) {
 		//数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		//TODO 使用公共方法校验数据的正确性
+		//校验数据合法性
+		validatorData(ftp_collect);
 		//为空则新增
 		//1.判断ftp采集任务名称是否重复
 		long count = Dbo.queryNumber("SELECT count(1) count FROM " + Ftp_collect.TableName
@@ -77,6 +79,8 @@ public class FtpCollectAction extends BaseAction {
 		if (ftp_collect.getFtp_id() == null) {
 			throw new BusinessException("更新ftp_collect时ftp_id不能为空");
 		}
+		//校验数据合法性
+		validatorData(ftp_collect);
 		//将ftp_password转为Unicode编码
 		ftp_collect.setFtp_password(StringUtil.string2Unicode(ftp_collect.getFtp_password()));
 		//2.根据ftp_name查询ftp采集任务名称是否与其他采集任务名称重复
@@ -118,5 +122,18 @@ public class FtpCollectAction extends BaseAction {
 		if (!ar.isSuccess()) {
 			throw new BusinessException("连接" + url + "失败");
 		}
+	}
+
+	/**
+	 * 校验数据的合法性
+	 */
+	private void validatorData(Ftp_collect ftp_collect) {
+		//检验端口
+		Validator.isPort(Integer.parseInt(ftp_collect.getFtp_port()));
+		//检验IP地址合法性
+		Validator.isIpAddr(ftp_collect.getFtp_ip());
+		//名称编号不能为空
+		Validator.notEmpty(ftp_collect.getFtp_name(), "ftp采集任务名称不能为空");
+		Validator.notEmpty(ftp_collect.getFtp_number(), "ftp任务编号不能为空");
 	}
 }
