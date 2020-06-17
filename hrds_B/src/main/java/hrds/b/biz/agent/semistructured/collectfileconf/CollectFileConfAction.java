@@ -10,7 +10,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
-import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -34,8 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Collectors;
 
 @DocClass(desc = "半结构化采集文件配置类", author = "dhw", createdate = "2020/6/10 14:29")
 public class CollectFileConfAction extends BaseAction {
@@ -85,7 +83,8 @@ public class CollectFileConfAction extends BaseAction {
 				object_collect.getOdc_id());
 		// 4.如果数据库中有但是字典中没有的表，将数据库数据删除
 		List<Object_collect_task> deleteList =
-				objCollectTaskList.stream().filter(item -> !dicTableList.contains(item)).collect(toList());
+				objCollectTaskList.stream().filter(item -> !dicTableList.contains(item))
+						.collect(Collectors.toList());
 		deleteTable(deleteList);
 		// 5.第一次，直接新增，第二次数据库多余的删，数据字典多余的新增
 		if (objCollectTaskList.isEmpty()) {
@@ -93,7 +92,8 @@ public class CollectFileConfAction extends BaseAction {
 		}
 		// 6.获取差集，数据字典新增表入库
 		List<Object_collect_task> intersectionList =
-				dicTableList.stream().filter(item -> !objCollectTaskList.contains(item)).collect(toList());
+				dicTableList.stream().filter(item -> !objCollectTaskList.contains(item))
+						.collect(Collectors.toList());
 		if (!intersectionList.isEmpty()) {
 			addDicTable(object_collect, dicTableList);
 		}
@@ -428,11 +428,11 @@ public class CollectFileConfAction extends BaseAction {
 			// 3.获取数据字典少了的列信息对应采集结构ID
 			structIdList.add(object_collect_struct.getStruct_id());
 		}
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.addSql("delete from " + Object_collect_struct.TableName + " where ocs_id=?");
-		asmSql.addORParam("struct_id", structIdList.toArray(), "not");
 		// 4.删除对应数据字典少了列结构信息
-		Dbo.execute(asmSql.sql(), asmSql.params());
+		structIdList.forEach(struct_id ->
+				DboExecute.deletesOrThrow("删除对象采集结构信息struct_id=" + struct_id + "失败",
+						"delete from " + Object_collect_struct.TableName + " where ocs_id=? and struct_id=?",
+						ocs_id, struct_id));
 	}
 
 	@Method(desc = "保存对象文件配置信息时检查字段(采集文件设置)",
