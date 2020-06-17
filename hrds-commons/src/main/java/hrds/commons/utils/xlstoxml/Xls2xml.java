@@ -127,6 +127,8 @@ public class Xls2xml {
 
 	public static void toXml2(String db_path, String xml_path) {
 
+		db_path = pathToUnEscape(db_path + File.separator + "~dd_data.json");
+		logger.info("采集文件路径：" + db_path);
 		File file = FileUtils.getFile(db_path);
 		if (file.exists()) {
 			jsonToXml2(db_path, xml_path);

@@ -59,13 +59,13 @@ public class AgentActionUtil {
 	//向agent端发送一个ftp采集的任务
 	public static final String SENDFTPCOLLECTTASKINFO = "/hrds/agent/trans/biz/ftpcollect/execute";
 	//向agent发送一个半结构化直连解析数据字典获取表信息
-	public static final String GETDICTABLE = "/hrds/agent/trans/biz/objectCollect/getDicTable";
+	public static final String GETDICTABLE = "/hrds/agent/trans/biz/semistructured/getDicTable";
 	//向agent发送一个半结构化直连解析数据字典根据表名获取列信息
-	public static final String GETDICALLCOLUMN = "/hrds/agent/trans/biz/objectCollect/getDicAllColumn";
+	public static final String GETDICALLCOLUMN = "/hrds/agent/trans/biz/semistructured/getDicAllColumn";
 	//向agent发送一个半结构化直连解析数据字典根据表名获取数据处理方式信息
-	public static final String GETHANDLETYPEBYTABLE = "/hrds/agent/trans/biz/objectCollect/getHandleTypeByTable";
+	public static final String GETHANDLETYPEBYTABLE = "/hrds/agent/trans/biz/semistructured/getHandleTypeByTable";
 	//向agent发送一个半结构化直连重写数据字典任务
-	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/objectCollect/writeDictionary";
+	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/semistructured/writeDictionary";
 
 	static {
 		list = new ArrayList<>();

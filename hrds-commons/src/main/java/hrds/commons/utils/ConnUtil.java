@@ -552,6 +552,7 @@ public class ConnUtil {
 			for (Object object : columns) {
 				Element column = (Element) object;
 				columnMap.put("column_name", column.getAttribute("column_name"));
+				columnMap.put("data_desc", column.getAttribute("column_ch_name"));
 				columnMap.put("column_type", column.getAttribute("column_type"));
 				columnMap.put("is_operate", column.getAttribute("is_operate"));
 				columnMap.put("columnposition", column.getAttribute("columnposition"));
@@ -568,8 +569,7 @@ public class ConnUtil {
 	@Param(desc = "数据日期", name = "data_date", range = "无限制")
 	@Param(desc = "文件后缀名", name = "file_suffix", range = "无限制")
 	@Return(desc = "半结构化采集查看表时，对于不提供数据字典的情况，解析返回表名", range = "无限制")
-	public static List<Object> getTableByNoDictionary(String file_path, String data_date,
-	                                                  String file_suffix) {
+	public static List<Object> getTableByNoDictionary(String file_path, String data_date, String file_suffix) {
 		JSONObject resultObject = new JSONObject();
 		File pathFile = new File(file_path);
 		File[] fileList = Objects.requireNonNull(pathFile.listFiles());
@@ -578,7 +578,7 @@ public class ConnUtil {
 			fileNameList.add(file.getName());
 		}
 		if (!fileNameList.contains(data_date)) {
-			resultObject.put("ErrorMessage", "文件路径不存在，请检查:" + file_path + " 下是否存在 " + data_date + " 文件");
+			resultObject.put("ErrorMessage", "文件路径不存在，请检查:" + file_path + " 下是否存在 " + data_date + " 文件夹");
 			throw new BusinessException(resultObject.getString("ErrorMessage"));
 		}
 		List<String> tableNameList = new ArrayList<>();
@@ -605,8 +605,8 @@ public class ConnUtil {
 						String readLine = reader.readLine();
 						tableNameList.add(tablename);
 						Map<String, String> tableMap = new HashMap<>();
-						tableMap.put("table_name", tablename);
-						tableMap.put("table_ch_name", tablename);
+						tableMap.put("zh_name", tablename);
+						tableMap.put("en_name", tablename);
 						tableMap.put("firstline", readLine);
 						tableList.add(tableMap);
 					} catch (Exception e) {
