@@ -204,10 +204,7 @@ public class RuleConfigAction extends BaseAction {
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public void saveETLJob(String pro_id, String task_id, String reg_num) {
         //保存作业调度信息
-        int save_status = EtlJobUtil.saveJob(reg_num, DataSourceType.DQC, pro_id, task_id, null);
-        if (0 != save_status) {
-            throw new BusinessException("保存作业信息失败!");
-        }
+        EtlJobUtil.saveJob(reg_num, DataSourceType.DQC, pro_id, task_id, null);
     }
 
     @Method(desc = "搜索规则信息", logicStep = "搜索规则信息")
