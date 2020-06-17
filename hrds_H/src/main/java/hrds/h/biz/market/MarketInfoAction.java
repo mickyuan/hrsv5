@@ -196,10 +196,15 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "获取集市工程的具体信息")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "data_mart_id")
 	@Return(desc = "集市工程信息", range = "返回值取值范围")
-	public List<Dm_info> getdminfo(String data_mart_id) {
+	public Dm_info getdminfo(String data_mart_id) {
 		Dm_info dm_info = new Dm_info();
 		dm_info.setData_mart_id(data_mart_id);
-		return Dbo.queryList(Dm_info.class, "select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+		Optional<Dm_info> dm_info1 = Dbo.queryOneObject(Dm_info.class, "select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+		if(dm_info1.isPresent()){
+			return dm_info1.get();
+		}else{
+			throw new BusinessSystemException("查询表dm_info错误，根据data_mart_id查找不存在该表");
+		}
 	}
 
 
