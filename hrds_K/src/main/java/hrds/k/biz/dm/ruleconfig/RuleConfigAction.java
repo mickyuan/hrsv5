@@ -182,6 +182,7 @@ public class RuleConfigAction extends BaseAction {
     @Return(desc = "字段信息列表", range = "字段信息列表")
     public List<Map<String, Object>> getColumnsByTableName(String table_name) {
         //数据层获取不同表结构
+        Validator.notBlank(table_name, "查询表名不能为空!");
         return DataTableUtil.getColumnByTableName(table_name);
     }
 
@@ -340,8 +341,7 @@ public class RuleConfigAction extends BaseAction {
         return EtlJobUtil.getProInfo(getUserId());
     }
 
-    @Method(desc = "获取作业某个工程下的任务信息",
-            logicStep = "获取作业某个工程下的任务信息")
+    @Method(desc = "获取作业某个工程下的任务信息", logicStep = "获取作业某个工程下的任务信息")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "String类型")
     @Return(desc = "工程下的任务信息", range = "工程下的任务信息")
     public List<Etl_sub_sys_list> getTaskInfo(String etl_sys_cd) {
