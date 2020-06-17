@@ -126,7 +126,7 @@ public class CollectConfAction extends BaseAction {
 			object_collect.setData_date("");
 		}
 		// 6.保存object_collect表数据入库，这里新增编辑放在一起是因为可能会上一步下一步查看配置信息
-		if (object_collect.getOdc_id() != null) {
+		if (object_collect.getOdc_id() == null) {
 			// 新增
 			object_collect.setOdc_id(PrimayKeyGener.getNextId());
 			object_collect.add(Dbo.db());
