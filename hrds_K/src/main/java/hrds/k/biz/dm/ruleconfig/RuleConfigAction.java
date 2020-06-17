@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -82,8 +83,7 @@ public class RuleConfigAction extends BaseAction {
         dq_definition.add(Dbo.db());
     }
 
-    @Method(desc = "删除规则(编号删除)",
-            logicStep = "删除规则(编号删除)")
+    @Method(desc = "删除规则(编号删除)", logicStep = "删除规则(编号删除)")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型,数组")
     public void deleteDqDefinition(long reg_num) {
         //检查数据
@@ -93,8 +93,7 @@ public class RuleConfigAction extends BaseAction {
         }
     }
 
-    @Method(desc = "删除规则(批量)",
-            logicStep = "删除规则(批量)")
+    @Method(desc = "删除规则(批量)", logicStep = "删除规则(批量)")
     @Param(name = "reg_num", desc = "规则编号", range = "long[]类型,数组")
     public void releaseDeleteDqDefinition(Long[] reg_num) {
         //检查
@@ -102,20 +101,17 @@ public class RuleConfigAction extends BaseAction {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("delete from " + Dq_definition.TableName + " where user_id=?");
-        asmSql.addParam(getUserId().toString());
+        asmSql.addParam(getUserId());
         asmSql.addORParam("reg_num ", reg_num);
         //删除数据
         Dbo.execute(asmSql.sql(), asmSql.params());
     }
 
-    @Method(desc = "更新规则",
-            logicStep = "更新规则")
+    @Method(desc = "更新规则", logicStep = "更新规则")
     @Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象")
     public void updateDqDefinition(Dq_definition dq_definition) {
         //数据校验
-        if (StringUtil.isBlank(dq_definition.getReg_num().toString())) {
-            throw new BusinessException("修改规则编号为空!");
-        }
+        Validator.notBlank(dq_definition.getReg_num().toString(), "修改规则编号为空");
         if (!checkRegNumIsExist(dq_definition.getReg_num())) {
             throw new BusinessException("修改的规则已经不存在!");
         }
@@ -133,16 +129,19 @@ public class RuleConfigAction extends BaseAction {
             dq_definition.setIs_saveindex3(IsFlag.Fou.getCode());
         }
         dq_definition.setUser_id(getUserId());
-        dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
-        dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\t", " "));
-        dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
-        dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\t", " "));
+        if (StringUtil.isNotBlank(dq_definition.getSpecify_sql())) {
+            dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
+            dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\t", " "));
+        }
+        if (StringUtil.isNotBlank(dq_definition.getErr_data_sql())) {
+            dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
+            dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\t", " "));
+        }
         //添加规则
         dq_definition.update(Dbo.db());
     }
 
-    @Method(desc = "获取规则信息列表",
-            logicStep = "获取规则信息列表")
+    @Method(desc = "获取规则信息列表", logicStep = "获取规则信息列表")
     @Return(desc = "规则信息列表", range = "规则信息列表")
     public Map<String, Object> getDqDefinitionInfos() {
         //设置查询sql
@@ -165,8 +164,7 @@ public class RuleConfigAction extends BaseAction {
         return dqd_map;
     }
 
-    @Method(desc = "获取规则信息",
-            logicStep = "获取规则信息")
+    @Method(desc = "获取规则信息", logicStep = "获取规则信息")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型")
     @Return(desc = "规则信息", range = "规则信息")
     public Dq_definition getDqDefinition(long reg_num) {
@@ -199,8 +197,7 @@ public class RuleConfigAction extends BaseAction {
         return Dbo.queryList(Dq_help_info.class, "select * from " + Dq_help_info.TableName);
     }
 
-    @Method(desc = "保存作业信息",
-            logicStep = "保存作业信息")
+    @Method(desc = "保存作业信息", logicStep = "保存作业信息")
     @Param(name = "pro_id", desc = "调度工程id", range = "long类型,唯一")
     @Param(name = "task_id", desc = "调度任务id", range = "long类型,唯一")
     @Param(name = "reg_num", desc = "规则编号", range = "long类型,唯一")
@@ -343,7 +340,7 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
     @Return(desc = "作业工程信息", range = "作业工程信息")
     public List<Etl_sys> getProInfos() {
-        return EtlJobUtil.getProInfo();
+        return EtlJobUtil.getProInfo(getUserId());
     }
 
     @Method(desc = "获取作业某个工程下的任务信息",
