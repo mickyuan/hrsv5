@@ -207,58 +207,60 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(false));
 
 			//3.添加一个ftp采集，但是ftp_dir格式不正确
-//		bodyString = new HttpClient()
-//				.addData("ftp_number", "zxzftpcj_csylzybs")
-//				.addData("ftp_name", "zxzwjcj_csylzync1111")
-//				.addData("start_date", DateUtil.getSysDate())
-//				.addData("end_date", DateUtil.getSysDate())
-//				.addData("ftp_ip", "127.0.0.1")
-//				.addData("ftp_port", "33333")
-//				.addData("ftp_username", "zzzz")
-//				.addData("ftp_password", "1111111")
-//				.addData("ftp_dir", "sajdlsakdj,asdw,,.www")
-//				.addData("local_path", "/uuu/ddd/")
-//				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
-//				.addData("child_file_path", "/aaa/bbb/")
-//				.addData("child_time", TimeType.Hour.getCode())
-//				.addData("file_suffix", "dat")
-//				.addData("ftp_model", IsFlag.Shi.getCode())
-//				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-//				.addData("is_sendok", IsFlag.Fou.getCode())
-//				.addData("is_unzip", IsFlag.Shi.getCode())
-//				.addData("reduce_type", ReduceType.ZIP.getCode())
-//				.addData("agent_id", AGENT_ID)
-//				.post(getActionUrl("addFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-//				-> new BusinessException("连接失败！"));
-//		assertThat(ar.isSuccess(), is(false));
+			bodyString = new HttpClient()
+					.addData("ftp_number", id + "zxzftpcj_csylzybs_direrror")
+					.addData("ftp_name", id + "zxzwjcj_csylzync_direrror")
+					.addData("start_date", DateUtil.getSysDate())
+					.addData("end_date", DateUtil.getSysDate())
+					.addData("ftp_ip", "127.0.0.1")
+					.addData("ftp_port", "33333")
+					.addData("ftp_username", "zzzz")
+					.addData("ftp_password", "1111111")
+					.addData("ftp_dir", "sajdlsakdj,asdw,,.www")
+					.addData("local_path", "/uuu/ddd/")
+					.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
+					.addData("child_file_path", "/aaa/bbb/")
+					.addData("child_time", TimeType.Hour.getCode())
+					.addData("file_suffix", "dat")
+					.addData("ftp_model", IsFlag.Shi.getCode())
+					.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
+					.addData("is_sendok", IsFlag.Fou.getCode())
+					.addData("is_unzip", IsFlag.Shi.getCode())
+					.addData("reduce_type", ReduceType.ZIP.getCode())
+					.addData("agent_id", AGENT_ID)
+					.addData("remark", id + "FtpCollectActionTest测试用例专用数据标识")
+					.post(getActionUrl("addFtp_collect")).getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+					-> new BusinessException("连接失败！"));
+			assertThat(ar.isSuccess(), is(false));
 
 			//4.添加一个ftp采集，但是ftp_ip格式不正确
-//		bodyString = new HttpClient()
-//				.addData("ftp_number", "zxzftpcj_csylzybs")
-//				.addData("ftp_name", "zxzwjcj_csylzync" + 3)
-//				.addData("start_date", DateUtil.getSysDate())
-//				.addData("end_date", DateUtil.getSysDate())
-//				.addData("ftp_ip", "127.0.0.1901.211.223")
-//				.addData("ftp_port", "33333")
-//				.addData("ftp_username", "zzzz")
-//				.addData("ftp_password", "1111111")
-//				.addData("ftp_dir", "/ccc/fff/")
-//				.addData("local_path", "/uuu/ddd/")
-//				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
-//				.addData("child_file_path", "/aaa/bbb/")
-//				.addData("child_time", TimeType.Hour.getCode())
-//				.addData("file_suffix", "dat")
-//				.addData("ftp_model", IsFlag.Shi.getCode())
-//				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-//				.addData("is_sendok", IsFlag.Fou.getCode())
-//				.addData("is_unzip", IsFlag.Shi.getCode())
-//				.addData("reduce_type", ReduceType.ZIP.getCode())
-//				.addData("agent_id", AGENT_ID)
-//				.post(getActionUrl("addFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-//				-> new BusinessException("连接失败！"));
-//		assertThat(ar.isSuccess(), is(false));
+			bodyString = new HttpClient()
+					.addData("ftp_number", id + "zxzftpcj_csylzybs_iperror")
+					.addData("ftp_name", id + "zxzwjcj_csylzync_iperror")
+					.addData("start_date", DateUtil.getSysDate())
+					.addData("end_date", DateUtil.getSysDate())
+					.addData("ftp_ip", "127.0.0.1901.211.223")
+					.addData("ftp_port", "33333")
+					.addData("ftp_username", "zzzz")
+					.addData("ftp_password", "1111111")
+					.addData("ftp_dir", "/ccc/fff/")
+					.addData("local_path", "/uuu/ddd/")
+					.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
+					.addData("child_file_path", "/aaa/bbb/")
+					.addData("child_time", TimeType.Hour.getCode())
+					.addData("file_suffix", "dat")
+					.addData("ftp_model", IsFlag.Shi.getCode())
+					.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
+					.addData("is_sendok", IsFlag.Fou.getCode())
+					.addData("is_unzip", IsFlag.Shi.getCode())
+					.addData("reduce_type", ReduceType.ZIP.getCode())
+					.addData("agent_id", AGENT_ID)
+					.addData("remark", id + "FtpCollectActionTest测试用例专用数据标识")
+					.post(getActionUrl("addFtp_collect")).getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+					-> new BusinessException("连接失败！"));
+			assertThat(ar.isSuccess(), is(false));
 		}
 	}
 
@@ -379,61 +381,63 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(false));
 
-//		//3.更新一个ftp采集，但是ftp_port格式不正确
-//		bodyString = new HttpClient()
-//				.addData("ftp_id", FTP_ID + 2)
-//				.addData("ftp_number", "zxzftpcj_csylzybs")
-//				.addData("ftp_name", "zxzwjcj_csylzync" + 3)
-//				.addData("start_date", DateUtil.getSysDate())
-//				.addData("end_date", DateUtil.getSysDate())
-//				.addData("ftp_ip", "127.0.0.1")
-//				.addData("ftp_port", "qweweq")
-//				.addData("ftp_username", "zzzz")
-//				.addData("ftp_password", "1111111")
-//				.addData("ftp_dir", "/ccc/fff/")
-//				.addData("local_path", "/uuu/ddd/")
-//				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
-//				.addData("child_file_path", "/aaa/bbb/")
-//				.addData("child_time", TimeType.Hour.getCode())
-//				.addData("file_suffix", "dat")
-//				.addData("ftp_model", IsFlag.Shi.getCode())
-//				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-//				.addData("is_sendok", IsFlag.Fou.getCode())
-//				.addData("is_unzip", IsFlag.Shi.getCode())
-//				.addData("reduce_type", ReduceType.ZIP.getCode())
-//				.addData("agent_id", AGENT_ID)
-//				.post(getActionUrl("updateFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-//				-> new BusinessException("连接失败！"));
-//		assertThat(ar.isSuccess(), is(false));
-//
-//		//4.更新一个ftp采集，但是is_unzip格式不正确
-//		bodyString = new HttpClient()
-//				.addData("ftp_id", FTP_ID + 2)
-//				.addData("ftp_number", "zxzftpcj_csylzybs")
-//				.addData("ftp_name", "zxzwjcj_csylzync" + 3)
-//				.addData("start_date", DateUtil.getSysDate())
-//				.addData("end_date", DateUtil.getSysDate())
-//				.addData("ftp_ip", "127.0.0.1")
-//				.addData("ftp_port", "33333")
-//				.addData("ftp_username", "zzzz")
-//				.addData("ftp_password", "1111111")
-//				.addData("ftp_dir", "/ccc/fff/")
-//				.addData("local_path", "/uuu/ddd/")
-//				.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
-//				.addData("child_file_path", "/aaa/bbb/")
-//				.addData("child_time", TimeType.Hour.getCode())
-//				.addData("file_suffix", "dat")
-//				.addData("ftp_model", IsFlag.Shi.getCode())
-//				.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
-//				.addData("is_sendok", IsFlag.Fou.getCode())
-//				.addData("is_unzip", "ccc")
-//				.addData("reduce_type", ReduceType.ZIP.getCode())
-//				.addData("agent_id", AGENT_ID)
-//				.post(getActionUrl("updateFtp_collect")).getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-//				-> new BusinessException("连接失败！"));
-//		assertThat(ar.isSuccess(), is(false));
+			//3.更新一个ftp采集，但是ftp_port格式不正确
+			bodyString = new HttpClient()
+					.addData("ftp_id", FTP_ID)
+					.addData("ftp_number", id + "zxzftpcj_csylzybs_porterror")
+					.addData("ftp_name", id + "zxzwjcj_csylzync_porterror")
+					.addData("start_date", DateUtil.getSysDate())
+					.addData("end_date", DateUtil.getSysDate())
+					.addData("ftp_ip", "127.0.0.1")
+					.addData("ftp_port", "778776")
+					.addData("ftp_username", "zzzz")
+					.addData("ftp_password", "1111111")
+					.addData("ftp_dir", "/ccc/fff/")
+					.addData("local_path", "/uuu/ddd/")
+					.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
+					.addData("child_file_path", "/aaa/bbb/")
+					.addData("child_time", TimeType.Hour.getCode())
+					.addData("file_suffix", "dat")
+					.addData("ftp_model", IsFlag.Shi.getCode())
+					.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
+					.addData("is_sendok", IsFlag.Fou.getCode())
+					.addData("is_unzip", IsFlag.Shi.getCode())
+					.addData("reduce_type", ReduceType.ZIP.getCode())
+					.addData("agent_id", AGENT_ID)
+					.addData("remark", id + "FtpCollectActionTest测试用例专用数据标识")
+					.post(getActionUrl("updateFtp_collect")).getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+					-> new BusinessException("连接失败！"));
+			assertThat(ar.isSuccess(), is(false));
+
+			//4.更新一个ftp采集，但是is_unzip格式不正确
+			bodyString = new HttpClient()
+					.addData("ftp_id", FTP_ID)
+					.addData("ftp_number", id + "zxzftpcj_csylzybs_unziperror")
+					.addData("ftp_name", id + "zxzwjcj_csylzync_unziperror")
+					.addData("start_date", DateUtil.getSysDate())
+					.addData("end_date", DateUtil.getSysDate())
+					.addData("ftp_ip", "127.0.0.1")
+					.addData("ftp_port", "33333")
+					.addData("ftp_username", "zzzz")
+					.addData("ftp_password", "1111111")
+					.addData("ftp_dir", "/ccc/fff/")
+					.addData("local_path", "/uuu/ddd/")
+					.addData("ftp_rule_path", FtpRule.AnShiJian.getCode())
+					.addData("child_file_path", "/aaa/bbb/")
+					.addData("child_time", TimeType.Hour.getCode())
+					.addData("file_suffix", "dat")
+					.addData("ftp_model", IsFlag.Shi.getCode())
+					.addData("run_way", ExecuteWay.MingLingChuFa.getCode())
+					.addData("is_sendok", IsFlag.Fou.getCode())
+					.addData("is_unzip", "ccc")
+					.addData("reduce_type", ReduceType.ZIP.getCode())
+					.addData("agent_id", AGENT_ID)
+					.addData("remark", id + "FtpCollectActionTest测试用例专用数据标识")
+					.post(getActionUrl("updateFtp_collect")).getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+					-> new BusinessException("连接失败！"));
+			assertThat(ar.isSuccess(), is(false));
 		}
 	}
 
