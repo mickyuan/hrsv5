@@ -76,7 +76,9 @@ public class CollectFileConfAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.与agent交互获取agent解析数据字典获取数据字典表数据
 		List<Object_collect_task> dicTableList = SendMsgUtil.getDictionaryTableInfo(
-				object_collect, getUserId());
+				object_collect.getAgent_id(), object_collect.getFile_path(),
+				object_collect.getIs_dictionary(), object_collect.getData_date(),
+				object_collect.getFile_suffix(), getUserId());
 		// 3.获取数据库当前任务下的表集合
 		List<Object_collect_task> objCollectTaskList = Dbo.queryList(Object_collect_task.class,
 				"select en_name,ocs_id from " + Object_collect_task.TableName + " where odc_id =?",
@@ -155,7 +157,8 @@ public class CollectFileConfAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			// 4.获取所有数据字典表对应列信息
-			return SendMsgUtil.getDicAllColumn(object_collect, getUserId());
+			return SendMsgUtil.getDicAllColumn(object_collect.getAgent_id(), object_collect.getFile_path(),
+					getUserId());
 		}
 		List<String> firstLineList = getFirstLineInfo(ocs_id);
 		Validator.notEmpty(firstLineList, "没有数据字典时第一行数据不能为空，请检查");
@@ -204,7 +207,8 @@ public class CollectFileConfAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			List<Object_handle_type> dicObjectHandleTypeList = SendMsgUtil.getHandleTypeByTable(
-					object_collect, getUserId(), object_collect_task.getEn_name());
+					object_collect.getAgent_id(), object_collect.getFile_path(), getUserId(),
+					object_collect_task.getEn_name());
 			Validator.notEmpty(dicObjectHandleTypeList, "数据字典处理方式不能为空，请检查数据字典");
 			// 只会有一种情况，要么有数据字典要么没有
 			return dicObjectHandleTypeList;

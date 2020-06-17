@@ -10,7 +10,10 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Object_collect_struct;
+import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.Object_handle_type;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
@@ -376,48 +379,53 @@ public class SendMsgUtil {
 		return databaseSet;
 	}
 
-	@Method(desc = "获取agent解析数据字典数据",
+	@Method(desc = "获取agent解析数据字典表数据",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
 					"2.调用工具类获取本次访问的agentserver端url" +
 					"3、给agent发消息，并获取agent响应" +
 					"4.转换agent返回的数据为想要格式")
-	@Param(name = "object_collect", desc = "半结构采集配置实体对象", range = "与数据库对应字段规则一致", isBean = true)
+	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
+	@Param(name = "file_path", desc = "采集文件路径", range = "不为空")
+	@Param(name = "is_dictionary", desc = "是否存在数据字典", range = "使用（IsFlag）代码项")
+	@Param(name = "data_date", desc = "数据日期", range = "是否存在数据字典选择否的时候必选", nullable = true)
+	@Param(name = "file_suffix", desc = "文件后缀名", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Return(desc = "解析agent返回的json数据", range = "无限制")
-	public static List<Object_collect_task> getDictionaryTableInfo(Object_collect object_collect,
-	                                                               long user_id) {
+	@Return(desc = "返回agent解析数据字典表数据", range = "无限制")
+	public static List<Object_collect_task> getDictionaryTableInfo(long agent_id, String file_path,
+	                                                               String is_dictionary, String data_date,
+	                                                               String file_suffix, long user_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
-		String url = AgentActionUtil.getUrl(object_collect.getAgent_id(), user_id, AgentActionUtil.GETDICTABLE);
+		String url = AgentActionUtil.getUrl(agent_id, user_id, AgentActionUtil.GETDICTABLE);
 		// 3、给agent发消息，并获取agent响应
 		String bodyString = new HttpClient()
-				.addData("file_suffix", object_collect.getFile_suffix())
-				.addData("is_dictionary", object_collect.getIs_dictionary())
-				.addData("data_date", object_collect.getData_date())
-				.addData("file_path", object_collect.getFile_path())
+				.addData("file_suffix", file_suffix)
+				.addData("is_dictionary", is_dictionary)
+				.addData("data_date", data_date == null ? "" : data_date)
+				.addData("file_path", file_path)
 				.post(url).getBodyString();
 		// 4.转换agent返回的数据为想要格式
 		return JsonUtil.toObject(getRespMsg(bodyString, url), new TypeReference<List<Object_collect_task>>() {
 		}.getType());
 	}
 
-	@Method(desc = "获取agent解析数据字典数据",
+	@Method(desc = "获取agent解析数据字典所有列数据",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
 					"2.调用工具类获取本次访问的agentserver端url" +
 					"3、给agent发消息，并获取agent响应" +
 					"4、转换agent返回的数据为想要格式")
 	@Param(name = "object_collect", desc = "半结构采集配置实体对象", range = "与数据库对应字段规则一致", isBean = true)
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Return(desc = "解析agent返回的json数据", range = "无限制")
-	public static Map<String, List<Object_collect_struct>> getDicAllColumn(Object_collect object_collect,
+	@Return(desc = "返回agent返回所有列数据", range = "无限制")
+	public static Map<String, List<Object_collect_struct>> getDicAllColumn(long agent_id, String file_path,
 	                                                                       long user_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
-		String url = AgentActionUtil.getUrl(object_collect.getAgent_id(), user_id,
+		String url = AgentActionUtil.getUrl(agent_id, user_id,
 				AgentActionUtil.GETDICALLCOLUMN);
 		// 3、给agent发消息，并获取agent响应
 		String bodyString = new HttpClient()
-				.addData("file_path", object_collect.getFile_path())
+				.addData("file_path", file_path)
 				.post(url).getBodyString();
 		// 4、转换agent返回的数据为想要格式
 		return JsonUtil.toObject(getRespMsg(bodyString, url),
@@ -434,15 +442,15 @@ public class SendMsgUtil {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "解析agent返回的json数据", range = "无限制")
-	public static List<Object_handle_type> getHandleTypeByTable(Object_collect object_collect,
+	public static List<Object_handle_type> getHandleTypeByTable(long agent_id, String file_path,
 	                                                            long user_id, String table_name) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
-		String url = AgentActionUtil.getUrl(object_collect.getAgent_id(), user_id,
+		String url = AgentActionUtil.getUrl(agent_id, user_id,
 				AgentActionUtil.GETHANDLETYPEBYTABLE);
 		// 3、给agent发消息，并获取agent响应
 		String bodyString = new HttpClient()
-				.addData("file_path", object_collect.getFile_path())
+				.addData("file_path", file_path)
 				.addData("table_name", table_name)
 				.post(url).getBodyString();
 		// 4、转换agent返回的数据为想要格式
@@ -460,7 +468,7 @@ public class SendMsgUtil {
 		ActionResult actionResult = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
 		if (!actionResult.isSuccess()) {
-			throw new BusinessException("获取表信息失败，详情请查看agent日志" + actionResult.getMessage());
+			throw new BusinessException("获取表信息失败，详情请查看agent日志:" + actionResult.getMessage());
 		}
 		// 2.解包返回数据
 		return PackUtil.unpackMsg(actionResult.getData().toString()).get("msg");

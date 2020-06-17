@@ -7,7 +7,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.core.utils.Validator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -75,31 +74,24 @@ public class CollectConfAction extends BaseAction {
 	@Method(desc = "半结构化采集查看表",
 			logicStep = "1.数据可访问权限处理方式：通过user_id与agent_id进行访问权限限制" +
 					"2.判断当是否存在数据字典选择否的时候数据日前是否为空" +
-					"3.获取半结构化与agent服务交互参数" +
-					"4.获取解析与agent服务交互返回响应数据" +
-					"5.判断当前目录下的数据文件响应信息是否为空" +
-					"6.不为空，循环获取当前目录下的数据文件表信息" +
-					"7.返回解析后当前目录获取表信息" +
-					"8.返回当前目录下的数据文件响应信息")
+					"3.获取解析与agent服务交互返回响应表数据")
 	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
 	@Param(name = "file_path", desc = "采集文件路径", range = "不为空")
 	@Param(name = "is_dictionary", desc = "是否存在数据字典", range = "使用（IsFlag）代码项")
 	@Param(name = "data_date", desc = "数据日期", range = "是否存在数据字典选择否的时候必选", nullable = true)
 	@Param(name = "file_suffix", desc = "文件后缀名", range = "无限制")
 	@Return(desc = "返回解析数据字典后的表数据", range = "无限制")
-	public List<Object_collect_task> viewTable(Object_collect object_collect) {
+	public List<Object_collect_task> viewTable(long agent_id, String file_path, String is_dictionary,
+	                                           String data_date, String file_suffix) {
 		// 1.数据可访问权限处理方式：通过user_id与agent_id进行访问权限限制
-		Validator.notBlank(object_collect.getFile_suffix(), "文件后缀名名不能为空");
-		Validator.notBlank(object_collect.getIs_dictionary(), "是否数据字典不能为空");
-		IsFlag.ofEnumByCode(object_collect.getIs_dictionary());
-		Validator.notBlank(object_collect.getFile_path(), "文件采集路径不能为空");
 		// 2.判断当是否存在数据字典选择否的时候数据日期是否为空
-		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())
-				&& StringUtil.isBlank(object_collect.getData_date())) {
+		if (IsFlag.Fou == IsFlag.ofEnumByCode(is_dictionary)
+				&& StringUtil.isBlank(data_date)) {
 			throw new BusinessException("当是否存在数据字典选择否，数据日期不能为空");
 		}
-		// 4.获取解析与agent服务交互返回响应数据
-		return SendMsgUtil.getDictionaryTableInfo(object_collect, getUserId());
+		// 3.获取解析与agent服务交互返回响应表数据
+		return SendMsgUtil.getDictionaryTableInfo(agent_id, file_path, is_dictionary, data_date, file_suffix,
+						getUserId());
 	}
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
@@ -113,7 +105,7 @@ public class CollectConfAction extends BaseAction {
 	@Param(name = "object_collect", desc = "对象采集设置表对象，对象中不能为空的字段必须有值",
 			range = "不可为空", isBean = true)
 	@Return(desc = "对象采集设置表id，新建的id后台生成的所以要返回到前端", range = "不会为空")
-	public long addObjectCollect(Object_collect object_collect) {
+	public long saveObjectCollect(Object_collect object_collect) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.根据obj_number查询半结构化采集任务编号是否重复
 		long count = Dbo.queryNumber(
