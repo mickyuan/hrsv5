@@ -192,14 +192,25 @@ public class DataManageActionTest extends WebBaseTestCase {
         }
     }
 
-    @Method(desc = "获取统计信息测试方法", logicStep = "获取统计信息测试方法")
+    @Method(desc = "获取表统计信息", logicStep = "获取表统计信息")
     @Test
-    public void getDMStatistics() {
+    public void getTableStatistics() {
         String bodyString = new HttpClient()
                 .addData("statistics_layer_num", "3")
-                .post(getActionUrl("getDMStatistics")).getBodyString();
+                .post(getActionUrl("getTableStatistics")).getBodyString();
         ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
-                new BusinessException("获取数据管控首页统计信息失败!"));
+                new BusinessException("获取数据管控首页表统计信息失败!"));
+        //无法根据数据进行结果校验,因为统计的数据表存在其他数据
+        assertThat(ar.isSuccess(), is(true));
+    }
+
+    @Method(desc = "获取各种规则统计结果", logicStep = "获取各种规则统计结果")
+    @Test
+    public void getRuleStatistics() {
+        String bodyString = new HttpClient()
+                .post(getActionUrl("getTableStatistics")).getBodyString();
+        ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
+                new BusinessException("获取数据管控首页各种规则统计信息失败!"));
         //无法根据数据进行结果校验,因为统计的数据表存在其他数据
         assertThat(ar.isSuccess(), is(true));
     }
