@@ -26,6 +26,12 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     private static final long USER_ID = -1000L;
     //测试数据的部门ID
     private static final long DEP_ID = -1000L;
+    //测试数据的文件id
+    private static final String FILE_ID = "-1000";
+    //测试数据库设置id
+    private static final long DATABASE_ID = -1000L;
+    //测试数据表id
+    private static final long TABLE_ID = -1000L;
 
     private static String bodyString;
     private static ActionResult ar;
@@ -158,6 +164,72 @@ public class RuleConfigActionTest extends WebBaseTestCase {
             etl_job_cur.setEtl_sys_cd("-1051");
             etl_job_cur.setSub_sys_cd("-1052");
             etl_job_cur.add(db);
+            //初始化 Etl_sub_sys_list
+            Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
+            etl_sub_sys_list.setSub_sys_cd("-1151");
+            etl_sub_sys_list.setEtl_sys_cd("-1051");
+            etl_sub_sys_list.add(db);
+            //初始化 Data_store_reg
+            Data_store_reg data_store_reg = new Data_store_reg();
+            data_store_reg.setFile_id(FILE_ID);
+            data_store_reg.setCollect_type("4");
+            data_store_reg.setOriginal_update_date(DateUtil.getSysDate());
+            data_store_reg.setOriginal_update_time(DateUtil.getSysTime());
+            data_store_reg.setOriginal_name("hll_测试表中文名");
+            data_store_reg.setTable_name("hll_table");
+            data_store_reg.setHyren_name("hyren_hll_table");
+            data_store_reg.setStorage_date(DateUtil.getSysDate());
+            data_store_reg.setStorage_time(DateUtil.getSysTime());
+            data_store_reg.setFile_size(0L);
+            data_store_reg.setAgent_id(-1000L);
+            data_store_reg.setSource_id(-1000L);
+            data_store_reg.setDatabase_id(DATABASE_ID);
+            data_store_reg.setTable_id(TABLE_ID);
+            data_store_reg.add(db);
+            //初始化 Table_info
+            Table_info table_info = new Table_info();
+            table_info.setTable_id(TABLE_ID);
+            table_info.setTable_name("hll_table");
+            table_info.setTable_ch_name("hll_测试表中文名");
+            table_info.setRec_num_date(DateUtil.getSysDate());
+            table_info.setDatabase_id(DATABASE_ID);
+            table_info.setValid_s_date(DateUtil.getSysDate());
+            table_info.setValid_e_date("99991231");
+            table_info.setIs_md5("1");
+            table_info.setIs_register("0");
+            table_info.setIs_customize_sql("0");
+            table_info.setIs_parallel("0");
+            table_info.setIs_user_defined("0");
+            table_info.add(db);
+            //初始化 Table_column
+            Table_column table_column = new Table_column();
+            table_column.setColumn_id(-1001L);
+            table_column.setIs_primary_key("0");
+            table_column.setColumn_name("hll_table_1001");
+            table_column.setTable_id(TABLE_ID);
+            table_column.setValid_s_date(DateUtil.getSysDate());
+            table_column.setValid_e_date("99991231");
+            table_column.setIs_alive("0");
+            table_column.setIs_new("0");
+            table_column.add(db);
+            table_column.setColumn_id(-1002L);
+            table_column.setIs_primary_key("0");
+            table_column.setColumn_name("hll_table_1002");
+            table_column.setTable_id(TABLE_ID);
+            table_column.setValid_s_date(DateUtil.getSysDate());
+            table_column.setValid_e_date("99991231");
+            table_column.setIs_alive("0");
+            table_column.setIs_new("0");
+            table_column.add(db);
+            table_column.setColumn_id(-1003L);
+            table_column.setIs_primary_key("0");
+            table_column.setColumn_name("hll_table_1003");
+            table_column.setTable_id(TABLE_ID);
+            table_column.setValid_s_date(DateUtil.getSysDate());
+            table_column.setValid_e_date("99991231");
+            table_column.setIs_alive("0");
+            table_column.setIs_new("0");
+            table_column.add(db);
             //提交所有数据库执行操作
             SqlOperator.commitTransaction(db);
             //根据初始化的 Sys_user 用户模拟登陆
@@ -221,6 +293,57 @@ public class RuleConfigActionTest extends WebBaseTestCase {
                     " etl_sys_cd=?", "hll_测试查询规则调度信息_1051_-1030", "-1051").orElseThrow(()
                     -> new RuntimeException("count fail!"));
             assertThat("Etl_job_cur 表此条数据删除后,记录数应该为0", num, is(0L));
+            //删除 Etl_sub_sys_list 表测试数据
+            SqlOperator.execute(db, "delete from " + Etl_sub_sys_list.TableName + " where sub_sys_cd=? and etl_sys_cd=?",
+                    "-1151", "-1051");
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sub_sys_list.TableName + " where sub_sys_cd=? and" +
+                    " etl_sys_cd=?", "-1151", "-1051").orElseThrow(()
+                    -> new RuntimeException("count fail!"));
+            assertThat("Etl_sub_sys_list 表此条数据删除后,记录数应该为0", num, is(0L));
+            //清理测试用例运行时产生的表数据 Etl_para
+            SqlOperator.execute(db, "delete from " + Etl_para.TableName + " where etl_sys_cd=?", "-1051");
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_para.TableName + " where etl_sys_cd=?",
+                    "-1051").orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Etl_para 表此条数据删除后,记录数应该为0", num, is(0L));
+            //清理测试用例运行时产生的表数据 Etl_resource
+            SqlOperator.execute(db, "delete from " + Etl_resource.TableName + " where etl_sys_cd=?", "-1051");
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_resource.TableName + " where etl_sys_cd=?",
+                    "-1051").orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Etl_resource 表此条数据删除后,记录数应该为0", num, is(0L));
+            //清理测试用例运行时产生的表数据 Etl_job_def
+            SqlOperator.execute(db, "delete from " + Etl_job_def.TableName + " where etl_sys_cd=?", "-1051");
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
+                    " and sub_sys_cd=?", "-1051", "-1151").orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Etl_job_def 表此条数据删除后,记录数应该为0", num, is(0L));
+            //清理测试用例运行时产生的表数据 Etl_job_resource_rela
+            SqlOperator.execute(db, "delete from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=?", "-1051");
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_resource_rela.TableName
+                    + " where etl_sys_cd=?", "-1051").orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Etl_job_resource_rela 表此条数据删除后,记录数应该为0", num, is(0L));
+
+            //删除 Data_store_reg 表测试数据
+            SqlOperator.execute(db, "delete from " + Data_store_reg.TableName + " where file_id=?", FILE_ID);
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_reg.TableName + " where file_id=?"
+                    , FILE_ID).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Data_store_reg 表此条数据删除后,记录数应该为0", num, is(0L));
+            //删除 Table_info 表测试数据
+            SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id=?", TABLE_ID);
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName + " where table_id=?"
+                    , TABLE_ID).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Table_info 表此条数据删除后,记录数应该为0", num, is(0L));
+            //删除 Table_column 表测试数据
+            SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id=?", TABLE_ID);
+            SqlOperator.commitTransaction(db);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id=?"
+                    , TABLE_ID).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Table_column 表此条数据删除后,记录数应该为0", num, is(0L));
         }
     }
 
@@ -318,16 +441,36 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     public void getDqDefinitionInfos() {
         bodyString = new HttpClient()
                 .post(getActionUrl("getDqDefinitionInfos")).getBodyString();
-        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElse(null);
-
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取规则信息列表失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForMap().get("totalSize"), is(4));
     }
 
+    @Method(desc = "获取规则信息", logicStep = "获取规则信息")
     @Test
     public void getDqDefinition() {
+        bodyString = new HttpClient()
+                .addData("reg_num", -1030L)
+                .post(getActionUrl("getDqDefinition")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取规则信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForMap().get("reg_num"), is(-1030));
+        assertThat(ar.getDataForMap().get("reg_name"), is("hll-测试查询规则"));
+        assertThat(ar.getDataForMap().get("case_type"), is("SQL"));
     }
 
+    @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
     @Test
     public void getColumnsByTableName() {
+        bodyString = new HttpClient()
+                .addData("table_name", "hyren_hll_table")
+                .post(getActionUrl("getColumnsByTableName")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
+                new BusinessException("获取规则类型数据失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForResult().getRowCount(), is(3));
     }
 
     @Method(desc = "获取规则类型数据测试方法", logicStep = "获取规则类型数据测试方法")
@@ -353,8 +496,17 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         assertThat(ar.isSuccess(), is(true));
     }
 
+    @Method(desc = "保存作业信息", logicStep = "保存作业信息")
     @Test
     public void saveETLJob() {
+        bodyString = new HttpClient()
+                .addData("pro_id", "-1051")
+                .addData("task_id", "-1151")
+                .addData("reg_num", -1020L)
+                .post(getActionUrl("saveETLJob")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
+                new BusinessException("获取规则类型数据失败!"));
+        assertThat(ar.isSuccess(), is(true));
     }
 
     @Method(desc = "搜索规则信息", logicStep = "搜索规则信息")
@@ -421,13 +573,29 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         //获取检查结果3的数据需要根据配置的数据存储层获取
     }
 
+    @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
     @Test
     public void getProInfos() {
-
+        bodyString = new HttpClient()
+                .post(getActionUrl("getProInfos")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
+                new BusinessException("获取作业工程信息数据失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForEntityList(Etl_sys.class).get(0).getEtl_sys_cd(), is("-1051"));
+        assertThat(ar.getDataForEntityList(Etl_sys.class).get(0).getEtl_sys_name(), is("hll_测试工程名_1051_-1030"));
     }
 
+    @Method(desc = "获取作业某个工程下的任务信息", logicStep = "获取作业某个工程下的任务信息")
     @Test
     public void getTaskInfo() {
+        bodyString = new HttpClient()
+                .addData("etl_sys_cd", "-1051")
+                .post(getActionUrl("getTaskInfo")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
+                new BusinessException("获取作业某个工程下的任务信息数据失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(ar.getDataForResult().getString(0, "etl_sys_cd"), is("-1051"));
+        assertThat(ar.getDataForResult().getString(0, "sub_sys_cd"), is("-1151"));
     }
 
     @Method(desc = "查看规则调度状态", logicStep = "查看规则调度状态")
@@ -450,5 +618,6 @@ public class RuleConfigActionTest extends WebBaseTestCase {
 
     @Test
     public void errDataSqlCheck() {
+        //检查表是针对已入库数据进行检查
     }
 }
