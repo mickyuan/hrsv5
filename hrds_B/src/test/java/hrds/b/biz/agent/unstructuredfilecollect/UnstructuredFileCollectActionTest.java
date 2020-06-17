@@ -68,6 +68,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	 */
 	@Before
 	public void beforeTest() {
+		//TODO 测试用例里面报错要不要rollback ???
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1.造file_collect_set表数据，初始化条数为1条 主键由PrimayKeyGener.getNextId()生成，其中FCS_ID为全局使用
 			File_collect_set file_collect_set = new File_collect_set();
