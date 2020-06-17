@@ -129,10 +129,14 @@ public class RuleConfigAction extends BaseAction {
             dq_definition.setIs_saveindex3(IsFlag.Fou.getCode());
         }
         dq_definition.setUser_id(getUserId());
-        dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
-        dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\t", " "));
-        dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
-        dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\t", " "));
+        if (StringUtil.isNotBlank(dq_definition.getSpecify_sql())) {
+            dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\n", " "));
+            dq_definition.setSpecify_sql(dq_definition.getSpecify_sql().replace("\t", " "));
+        }
+        if (StringUtil.isNotBlank(dq_definition.getErr_data_sql())) {
+            dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\n", " "));
+            dq_definition.setErr_data_sql(dq_definition.getErr_data_sql().replace("\t", " "));
+        }
         //添加规则
         dq_definition.update(Dbo.db());
     }
