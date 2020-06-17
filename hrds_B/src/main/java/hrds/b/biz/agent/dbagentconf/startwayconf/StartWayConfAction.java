@@ -10,44 +10,22 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.datafileconf.CheckParam;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.Dispatch_Frequency;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.Job_Effective_Flag;
-import hrds.commons.codes.Main_Server_Sync;
-import hrds.commons.codes.ParamType;
-import hrds.commons.codes.Pro_Type;
-import hrds.commons.codes.Status;
-import hrds.commons.codes.Today_Dispatch_Flag;
-import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
-import hrds.commons.entity.Etl_dependency;
-import hrds.commons.entity.Etl_job_def;
-import hrds.commons.entity.Etl_job_resource_rela;
-import hrds.commons.entity.Etl_para;
-import hrds.commons.entity.Etl_resource;
-import hrds.commons.entity.Etl_sub_sys_list;
-import hrds.commons.entity.Etl_sys;
-import hrds.commons.entity.Table_info;
-import hrds.commons.entity.Take_relation_etl;
+import hrds.commons.codes.*;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.jsch.ChineseUtil;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 @DocClass(desc = "定义启动方式配置", author = "Lee-Qiang")
 public class StartWayConfAction extends BaseAction {
@@ -411,22 +389,22 @@ public class StartWayConfAction extends BaseAction {
 				colSetId);
 
 		// 检查作业系统参数的作业程序目录
-		setDefaultEtlConf(etl_sys_cd, Constant.PARA_HYRENBIN, pro_dic + File.separator);
+		EtlJobUtil.setDefaultEtlParaConf(etl_sys_cd, Constant.PARA_HYRENBIN, pro_dic + File.separator);
 
 		// 检查作业系统参数的作业日志是否存在
-		setDefaultEtlConf(etl_sys_cd, Constant.PARA_HYRENLOG, log_dic);
+		EtlJobUtil.setDefaultEtlParaConf(etl_sys_cd, Constant.PARA_HYRENLOG, log_dic);
 
 		// 默认增加一个资源类型,先检查是否存在,如果不存在则添加
-		setDefaultEtlResource(etl_sys_cd);
+		EtlJobUtil.setDefaultEtlResource(etl_sys_cd);
 
 		// 获取作业资源关系信息
-		List<Object> jobResource = getJobResource(etl_sys_cd);
+		List<String> jobResource = EtlJobUtil.getJobResource(etl_sys_cd);
 
 		// 获取抽数关系依赖信息
 		List<Object> relationEtl = getRelationEtl(source_id);
 
 		// 先获取当前工程,任务下的作业名称
-		List<Object> etlJobList = getEtlJob(etl_sys_cd, sub_sys_cd);
+		List<String> etlJobList = EtlJobUtil.getEtlJob(etl_sys_cd, sub_sys_cd);
 
 		// 作业定义信息
 		int index = 0;
@@ -489,7 +467,7 @@ public class StartWayConfAction extends BaseAction {
       /*
        对每个采集作业定义资源分配 ,检查作业所需资源是否存在,如果存在则跳过
       */
-			setEtl_job_resource_rela(etl_sys_cd, etl_job_def, jobResource);
+			EtlJobUtil.setEtl_job_resource_rela(etl_sys_cd, etl_job_def, jobResource);
 
       /*
        保存抽数作业关系表,检查作业名称是否存在,如果存在则更新,反之新增
@@ -505,23 +483,6 @@ public class StartWayConfAction extends BaseAction {
 				"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
 				IsFlag.Shi.getCode(),
 				colSetId);
-	}
-
-	@Method(desc = "保存作业所需的资源信息", logicStep = "1: 判断当前的作业信息是否存在,如果不存在则添加")
-	@Param(name = "etl_sys_cd", desc = "作业工程编号", range = "不可为空")
-	@Param(name = "etl_job_def", desc = "作业资源的信息集合", range = "不可为空", isBean = true)
-	@Param(name = "jobResource", desc = "作业资源的信息名称集合", range = "可为空")
-	private void setEtl_job_resource_rela(
-			String etl_sys_cd, Etl_job_def etl_job_def, List<Object> jobResource) {
-		//    1: 判断当前的作业信息是否存在,如果不存在则添加
-		if (!jobResource.contains(etl_job_def.getEtl_job())) {
-			Etl_job_resource_rela etl_job_resource_rela = new Etl_job_resource_rela();
-			etl_job_resource_rela.setEtl_sys_cd(etl_sys_cd);
-			etl_job_resource_rela.setEtl_job(etl_job_def.getEtl_job());
-			etl_job_resource_rela.setResource_type(Constant.RESOURCE_THRESHOLD);
-			etl_job_resource_rela.setResource_req(Constant.JOB_RESOURCE_NUM);
-			etl_job_resource_rela.add(Dbo.db());
-		}
 	}
 
 	@Method(desc = "保存作业所需的资源信息", logicStep = "1: 判断当前的作业信息是否存在,如果不存在则添加")
@@ -543,73 +504,6 @@ public class StartWayConfAction extends BaseAction {
 			take_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
 			take_relation_etl.add(Dbo.db());
 		}
-	}
-
-	@Method(desc = "对程序作业的作业系统参数经行检查添加", logicStep = "1: 检查当前的作业系统参数是否存在 2: 如果不存在则添加")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不能为空")
-	@Param(name = "para_cd", desc = "工程系统参数变量名称", range = "不能为空")
-	@Param(name = "pro_val", desc = "工程系统参数变量值", range = "不能为空")
-	private void setDefaultEtlConf(String etl_sys_cd, String para_cd, String pro_val) {
-		//    1: 检查当前的作业系统参数是否存在
-		long resourceNum =
-				Dbo.queryNumber(
-						"SELECT COUNT(1) FROM "
-								+ Etl_para.TableName
-								+ " WHERE etl_sys_cd = ? AND para_cd = ?",
-						etl_sys_cd,
-						para_cd)
-						.orElseThrow(() -> new BusinessException("SQL查询错误"));
-		//    2: 如果不存在则添加
-		if (resourceNum == 0) {
-			Etl_para etl_para = new Etl_para();
-			etl_para.setEtl_sys_cd(etl_sys_cd);
-			etl_para.setPara_cd(para_cd);
-			etl_para.setPara_val(pro_val);
-			etl_para.setPara_type(ParamType.LuJing.getCode());
-			etl_para.add(Dbo.db());
-		}
-	}
-
-	@Method(desc = "设置资源登记信息", logicStep = "")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
-	private void setDefaultEtlResource(String etl_sys_cd) {
-		long resourceNum =
-				Dbo.queryNumber(
-						"SELECT COUNT(1) FROM "
-								+ Etl_resource.TableName
-								+ " WHERE resource_type = ? AND etl_sys_cd = ?",
-						Constant.RESOURCE_THRESHOLD,
-						etl_sys_cd)
-						.orElseThrow(() -> new BusinessException("SQL查询错误"));
-		if (resourceNum == 0) {
-			Etl_resource etl_resource = new Etl_resource();
-			etl_resource.setEtl_sys_cd(etl_sys_cd);
-			etl_resource.setResource_type(Constant.RESOURCE_THRESHOLD);
-			etl_resource.setResource_max(Constant.RESOURCE_NUM);
-			etl_resource.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-			etl_resource.add(Dbo.db());
-		}
-	}
-
-	@Method(desc = "获取作业信息", logicStep = "")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
-	@Param(name = "sub_sys_cd", desc = "任务编号", range = "不可为空")
-	@Return(desc = "返回作业定义下的作业名称集合", range = "可以为空.为空表示没有作业信息存在")
-	private List<Object> getEtlJob(String etl_sys_cd, String sub_sys_cd) {
-		return Dbo.queryOneColumnList(
-				"SELECT etl_job FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
-				etl_sys_cd,
-				sub_sys_cd);
-	}
-
-	@Method(desc = "获取作业资源分配的作业信息", logicStep = "")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
-	@Return(desc = "返回作业资源下的作业名称集合", range = "可以为空.为空表示没有作业资源信息存在")
-	private List<Object> getJobResource(String etl_sys_cd) {
-
-		return Dbo.queryOneColumnList(
-				"SELECT etl_job FROM " + Etl_job_resource_rela.TableName + " WHERE etl_sys_cd = ? ",
-				etl_sys_cd);
 	}
 
 	@Method(desc = "获取当前同个数据源分类下表抽数作业关系表", logicStep = "防止数据源下的同个分类出现重复的作业信息")

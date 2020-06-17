@@ -82,6 +82,9 @@ public class JobConfiguration extends BaseAction {
 	public Map<String, Object> searchEtlSubSysByPage(String etl_sys_cd, String sub_sys_cd,
 	                                                 int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.获取某个工程下任务信息,每次拼接新sql之前清空原来的sql以及参数
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -111,6 +114,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回查询任务信息", range = "无限制")
 	public List<Etl_sub_sys_list> searchEtlSubSys(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.返回查询任务信息,实体字段基本都需要所以查询所有字段
 		return Dbo.queryList(Etl_sub_sys_list.class, "select * from " + Etl_sub_sys_list.TableName
 				+ " where etl_sys_cd=? order by etl_sys_cd, sub_sys_cd", etl_sys_cd);
@@ -125,6 +131,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回根据工程编号，任务编号查询任务信息", range = "无限制")
 	public Map<String, Object> searchEtlSubSysById(String etl_sys_cd, String sub_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.判断当前工程下的任务是否存在
 		if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd)) {
 			throw new BusinessException("该工程下任务已不存在，可能被删除！");
@@ -338,6 +347,9 @@ public class JobConfiguration extends BaseAction {
 	                                                 String pro_name, String sub_sys_cd, int currPage,
 	                                                 int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id关联查询进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -404,6 +416,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回查询作业名称信息", range = "取值范围")
 	public List<String> searchEtlJob(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
 		return Dbo.queryOneColumnList("select etl_job from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
 				" order by etl_job", etl_sys_cd);
@@ -657,6 +672,9 @@ public class JobConfiguration extends BaseAction {
 	                                                          int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		asmSql.clean();
 		asmSql.addSql("select * from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? ");
 		asmSql.addParam(etl_sys_cd);
@@ -687,6 +705,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回资源类型", range = "无限制")
 	public List<String> searchEtlResourceType(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.查询资源类型
 		return Dbo.queryOneColumnList("select resource_type from " + Etl_resource.TableName +
 				" where etl_sys_cd=?", etl_sys_cd);
@@ -701,6 +722,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回根据工程编号、作业名称查询作业资源分配情况，实体字段基本都需要所以查询所有字段", range = "无限制")
 	public Map<String, Object> searchEtlJobResourceRela(String etl_sys_cd, String etl_job) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.判断当前工程下作业资源使用情况是否存在
 		if (!ETLJobUtil.isEtlJobResourceRelaExist(etl_sys_cd, etl_job)) {
 			throw new BusinessException("当前工程对应作业资源分配信息不存在！");
@@ -919,7 +943,6 @@ public class JobConfiguration extends BaseAction {
 				" and etl_job=?", etl_sys_cd, etl_job).orElseThrow(() ->
 				new BusinessException("sql查询错误")) > 0) {
 			// 2.1删除作业的依赖关系，只有有作业依赖关系的作业才需要删除，不关心删除几条依赖
-			// fixme 删除上下游作业，多个依赖 主键删除 已修改单元测试未修改
 			Dbo.execute("delete from " + Etl_dependency.TableName +
 					" where etl_sys_cd=? AND etl_job=?", etl_sys_cd, etl_job);
 		}
@@ -999,6 +1022,9 @@ public class JobConfiguration extends BaseAction {
 	public Map<String, Object> searchEtlResourceByPage(String etl_sys_cd, String resource_type,
 	                                                   int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		// 2.拼接sql
@@ -1030,6 +1056,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回根据工程编号、资源类型查询资源定义信息", range = "无限制")
 	public Map<String, Object> searchEtlResource(String etl_sys_cd, String resource_type) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.判断当前工程下资源定义信息是否存在
 		if (!ETLJobUtil.isEtlResourceExist(etl_sys_cd, resource_type)) {
 			throw new BusinessException("当前工程对应的资源已不存在！");
@@ -1140,6 +1169,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "分页查询系统参数信息、分页查询总记录数、工程编号、工程名称", range = "取值范围")
 	public Map<String, Object> searchEtlParaByPage(String etl_sys_cd, String para_cd, int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.拼接sql前清理原sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -1226,6 +1258,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回根据工程编号、变量名称查询作业系统参数信息", range = "取值范围")
 	public Map<String, Object> searchEtlPara(String etl_sys_cd, String para_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.判断当前工程下作业系统参数是否存在
 		if (!ETLJobUtil.isEtlParaExist(etl_sys_cd, para_cd)) {
 			throw new BusinessException("作业系统参数已不存在，可能被删除！");
@@ -1281,6 +1316,9 @@ public class JobConfiguration extends BaseAction {
 	public Map<String, Object> searchEtlDependencyByPage(String etl_sys_cd, String etl_job, String pre_etl_job,
 	                                                     int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("select * from etl_dependency where etl_sys_cd = ? ");
@@ -1315,6 +1353,9 @@ public class JobConfiguration extends BaseAction {
 	@Return(desc = "返回根据工程编号查询作业依赖信息，实体字段基本都需要所以查询所有字段", range = "无限制")
 	public Map<String, Object> searchEtlDependency(String etl_sys_cd, String etl_job, String pre_etl_job) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.判断当前工程下的依赖作业是否存在
 		if (!ETLJobUtil.isEtlDependencyExist(etl_sys_cd, etl_sys_cd, etl_job, pre_etl_job)) {
 			throw new BusinessException("当前工程对应作业的依赖不存在！");
@@ -1404,6 +1445,12 @@ public class JobConfiguration extends BaseAction {
 	public void batchSaveEtlDependency(String etl_sys_cd, String pre_etl_sys_cd, String sub_sys_cd,
 	                                   String pre_sub_sys_cd, String status) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
+		if (!ETLJobUtil.isEtlSysExistById(pre_etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.验证status是否合法
 		Status.ofEnumByCode(status);
 		// 3.验证当前任务是否存在
@@ -1608,7 +1655,7 @@ public class JobConfiguration extends BaseAction {
 					}
 				}
 			}
-			// 16.将excel数据导入数据库  fixme 使用bean处理
+			// 16.将excel数据导入数据库
 			insertData(listMap, table_name);
 		} catch (FileNotFoundException e) {
 			throw new BusinessException("导入excel文件数据失败！");
@@ -1749,6 +1796,9 @@ public class JobConfiguration extends BaseAction {
 		FileOutputStream out = null;
 		XSSFWorkbook workbook = null;
 		try {
+			if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+				throw new BusinessException("当前工程是否存在");
+			}
 			// 2.创建工作簿对象
 			workbook = new XSSFWorkbook();
 			// 3.创建工作表对象
