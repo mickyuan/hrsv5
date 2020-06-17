@@ -131,18 +131,27 @@ public class CommandJdbcTest {
 				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
+	/**
+	 * 测试卸数非定长文件有清洗配置
+	 */
 	@Test
 	public void test12() {
 		assertThat("执行测试卸数非定长文件成功", execute("1000402881",
 				AgentType.ShuJuKu.getCode()), is(true));
 	}
 
+	/**
+	 * 测试文件采集
+	 */
 	@Test
 	public void test13() {
 		assertThat("执行测试文件采集成功", execute("1000230238",
 				AgentType.WenJianXiTong.getCode()), is(true));
 	}
 
+	/**
+	 * 测试文件采集
+	 */
 	@Test
 	public void test14() {
 		assertThat("执行测试文件采集成功", execute("1000230240",
