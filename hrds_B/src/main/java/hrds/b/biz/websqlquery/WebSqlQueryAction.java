@@ -4,11 +4,9 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.base.BaseAction;
 import hrds.commons.collection.ProcessingData;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
@@ -55,17 +53,7 @@ public class WebSqlQueryAction extends BaseAction {
     public List<Map<String, Object>> queryDataBasedOnSql(String querySQL) {
         //初始化查询sql
         querySQL = new DruidParseQuerySql().GetNewSql(querySQL);
-       /* if (!querySQL.toLowerCase().contains(" limit ")) {
-            querySQL += " limit 100";
-        } else {
-            int limit_num = Integer.parseInt(querySQL.substring(querySQL.indexOf("limit") + 5).trim());
-            querySQL = querySQL.substring(0, querySQL.indexOf("limit"));
-            if (limit_num > 100) {
-                querySQL += "limit 100";
-            }
-        }*/
         //根据sql语句获取数据
-        //获取数据
         List<Map<String, Object>> query_list = new ArrayList<>();
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             new ProcessingData() {
@@ -73,24 +61,20 @@ public class WebSqlQueryAction extends BaseAction {
                 public void dealLine(Map<String, Object> map) {
                     query_list.add(map);
                 }
-            }.getPageDataLayer(querySQL, db,1,100);
+            }.getPageDataLayer(querySQL, db, 1, 100);
         }
         return query_list;
     }
 
     @Method(desc = "获取数据源树信息", logicStep = "获取数据源树信息")
     @Return(desc = "数据源树信息", range = "数据源树信息")
-    public Object getWebSQLTreeData() {
+    public List<Node> getWebSQLTreeData() {
         //配置树不显示文件采集的数据
         TreeConf treeConf = new TreeConf();
         treeConf.setShowFileCollection(Boolean.FALSE);
         //根据源菜单信息获取节点数据列表
-        List<Map<String, Object>> dataList =
-                TreeNodeInfo.getTreeNodeInfo(TreePageSource.WEB_SQL, getUser(), treeConf);
-        //转换节点数据列表为分叉树列表
-        List<Node> ruleConfigTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
-        return JsonUtil.toObjectSafety(ruleConfigTreeList.toString(), Object.class).orElseThrow(()
-                -> (new BusinessException("数据类型转换失败!")));
+        List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(TreePageSource.WEB_SQL, getUser(), treeConf);
+        return NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
     }
 
     @Method(desc = "获取树的数据信息",
