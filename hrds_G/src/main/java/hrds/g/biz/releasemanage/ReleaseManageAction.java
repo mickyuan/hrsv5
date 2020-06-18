@@ -16,7 +16,6 @@ import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
-import hrds.g.biz.bean.InterfaceUseInfo;
 import hrds.g.biz.init.InterfaceManager;
 
 import java.util.List;
@@ -61,11 +60,12 @@ public class ReleaseManageAction extends BaseAction {
 			"6.1 新增接口用户信息" +
 			"6.2 更新接口用户信息" +
 			"7.重新更新接口使用信息")
-	@Param(name = "interfaceUseInfos", desc = "保存接口使用信息实体对象", range = "无限制", isBean = true)
+	@Param(name = "interfaceUses", desc = "接口使用信息实体对象数组", range = "与数据库表字段对应规则一致",
+			isBean = true)
 	@Param(name = "user_id", desc = "保存接口使用信息实体对象", range = "无限制")
 	@Param(name = "interface_note", desc = "保存接口使用信息实体对象", range = "无限制", nullable = true)
 	@Param(name = "classify_name", desc = "保存接口使用信息实体对象", range = "无限制", nullable = true)
-	public void saveInterfaceUseInfo(InterfaceUseInfo[] interfaceUseInfos, long[] user_id,
+	public void saveInterfaceUseInfo(Interface_use[] interfaceUses, long[] user_id,
 	                                 String interface_note, String classify_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		if (user_id == null || user_id.length == 0) {
@@ -73,14 +73,14 @@ public class ReleaseManageAction extends BaseAction {
 		}
 		// 3.遍历用户ID，接口ID保存接口使用信息
 		for (long userId : user_id) {
-			for (InterfaceUseInfo interfaceUseInfo : interfaceUseInfos) {
-				String start_use_date = interfaceUseInfo.getStart_use_date();
-				String use_valid_date = interfaceUseInfo.getUse_valid_date();
-				Long interface_id = interfaceUseInfo.getInterface_id();
+			for (Interface_use interface_use : interfaceUses) {
+				String start_use_date = interface_use.getStart_use_date();
+				String use_valid_date = interface_use.getUse_valid_date();
+				Long interface_id = interface_use.getInterface_id();
 				// 2.判断接口ID，用户ID，开始日期，结束日期是否为空
 				Validator.notBlank(start_use_date, "开始日期不能为空");
 				Validator.notBlank(use_valid_date, "结束日期不能为空");
-				Validator.notNull(interfaceUseInfo.getInterface_id(), "接口ID不能为空");
+				Validator.notNull(interface_use.getInterface_id(), "接口ID不能为空");
 				long startUseDate = Long.parseLong(start_use_date);
 				long useValidDate = Long.parseLong(use_valid_date);
 				long todayDate = Long.parseLong(DateUtil.getSysDate());
@@ -97,25 +97,21 @@ public class ReleaseManageAction extends BaseAction {
 					throw new BusinessException("当前接口ID对应的接口信息不存在，请检查，interface_id=" + interface_id);
 				}
 				// 6.判断当前用户接口使用信息是否已存在，如果不存在新增，存在更新
-				Interface_use interface_use = new Interface_use();
 				interface_use.setUse_state(interfaceInfoResult.getString(0, "interface_state"));
 				interface_use.setStart_use_date(start_use_date);
 				interface_use.setUse_valid_date(use_valid_date);
 				if (interfaceUseResult.isEmpty()) {
 					// 6.1 新增接口用户信息
 					interface_use.setInterface_use_id(PrimayKeyGener.getNextId());
-					List<Object> userNameList = Dbo.queryOneColumnList("SELECT user_name FROM "
+					List<String> userNameList = Dbo.queryOneColumnList("SELECT user_name FROM "
 							+ Sys_user.TableName + " WHERE user_id = ?", userId);
 					if (userNameList.isEmpty()) {
 						throw new BusinessException("当前用户对应用户信息已不存在，user_id=" + userId);
 					}
 					interface_use.setUser_id(userId);
-					interface_use.setInterface_id(interface_id);
-					interface_use.setUser_name(userNameList.get(0).toString());
-					interface_use.setInterface_code(interfaceInfoResult.getString(0, "interface_code"));
-					interface_use.setUrl(interfaceInfoResult.getString(0, "url"));
 					interface_use.setTheir_type(interfaceInfoResult.getString(0, "interface_type"));
-					interface_use.setInterface_name(interfaceInfoResult.getString(0, "interface_name"));
+					interface_use.setInterface_id(interface_id);
+					interface_use.setUser_name(userNameList.get(0));
 					interface_use.setInterface_note(interface_note);
 					interface_use.setClassify_name(classify_name);
 					interface_use.setCreate_id(getUserId());

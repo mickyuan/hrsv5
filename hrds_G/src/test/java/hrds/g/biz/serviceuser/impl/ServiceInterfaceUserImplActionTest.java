@@ -28,8 +28,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "服务接口测试类", author = "dhw", createdate = "2020/4/20 16:12")
 public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 
-	private static String bodyString;
-	private static ActionResult ar;
 	// 用户ID
 	private static final long USER_ID = 6661L;
 	// 部门ID
@@ -105,11 +103,11 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 	@Test
 	public void getToken() {
 		// 1.正确的数据访问1，数据有效
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("user_id", "2001")
 				.addData("user_password", "1")
 				.post(getActionUrl("getToken")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> dataForMap = ar.getDataForMap();
@@ -150,7 +148,8 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			//1.清理sys_user表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
 					, USER_ID);
@@ -162,6 +161,10 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 					, LOG_ID);
 
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
+		} finally {
+			db.close();
 		}
 	}
 }

@@ -67,8 +67,9 @@ public class DataTableUseInfoAction extends BaseAction {
 	public Result searchFieldInfoById(Long use_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询字段信息并返回
-		return Dbo.queryResult("SELECT table_ch_column,table_en_column FROM "
-				+ Sysreg_parameter_info.TableName + " WHERE use_id = ?", use_id);
+		return Dbo.queryResult(
+				"SELECT parameter_id,table_ch_column,table_en_column FROM "
+						+ Sysreg_parameter_info.TableName + " WHERE use_id = ?", use_id);
 	}
 
 	@Method(desc = "根据表使用ID删除数据表信息（接口使用监控）",

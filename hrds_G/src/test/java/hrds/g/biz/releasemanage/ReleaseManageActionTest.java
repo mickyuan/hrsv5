@@ -1,6 +1,5 @@
 package hrds.g.biz.releasemanage;
 
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
@@ -19,16 +18,14 @@ import hrds.commons.entity.Interface_info;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
-import hrds.g.biz.bean.InterfaceUseInfo;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.noggit.JSONUtil;
 
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,12 +33,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "接口发布管理测试类", author = "dhw", createdate = "2020/4/10 11:09")
 public class ReleaseManageActionTest extends WebBaseTestCase {
 
-	private static final String SYSDATE = DateUtil.getSysDate();
-	private static final String ENDATE = "20991231";
-	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
-	}.getType();
-	private static String bodyString;
-	private static ActionResult ar;
 	// 用户ID
 	private static final long USER_ID = 8886L;
 	// 部门ID
@@ -89,11 +80,11 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
 				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 	}
@@ -102,9 +93,9 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 	@Test
 	public void searchUserInfo() {
 		// 1.正确的数据访问1
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.post(getActionUrl("searchUserInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
@@ -121,10 +112,10 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 	@Test
 	public void searchInterfaceInfoByType() {
 		// 1.正确的数据访问1
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("interface_type", InterfaceType.ShuJuLei.getCode())
 				.post(getActionUrl("searchInterfaceInfoByType")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		List<Interface_info> interfaceInfos = ar.getDataForEntityList(Interface_info.class);
@@ -150,21 +141,31 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 	@Test
 	public void saveInterfaceUseInfo() {
 		// 1.正确的数据访问，数据正确
-		InterfaceUseInfo[] interfaceUseInfos = new InterfaceUseInfo[3];
-		InterfaceUseInfo interfaceUseInfo = new InterfaceUseInfo();
-		for (int i = 0; i < interfaceUseInfos.length; i++) {
-			interfaceUseInfo.setInterface_id((long) (103 + i));
-			interfaceUseInfo.setStart_use_date(SYSDATE);
-			interfaceUseInfo.setUse_valid_date(ENDATE);
-			interfaceUseInfos[i] = interfaceUseInfo;
+		Interface_use[] interfaceUses = new Interface_use[2];
+		for (int i = 0; i < 2; i++) {
+			Interface_use interface_use = new Interface_use();
+			if (i == 0) {
+				interface_use.setInterface_id(104L);
+				interface_use.setInterface_code("01-123");
+				interface_use.setInterface_name("表使用权限查询接口");
+				interface_use.setUrl("tableUsePermissions");
+			} else {
+				interface_use.setInterface_id(105L);
+				interface_use.setInterface_code("01-124");
+				interface_use.setInterface_name("单表普通查询接口");
+				interface_use.setUrl("generalQuery");
+			}
+			interface_use.setStart_use_date(DateUtil.getSysDate());
+			interface_use.setUse_valid_date(Constant.MAXDATE);
+			interfaceUses[i] = interface_use;
 		}
-		bodyString = new HttpClient().buildSession()
-				.addJson(JsonUtil.toJson(interfaceUseInfos))
+		String bodyString = new HttpClient().buildSession()
+				.addData("interfaceUses", JsonUtil.toJson(interfaceUses))
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -172,7 +173,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 					"select * from " + Interface_use.TableName + " where user_id in(?,?) " +
 							" order by interface_id",
 					USER_ID, USER_ID + 1);
-			assertThat(interface_uses.size(), is(16));
+			assertThat(interface_uses.size(), is(4));
 			for (Interface_use interface_use : interface_uses) {
 				Long user_id = interface_use.getUser_id();
 				if (user_id == USER_ID) {
@@ -183,14 +184,14 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 				assertThat(interface_use.getCreate_id(), is(USER_ID));
 				assertThat(interface_use.getClassify_name(), is("dhw-cs"));
 				assertThat(interface_use.getInterface_note(), is("新增接口使用信息测试"));
-				assertThat(interface_use.getStart_use_date(), is(SYSDATE));
-				assertThat(interface_use.getUse_valid_date(), is(ENDATE));
+				assertThat(interface_use.getStart_use_date(), is(DateUtil.getSysDate()));
+				assertThat(interface_use.getUse_valid_date(), is(Constant.MAXDATE));
 			}
 		}
 		// 2.错误的数据访问1，user_id为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", "")
-				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
+				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
@@ -200,7 +201,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 3.错误的数据访问2，interface_id为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
+				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
@@ -210,7 +211,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 4.错误的数据访问3，start_use_date为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
+				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("start_use_date", "")
 				.addData("classify_name", "dhw-cs")
@@ -221,7 +222,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		// 5.错误的数据访问4，use_valid_date为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interfaceUseInfos", JSONUtil.toJSON(interfaceUseInfos))
+				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
@@ -232,7 +233,8 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			//1.清理sys_user表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
 					, USER_ID);
@@ -243,6 +245,10 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "DELETE FROM " + Interface_use.TableName + " WHERE user_id in(?,?)"
 					, USER_ID, USER_ID + 1);
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
+		} finally {
+			db.close();
 		}
 	}
 }
