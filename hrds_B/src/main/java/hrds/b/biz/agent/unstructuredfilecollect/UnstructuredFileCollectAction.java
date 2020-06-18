@@ -20,15 +20,12 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "非结构化文件采集接口类，处理非机构化采集的增改查", author = "zxz", createdate = "2019/9/11 14:47")
 public class UnstructuredFileCollectAction extends BaseAction {
-	private static final Logger LOGGER = LoggerFactory.getLogger(UnstructuredFileCollectAction.class);
 
 	@Method(desc = "该方法在页面点击添加非结构化文件采集时调用，获取非结构化采集配置页面初始化的值" +
 			",当为编辑时，则同时返回回显的值",
