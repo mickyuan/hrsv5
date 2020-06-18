@@ -29,15 +29,14 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	// 用户ID
 	private static final long USER_ID = 8886L;
 	// 部门ID
-	private static final long DEP_ID = 8886L;
-	private static final int USERROWS = 2;
+	private static final long DEP_ID = 1116L;
 
 	@Before
 	public void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.造sys_user表数据，用于模拟登录
 			Sys_user user = new Sys_user();
-			for (int i = 0; i < USERROWS; i++) {
+			for (int i = 0; i < 2; i++) {
 				user.setUser_id(USER_ID + i);
 				user.setCreate_id(USER_ID);
 				user.setDep_id(DEP_ID);
@@ -418,7 +417,7 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 		DatabaseWrapper db = new DatabaseWrapper();
 		try {
 			//1.清理sys_user表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
+			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id =?"
 					, USER_ID);
 			//2.清理Department_info表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
