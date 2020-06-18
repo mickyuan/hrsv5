@@ -161,7 +161,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		}
 		String bodyString = new HttpClient().buildSession()
 				.addData("interfaceUses", JsonUtil.toJson(interfaceUses))
-				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
+				.addData("userIds", new long[]{USER_ID, USER_ID + 1})
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
@@ -190,18 +190,36 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		}
 		// 2.错误的数据访问1，user_id为空
 		bodyString = new HttpClient().buildSession()
-				.addData("user_id", "")
+				.addData("userIds", "")
 				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
-				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
+				.post(getActionUrl("saveInterfaceUseInfo"))
+				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(false));
+		Interface_use[] interfaceUses2 = new Interface_use[2];
+		for (int i = 0; i < 2; i++) {
+			Interface_use interface_use = new Interface_use();
+			if (i == 0) {
+				interface_use.setInterface_id(104L);
+				interface_use.setInterface_code("01-123");
+				interface_use.setInterface_name("表使用权限查询接口");
+				interface_use.setUrl("tableUsePermissions");
+			} else {
+				interface_use.setInterface_code("01-124");
+				interface_use.setInterface_name("单表普通查询接口");
+				interface_use.setUrl("generalQuery");
+			}
+			interface_use.setStart_use_date(DateUtil.getSysDate());
+			interface_use.setUse_valid_date(Constant.MAXDATE);
+			interfaceUses2[i] = interface_use;
+		}
 		// 3.错误的数据访问2，interface_id为空
 		bodyString = new HttpClient().buildSession()
-				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
-				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
+				.addData("interfaceUses", JsonUtil.toJson(interfaceUses2))
+				.addData("userIds", new long[]{USER_ID, USER_ID + 1})
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
@@ -210,10 +228,9 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 		// 4.错误的数据访问3，start_use_date为空
 		bodyString = new HttpClient().buildSession()
-				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
+				.addData("userIds", new long[]{USER_ID, USER_ID + 1})
 				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
-				.addData("start_use_date", "")
 				.addData("classify_name", "dhw-cs")
 				.post(getActionUrl("saveInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -221,7 +238,7 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 		// 5.错误的数据访问4，use_valid_date为空
 		bodyString = new HttpClient().buildSession()
-				.addData("user_id", new long[]{USER_ID, USER_ID + 1})
+				.addData("userIds", new long[]{USER_ID, USER_ID + 1})
 				.addData("interfaceUses", JSONUtil.toJSON(interfaceUses))
 				.addData("interface_note", "新增接口使用信息测试")
 				.addData("classify_name", "dhw-cs")

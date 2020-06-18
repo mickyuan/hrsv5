@@ -62,17 +62,17 @@ public class ReleaseManageAction extends BaseAction {
 			"7.重新更新接口使用信息")
 	@Param(name = "interfaceUses", desc = "接口使用信息实体对象数组", range = "与数据库表字段对应规则一致",
 			isBean = true)
-	@Param(name = "user_id", desc = "保存接口使用信息实体对象", range = "无限制")
+	@Param(name = "userIds", desc = "保存接口使用信息实体对象", range = "无限制")
 	@Param(name = "interface_note", desc = "保存接口使用信息实体对象", range = "无限制", nullable = true)
 	@Param(name = "classify_name", desc = "保存接口使用信息实体对象", range = "无限制", nullable = true)
-	public void saveInterfaceUseInfo(Interface_use[] interfaceUses, long[] user_id,
+	public void saveInterfaceUseInfo(Interface_use[] interfaceUses, long[] userIds,
 	                                 String interface_note, String classify_name) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		if (user_id == null || user_id.length == 0) {
+		if (userIds == null || userIds.length == 0) {
 			throw new BusinessException("用户ID不能为空");
 		}
 		// 3.遍历用户ID，接口ID保存接口使用信息
-		for (long userId : user_id) {
+		for (long userId : userIds) {
 			for (Interface_use interface_use : interfaceUses) {
 				String start_use_date = interface_use.getStart_use_date();
 				String use_valid_date = interface_use.getUse_valid_date();
@@ -81,6 +81,8 @@ public class ReleaseManageAction extends BaseAction {
 				Validator.notBlank(start_use_date, "开始日期不能为空");
 				Validator.notBlank(use_valid_date, "结束日期不能为空");
 				Validator.notNull(interface_use.getInterface_id(), "接口ID不能为空");
+				Validator.notNull(interface_use.getUrl(), "接口地址不能为空");
+				Validator.notNull(interface_use.getInterface_name(), "接口名称不能为空");
 				long startUseDate = Long.parseLong(start_use_date);
 				long useValidDate = Long.parseLong(use_valid_date);
 				long todayDate = Long.parseLong(DateUtil.getSysDate());
