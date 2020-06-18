@@ -6,6 +6,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.b.biz.agent.unstructuredfilecollect.UnstructuredFileCollectActionTest;
 import hrds.commons.codes.*;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
@@ -14,6 +15,8 @@ import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,18 +27,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * author: zxz
  */
 public class FtpCollectActionTest extends WebBaseTestCase {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UnstructuredFileCollectActionTest.class);
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-//	private static final String LOGIN_URL = "http://172.168.0.9:8888/A/action/hrds/a/biz/login/login";
-	//TODO 是否从测试用例全局配置文件取
-	private static final String LOGIN_URL = "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login";
+	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
 	// 请填写已有的已经部署并且启动的一个agent的agent_id
-	// TODO 是否从测试用例全局配置文件取
-	private static final long AGENT_ID = 1000000032L;
-	// TODO 是否从测试用例全局配置文件取
-	private static final long USER_ID = 2001L;
-	//上面用户id所对应的用户名
-	// TODO 是否从测试用例全局配置文件取
-	private static final String PASSWORD = "1";
+	private static final long AGENT_ID = agentInitConfig.getLong("agent_id");
+	//一个已经存在的用户id
+	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	//上面用户id所对应的密码
+	private static final String PASSWORD = agentInitConfig.getString("password");
 	//当前线程的id
 	private String id = String.valueOf(Thread.currentThread().getId());
 	//ftp采集设置表id
@@ -78,6 +78,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 			ftp_collect.setRemark(id + "FtpCollectActionTest测试用例专用数据标识");
 			assertThat("初始化数据成功", ftp_collect.add(db), is(1));
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			LOGGER.error("测试用例初始化数据错误", e);
 		}
 		//2.模拟用户登录
 		String responseValue = new HttpClient().buildSession()
@@ -453,6 +455,8 @@ public class FtpCollectActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "DELETE FROM " + Ftp_collect.TableName
 					+ " WHERE remark = ?", id + "FtpCollectActionTest测试用例专用数据标识");
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			LOGGER.error("测试用例清理初始化数据，测试用例中产生的数据错误", e);
 		}
 	}
 }

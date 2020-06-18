@@ -2,6 +2,7 @@ package hrds.b.biz.agent.unstructuredfilecollect;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -9,7 +10,10 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.commons.codes.AgentStatus;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.BusinessException;
@@ -18,6 +22,8 @@ import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -30,34 +36,26 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * author: zxz
  */
 public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UnstructuredFileCollectActionTest.class);
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-//	private static final String LOGIN_URL = "http://172.168.0.9:8888/A/action/hrds/a/biz/login/login";
-	//TODO 是否从测试用例全局配置文件取
-	private static final String LOGIN_URL = "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login";
+	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	// 请填写已有的已经部署并且启动的一个agent的agent_id
+	private static final long AGENT_ID = agentInitConfig.getLong("agent_id");
+	//部署的agent所在机器的操作系统 填写linux或windows
+	private static final String OS_NAME = agentInitConfig.getString("agent_os_name");
+	//windows上除了C:/下，可以读取的一个目录
+	private static final String WINDOWS_PATH = agentInitConfig.getString("windows_path");
+	//一个已经存在的用户id
+	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	//上面用户id所对应的密码
+	private static final String PASSWORD = agentInitConfig.getString("password");
 	//当前线程的id
 	private String id = String.valueOf(Thread.currentThread().getId());
 	// 向file_source表中初始化的数据条数
 	private static final int FILE_SOURCE_ROWS = 10;
-	// 请填写已有的已经部署并且启动的一个agent的agent_id
-	// TODO 是否从测试用例全局配置文件取
-	private static final long AGENT_ID = 1000000032L;
-	//部署的agent所在机器的操作系统 填写linux或windows
-	// TODO 是否从测试用例全局配置文件取
-	private static final String OS_NAME = "linux";
 	// 文件采集设置表id
 	private final long FCS_ID = PrimayKeyGener.getNextId();
-	// 数据源id
-//	private final long SOURCE_ID = Long.parseLong(id + "0000001");
-//	//用户id
-//	private final long USER_ID = Long.parseLong(id + "999");
-//	//部门ID
-//	private final long DEPT_ID = Long.parseLong(id + "999");
-	//一个已经存在的用户id
-	// TODO 是否从测试用例全局配置文件取
-	private static final long USER_ID = 2001L;
-	//上面用户id所对应的用户名
-	// TODO 是否从测试用例全局配置文件取
-	private static final String PASSWORD = "1";
+
 
 	/**
 	 * 为每个方法测试用例初始化参数
@@ -68,7 +66,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	 */
 	@Before
 	public void beforeTest() {
-		//TODO 测试用例里面报错要不要rollback ???
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1.造file_collect_set表数据，初始化条数为1条 主键由PrimayKeyGener.getNextId()生成，其中FCS_ID为全局使用
 			File_collect_set file_collect_set = new File_collect_set();
@@ -100,6 +97,8 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 				assertThat("初始化数据成功", file_source.add(db), is(1));
 			}
 			db.commit();
+		} catch (Exception e) {
+			LOGGER.error("测试用例初始化数据错误", e);
 		}
 		//3.模拟用户登录
 		String responseValue = new HttpClient().buildSession()
@@ -141,7 +140,10 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(StringUtil.isBlank(ar.getDataForMap().get("file_collect_set_info").toString()), is(false));
+		Map<Object, Object> dataForMap = ar.getDataForMap();
+		assertThat(((JSONObject) dataForMap.get("file_collect_set_info")).getLong("fcs_id"), is(FCS_ID));
+		assertThat(((JSONObject) dataForMap.get("file_collect_set_info")).getString("fcs_name"),
+				is(id + "zxzwjcj_csylzybs"));
 
 		//3.当agent_id不为空，且agent_id在表中不存在时
 		bodyString = new HttpClient()
@@ -162,12 +164,29 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 
 		//5.当agent_id不为空，且agent服务没有启动时
-//		bodyString = new HttpClient()
-//				.addData("agent_id", AGENT_ID + 1)
-//				.post(getActionUrl("searchFileCollect")).getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-//				-> new BusinessException("连接失败！"));
-//		assertThat(ar.isSuccess(), is(false));
+		Long agent_id = PrimayKeyGener.getNextId();
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Agent_info agent_info = new Agent_info();
+			// 封装agent_info数据
+			agent_info.setCreate_date(DateUtil.getSysDate());
+			agent_info.setCreate_time(DateUtil.getSysTime());
+			agent_info.setUser_id(USER_ID);
+			agent_info.setSource_id(PrimayKeyGener.getNextId());
+			agent_info.setAgent_id(agent_id);
+			agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
+			agent_info.setAgent_name(id + "UnstructuredFileCollectActionTest测试用例专用数据标识");
+			agent_info.setAgent_ip("10.71.4.51");
+			agent_info.setAgent_port("3451");
+			agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
+			// 初始化agent_info数据
+			assertThat("测试agent_info数据初始化", agent_info.add(db), is(1));
+		}
+		bodyString = new HttpClient()
+				.addData("agent_id", agent_id)
+				.post(getActionUrl("searchFileCollect")).getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	/**
@@ -195,7 +214,6 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
-
 			long count = SqlOperator.queryNumber(db, "select count(1) count from "
 							+ File_collect_set.TableName + " WHERE agent_id = ? AND fcs_name = ?", AGENT_ID,
 					id + "zxzwjcj_csylzybsy_value").orElseThrow(()
@@ -393,13 +411,12 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 		if ("windows".equals(OS_NAME)) {
 			bodyString = new HttpClient()
 					.addData("agent_id", AGENT_ID)
-					.addData("path", "D:/")
+					.addData("path", WINDOWS_PATH)
 					.post(getActionUrl("selectPath")).getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			assertThat(ar.getDataForEntityList(Map.class).isEmpty(), is(false));
-			System.out.println("===========" + ar.getData().toString());
 		}
 		//一个正确的agent_id，正确的路径
 		if ("linux".equals(OS_NAME)) {
@@ -576,6 +593,7 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	 * <p>
 	 * 1.清理file_collect_set表中造的数据
 	 * 2.清理file_source表中造的数据
+	 * 3.清理agent_info测试用例中产生的数据
 	 */
 	@After
 	public void afterTest() {
@@ -586,7 +604,12 @@ public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 			//2.清理file_source表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + File_source.TableName + " WHERE file_remark = ?",
 					id + "UnstructuredFileCollectActionTest测试用例专用数据标识");
+			//3.清理agent_info测试用例中产生的数据
+			SqlOperator.execute(db, "DELETE FROM " + Agent_info.TableName + " where AGENT_NAME = ?",
+					id + "UnstructuredFileCollectActionTest测试用例专用数据标识");
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			LOGGER.error("测试用例清理初始化数据，测试用例中产生的数据错误", e);
 		}
 	}
 
