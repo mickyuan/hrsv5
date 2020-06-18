@@ -15,9 +15,6 @@ import hrds.commons.entity.Sysreg_parameter_info;
 import hrds.commons.entity.Table_use_info;
 import hrds.commons.utils.PropertyParaValue;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @DocClass(desc = "接口/数据表信息", author = "dhw", createdate = "2020/3/30 13:39")
 public class ServiceUserAction extends BaseAction {
 
@@ -69,23 +66,21 @@ public class ServiceUserAction extends BaseAction {
 	public Result searchColumnInfoById(long use_id) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.返回根据表使用ID查询当前用户对应的列信息
-		return Dbo.queryResult("SELECT table_ch_column,table_en_column FROM "
-				+ Sysreg_parameter_info.TableName + " WHERE use_id = ? and user_id=?", use_id, getUserId());
+		return Dbo.queryResult(
+				"SELECT parameter_id,table_ch_column,table_en_column FROM "
+						+ Sysreg_parameter_info.TableName + " WHERE use_id = ? and user_id=?",
+				use_id, getUserId());
 	}
 
 	@Method(desc = "获取当前用户请求ip端口",
 			logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-					"2.封装当前用户请求ip端口" +
-					"3.返回当前用户请求ip端口")
+					"2.返回当前用户请求ip端口")
 	@Return(desc = "返回当前用户请求ip端口", range = "无限制")
-	public Map<String, Object> getIpAndPort() {
+	public String getIpAndPort() {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		Map<String, Object> useMap = new HashMap<>();
-		// 2.封装当前用户请求ip端口
-		useMap.put("ipAndPort", PropertyParaValue.getString("hyren_host", "127.0.0.1") + ":"
-				+ RequestUtil.getRequest().getLocalPort());
-		// 3.返回当前用户请求ip端口
-		return useMap;
+		// 2.返回当前用户请求ip端口
+		return PropertyParaValue.getString("hyren_host", "127.0.0.1") + ":"
+				+ RequestUtil.getRequest().getLocalPort();
 	}
 
 }

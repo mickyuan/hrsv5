@@ -1,6 +1,5 @@
 package hrds.g.biz.usermanage;
 
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
@@ -20,8 +19,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -29,10 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class InterfaceUserManageActionTest extends WebBaseTestCase {
 
-	private static final Type LISTTYPE = new TypeReference<List<Map<String, Object>>>() {
-	}.getType();
-	private static String bodyString;
-	private static ActionResult ar;
 	// 用户ID
 	private static final long USER_ID = 8886L;
 	// 部门ID
@@ -95,9 +88,9 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	@Test
 	public void selectUserInfo() {
 		//1.正确的数据访问1，user_name为空
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.post(getActionUrl("selectUserInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
@@ -131,13 +124,13 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	@Test
 	public void addUser() {
 		//1.正确的数据访问1，数据都有效
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("user_name", "新增接口用户测试")
 				.addData("user_password", "1")
 				.addData("user_email", "123@qq.com")
 				.addData("user_remark", "新增接口用户测试")
 				.post(getActionUrl("addUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -234,14 +227,14 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	@Test
 	public void updateUser() {
 		//1.正确的数据访问1，数据都有效
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("user_id", USER_ID)
 				.addData("user_name", "更新接口用户测试")
 				.addData("user_password", "111")
 				.addData("user_email", "123456@qq.com")
 				.addData("user_remark", "更新接口用户测试")
 				.post(getActionUrl("updateUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -379,10 +372,10 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 				throw new BusinessException("必须有一条数据要被删除");
 			}
 			//1.正确的数据访问1，数据都有效
-			bodyString = new HttpClient()
+			String bodyString = new HttpClient()
 					.addData("user_id", USER_ID)
 					.post(getActionUrl("deleteUser")).getBodyString();
-			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			// 确定此条数据已被删除
@@ -399,10 +392,10 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	@Test
 	public void selectUserById() {
 		//1.正确的数据访问1，数据都有效
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("user_id", USER_ID)
 				.post(getActionUrl("selectUserById")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> dataForMap = ar.getDataForMap();
@@ -422,15 +415,19 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			//1.清理sys_user表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
 					, USER_ID);
 			//2.清理Department_info表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
 					, DEP_ID);
-
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
+		} finally {
+			db.close();
 		}
 	}
 }

@@ -27,8 +27,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "接口响应时间测试类", author = "dhw", createdate = "2020/4/10 9:36")
 public class InterfaceIndexActionTest extends WebBaseTestCase {
 
-	private static String bodyString;
-	private static ActionResult ar;
 	// 用户ID
 	private static final long USER_ID = 6661L;
 	// 部门ID
@@ -99,11 +97,11 @@ public class InterfaceIndexActionTest extends WebBaseTestCase {
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
 				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 	}
@@ -113,9 +111,9 @@ public class InterfaceIndexActionTest extends WebBaseTestCase {
 	@Test
 	public void interfaceResponseTimeTest() {
 		// 1.正确的数据访问1，数据有效
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.post(getActionUrl("interfaceResponseTime")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
@@ -128,7 +126,8 @@ public class InterfaceIndexActionTest extends WebBaseTestCase {
 
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			//1.清理sys_user表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
 					, USER_ID);
@@ -140,6 +139,10 @@ public class InterfaceIndexActionTest extends WebBaseTestCase {
 					, LOG_ID);
 
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
+		} finally {
+			db.close();
 		}
 	}
 }

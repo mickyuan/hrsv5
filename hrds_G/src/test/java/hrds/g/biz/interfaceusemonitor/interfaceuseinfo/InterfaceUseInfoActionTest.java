@@ -14,6 +14,7 @@ import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -27,10 +28,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "监控接口使用信息测试类", author = "dhw", createdate = "2020/5/14 17:00")
 public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 
-	private static final String SYSDATE = DateUtil.getSysDate();
-	private static final String ENDATE = "20991231";
-	private static String bodyString;
-	private static ActionResult ar;
 	// 用户ID
 	private static final long USER_ID = 8886L;
 	// 部门ID
@@ -78,7 +75,7 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 			assertThat("初始化数据成功", deptInfo.add(db), is(1));
 			// 3.造interface_use表测试数据
 			Interface_use interface_use = new Interface_use();
-			interface_use.setUse_valid_date(ENDATE);
+			interface_use.setUse_valid_date(Constant.MAXDATE);
 			interface_use.setInterface_use_id(INTERFACE_USE_ID);
 			interface_use.setClassify_name("jkjkcs");
 			interface_use.setInterface_id(104L);
@@ -90,24 +87,25 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 			interface_use.setInterface_code("01-123");
 			interface_use.setUrl("tableUsePermissions");
 			interface_use.setInterface_name("表使用权限查询接口");
-			interface_use.setStart_use_date(SYSDATE);
+			interface_use.setStart_use_date(DateUtil.getSysDate());
 			interface_use.setUser_name("接口测试用户-dhw0");
 			interface_use.add(db);
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.addData("password", "1")
 				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 	}
 
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			//1.清理sys_user表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
 					, USER_ID);
@@ -118,6 +116,8 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "DELETE FROM " + Interface_use.TableName + " WHERE user_id =?"
 					, USER_ID);
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
 		}
 	}
 
@@ -129,11 +129,11 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void interfaceDisableEnable() {
 		// 1.正确的数据访问1,数据都有效
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
 				.addData("use_state", InterfaceState.QiYong.getCode())
 				.post(getActionUrl("interfaceDisableEnable")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -182,9 +182,9 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void searchInterfaceInfo() {
 		// 1.正确的数据访问1
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.post(getActionUrl("searchInterfaceInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
@@ -192,7 +192,7 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
 		assertThat(result.getString(0, "interface_code"), is("01-123"));
 		assertThat(result.getString(0, "user_name"), is("接口测试用户-dhw0"));
-		assertThat(result.getString(0, "use_state"), is(UserState.ZhengChang.getCode()));
+		assertThat(result.getString(0, "use_state"), is(InterfaceState.JinYong.getCode()));
 	}
 
 	@Method(desc = "根据用户ID或有效日期查询接口监控信息（接口使用监控）",
@@ -203,10 +203,10 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void searchInterfaceInfoByIdOrDate() {
 		// 1.正确的数据访问1,uer_id不为空，use_valid_date为空
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
 				.post(getActionUrl("searchInterfaceInfoByIdOrDate")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
@@ -214,10 +214,10 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
 		assertThat(result.getString(0, "interface_code"), is("01-123"));
 		assertThat(result.getString(0, "user_name"), is("接口测试用户-dhw0"));
-		assertThat(result.getString(0, "use_state"), is(UserState.ZhengChang.getCode()));
+		assertThat(result.getString(0, "use_state"), is(InterfaceState.JinYong.getCode()));
 		// 2.正确的数据访问2,uer_id为空，use_valid_date不为空
 		bodyString = new HttpClient().buildSession()
-				.addData("use_valid_date", ENDATE)
+				.addData("use_valid_date", Constant.MAXDATE)
 				.post(getActionUrl("searchInterfaceInfoByIdOrDate")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
@@ -227,11 +227,11 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
 		assertThat(result.getString(0, "interface_code"), is("01-123"));
 		assertThat(result.getString(0, "user_name"), is("接口测试用户-dhw0"));
-		assertThat(result.getString(0, "use_state"), is(UserState.ZhengChang.getCode()));
+		assertThat(result.getString(0, "use_state"), is(InterfaceState.JinYong.getCode()));
 		// 3.正确的数据访问3,uer_id不为空，use_valid_date不为空
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
-				.addData("use_valid_date", ENDATE)
+				.addData("use_valid_date", Constant.MAXDATE)
 				.post(getActionUrl("searchInterfaceInfoByIdOrDate")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
@@ -241,7 +241,7 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
 		assertThat(result.getString(0, "interface_code"), is("01-123"));
 		assertThat(result.getString(0, "user_name"), is("接口测试用户-dhw0"));
-		assertThat(result.getString(0, "use_state"), is(UserState.ZhengChang.getCode()));
+		assertThat(result.getString(0, "use_state"), is(UserState.JinYong.getCode()));
 		// 4.正确的数据访问4,uer_id为空，use_valid_date为空
 		bodyString = new HttpClient().buildSession()
 				.post(getActionUrl("searchInterfaceInfoByIdOrDate")).getBodyString();
@@ -253,7 +253,7 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
 		assertThat(result.getString(0, "interface_code"), is("01-123"));
 		assertThat(result.getString(0, "user_name"), is("接口测试用户-dhw0"));
-		assertThat(result.getString(0, "use_state"), is(UserState.ZhengChang.getCode()));
+		assertThat(result.getString(0, "use_state"), is(UserState.JinYong.getCode()));
 	}
 
 	@Method(desc = "根据用户ID或有效日期查询接口监控信息（接口使用监控）",
@@ -269,10 +269,10 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 				throw new BusinessException("必须有一条数据要被删除");
 			}
 			// 1.正确的数据访问1,数据都有效
-			bodyString = new HttpClient().buildSession()
+			String bodyString = new HttpClient().buildSession()
 					.addData("interface_use_id", INTERFACE_USE_ID)
 					.post(getActionUrl("deleteInterfaceUseInfo")).getBodyString();
-			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 					-> new BusinessException("连接失败"));
 			assertThat(ar.isSuccess(), is(true));
 			// 确定此条数据已被删除
@@ -297,16 +297,16 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void searchInterfaceUseInfoById() {
 		// 1.正确的数据访问1,数据都有效
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
 				.post(getActionUrl("searchInterfaceUseInfoById")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> dataForMap = ar.getDataForMap();
 		assertThat(dataForMap.get("interface_use_id").toString(), is(String.valueOf(INTERFACE_USE_ID)));
-		assertThat(dataForMap.get("use_valid_date"), is(ENDATE));
-		assertThat(dataForMap.get("start_use_date"), is(SYSDATE));
+		assertThat(dataForMap.get("use_valid_date"), is(Constant.MAXDATE));
+		assertThat(dataForMap.get("start_use_date"), is(DateUtil.getSysDate()));
 		// 2.错误的数据访问1,interface_use_id为空
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", "")
@@ -335,12 +335,12 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 	@Test
 	public void updateInterfaceUseInfo() {
 		// 1.正确的数据访问1,数据都有效
-		bodyString = new HttpClient().buildSession()
+		String bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
-				.addData("start_use_date", SYSDATE)
-				.addData("use_valid_date", ENDATE)
+				.addData("start_use_date", DateUtil.getSysDate())
+				.addData("use_valid_date", Constant.MAXDATE)
 				.post(getActionUrl("updateInterfaceUseInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -349,14 +349,14 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 							+ Interface_use.TableName + " where interface_use_id=?", INTERFACE_USE_ID)
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
 			assertThat(interface_use.getInterface_use_id(), is(INTERFACE_USE_ID));
-			assertThat(interface_use.getStart_use_date(), is(SYSDATE));
-			assertThat(interface_use.getUse_valid_date(), is(ENDATE));
+			assertThat(interface_use.getStart_use_date(), is(DateUtil.getSysDate()));
+			assertThat(interface_use.getUse_valid_date(), is(Constant.MAXDATE));
 		}
 		// 2.正确的数据访问2，use_valid_date格式10位
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
-				.addData("start_use_date", DateUtil.parseStr2DateWith8Char(SYSDATE).toString())
-				.addData("use_valid_date", ENDATE)
+				.addData("start_use_date", DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString())
+				.addData("use_valid_date", Constant.MAXDATE)
 				.post(getActionUrl("updateInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
@@ -364,8 +364,8 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		// 3.正确的数据访问3，use_valid_date格式10位
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
-				.addData("start_use_date", SYSDATE)
-				.addData("use_valid_date", DateUtil.parseStr2DateWith8Char(ENDATE).toString())
+				.addData("start_use_date", DateUtil.getSysDate())
+				.addData("use_valid_date", DateUtil.parseStr2DateWith8Char(Constant.MAXDATE).toString())
 				.post(getActionUrl("updateInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
@@ -373,8 +373,8 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		// 4.错误的数据访问1，interface_use_id为空
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", "")
-				.addData("start_use_date", SYSDATE)
-				.addData("use_valid_date", ENDATE)
+				.addData("start_use_date", DateUtil.getSysDate())
+				.addData("use_valid_date", Constant.MAXDATE)
 				.post(getActionUrl("updateInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
@@ -383,7 +383,7 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
 				.addData("start_use_date", "")
-				.addData("use_valid_date", ENDATE)
+				.addData("use_valid_date", Constant.MAXDATE)
 				.post(getActionUrl("updateInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
@@ -391,7 +391,7 @@ public class InterfaceUseInfoActionTest extends WebBaseTestCase {
 		// 6.错误的数据访问3，use_valid_date为空
 		bodyString = new HttpClient().buildSession()
 				.addData("interface_use_id", INTERFACE_USE_ID)
-				.addData("start_use_date", SYSDATE)
+				.addData("start_use_date", DateUtil.getSysDate())
 				.addData("use_valid_date", "")
 				.post(getActionUrl("updateInterfaceUseInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
