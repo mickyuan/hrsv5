@@ -50,6 +50,9 @@ public class JobLevelInterventionAction extends BaseAction {
 	public Map<String, Object> searchJobLevelIntervention(String etl_sys_cd, String etl_job, String sub_sys_desc,
 	                                                      String job_status, int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT t1.etl_sys_cd,t1.etl_job,");
@@ -93,6 +96,9 @@ public class JobLevelInterventionAction extends BaseAction {
 	public Map<String, Object> searchJobLevelCurrInterventionByPage(String etl_sys_cd, int currPage,
 	                                                                int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.分页查询查询作业级当前干预情况
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> currInterventionList = Dbo.queryPagedList(page,
@@ -122,6 +128,9 @@ public class JobLevelInterventionAction extends BaseAction {
 	public Map<String, Object> searchJobLeverHisInterventionByPage(String etl_sys_cd, int currPage,
 	                                                               int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.分页查询系统级历史干预情况
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> handHisList = Dbo.queryPagedList(page, "SELECT t1.event_id,t1.etl_sys_cd," +
@@ -156,6 +165,9 @@ public class JobLevelInterventionAction extends BaseAction {
 	public void jobLevelInterventionOperate(String etl_sys_cd, String etl_job, String etl_hand_type,
 	                                        String curr_bath_date, Integer job_priority) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.封装作业干预实体属性
 		Etl_job_hand etl_job_hand = new Etl_job_hand();
 		etl_job_hand.setEtl_sys_cd(etl_sys_cd);
@@ -271,6 +283,9 @@ public class JobLevelInterventionAction extends BaseAction {
 	public void batchJobLevelInterventionOperate(String etl_sys_cd, String batchEtlJob, String etl_hand_type,
 	                                             Integer job_priority) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.获取存放作业干预作业情况信息
 		Type type = new TypeReference<List<Map<String, String>>>() {
 		}.getType();

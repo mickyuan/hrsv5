@@ -1077,6 +1077,9 @@ public class JobConfiguration extends BaseAction {
 			isBean = true)
 	public void saveEtlResource(Etl_resource etl_resource) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		if (!ETLJobUtil.isEtlSysExistById(etl_resource.getEtl_sys_cd(), getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 2.验证etl_resource字段合法性
 		checkEtlResourceField(etl_resource);
 		// 3.确认新增的资源不存在，存在不能新增
@@ -1505,27 +1508,23 @@ public class JobConfiguration extends BaseAction {
 
 	@Method(desc = "批量删除作业依赖",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-					"2.获取存放作业依赖关系的集合" +
-					"3.遍历获取所有的依赖作业名称" +
-					"4.循环删除作业依赖关系")
-	@Param(name = "etl_sys_cd", desc = "工程代码", range = "新增工程时生成")
-	@Param(name = "pre_etl_sys_cd", desc = "上游工程代码", range = "新增工程时生成")
-	@Param(name = "batchEtlJob", desc = "批量作业编号（以作业名称etl_job,pre_etl_job为key,对应的值为value格式的json字符串）",
-			range = "无限制")
-	public void batchDeleteEtlDependency(String etl_sys_cd, String pre_etl_sys_cd, String batchEtlJob) {
+					"2.循环删除作业依赖关系")
+	@Param(name = "etlDependencies", desc = "作业依赖实体对象数组", range = "与数据库对应表字段规则一致",
+			isBean = true)
+	public void batchDeleteEtlDependency(Etl_dependency[] etlDependencies) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		// 3.获取存放作业依赖关系的集合
-		List<Map<String, String>> etlJobList = JsonUtil.toObject(batchEtlJob, type);
-		// 4.遍历所有的依赖作业名称
-		for (Map<String, String> map : etlJobList) {
-			// 5.循环删除作业依赖关系
-			DboExecute.deletesOrThrow("删除作业依赖失败", "delete from "
-							+ Etl_dependency.TableName + " where etl_sys_cd=? AND pre_etl_sys_cd=?" +
-							" AND etl_job=? and pre_etl_job=?",
-					etl_sys_cd, pre_etl_sys_cd, map.get("etl_job"), map.get("pre_etl_job"));
+		for (Etl_dependency etlDependency : etlDependencies) {
+			Validator.notBlank(etlDependency.getEtl_sys_cd());
+			Validator.notBlank(etlDependency.getPre_etl_sys_cd());
+			Validator.notBlank(etlDependency.getEtl_job());
+			Validator.notBlank(etlDependency.getPre_etl_job());
+			if (!ETLJobUtil.isEtlSysExistById(etlDependency.getEtl_sys_cd(), getUserId())) {
+				throw new BusinessException("当前工程已不存在");
+			}
+			// 2.循环删除作业依赖关系
+			etlDependency.delete(Dbo.db());
 		}
+
 	}
 
 	@Method(desc = "更新保存作业依赖",

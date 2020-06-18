@@ -440,7 +440,7 @@ public class MonitorActionTest extends WebBaseTestCase {
 				.buildSession()
 				.addData("user_id", UserId)
 				.addData("password", "1")
-				.post("http://127.0.0.1:8088/A/action/hrds/a/biz/login/login")
+				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
 				.getBodyString();
 		Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
 		assertThat("用户登录", ar.get().isSuccess(), is(true));
@@ -448,7 +448,8 @@ public class MonitorActionTest extends WebBaseTestCase {
 
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			// 1.测试完成后删除sys_user表测试数据
 			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
 			// 判断sys_user数据是否被删除
@@ -527,6 +528,10 @@ public class MonitorActionTest extends WebBaseTestCase {
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 12.提交事务
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
+		} finally {
+			db.close();
 		}
 	}
 
@@ -554,9 +559,28 @@ public class MonitorActionTest extends WebBaseTestCase {
 		assertThat(systemOperationStatus.get("sys_name"), is("zyjkcs(作业调度监控测试)"));
 		assertThat(systemOperationStatus.get("curr_bath_date"), is(DateUtil.parseStr2DateWith8Char(
 				DateUtil.getSysDate()).toString()));
-		List<Map<String, Object>> currBatchInfoList = (List<Map<String, Object>>)
-				systemOperationStatus.get("systemOperationStatus");
-		for (Map<String, Object> currBatchInfo : currBatchInfoList) {
+		// 2.错误的数据访问1，etl_sys_cd不存在
+		bodyString = new HttpClient()
+				.addData("etl_sys_cd", "jkdqplcs")
+				.post(getActionUrl("monitorCurrentBatchInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Test
+	public void monitorCurrentBatchInfoByTask() {
+		// 1.正常的数据访问1，数据都正常
+		String bodyString = new HttpClient()
+				.addData("etl_sys_cd", EtlSysCd)
+				.post(getActionUrl("monitorCurrentBatchInfoByTask"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+		List<Map> currBatchInfoList = ar.getDataForEntityList(Map.class);
+		for (Map currBatchInfo : currBatchInfoList) {
 			assertThat(currBatchInfo.get("etl_sys_cd"), is(EtlSysCd));
 			if (currBatchInfo.get("sub_sys_cd").toString().equals(SubSysCd)) {
 				assertThat(currBatchInfo.get("sub_sys_desc"), is("监控任务(zyjkrwcs)"));
@@ -579,8 +603,8 @@ public class MonitorActionTest extends WebBaseTestCase {
 
 		// 2.错误的数据访问1，etl_sys_cd不存在
 		bodyString = new HttpClient()
-				.addData("etl_sys_cd", "jkdqplcs")
-				.post(getActionUrl("monitorCurrentBatchInfo"))
+				.addData("etl_sys_cd", "jkdqplcs_dhw")
+				.post(getActionUrl("monitorCurrentBatchInfoByTask"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
@@ -779,14 +803,14 @@ public class MonitorActionTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
-		Map<Object, Object> historyJob = ar.getDataForMap();
-		assertThat(historyJob.get("job_disp_status"), is(""));
-		assertThat(historyJob.get("curr_bath_date"),
+		List<Map> historyJob = ar.getDataForEntityList(Map.class);
+		assertThat(historyJob.get(0).get("job_disp_status"), is(""));
+		assertThat(historyJob.get(0).get("curr_bath_date"),
 				is(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString()));
-		assertThat(historyJob.get("curr_end_time"), is("2019-12-17 11:43:37"));
-		assertThat(historyJob.get("sub_sys_cd"), is("监控任务(zyjkrwcs)"));
-		assertThat(historyJob.get("curr_st_time"), is("2019-12-17 11:42:37"));
-		assertThat(historyJob.get("etl_job"), is("监控作业测试1"));
+		assertThat(historyJob.get(0).get("curr_end_time"), is("2019-12-17 11:43:37"));
+		assertThat(historyJob.get(0).get("sub_sys_cd"), is("监控任务(zyjkrwcs)"));
+		assertThat(historyJob.get(0).get("curr_st_time"), is("2019-12-17 11:42:37"));
+		assertThat(historyJob.get(0).get("etl_job"), is("监控作业测试1"));
 		// 2.错误的数据访问1，etl_sys_cd不存在
 		bodyString = new HttpClient()
 				.addData("etl_sys_cd", "jklszycs")
@@ -928,24 +952,25 @@ public class MonitorActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> jobDependencyInfo = ar.getDataForMap();
 		assertThat(jobDependencyInfo.get("id"), is("0"));
-		assertThat(jobDependencyInfo.get("topic"), is("监控作业测试3"));
+		assertThat(jobDependencyInfo.get("name"), is("监控作业测试3"));
 		assertThat(jobDependencyInfo.get("aid"), is("999"));
+		// 校验作业依赖是否正确
 		List<Map<String, Object>> downJobInfoList = (List<Map<String, Object>>) jobDependencyInfo.get("children");
 		for (Map<String, Object> jobInfo : downJobInfoList) {
-			String topic = jobInfo.get("topic").toString();
-			if (topic.equals("监控作业测试4")) {
+			String name = jobInfo.get("name").toString();
+			if (name.equals("监控作业测试4")) {
 				assertThat(jobInfo.get("id"), is("监控作业测试4"));
 				assertThat(jobInfo.get("etl_job"), is("监控作业测试3"));
 				assertThat(jobInfo.get("etl_sys_cd"), is(EtlSysCd));
 				assertThat(jobInfo.get("direction"), is("left"));
 				assertThat(jobInfo.get("pre_etl_job"), is("监控作业测试4"));
-			} else if (topic.equals("监控作业测试5")) {
+			} else if (name.equals("监控作业测试5")) {
 				assertThat(jobInfo.get("id"), is("监控作业测试5"));
 				assertThat(jobInfo.get("etl_job"), is("监控作业测试5"));
 				assertThat(jobInfo.get("etl_sys_cd"), is(EtlSysCd));
 				assertThat(jobInfo.get("direction"), is("right"));
 				assertThat(jobInfo.get("pre_etl_job"), is("监控作业测试3"));
-			} else if (topic.equals("监控作业测试2")) {
+			} else if (name.equals("监控作业测试2")) {
 				assertThat(jobInfo.get("id"), is("监控作业测试2"));
 				assertThat(jobInfo.get("etl_job"), is("监控作业测试3"));
 				assertThat(jobInfo.get("etl_sys_cd"), is(EtlSysCd));

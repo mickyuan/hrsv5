@@ -23,7 +23,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -365,14 +367,15 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			SqlOperator.commitTransaction(db);
 		}
 		// 13.模拟用户登录
-		String responseValue = new HttpClient()
+		String bodyString = new HttpClient()
 				.buildSession()
 				.addData("user_id", UserId)
 				.addData("password", "1")
 				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
 				.getBodyString();
-		Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
-		assertThat("用户登录", ar.get().isSuccess(), is(true));
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat("用户登录", ar.isSuccess(), is(true));
 	}
 
 	@Method(desc = "测试完删除测试数据", logicStep = "1.测试完成后删除sys_user表测试数据" +
@@ -390,7 +393,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			"13.提交事务")
 	@After
 	public void after() {
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
+		DatabaseWrapper db = new DatabaseWrapper();
+		try {
 			// 1.测试完成后删除sys_user表测试数据
 			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
 			// 判断sys_user数据是否被删除
@@ -482,6 +486,10 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 13.提交事务
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			db.rollback();
+		} finally {
+			db.close();
 		}
 	}
 
@@ -5656,30 +5664,19 @@ public class JobConfigurationTest extends WebBaseTestCase {
 	public void batchDeleteEtlDependency() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 存在的依赖
-			List<Object> list = new ArrayList<>();
+			Etl_dependency[] etlDependencies = new Etl_dependency[2];
 			for (int i = 0; i < 2; i++) {
-				Map<String, String> jobMap = new HashMap<>();
+				Etl_dependency etl_dependency = new Etl_dependency();
+				etl_dependency.setPre_etl_sys_cd(EtlSysCd);
+				etl_dependency.setEtl_sys_cd(EtlSysCd);
 				if (i == 0) {
-					jobMap.put("etl_job", "测试作业6");
-					jobMap.put("pre_etl_job", "测试作业10");
+					etl_dependency.setEtl_job("测试作业6");
+					etl_dependency.setPre_etl_job("测试作业10");
 				} else {
-					jobMap.put("etl_job", "测试作业5");
-					jobMap.put("pre_etl_job", "测试作业7");
+					etl_dependency.setEtl_job("测试作业5");
+					etl_dependency.setPre_etl_job("测试作业7");
 				}
-				list.add(jobMap);
-			}
-			// 不存在的依赖
-			List<Object> list2 = new ArrayList<>();
-			for (int i = 0; i < 2; i++) {
-				Map<String, String> jobMap = new HashMap<>();
-				if (i == 0) {
-					jobMap.put("etl_job", "测试作业6");
-					jobMap.put("pre_etl_job", "测试作业1");
-				} else {
-					jobMap.put("etl_job", "测试作业5");
-					jobMap.put("pre_etl_job", "测试作业2");
-				}
-				list2.add(jobMap);
+				etlDependencies[i] = etl_dependency;
 			}
 			// 1.正常的数据访问1，数据都正常
 			// 删除前查询数据库，确认预期删除的数据存在
@@ -5694,9 +5691,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			assertThat("删除操作前，Etl_dependency表中的确存在这样一条数据", optionalLong.
 					orElse(Long.MIN_VALUE), is(1L));
 			String bodyString = new HttpClient()
-					.addData("etl_sys_cd", EtlSysCd)
-					.addData("pre_etl_sys_cd", EtlSysCd)
-					.addData("batchEtlJob", JsonUtil.toJson(list))
+					.addData("etlDependencies", JsonUtil.toJson(etlDependencies))
 					.post(getActionUrl("batchDeleteEtlDependency"))
 					.getBodyString();
 			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -5712,21 +5707,62 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					EtlSysCd, "测试作业5", "测试作业7");
 			assertThat("删除操作后，确认这条数据已删除", optionalLong.
 					orElse(Long.MIN_VALUE), is(0L));
-			// 2.错误的数据访问1，etl_sys_cd不存在
+			// 工程编号为空
+			Etl_dependency[] etlDependencies2 = new Etl_dependency[2];
+			for (int i = 0; i < 2; i++) {
+				Etl_dependency etl_dependency = new Etl_dependency();
+				if (i == 0) {
+					etl_dependency.setEtl_job("测试作业6");
+					etl_dependency.setPre_etl_job("测试作业10");
+				} else {
+					etl_dependency.setEtl_job("测试作业5");
+					etl_dependency.setPre_etl_job("测试作业7");
+				}
+				etlDependencies2[i] = etl_dependency;
+			}
+			// 2.错误的数据访问1，etl_sys_cd为空
 			bodyString = new HttpClient()
-					.addData("etl_sys_cd", "sccs1")
-					.addData("pre_etl_sys_cd", EtlSysCd)
-					.addData("batchEtlJob", JsonUtil.toJson(list))
+					.addData("etlDependencies", JsonUtil.toJson(etlDependencies2))
 					.post(getActionUrl("batchDeleteEtlDependency"))
 					.getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 			assertThat(ar.isSuccess(), is(false));
-			// 3.错误的数据访问2，batchEtlJob不存在
+			// 工程编号为空
+			Etl_dependency[] etlDependencies3 = new Etl_dependency[2];
+			for (int i = 0; i < 2; i++) {
+				Etl_dependency etl_dependency = new Etl_dependency();
+				if (i == 0) {
+					etl_dependency.setEtl_job("测试作业6");
+					etl_dependency.setPre_etl_job("测试作业10");
+				} else {
+					etl_dependency.setPre_etl_job("测试作业7");
+				}
+				etlDependencies3[i] = etl_dependency;
+			}
+			// 3.错误的数据访问2，etl_job为空
 			bodyString = new HttpClient()
-					.addData("etl_sys_cd", EtlSysCd)
-					.addData("pre_etl_sys_cd", EtlSysCd)
-					.addData("batchEtlJob", JsonUtil.toJson(list2))
+					.addData("etlDependencies", JsonUtil.toJson(etlDependencies3))
+					.post(getActionUrl("batchDeleteEtlDependency"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+			assertThat(ar.isSuccess(), is(false));
+			// 工程编号为空
+			Etl_dependency[] etlDependencies4 = new Etl_dependency[2];
+			for (int i = 0; i < 2; i++) {
+				Etl_dependency etl_dependency = new Etl_dependency();
+				if (i == 0) {
+					etl_dependency.setEtl_job("测试作业6");
+				} else {
+					etl_dependency.setEtl_job("测试作业5");
+					etl_dependency.setPre_etl_job("测试作业7");
+				}
+				etlDependencies4[i] = etl_dependency;
+			}
+			// 4.错误的数据访问3，pre_etl_job为空
+			bodyString = new HttpClient()
+					.addData("etlDependencies", JsonUtil.toJson(etlDependencies4))
 					.post(getActionUrl("batchDeleteEtlDependency"))
 					.getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -5744,6 +5780,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
 				.reset(SubmitMediaType.MULTIPART)
+				.addData("table_name", "Etl_resource")
 				.addFile("file", file)
 				.post(getActionUrl("uploadExcelFile"))
 				.getBodyString();
@@ -5764,6 +5801,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 		// 2.错误的数据访问1，文件不存在
 		bodyString = new HttpClient()
 				.addData("file", "c:\\Etl_resources.xlsx")
+				.addData("table_name", "Etl_resources")
 				.post(getActionUrl("uploadExcelFile"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
