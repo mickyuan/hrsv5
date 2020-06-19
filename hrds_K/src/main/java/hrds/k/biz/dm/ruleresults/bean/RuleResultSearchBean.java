@@ -21,7 +21,7 @@ public class RuleResultSearchBean extends ProjectTableEntity {
     @DocBean(name = "reg_name", value = "规则名称", dataType = String.class, required = false)
     private String reg_name; //规则名称
     @DocBean(name = "reg_num", value = "规则编号", dataType = String.class, required = false)
-    private Long reg_num; //规则编号
+    private String reg_num; //规则编号
     @DocBean(name = "exec_mode", value = "执行方式", dataType = String.class, required = false)
     private String[] exec_mode; //执行方式
     @DocBean(name = "verify_result", value = "检查结果", dataType = String.class, required = false)
@@ -67,11 +67,11 @@ public class RuleResultSearchBean extends ProjectTableEntity {
         this.reg_name = reg_name;
     }
 
-    public Long getReg_num() {
+    public String getReg_num() {
         return reg_num;
     }
 
-    public void setReg_num(Long reg_num) {
+    public void setReg_num(String reg_num) {
         this.reg_num = reg_num;
     }
 
