@@ -33,13 +33,11 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     //测试数据表id
     private static final long TABLE_ID = -1000L;
 
-    private static String bodyString;
-    private static ActionResult ar;
-
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
     @BeforeClass
     public static void before() {
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = new DatabaseWrapper();
+        try {
             //初始化 Sys_user 数据
             Sys_user sysUser = new Sys_user();
             sysUser.setUser_id(USER_ID);
@@ -239,13 +237,18 @@ public class RuleConfigActionTest extends WebBaseTestCase {
                     .post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
             JsonUtil.toObjectSafety(bodyString, ActionResult.class).ifPresent(ar ->
                     assertThat(ar.isSuccess(), is(true)));
+        } catch (Exception e) {
+            db.rollback();
+        } finally {
+            db.close();
         }
     }
 
     @Method(desc = "测试案例执行完成后清理测试数据", logicStep = "测试案例执行完成后清理测试数据")
     @AfterClass
     public static void after() {
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = new DatabaseWrapper();
+        try {
             long num;
             //删除 Sys_user 表测试数据
             SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", USER_ID);
@@ -344,12 +347,18 @@ public class RuleConfigActionTest extends WebBaseTestCase {
             num = SqlOperator.queryNumber(db, "select count(1) from " + Table_column.TableName + " where table_id=?"
                     , TABLE_ID).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("Table_column 表此条数据删除后,记录数应该为0", num, is(0L));
+        } catch (Exception e) {
+            db.rollback();
+        } finally {
+            db.close();
         }
     }
 
     @Method(desc = "添加规则配置数据", logicStep = "添加规则配置数据")
     @Test
     public void addDqDefinition() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("reg_name", "hll-测试添加规则")
                 .addData("case_type", "SQL")
@@ -358,7 +367,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
                 new BusinessException("测试添加规则失败!"));
         assertThat(ar.isSuccess(), is(true));
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = new DatabaseWrapper();
+        try {
             //是否新增成功
             long number = SqlOperator.queryNumber(db, "select count(*) from " + Dq_definition.TableName +
                     " where reg_name=?", "hll-测试添加规则").orElseThrow(() -> (new BusinessException("统计sql执行出错!")));
@@ -368,12 +378,18 @@ public class RuleConfigActionTest extends WebBaseTestCase {
                     "select * from " + Dq_definition.TableName + " where reg_name=?",
                     "hll-测试添加规则").orElseThrow(() -> (new BusinessException("统计sql执行出错!")));
             assertThat(dq_definition.getReg_name(), is("hll-测试添加规则"));
+        } catch (Exception e) {
+            db.rollback();
+        } finally {
+            db.close();
         }
     }
 
     @Method(desc = "删除规则配置数据", logicStep = "删除规则配置数据")
     @Test
     public void deleteDqDefinition() {
+        String bodyString;
+        ActionResult ar;
         //规则存在
         bodyString = new HttpClient()
                 .addData("reg_num", -1000L)
@@ -381,11 +397,16 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
                 new BusinessException("删除规则信息失败!"));
         assertThat(ar.isSuccess(), is(true));
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = new DatabaseWrapper();
+        try {
             long number = SqlOperator.queryNumber(db,
                     "select count(*) from " + Dq_definition.TableName + " where reg_name=?", "hll-测试添加规则")
                     .orElseThrow(() -> (new BusinessException("统计sql执行出错!")));
             assertThat("Dq_definition 数据删除成功", number, is(0L));
+        } catch (Exception e) {
+            db.rollback();
+        } finally {
+            db.close();
         }
         //规则不存在
         bodyString = new HttpClient()
@@ -399,6 +420,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "删除规则(批量)", logicStep = "删除规则(批量)")
     @Test
     public void releaseDeleteDqDefinition() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("reg_num", new long[]{-1010L, -1011L})
                 .post(getActionUrl("releaseDeleteDqDefinition")).getBodyString();
@@ -417,6 +440,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "更新规则", logicStep = "更新规则")
     @Test
     public void updateDqDefinition() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("reg_num", -1020L)
                 .addData("reg_name", "hll-测试修改规则_修改后")
@@ -426,19 +451,26 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
                 new BusinessException("更新规则信息失败!"));
         assertThat(ar.isSuccess(), is(true));
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
+        DatabaseWrapper db = new DatabaseWrapper();
+        try {
             //检查新增的数据是否正确
             Dq_definition dq_definition = SqlOperator.queryOneObject(db, Dq_definition.class,
                     "select * from " + Dq_definition.TableName + " where reg_name=?", "hll-测试修改规则_修改后")
                     .orElseThrow(() -> (new BusinessException("获取测试修改规则后的数据失败!")));
             assertThat(dq_definition.getReg_name(), is("hll-测试修改规则_修改后"));
             assertThat(dq_definition.getCase_type(), is("SQL_修改后"));
+        } catch (Exception e) {
+            db.rollback();
+        } finally {
+            db.close();
         }
     }
 
     @Method(desc = "获取规则信息列表", logicStep = "获取规则信息列表")
     @Test
     public void getDqDefinitionInfos() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .post(getActionUrl("getDqDefinitionInfos")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
@@ -450,6 +482,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "获取规则信息", logicStep = "获取规则信息")
     @Test
     public void getDqDefinition() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("reg_num", -1030L)
                 .post(getActionUrl("getDqDefinition")).getBodyString();
@@ -464,6 +498,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
     @Test
     public void getColumnsByTableName() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("table_name", "hyren_hll_table")
                 .post(getActionUrl("getColumnsByTableName")).getBodyString();
@@ -476,6 +512,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "获取规则类型数据测试方法", logicStep = "获取规则类型数据测试方法")
     @Test
     public void getDqRuleDef() {
+        String bodyString;
+        ActionResult ar;
         //获取规则类型数据
         bodyString = new HttpClient()
                 .post(getActionUrl("getDqRuleDef")).getBodyString();
@@ -488,6 +526,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "获取规则类型数据测试方法", logicStep = "获取规则类型数据测试方法")
     @Test
     public void getDqHelpInfo() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .post(getActionUrl("getDqHelpInfo")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
@@ -499,6 +539,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "保存作业信息", logicStep = "保存作业信息")
     @Test
     public void saveETLJob() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("pro_id", "-1051")
                 .addData("task_id", "-1151")
@@ -512,6 +554,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "搜索规则信息", logicStep = "搜索规则信息")
     @Test
     public void searchDqDefinitionInfos() {
+        String bodyString;
+        ActionResult ar;
         //根据规则编号检索
         bodyString = new HttpClient()
                 .addData("reg_num", 104L)
@@ -576,6 +620,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
     @Test
     public void getProInfos() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .post(getActionUrl("getProInfos")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
@@ -588,6 +634,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "获取作业某个工程下的任务信息", logicStep = "获取作业某个工程下的任务信息")
     @Test
     public void getTaskInfo() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("etl_sys_cd", "-1051")
                 .post(getActionUrl("getTaskInfo")).getBodyString();
@@ -601,6 +649,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     @Method(desc = "查看规则调度状态", logicStep = "查看规则调度状态")
     @Test
     public void viewRuleSchedulingStatus() {
+        String bodyString;
+        ActionResult ar;
         //查看规则调度状态
         bodyString = new HttpClient()
                 .addData("reg_num", -1030L)
