@@ -32,7 +32,7 @@ public class RuleResultsAction extends BaseAction {
         asmSql.addSql("SELECT t1.verify_date, t1.start_date, t1.start_time, t1.verify_result,t1.exec_mode,t1.dl_stat," +
                 " t1.task_id, t2.target_tab, t2.reg_name,t2.reg_num, t2.flags, t2.rule_src, t2.rule_tag FROM " +
                 Dq_result.TableName + " t1 JOIN " + Dq_definition.TableName + " t2 ON t1.reg_num = t2.reg_num " +
-                "ORDER BY t1.verify_date DESC");
+                " where user_id=? ORDER BY t1.verify_date DESC").addParam(getUserId());
         List<Map<String, Object>> rule_result_s = Dbo.queryList(asmSql.sql(), asmSql.params());
         Map<String, Object> ruleResultMap = new HashMap<>();
         ruleResultMap.put("rule_result_s", rule_result_s);
@@ -40,8 +40,7 @@ public class RuleResultsAction extends BaseAction {
         return ruleResultMap;
     }
 
-    @Method(desc = "检索规则结果信息",
-            logicStep = "检索规则结果信息")
+    @Method(desc = "检索规则结果信息", logicStep = "检索规则结果信息")
     @Param(name = "ruleResultSearchBean", desc = "自定义Bean", range = "ruleResultSearchBean")
     @Return(desc = "检索规则结果信息", range = "检索规则结果信息")
     public Map<String, Object> searchRuleResultInfos(RuleResultSearchBean ruleResultSearchBean) {
@@ -71,8 +70,9 @@ public class RuleResultsAction extends BaseAction {
         if (StringUtil.isNotBlank(ruleResultSearchBean.getReg_name())) {
             asmSql.addLikeParam(" t2.reg_name", '%' + ruleResultSearchBean.getReg_name() + '%');
         }
-        if (StringUtil.isNotBlank(ruleResultSearchBean.getReg_num().toString())) {
-            asmSql.addLikeParam(" cast(t1.reg_num as varchar(10))", '%' + ruleResultSearchBean.getReg_num().toString() + '%');
+        if (StringUtil.isNotBlank(ruleResultSearchBean.getReg_num())) {
+            asmSql.addLikeParam(" cast(t1.reg_num as varchar(100))",
+                    '%' + ruleResultSearchBean.getReg_num() + '%');
         }
         if (null != ruleResultSearchBean.getExec_mode() && ruleResultSearchBean.getExec_mode().length > 0) {
             asmSql.addORParam("t1.exec_mode", ruleResultSearchBean.getExec_mode());
@@ -87,8 +87,7 @@ public class RuleResultsAction extends BaseAction {
         return search_result_map;
     }
 
-    @Method(desc = "规则执行详细信息",
-            logicStep = "规则执行详细信息")
+    @Method(desc = "规则执行详细信息", logicStep = "规则执行详细信息")
     @Param(name = "task_id", desc = "任务编号", range = "String类型")
     @Return(desc = "规则执行详细信息", range = "规则执行详细信息")
     public Dq_result getRuleDetectDetail(String task_id) {
