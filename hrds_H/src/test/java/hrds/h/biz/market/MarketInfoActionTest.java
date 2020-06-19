@@ -9,22 +9,22 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.StorageType;
-import hrds.commons.codes.TableLifeCycle;
-import hrds.commons.codes.TableStorage;
+import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,22 +36,30 @@ import static org.hamcrest.CoreMatchers.hasItem;
  * Time:2020.4.10
  */
 public class MarketInfoActionTest extends WebBaseTestCase {
+	private static final Logger logger = LogManager.getLogger();
+	private static final Long ThreadId = Thread.currentThread().getId();
 	//用户id
 	private static final long USER_ID = 9001L;
 	//部门ID
 	private static final long DEPT_ID = 9002L;
 	//数据集市ID
-	private static final long DATA_MART_ID = 1000000000L;
+	private static final long DATA_MART_ID = PrimayKeyGener.getNextId();
 	//数据表id
-	private static final long DATATABLE_ID = 1200000000L;
+	private static final long DATATABLE_ID = PrimayKeyGener.getNextId();
 	//数据分类表ID
-	private static final long CATEGORY_ID = 1200000000L;
+	private static final long CATEGORY_ID = PrimayKeyGener.getNextId();
 	//数据操作信息表(SQL表）ID
-	private static final long ID = 1300000000L;
+	private static final long ID = PrimayKeyGener.getNextId();
 	//前后置处理表ID
-	private static final long RELID = 1400000000L;
-	//数据字段id（递增）
-	private static final long DATATABLE_FIELD_ID = 1400000000L;
+	private static final long RELID = PrimayKeyGener.getNextId();
+	//数据表存储关系表ID
+	private static final long DSL_ID = PrimayKeyGener.getNextId();
+	//类型对照ID
+	private static final long DTCS_ID = PrimayKeyGener.getNextId();
+	//长度对照表ID
+	private static final long DLCS_ID = PrimayKeyGener.getNextId();
+	//数据字段存储关系表ID
+	private static final long DSLAD_ID = PrimayKeyGener.getNextId();
 	//定义全局的sys_user
 	private static final Sys_user sys_user = newsysuser();
 	//定义全局的department_info
@@ -64,6 +72,18 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	private static final Dm_datatable dm_datatable = newdmdatatable();
 	//定义全局的dm_operation_info
 	private static final Dm_operation_info dm_operation_info = newdmoperationinfo();
+	//定义全局的datatable_field_info
+	private static final Datatable_field_info datatable_field_info1 = newdatatablefieldinfo("A", "0");
+	//定义全局的datatable_field_info
+	private static final Datatable_field_info datatable_field_info2 = newdatatablefieldinfo("B", "1");
+	//定义全局的datatable_field_info
+	private static final Datatable_field_info datatable_field_info3 = newdatatablefieldinfo("C", "2");
+	//定义全局的datatable_field_info
+	private static final Datatable_field_info datatable_field_info4 = newdatatablefieldinfo("D", "3");
+	//定义全局的dtab_relation_store
+	private static final Dtab_relation_store dtab_relation_store = newdtabrelationstore();
+	//定义全局的data_store_layer
+	private static final Data_store_layer data_store_layer = newdatastorelayer();
 
 	//定义全局的sys_user
 	private static Sys_user newsysuser() {
@@ -98,8 +118,8 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	private static Dm_info newdminfo() {
 		Dm_info dm_info = new Dm_info();
 		dm_info.setData_mart_id(DATA_MART_ID);
-		dm_info.setMart_name("Mart_name");
-		dm_info.setMart_number("Mart_number");
+		dm_info.setMart_name(ThreadId + "Mart_name");
+		dm_info.setMart_number(ThreadId + "Mart_number");
 		dm_info.setMart_desc("Mart_desc");
 		dm_info.setMart_storage_path("");
 		dm_info.setCreate_date(DateUtil.getSysDate());
@@ -113,8 +133,8 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	private static Dm_category newdmcategory() {
 		Dm_category dm_category = new Dm_category();
 		dm_category.setCategory_id(CATEGORY_ID);
-		dm_category.setCategory_name("Category_name");
-		dm_category.setCategory_desc("Category_desc");
+		dm_category.setCategory_name(ThreadId + "Category_name");
+		dm_category.setCategory_desc(ThreadId + "Category_desc");
 		dm_category.setCreate_date(DateUtil.getSysDate());
 		dm_category.setCreate_time(DateUtil.getSysTime());
 		dm_category.setCategory_seq("1");
@@ -130,8 +150,11 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(DATATABLE_ID);
 		dm_datatable.setData_mart_id(DATA_MART_ID);
-		dm_datatable.setDatatable_cn_name("集市表中文名");
-		dm_datatable.setDatatable_en_name("datatable_en_name");
+		dm_datatable.setDatatable_cn_name(ThreadId + "集市表中文名");
+		dm_datatable.setDatatable_en_name(ThreadId + "datatable_en_name");
+		dm_datatable.setSql_engine(SqlEngine.MOREN.getCode());
+		dm_datatable.setDatatable_desc("");
+		dm_datatable.setRemark("");
 		dm_datatable.setDatatable_create_date(DateUtil.getSysDate());
 		dm_datatable.setDatatable_create_time(DateUtil.getSysTime());
 		dm_datatable.setDatatable_due_date(Constant.MAXDATE);
@@ -140,7 +163,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		dm_datatable.setDatac_date(DateUtil.getSysDate());
 		dm_datatable.setDatac_time(DateUtil.getSysTime());
 		dm_datatable.setDatatable_lifecycle(TableLifeCycle.YongJiu.getCode());
-		dm_datatable.setSoruce_size("9999999999");
+		dm_datatable.setSoruce_size("9999999999.00");
 		dm_datatable.setEtl_date(Constant.MAXDATE);
 		dm_datatable.setStorage_type(StorageType.ZengLiang.getCode());
 		dm_datatable.setTable_storage(TableStorage.ShuJuBiao.getCode());
@@ -156,6 +179,45 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		dm_operation_info.setDatatable_id(DATATABLE_ID);
 		dm_operation_info.setExecute_sql("select A,B,C,D from datatable_en_name");
 		return dm_operation_info;
+	}
+
+	//定义全局的datatable_field_info
+	private static Datatable_field_info newdatatablefieldinfo(String name, String count) {
+		Datatable_field_info datatable_field_info = new Datatable_field_info();
+		datatable_field_info.setDatatable_field_id(PrimayKeyGener.getNextId());
+		datatable_field_info.setDatatable_id(DATATABLE_ID);
+		datatable_field_info.setField_en_name(name);
+		datatable_field_info.setField_cn_name(name);
+		datatable_field_info.setField_type("varchar");
+		datatable_field_info.setField_length("100");
+		datatable_field_info.setField_desc("");
+		datatable_field_info.setField_process(ProcessType.YingShe.getCode());
+		datatable_field_info.setProcess_para(count);
+		datatable_field_info.setField_seq(count);
+		datatable_field_info.setRemark("");
+		return datatable_field_info;
+	}
+
+	//定义全局的dtab_relation_store
+	private static Dtab_relation_store newdtabrelationstore() {
+		Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
+		dtab_relation_store.setDsl_id(DSL_ID);
+		dtab_relation_store.setTab_id(DATATABLE_ID);
+		dtab_relation_store.setData_source(StoreLayerDataSource.DM.getCode());
+		dtab_relation_store.setIs_successful(JobExecuteState.DengDai.getCode());
+		return dtab_relation_store;
+	}
+
+	//定义全局的dtab_relation_store
+	private static Data_store_layer newdatastorelayer() {
+		Data_store_layer data_store_layer = new Data_store_layer();
+		data_store_layer.setDsl_id(DSL_ID);
+		data_store_layer.setDsl_name(ThreadId + "dsl_name");
+		data_store_layer.setStore_type(Store_type.DATABASE.getCode());
+		data_store_layer.setIs_hadoopclient(IsFlag.Shi.getCode());
+		data_store_layer.setDtcs_id(DTCS_ID);
+		data_store_layer.setDlcs_id(DLCS_ID);
+		return data_store_layer;
 	}
 
 	/**
@@ -188,6 +250,18 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 			assertThat("初始化数据成功", dm_datatable.add(db), is(1));
 			//初始化数据SQL表
 			assertThat("初始化数据成功", dm_operation_info.add(db), is(1));
+			//初始化数据表字段信息
+			assertThat("初始化数据成功", datatable_field_info1.add(db), is(1));
+			//初始化数据表字段信息
+			assertThat("初始化数据成功", datatable_field_info2.add(db), is(1));
+			//初始化数据表字段信息
+			assertThat("初始化数据成功", datatable_field_info3.add(db), is(1));
+			//初始化数据表字段信息
+			assertThat("初始化数据成功", datatable_field_info4.add(db), is(1));
+			//初始化数据表存储关系表
+			assertThat("初始化数据成功", dtab_relation_store.add(db), is(1));
+			//初始化数据表存储关系表
+			assertThat("初始化数据成功", data_store_layer.add(db), is(1));
 			SqlOperator.commitTransaction(db);
 			db.close();
 			//模拟用户登录
@@ -202,6 +276,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 			if (db != null) {
 				db.rollback();
 			}
+			e.printStackTrace();
 		} finally {
 			if (db != null) {
 				db.close();
@@ -222,14 +297,19 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 			checkdeletedata(db, Dm_datatable.TableName, "datatable_id", DATATABLE_ID);
 			checkdeletedata(db, Dm_operation_info.TableName, "id", ID);
 			checkdeletedata(db, Datatable_field_info.TableName, "datatable_id", DATATABLE_ID);
-			//删除addMarket方法的数据
-			checkdeletedata(db, Dm_info.TableName, "mart_name", "TestMart_name");
+			checkdeletedata(db, Data_store_layer.TableName, "dsl_id", DSL_ID);
+			checkdeletedata(db, Dtab_relation_store.TableName, "tab_id", DATATABLE_ID);
+			checkdeletedata(db, Dcol_relation_store.TableName, "col_id", datatable_field_info1.getDatatable_field_id());
+			checkdeletedata(db, Dcol_relation_store.TableName, "col_id", datatable_field_info2.getDatatable_field_id());
+			checkdeletedata(db, Dcol_relation_store.TableName, "col_id", datatable_field_info3.getDatatable_field_id());
+			checkdeletedata(db, Dcol_relation_store.TableName, "col_id", datatable_field_info4.getDatatable_field_id());
 			SqlOperator.commitTransaction(db);
 			db.close();
 		} catch (Exception e) {
 			if (db != null) {
 				db.rollback();
 			}
+			e.printStackTrace();
 		} finally {
 			if (db != null) {
 				db.close();
@@ -257,6 +337,21 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 
 	}
 
+	//封装一个map转bean的方法
+	public static <T> T map2bean(Map<String, Object> map, Class<T> classType) throws Exception {
+		//采用反射动态创建对象
+		T obj = classType.newInstance();
+		//获取对象字节码信息,不要Object的属性
+		BeanInfo beanInfo = Introspector.getBeanInfo(classType, Object.class);
+		//获取bean对象中的所有属性
+		PropertyDescriptor[] list = beanInfo.getPropertyDescriptors();
+		for (PropertyDescriptor pd : list) {
+			String key = pd.getName();    //获取属性名
+			Object value = map.get(key);  //获取属性值
+			pd.getWriteMethod().invoke(obj, value);//调用属性setter()方法,设置到javabean对象当中
+		}
+		return obj;
+	}
 
 	@Test
 	public void getAllDslInMart() {
@@ -309,20 +404,36 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	public void addMarket() {
 		//第一遍插入 能成功
 		String rightString = new HttpClient()
-				.addData("mart_name", "TestMart_name")
-				.addData("mart_number", "TestMart_number")
+				.addData("mart_name", ThreadId + "TestMart_name")
+				.addData("mart_number", ThreadId + "TestMart_number")
 				.post(getActionUrl("addMarket")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		//第一遍插入,应该判断出存在重复的情况，抛出异常
+		//第二遍插入,应该判断出存在重复的情况，抛出异常
 		rightString = new HttpClient()
-				.addData("mart_name", "TestMart_name")
-				.addData("mart_number", "TestMart_number")
+				.addData("mart_name", ThreadId + "TestMart_name")
+				.addData("mart_number", ThreadId + "TestMart_number")
 				.post(getActionUrl("addMarket")).getBodyString();
 		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(false));
+		DatabaseWrapper db = null;
+		try {
+			db = new DatabaseWrapper();
+			//删除addMarket方法的数据
+			checkdeletedata(db, Dm_info.TableName, "mart_name", "TestMart_name");
+		} catch (Exception e) {
+			if (db != null) {
+				db.rollback();
+			}
+			e.printStackTrace();
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
+
 	}
 
 	@Test
@@ -335,20 +446,162 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		assertThat(rightResult.isSuccess(), is(true));
 		Dm_info dm_info1 = JSON.parseObject(rightResult.getData().toString(), new TypeReference<Dm_info>() {
 		});
-		assertThat(dm_info1.equals(dm_info),is(true));
+		assertThat(dm_info1.equals(dm_info), is(true));
 	}
 
 	@Test
-	public void queryDMDataTableByDataMartID() {
+	public void queryDMDataTableByDataMartID() throws Exception {
 		String rightString = new HttpClient()
 				.addData("data_mart_id", dm_info.getData_mart_id())
 				.post(getActionUrl("queryDMDataTableByDataMartID")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-//		Dm_info dm_info1 = JSON.parseObject(rightResult.getData().toString(), new TypeReference<Dm_info>() {
-//		});
-//		assertThat(dm_info1.equals(dm_info),is(true));
+		List<Map<String, Object>> maps = JSON.parseObject(rightResult.getData().toString(), new TypeReference<List<Map<String, Object>>>() {
+		});
+		assertThat(maps.size() == 1, is(true));
+		Map<String, Object> stringObjectMap = maps.get(0);
+		assertThat(stringObjectMap.get("isadd").equals(true), is(true));
+		Dm_datatable dm_datatable1 = map2bean(stringObjectMap, Dm_datatable.class);
+		assertThat(dm_datatable1.equals(dm_datatable), is(true));
+	}
+
+	@Test
+	public void deleteDMDataTable() throws Exception {
+		String rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.post(getActionUrl("deleteDMDataTable")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		DatabaseWrapper db = null;
+		try {
+			after();
+			db = new DatabaseWrapper();
+			long longnum = querylong(db, Dm_info.TableName, "data_mart_id", dm_info.getData_mart_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dm_datatable.TableName, "datatable_id", dm_datatable.getDatatable_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dm_operation_info.TableName, "id", dm_operation_info.getId());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dtab_relation_store.TableName, "dsl_id", dtab_relation_store.getDsl_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Datatable_field_info.TableName, "datatable_id", dm_datatable.getDatatable_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dcol_relation_store.TableName, "col_id", datatable_field_info1.getDatatable_field_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dcol_relation_store.TableName, "col_id", datatable_field_info2.getDatatable_field_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dcol_relation_store.TableName, "col_id", datatable_field_info3.getDatatable_field_id());
+			assertThat(longnum == 0L, is(true));
+			longnum = querylong(db, Dcol_relation_store.TableName, "col_id", datatable_field_info4.getDatatable_field_id());
+			assertThat(longnum == 0L, is(true));
+			//TODO 缺失三张血缘和前后置处理表的检测
+		} catch (Exception e) {
+			if (db != null) {
+				db.rollback();
+			}
+			e.printStackTrace();
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+			//将删除后的数据补充回来
+			before();
+		}
+	}
+
+	//封装一个查询count的方法
+	private long querylong(DatabaseWrapper db, String tablename, String key, Object value) {
+		return  SqlOperator.queryNumber(db, "select count(*) from " + tablename + " where " + key + " = ?", value)
+				.orElseThrow(() -> new BusinessException("查询" + Dm_datatable.TableName + "失败"));
+	}
+
+	@Test
+	public void searchDataStore() throws Exception {
+		String rightString = new HttpClient()
+				.post(getActionUrl("searchDataStore")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		List<Data_store_layer> data_store_layers = JSON.parseObject(rightResult.getData().toString(), new TypeReference<List<Data_store_layer>>() {
+		});
+		assertThat(data_store_layers.contains(data_store_layer), is(true));
+	}
+
+	@Test
+	public void searchDataStoreByFuzzyQuery() throws Exception {
+		String rightString = new HttpClient()
+				.addData("fuzzyqueryitem", ThreadId)
+				.post(getActionUrl("searchDataStoreByFuzzyQuery")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		List<Data_store_layer> data_store_layers = JSON.parseObject(rightResult.getData().toString(), new TypeReference<List<Data_store_layer>>() {
+		});
+		assertThat(data_store_layers.contains(data_store_layer), is(true));
+	}
+
+	@Test
+	public void addDMDataTable() throws Exception {
+		Dm_datatable dm_datatable1 = new Dm_datatable();
+		dm_datatable1.setDatatable_id(PrimayKeyGener.getNextId());
+		dm_datatable1.setData_mart_id(DATA_MART_ID);
+		dm_datatable1.setDatatable_cn_name(ThreadId + "集市表中文名2");
+		dm_datatable1.setDatatable_en_name(ThreadId + "datatable_en_name2");
+		dm_datatable1.setSql_engine(SqlEngine.MOREN.getCode());
+		dm_datatable1.setDatatable_desc("");
+		dm_datatable1.setRemark("");
+		dm_datatable1.setDatatable_create_date(DateUtil.getSysDate());
+		dm_datatable1.setDatatable_create_time(DateUtil.getSysTime());
+		dm_datatable1.setDatatable_due_date(Constant.MAXDATE);
+		dm_datatable1.setDdlc_date(DateUtil.getSysDate());
+		dm_datatable1.setDdlc_time(DateUtil.getSysTime());
+		dm_datatable1.setDatac_date(DateUtil.getSysDate());
+		dm_datatable1.setDatac_time(DateUtil.getSysTime());
+		dm_datatable1.setDatatable_lifecycle(TableLifeCycle.YongJiu.getCode());
+		dm_datatable1.setSoruce_size("9999999999.00");
+		dm_datatable1.setEtl_date(Constant.MAXDATE);
+		dm_datatable1.setStorage_type(StorageType.ZengLiang.getCode());
+		dm_datatable1.setTable_storage(TableStorage.ShuJuBiao.getCode());
+		dm_datatable1.setRepeat_flag(IsFlag.Fou.getCode());
+		dm_datatable1.setCategory_id(CATEGORY_ID);
+
+		String rightString = new HttpClient()
+				.addData("dm_datatable", dm_datatable1)
+				.addData("dsl_id", DSL_ID)
+				.post(getActionUrl("addDMDataTable")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		DatabaseWrapper db = null;
+		try {
+			db = new DatabaseWrapper();
+			Dm_datatable dm_datatable2 = SqlOperator.queryOneObject(db, Dm_datatable.class,
+					"select * from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable1.getDatatable_id())
+					.orElseThrow(() -> new BusinessException("查询" + Dm_datatable.TableName + "失败"));
+			assertThat(dm_datatable2.equals(dm_datatable1), is(true));
+			Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
+			dtab_relation_store.setTab_id(dm_datatable1.getDatatable_id());
+			dtab_relation_store.setDsl_id(DSL_ID);
+			dtab_relation_store.setData_source(StoreLayerDataSource.DM.getCode());
+			dtab_relation_store.setIs_successful(JobExecuteState.DengDai.getCode());
+			Dtab_relation_store dtab_relation_store1 = SqlOperator.queryOneObject(db, Dtab_relation_store.class,
+					"select * from " + Dtab_relation_store.TableName + " where tab_id = ?", dm_datatable1.getDatatable_id())
+					.orElseThrow(() -> new BusinessException("查询" + Dm_datatable.TableName + "失败"));
+			assertThat(dtab_relation_store1.equals(dtab_relation_store), is(true));
+		} catch (Exception e) {
+			if (db != null) {
+				db.rollback();
+			}
+			logger.error(e.getStackTrace());
+		} finally {
+			checkdeletedata(db, Dm_datatable.TableName, "datatable_id", dm_datatable1.getDatatable_id());
+			checkdeletedata(db, Dtab_relation_store.TableName, "tab_id", dm_datatable1.getDatatable_id());
+			if (db != null) {
+				db.close();
+			}
+		}
 	}
 
 }
