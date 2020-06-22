@@ -89,15 +89,16 @@ public class ObjectCollectJob extends AgentBaseAction {
 					"3.有数据字典写xml文件获取数据字典数据" +
 					"4.返回解析后的所有数据字典表对应列数据")
 	@Param(name = "file_path", desc = "文件存储路径", range = "不为空")
+	@Param(name = "table_name", desc = "表名称", range = "不为空")
 	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
-	public String getDicColumnByTable(String file_path) {
+	public String getDicColumnByTable(String file_path, String table_name) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.获取生成xml文件文件名
 		String xmlName = ConnUtil.getDataBaseFile("", "", file_path, "");
 		// 3.有数据字典写xml文件获取数据字典数据
 		Xls2xml.toXml2(file_path, xmlName);
 		// 4.返回解析后的所有数据字典表对应列数据
-		return PackUtil.packMsg(JsonUtil.toJson(ConnUtil.getColumnByXml2(file_path)));
+		return PackUtil.packMsg(JsonUtil.toJson(ConnUtil.getColumnByTable2(xmlName, table_name)));
 	}
 
 	@Method(desc = "解析半结构化采集数据字典获取表数据",
