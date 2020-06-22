@@ -1438,7 +1438,6 @@ public class CollTbConfStepAction extends BaseAction {
 		range = "Table_info实体类对象，" + "其中table_id和sql两个属性不能为空",
 		isBean = true)
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
-	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
 	public void saveCustomSQLColumnInfoForAdd(Table_info tableInfo, long colSetId) {
 
     /*
