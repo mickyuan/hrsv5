@@ -100,6 +100,7 @@ public class MarketInfoAction extends BaseAction {
 		} catch (ProjectTableEntity.EntityDealZeroException e) {
 			logger.info("更新表" + bean.getClass().getName() + "数据为0条，无误");
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw e;
 		}
 	}
@@ -200,9 +201,9 @@ public class MarketInfoAction extends BaseAction {
 		Dm_info dm_info = new Dm_info();
 		dm_info.setData_mart_id(data_mart_id);
 		Optional<Dm_info> dm_info1 = Dbo.queryOneObject(Dm_info.class, "select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
-		if(dm_info1.isPresent()){
+		if (dm_info1.isPresent()) {
 			return dm_info1.get();
-		}else{
+		} else {
 			throw new BusinessSystemException("查询表dm_info错误，根据data_mart_id查找不存在该表");
 		}
 	}
@@ -495,11 +496,11 @@ public class MarketInfoAction extends BaseAction {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_en_name(datatable_en_name);
-		List<Dm_datatable> dm_datatables  = null;
+		List<Dm_datatable> dm_datatables = null;
 		//如果是新增集市表
 		if (StringUtils.isEmpty(datatable_id)) {
 			//查询相同表名的表
-			 dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
+			dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
 		}
 		//更新 SQL多增加一个不包括当前ID
 		else {
@@ -1792,10 +1793,13 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "根据表主键查询表名")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Dm_datatable> getTableName(String datatable_id) {
+	public String getTableName(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		return Dbo.queryList(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		dm_datatable = Dbo.queryOneObject(Dm_datatable.class, "select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id())
+				.orElseThrow(() -> new BusinessException("查询" + Dm_datatable.TableName + "失败"));
+		return dm_datatable.getDatatable_en_name();
+
 	}
 
 	@Method(desc = "保存前置作业",
@@ -1816,7 +1820,7 @@ public class MarketInfoAction extends BaseAction {
 		}
 		String datatable_en_name = dm_datatables.get(0).getDatatable_en_name();
 		//判空
-		if (pre_work != null) {
+		if (!StringUtils.isBlank(pre_work)) {
 			//分隔
 			if (pre_work.contains(";;")) {
 				List<String> pre_works = Arrays.asList(pre_work.split(";;"));
@@ -1836,7 +1840,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 		}
 		//判空
-		if (post_work != null) {
+		if (!StringUtils.isBlank(post_work)) {
 			//分隔
 			if (post_work.contains(";;")) {
 				List<String> post_works = Arrays.asList(post_work.split(";;"));
@@ -1853,15 +1857,20 @@ public class MarketInfoAction extends BaseAction {
 				}
 			}
 		}
-		dm_relevant_info.setPre_work(pre_work);
-		dm_relevant_info.setPost_work(post_work);
+
 		Optional<Dm_relevant_info> dm_relevant_infoOptional = Dbo.queryOneObject(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
 		//如果存在就更新
 		if (dm_relevant_infoOptional.isPresent()) {
+			dm_relevant_info = dm_relevant_infoOptional.get();
+			dm_relevant_info.setPre_work(pre_work);
+			dm_relevant_info.setPost_work(post_work);
 			updatebean(dm_relevant_info);
 		}
 		//如果不存在 就新增
 		else {
+			dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
+			dm_relevant_info.setPre_work(pre_work);
+			dm_relevant_info.setPost_work(post_work);
 			dm_relevant_info.add(Dbo.db());
 		}
 		//保存
@@ -1871,10 +1880,11 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "前后置处理SQL回显")
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Dm_relevant_info> getPreAndAfterJob(String datatable_id) {
+	public Dm_relevant_info getPreAndAfterJob(String datatable_id) {
 		Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
 		dm_relevant_info.setDatatable_id(datatable_id);
-		return Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id());
+		return Dbo.queryOneObject(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", dm_relevant_info.getDatatable_id())
+				.orElseThrow(() -> new BusinessException("查询" + Dm_relevant_info.TableName + "失败"));
 	}
 
 
