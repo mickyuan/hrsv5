@@ -10,7 +10,10 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.*;
+import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.InterfaceState;
+import hrds.commons.codes.InterfaceType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
@@ -28,58 +31,22 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "服务接口用户测试类", author = "dhw", createdate = "2020/5/15 13:48")
 public class ServiceUserActionTest extends WebBaseTestCase {
 
-	// 用户ID
-	private static final long USER_ID = 8886L;
-	// 部门ID
-	private static final long DEP_ID = 8886L;
-	private static final int USERROWS = 2;
-	// 接口使用ID
-	private static final long INTERFACE_USE_ID = 100000001L;
-	// 接口表参数信息ID
-	private static final long PARAM_ID = 20000002L;
+	//请填写测试用户需要做登录验证的A项目的登录验证的接口
+	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	// 已经存在的用户ID,用于模拟登录
+	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	private static final String PASSWORD = agentInitConfig.getString("password");
+	//当前线程的id
+	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 
 	@Before
 	public void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			// 1.造sys_user表数据，用于模拟登录
-			Sys_user user = new Sys_user();
-			for (int i = 0; i < USERROWS; i++) {
-				user.setUser_id(USER_ID + i);
-				user.setCreate_id(USER_ID);
-				user.setDep_id(DEP_ID);
-				user.setRole_id("1001");
-				user.setUser_name("接口测试用户-dhw" + i);
-				user.setUser_password("1");
-				// 0：管理员，1：操作员
-				user.setUseris_admin(IsFlag.Shi.getCode());
-				user.setUser_type(UserType.RESTYongHu.getCode());
-				user.setUsertype_group(UserType.RESTYongHu.getCode() + "," + UserType.CaijiGuanLiYuan.getCode());
-				user.setLogin_ip("127.0.0.1");
-				user.setLogin_date("20191001");
-				user.setUser_state(UserState.ZhengChang.getCode());
-				user.setCreate_date(DateUtil.getSysDate());
-				user.setCreate_time(DateUtil.getSysTime());
-				user.setUpdate_date(DateUtil.getSysDate());
-				user.setUpdate_time(DateUtil.getSysTime());
-				user.setToken("0");
-				user.setValid_time("0");
-				user.setUser_email("123@163.com");
-				user.setUser_remark("接口测试用户-dhw" + i);
-				assertThat("初始化数据成功", user.add(db), is(1));
-			}
-			//2.造部门表数据，用于模拟用户登录
-			Department_info deptInfo = new Department_info();
-			deptInfo.setDep_id(DEP_ID);
-			deptInfo.setDep_name("测试接口部门init-dhw");
-			deptInfo.setCreate_date(DateUtil.getSysDate());
-			deptInfo.setCreate_time(DateUtil.getSysTime());
-			deptInfo.setDep_remark("测试接口部门init-dhw");
-			assertThat("初始化数据成功", deptInfo.add(db), is(1));
 			// 3.造interface_use表测试数据
 			Interface_use interface_use = new Interface_use();
 			interface_use.setUse_valid_date(Constant.MAXDATE);
-			interface_use.setInterface_use_id(INTERFACE_USE_ID);
-			interface_use.setClassify_name("jkjkcs");
+			interface_use.setInterface_use_id(THREAD_ID);
+			interface_use.setClassify_name("dhwcs" + THREAD_ID);
 			interface_use.setInterface_id(104L);
 			interface_use.setInterface_note("接口监控测试");
 			interface_use.setUse_state(InterfaceState.JinYong.getCode());
@@ -90,7 +57,7 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 			interface_use.setUrl("tableUsePermissions");
 			interface_use.setInterface_name("表使用权限查询接口");
 			interface_use.setStart_use_date(DateUtil.getSysDate());
-			interface_use.setUser_name("接口测试用户-dhw0");
+			interface_use.setUser_name("接口测试用户-dhw");
 			interface_use.add(db);
 			// 4.造table_use_info表测试数据
 			Table_use_info table_use_info = new Table_use_info();
@@ -99,12 +66,12 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 			table_use_info.setTable_note("监控监控表使用信息测试");
 			table_use_info.setSysreg_name("fdc01_dhw_test");
 			table_use_info.setOriginal_name("dhw_test");
-			table_use_info.setUse_id(INTERFACE_USE_ID);
+			table_use_info.setUse_id(THREAD_ID);
 			table_use_info.add(db);
 			// 5.造sysreg_parameter_info表测试数据
 			Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
 			for (int i = 0; i < 2; i++) {
-				sysreg_parameter_info.setParameter_id(PARAM_ID + i);
+				sysreg_parameter_info.setParameter_id(THREAD_ID + i);
 				if (i == 0) {
 					sysreg_parameter_info.setTable_ch_column("PARA_NAME");
 					sysreg_parameter_info.setTable_en_column("PARA_NAME");
@@ -112,19 +79,20 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 					sysreg_parameter_info.setTable_ch_column("PARA_VALUE");
 					sysreg_parameter_info.setTable_en_column("PARA_VALUE");
 				}
-				sysreg_parameter_info.setRemark("监控测试");
+				sysreg_parameter_info.setRemark("接口测试dhw");
 				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
-				sysreg_parameter_info.setUse_id(INTERFACE_USE_ID);
+				sysreg_parameter_info.setUse_id(THREAD_ID);
 				sysreg_parameter_info.setUser_id(USER_ID);
 				sysreg_parameter_info.add(db);
 			}
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
+		// 模拟用户登录
 		String bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
-				.addData("password", "1")
-				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
+				.addData("password", PASSWORD)
+				.post(LOGIN_URL).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
@@ -134,21 +102,18 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 	public void after() {
 		DatabaseWrapper db = new DatabaseWrapper();
 		try {
-			//1.清理sys_user表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
-					, USER_ID);
-			//2.清理Department_info表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
-					, DEP_ID);
-			// 3.清理interface_use表数据
-			SqlOperator.execute(db, "DELETE FROM " + Interface_use.TableName + " WHERE user_id =?"
-					, USER_ID);
-			// 4.清理Table_use_info表数据
-			SqlOperator.execute(db, "DELETE FROM " + Table_use_info.TableName + " WHERE user_id =?"
-					, USER_ID);
-			// 5.清理Sysreg_parameter_info表数据
-			SqlOperator.execute(db, "DELETE FROM " + Sysreg_parameter_info.TableName + " WHERE user_id =?"
-					, USER_ID);
+			// 1.清理interface_use表数据
+			SqlOperator.execute(db,
+					"DELETE FROM " + Interface_use.TableName + " WHERE interface_use_id =?", THREAD_ID);
+			// 2.清理Table_use_info表数据
+			SqlOperator.execute(db,
+					"DELETE FROM " + Table_use_info.TableName + " WHERE use_id =?", THREAD_ID);
+			// 3.清理Sysreg_parameter_info表数据
+			for (int i = 0; i < 2; i++) {
+				SqlOperator.execute(db,
+						"DELETE FROM " + Sysreg_parameter_info.TableName + " WHERE parameter_id =?",
+						THREAD_ID + i);
+			}
 			SqlOperator.commitTransaction(db);
 		} catch (Exception e) {
 			db.rollback();
@@ -170,7 +135,7 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
-		assertThat(result.getLong(0, "interface_use_id"), is(INTERFACE_USE_ID));
+		assertThat(result.getLong(0, "interface_use_id"), is(THREAD_ID));
 		assertThat(result.getString(0, "interface_name"), is("表使用权限查询接口"));
 		assertThat(result.getString(0, "url"), is("tableUsePermissions"));
 		assertThat(result.getString(0, "start_use_date"), is(DateUtil.getSysDate()));
@@ -212,7 +177,7 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
-		assertThat(result.getLong(0, "use_id"), is(INTERFACE_USE_ID));
+		assertThat(result.getLong(0, "use_id"), is(THREAD_ID));
 		assertThat(result.getString(0, "sysreg_name"), is("fdc01_dhw_test"));
 		assertThat(result.getString(0, "original_name"), is("dhw_test"));
 		// 2.正确的数据访问2,sysreg_name不为空
@@ -246,14 +211,14 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 	public void searchColumnInfoById() {
 		// 1.正确的数据访问1,数据都有效
 		String bodyString = new HttpClient().buildSession()
-				.addData("use_id", INTERFACE_USE_ID)
+				.addData("use_id", THREAD_ID)
 				.post(getActionUrl("searchColumnInfoById")).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
 		List<Sysreg_parameter_info> parameterInfos = ar.getDataForEntityList(Sysreg_parameter_info.class);
 		parameterInfos.forEach(parameter_info -> {
-			if (parameter_info.getParameter_id() == PARAM_ID) {
+			if (parameter_info.getParameter_id() == THREAD_ID) {
 				assertThat(parameter_info.getTable_ch_column(), is("PARA_NAME"));
 				assertThat(parameter_info.getTable_en_column(), is("PARA_NAME"));
 			} else {
@@ -284,12 +249,12 @@ public class ServiceUserActionTest extends WebBaseTestCase {
 	public void getIpAndPort() {
 		// 1.正确的数据访问1,数据都有效
 		String bodyString = new HttpClient().buildSession()
-				.addData("use_id", INTERFACE_USE_ID)
+				.addData("use_id", THREAD_ID)
 				.post(getActionUrl("getIpAndPort")).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getData().toString(), is(PropertyParaValue.getString("hyren_host", "127.0.0.1") + ":"
-				+ HttpServerConf.getHttpServer().getHttpPort()));
+		assertThat(ar.getData().toString(), is(PropertyParaValue.getString("hyren_host", "127.0.0.1")
+				+ ":" + HttpServerConf.getHttpServer().getHttpPort()));
 	}
 }

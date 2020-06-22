@@ -25,10 +25,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "服务接口测试类", author = "dhw", createdate = "2020/4/20 16:12")
 public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 
-	// 用户ID
-	private static final long USER_ID = 6661L;
-	// 部门ID
-	private static final long DEP_ID = 5551L;
+	//请填写测试用户需要做登录验证的A项目的登录验证的接口
+	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	// 已经存在的用户ID,用于模拟登录
+	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	private static final String PASSWORD = agentInitConfig.getString("password");
+	//当前线程的id
+	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 接口使用ID
 	private static final long INTERFACE_USE_ID = 3331L;
 	// 接口使用日志ID
@@ -52,41 +55,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 	@Before
 	public void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			// 1.初始化sys_user表测试数据，用于模拟登录
-			Sys_user user = new Sys_user();
-			for (int i = 0; i < 2; i++) {
-				user.setUser_id(USER_ID + i);
-				user.setCreate_id(USER_ID);
-				user.setDep_id(DEP_ID);
-				user.setRole_id("1001");
-				user.setUser_name("接口测试用户-dhw" + i);
-				user.setUser_password("1");
-				// 0：管理员，1：操作员
-				user.setUseris_admin(IsFlag.Shi.getCode());
-				user.setUser_type(UserType.RESTYongHu.getCode());
-				user.setUsertype_group(UserType.RESTYongHu.getCode() + "," + UserType.CaijiGuanLiYuan.getCode());
-				user.setLogin_ip("127.0.0.1");
-				user.setLogin_date(DateUtil.getSysDate());
-				user.setUser_state(UserState.ZhengChang.getCode());
-				user.setCreate_date(DateUtil.getSysDate());
-				user.setCreate_time(DateUtil.getSysTime());
-				user.setUpdate_date(DateUtil.getSysDate());
-				user.setUpdate_time(DateUtil.getSysTime());
-				user.setToken("0");
-				user.setValid_time("0");
-				user.setUser_email("123@163.com");
-				user.setUser_remark("接口测试用户-dhw" + i);
-				assertThat("初始化sys_user表测试数据", user.add(db), is(1));
-			}
-			//2.初始化部门表测试数据
-			Department_info deptInfo = new Department_info();
-			deptInfo.setDep_id(DEP_ID);
-			deptInfo.setDep_name("测试接口部门init-dhw");
-			deptInfo.setCreate_date(DateUtil.getSysDate());
-			deptInfo.setCreate_time(DateUtil.getSysTime());
-			deptInfo.setDep_remark("测试接口部门init-dhw");
-			assertThat("初始化部门表测试数据", deptInfo.add(db), is(1));
-			// 3.初始化接口使用日志表测试数据
+			// 1.初始化接口使用日志表测试数据
 			Interface_use_log interface_use_log = new Interface_use_log();
 			interface_use_log.setInterface_use_id(INTERFACE_USE_ID);
 			interface_use_log.setLog_id(LOG_ID);
@@ -106,7 +75,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 			interface_use_log.setRequest_info("");
 			interface_use_log.setRemoteaddr("127.0.0.1");
 			assertThat("初始化接口使用日志表测试数据", interface_use_log.add(db), is(1));
-			// 4.初始化数据存储登记表信息
+			// 2.初始化数据存储登记表信息
 			Data_store_reg dst = new Data_store_reg();
 			for (int i = 0; i < 3; i++) {
 				dst.setFile_id(fileID + i);
@@ -125,7 +94,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 				dst.setTable_id(TableId + i);
 				assertThat("初始化数据存储登记表信息", dst.add(db), is(1));
 			}
-			// 5.初始化表存储信息信息测试数据
+			// 3.初始化表存储信息信息测试数据
 			Table_storage_info tsi = new Table_storage_info();
 			for (int i = 0; i < 3; i++) {
 				tsi.setHyren_name("sys_user");
@@ -137,7 +106,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 				tsi.setTable_id(TableId + i);
 				assertThat("初始化表存储信息信息测试数据", tsi.add(db), is(1));
 			}
-			// 6.初始化数据表存储关系表测试数据
+			// 4.初始化数据表存储关系表测试数据
 			Dtab_relation_store drt = new Dtab_relation_store();
 			for (int i = 0; i < 3; i++) {
 				drt.setData_source(StoreLayerDataSource.DB.getCode());
@@ -145,7 +114,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 				drt.setDsl_id(DslId + i);
 				assertThat("初始化数据表存储关系表测试数据", drt.add(db), is(1));
 			}
-			// 7.初始化数据存储层配置表测试数据
+			// 5.初始化数据存储层配置表测试数据
 			Data_store_layer dsl = new Data_store_layer();
 			for (int i = 0; i < 3; i++) {
 				dsl.setDsl_id(DslId + i);
@@ -154,7 +123,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 				dsl.setIs_hadoopclient(IsFlag.Fou.getCode());
 				assertThat("初始化数据存储层配置表测试数据", dsl.add(db), is(1));
 			}
-			// 8.初始化数据存储层配置属性表测试数据
+			// 6.初始化数据存储层配置属性表测试数据
 			Data_store_layer_attr dsla = new Data_store_layer_attr();
 			for (int i = 0; i < 6; i++) {
 				dsla.setDsla_id(DslaId + i);
@@ -236,13 +205,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 	public void after() {
 		DatabaseWrapper db = new DatabaseWrapper();
 		try {
-			//1.清理sys_user表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + Sys_user.TableName + " WHERE create_id = ?"
-					, USER_ID);
-			//2.清理Department_info表中造的数据
-			SqlOperator.execute(db, "DELETE FROM " + Department_info.TableName + " WHERE dep_id = ?"
-					, DEP_ID);
-			//3.清理Interface_use_log表中造的数据
+			//1.清理Interface_use_log表中造的数据
 			SqlOperator.execute(db, "DELETE FROM " + Interface_use_log.TableName + " WHERE log_id = ?"
 					, LOG_ID);
 
