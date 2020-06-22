@@ -1,7 +1,6 @@
 package hrds.h.biz.market;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
@@ -10,16 +9,13 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import groovy.sql.Sql;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.derby.iapi.db.Database;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,8 +56,6 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	private static final long DTCS_ID = PrimayKeyGener.getNextId();
 	//长度对照表ID
 	private static final long DLCS_ID = PrimayKeyGener.getNextId();
-	//数据字段存储关系表ID
-//	private  final long DSLAD_ID = PrimayKeyGener.getNextId();
 	//定义全局的dm_info
 	private final Dm_info dm_info = newdminfo();
 	//定义全局的dm_category
@@ -377,7 +371,13 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		//TODO 需要造数据
+		List<Map<String, Object>> maps = JSON.parseObject(rightResult.getData().toString(), new TypeReference<List<Map<String, Object>>>() {
+		});
+		List<String> dsl_names = new ArrayList<>();
+		for(Map<String,Object> map : maps){
+			dsl_names.add(map.get("dsl_name").toString());
+		}
+		assertThat(dsl_names.contains("ORACLE"),is(true));
 	}
 
 	@Test
@@ -387,7 +387,13 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-		//TODO 需要造数据
+		List<Map<String, Object>> maps = JSON.parseObject(rightResult.getData().toString(), new TypeReference<List<Map<String, Object>>>() {
+		});
+		List<String> dsl_names = new ArrayList<>();
+		for(Map<String,Object> map : maps){
+			dsl_names.add(map.get("dsl_name").toString());
+		}
+		assertThat(dsl_names.contains("ORACLE"),is(true));
 	}
 
 	@Test
@@ -595,7 +601,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 			}
 			e.printStackTrace();
 		} finally {
-			if (db == null) {
+			if (db != null) {
 				db.close();
 			}
 		}
@@ -1161,6 +1167,5 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		data = rightResult.getData();
 		assertThat(data instanceof Boolean, is(true));
 		assertThat(data.equals(false), is(true));
-
 	}
 }
