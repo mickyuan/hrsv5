@@ -1,17 +1,17 @@
 package hrds.c.biz.joblevelintervention;
 
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
+import hrds.c.biz.bean.JobHandBean;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.Job_Status;
@@ -25,7 +25,6 @@ import hrds.commons.entity.Etl_sub_sys_list;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -247,6 +246,7 @@ public class JobLevelInterventionAction extends BaseAction {
 				etl_job_hand.add(Dbo.db());
 			}
 		} else if (Meddle_type.JOB_PRIORITY == Meddle_type.ofEnumByCode(etl_hand_type)) {
+			Validator.notNull(job_priority, "干预类型为调整优先级时，作业优先级不能为空");
 			// 4.5设置优先级
 			String[] jobStatus = {Job_Status.RUNNING.getCode()};
 			// 根据工程代码作业名获取作业状态
@@ -274,29 +274,24 @@ public class JobLevelInterventionAction extends BaseAction {
 					"2.获取存放作业干预作业情况信息" +
 					"3.遍历获取批量干预作业名称以及当前批量日期" +
 					"4.循环干预作业")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-	@Param(name = "batchEtlJob", desc = "存放以etl_job,curr_bath_date为key，对应值为value的json字符串",
-			range = "格式[{etl_job:job1,curr_bath_date:2019-12-12}," +
-					"{etl_job:job2,curr_bath_date:2019-12-11}]")
-	@Param(name = "etl_hand_type", desc = "干预类型", range = "使用（Meddle_type）代码项")
+	@Param(name = "jobHandBeans", desc = "作业干预自定义实体对象", range = "包括作业干预实体与当前批量日期",
+			isBean = true)
 	@Param(name = "job_priority", desc = "作业优先级", range = "无限制", nullable = true)
-	public void batchJobLevelInterventionOperate(String etl_sys_cd, String batchEtlJob, String etl_hand_type,
-	                                             Integer job_priority) {
+	public void batchJobLevelInterventionOperate(JobHandBean[] jobHandBeans, Integer job_priority) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
-			throw new BusinessException("当前工程已不存在");
+		if (jobHandBeans == null || jobHandBeans.length == 0) {
+			// 2.判断批量干预值是否为空
+			throw new BusinessException("干预作业为空，请检查");
 		}
-		// 2.获取存放作业干预作业情况信息
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> etlJobHandList = JsonUtil.toObject(batchEtlJob, type);
-		if (!etlJobHandList.isEmpty()) {
-			// 3.遍历获取批量干预作业名称以及当前批量日期
-			for (Map<String, String> etlJobHand : etlJobHandList) {
-				// 4.循环干预作业
-				jobLevelInterventionOperate(etl_sys_cd, etlJobHand.get("etl_job"), etl_hand_type,
-						etlJobHand.get("curr_bath_date"), job_priority);
-			}
+		// 3.遍历获取批量干预作业名称以及当前批量日期
+		for (JobHandBean jobHandBean : jobHandBeans) {
+			Validator.notBlank(jobHandBean.getEtl_job(), "作业名称不能为空");
+			Validator.notBlank(jobHandBean.getEtl_hand_type(), "干预类型不能为空");
+			Validator.notBlank(jobHandBean.getEtl_sys_cd(), "工程编号不能为空");
+			Validator.notBlank(jobHandBean.getCurr_bath_date(), "批量日期不能为空");
+			// 4.循环干预作业
+			jobLevelInterventionOperate(jobHandBean.getEtl_sys_cd(), jobHandBean.getEtl_job(),
+					jobHandBean.getEtl_hand_type(), jobHandBean.getCurr_bath_date(), job_priority);
 		}
 	}
 
