@@ -548,9 +548,9 @@ public class ConnUtil {
 			Element table = (Element) value;
 			String tableName = table.getAttribute("table_name");
 			if (tableName.equals(table_name)) {
-				Map<String, String> columnMap = new HashMap<>();
 				List<?> columns = XMLUtil.getChildElements(table, "columns");
 				for (Object object : columns) {
+					Map<String, String> columnMap = new HashMap<>();
 					Element column = (Element) object;
 					columnMap.put("column_name", column.getAttribute("column_name"));
 					columnMap.put("data_desc", column.getAttribute("column_ch_name"));
