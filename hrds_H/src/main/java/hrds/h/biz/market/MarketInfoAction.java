@@ -495,21 +495,22 @@ public class MarketInfoAction extends BaseAction {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_en_name(datatable_en_name);
-		Optional<Dm_datatable> dm_datatableOptional = null;
+		List<Dm_datatable> dm_datatables  = null;
 		//如果是新增集市表
 		if (StringUtils.isEmpty(datatable_id)) {
 			//查询相同表名的表
-			dm_datatableOptional = Dbo.queryOneObject(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
+			 dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ?", dm_datatable.getDatatable_en_name());
 		}
 		//更新 SQL多增加一个不包括当前ID
 		else {
 			dm_datatable.setDatatable_id(datatable_id);
 			//查询相同表名的表
-			dm_datatableOptional = Dbo.queryOneObject(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ? and datatable_id != ?",
+			dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + "  where datatable_en_name= ? and datatable_id != ?",
 					dm_datatable.getDatatable_en_name(), dm_datatable.getDatatable_id());
 		}
-		if (dm_datatableOptional.isPresent()) {
-			dm_datatable = dm_datatableOptional.get();
+		//如果不是空的话 那么无论有多少个相同的表 他们的配置也是一样的
+		if (!dm_datatables.isEmpty()) {
+			dm_datatable = dm_datatables.get(0);
 			resultmap.put("datatable_id", dm_datatable.getDatatable_id());
 			resultmap.put("result", true);
 		} else {
@@ -519,36 +520,35 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 
-	@Method(desc = "根据集市表主键ID:datatable_id 判断当前集市是否重复 ",
-			logicStep = "根据数据集市表ID进行查询")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
-	@Return(desc = "是否重复", range = "返回值取值范围")
-	public Boolean queryDataTableIdIfRepeat(String datatable_id) {
-		Map<String, Object> resultmap = new HashMap<>();
-		Dm_datatable dm_datatable = new Dm_datatable();
-		dm_datatable.setDatatable_id(datatable_id);
-		OptionalLong optionalLong = Dbo.queryNumber("select * from " + Dm_datatable.TableName +
-				" where datatable_en_name in (select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
-		if (optionalLong.isPresent()) {
-			long asLong = optionalLong.getAsLong();
-			if (asLong > 1) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			throw new BusinessSystemException("查询是否集市重复错误");
-		}
-	}
+//	@Method(desc = "根据集市表主键ID:datatable_id 判断当前集市是否重复 ",
+//			logicStep = "根据数据集市表ID进行查询")
+//	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
+//	@Return(desc = "是否重复", range = "返回值取值范围")
+//	public Boolean queryDataTableIdIfRepeat(String datatable_id) {
+//		Map<String, Object> resultmap = new HashMap<>();
+//		Dm_datatable dm_datatable = new Dm_datatable();
+//		dm_datatable.setDatatable_id(datatable_id);
+//		OptionalLong optionalLong = Dbo.queryNumber("select count(*) from " + Dm_datatable.TableName +
+//				" where datatable_en_name in (select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ? )", dm_datatable.getDatatable_id());
+//		if (optionalLong.isPresent()) {
+//			long asLong = optionalLong.getAsLong();
+//			if (asLong > 1) {
+//				return true;
+//			} else {
+//				return false;
+//			}
+//		} else {
+//			throw new BusinessSystemException("查询是否集市重复错误");
+//		}
+//	}
 
 	@Method(desc = "根据SQL获取采集数据，默认显示10条",
 			logicStep = "1.处理SQL" +
 					"2.查询SQL")
 	@Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID ")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter, String datatable_id) {
+	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter) {
 		Map<String, Object> resultmap = new HashMap<String, Object>();
 		//1.处理SQL
 		try {
@@ -648,7 +648,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 			//如果druid解析错误 并且没有返回信息 说明sql存在问题 用获取sql查询结果的方法返回错误信息
 			else {
-				getDataBySQL(querysql, sqlparameter, datatable_id);
+				getDataBySQL(querysql, sqlparameter);
 			}
 		}
 		String targetfield_type = "";
