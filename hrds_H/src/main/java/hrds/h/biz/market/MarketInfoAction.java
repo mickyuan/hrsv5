@@ -970,8 +970,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
 	@Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
 	@Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
-	@Param(name = "ifrepeat", desc = "ifrepeat", range = "表名是否为重复的")
-	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dcol_relation_store[] dm_column_storage, String querysql, String hbasesort, String ifrepeat) {
+	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dcol_relation_store[] dm_column_storage, String querysql, String hbasesort) {
 		Map<String, Object> resultmap = new HashMap<>();
 		//循环 检查数据合法性
 		for (int i = 0; i < datatable_field_info.length; i++) {
