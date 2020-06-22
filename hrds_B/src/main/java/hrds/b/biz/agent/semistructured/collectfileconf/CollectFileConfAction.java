@@ -157,15 +157,21 @@ public class CollectFileConfAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
 		Validator.notBlank(object_collect_task.getEn_name(), "英文名称不能为空");
 		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
+		Map<String, Object> columnMap = new HashMap<>();
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			// 4.获取所有数据字典表对应列信息
-			return SendMsgUtil.getDicColumnByTable(object_collect.getAgent_id(), object_collect.getFile_path(),
+			List<Object_collect_struct> dicColumnByTable = SendMsgUtil.getDicColumnByTable(object_collect.getAgent_id(), object_collect.getFile_path(),
 					getUserId(), object_collect_task.getEn_name());
+			// 前端需要根据是否存在数据字典采集列结构展示不同
+			columnMap.put("is_dictionary", IsFlag.Shi.getCode());
+			return dicColumnByTable;
 		}
 		List<String> firstLineList = getFirstLineInfo(ocs_id);
 		Validator.notEmpty(firstLineList, "没有数据字典时第一行数据不能为空，请检查");
 		// 5.数据字典不存在，解析第一行数据，按树结构方式返回
-		return parseFirstLine(firstLineList.get(0), "");
+		JSONArray firstLine = parseFirstLine(firstLineList.get(0), "");
+		columnMap.put("is_dictionary", IsFlag.Fou.getCode());
+		return columnMap;
 
 	}
 

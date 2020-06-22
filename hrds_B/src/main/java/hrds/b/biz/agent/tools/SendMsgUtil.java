@@ -428,11 +428,11 @@ public class SendMsgUtil {
 		String bodyString = new HttpClient()
 				.addData("file_path", file_path)
 				.addData("table_name", table_name)
-				.post(url).getBodyString();
+				.post(url)
+				.getBodyString();
 		// 4、转换agent返回的数据为想要格式
-		return JsonUtil.toObject(getRespMsg(bodyString, url),
-				new TypeReference<List<Object_collect_struct>>() {
-				}.getType());
+		return JsonUtil.toObject(getRespMsg(bodyString, url), new TypeReference<List<Object_collect_struct>>() {
+		}.getType());
 	}
 
 	@Method(desc = "获取agent解析数据字典数据",
