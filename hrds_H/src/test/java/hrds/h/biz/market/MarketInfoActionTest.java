@@ -15,6 +15,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.apache.commons.beanutils.BeanUtils;
@@ -54,8 +55,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	//数据操作信息表(SQL表）ID
 	private static final long ID = PrimayKeyGener.getNextId();
 	//前后置处理表ID
-//	private  final long RELID = PrimayKeyGener.getNextId();
-
+	private final long RELID = PrimayKeyGener.getNextId();
 	//类型对照ID
 	private static final long DTCS_ID = PrimayKeyGener.getNextId();
 	//长度对照表ID
@@ -74,6 +74,8 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	private Dtab_relation_store dtab_relation_store = newdtabrelationstore();
 	//定义全局的存储层
 	private final Data_store_layer data_store_layer = newdatastorelayer();
+	//定义全局的前后置处理表
+	private final Dm_relevant_info dm_relevant_info = newdmrelevantinfo();
 	//记录批量字段表
 	private List<Datatable_field_info> datatable_field_infos = new ArrayList<>();
 	//记录批量的字段附加属性关系表
@@ -186,6 +188,16 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		return dtab_relation_store;
 	}
 
+	//定义全局的前后置处理表
+	private Dm_relevant_info newdmrelevantinfo() {
+		Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
+		dm_relevant_info.setPost_work("delete from " + dm_datatable.getDatatable_en_name());
+		dm_relevant_info.setPre_work("delete from " + dm_datatable.getDatatable_en_name());
+		dm_relevant_info.setRel_id(RELID);
+		dm_relevant_info.setDatatable_id(DATATABLE_ID);
+		return dm_relevant_info;
+	}
+
 	//
 	//定义全局的dtab_relation_store
 	private Data_store_layer newdatastorelayer() {
@@ -257,6 +269,8 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 			assertThat("初始化数据成功", etl_sys.add(db), is(1));
 			//初始化作业任务表
 			assertThat("初始化数据成功", etl_sub_sys_list.add(db), is(1));
+			//初始化前后置处理表
+			assertThat("初始化数据成功", dm_relevant_info.add(db), is(1));
 			//初始化数据表字段信息
 			for (int i = 0; i < COLUMN.size(); i++) {
 				Datatable_field_info datatable_field_info = newdatatablefieldinfo(COLUMN.get(i), String.valueOf(i));
@@ -304,6 +318,12 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 			checkdeletedata(db, Dtab_relation_store.TableName, "tab_id", dtab_relation_store.getTab_id());
 			checkdeletedata(db, Etl_sys.TableName, "etl_sys_cd", etl_sys.getEtl_sys_cd());
 			checkdeletedata(db, Etl_sub_sys_list.TableName, "etl_sys_cd", etl_sub_sys_list.getEtl_sys_cd());
+			checkdeletedata(db, Etl_job_def.TableName, "etl_sys_cd", etl_sub_sys_list.getEtl_sys_cd());
+			checkdeletedata(db, Etl_dependency.TableName, "etl_sys_cd", etl_sys.getEtl_sys_cd());
+			checkdeletedata(db, Etl_para.TableName, "etl_sys_cd", etl_sys.getEtl_sys_cd());
+			checkdeletedata(db, Etl_job_resource_rela.TableName, "etl_sys_cd", etl_sys.getEtl_sys_cd());
+			checkdeletedata(db, Etl_resource.TableName, "etl_sys_cd", etl_sys.getEtl_sys_cd());
+			checkdeletedata(db, Dm_relevant_info.TableName, "rel_id", dm_relevant_info.getRel_id());
 			for (Datatable_field_info datatable_field_info : datatable_field_infos) {
 				checkdeletedata(db, Datatable_field_info.TableName, "datatable_id", datatable_field_info.getDatatable_id());
 			}
@@ -473,11 +493,8 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		assertThat(rightResult.isSuccess(), is(true));
 		DatabaseWrapper db = null;
 		try {
-			after();
 			db = new DatabaseWrapper();
-			long longnum = querylong(db, Dm_info.TableName, "data_mart_id", dm_info.getData_mart_id());
-			assertThat(longnum == 0L, is(true));
-			longnum = querylong(db, Dm_datatable.TableName, "datatable_id", dm_datatable.getDatatable_id());
+			long longnum = querylong(db, Dm_datatable.TableName, "datatable_id", dm_datatable.getDatatable_id());
 			assertThat(longnum == 0L, is(true));
 			longnum = querylong(db, Dm_operation_info.TableName, "id", dm_operation_info.getId());
 			assertThat(longnum == 0L, is(true));
@@ -507,7 +524,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 	//封装一个查询count的方法
 	private long querylong(DatabaseWrapper db, String tablename, String key, Object value) {
 		return SqlOperator.queryNumber(db, "select count(*) from " + tablename + " where " + key + " = ?", value)
-				.orElseThrow(() -> new BusinessException("查询" + tablename+ "失败"));
+				.orElseThrow(() -> new BusinessException("查询" + tablename + "失败"));
 	}
 
 	@Test
@@ -980,10 +997,15 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		DatabaseWrapper db = null;
 		try {
 			db = new DatabaseWrapper();
-			Etl_job_def etl_job_def = SqlOperator.queryOneObject(db, Etl_job_def.class, "select * from " + Etl_job_def.TableName + " where etl_sys_cd = ? and sub_sys_cd = ? ",
+			Etl_job_def etl_job_def = SqlOperator.queryOneObject(db, Etl_job_def.class, "select * from " + Etl_job_def.TableName +
+							" where etl_sys_cd = ? and sub_sys_cd = ? ",
 					etl_sys.getEtl_sys_cd(), etl_sub_sys_list.getSub_sys_cd()).orElseThrow(() -> new BusinessException("查询" + Etl_job_def.TableName + "失败"));
-//			assertThat();
-
+			assertThat(etl_job_def.getEtl_sys_cd().equals(etl_sys.getEtl_sys_cd()), is(true));
+			assertThat(etl_job_def.getSub_sys_cd().equals(etl_sub_sys_list.getSub_sys_cd()), is(true));
+			assertThat(etl_job_def.getEtl_job().equals(etl_sub_sys_list.getSub_sys_cd() + "_DML_" + dm_datatable.getDatatable_en_name()),
+					is(true));
+			assertThat(etl_job_def.getPro_type().equals(Pro_Type.SHELL.getCode()), is(true));
+			assertThat(etl_job_def.getPro_para().equals(dm_datatable.getDatatable_id() + "@#{txdate}"), is(true));
 		} catch (Exception e) {
 			if (db != null) {
 				db.rollback();
@@ -994,5 +1016,151 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 				db.close();
 			}
 		}
+	}
+
+	@Test
+	public void getTableName() {
+		String rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.post(getActionUrl("getTableName")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		String s = rightResult.getData().toString();
+		assertThat(dm_datatable.getDatatable_en_name().equals(s), is(true));
+	}
+
+
+	@Test
+	public void savePreAndAfterJob() {
+		String post_work = "";
+		String pre_work = "";
+		String rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		//后置处理修改的表名与集市表名不相同
+		post_work = "delete from tableAAAAAAAA";
+		pre_work = "";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+		//后置处理修改的表名与集市表名不相同
+		post_work = "update tableAAAAAAAA set columnAAAA = 'AAAAAAAAAA'";
+		pre_work = "";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+		//后置处理修改的表名与集市表名不相同
+		post_work = "insert into tableAAAAAAAA (columnAAA) values ('AAA')";
+		pre_work = "";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+		//前置处理修改的表名与集市表名不相同
+		post_work = "";
+		pre_work = "delete from tableAAAAAAAA";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+		//前置处理修改的表名与集市表名不相同
+		post_work = "";
+		pre_work = "update tableAAAAAAAA set columnAAAA = 'AAAAAAAAAA'";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+		//前置处理修改的表名与集市表名不相同
+		post_work = "";
+		pre_work = "insert into tableAAAAAAAA (columnAAA) values ('AAA')";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+		//存储不是sql的东西
+		post_work = "I am not a sql";
+		pre_work = "";
+		rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.addData("pre_work", pre_work)
+				.addData("post_work", post_work)
+				.post(getActionUrl("savePreAndAfterJob")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(false));
+	}
+
+	@Test
+	public void getPreAndAfterJob() {
+		String rightString = new HttpClient()
+				.addData("datatable_id", dm_datatable.getDatatable_id())
+				.post(getActionUrl("getPreAndAfterJob")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		Dm_relevant_info dm_relevant_info1 = JSON.parseObject(rightResult.getData().toString(), new TypeReference<Dm_relevant_info>() {
+		});
+		assertThat(dm_relevant_info1.equals(dm_relevant_info), is(true));
+	}
+
+	@Test
+	public void checkOracle() {
+		//正确的表名
+		String datatable_en_name = "aa";
+		String rightString = new HttpClient()
+				.addData("dsl_id", DSL_ID)
+				.addData("datatable_en_name", datatable_en_name)
+				.post(getActionUrl("checkOracle")).getBodyString();
+		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		Object data = rightResult.getData();
+		assertThat(data instanceof Boolean, is(true));
+		assertThat(data.equals(true), is(true));
+		//过长的表名
+		datatable_en_name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		rightString = new HttpClient()
+				.addData("dsl_id", DSL_ID)
+				.addData("datatable_en_name", datatable_en_name)
+				.post(getActionUrl("checkOracle")).getBodyString();
+		rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败!"));
+		assertThat(rightResult.isSuccess(), is(true));
+		data = rightResult.getData();
+		assertThat(data instanceof Boolean, is(true));
+		assertThat(data.equals(false), is(true));
+
 	}
 }
