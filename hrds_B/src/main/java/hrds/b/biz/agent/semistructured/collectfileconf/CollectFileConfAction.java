@@ -40,7 +40,7 @@ public class CollectFileConfAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 
-	@Method(desc = "根据对象采集id与agent id查询对象采集对应信息的合集(采集文件配置）",
+	@Method(desc = "根据对象采集id查询对象采集对应信息的合集(采集文件配置）",
 			logicStep = "1.根据对象采集id查询对象采集对应信息表返回到前端" +
 					"2.判断当前半结构化采集任务是否已存在" +
 					"3.获取解析数据字典向agent发送请求所需参数" +
@@ -155,10 +155,12 @@ public class CollectFileConfAction extends BaseAction {
 				"select agent_id,file_path,file_suffix,is_dictionary,data_date from "
 						+ Object_collect.TableName + " where odc_id=?", object_collect_task.getOdc_id())
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+		Validator.notBlank(object_collect_task.getEn_name(), "英文名称不能为空");
+		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			// 4.获取所有数据字典表对应列信息
-			return SendMsgUtil.getDicAllColumn(object_collect.getAgent_id(), object_collect.getFile_path(),
-					getUserId());
+			return SendMsgUtil.getDicColumnByTable(object_collect.getAgent_id(), object_collect.getFile_path(),
+					getUserId(), object_collect_task.getEn_name());
 		}
 		List<String> firstLineList = getFirstLineInfo(ocs_id);
 		Validator.notEmpty(firstLineList, "没有数据字典时第一行数据不能为空，请检查");
