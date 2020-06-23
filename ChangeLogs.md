@@ -20,6 +20,8 @@
 - Node.java 修改该类为自定义实体Bean,对所有属性添加get和set
 - NodeDataConvertedTreeList.java 使用get替代获取属性值,set替代设置属性值
 - NodeIDComparator.java 使用get替代获取属性值
+- LoginOperationLogInfo类：saveLoginLog方法：new DatabaseWrapper改为直接使用Dbo
+- AgentActionUtil类：getUrl方法：将两句查询sql并为一个join关联sql
 
 ### B项目
 - StoDestStepConfAction：saveTbStoInfo：修改类容: 获取主键的类型改为long,之前为String
@@ -29,6 +31,23 @@
 - CollectFIleAction：saveDataFile ： 修改类容: 回去的主键进行转换,增加String.valueOf
 - DictionaryTableAction：saveTableData：修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
 - DBConfStepAction：saveDbConf：修改类容: 获取主键的类型改为long,之前为String
+- UnstructuredFileCollectActionTest类：修改测试用例支持多线程并发测试
+
+### Agent项目
+- JobConstant类：增加常量：agent写文件时缓存的行数 5000条
+- JdbcToCsvFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- JdbcToFixedFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- JdbcToIncrementFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- JdbcToNonFixedFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- JdbcToOrcFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- JdbcToParquetFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- JdbcToSequenceFileWriter类：writeFiles方法：写文件时缓存的行数使用JobConstant类常量
+- CsvFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
+- FixedFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
+- NonFixedFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
+- ParquetFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
+- SequenceFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
+- ReadFileToDataBase类：读文件batch提交到数据库缓存的行数使用JobConstant类常量
 
 ### K项目
 - DataManageAction类：删除getDMStatistics方法,提供getTableStatistics和getRuleStatistics方法,参数名称query_num修改为statistics_layer_num
