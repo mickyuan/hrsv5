@@ -21,7 +21,7 @@
 - NodeDataConvertedTreeList.java 使用get替代获取属性值,set替代设置属性值
 - NodeIDComparator.java 使用get替代获取属性值
 
-### B
+### B项目
 - StoDestStepConfAction：saveTbStoInfo：修改类容: 获取主键的类型改为long,之前为String
 - CollTbConfStepAction：saveAllSQL： 修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
 - CollTbConfStepAction： saveCollTbInfo：修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
