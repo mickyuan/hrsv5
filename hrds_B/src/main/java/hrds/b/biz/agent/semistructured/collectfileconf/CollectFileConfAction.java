@@ -144,7 +144,7 @@ public class CollectFileConfAction extends BaseAction {
 					"5.数据字典不存在，解析第一行数据，按树结构方式返回")
 	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
-	public Object searchObjectCollectStruct(long ocs_id) {
+	public Map<String, Object> searchObjectCollectStruct(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.根据对象采集任务编号查询对象采集任务信息
 		Object_collect_task object_collect_task = Dbo.queryOneObject(Object_collect_task.class,
@@ -164,13 +164,15 @@ public class CollectFileConfAction extends BaseAction {
 					getUserId(), object_collect_task.getEn_name());
 			// 前端需要根据是否存在数据字典采集列结构展示不同
 			columnMap.put("is_dictionary", IsFlag.Shi.getCode());
-			return dicColumnByTable;
+			columnMap.put("dicColumnByTable", dicColumnByTable);
+			return columnMap;
 		}
 		List<String> firstLineList = getFirstLineInfo(ocs_id);
 		Validator.notEmpty(firstLineList, "没有数据字典时第一行数据不能为空，请检查");
 		// 5.数据字典不存在，解析第一行数据，按树结构方式返回
 		JSONArray firstLine = parseFirstLine(firstLineList.get(0), "");
 		columnMap.put("is_dictionary", IsFlag.Fou.getCode());
+		columnMap.put("dicColumnByTable", firstLine);
 		return columnMap;
 
 	}
