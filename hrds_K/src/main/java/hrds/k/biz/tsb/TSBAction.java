@@ -8,7 +8,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -227,31 +226,26 @@ public class TSBAction extends BaseAction {
             }
         });
         //结果存入数据库
-        DatabaseWrapper db = new DatabaseWrapper();
-        try {
-            //设置检测结束时间
-            Dbm_normbm_detect dbm_normbm_detect = tsbConf.getDbm_normbm_detect();
-            dbm_normbm_detect.setDetect_edate(DateUtil.getSysDate());
-            dbm_normbm_detect.setDetect_etime(DateUtil.getSysTime());
-            //保存对标检测记录表表信息
-            tsbConf.setDbm_normbm_detect(dbm_normbm_detect);
-            tsbConf.getDbm_normbm_detect().add(db);
-            //保存对标检测表信息表
-            tsbConf.getDbm_dtable_info().add(db);
-            //保存对标检测字段信息表
-            tsbConf.getDbm_dtcol_info_list().forEach(dbm_dtcol_info -> dbm_dtcol_info.add(db));
-            //保存对标检测结果表
-            tsbConf.getDbm_normbmd_result_list().forEach(dbm_normbmd_result -> dbm_normbmd_result.add(db));
-            //提交所有数据库执行操作
-            SqlOperator.commitTransaction(db);
-            //数据保存完成后,清理本次操作数据
-            tsbConf.setDbm_normbm_detect(new Dbm_normbm_detect());
-            tsbConf.setDbm_dtable_info(new Dbm_dtable_info());
-            tsbConf.getDbm_dtcol_info_list().clear();
-            tsbConf.getDbm_normbmd_result_list().clear();
-        } catch (Exception e) {
-            db.rollback();
-        }
+        //设置检测结束时间
+        Dbm_normbm_detect dbm_normbm_detect = tsbConf.getDbm_normbm_detect();
+        dbm_normbm_detect.setDetect_edate(DateUtil.getSysDate());
+        dbm_normbm_detect.setDetect_etime(DateUtil.getSysTime());
+        //保存对标检测记录表表信息
+        tsbConf.setDbm_normbm_detect(dbm_normbm_detect);
+        tsbConf.getDbm_normbm_detect().add(Dbo.db());
+        //保存对标检测表信息表
+        tsbConf.getDbm_dtable_info().add(Dbo.db());
+        //保存对标检测字段信息表
+        tsbConf.getDbm_dtcol_info_list().forEach(dbm_dtcol_info -> dbm_dtcol_info.add(Dbo.db()));
+        //保存对标检测结果表
+        tsbConf.getDbm_normbmd_result_list().forEach(dbm_normbmd_result -> dbm_normbmd_result.add(Dbo.db()));
+        //提交所有数据库执行操作
+        SqlOperator.commitTransaction(Dbo.db());
+        //数据保存完成后,清理本次操作数据
+        tsbConf.setDbm_normbm_detect(new Dbm_normbm_detect());
+        tsbConf.setDbm_dtable_info(new Dbm_dtable_info());
+        tsbConf.getDbm_dtcol_info_list().clear();
+        tsbConf.getDbm_normbmd_result_list().clear();
     }
 
     @Method(desc = "设置对标检测记录",
