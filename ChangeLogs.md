@@ -15,5 +15,9 @@
 - PrimayKeyGener类：添加静态块方法：主要读取数据库配置的初始数据，以便生成主键
 - PrimayKeyGener类：getNextId方法：修改返回值为long类型
 
+### B
+- StoDestStepConfAction.java：saveTbStoInfo方法：获取主键的类型次改为long,之前为String
+- CollTbConfStepAction.java：saveAllSQL、saveCollTbInfo方法：获取主键的类型次改为long,之前为String,并去除之前的Long.parse
+- ObjectCollectAction.java：saveCollectColumnStruct方法：获取主键返回的是long,这里不在使用String接收
 
 
