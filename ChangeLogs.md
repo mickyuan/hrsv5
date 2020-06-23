@@ -14,10 +14,52 @@
 - 02-seq.sql添加对KEYTABLE_SNOWFLAKE表的初始化sql
 - PrimayKeyGener类：添加静态块方法：主要读取数据库配置的初始数据，以便生成主键
 - PrimayKeyGener类：getNextId方法：修改返回值为long类型
+- DataTableUtil类：getTableInfoAndColumnInfo方法 修改switch为ifelse判断
+- DataTableUtil类：getColumnByFileId方法： 修改switch为ifelse判断
+- DataTableUtil类：getColumnByTableName方法： 添加DML层查询
+- Node.java 修改该类为自定义实体Bean,对所有属性添加get和set
+- NodeDataConvertedTreeList.java 使用get替代获取属性值,set替代设置属性值
+- NodeIDComparator.java 使用get替代获取属性值
 
 ### B
-- StoDestStepConfAction.java：saveTbStoInfo方法：获取主键的类型次改为long,之前为String
-- CollTbConfStepAction.java：saveAllSQL、saveCollTbInfo方法：获取主键的类型次改为long,之前为String,并去除之前的Long.parse
-- ObjectCollectAction.java：saveCollectColumnStruct方法：获取主键返回的是long,这里不在使用String接收
+- StoDestStepConfAction：saveTbStoInfo：修改类容: 获取主键的类型改为long,之前为String
+- CollTbConfStepAction：saveAllSQL： 修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
+- CollTbConfStepAction： saveCollTbInfo：修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
+- ObjectCollectAction：saveCollectColumnStruct：修改类容: 获取主键返回的是long,这里不在使用String接收
+- CollectFIleAction：saveDataFile ： 修改类容: 回去的主键进行转换,增加String.valueOf
+- DictionaryTableAction：saveTableData：修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
+- DBConfStepAction：saveDbConf：修改类容: 获取主键的类型改为long,之前为String
 
+### K项目
+- DataManageAction类：删除getDMStatistics方法,提供getTableStatistics和getRuleStatistics方法,参数名称query_num修改为statistics_layer_num
+- BloodAnalysisAction：getTableBloodRelationship方法： 优化校验参数方式,使用Validator进行校验
+- BloodAnalysisAction：fuzzySearchTableName方法： 优化校验参数方式,使用Validator进行校验
+- BloodAnalysisAction：influencesDataInfo方法：优化校验参数方式,使用Validator进行校验
+- MetaDataManageAction：getMDMTreeData 修改返回结果集类型Map<String, Object>为List<Node>
+- MetaDataManageAction：getDRBTreeData 修改返回结果集类型Map<String, Object>为List<Node>
+- MetaDataManageAction：getMDMTableColumnInfo 优化校验参数方式,使用Validator进行校验,修改switch为ifelse判断
+- MetaDataManageAction：saveMetaData 修改switch为ifelse判断
+- MetaDataManageAction：tableSetToInvalid 修改switch为ifelse判断
+- MetaDataManageAction：removeCompletelyTable 删除new DatabaseWrapper()此处不需要
+- MetaDataManageAction：removeCompletelyAllTable 删除new DatabaseWrapper()此处不需要
+- MetaDataManageAction：createTable 修改switch为ifelse判断
+- TableMetaInfoTool:  setDCLTableInvalid 删除new DatabaseWrapper()此处不需要
+- TableMetaInfoTool:	setDMLTableInvalid 删除new DatabaseWrapper()此处不需要
+- TableMetaInfoTool:	restoreDCLTableInfo 删除new DatabaseWrapper()此处不需要
+- TableMetaInfoTool:	restoreDMLTableInfo 删除new DatabaseWrapper()此处不需要
+- TableMetaInfoTool:	updateDCLTableMetaInfo 删除new DatabaseWrapper()此处不需要
+- TableMetaInfoTool:	updateDMLTableMetaInfo 删除new DatabaseWrapper()此处不需要
+- RuleConfigAction：addDqDefinition 优化校验参数方式,使用Validator进行校验
+- RuleConfigAction：updateDqDefinition 优化校验参数方式,使用Validator进行校验
+- RuleConfigAction：getColumnsByTableName 优化校验参数方式,使用Validator进行校验
+- RuleConfigAction：manualExecution	删除new DatabaseWrapper()此处不需要
+- RuleConfigAction：getTaskInfo 优化校验参数方式,使用Validator进行校验
+- RuleConfigAction：errDataSqlCheck 修改提示信息
+- RuleConfigAction：listToMap 删除,无用代码
+- VariableConfigAction：addVariableConfigDat 优化校验参数方式,使用Validator进行校验,修改sql拼接方式
+- VariableConfigAction：updateVariableConfigData 优化校验参数方式,使用Validator进行校验,修改sql拼接方式
+- TSBAction：getTSBTreeData 修改返回结果集类型Map<String, Object>为List<Node>
+- TSBAction：getColumnByFileId 添加根据数据层获取不同数据层的字段信息
+- TSBAction：saveTSBConfData 使用new DatabaseWrapper()后添加回滚
+- TSBAction：setDbmDtableInfo 修改变量名称,混淆定义
 
