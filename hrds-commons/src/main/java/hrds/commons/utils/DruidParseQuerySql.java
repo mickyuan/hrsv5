@@ -698,6 +698,7 @@ public class DruidParseQuerySql {
      */
     public String GetNewSql(String sql) {
         String dbType = JdbcConstants.ORACLE;
+        List<String> sqllist = new ArrayList<>();
         List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             for (SQLStatement stmt : stmtList) {
@@ -705,9 +706,11 @@ public class DruidParseQuerySql {
                 SQLSelect sqlSelect = sqlSelectStatement.getSelect();
                 SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
                 setFrom(sqlSelectQuery, db);
+                sqllist.add(sqlSelectQuery.toString());
             }
         }
-        return sql;
+        return sqllist.get(0);
+
     }
 
     /**
