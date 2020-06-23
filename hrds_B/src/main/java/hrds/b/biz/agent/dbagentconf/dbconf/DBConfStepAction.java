@@ -421,7 +421,7 @@ public class DBConfStepAction extends BaseAction {
 					databaseSet.getDatabase_number())
 					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			if (val != 0) {
-				throw new BusinessException("作业编号重复，请重新定义作业编号");
+				throw new BusinessException("任务编号重复，请重新定义作业编号");
 			}
 
 			long id = PrimayKeyGener.getNextId();
