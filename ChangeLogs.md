@@ -5,15 +5,15 @@
 - fdcore Validator类：新增对isIpAddr isPort两个方法，判断ip地址、端口的合法性
 - fdcore validator类：修改所有的抛出异常的方法，修改为BusinessProcessException异常，因为需要将信息抛给页面
 - fdcore AppinfoConf类：添加读取appinfo配置文件中projectId参数，同时添加对配置文件中properties参数可以任意定义key-value的方式
-- fdnetclient HttpClient类：添加addData方法，支持测试用例直接可以传入一个实体bean
-- fdcore JsonUtil类：添加toJsonForJS方法，支持long类型的长度，如果超出16位默认转存字符串返回
-- fdweb ResponseUtil类：修改writeJSON方法，支持long类型的长度，如果超出16位默认转存字符串的方式返回给页面
+- fdnetclient HttpClient类：添加addData方法：支持测试用例直接可以传入一个实体bean
+- fdcore JsonUtil类：添加toJsonForJS方法：支持long类型的长度，如果超出16位默认转存字符串返回
+- fdweb ResponseUtil类：修改writeJSON方法：支持long类型的长度，如果超出16位默认转存字符串的方式返回给页面
 
 ### commons
 - 01-create_table.sql添加KEYTABLE_SNOWFLAKE表：主要配置获取主键的数据中心id和机器识别id
 - 02-seq.sql添加对KEYTABLE_SNOWFLAKE表的初始化sql
-- PrimayKeyGener类：添加静态块方法主要读取数据库配置的初始数据，以便生成主键
-- PrimayKeyGener类：getNextId方法，修改返回值为long类型
+- PrimayKeyGener类：添加静态块方法：主要读取数据库配置的初始数据，以便生成主键
+- PrimayKeyGener类：getNextId方法：修改返回值为long类型
 
 
 
