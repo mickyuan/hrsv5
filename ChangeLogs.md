@@ -81,4 +81,6 @@
 - TSBAction：getColumnByFileId 添加根据数据层获取不同数据层的字段信息
 - TSBAction：saveTSBConfData 使用new DatabaseWrapper()后添加回滚
 - TSBAction：setDbmDtableInfo 修改变量名称,混淆定义
+- ImportData：importDbmCodeTypeInfoData：获取主键id返回值类型调整long > string
+- TSBAction：saveTSBConfData、setDbmNormbmDetect、setDbmNormbmdResult：获取主键id返回值类型调整long > string
 
