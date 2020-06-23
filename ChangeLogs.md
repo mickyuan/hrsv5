@@ -24,14 +24,29 @@
 - AgentActionUtil类：getUrl方法：将两句查询sql并为一个join关联sql
 
 ### B项目
-- StoDestStepConfAction：saveTbStoInfo：修改类容: 获取主键的类型改为long,之前为String
-- CollTbConfStepAction：saveAllSQL： 修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
-- CollTbConfStepAction： saveCollTbInfo：修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
-- ObjectCollectAction：saveCollectColumnStruct：修改类容: 获取主键返回的是long,这里不在使用String接收
-- CollectFIleAction：saveDataFile ： 修改类容: 回去的主键进行转换,增加String.valueOf
-- DictionaryTableAction：saveTableData：修改类容: 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
-- DBConfStepAction：saveDbConf：修改类容: 获取主键的类型改为long,之前为String
+- StoDestStepConfAction：saveTbStoInfo：获取主键的类型改为long,之前为String
+- CollTbConfStepAction：saveAllSQL：获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
+- CollTbConfStepAction： saveCollTbInfo：获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
+- ObjectCollectAction：saveCollectColumnStruct：获取主键返回的是long,这里不在使用String接收
+- CollectFIleAction：saveDataFile：回去的主键进行转换,增加String.valueOf
+- DictionaryTableAction：saveTableData： 获取主键的类型改为long,之前为String,并去除之前的Long.parseLong
+- DBConfStepAction：saveDbConf : 获取主键的类型改为long,之前为String
 - UnstructuredFileCollectActionTest类：修改测试用例支持多线程并发测试
+- ObjectCollectAction：saveCollectColumnStruct：获取主键的类型改为long,之前为String
+- ObjectCollectAction：saveCollectColumnStruct:获取主键的类型改为long,之前为String
+- DataSourceAction：addColumnSplit：获取主键的类型改为long,之前为String
+- DataSourceAction：addColumnSplit：获取主键的类型改为long,之前为String
+- DataSourceAction：addTableClean： 获取主键的类型改为long,之前为String
+- DataSourceAction：addFileSource：获取主键的类型改为long,之前为String
+- DataSourceAction：addObjectStorage：获取主键的类型改为long,之前为String
+- DataSourceAction：addFtpTransfered：获取主键的类型改为long,之前为String
+- DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
+- DataSourceAction：addSourceRelationDep：获取主键的类型改为long,之前为String
+- DataSourceAction：getDataSource：获取主键的类型改为long,之前为String
+- DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
+- DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
+- DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
+- DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
 
 ### Agent项目
 - JobConstant类：增加常量：agent写文件时缓存的行数 5000条
