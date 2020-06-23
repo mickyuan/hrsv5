@@ -61,7 +61,7 @@ public class AgentActionUtil {
 	//向agent发送一个半结构化直连解析数据字典获取表信息
 	public static final String GETDICTABLE = "/hrds/agent/trans/biz/semistructured/getDicTable";
 	//向agent发送一个半结构化直连解析数据字典根据表名获取列信息
-	public static final String GETDICALLCOLUMN = "/hrds/agent/trans/biz/semistructured/getDicAllColumn";
+	public static final String GETDICCOLUMNBYTABLE = "/hrds/agent/trans/biz/semistructured/getDicColumnByTable";
 	//向agent发送一个半结构化直连解析数据字典根据表名获取数据处理方式信息
 	public static final String GETHANDLETYPEBYTABLE = "/hrds/agent/trans/biz/semistructured/getHandleTypeByTable";
 	//向agent发送一个半结构化直连重写数据字典任务
@@ -88,7 +88,7 @@ public class AgentActionUtil {
 		list.add(BATCHADDFTPTRANSFER);
 		list.add(SENDFTPCOLLECTTASKINFO);
 		list.add(GETDICTABLE);
-		list.add(GETDICALLCOLUMN);
+		list.add(GETDICCOLUMNBYTABLE);
 		list.add(GETHANDLETYPEBYTABLE);
 		list.add(WRITEDICTIONARY);
 		list.add(ADDDATASTOREREG);

@@ -40,7 +40,7 @@ public class CollectFileConfAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 
-	@Method(desc = "根据对象采集id与agent id查询对象采集对应信息的合集(采集文件配置）",
+	@Method(desc = "根据对象采集id查询对象采集对应信息的合集(采集文件配置）",
 			logicStep = "1.根据对象采集id查询对象采集对应信息表返回到前端" +
 					"2.判断当前半结构化采集任务是否已存在" +
 					"3.获取解析数据字典向agent发送请求所需参数" +
@@ -144,7 +144,7 @@ public class CollectFileConfAction extends BaseAction {
 					"5.数据字典不存在，解析第一行数据，按树结构方式返回")
 	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
-	public Object searchObjectCollectStruct(long ocs_id) {
+	public Map<String, Object> searchObjectCollectStruct(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.根据对象采集任务编号查询对象采集任务信息
 		Object_collect_task object_collect_task = Dbo.queryOneObject(Object_collect_task.class,
@@ -155,15 +155,25 @@ public class CollectFileConfAction extends BaseAction {
 				"select agent_id,file_path,file_suffix,is_dictionary,data_date from "
 						+ Object_collect.TableName + " where odc_id=?", object_collect_task.getOdc_id())
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+		Validator.notBlank(object_collect_task.getEn_name(), "英文名称不能为空");
+		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
+		Map<String, Object> columnMap = new HashMap<>();
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			// 4.获取所有数据字典表对应列信息
-			return SendMsgUtil.getDicAllColumn(object_collect.getAgent_id(), object_collect.getFile_path(),
-					getUserId());
+			List<Object_collect_struct> dicColumnByTable = SendMsgUtil.getDicColumnByTable(object_collect.getAgent_id(), object_collect.getFile_path(),
+					getUserId(), object_collect_task.getEn_name());
+			// 前端需要根据是否存在数据字典采集列结构展示不同
+			columnMap.put("is_dictionary", IsFlag.Shi.getCode());
+			columnMap.put("dicColumnByTable", dicColumnByTable);
+			return columnMap;
 		}
 		List<String> firstLineList = getFirstLineInfo(ocs_id);
 		Validator.notEmpty(firstLineList, "没有数据字典时第一行数据不能为空，请检查");
 		// 5.数据字典不存在，解析第一行数据，按树结构方式返回
-		return parseFirstLine(firstLineList.get(0), "");
+		JSONArray firstLine = parseFirstLine(firstLineList.get(0), "");
+		columnMap.put("is_dictionary", IsFlag.Fou.getCode());
+		columnMap.put("dicColumnByTable", firstLine);
+		return columnMap;
 
 	}
 

@@ -91,51 +91,58 @@ public class CollectConfAction extends BaseAction {
 		}
 		// 3.获取解析与agent服务交互返回响应表数据
 		return SendMsgUtil.getDictionaryTableInfo(agent_id, file_path, is_dictionary, data_date, file_suffix,
-						getUserId());
+				getUserId());
 	}
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
-					"2.根据obj_number查询半结构化采集任务编号是否重复" +
-					"3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给" +
-					"4.判断是否存在数据字典选择否的时候数据日期是否为空" +
-					"5.如果选择有数据字典数据日期为空" +
-					"6.保存object_collect表数据入库，这里新增编辑放在一起是因为可能会上一步下一步查看配置信息" +
-					"7.返回对象采集ID")
+					"2.判断是否存在数据字典选择否的时候数据日期是否为空" +
+					"3.如果选择有数据字典数据日期为空" +
+					"4.保存object_collect表数据入库，这里新增编辑放在一起是因为可能会上一步下一步查看配置信息" +
+					"4.1.新增时根据obj_number查询半结构化采集任务编号是否重复" +
+					"4.2 更新" +
+					"5.返回对象采集ID")
 	@Param(name = "object_collect", desc = "对象采集设置表对象，对象中不能为空的字段必须有值",
 			range = "不可为空", isBean = true)
 	@Return(desc = "对象采集设置表id，新建的id后台生成的所以要返回到前端", range = "不会为空")
 	public long saveObjectCollect(Object_collect object_collect) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
-		// 2.根据obj_number查询半结构化采集任务编号是否重复
-		long count = Dbo.queryNumber(
-				"SELECT count(1) count FROM " + Object_collect.TableName + " WHERE obj_number = ?",
-				object_collect.getObj_number()).orElseThrow(() -> new BusinessException("sql查询错误"));
-		if (count > 0) {
-			throw new BusinessException("半结构化采集任务编号重复");
-		}
-		// 3.之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给
+		// 之前对象采集存在行采集与对象采集两种，目前仅支持行采集,所以默认给
 		object_collect.setObject_collect_type(ObjectCollectType.HangCaiJi.getCode());
-		// 4.判断是否存在数据字典选择否的时候数据日期是否为空
+		// 2.判断是否存在数据字典选择否的时候数据日期是否为空
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary()) &&
 				StringUtil.isBlank(object_collect.getData_date())) {
 			throw new BusinessException("当是否存在数据字典选择否的时候，数据日期不能为空");
 		}
-		// 5.如果选择有数据字典数据日期为空
+		// 3.如果选择有数据字典数据日期为空
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			object_collect.setData_date("");
 		}
-		// 6.保存object_collect表数据入库，这里新增编辑放在一起是因为可能会上一步下一步查看配置信息
+		// 4.保存object_collect表数据入库，这里新增编辑放在一起是因为可能会上一步下一步查看配置信息
 		if (object_collect.getOdc_id() == null) {
+			// 4.1.新增时根据obj_number查询半结构化采集任务编号是否重复
+			isObjNumberExist(object_collect.getObj_number());
 			// 新增
 			object_collect.setOdc_id(PrimayKeyGener.getNextId());
 			object_collect.add(Dbo.db());
 		} else {
-			// 更新
+			// 4.2 更新
 			object_collect.update(Dbo.db());
 		}
-		// 7.返回对象采集ID
+		// 5.返回对象采集ID
 		return object_collect.getOdc_id();
+	}
+
+	@Method(desc = "判断半结构化采集任务编号是否重复", logicStep = "1.判断半结构化采集任务编号是否重复")
+	@Param(name = "obj_number", desc = "采集任务编号", range = "新增半结构化配置信息时生成")
+	private void isObjNumberExist(String obj_number) {
+		// 1.判断半结构化采集任务编号是否重复
+		long count = Dbo.queryNumber(
+				"SELECT count(1) count FROM " + Object_collect.TableName + " WHERE obj_number = ?",
+				obj_number).orElseThrow(() -> new BusinessException("sql查询错误"));
+		if (count > 0) {
+			throw new BusinessException("半结构化采集任务编号重复");
+		}
 	}
 
 }

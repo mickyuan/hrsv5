@@ -511,11 +511,11 @@ public class ConnUtil {
 	}
 
 	@Method(desc = "半结构化采集通过表名获取处理方式值", logicStep = "")
-	@Param(name = "filename", desc = "采集文件路径", range = "无限制")
+	@Param(name = "xmlName", desc = "xml文件名称", range = "无限制")
 	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回半结构化采集获取数据字典所有表对应列信息", range = "无限制")
-	public static List<Object_handle_type> getHandleTypeByTable(String filename, String table_name) {
-		List<?> xmlToList = getXmlToList(filename);
+	public static List<Object_handle_type> getHandleTypeByTable(String xmlName, String table_name) {
+		List<?> xmlToList = getXmlToList(xmlName);
 		List<Object_handle_type> handleTypeList = new ArrayList<>();
 		for (Object o : xmlToList) {
 			Element table = (Element) o;
@@ -538,30 +538,30 @@ public class ConnUtil {
 	}
 
 	@Method(desc = "半结构化采集获取数据字典所有表对应列信息", logicStep = "")
-	@Param(name = "filename", desc = "采集文件路径", range = "无限制")
+	@Param(name = "xmlName", desc = "xml文件名称", range = "无限制")
+	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回半结构化采集获取数据字典所有表对应列信息", range = "无限制")
-	public static List<Object> getColumnByXml2(String filename) {
-		List<?> xmlToList = getXmlToList(filename);
-		List<Object> tableList = new ArrayList<>();
+	public static List<Map<String, String>> getColumnByTable2(String xmlName, String table_name) {
+		List<?> xmlToList = getXmlToList(xmlName);
+		List<Map<String, String>> columnList = new ArrayList<>();
 		for (Object value : xmlToList) {
-			List<Object> columnList = new ArrayList<>();
-			Map<String, Object> tableMap = new HashMap<>();
 			Element table = (Element) value;
-			Map<String, String> columnMap = new HashMap<>();
-			List<?> columns = XMLUtil.getChildElements(table, "columns");
-			for (Object object : columns) {
-				Element column = (Element) object;
-				columnMap.put("column_name", column.getAttribute("column_name"));
-				columnMap.put("data_desc", column.getAttribute("column_ch_name"));
-				columnMap.put("column_type", column.getAttribute("column_type"));
-				columnMap.put("is_operate", column.getAttribute("is_operate"));
-				columnMap.put("columnposition", column.getAttribute("columnposition"));
-				columnList.add(columnMap);
+			String tableName = table.getAttribute("table_name");
+			if (tableName.equals(table_name)) {
+				List<?> columns = XMLUtil.getChildElements(table, "columns");
+				for (Object object : columns) {
+					Map<String, String> columnMap = new HashMap<>();
+					Element column = (Element) object;
+					columnMap.put("column_name", column.getAttribute("column_name"));
+					columnMap.put("data_desc", column.getAttribute("column_ch_name"));
+					columnMap.put("column_type", column.getAttribute("column_type"));
+					columnMap.put("is_operate", column.getAttribute("is_operate"));
+					columnMap.put("columnposition", column.getAttribute("columnposition"));
+					columnList.add(columnMap);
+				}
 			}
-			tableMap.put(table.getAttribute("table_name"), columnList);
-			tableList.add(tableMap);
 		}
-		return tableList;
+		return columnList;
 	}
 
 	@Method(desc = "没有数据字典时读取数据文件", logicStep = "")

@@ -46,10 +46,6 @@ public class TSBActionTest extends WebBaseTestCase {
     //检测表结果id
     private static final String RESULT_ID = "-1000L";
 
-
-    private static String bodyString;
-    private static ActionResult ar;
-
     @Method(desc = "初始化测试用例依赖表数据",
             logicStep = "初始化测试用例依赖表数据"
     )
@@ -339,6 +335,8 @@ public class TSBActionTest extends WebBaseTestCase {
             logicStep = "获取树菜单测试方法")
     @Test
     public void getTSBTreeData() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("tree_source", "dataBenchmarking")
                 .post(getActionUrl("getTSBTreeData")).getBodyString();
@@ -351,6 +349,8 @@ public class TSBActionTest extends WebBaseTestCase {
             logicStep = "获取表字段信息列表")
     @Test
     public void getColumnByFileId() {
+        String bodyString;
+        ActionResult ar;
         bodyString = new HttpClient()
                 .addData("data_layer", "DCL")
                 .addData("table_type", "01")
@@ -366,18 +366,20 @@ public class TSBActionTest extends WebBaseTestCase {
             logicStep = "请求对标接口测试方法(因为要调用对标接口,测试用例无法实现)")
     @Test
     public void predictBenchmarking() {
-
+        //依赖预测对标结果接口
     }
 
     @Method(desc = "获取预测结果信息测试方法",
             logicStep = "获取预测结果信息测试方法(依赖 predictBenchmarking())")
     @Test
     public void getPredictResult() {
+        //依赖预测对标结果接口
     }
 
     @Method(desc = "获取预测结果信息测试方法",
             logicStep = "获取预测结果信息测试方法(依赖 getPredictResult())")
     @Test
     public void saveTSBConfData() {
+        //依赖预测对标结果接口
     }
 }
