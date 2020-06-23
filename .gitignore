@@ -39,5 +39,7 @@ TODO
 /hrds_A/src/main/resources/
 /hrds_B/src/main/resources/
 /hrds_H/src/main/resources/
+/hrds_Agent/src/main/resources/
+/hrds_Receive/src/main/resources/
 /hrds-commons/src/main/resources/
 /conf

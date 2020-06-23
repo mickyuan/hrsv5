@@ -130,6 +130,8 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 					String md5 = toMD5(midStringOther.toString());
 					group.append(Constant.EDATENAME, Constant.MAXDATE).append(Constant.MD5NAME, md5);
 				}
+				//添加操作日期、操作时间、操作人
+				appendOperateInfo(group);
 				if (JobConstant.WriteMultipleFiles) {
 					//获取文件大小和当前读到的内容大小
 					long messageSize = group.toString().length();
@@ -164,5 +166,16 @@ public class JdbcToParquetFileWriter extends AbstractFileWriter {
 		fileInfo.append(counter);
 		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
+	}
+
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(Group group) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			group.append(Constant.HYREN_OPER_DATE, operateDate);
+			group.append(Constant.HYREN_OPER_TIME, operateTime);
+			group.append(Constant.HYREN_OPER_PERSON, user_id);
+		}
 	}
 }

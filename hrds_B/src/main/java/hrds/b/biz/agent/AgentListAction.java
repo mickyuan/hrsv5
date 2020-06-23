@@ -739,7 +739,7 @@ public class AgentListAction extends BaseAction {
 					+ "ti.remark, ti.is_user_defined, ti.is_md5,ti.is_register,ti.is_parallel,ti.page_sql,ti.rec_num_date,"
 					+ "ti.unload_type,ti.is_customize_sql,ti.pageparallels, ti.dataincrement,tsi.storage_type, "
 					+ "tsi.storage_time, tsi.is_zipper, ds.datasource_number || '_' || cjc.classify_num || '_' || "
-					+ "ti.table_name as hbase_name, ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id"
+					+ "ti.table_name as hbase_name, ds.datasource_name, ai.agent_name, ai.agent_id,ai.user_id, ds.source_id"
 					+ " FROM "
 					+ Data_source.TableName
 					+ " ds "
@@ -1049,7 +1049,7 @@ public class AgentListAction extends BaseAction {
 					+ "ti.remark, ti.is_user_defined, ti.is_md5,ti.is_register,ti.is_parallel,ti.page_sql,ti.rec_num_date,"
 					+ "ti.unload_type,ti.is_customize_sql,ti.pageparallels, ti.dataincrement,tsi.storage_type, "
 					+ "tsi.storage_time, tsi.is_zipper, tsi.hyren_name as hbase_name, ds.datasource_name, ai.agent_name, ai.agent_id, ds.source_id, "
-					+ "dsr.storage_date FROM "
+					+ "ai.user_id , dsr.storage_date FROM "
 					+ Data_source.TableName
 					+ " ds "
 					+ " JOIN "

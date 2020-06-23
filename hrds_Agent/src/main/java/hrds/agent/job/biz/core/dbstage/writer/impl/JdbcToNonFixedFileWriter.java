@@ -121,6 +121,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					sb.append(dataDelimiter).append(Constant.MAXDATE).
 							append(dataDelimiter).append(md5);
 				}
+				//拼接操作时间、操作日期、操作人
+				appendOperateInfo(sb, dataDelimiter);
 				sb.append(data_extraction_def.getRow_separator());
 				if (JobConstant.WriteMultipleFiles) {
 					long messageSize = sb.toString().length();
@@ -161,5 +163,15 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		fileInfo.append(counter);
 		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
+	}
+
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(StringBuilder sb, String database_separatorr) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			sb.append(database_separatorr).append(operateDate).append(database_separatorr)
+					.append(operateTime).append(database_separatorr).append(user_id);
+		}
 	}
 }

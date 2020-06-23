@@ -6,6 +6,7 @@ import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dbstage.writer.AbstractFileWriter;
 import hrds.agent.job.biz.dataclean.Clean;
 import hrds.agent.job.biz.dataclean.CleanFactory;
@@ -18,10 +19,12 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "解析文件抽象类",createdate = "2020/4/21 16:44",author = "zxz")
+@DocClass(desc = "解析文件抽象类", createdate = "2020/4/21 16:44", author = "zxz")
 public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
 	protected TableBean tableBean;
@@ -53,6 +56,12 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	protected String unloadFileAbsolutePath;
 	//跑批日期
 	private String etl_date;
+	//操作日期
+	private String operateDate;
+	//操作时间
+	private String operateTime;
+	//操作人
+	private long user_id;
 
 	@SuppressWarnings("unchecked")
 	protected FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
@@ -81,6 +90,9 @@ public abstract class FileParserAbstract implements FileParserInterface {
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
 						StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type()));
 		this.etl_date = collectTableBean.getEtlDate();
+		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
+		this.user_id = collectTableBean.getUser_id();
 	}
 
 	@Override
@@ -104,8 +116,12 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		for (int i = 0; i < lineList.size(); i++) {
 			columnName = dictionaryColumnList.get(i);
 			//转存这里碰到HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列直接跳过
-			if (Constant.SDATENAME.equalsIgnoreCase(columnName) || Constant.EDATENAME.equalsIgnoreCase(columnName)
-					|| Constant.MD5NAME.equalsIgnoreCase(columnName)) {
+			if (Constant.SDATENAME.equalsIgnoreCase(columnName)
+					|| Constant.EDATENAME.equalsIgnoreCase(columnName)
+					|| Constant.MD5NAME.equalsIgnoreCase(columnName)
+					|| Constant.HYREN_OPER_DATE.equalsIgnoreCase(columnName)
+					|| Constant.HYREN_OPER_TIME.equalsIgnoreCase(columnName)
+					|| Constant.HYREN_OPER_PERSON.equalsIgnoreCase(columnName)) {
 				continue;
 			}
 			columnData = lineList.get(i);
@@ -138,6 +154,8 @@ public abstract class FileParserAbstract implements FileParserInterface {
 			lineSb.append(Constant.DATADELIMITER).append(Constant.MAXDATE);
 			lineSb.append(Constant.DATADELIMITER).append(MD5Util.md5String(midStringOther.toString()));
 		}
+		//拼接操作时间、操作日期、操作人
+		appendOperateInfo(lineSb);
 		lineSb.append(Constant.DEFAULTLINESEPARATOR);
 		writer.write(lineSb.toString());
 	}
@@ -149,6 +167,16 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					+ " 现在获取的长度是  " + dictionaryColumnList.size() + "\n" + "数据为 " + valueList;
 			//XXX 写文件还是直接抛异常  写文件就需要返回值，抛异常就不需要返回值
 			throw new AppSystemException(mss);
+		}
+	}
+
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(StringBuilder sb) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			sb.append(Constant.DATADELIMITER).append(operateDate).append(Constant.DATADELIMITER)
+					.append(operateTime).append(Constant.DATADELIMITER).append(user_id);
 		}
 	}
 }

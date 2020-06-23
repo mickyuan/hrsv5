@@ -133,6 +133,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					sb.append(database_separatorr).append(Constant.MAXDATE).
 							append(database_separatorr).append(md5);
 				}
+				//拼接操作时间、操作日期、操作人
+				appendOperateInfo(sb, database_separatorr);
 				sb.append(data_extraction_def.getRow_separator());
 				if (JobConstant.WriteMultipleFiles) {
 					long messageSize = sb.toString().length();
@@ -174,4 +176,13 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 		return fileInfo.toString();
 	}
 
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(StringBuilder sb, String database_separatorr) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			sb.append(database_separatorr).append(operateDate).append(database_separatorr)
+					.append(operateTime).append(database_separatorr).append(user_id);
+		}
+	}
 }

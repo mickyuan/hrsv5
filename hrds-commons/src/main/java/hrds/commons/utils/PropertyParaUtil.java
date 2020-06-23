@@ -5,11 +5,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.conf.ConfFileLoader;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.core.yaml.YamlFactory;
 import fd.ng.core.yaml.YamlMap;
-
-import java.math.BigDecimal;
 
 @DocClass(desc = "agent获取系统参数配置类", author = "zxz", createdate = "2019/11/8 14:30")
 public class PropertyParaUtil {
@@ -19,7 +16,7 @@ public class PropertyParaUtil {
 	//读取配置文件sysparam.conf
 	static {
 		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("sysparam")).asMap();
-		paramMap = rootConfig.getMap("param");
+		paramMap = rootConfig.getArray("param").getMap(0);
 	}
 
 	@Method(desc = "根据key获取value,取不到则给默认值",
