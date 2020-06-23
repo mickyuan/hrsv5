@@ -1,4 +1,5 @@
 # 5.0.1
+### 核心表的修改
 - fdcore 新增SnowflakeImpl.java类：修改生成主键的方法，将主键全部生成为18位的long类型
 - fddbdata 静态块方法：修改获取连接池参数maxPoolSize错误的bug
 - fdcore Validator类：新增对isIpAddr isPort两个方法，判断ip地址、端口的合法性
