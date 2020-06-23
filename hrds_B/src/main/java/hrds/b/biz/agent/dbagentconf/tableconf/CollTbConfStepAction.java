@@ -11,6 +11,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -105,15 +106,10 @@ public class CollTbConfStepAction extends BaseAction {
 		// 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
 		tableList.forEach(
 			itemMap -> {
-				if (itemMap.get("table_name") != null) {
-					String table_name = String.valueOf(itemMap.get("table_name"));
-					List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
-					if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-						|| tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
-						itemMap.put("collectState", false);
-					} else {
-						itemMap.put("collectState", true);
-					}
+				List<Object> tableStateList = checkTableCollectState(colSetId, itemMap.get("table_name"));
+				if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+					|| tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
+					itemMap.put("collectState", false);
 				} else {
 					itemMap.put("collectState", true);
 				}
@@ -401,6 +397,8 @@ public class CollTbConfStepAction extends BaseAction {
 						if (tableColumnMap.containsKey(tableInfo.getTable_name())) {
 							saveCustomizeColumn(tableColumnMap.get(tableInfo.getTable_name()).toString(), tableInfo);
 						}
+					} else {
+						saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
 					}
 				}
 			}
@@ -499,12 +497,12 @@ public class CollTbConfStepAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
 		// 4、如果响应失败，则抛出异常(和agent交互不成功)
 		if (!actionResult.isSuccess()) {
-			throw new BusinessException("并行抽取SQL测试失败");
+			throw new BusinessException("并行抽取SQL(" + pageSql + ")测试失败");
 		}
 		boolean resultData = (boolean) actionResult.getData();
 		// 5、和agent交互成功，但是根据并行抽取SQL没有查到数据,agent返回false，表示根据分页SQL没有取到数据，抛出异常给前端
 		if (!resultData) {
-			throw new BusinessException("根据并行抽取SQL未能获取到数据");
+			throw new BusinessException("根据并行抽取SQL(" + pageSql + ")未能获取到数据");
 		}
 	}
 
@@ -584,15 +582,10 @@ public class CollTbConfStepAction extends BaseAction {
 		// 2: 根据表名检查是否采集过(只要有一个阶段采集是完成或者运行中的,将不再支持编辑),这里的采集指的是发给Agent的
 		tableList.forEach(
 			itemMap -> {
-				if (itemMap.get("table_name") != null) {
-					String table_name = String.valueOf(itemMap.get("table_name"));
-					List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
-					if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-						|| tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
-						itemMap.put("collectState", false);
-					} else {
-						itemMap.put("collectState", true);
-					}
+				List<Object> tableStateList = checkTableCollectState(colSetId, itemMap.get("table_name"));
+				if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+					|| tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
+					itemMap.put("collectState", false);
 				} else {
 					itemMap.put("collectState", true);
 				}
@@ -834,19 +827,13 @@ public class CollTbConfStepAction extends BaseAction {
 		// 2、设置主键，外键等信息，如果columnSort不为空，则将Table_column对象的remark属性设置为该列的采集顺序
 		if (tableColumns != null && !tableColumns.isEmpty()) {
 			for (Table_column tableColumn : tableColumns) {
-				if (StringUtil.isBlank(tableColumn.getColumn_name())) {
-					throw new BusinessException("保存" + tableColumn.getColumn_name() + "采集列时，字段名不能为空");
-				}
-				if (StringUtil.isBlank(tableColumn.getColumn_type())) {
-					throw new BusinessException("保存" + tableColumn.getColumn_type() + "采集列时，字段类型不能为空");
-				}
-				if (StringUtil.isBlank(tableColumn.getIs_get())) {
-					throw new BusinessException("保存" + tableColumn.getIs_get() + "采集列时，是否采集标识位不能为空");
-				}
+				Validator.notBlank(tableColumn.getColumn_name(), "保存" + tableColumn.getColumn_name() + "采集列时，字段名不能为空");
+				Validator.notBlank(tableColumn.getColumn_type(), "保存" + tableColumn.getColumn_type() + "采集列时，字段类型不能为空");
+				Validator.notBlank(tableColumn.getIs_get(), "保存" + tableColumn.getIs_get() + "采集列时，是否采集标识位不能为空");
+
 				IsFlag.ofEnumByCode(tableColumn.getIs_get());
-				if (StringUtil.isBlank(tableColumn.getIs_primary_key())) {
-					throw new BusinessException("保存" + tableColumn.getIs_primary_key() + "采集列时，是否主键标识位不能为空");
-				}
+				Validator
+					.notBlank(tableColumn.getIs_primary_key(), "保存" + tableColumn.getIs_primary_key() + "采集列时，是否主键标识位不能为空");
 				// 设置主键
 				tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 				// 设置外键
@@ -940,20 +927,6 @@ public class CollTbConfStepAction extends BaseAction {
 		// 3、将列信息反序列化为Json数组
 		return JSON.parseObject(respMsg, new TypeReference<List<Table_column>>() {
 		});
-		//    List<Table_column> tableColumns = new ArrayList<>();
-		// 4、由于agent端返回的信息比较多，而我们前端用到的信息较少，所以在这里重新做封装
-		//    for (int i = 0; i < columnInfos.size(); i++) {
-		//      JSONObject columnInfo = columnInfos.getJSONObject(i);
-		//      Table_column tableColumn = new Table_column();
-		//      tableColumn.setColumn_name(columnInfo.getString("column_name"));
-		//      tableColumn.setColumn_ch_name(columnInfo.getString("column_ch_name"));
-		//      tableColumn.setIs_primary_key(columnInfo.getString("is_primary_key"));
-		//      tableColumn.setColumn_type(columnInfo.getString("column_type("));
-		//
-		//      tableColumns.add(tableColumn);
-		//    }
-		// 5、返回List集合
-		//    return tableColumns;
 	}
 
 	@Method(
@@ -1041,109 +1014,93 @@ public class CollTbConfStepAction extends BaseAction {
 			}
 			for (int i = 0; i < tableInfos.size(); i++) {
 				Table_info tableInfo = tableInfos.get(i);
-				String collColumn = tbConfParams.get(i).getCollColumnString();
 				// 2、校验Table_info对象中的信息是否合法
-				if (StringUtil.isBlank(tableInfo.getTable_name())) {
-					throw new BusinessException(
-						"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据表名不能为空!");
-				}
-				if (StringUtil.isBlank(tableInfo.getTable_ch_name())) {
-					throw new BusinessException(
-						"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据表中文名不能为空!");
-				}
+				Validator.notBlank(tableInfo.getTable_name(),
+					"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据表名不能为空!");
+				Validator.notBlank(tableInfo.getTable_ch_name(),
+					"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据表中文名不能为空!");
+				Validator.notBlank(tableInfo.getUnload_type(),
+					"保存采集表 " + tableInfo.getTable_name() + " 配置,第 " + (i + 1) + " 条,卸数方式不能为空!");
 
 				// 检查是否存在卸数方式,如果存在检查当前的方式是否为增量,如果是增量则判断增量的SQL是否存在
-				if (StringUtil.isBlank(tableInfo.getUnload_type())) {
-					throw new BusinessException(
-						"保存采集表 " + tableInfo.getTable_name() + " 配置,第 " + (i + 1) + " 条,卸数方式不能为空!");
-				} else {
-					/*
-					 * 如果卸数方式是 增量的形式,则保存增量的SQL, 数据结构为 { update:sql, delete:sql, add:sql }
-					 * update : 更新的SQL语句
-					 * delete : 删除的SQL语句
-					 * add : 新增的SQL语句,
-					 * 将并行抽取设置为否的状态
-					 */
-					if (UnloadType.ofEnumByCode(tableInfo.getUnload_type()) == UnloadType.ZengLiangXieShu) {
-						if (StringUtil.isBlank(tableInfo.getSql())) {
-							throw new BusinessException(
-								"保存采集表 " + tableInfo.getTable_name() + " 配置,第 " + (i + 1) + " 条,增量SQL不能为空!");
-						}
-						// 将并行抽取设置为否的状态
-						tableInfo.setIs_parallel(IsFlag.Fou.getCode());
-						// 设置并行抽取中的自定义SQL字段为否
-						tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
+				/*
+				 * 如果卸数方式是 增量的形式,则保存增量的SQL, 数据结构为 { update:sql, delete:sql, insert:sql }
+				 * update : 更新的SQL语句
+				 * delete : 删除的SQL语句
+				 * insert : 新增的SQL语句,
+				 * 将并行抽取设置为否的状态
+				 */
+				if (UnloadType.ofEnumByCode(tableInfo.getUnload_type()) == UnloadType.ZengLiangXieShu) {
+					Validator.notBlank(tableInfo.getSql(),
+						"保存采集表 " + tableInfo.getTable_name() + " 配置,第 " + (i + 1) + " 条,增量SQL不能为空!");
+					// 将并行抽取设置为否的状态
+					tableInfo.setIs_parallel(IsFlag.Fou.getCode());
+					// 设置并行抽取中的自定义SQL字段为否
+					tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
             /*
               1 : 设置分页SQL为空
               2 : 设置数据总量为空
               3 : 设置每日数据量为空
               4 : 设置分页并行数为空
             */
-						tableInfo.setPage_sql("");
-						tableInfo.setTable_count("");
-						tableInfo.setDataincrement("");
-						tableInfo.setPageparallels("");
-					} else if (UnloadType.ofEnumByCode(tableInfo.getUnload_type())
-						== UnloadType.QuanLiangXieShu) {
+					tableInfo.setPage_sql("");
+					tableInfo.setTable_count("");
+					tableInfo.setDataincrement("");
+					tableInfo.setPageparallels("");
+				} else if (UnloadType.ofEnumByCode(tableInfo.getUnload_type())
+					== UnloadType.QuanLiangXieShu) {
 
-						if (StringUtil.isBlank(tableInfo.getIs_parallel())) {
-							throw new BusinessException(
-								"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据并行方式不能为空!");
-						}
+					Validator.notBlank(tableInfo.getIs_parallel(),
+						"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据并行方式不能为空!");
 
-						IsFlag isFlag = IsFlag.ofEnumByCode(tableInfo.getIs_parallel());
-						if (isFlag == IsFlag.Shi) {
+					IsFlag isFlag = IsFlag.ofEnumByCode(tableInfo.getIs_parallel());
+					if (isFlag == IsFlag.Shi) {
               /*
               这里需要注意的是,并行情况下选择的是自定义分页SQL采集还是自定义总量的并行方式采集
               如果选择的是自定义SQL分页方式,则将 数据量,每日数据量,并行数置空, 反之则将分页SQL置空
               */
-							if (StringUtil.isBlank(tableInfo.getIs_customize_sql())) {
-								throw new BusinessException(
-									"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据自定义SQL方式不能为空!");
-							} else {
-								if (IsFlag.ofEnumByCode(tableInfo.getIs_customize_sql()) == IsFlag.Shi) {
-									tableInfo.setTable_count("");
-									tableInfo.setDataincrement("");
-									tableInfo.setPageparallels("");
-									if (StringUtil.isBlank(tableInfo.getPage_sql())) {
-										throw new BusinessException(
-											"保存采集表"
-												+ tableInfo.getTable_name()
-												+ "配置，第 "
-												+ (i + 1)
-												+ "条数据分页抽取SQL不能为空!");
-									}
-								} else {
-									// 将分页SQL置为空
-									tableInfo.setPage_sql("");
-									if (tableInfo.getPageparallels() == null) {
-										throw new BusinessException(
-											"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据分页并行数不能为空!");
-									}
-									if (tableInfo.getDataincrement() == null) {
-										throw new BusinessException(
-											"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条每日数据增量不能为空!");
-									}
-									//                  if (StringUtil.isBlank(tableInfo.getTable_count())) {
-									//                    throw new BusinessException(
-									//                        "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1)
-									// + "条数据总量不能为空!");
-									//                  }
-								}
-							}
+						Validator.notBlank(tableInfo.getIs_customize_sql(),
+							"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据自定义SQL方式不能为空!");
+
+						if (IsFlag.ofEnumByCode(tableInfo.getIs_customize_sql()) == IsFlag.Shi) {
+							tableInfo.setTable_count("");
+							tableInfo.setDataincrement("");
+							tableInfo.setPageparallels("");
+							Validator.notBlank(tableInfo.getPage_sql(),
+								"保存采集表"
+									+ tableInfo.getTable_name()
+									+ "配置，第 "
+									+ (i + 1)
+									+ "条数据分页抽取SQL不能为空!");
 						} else {
-							// 如果并行抽取的方式是否,则将是否并行抽取中的自定义sql设置为否
-							tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
+							// 将分页SQL置为空
+							tableInfo.setPage_sql("");
+							if (tableInfo.getPageparallels() == null) {
+								throw new BusinessException(
+									"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据分页并行数不能为空!");
+							}
+							if (tableInfo.getDataincrement() == null) {
+								throw new BusinessException(
+									"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条每日数据增量不能为空!");
+							}
+							//                  if (StringUtil.isBlank(tableInfo.getTable_count())) {
+							//                    throw new BusinessException(
+							//                        "保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1)
+							// + "条数据总量不能为空!");
+							//                  }
 						}
 					} else {
-						throw new BusinessException(
-							"保存采集表"
-								+ tableInfo.getTable_name()
-								+ "配置，第 "
-								+ (i + 1)
-								+ "条数据的卸数方式不存在, 得到的卸数方式是 :"
-								+ tableInfo.getUnload_type());
+						// 如果并行抽取的方式是否,则将是否并行抽取中的自定义sql设置为否
+						tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
 					}
+				} else {
+					throw new BusinessException(
+						"保存采集表"
+							+ tableInfo.getTable_name()
+							+ "配置，第 "
+							+ (i + 1)
+							+ "条数据的卸数方式不存在, 得到的卸数方式是 :"
+							+ tableInfo.getUnload_type());
 				}
 
 				// 数据获取时间如果为空,则使用当天的时间
@@ -1152,11 +1109,8 @@ public class CollTbConfStepAction extends BaseAction {
 				}
 
 				// 检查MD5是否有值
-				if (StringUtil.isBlank(tableInfo.getIs_md5())) {
-					throw new BusinessException(
-						"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据是否算MD5不能为空!");
-				}
-
+				Validator.notBlank(tableInfo.getIs_md5(),
+					"保存采集表" + tableInfo.getTable_name() + "配置，第 " + (i + 1) + "条数据是否算MD5不能为空!");
 				// 3、给Table_info对象设置基本信息(valid_s_date,valid_e_date,is_user_defined,is_register)
 				tableInfo.setValid_s_date(DateUtil.getSysDate());
 				tableInfo.setValid_e_date(Constant.MAXDATE);
@@ -1164,8 +1118,6 @@ public class CollTbConfStepAction extends BaseAction {
 				tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
 				// 数据采集，该字段就是否
 				tableInfo.setIs_register(IsFlag.Fou.getCode());
-				// FIXME 是否使用MD5，目前页面没有供用户配置的选项，所以在保存是，后台给一个默认值为是(这里不需要了.根据页面的选择来进行数据的存储)
-				//				tableInfo.setIs_md5(IsFlag.Shi.getCode());
 
 				// 4、获取Table_info对象的table_id属性，如果该属性没有值，说明这张采集表是新增的，否则这张采集表在当前采集任务中
 				// 已经存在，且有可能经过了修改
@@ -1179,7 +1131,8 @@ public class CollTbConfStepAction extends BaseAction {
 					tableInfo.add(Dbo.db());
 					// 5-3、新增采集表，将该表要采集的列信息保存到相应的表里面
 					saveTableColumnInfoForAdd(
-						tableInfo, collColumn, colSetId, DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+						tableInfo, tbConfParams.get(i).getCollColumnString(), colSetId,
+						DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 				}
 				// 6、如果是修改采集表
 				else {
@@ -1193,7 +1146,7 @@ public class CollTbConfStepAction extends BaseAction {
 					// 6-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
 					updateTableId(newID, oldID);
 					// 6-4、编辑采集表，将该表要采集的列信息保存到相应的表里面
-					saveTableColumnInfoForUpdate(tableInfo, collColumn);
+					saveTableColumnInfoForUpdate(tableInfo, tbConfParams.get(i).getCollColumnString());
 				}
 			}
 		}
@@ -1296,15 +1249,10 @@ public class CollTbConfStepAction extends BaseAction {
 				map.put("collectState", true);
 				results.add(map);
 			} else {
-				if (tableResult.get("table_name") != null) {
-					String table_name = String.valueOf(tableResult.get("table_name"));
-					List<Object> tableStateList = checkTableCollectState(colSetId, table_name);
-					if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
-						|| tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
-						tableResult.put("collectState", false);
-					} else {
-						tableResult.put("collectState", true);
-					}
+				List<Object> tableStateList = checkTableCollectState(colSetId, tableName);
+				if (tableStateList.contains(ExecuteState.YunXingWanCheng.getCode())
+					|| tableStateList.contains(ExecuteState.KaiShiYunXing.getCode())) {
+					tableResult.put("collectState", false);
 				} else {
 					tableResult.put("collectState", true);
 				}
@@ -1438,6 +1386,7 @@ public class CollTbConfStepAction extends BaseAction {
 		range = "Table_info实体类对象，" + "其中table_id和sql两个属性不能为空",
 		isBean = true)
 	@Param(name = "colSetId", desc = "数据库设置ID，源系统数据库设置表主键，数据库对应表外键", range = "不为空")
+	@Param(name = "userId", desc = "当前登录用户ID，sys_user表主键", range = "不为空")
 	public void saveCustomSQLColumnInfoForAdd(Table_info tableInfo, long colSetId) {
 
     /*
@@ -1537,9 +1486,8 @@ public class CollTbConfStepAction extends BaseAction {
 				+ "3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目")
 	@Param(name = "columnId", desc = "表对应字段表ID，" + "字段存储信息表、列清洗信息表、列拆分信息表外键", range = "不为空")
 	private void deleteDirtyDataOfCol(long columnId) {
-		// 1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目
-		Dbo.execute("delete from " + Dcol_relation_store.TableName + " where col_id = ? AND data_source = ?", columnId,
-			StoreLayerDataSource.DB.getCode());
+		// 1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目 StoreLayerDataSource.DB.getCode() AND data_source = ?
+		Dbo.execute("delete from " + Dcol_relation_store.TableName + " where col_id = ? ", columnId);
 		// 2、删除旧的columnId在列清洗信息表做外键的数据，不关注删除的数目
 		Dbo.execute("delete from " + Column_clean.TableName + " where column_id = ?", columnId);
 		// 3、删除旧的columnId在列拆分信息表做外键的数据，不关注删除的数目
@@ -1637,7 +1585,6 @@ public class CollTbConfStepAction extends BaseAction {
 		desc = "根据SQL获取其中的列信息",
 		logicStep =
 			""
-				+ "1: 获取任务数据库连接信息"
 				+ "2: 检查卸数方式是否选择"
 				+ "3: 检查SQL是否存在"
 				+ "4: 检查卸数方式,这里根据卸数方式来处理SQL, 因为增量的SQL可能存在三种这里需要对SQL的字段进行去重"
@@ -1651,9 +1598,6 @@ public class CollTbConfStepAction extends BaseAction {
 	@Return(desc = "返回检查后的表数据信息", range = "不可为空")
 	public Set<Table_column> getSqlColumnData(long colSetId, String unloadType, String sql, long tableId,
 		String tableName) {
-
-		// 1: 获取任务数据库连接信息
-		Map<String, Object> databaseInfo = getDatabaseSetInfo(colSetId, getUserId());
 
 		// 2: 检查卸数方式是否选择
 		if (StringUtil.isBlank(unloadType)) {
@@ -1742,19 +1686,16 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
 	@Param(name = "table_name", desc = "表名称", range = "不可为空")
 	@Return(desc = "返回表的采集状态集合", range = "可以为空,为空表示表未采集过")
-	private List<Object> checkTableCollectState(long colSetId, String table_name) {
+	private List<Object> checkTableCollectState(long colSetId, Object table_name) {
 
 		//    1: 检查表名是否存在
-		long checkTableNum =
-			Dbo.queryNumber(
-				"SELECT COUNT(1) FROM "
-					+ Table_info.TableName
-					+ " WHERE database_id = ? AND table_name = ?",
-				colSetId,
-				table_name)
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
-
-		if (checkTableNum == 0) {
+		if (Dbo.queryNumber(
+			"SELECT COUNT(1) FROM "
+				+ Table_info.TableName
+				+ " WHERE database_id = ? AND table_name = ?",
+			colSetId,
+			table_name)
+			.orElseThrow(() -> new BusinessException("SQL查询错误")) == 0) {
 			throw new BusinessException("任务(" + colSetId + ")下不存在表 (" + table_name + ")");
 		}
 		//    2: 返回表的采集信息集合
