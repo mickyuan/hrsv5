@@ -28,6 +28,7 @@ import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -46,6 +47,12 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	protected int pageNum;
 	protected TableBean tableBean;
 	protected Data_extraction_def data_extraction_def;
+	//操作日期
+	protected String operateDate;
+	//操作时间
+	protected String operateTime;
+	//操作人
+	protected long user_id;
 
 	public AbstractFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
 	                          TableBean tableBean, Data_extraction_def data_extraction_def) {
@@ -54,6 +61,9 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		this.pageNum = pageNum;
 		this.tableBean = tableBean;
 		this.data_extraction_def = data_extraction_def;
+		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
+		this.user_id = collectTableBean.getUser_id();
 	}
 
 	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
@@ -348,4 +358,5 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		}
 		return integerList;
 	}
+
 }

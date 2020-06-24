@@ -20,11 +20,13 @@ public class JobConstant {
 	public static final boolean WriteMultipleFiles = IsFlag.Shi.getCode().equals(PropertyParaUtil.getString(
 			"writemultiplefiles", IsFlag.Fou.getCode()));
 	//判断文件变化的类型是否是MD5
-	public static final boolean FILECHANGESTYPEMD5 = "md5".equals(PropertyParaUtil.getString(
+	public static final boolean FILECHANGESTYPEMD5 = "MD5".equals(PropertyParaUtil.getString(
 			"determineFileChangesType", ""));
 	//文件上传到hdfs的顶层目录
 	public static final String PREFIX = PropertyParaUtil.getString("pathprefix", "/hrds");
-
+	//是否添加isAddOperateInfo
+	public static final boolean ISADDOPERATEINFO = Boolean.parseBoolean(PropertyParaUtil.
+			getString("isAddOperateInfo", "false"));
 	//多线程指定线程池的默认线程数
 	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
 			String.valueOf(Runtime.getRuntime().availableProcessors())));

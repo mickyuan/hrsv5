@@ -11,6 +11,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
@@ -219,6 +220,14 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
 				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
 				colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
+			}
+			//添加操作日期、操作时间、操作人
+			if (JobConstant.ISADDOPERATEINFO) {
+				columnMetaInfo.append(STRSPLIT).append(Constant.HYREN_OPER_DATE).append(STRSPLIT)
+						.append(Constant.HYREN_OPER_TIME).append(STRSPLIT).append(Constant.HYREN_OPER_PERSON);
+				colTypeMetaInfo.append(STRSPLIT).append("char(10)").append(STRSPLIT).append("char(8)")
+						.append(STRSPLIT).append("char(4)");
+				colLengthInfo.append(STRSPLIT).append("10").append(STRSPLIT).append("8").append(STRSPLIT).append("4");
 			}
 			//根据字段名称和页面选择的信息，判断是否为主键
 			StringBuilder primaryKeyInfo = new StringBuilder();//字段是否为主键

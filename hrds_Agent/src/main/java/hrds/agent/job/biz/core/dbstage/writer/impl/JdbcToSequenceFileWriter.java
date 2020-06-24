@@ -123,6 +123,8 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 					sb.append(dataDelimiter).append(Constant.MAXDATE).
 							append(dataDelimiter).append(md5);
 				}
+				//添加操作日期、操作时间、操作人
+				appendOperateInfo(sb, dataDelimiter);
 				if (JobConstant.WriteMultipleFiles) {
 					//获取文件大小和当前读到的内容大小
 					long messageSize = sb.toString().length();
@@ -162,5 +164,15 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 		fileInfo.append(counter);
 		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
+	}
+
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(StringBuilder sb, String database_separatorr) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			sb.append(database_separatorr).append(operateDate).append(database_separatorr)
+					.append(operateTime).append(database_separatorr).append(user_id);
+		}
 	}
 }
