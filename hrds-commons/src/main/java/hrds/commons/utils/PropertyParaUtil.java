@@ -19,7 +19,7 @@ public class PropertyParaUtil {
 	//读取配置文件sysparam.conf
 	static {
 		YamlMap rootConfig = YamlFactory.load(ConfFileLoader.getConfFile("sysparam")).asMap();
-		paramMap = rootConfig.getMap("param");
+		paramMap = rootConfig.getArray("param").getMap(0);
 	}
 
 	@Method(desc = "根据key获取value,取不到则给默认值",
