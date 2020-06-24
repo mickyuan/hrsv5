@@ -98,4 +98,10 @@
 - TSBAction：setDbmDtableInfo 修改变量名称,混淆定义
 - ImportData：importDbmCodeTypeInfoData：获取主键id返回值类型调整long > string
 - TSBAction：saveTSBConfData、setDbmNormbmDetect、setDbmNormbmdResult：获取主键id返回值类型调整long > string
+  
+### H项目  
+- MarketInfoAction: deleteDMDataTable: 获取主键的类型改为long,之前为String
+- MarketInfoAction: getDefaultFieldType: 获取主键的类型改为long,之前为String
+- MarketInfoAction: saveBloodRelationToPGTable: 获取主键的类型改为long,之前为String
+- MarketInfoAction: saveimportexcel: 获取主键的类型改为long,之前为String
 
