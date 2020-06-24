@@ -409,7 +409,7 @@ public class SendMsgUtil {
 		}.getType());
 	}
 
-	@Method(desc = "获取agent解析数据字典所有列数据",
+	@Method(desc = "获取agent解析数据字典表对应所有列数据",
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
 					"2.调用工具类获取本次访问的agentserver端url" +
 					"3、给agent发消息，并获取agent响应" +
@@ -417,22 +417,21 @@ public class SendMsgUtil {
 	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
 	@Param(name = "file_path", desc = "采集文件路径", range = "不为空")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回agent返回所有列数据", range = "无限制")
-	public static List<Object_collect_struct> getDicColumnByTable(long agent_id, String file_path,
-	                                                              long user_id, String table_name) {
+	public static Map<String, List<Object_collect_struct>> getAllDicColumns(long agent_id, String file_path,
+	                                                                        long user_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
-		String url = AgentActionUtil.getUrl(agent_id, user_id, AgentActionUtil.GETDICCOLUMNBYTABLE);
+		String url = AgentActionUtil.getUrl(agent_id, user_id, AgentActionUtil.GETALLDICCOLUMNS);
 		// 3、给agent发消息，并获取agent响应
 		String bodyString = new HttpClient()
 				.addData("file_path", file_path)
-				.addData("table_name", table_name)
 				.post(url)
 				.getBodyString();
 		// 4、转换agent返回的数据为想要格式
-		return JsonUtil.toObject(getRespMsg(bodyString, url), new TypeReference<List<Object_collect_struct>>() {
-		}.getType());
+		return JsonUtil.toObject(getRespMsg(bodyString, url),
+				new TypeReference<Map<String, List<Object_collect_struct>>>() {
+				}.getType());
 	}
 
 	@Method(desc = "获取agent解析数据字典数据",
@@ -443,22 +442,21 @@ public class SendMsgUtil {
 	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
 	@Param(name = "file_path", desc = "采集文件路径", range = "不为空")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "解析agent返回的json数据", range = "无限制")
-	public static List<Object_handle_type> getHandleTypeByTable(long agent_id, String file_path,
-	                                                            long user_id, String table_name) {
+	public static Map<String, List<Object_handle_type>> getAllHandleType(long agent_id, String file_path,
+	                                                                     long user_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
 		String url = AgentActionUtil.getUrl(agent_id, user_id,
-				AgentActionUtil.GETHANDLETYPEBYTABLE);
+				AgentActionUtil.GETALLHANDLETYPE);
 		// 3、给agent发消息，并获取agent响应
 		String bodyString = new HttpClient()
 				.addData("file_path", file_path)
-				.addData("table_name", table_name)
 				.post(url).getBodyString();
 		// 4、转换agent返回的数据为想要格式
-		return JsonUtil.toObject(getRespMsg(bodyString, url), new TypeReference<List<Object_handle_type>>() {
-		}.getType());
+		return JsonUtil.toObject(getRespMsg(bodyString, url),
+				new TypeReference<Map<String, List<Object_handle_type>>>() {
+				}.getType());
 	}
 
 	@Method(desc = "获取与agent交互解析数据字典返回数据", logicStep = "1.数据转换" +
