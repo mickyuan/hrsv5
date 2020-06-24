@@ -541,27 +541,26 @@ public class ConnUtil {
 	@Param(name = "xmlName", desc = "xml文件名称", range = "无限制")
 	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回半结构化采集获取数据字典所有表对应列信息", range = "无限制")
-	public static List<Map<String, String>> getColumnByTable2(String xmlName, String table_name) {
+	public static Map<String, List<Map<String, String>>> getColumnByXml2(String xmlName) {
 		List<?> xmlToList = getXmlToList(xmlName);
-		List<Map<String, String>> columnList = new ArrayList<>();
+		Map<String, List<Map<String, String>>> allColumnMap = new HashMap<>();
 		for (Object value : xmlToList) {
+			List<Map<String, String>> columnList = new ArrayList<>();
 			Element table = (Element) value;
-			String tableName = table.getAttribute("table_name");
-			if (tableName.equals(table_name)) {
-				List<?> columns = XMLUtil.getChildElements(table, "columns");
-				for (Object object : columns) {
-					Map<String, String> columnMap = new HashMap<>();
-					Element column = (Element) object;
-					columnMap.put("column_name", column.getAttribute("column_name"));
-					columnMap.put("data_desc", column.getAttribute("column_ch_name"));
-					columnMap.put("column_type", column.getAttribute("column_type"));
-					columnMap.put("is_operate", column.getAttribute("is_operate"));
-					columnMap.put("columnposition", column.getAttribute("columnposition"));
-					columnList.add(columnMap);
-				}
+			List<?> columns = XMLUtil.getChildElements(table, "columns");
+			for (Object object : columns) {
+				Map<String, String> columnMap = new HashMap<>();
+				Element column = (Element) object;
+				columnMap.put("column_name", column.getAttribute("column_name"));
+				columnMap.put("data_desc", column.getAttribute("column_ch_name"));
+				columnMap.put("column_type", column.getAttribute("column_type"));
+				columnMap.put("is_operate", column.getAttribute("is_operate"));
+				columnMap.put("columnposition", column.getAttribute("columnposition"));
+				columnList.add(columnMap);
 			}
+			allColumnMap.put(table.getAttribute("table_name"), columnList);
 		}
-		return columnList;
+		return allColumnMap;
 	}
 
 	@Method(desc = "没有数据字典时读取数据文件", logicStep = "")
