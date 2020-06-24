@@ -198,7 +198,30 @@ public class CollectFileConfAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "查询半结构化采集列结构信息(有数据字典）",
+	@Method(desc = "根据表名查询半结构化采集列结构信息(有数据字典）",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.判断当前半结构化采集任务是否还存在" +
+					"3.获取当前对象采集任务配置信息" +
+					"4.判断数据字典是否存在，不存在就抛异常" +
+					"5.获取数据字典所有表对应列信息并判断表对应列信息是否存在")
+	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
+	@Param(name = "en_name", desc = "表名称", range = "无限制")
+	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
+	public List<Object_collect_struct> getObjectCollectStructByTableName(long odc_id, String en_name) {
+		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+		// 2.判断当前半结构化采集任务是否还存在
+		isObjectCollectExist(odc_id);
+		// 3.获取当前对象采集任务配置信息
+		Object_collect object_collect = getObjectCollect(odc_id);
+		// 4.判断数据字典是否存在，不存在就抛异常
+		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
+			throw new BusinessException("该采集任务的是否数据字典应为是,实际为否，请检查");
+		}
+		// 5.获取数据字典所有表对应列信息并判断表对应列信息是否存在
+		return getDicColumnsByTableName(object_collect, en_name);
+	}
+
+	@Method(desc = "根据对象采集任务编号查询半结构化采集列结构信息(有数据字典)",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.判断当前半结构化采集任务是否还存在" +
 					"3.获取当前对象采集任务配置信息" +
@@ -215,7 +238,7 @@ public class CollectFileConfAction extends BaseAction {
 			nullable = true)
 	@Param(name = "en_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
-	public List<Object_collect_struct> getObjectCollectStruct(long odc_id, Long ocs_id, String en_name) {
+	public List<Object_collect_struct> getObjectCollectStructById(long odc_id, long ocs_id, String en_name) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
 		isObjectCollectExist(odc_id);
@@ -227,10 +250,6 @@ public class CollectFileConfAction extends BaseAction {
 		}
 		// 5.获取数据字典所有表对应列信息并判断表对应列信息是否存在
 		List<Object_collect_struct> dicColumnByTable = getDicColumnsByTableName(object_collect, en_name);
-		if (ocs_id == null) {
-			// 6.如果列结构信息ID为空说明是数据字典新增的表，这时候直接返回数据字典对应列信息即可
-			return dicColumnByTable;
-		}
 		// 7.查询数据库表对应列信息
 		List<Object_collect_struct> objectCollectStructList = getObjectCollectStructList(ocs_id);
 		// 8.获取数据字典以及数据库表对应列名称
