@@ -77,3 +77,6 @@ INSERT INTO sys_para VALUES ('188', 'pic_rpc_cpu', 'http://10.71.4.55:33332', 's
 INSERT INTO sys_para VALUES ('189', 'redis_ip', '10.71.4.61', 'server.properties', 'Redis服务IP');
 INSERT INTO sys_para VALUES ('190', 'redis_port', '56379', 'server.properties', 'Redis端口');
 INSERT INTO sys_para VALUES ('191', 'predict_address', 'http://139.9.126.19:38081/predict', 'server.properties','数据对标-标准预测地址');
+INSERT INTO sys_para VALUES ('192', 'determineFileChangesType', 'MD5', 'server.properties', '文件采集或者ftp采集比较文件是否变化的方式:MD5或fileAttr');
+--INSERT INTO sys_para VALUES ('193', 'availableProcessors', '8', 'server.properties', '多线程采集每个任务可用线程数,这一行默认不用存库，系统默认取最大值');
+INSERT INTO sys_para VALUES ('194', 'isAddOperateInfo', 'true', 'server.properties','采集是否添加操作时间、操作日期、操作人：true或false');
