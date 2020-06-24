@@ -89,9 +89,8 @@ public class ObjectCollectJob extends AgentBaseAction {
 					"3.有数据字典写xml文件获取数据字典数据" +
 					"4.返回解析后的所有数据字典表对应列数据")
 	@Param(name = "file_path", desc = "文件存储路径", range = "不为空")
-	@Param(name = "table_name", desc = "表名称", range = "不为空")
 	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
-	public String getAllDicColumn(String file_path) {
+	public String getAllDicColumns(String file_path) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.获取生成xml文件文件名
 		String xmlName = ConnUtil.getDataBaseFile("", "", file_path, "");
@@ -109,14 +108,14 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Param(name = "file_path", desc = "文件存储路径", range = "不为空")
 	@Param(name = "table_name", desc = "表名称", range = "不为空")
 	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
-	public String getHandleTypeByTable(String file_path, String table_name) {
+	public String getAllHandleType(String file_path, String table_name) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.获取生成xml文件文件名
 		String xmlName = ConnUtil.getDataBaseFile("", "", file_path, "");
 		// 3.有数据字典写xml文件获取数据字典数据
 		Xls2xml.toXml2(file_path, xmlName);
 		// 4.返回有数据字典时的数据处理方式数据
-		return PackUtil.packMsg(JsonUtil.toJson(ConnUtil.getHandleTypeByTable(file_path, table_name)));
+		return PackUtil.packMsg(JsonUtil.toJson(ConnUtil.getAllHandleType(xmlName)));
 	}
 
 	@Method(desc = "获取解包后半结构化采集与http交互参数",

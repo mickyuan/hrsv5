@@ -512,29 +512,28 @@ public class ConnUtil {
 
 	@Method(desc = "半结构化采集通过表名获取处理方式值", logicStep = "")
 	@Param(name = "xmlName", desc = "xml文件名称", range = "无限制")
-	@Param(name = "table_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回半结构化采集获取数据字典所有表对应列信息", range = "无限制")
-	public static List<Object_handle_type> getHandleTypeByTable(String xmlName, String table_name) {
+	public static Map<String, List<Object_handle_type>> getAllHandleType(String xmlName) {
 		List<?> xmlToList = getXmlToList(xmlName);
-		List<Object_handle_type> handleTypeList = new ArrayList<>();
+		Map<String, List<Object_handle_type>> handleTypeMap = new HashMap<>();
 		for (Object o : xmlToList) {
+			List<Object_handle_type> handleTypeList = new ArrayList<>();
 			Element table = (Element) o;
-			if (table_name.equals(table.getAttribute("table_name"))) {
-				Element handleType = XMLUtil.getChildElement(table, "handle_type");
-				Validator.notNull(handleType, "处理类型不能为空,生成xml数据或者数据字典有误");
-				Object_handle_type object_handle_type = new Object_handle_type();
-				object_handle_type.setHandle_type(OperationType.INSERT.getCode());
-				object_handle_type.setHandle_value(handleType.getAttribute("insert"));
-				handleTypeList.add(object_handle_type);
-				object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
-				object_handle_type.setHandle_value(handleType.getAttribute("update"));
-				handleTypeList.add(object_handle_type);
-				object_handle_type.setHandle_type(OperationType.DELETE.getCode());
-				object_handle_type.setHandle_value(handleType.getAttribute("delete"));
-				handleTypeList.add(object_handle_type);
-			}
+			Element handleType = XMLUtil.getChildElement(table, "handle_type");
+			Validator.notNull(handleType, "处理类型不能为空,生成xml数据或者数据字典有误");
+			Object_handle_type object_handle_type = new Object_handle_type();
+			object_handle_type.setHandle_type(OperationType.INSERT.getCode());
+			object_handle_type.setHandle_value(handleType.getAttribute("insert"));
+			handleTypeList.add(object_handle_type);
+			object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
+			object_handle_type.setHandle_value(handleType.getAttribute("update"));
+			handleTypeList.add(object_handle_type);
+			object_handle_type.setHandle_type(OperationType.DELETE.getCode());
+			object_handle_type.setHandle_value(handleType.getAttribute("delete"));
+			handleTypeList.add(object_handle_type);
+			handleTypeMap.put(table.getAttribute("table_name"), handleTypeList);
 		}
-		return handleTypeList;
+		return handleTypeMap;
 	}
 
 	@Method(desc = "半结构化采集获取数据字典所有表对应列信息", logicStep = "")
