@@ -62,10 +62,10 @@ public class AgentActionUtil {
 	public static final String SENDFTPCOLLECTTASKINFO = "/hrds/agent/trans/biz/ftpcollect/execute";
 	//向agent发送一个半结构化直连解析数据字典获取表信息
 	public static final String GETDICTABLE = "/hrds/agent/trans/biz/semistructured/getDicTable";
-	//向agent发送一个半结构化直连解析数据字典根据表名获取列信息
-	public static final String GETDICCOLUMNBYTABLE = "/hrds/agent/trans/biz/semistructured/getDicColumnByTable";
-	//向agent发送一个半结构化直连解析数据字典根据表名获取数据处理方式信息
-	public static final String GETHANDLETYPEBYTABLE = "/hrds/agent/trans/biz/semistructured/getHandleTypeByTable";
+	//向agent发送一个半结构化直连解析数据字典所有表对应所有列信息
+	public static final String GETALLDICCOLUMNS = "/hrds/agent/trans/biz/semistructured/getAllDicColumns";
+	//向agent发送一个半结构化直连解析数据字典获取所有表对应所有数据处理方式信息
+	public static final String GETALLHANDLETYPE = "/hrds/agent/trans/biz/semistructured/getAllHandleType";
 	//向agent发送一个半结构化直连重写数据字典任务
 	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/semistructured/writeDictionary";
 
@@ -90,8 +90,8 @@ public class AgentActionUtil {
 		list.add(BATCHADDFTPTRANSFER);
 		list.add(SENDFTPCOLLECTTASKINFO);
 		list.add(GETDICTABLE);
-		list.add(GETDICCOLUMNBYTABLE);
-		list.add(GETHANDLETYPEBYTABLE);
+		list.add(GETALLDICCOLUMNS);
+		list.add(GETALLHANDLETYPE);
 		list.add(WRITEDICTIONARY);
 		list.add(ADDDATASTOREREG);
 		list.add(GETAlLLTABLECOLUMN);
