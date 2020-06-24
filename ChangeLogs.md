@@ -22,6 +22,8 @@
 - NodeIDComparator.java 使用get替代获取属性值
 - LoginOperationLogInfo类：saveLoginLog方法：new DatabaseWrapper改为直接使用Dbo
 - AgentActionUtil类：getUrl方法：将两句查询sql并为一个join关联sql
+- Constant类增加常量：操作日期、操作时间、操作人三列的列名常量
+- 05-sys_para_new.sql：增加文件采集或者ftp采集比较文件是否变化的方式:MD5或fileAttr；多线程采集每个任务可用线程数,这一行默认不用存库，系统默认取最大值；采集是否添加操作时间、操作日期、操作人：true或false
 
 ### B项目
 - StoDestStepConfAction：saveTbStoInfo：获取主键的类型改为long,之前为String
@@ -47,6 +49,7 @@
 - DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
 - DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
 - DataSourceAction：addAgentDownInfo：获取主键的类型改为long,之前为String
+- AgentListAction.java：sendJDBCCollectTaskById和sendDBCollectTaskById方法：发送数据到agent新增user_id
 
 ### Agent项目
 - JobConstant类：增加常量：agent写文件时缓存的行数 5000条
@@ -63,6 +66,18 @@
 - ParquetFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
 - SequenceFileParserDeal类：parserFile方法：写文件时缓存的行数使用JobConstant类常量
 - ReadFileToDataBase类：读文件batch提交到数据库缓存的行数使用JobConstant类常量
+- PropertyParaUtil：静态代码块：修改agent获取sysparam.conf文件到YamlMap的bug
+- CollectTableBean：增加user_id:加user_id用于采集卸数数据增加操作人
+- JobConstant：增加常量：是否添加操作信息isAddOperateInfo，修改md5为MD5进行比较，和系统参数的对应
+- JdbcToCsvFileWriter.java：writeFiles方法：根据系统参数拼接操作日期、操作时间、操作人
+- JdbcToFixedFileWriter.java：writeFiles方法：根据系统参数拼接操作日期、操作时间、操作人
+- JdbcToNonFixedFileWriter.java：writeFiles方法：根据系统参数拼接操作日期、操作时间、操作人
+- JdbcToOrcFileWriter.java：writeFiles方法：根据系统参数拼接操作日期、操作时间、操作人
+- JdbcToParquetFileWriter.java：writeFiles方法：根据系统参数拼接操作日期、操作时间、操作人
+- JdbcToSequenceFileWriter.java：writeFiles方法：根据系统参数拼接操作日期、操作时间、操作人
+- FileParserAbstract.java：dealLine方法：构造方法初始化根据系统参数拼接操作日期、操作时间、操作人；过滤掉DB文本文件中的操作日期、操作时间、操作人；根据系统参数拼接操作日期、操作时间、操作人
+- DFCollectTableHandleParse.java：generateTableInfo方法：转存，过滤掉数据字典中海云的操作日期、操作时间、操作人三个字段；根据系统参数拼接操作日期、操作时间、操作人
+- JdbcCollectTableHandleParse.java：getFullAmountExtractTableBean方法：根据系统参数拼接操作日期、操作时间、操作人
 
 ### K项目
 - DataManageAction类：删除getDMStatistics方法,提供getTableStatistics和getRuleStatistics方法,参数名称query_num修改为statistics_layer_num
