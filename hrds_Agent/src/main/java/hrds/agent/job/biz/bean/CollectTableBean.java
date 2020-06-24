@@ -78,6 +78,8 @@ public class CollectTableBean implements Serializable {
 	private String agent_name;
 	@DocBean(name = "agent_id", value = "Agent_id", dataType = Long.class)
 	private Long agent_id;
+	@DocBean(name = "user_id", value = "User_id", dataType = Long.class)
+	private Long user_id;
 	@DocBean(name = "source_id", value = "数据源ID", dataType = Long.class)
 	private Long source_id;
 	@DocBean(name = "sqlParam", value = "sql占位符参数", dataType = String.class)
@@ -357,6 +359,14 @@ public class CollectTableBean implements Serializable {
 
 	public void setAgent_id(Long agent_id) {
 		this.agent_id = agent_id;
+	}
+
+	public Long getUser_id() {
+		return user_id;
+	}
+
+	public void setUser_id(Long user_id) {
+		this.user_id = user_id;
 	}
 
 	public Long getSource_id() {

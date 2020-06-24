@@ -134,6 +134,8 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					sb.add(Constant.MAXDATE);
 					sb.add(md5);
 				}
+				//拼接操作时间、操作日期、操作人
+				appendOperateInfo(sb);
 				if (JobConstant.WriteMultipleFiles) {
 					long messageSize = sb.toString().length();
 					long singleFileSize = new File(fileName).length();
@@ -176,6 +178,17 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 		fileInfo.append(counter);
 		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
+	}
+
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(List<Object> sb) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			sb.add(operateDate);
+			sb.add(operateTime);
+			sb.add(user_id);
+		}
 	}
 
 }

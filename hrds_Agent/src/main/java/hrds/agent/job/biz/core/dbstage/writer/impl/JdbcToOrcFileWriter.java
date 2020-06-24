@@ -137,6 +137,8 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 					lineData.add(Constant.MAXDATE);
 					lineData.add(md5);
 				}
+				//添加操作日期、操作时间、操作人
+				appendOperateInfo(lineData);
 				if (JobConstant.WriteMultipleFiles) {
 					//获取文件大小和当前读到的内容大小
 					long messageSize = lineData.toString().length();
@@ -172,5 +174,16 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 		fileInfo.append(counter);
 		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
+	}
+
+	/**
+	 * 添加操作日期、操作时间、操作人
+	 */
+	private void appendOperateInfo(List<Object> sb) {
+		if (JobConstant.ISADDOPERATEINFO) {
+			sb.add(operateDate);
+			sb.add(operateTime);
+			sb.add(user_id);
+		}
 	}
 }
