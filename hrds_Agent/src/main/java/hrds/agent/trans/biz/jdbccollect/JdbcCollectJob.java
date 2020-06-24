@@ -4,28 +4,33 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
+import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 
+import java.util.List;
+
 @DocClass(desc = "数据库采集接收消息接口", author = "zxz", createdate = "2019/12/2 10:35")
 public class JdbcCollectJob extends AgentBaseAction {
 
-	@Method(desc = "文件采集和前端交互的接口",
-			logicStep = "1.获取json数组转成File_source的集合" +
-					"2.校验对象的值是否正确" +
-					"3.使用JobFactory工厂类调用后台方法")
+	@Method(desc = "数据库抽取和前端交互生成页面配置到agent所在目录的接口",
+			logicStep = "1.对配置信息解压缩并反序列化为SourceDataConfBean对象" +
+					"2.将页面传递过来的压缩信息解压写文件")
 	@Param(name = "etlDate", desc = "跑批日期", range = "不能为空")
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
-			range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
+			range = "所有sourceDataConfBean表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
 	public void execute(String etlDate, String taskInfo) {
-		//对配置信息解压缩并反序列化为SourceDataConfBean对象
+		//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean =
 				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
-		//将页面传递过来的压缩信息解压写文件
+		//2.将页面传递过来的压缩信息解压写文件
 		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
 				PackUtil.unpackMsg(taskInfo).get("msg"));
 //		ExecutorService executor = null;
@@ -41,6 +46,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 //			List<Future<JobStatusInfo>> list = new ArrayList<>();
 //			//2.校验对象的值是否正确
 //			for (CollectTableBean collectTableBean : collectTableBeanList) {
+//				collectTableBean.setSelectFileFormat(FileFormat.FeiDingChang.getCode());
 //				//设置跑批日期
 //				collectTableBean.setEtlDate(etlDate);
 //				//为了确保多个线程之间的值不互相干涉，复制对象的值。
@@ -59,5 +65,40 @@ public class JdbcCollectJob extends AgentBaseAction {
 //			if (executor != null)
 //				executor.shutdown();
 //		}
+	}
+
+	@Method(desc = "数据库抽取和前端交互生成数据字典的接口",
+			logicStep = "1.对配置信息解压缩并反序列化为SourceDataConfBean对象" +
+					"2.将页面传递过来的压缩信息解压写文件" +
+					"3.获取json数组转成CollectTableBean的集合" +
+					"4.遍历CollectTableBean的集合" +
+					"5.获取需要采集的表的meta信息" +
+					"6.将数据字典信息解析，并返回")
+	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
+			range = "所有sourceDataConfBean表不能为空的字段的值必须有，为空则会抛异常，" +
+					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
+	public String getDictionaryJson(String taskInfo) {
+		//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+		SourceDataConfBean sourceDataConfBean =
+				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
+		//2.将页面传递过来的压缩信息解压写文件
+		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
+				PackUtil.unpackMsg(taskInfo).get("msg"));
+		String dd_data = "";
+		//3.获取json数组转成CollectTableBean的集合
+		List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
+		//4.遍历CollectTableBean的集合
+		for (CollectTableBean collectTableBean : collectTableBeanList) {
+			//5.获取需要采集的表的meta信息
+			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
+					.generateTableInfo(sourceDataConfBean, collectTableBean);
+			//6.将数据字典信息解析，并返回
+			dd_data = DataExtractUtil.parseJsonDictionary(dd_data, collectTableBean.getTable_name(),
+					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
+					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
+					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
+					, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
+		}
+		return dd_data;
 	}
 }
