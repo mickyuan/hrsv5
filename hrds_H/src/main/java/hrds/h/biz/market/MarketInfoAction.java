@@ -1291,7 +1291,8 @@ public class MarketInfoAction extends BaseAction {
 			Data_store_reg data_store_reg = new Data_store_reg();
 			data_store_reg.setFile_id(id);
 			List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName +
-					" t1 left join " + Data_store_reg.TableName + " t2 on t1.table_id = t2.table_id where t2.file_id = ? and upper(column_name) not in (?,?,?)", data_store_reg.getFile_id(), Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME);
+					" t1 left join " + Data_store_reg.TableName + " t2 on t1.table_id = t2.table_id where t2.file_id = ? and upper(column_name) not in (?,?,?,?,?,?)", data_store_reg.getFile_id(),
+					Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME,Constant.HYREN_OPER_DATE,Constant.HYREN_OPER_TIME,Constant.HYREN_OPER_PERSON);
 			resultmap.put("columnresult", maps);
 			List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where file_id = ?", data_store_reg.getFile_id());
 			if (tablenamelist.isEmpty()) {
