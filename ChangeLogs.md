@@ -12,4 +12,4 @@
 - 发送数据到agent新增user_id
 - agent写文件时,缓存的行数使用JobConstant类常量
 - agent写文件时，根据系统参数拼接操作日期、操作时间、操作人
-- 修改使用Validator中的断要进行判断数据的合法性
+- 修改使用Validator中的断言要进行判断数据的合法性
