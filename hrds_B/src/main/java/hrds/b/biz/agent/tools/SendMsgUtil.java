@@ -297,7 +297,7 @@ public class SendMsgUtil {
 	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")
 	@Param(name = "taskInfo", desc = "数据库采集任务信息", range = "SourceDataConfBean对象json格式字符串")
 	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
-	public static void sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo,
+	public static Object sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo,
 	                                         String methodName,String etlDate){
 		//1、对参数合法性进行校验
 		if(agentId == null){
@@ -337,6 +337,7 @@ public class SendMsgUtil {
 			// 6，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
 			DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败","UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
 					IsFlag.Shi.getCode(),colSetId);
+			return ar.getData();
 		}
 	}
 
