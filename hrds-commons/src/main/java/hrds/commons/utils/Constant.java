@@ -211,5 +211,6 @@ public class Constant {
 		fileFormatMap.put(FileFormat.ORC.getCode(), FileFormat.ORC.getValue());
 		fileFormatMap.put(FileFormat.SEQUENCEFILE.getCode(), FileFormat.SEQUENCEFILE.getValue());
 	}
-
+	// 项目bin目录路径 E:\hrsv5\bin
+	public static final String PROJECT_BIN_DIR = System.getProperty("user.dir") + File.separator + "bin";
 }
