@@ -19,7 +19,7 @@ import java.util.List;
 public class DataExtractUtil {
 
 	private static final Log log = LogFactory.getLog(DataExtractUtil.class);
-	public static final String DATADICTIONARY = "dd_data.json";
+	private static final String DATADICTIONARY = "dd_data.json";
 
 	/**
 	 * 生成数据字典
@@ -36,64 +36,12 @@ public class DataExtractUtil {
 			if (file.exists()) {
 				dd_data = FileUtil.readFile2String(file);
 			}
-			JSONArray jsonArray = new JSONArray();
-			if (!StringUtil.isEmpty(dd_data)) {
-				jsonArray = JSONArray.parseArray(dd_data);
-			}
-			for (int i = 0; i < jsonArray.size(); i++) {
-				JSONObject jsonObject = jsonArray.getJSONObject(i);
-				if (jsonObject.getString("table_name").equals(tableName)) {
-					jsonArray.remove(jsonObject);
-				}
-			}
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("table_name", tableName);
-			jsonObject.put("table_ch_name", tableName);
-			jsonObject.put("unload_type", unload_type);
-
-			jsonObject.put("insertColumnInfo", insertColumnInfo);
-			jsonObject.put("updateColumnInfo", updateColumnInfo);
-			jsonObject.put("deleteColumnInfo", deleteColumnInfo);
-			JSONArray storageArray = new JSONArray();
-			for (Data_extraction_def data_extraction_def : ext_defList) {
-				JSONObject object = new JSONObject();
-				object.put("is_header", data_extraction_def.getIs_header());
-				object.put("dbfile_format", data_extraction_def.getDbfile_format());
-				object.put("database_code", data_extraction_def.getDatabase_code());
-				if (StringUtil.isEmpty(data_extraction_def.getFile_suffix())) {
-					data_extraction_def.setFile_suffix("dat");
-				}
-				///home/hyshf/xccccccccccc/#{date}/#{table}/#{文件格式}/.*
-				object.put("plane_url", data_extraction_def.getPlane_url() + File.separator + "#{date}" +
-						File.separator + "#{table}" + File.separator + "#{文件格式}" + File.separator
-						+ hbase_name + ".*." + data_extraction_def.getFile_suffix());
-				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
-				object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
-				storageArray.add(object);
-			}
-			jsonObject.put("storage", storageArray);
-			List<String> columnList = StringUtil.split(allColumns, Constant.METAINFOSPLIT);
-			List<String> typeList = StringUtil.split(allType, Constant.METAINFOSPLIT);
-			List<String> primaryKeyList = StringUtil.split(primaryKeyInfo, Constant.METAINFOSPLIT);
-			List<JSONObject> array = new ArrayList<>();
-			for (int i = 0; i < columnList.size(); i++) {
-				JSONObject object = new JSONObject();
-				object.put("column_type", typeList.get(i));
-				object.put("column_remark", "");
-				object.put("column_ch_name", columnList.get(i));
-				object.put("column_name", columnList.get(i));
-				object.put("is_primary_key", primaryKeyList.get(i));
-				object.put("is_get", IsFlag.Shi.getCode());
-				object.put("is_alive", IsFlag.Shi.getCode());
-				object.put("is_new", IsFlag.Fou.getCode());
-				array.add(object);
-			}
-			jsonObject.put("columns", array);
-			jsonArray.add(jsonObject);
+			dd_data = parseJsonDictionary(dd_data, tableName, allColumns, allType, ext_defList,
+					unload_type, primaryKeyInfo, insertColumnInfo, updateColumnInfo, deleteColumnInfo, hbase_name);
 			//数据字典的编码默认直接使用utf-8
 			outputFileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
 			bufferOutputWriter = new BufferedWriter(outputFileWriter, 4096);
-			bufferOutputWriter.write(jsonArray.toJSONString());
+			bufferOutputWriter.write(dd_data);
 			bufferOutputWriter.flush();
 		} catch (Exception e) {
 			log.error("写数据字典失败", e);
@@ -182,5 +130,65 @@ public class DataExtractUtil {
 				log.error("关闭流失败", e);
 			}
 		}
+	}
+
+	public static String parseJsonDictionary(String dd_data, String tableName, String allColumns
+			, String allType, List<Data_extraction_def> ext_defList, String unload_type, String primaryKeyInfo
+			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo, String hbase_name) {
+		JSONArray jsonArray = new JSONArray();
+		if (!StringUtil.isEmpty(dd_data)) {
+			jsonArray = JSONArray.parseArray(dd_data);
+		}
+		for (int i = 0; i < jsonArray.size(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+			if (jsonObject.getString("table_name").equals(tableName)) {
+				jsonArray.remove(jsonObject);
+			}
+		}
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("table_name", tableName);
+		jsonObject.put("table_ch_name", tableName);
+		jsonObject.put("unload_type", unload_type);
+
+		jsonObject.put("insertColumnInfo", insertColumnInfo);
+		jsonObject.put("updateColumnInfo", updateColumnInfo);
+		jsonObject.put("deleteColumnInfo", deleteColumnInfo);
+		JSONArray storageArray = new JSONArray();
+		for (Data_extraction_def data_extraction_def : ext_defList) {
+			JSONObject object = new JSONObject();
+			object.put("is_header", data_extraction_def.getIs_header());
+			object.put("dbfile_format", data_extraction_def.getDbfile_format());
+			object.put("database_code", data_extraction_def.getDatabase_code());
+			if (StringUtil.isEmpty(data_extraction_def.getFile_suffix())) {
+				data_extraction_def.setFile_suffix("dat");
+			}
+			///home/hyshf/xccccccccccc/#{date}/#{table}/#{文件格式}/.*
+			object.put("plane_url", data_extraction_def.getPlane_url() + File.separator + "#{date}" +
+					File.separator + "#{table}" + File.separator + "#{文件格式}" + File.separator
+					+ hbase_name + ".*." + data_extraction_def.getFile_suffix());
+			object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
+			object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+			storageArray.add(object);
+		}
+		jsonObject.put("storage", storageArray);
+		List<String> columnList = StringUtil.split(allColumns, Constant.METAINFOSPLIT);
+		List<String> typeList = StringUtil.split(allType, Constant.METAINFOSPLIT);
+		List<String> primaryKeyList = StringUtil.split(primaryKeyInfo, Constant.METAINFOSPLIT);
+		List<JSONObject> array = new ArrayList<>();
+		for (int i = 0; i < columnList.size(); i++) {
+			JSONObject object = new JSONObject();
+			object.put("column_type", typeList.get(i));
+			object.put("column_remark", "");
+			object.put("column_ch_name", columnList.get(i));
+			object.put("column_name", columnList.get(i));
+			object.put("is_primary_key", primaryKeyList.get(i));
+			object.put("is_get", IsFlag.Shi.getCode());
+			object.put("is_alive", IsFlag.Shi.getCode());
+			object.put("is_new", IsFlag.Fou.getCode());
+			array.add(object);
+		}
+		jsonObject.put("columns", array);
+		jsonArray.add(jsonObject);
+		return jsonArray.toJSONString();
 	}
 }
