@@ -8,7 +8,6 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -273,12 +272,14 @@ public class AgentListAction extends BaseAction {
 
 		// 3、将日志信息由字符串转为byte[]
 		byte[] bytes = taskLog.get("log").getBytes();
+		File downloadFile = new File(taskLog.get("filePath"));
+		responseFile(downloadFile.getName(), bytes);
+	}
 
+	private void responseFile(String fileName, byte[] bytes) {
 		// 4、得到本次http交互的request和response
 		HttpServletResponse response = ResponseUtil.getResponse();
 		HttpServletRequest request = RequestUtil.getRequest();
-
-		File downloadFile = new File(taskLog.get("filePath"));
 
 		try (OutputStream out = response.getOutputStream()) {
 			// 5、设置响应头信息
@@ -288,12 +289,12 @@ public class AgentListAction extends BaseAction {
 				response.setHeader(
 					"content-disposition",
 					"attachment;filename="
-						+ new String(downloadFile.getName().getBytes(), CodecUtil.GBK_STRING));
+						+ new String(fileName.getBytes(), CodecUtil.GBK_STRING));
 			} else {
 				response.setHeader(
 					"content-disposition",
 					"attachment;filename="
-						+ URLEncoder.encode(downloadFile.getName(), CodecUtil.UTF8_STRING));
+						+ URLEncoder.encode(fileName, CodecUtil.UTF8_STRING));
 			}
 			response.setContentType("APPLICATION/OCTET-STREAM");
 			// 6、使用response获得输出流，完成文件下载
@@ -687,7 +688,8 @@ public class AgentListAction extends BaseAction {
 				+ "       2-4-8、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息"
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
-	public void sendJDBCCollectTaskById(long colSetId) {
+	@Param(name = "is_download", range = "可以为空,默认为不下载", desc = "是否为数据字典下载", nullable = true, valueIfNull = "false")
+	public void sendJDBCCollectTaskById(long colSetId, String is_download) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
 			Dbo.queryNumber(
@@ -966,15 +968,22 @@ public class AgentListAction extends BaseAction {
 		// return sourceDBConfObj.toJSONString();
 		// 3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
 		String methodName = AgentActionUtil.SENDJDBCCOLLECTTASKINFO;
+		if (Boolean.parseBoolean(is_download)) {
+			methodName = AgentActionUtil.GETDICTIONARYJSON;
+		}
 		// TODO 前端调用这个方法应该传入跑批日期，作业调度同样
 		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
-		SendMsgUtil.sendDBCollectTaskInfo(
+		String dataDic = (String) SendMsgUtil.sendDBCollectTaskInfo(
 			sourceDBConfObj.getLong("database_id"),
 			sourceDBConfObj.getLong("agent_id"),
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
 			DateUtil.getSysDate());
+
+		if (Boolean.parseBoolean(is_download)) {
+			responseFile("dd_json.json", dataDic.getBytes());
+		}
 	}
 
 	@Method(
