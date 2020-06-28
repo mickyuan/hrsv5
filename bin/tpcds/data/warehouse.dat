@@ -1,0 +1,6 @@
+w_warehouse_sk|w_warehouse_id|w_warehouse_name|w_warehouse_sq_ft|w_street_number|w_street_name|w_street_type|w_suite_number|w_city|w_county|w_state|w_zip|w_country|w_gmt_offset|remark
+1|AAAAAAAABAAAAAAA|常规子项|977787|651|6th|Parkway|Suite470|Fairview|WilliamsonCounty|TN|35709|美国|-5|
+2|AAAAAAAACAAAAAAA|重要事项liv|138504|600|先查看|大道|套房P|Fairview|威廉森县|TN|35709|美国|-5|
+3|AAAAAAAADAAAAAAA|门坎|294242|534|阿什·劳雷尔|博士|套房0|博览会|威廉森县|TN|35709|美国|-5|
+4|AAAAAAAAEAAAAAAA|坏卡必须制造。|621234|368|威尔逊榆树|驱动器|套房80|锦绣|威廉森县|TN|35709|美国|-5|
+5|AAAAAAAAFAAAAAAA|||||||Fairview|威廉森县|TN|35709|美国||
