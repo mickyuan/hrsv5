@@ -30,6 +30,14 @@ public class Database_set extends ProjectTableEntity
 		__tmpPKS.add("database_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="row_separator",value="数据行分隔符:",dataType = String.class,required = false)
+	private String row_separator;
+	@DocBean(name ="classify_id",value="分类id:",dataType = Long.class,required = true)
+	private Long classify_id;
+	@DocBean(name ="cp_or",value="清洗顺序:",dataType = String.class,required = false)
+	private String cp_or;
+	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
+	private String jdbc_url;
 	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
 	private Long agent_id;
 	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
@@ -64,15 +72,45 @@ public class Database_set extends ProjectTableEntity
 	private String plane_url;
 	@DocBean(name ="database_separatorr",value="数据采用分隔符:",dataType = String.class,required = false)
 	private String database_separatorr;
-	@DocBean(name ="row_separator",value="数据行分隔符:",dataType = String.class,required = false)
-	private String row_separator;
-	@DocBean(name ="classify_id",value="分类id:",dataType = Long.class,required = true)
-	private Long classify_id;
-	@DocBean(name ="cp_or",value="清洗顺序:",dataType = String.class,required = false)
-	private String cp_or;
-	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
-	private String jdbc_url;
 
+	/** 取得：数据行分隔符 */
+	public String getRow_separator(){
+		return row_separator;
+	}
+	/** 设置：数据行分隔符 */
+	public void setRow_separator(String row_separator){
+		this.row_separator=row_separator;
+	}
+	/** 取得：分类id */
+	public Long getClassify_id(){
+		return classify_id;
+	}
+	/** 设置：分类id */
+	public void setClassify_id(Long classify_id){
+		this.classify_id=classify_id;
+	}
+	/** 设置：分类id */
+	public void setClassify_id(String classify_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
+			this.classify_id=new Long(classify_id);
+		}
+	}
+	/** 取得：清洗顺序 */
+	public String getCp_or(){
+		return cp_or;
+	}
+	/** 设置：清洗顺序 */
+	public void setCp_or(String cp_or){
+		this.cp_or=cp_or;
+	}
+	/** 取得：数据库连接地址 */
+	public String getJdbc_url(){
+		return jdbc_url;
+	}
+	/** 设置：数据库连接地址 */
+	public void setJdbc_url(String jdbc_url){
+		this.jdbc_url=jdbc_url;
+	}
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
 		return agent_id;
@@ -220,43 +258,5 @@ public class Database_set extends ProjectTableEntity
 	/** 设置：数据采用分隔符 */
 	public void setDatabase_separatorr(String database_separatorr){
 		this.database_separatorr=database_separatorr;
-	}
-	/** 取得：数据行分隔符 */
-	public String getRow_separator(){
-		return row_separator;
-	}
-	/** 设置：数据行分隔符 */
-	public void setRow_separator(String row_separator){
-		this.row_separator=row_separator;
-	}
-	/** 取得：分类id */
-	public Long getClassify_id(){
-		return classify_id;
-	}
-	/** 设置：分类id */
-	public void setClassify_id(Long classify_id){
-		this.classify_id=classify_id;
-	}
-	/** 设置：分类id */
-	public void setClassify_id(String classify_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(classify_id)){
-			this.classify_id=new Long(classify_id);
-		}
-	}
-	/** 取得：清洗顺序 */
-	public String getCp_or(){
-		return cp_or;
-	}
-	/** 设置：清洗顺序 */
-	public void setCp_or(String cp_or){
-		this.cp_or=cp_or;
-	}
-	/** 取得：数据库连接地址 */
-	public String getJdbc_url(){
-		return jdbc_url;
-	}
-	/** 设置：数据库连接地址 */
-	public void setJdbc_url(String jdbc_url){
-		this.jdbc_url=jdbc_url;
 	}
 }
