@@ -38,7 +38,8 @@ public class DataBaseJobImpl implements JobInterface {
 	@Override
 	public JobStatusInfo runJob() {
 		String statusFilePath = Constant.JOBINFOPATH + sourceDataConfBean.getDatabase_id()
-				+ File.separator + collectTableBean.getTable_id() + File.separator + Constant.JOBFILENAME;
+				+ File.separator + collectTableBean.getTable_id() + File.separator + Constant.fileFormatMap.
+				get(collectTableBean.getSelectFileFormat()) + File.separator + Constant.JOBFILENAME;
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
 				collectTableBean.getTable_id());

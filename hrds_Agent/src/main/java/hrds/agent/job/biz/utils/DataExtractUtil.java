@@ -166,8 +166,16 @@ public class DataExtractUtil {
 			object.put("plane_url", data_extraction_def.getPlane_url() + File.separator + "#{date}" +
 					File.separator + "#{table}" + File.separator + "#{文件格式}" + File.separator
 					+ hbase_name + ".*." + data_extraction_def.getFile_suffix());
-			object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
-			object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+			if (StringUtil.isEmpty(data_extraction_def.getRow_separator())) {
+				object.put("row_separator", "");
+			} else {
+				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
+			}
+			if (StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
+				object.put("database_separatorr", "");
+			} else {
+				object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+			}
 			storageArray.add(object);
 		}
 		jsonObject.put("storage", storageArray);

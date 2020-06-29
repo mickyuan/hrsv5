@@ -69,7 +69,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
 				sourceDataConfBean.getDatabase_name(), 4000)) {
 			//获得数据抽取文件格式
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
 			//抽取这里可以同时抽成多种文件格式，遍历，执行卸数。
 			//TODO 这里有一个优化的方式，就是在一个resultSet里面根据逻辑写多个文件，暂时直接遍历，复用以前的方法
 			//TODO 抽取这里其实不用返回文件路径，待删除

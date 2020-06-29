@@ -96,7 +96,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			//写数据字典
 			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
-					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
+					collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
 					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
 					, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
 			//卸数成功，删除重命名的目录
@@ -127,7 +127,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * @param collectTableBean 表存储信息
 	 */
 	private void restoreRenameDir(CollectTableBean collectTableBean) throws Exception {
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -157,7 +157,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * @param collectTableBean 表存储信息
 	 */
 	private void deleteRenameDir(CollectTableBean collectTableBean) throws Exception {
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -180,7 +180,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 */
 	private void renameUnloadDir(CollectTableBean collectTableBean) {
 		//TODO 这边为啥不是直接在日期这一层重命名 抽数根据文件格式分为多个作业，所以到文件格式这一层
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -238,7 +238,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					ResultSetParser parser = new ResultSetParser();
 					//文件路径
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, 0,
-							tableBean, collectTableBean.getData_extraction_def_list().get(0));
+							tableBean, collectTableBean.getTransSeparatorExtractionList().get(0));
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
 						//返回值为卸数文件全路径拼接卸数文件的条数
 						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);
@@ -386,6 +386,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				totalCount += collectTableBean.getDataincrement() * days;
 				//3、读取并行抽取线程数
 				int threadCount = collectTableBean.getPageparallels();
+				if (threadCount > totalCount) {
+					throw new AppSystemException("多线程抽取数据，页面填写的多线程数大于表的总数据量");
+				}
 				int pageRow = totalCount / threadCount;
 				//4、创建固定大小的线程池，执行分页查询(线程池类型和线程数可以后续改造)
 				// 此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。

@@ -14,10 +14,12 @@ import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.schema.MessageType;
-import org.apache.parquet.schema.MessageTypeParser;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "构建parquet对象", author = "WangZhengcheng")
@@ -31,30 +33,58 @@ public class ParquetUtil {
 		List<String> colList = StringUtil.split(columns.toUpperCase(), Constant.METAINFOSPLIT);
 		//字段类型
 		List<String> typeArray = StringUtil.split(types.toLowerCase(), Constant.METAINFOSPLIT);
-		StringBuilder sb = new StringBuilder(170);
-		sb.append("message Pair {\n");
+//		StringBuilder sb = new StringBuilder(170);
+//		sb.append("message Pair {\n");
+//		for (int i = 0; i < colList.size(); i++) {
+//			String columns_type = typeArray.get(i);
+//			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
+//				sb.append("required ").append("BOOLEAN ").append(colList.get(i)).append(" ;");
+//			} else if (columns_type.contains(DataTypeConstant.INT8.getMessage())
+//					|| columns_type.equals(DataTypeConstant.BIGINT.getMessage())
+//					|| columns_type.equals(DataTypeConstant.LONG.getMessage())) {
+//				sb.append("required ").append("INT64 ").append(colList.get(i)).append(" ;");
+//			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
+//				sb.append("required ").append("INT32 ").append(colList.get(i)).append(" ;");
+//			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())
+//					|| columns_type.contains(DataTypeConstant.NUMERIC.getMessage())
+//					|| columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
+//				sb.append("required ").append("DOUBLE ").append(colList.get(i)).append(" ;");
+//			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
+//				sb.append("required ").append("FLOAT ").append(colList.get(i)).append(" ;");
+//			} else {
+//				sb.append("required binary ").append(colList.get(i)).append(" (UTF8);");
+//			}
+//		}
+//		sb.append(" }");
+//		return MessageTypeParser.parseMessageType(sb.toString());
+		ArrayList<Type> fields = new ArrayList<>();
 		for (int i = 0; i < colList.size(); i++) {
 			String columns_type = typeArray.get(i);
 			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-				sb.append("required ").append("BOOLEAN ").append(colList.get(i)).append(" ;");
+				fields.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN,
+						colList.get(i), null));
 			} else if (columns_type.contains(DataTypeConstant.INT8.getMessage())
 					|| columns_type.equals(DataTypeConstant.BIGINT.getMessage())
 					|| columns_type.equals(DataTypeConstant.LONG.getMessage())) {
-				sb.append("required ").append("INT64 ").append(colList.get(i)).append(" ;");
+				fields.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT64,
+						colList.get(i), null));
 			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
-				sb.append("required ").append("INT32 ").append(colList.get(i)).append(" ;");
+				fields.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32,
+						colList.get(i), null));
 			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())
 					|| columns_type.contains(DataTypeConstant.NUMERIC.getMessage())
 					|| columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
-				sb.append("required ").append("DOUBLE ").append(colList.get(i)).append(" ;");
+				fields.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.DOUBLE,
+						colList.get(i), null));
 			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
-				sb.append("required ").append("FLOAT ").append(colList.get(i)).append(" ;");
+				fields.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FLOAT,
+						colList.get(i), null));
 			} else {
-				sb.append("required binary ").append(colList.get(i)).append(" (UTF8);");
+				fields.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY,
+						colList.get(i), null));
 			}
 		}
-		sb.append(" }");
-		return MessageTypeParser.parseMessageType(sb.toString());
+		return new MessageType("input", fields);
 	}
 
 	/**
