@@ -495,12 +495,12 @@ public class ConnUtil {
 	 * @param filename 文件路径
 	 * @return
 	 */
-	public static List<Object> getDicTable(String filename) {
+	public static List<Map<String, String>> getDicTable(String filename) {
 		List<?> xmlToList = getXmlToList(filename);
-		List<Object> tableList = new ArrayList<>();
+		List<Map<String, String>> tableList = new ArrayList<>();
 		for (Object o : xmlToList) {
 			Element table = (Element) o;
-			Map<String, Object> tableJson = new HashMap<>();
+			Map<String, String> tableJson = new HashMap<>();
 			tableJson.put("en_name", table.getAttribute("table_name"));
 			tableJson.put("zh_name", table.getAttribute("table_ch_name"));
 			// 数据更新方式：0--直接更新，1--拉链更新
@@ -567,7 +567,7 @@ public class ConnUtil {
 	@Param(desc = "数据日期", name = "data_date", range = "无限制")
 	@Param(desc = "文件后缀名", name = "file_suffix", range = "无限制")
 	@Return(desc = "半结构化采集查看表时，对于不提供数据字典的情况，解析返回表名", range = "无限制")
-	public static List<Object> getTableByNoDictionary(String file_path, String data_date, String file_suffix) {
+	public static List<Map<String, String>> getTableByNoDictionary(String file_path, String data_date, String file_suffix) {
 		JSONObject resultObject = new JSONObject();
 		File pathFile = new File(file_path);
 		File[] fileList = Objects.requireNonNull(pathFile.listFiles());
@@ -592,7 +592,7 @@ public class ConnUtil {
 			resultObject.put("ErrorMessage", "数据路径的日期目录：" + filepath + " 下没有文件");
 			throw new BusinessException(resultObject.getString("ErrorMessage"));
 		}
-		List<Object> tableList = new ArrayList<>();
+		List<Map<String, String>> tableList = new ArrayList<>();
 		for (File file : files) {
 			String filename = file.getName();
 			if (filename.endsWith("_" + data_date + "." + file_suffix)) {
