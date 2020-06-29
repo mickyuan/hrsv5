@@ -29,13 +29,15 @@ public class ParallerTest {
 	private static final Logger logger = LogManager.getLogger(ParallerTest.class);
 
 	public static void main(String[] args) {
-		if (args.length < 2) {
-			logger.info("请传递正确的参数");
-			logger.info("参数一：需要测试的测试用例的配置文件绝对路径");
-			logger.info("参数二：测试结果写文件，文件夹路径");
-		}
-		final String classNameFilePath = args[0];
-		final String path = args[1];
+//		if (args.length < 2) {
+//			logger.info("请传递正确的参数");
+//			logger.info("参数一：需要测试的测试用例的配置文件绝对路径");
+//			logger.info("参数二：测试结果写文件，文件夹路径");
+//		}
+//		final String classNameFilePath = args[0];
+//		final String path = args[1];
+		final String classNameFilePath = "C:\\Work\\newproject5.0\\hrsv5\\hrsv5\\test.conf";
+		final String path = "C:\\Work\\newproject5.0\\hrsv5\\hrsv5\\hrds_H\\src\\test\\java\\hrds\\h\\biz\\market\\log\\";
 		//读取文件，遍历需要测试的类
 		try (Stream<String> stream = Files.lines(Paths.get(classNameFilePath))) {
 			stream.skip(1).filter(line -> !StringUtil.isEmpty(line)).forEach(line -> {
