@@ -1,6 +1,5 @@
 package hrds.b.biz.agent.tools;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -8,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.IsFlag;
@@ -304,7 +304,7 @@ public class SendMsgUtil {
 	@Param(name = "taskInfo", desc = "数据库采集任务信息", range = "SourceDataConfBean对象json格式字符串")
 	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
 	public static Object sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo,
-	                                         String methodName, String etlDate) {
+	                                           String methodName, String etlDate) {
 		//1、对参数合法性进行校验
 		if (agentId == null) {
 			throw new BusinessException("向Agent发送数据库采集任务信息，agentId不能为空");
@@ -388,22 +388,42 @@ public class SendMsgUtil {
 					"4.转换agent返回的数据为想要格式")
 	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
 	@Param(name = "file_path", desc = "采集文件路径", range = "不为空")
-	@Param(name = "is_dictionary", desc = "是否存在数据字典", range = "使用（IsFlag）代码项")
-	@Param(name = "data_date", desc = "数据日期", range = "是否存在数据字典选择否的时候必选", nullable = true)
-	@Param(name = "file_suffix", desc = "文件后缀名", range = "无限制")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回agent解析数据字典表数据", range = "无限制")
-	public static List<Object_collect_task> getDictionaryTableInfo(long agent_id, String file_path,
-	                                                               String is_dictionary, String data_date,
-	                                                               String file_suffix, long user_id) {
+	public static List<Object_collect_task> getDictionaryTableInfo(long agent_id, String file_path, long user_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.调用工具类获取本次访问的agentserver端url
 		String url = AgentActionUtil.getUrl(agent_id, user_id, AgentActionUtil.GETDICTABLE);
 		// 3、给agent发消息，并获取agent响应
 		String bodyString = new HttpClient()
+				.addData("file_path", file_path)
+				.post(url).getBodyString();
+		// 4.转换agent返回的数据为想要格式
+		return JsonUtil.toObject(getRespMsg(bodyString, url), new TypeReference<List<Object_collect_task>>() {
+		}.getType());
+	}
+
+	@Method(desc = "获取agent没有数据字典时的第一行数据",
+			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
+					"2.调用工具类获取本次访问的agentserver端url" +
+					"3、给agent发消息，并获取agent响应" +
+					"4.转换agent返回的数据为想要格式")
+	@Param(name = "agent_id", desc = "agent信息表主键ID", range = "新增agent时生成")
+	@Param(name = "file_path", desc = "采集文件路径", range = "不为空")
+	@Param(name = "data_date", desc = "数据日期", range = "不为空")
+	@Param(name = "file_suffix", desc = "文件后缀名", range = "无限制")
+	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
+	@Return(desc = "返回agent解析数据字典表数据", range = "无限制")
+	public static List<Object_collect_task> getFirstLineData(long agent_id, String file_path, String data_date,
+	                                                         String file_suffix, long user_id) {
+		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
+		// 2.调用工具类获取本次访问的agentserver端url
+		String url = AgentActionUtil.getUrl(agent_id, user_id, AgentActionUtil.GETFIRSTLINEDATA);
+		Validator.notEmpty(data_date, "没有数据字典时数据日期不能为空");
+		// 3、给agent发消息，并获取agent响应
+		String bodyString = new HttpClient()
 				.addData("file_suffix", file_suffix)
-				.addData("is_dictionary", is_dictionary)
-				.addData("data_date", data_date == null ? "" : data_date)
+				.addData("data_date", data_date)
 				.addData("file_path", file_path)
 				.post(url).getBodyString();
 		// 4.转换agent返回的数据为想要格式

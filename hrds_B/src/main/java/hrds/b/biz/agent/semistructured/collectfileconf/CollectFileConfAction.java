@@ -127,10 +127,14 @@ public class CollectFileConfAction extends BaseAction {
 	@Return(desc = "返回获取数据字典半结构化采集对应表数据", range = "无限制")
 	private List<Object_collect_task> getDictionaryTableInfo(Object_collect object_collect) {
 		// 1.获取数据字典半结构化采集对应表数据
-		return SendMsgUtil.getDictionaryTableInfo(
-				object_collect.getAgent_id(), object_collect.getFile_path(),
-				object_collect.getIs_dictionary(), object_collect.getData_date(),
-				object_collect.getFile_suffix(), getUserId());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
+			return SendMsgUtil.getDictionaryTableInfo(
+					object_collect.getAgent_id(), object_collect.getFile_path(), getUserId());
+		} else {
+			return SendMsgUtil.getFirstLineData(
+					object_collect.getAgent_id(), object_collect.getFile_path(),
+					object_collect.getData_date(), object_collect.getFile_suffix(), getUserId());
+		}
 	}
 
 	@Method(desc = "获取集合Bean中的表名称", logicStep = "获取表名称")
@@ -277,16 +281,32 @@ public class CollectFileConfAction extends BaseAction {
 			"3.获取当前任务表对应第一行数据" +
 			"4.返回没有数据字典解析后的第一行数据的采集列信息")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对应采集配置信息时生成")
-	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
+	@Param(name = "en_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回没有数据字典解析后的第一行数据的采集列信息", range = "无限制")
-	public JSONArray getFirstLineInfo(long odc_id, long ocs_id) {
+	public JSONArray getFirstLineInfo(long odc_id, String en_name) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
 		isObjectCollectExist(odc_id);
+		Object_collect object_collect = getObjectCollect(odc_id);
 		// 3.获取当前任务表对应第一行数据
-		String firstLine = getFirstLineInfo(ocs_id);
+		String firstLine = getFirstLineByName(en_name, object_collect);
+		Validator.notNull(firstLine, "当前表" + en_name + "对应的第一行数据不存在，请检查");
 		// 4.返回没有数据字典解析后的第一行数据的采集列信息
 		return parseFirstLine(firstLine, "");
+
+	}
+
+	private String getFirstLineByName(String en_name, Object_collect object_collect) {
+		List<Object_collect_task> firstLineData = SendMsgUtil.getFirstLineData(object_collect.getAgent_id(),
+				object_collect.getFile_path(), object_collect.getData_date(),
+				object_collect.getFile_suffix(), getUserId());
+		String firstLine = null;
+		for (Object_collect_task object_collect_task : firstLineData) {
+			if (en_name.equals(object_collect_task.getEn_name())) {
+				firstLine = object_collect_task.getFirstline();
+			}
+		}
+		return firstLine;
 	}
 
 	@Method(desc = "查询对象采集结构表信息(采集列结构与getFirstLineInfo一起调用）",
@@ -417,23 +437,6 @@ public class CollectFileConfAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "无数据字典时查询第一行数据",
-			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.返回无数据字典时查询第一行数据")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
-	@Return(desc = "返回无数据字典时查询第一行数据", range = "无限制")
-	private String getFirstLineInfo(long ocs_id) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.返回无数据字典时查询第一行数据
-		List<String> firstLine = Dbo.queryOneColumnList(
-				"select firstline from " + Object_collect.TableName + " t1 left join "
-						+ Object_collect_task.TableName + " t2 on t1.odc_id = t2.odc_id" +
-						" where t2.ocs_id = ? and t1.is_dictionary = ?",
-				ocs_id, IsFlag.Fou.getCode());
-		Validator.notEmpty(firstLine, "没有数据字典时第一行数据不能为空");
-		return firstLine.get(0);
-	}
-
 	@Method(desc = "解析没有数据字典的第一行数据",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.解析第一行数据，第一行数据为jsonArray格式，解析错误会跳到6" +
@@ -520,18 +523,25 @@ public class CollectFileConfAction extends BaseAction {
 	}
 
 	@Method(desc = "获取对象采集树节点信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.解析json获取树结构信息并返回" +
-			"3.获取树信息失败")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+			"2.判断当前任务是否存在" +
+			"3.获取当前任务配置信息" +
+			"4.根据表名获取第一行数据" +
+			"5.解析json获取树结构信息并返回")
+	@Param(name = "odc_id", desc = "对象采集id", range = "新增对应采集配置信息时生成")
+	@Param(name = "en_name", desc = "表名称", range = "无限制")
 	@Param(name = "location", desc = "树节点位置，不是根节点则格式如（columns,column_id）", range = "无限制")
 	@Return(desc = "获取对象采集树节点信息", range = "无限制")
-	public JSONArray getObjectCollectTreeInfo(long ocs_id, String location) {
+	public JSONArray getObjectCollectTreeInfo(long odc_id, String en_name, String location) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		String firstLine = getFirstLineInfo(ocs_id);
-		// 2.解析json获取树结构信息并返回
+		// 2.判断当前任务是否存在
+		isObjectCollectExist(odc_id);
+		// 3.获取当前任务配置信息
+		Object_collect object_collect = getObjectCollect(odc_id);
+		// 4.根据表名获取第一行数据
+		String firstLine = getFirstLineByName(en_name, object_collect);
+		// 5.解析json获取树结构信息并返回
 		return parseFirstLine(firstLine, location);
 	}
-
 
 	@Method(desc = "获取当前节点树信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 			"2.判断树节点是否为空" +
