@@ -90,8 +90,11 @@ public class CollectConfAction extends BaseAction {
 			throw new BusinessException("当是否存在数据字典选择否，数据日期不能为空");
 		}
 		// 3.获取解析与agent服务交互返回响应表数据
-		return SendMsgUtil.getDictionaryTableInfo(agent_id, file_path, is_dictionary, data_date, file_suffix,
-				getUserId());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(is_dictionary)) {
+			return SendMsgUtil.getDictionaryTableInfo(agent_id, file_path, getUserId());
+		} else {
+			return SendMsgUtil.getFirstLineData(agent_id, file_path, data_date, file_suffix, getUserId());
+		}
 	}
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
