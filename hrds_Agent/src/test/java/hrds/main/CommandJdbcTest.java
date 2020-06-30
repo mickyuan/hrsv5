@@ -5,17 +5,14 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
-import hrds.agent.job.biz.bean.CollectTableBean;
-import hrds.agent.job.biz.bean.JobStatusInfo;
-import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.DataExtractType;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.*;
+import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
@@ -67,11 +64,8 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test3() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			collectTableBean.setIs_md5(IsFlag.Shi.getCode());
-		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		collectTableBean.setIs_md5(IsFlag.Shi.getCode());
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -88,7 +82,6 @@ public class CommandJdbcTest extends WebBaseTestCase {
 		for (CollectTableBean collectTableBean : collectTableBeanArray) {
 			collectTableBean.setIs_md5(IsFlag.Shi.getCode());
 		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -101,16 +94,13 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test5() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			collectTableBean.setIs_md5(IsFlag.Shi.getCode());
-			collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
-			collectTableBean.setPageparallels(5);
-			collectTableBean.setRec_num_date(DateUtil.getSysDate());
-			collectTableBean.setDataincrement(10);
-			collectTableBean.setTable_count("8");
-		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		collectTableBean.setIs_md5(IsFlag.Shi.getCode());
+		collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
+		collectTableBean.setPageparallels(5);
+		collectTableBean.setRec_num_date(DateUtil.getSysDate());
+		collectTableBean.setDataincrement(10);
+		collectTableBean.setTable_count("8");
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -132,7 +122,6 @@ public class CommandJdbcTest extends WebBaseTestCase {
 			collectTableBean.setDataincrement(10);
 			collectTableBean.setTable_count("100");
 		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -145,18 +134,14 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test7() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			collectTableBean.setIs_md5(IsFlag.Shi.getCode());
-			collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
-			collectTableBean.setPageparallels(5);
-			collectTableBean.setRec_num_date(DateUtil.getSysDate());
-			collectTableBean.setDataincrement(10);
-			collectTableBean.setTable_count("8");
-			if ("call_center".equals(collectTableBean.getTable_name()))
-				collectTableBean.setSql("cc_class = 'medium'");
-		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		collectTableBean.setIs_md5(IsFlag.Shi.getCode());
+		collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
+		collectTableBean.setPageparallels(5);
+		collectTableBean.setRec_num_date(DateUtil.getSysDate());
+		collectTableBean.setDataincrement(10);
+		collectTableBean.setTable_count("8");
+		collectTableBean.setSql("cc_street_name = 'Pine Ridge'");
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -178,13 +163,12 @@ public class CommandJdbcTest extends WebBaseTestCase {
 			collectTableBean.setDataincrement(10);
 			collectTableBean.setTable_count("100");
 			if ("call_center".equals(collectTableBean.getTable_name()))
-				collectTableBean.setSql("cc_class = 'medium'");
+				collectTableBean.setSql("cc_street_name = 'Pine Ridge'");
 			else if ("item".equals(collectTableBean.getTable_name()))
 				collectTableBean.setSql("i_rec_start_date = '2000-10-27'");
 			else if ("reason".equals(collectTableBean.getTable_name()))
 				collectTableBean.setSql("r_reason_desc like 'reason%'");
 		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -197,18 +181,13 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test9() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			collectTableBean.setIs_md5(IsFlag.Shi.getCode());
-			if ("call_center".equals(collectTableBean.getTable_name())) {
-				collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
-				collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
-				collectTableBean.setPage_sql("select * from call_center where cc_class = 'medium'" +
-						" `@^ select * from call_center where cc_class = 'large' " +
-						" `@^ select * from call_center where cc_class = 'small' ");
-			}
-		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		collectTableBean.setIs_md5(IsFlag.Shi.getCode());
+		collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
+		collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
+		collectTableBean.setPage_sql("select * from call_center where cc_street_name = 'Pine Ridge'" +
+				" `@^ select * from call_center where cc_street_name = 'Jefferson Tenth' " +
+				" `@^ select * from call_center where cc_street_name = 'Center Hill' ");
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -227,9 +206,9 @@ public class CommandJdbcTest extends WebBaseTestCase {
 			if ("call_center".equals(collectTableBean.getTable_name())) {
 				collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
 				collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
-				collectTableBean.setPage_sql("select * from call_center where cc_class = 'medium'" +
-						" `@^ select * from call_center where cc_class = 'large' " +
-						" `@^ select * from call_center where cc_class = 'small' ");
+				collectTableBean.setPage_sql("select * from call_center where cc_street_name = 'Pine Ridge'" +
+						" `@^ select * from call_center where cc_street_name = 'Jefferson Tenth' " +
+						" `@^ select * from call_center where cc_street_name = 'Center Hill' ");
 			} else if ("item".equals(collectTableBean.getTable_name())) {
 				collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
 				collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
@@ -245,7 +224,6 @@ public class CommandJdbcTest extends WebBaseTestCase {
 						" `@^ select * from reason where r_reason_desc like 'reason%' ");
 			}
 		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -258,18 +236,13 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test11() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			collectTableBean.setIs_md5(IsFlag.Fou.getCode());
-			if ("call_center".equals(collectTableBean.getTable_name())) {
-				collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
-				collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
-				collectTableBean.setPage_sql("select * from call_center where cc_class = 'medium'" +
-						" `@^ select * from call_center where cc_class = 'large' " +
-						" `@^ select * from call_center where cc_class = 'small' ");
-			}
-		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		collectTableBean.setIs_md5(IsFlag.Fou.getCode());
+		collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
+		collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
+		collectTableBean.setPage_sql("select * from call_center where cc_street_name = 'Pine Ridge'" +
+				" `@^ select * from call_center where cc_street_name = 'Jefferson Tenth' " +
+				" `@^ select * from call_center where cc_street_name = 'Center Hill' ");
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -288,9 +261,9 @@ public class CommandJdbcTest extends WebBaseTestCase {
 			if ("call_center".equals(collectTableBean.getTable_name())) {
 				collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
 				collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
-				collectTableBean.setPage_sql("select * from call_center where cc_class = 'medium'" +
-						" `@^ select * from call_center where cc_class = 'large' " +
-						" `@^ select * from call_center where cc_class = 'small' ");
+				collectTableBean.setPage_sql("select * from call_center where cc_street_name = 'Pine Ridge'" +
+						" `@^ select * from call_center where cc_street_name = 'Jefferson Tenth' " +
+						" `@^ select * from call_center where cc_street_name = 'Center Hill' ");
 			} else if ("item".equals(collectTableBean.getTable_name())) {
 				collectTableBean.setIs_parallel(IsFlag.Shi.getCode());
 				collectTableBean.setIs_customize_sql(IsFlag.Shi.getCode());
@@ -306,7 +279,6 @@ public class CommandJdbcTest extends WebBaseTestCase {
 						" `@^ select * from reason where r_reason_desc like 'reason%' ");
 			}
 		}
-		sourceDataConfBean.setCollectTableBeanArray(collectTableBeanArray);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -319,12 +291,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test13() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
-			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
-			}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
@@ -358,12 +328,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test15() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
-			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
-			}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
@@ -396,12 +364,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test17() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
-			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setDbfile_format(FileFormat.ORC.getCode());
-			}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.ORC.getCode());
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
@@ -434,12 +400,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test19() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
-			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
-			}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
@@ -472,12 +436,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test21() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
-			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
-			}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
@@ -510,59 +472,57 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test23() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			String plane_url = collectTableBean.getData_extraction_def_list().get(0).getPlane_url();
-			String row_separator = StringUtil.string2Unicode(collectTableBean.getData_extraction_def_list().
-					get(0).getRow_separator());
-			List<Data_extraction_def> data_extraction_def_list = new ArrayList<>();
-			//定长
-			Data_extraction_def data_extraction_def_DingChang = new Data_extraction_def();
-			data_extraction_def_DingChang.setDbfile_format(FileFormat.DingChang.getCode());
-			data_extraction_def_DingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_DingChang.setRow_separator(row_separator);
-			data_extraction_def_DingChang.setDatabase_separatorr(StringUtil.string2Unicode(Constant.DATADELIMITER));
-			data_extraction_def_DingChang.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_DingChang.setPlane_url(plane_url);
-			data_extraction_def_list.add(data_extraction_def_DingChang);
-			//非定长
-			Data_extraction_def data_extraction_def_FeiDingChang = new Data_extraction_def();
-			data_extraction_def_FeiDingChang.setDbfile_format(FileFormat.FeiDingChang.getCode());
-			data_extraction_def_FeiDingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_FeiDingChang.setRow_separator(row_separator);
-			data_extraction_def_FeiDingChang.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_FeiDingChang.setPlane_url(plane_url);
-			data_extraction_def_list.add(data_extraction_def_FeiDingChang);
-			//CSV
-			Data_extraction_def data_extraction_def_csv = new Data_extraction_def();
-			data_extraction_def_csv.setDbfile_format(FileFormat.CSV.getCode());
-			data_extraction_def_csv.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_csv.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_csv.setPlane_url(plane_url);
-			data_extraction_def_list.add(data_extraction_def_csv);
-			//Parquet
-			Data_extraction_def data_extraction_def_parquet = new Data_extraction_def();
-			data_extraction_def_parquet.setDbfile_format(FileFormat.PARQUET.getCode());
-			data_extraction_def_parquet.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_parquet.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_parquet.setPlane_url(plane_url);
-			data_extraction_def_list.add(data_extraction_def_parquet);
-			//Orc
-			Data_extraction_def data_extraction_def_orc = new Data_extraction_def();
-			data_extraction_def_orc.setDbfile_format(FileFormat.ORC.getCode());
-			data_extraction_def_orc.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_orc.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_orc.setPlane_url(plane_url);
-			data_extraction_def_list.add(data_extraction_def_orc);
-			//SequenceFile
-			Data_extraction_def data_extraction_def_sequenceFile = new Data_extraction_def();
-			data_extraction_def_sequenceFile.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
-			data_extraction_def_sequenceFile.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_sequenceFile.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_sequenceFile.setPlane_url(plane_url);
-			data_extraction_def_list.add(data_extraction_def_sequenceFile);
-			collectTableBean.setData_extraction_def_list(data_extraction_def_list);
-		}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		String plane_url = collectTableBean.getData_extraction_def_list().get(0).getPlane_url();
+		String row_separator = StringUtil.string2Unicode(collectTableBean.getData_extraction_def_list().
+				get(0).getRow_separator());
+		List<Data_extraction_def> data_extraction_def_list = new ArrayList<>();
+		//定长
+		Data_extraction_def data_extraction_def_DingChang = new Data_extraction_def();
+		data_extraction_def_DingChang.setDbfile_format(FileFormat.DingChang.getCode());
+		data_extraction_def_DingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_DingChang.setRow_separator(row_separator);
+		data_extraction_def_DingChang.setDatabase_separatorr(StringUtil.string2Unicode(Constant.DATADELIMITER));
+		data_extraction_def_DingChang.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_DingChang.setPlane_url(plane_url);
+		data_extraction_def_list.add(data_extraction_def_DingChang);
+		//非定长
+		Data_extraction_def data_extraction_def_FeiDingChang = new Data_extraction_def();
+		data_extraction_def_FeiDingChang.setDbfile_format(FileFormat.FeiDingChang.getCode());
+		data_extraction_def_FeiDingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_FeiDingChang.setRow_separator(row_separator);
+		data_extraction_def_FeiDingChang.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_FeiDingChang.setPlane_url(plane_url);
+		data_extraction_def_list.add(data_extraction_def_FeiDingChang);
+		//CSV
+		Data_extraction_def data_extraction_def_csv = new Data_extraction_def();
+		data_extraction_def_csv.setDbfile_format(FileFormat.CSV.getCode());
+		data_extraction_def_csv.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_csv.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_csv.setPlane_url(plane_url);
+		data_extraction_def_list.add(data_extraction_def_csv);
+		//Parquet
+		Data_extraction_def data_extraction_def_parquet = new Data_extraction_def();
+		data_extraction_def_parquet.setDbfile_format(FileFormat.PARQUET.getCode());
+		data_extraction_def_parquet.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_parquet.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_parquet.setPlane_url(plane_url);
+		data_extraction_def_list.add(data_extraction_def_parquet);
+		//Orc
+		Data_extraction_def data_extraction_def_orc = new Data_extraction_def();
+		data_extraction_def_orc.setDbfile_format(FileFormat.ORC.getCode());
+		data_extraction_def_orc.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_orc.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_orc.setPlane_url(plane_url);
+		data_extraction_def_list.add(data_extraction_def_orc);
+		//SequenceFile
+		Data_extraction_def data_extraction_def_sequenceFile = new Data_extraction_def();
+		data_extraction_def_sequenceFile.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
+		data_extraction_def_sequenceFile.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_sequenceFile.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_sequenceFile.setPlane_url(plane_url);
+		data_extraction_def_list.add(data_extraction_def_sequenceFile);
+		collectTableBean.setData_extraction_def_list(data_extraction_def_list);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -633,7 +593,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 
 	/**
 	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
-	 * 列和表都不选择清洗、仅生成非定长文件、选择不同目的地
+	 * 列和表都不选择清洗、生成六种格式的文件、选择不同目的地
 	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
 	 */
 	@Test
@@ -643,64 +603,62 @@ public class CommandJdbcTest extends WebBaseTestCase {
 				(agentInitConfig.getString("multi_landing_directory"));
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			String row_separator = StringUtil.string2Unicode(collectTableBean.getData_extraction_def_list().
-					get(0).getRow_separator());
-			List<Data_extraction_def> data_extraction_def_list = new ArrayList<>();
-			//定长
-			Data_extraction_def data_extraction_def_DingChang = new Data_extraction_def();
-			data_extraction_def_DingChang.setDbfile_format(FileFormat.DingChang.getCode());
-			data_extraction_def_DingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_DingChang.setRow_separator(row_separator);
-			data_extraction_def_DingChang.setDatabase_separatorr(StringUtil.string2Unicode(Constant.DATADELIMITER));
-			data_extraction_def_DingChang.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_DingChang.setPlane_url(multi_landing_directory.getString(0
-					% multi_landing_directory.size()));
-			data_extraction_def_list.add(data_extraction_def_DingChang);
-			//非定长
-			Data_extraction_def data_extraction_def_FeiDingChang = new Data_extraction_def();
-			data_extraction_def_FeiDingChang.setDbfile_format(FileFormat.FeiDingChang.getCode());
-			data_extraction_def_FeiDingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_FeiDingChang.setRow_separator(row_separator);
-			data_extraction_def_FeiDingChang.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_FeiDingChang.setPlane_url(multi_landing_directory.getString(1
-					% multi_landing_directory.size()));
-			data_extraction_def_list.add(data_extraction_def_FeiDingChang);
-			//CSV
-			Data_extraction_def data_extraction_def_csv = new Data_extraction_def();
-			data_extraction_def_csv.setDbfile_format(FileFormat.CSV.getCode());
-			data_extraction_def_csv.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_csv.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_csv.setPlane_url(multi_landing_directory.getString(2
-					% multi_landing_directory.size()));
-			data_extraction_def_list.add(data_extraction_def_csv);
-			//Parquet
-			Data_extraction_def data_extraction_def_parquet = new Data_extraction_def();
-			data_extraction_def_parquet.setDbfile_format(FileFormat.PARQUET.getCode());
-			data_extraction_def_parquet.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_parquet.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_parquet.setPlane_url(multi_landing_directory.getString(3
-					% multi_landing_directory.size()));
-			data_extraction_def_list.add(data_extraction_def_parquet);
-			//Orc
-			Data_extraction_def data_extraction_def_orc = new Data_extraction_def();
-			data_extraction_def_orc.setDbfile_format(FileFormat.ORC.getCode());
-			data_extraction_def_orc.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_orc.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_orc.setPlane_url(multi_landing_directory.getString(4
-					% multi_landing_directory.size()));
-			data_extraction_def_list.add(data_extraction_def_orc);
-			//SequenceFile
-			Data_extraction_def data_extraction_def_sequenceFile = new Data_extraction_def();
-			data_extraction_def_sequenceFile.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
-			data_extraction_def_sequenceFile.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
-			data_extraction_def_sequenceFile.setDatabase_code(DataBaseCode.GBK.getCode());
-			data_extraction_def_sequenceFile.setPlane_url(multi_landing_directory.getString(5
-					% multi_landing_directory.size()));
-			data_extraction_def_list.add(data_extraction_def_sequenceFile);
-			collectTableBean.setData_extraction_def_list(data_extraction_def_list);
-		}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		String row_separator = StringUtil.string2Unicode(collectTableBean.getData_extraction_def_list().
+				get(0).getRow_separator());
+		List<Data_extraction_def> data_extraction_def_list = new ArrayList<>();
+		//定长
+		Data_extraction_def data_extraction_def_DingChang = new Data_extraction_def();
+		data_extraction_def_DingChang.setDbfile_format(FileFormat.DingChang.getCode());
+		data_extraction_def_DingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_DingChang.setRow_separator(row_separator);
+		data_extraction_def_DingChang.setDatabase_separatorr(StringUtil.string2Unicode(Constant.DATADELIMITER));
+		data_extraction_def_DingChang.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_DingChang.setPlane_url(multi_landing_directory.getString(0
+				% multi_landing_directory.size()));
+		data_extraction_def_list.add(data_extraction_def_DingChang);
+		//非定长
+		Data_extraction_def data_extraction_def_FeiDingChang = new Data_extraction_def();
+		data_extraction_def_FeiDingChang.setDbfile_format(FileFormat.FeiDingChang.getCode());
+		data_extraction_def_FeiDingChang.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_FeiDingChang.setRow_separator(row_separator);
+		data_extraction_def_FeiDingChang.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_FeiDingChang.setPlane_url(multi_landing_directory.getString(1
+				% multi_landing_directory.size()));
+		data_extraction_def_list.add(data_extraction_def_FeiDingChang);
+		//CSV
+		Data_extraction_def data_extraction_def_csv = new Data_extraction_def();
+		data_extraction_def_csv.setDbfile_format(FileFormat.CSV.getCode());
+		data_extraction_def_csv.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_csv.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_csv.setPlane_url(multi_landing_directory.getString(2
+				% multi_landing_directory.size()));
+		data_extraction_def_list.add(data_extraction_def_csv);
+		//Parquet
+		Data_extraction_def data_extraction_def_parquet = new Data_extraction_def();
+		data_extraction_def_parquet.setDbfile_format(FileFormat.PARQUET.getCode());
+		data_extraction_def_parquet.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_parquet.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_parquet.setPlane_url(multi_landing_directory.getString(3
+				% multi_landing_directory.size()));
+		data_extraction_def_list.add(data_extraction_def_parquet);
+		//Orc
+		Data_extraction_def data_extraction_def_orc = new Data_extraction_def();
+		data_extraction_def_orc.setDbfile_format(FileFormat.ORC.getCode());
+		data_extraction_def_orc.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_orc.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_orc.setPlane_url(multi_landing_directory.getString(4
+				% multi_landing_directory.size()));
+		data_extraction_def_list.add(data_extraction_def_orc);
+		//SequenceFile
+		Data_extraction_def data_extraction_def_sequenceFile = new Data_extraction_def();
+		data_extraction_def_sequenceFile.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
+		data_extraction_def_sequenceFile.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+		data_extraction_def_sequenceFile.setDatabase_code(DataBaseCode.GBK.getCode());
+		data_extraction_def_sequenceFile.setPlane_url(multi_landing_directory.getString(5
+				% multi_landing_directory.size()));
+		data_extraction_def_list.add(data_extraction_def_sequenceFile);
+		collectTableBean.setData_extraction_def_list(data_extraction_def_list);
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
 
@@ -738,12 +696,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test27() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
-		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
-		for (CollectTableBean collectTableBean : collectTableBeanArray) {
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
-			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setRow_separator(StringUtil.string2Unicode("\\r\\n"));
-			}
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setRow_separator(StringUtil.string2Unicode("\\r\\n"));
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
 	}
@@ -762,6 +718,628 @@ public class CommandJdbcTest extends WebBaseTestCase {
 			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
 				data_extraction_def.setRow_separator(StringUtil.string2Unicode("\\r\\n"));
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
+	 * 选择windows换行符、列分隔符使用*%#、字符集选择GBK、全量采集
+	 */
+	@Test
+	public void test29() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDatabase_separatorr(StringUtil.string2Unicode("*%#"));
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
+	 * 选择windows换行符、列分隔符使用*%#、字符集选择GBK、全量采集
+	 */
+	@Test
+	public void test30() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDatabase_separatorr(StringUtil.string2Unicode("*%#"));
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择UTF-8、全量采集
+	 */
+	@Test
+	public void test31() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择UTF-8、全量采集
+	 */
+	@Test
+	public void test32() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、单表所有字段选择去空
+	 */
+	@Test
+	public void test33() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+			ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+			//去空
+			columnCleanBean.setClean_type(CleanType.ZiFuTrim.getCode());
+			columnCleanBeans.add(columnCleanBean);
+			collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、所有表所有字段选择去空
+	 */
+	@Test
+	public void test34() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//去空
+				columnCleanBean.setClean_type(CleanType.ZiFuTrim.getCode());
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、仅call_center表的cc_name字段选择去空
+	 */
+	@Test
+	public void test35() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			if ("call_center".equals(collectTableBean.getTable_name())) {
+				for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+					if ("cc_name".equals(collectTableColumnBean.getColumn_name())) {
+						List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+						ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+						//去空
+						columnCleanBean.setClean_type(CleanType.ZiFuTrim.getCode());
+						columnCleanBeans.add(columnCleanBean);
+						collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+					}
+				}
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择字符补齐、单表的cc_name字段选择前补齐，cc_class字段选择后补齐
+	 */
+	@Test
+	public void test36() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_name".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//字符补齐
+				columnCleanBean.setClean_type(CleanType.ZiFuBuQi.getCode());
+				//前补齐
+				columnCleanBean.setFilling_type(FillingType.QianBuQi.getCode());
+				//补齐长度
+				columnCleanBean.setFilling_length(40L);
+				//补齐字符
+				columnCleanBean.setCharacter_filling(StringUtil.string2Unicode("%"));
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			} else if ("cc_class".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//字符补齐
+				columnCleanBean.setClean_type(CleanType.ZiFuBuQi.getCode());
+				//后补齐
+				columnCleanBean.setFilling_type(FillingType.HouBuQi.getCode());
+				//补齐长度
+				columnCleanBean.setFilling_length(40L);
+				//补齐字符
+				columnCleanBean.setCharacter_filling(StringUtil.string2Unicode("&"));
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择字符补齐、表call_center的cc_name字段选择前补齐，表catalog_page的cp_type字段选择后补齐
+	 */
+	@Test
+	public void test37() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			if ("call_center".equals(collectTableBean.getTable_name())) {
+				for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+					if ("cc_name".equals(collectTableColumnBean.getColumn_name())) {
+						List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+						ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+						//字符补齐
+						columnCleanBean.setClean_type(CleanType.ZiFuBuQi.getCode());
+						//前补齐
+						columnCleanBean.setFilling_type(FillingType.QianBuQi.getCode());
+						//补齐长度
+						columnCleanBean.setFilling_length(40L);
+						//补齐字符
+						columnCleanBean.setCharacter_filling(StringUtil.string2Unicode("%"));
+						columnCleanBeans.add(columnCleanBean);
+						collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+					}
+				}
+			}
+			if ("catalog_page".equals(collectTableBean.getTable_name())) {
+				for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+					if ("cp_type".equals(collectTableColumnBean.getColumn_name())) {
+						List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+						ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+						//字符补齐
+						columnCleanBean.setClean_type(CleanType.ZiFuBuQi.getCode());
+						//后补齐
+						columnCleanBean.setFilling_type(FillingType.HouBuQi.getCode());
+						//补齐长度
+						columnCleanBean.setFilling_length(40L);
+						//补齐字符
+						columnCleanBean.setCharacter_filling(StringUtil.string2Unicode("&"));
+						columnCleanBeans.add(columnCleanBean);
+						collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+					}
+				}
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择字符替换、单表的cc_manager字段Larry Mccray值替换成Larry Mccray ----------------- zxz
+	 */
+	@Test
+	public void test38() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_manager".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//字符替换
+				columnCleanBean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+				//原字段
+				columnCleanBean.setField(StringUtil.string2Unicode("Larry Mccray"));
+				//替换字段
+				columnCleanBean.setReplace_feild(StringUtil.string2Unicode("Larry Mccray ----------------- zxz"));
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择字符替换、表call_center的cc_manager字段Larry Mccray值替换成Larry Mccray zxz
+	 * 表customer_demographics的cd_education_status字段Primary值替换成LarryMccray---------zxz
+	 */
+	@Test
+	public void test39() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			if ("call_center".equals(collectTableBean.getTable_name())) {
+				for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+					if ("cc_manager".equals(collectTableColumnBean.getColumn_name())) {
+						List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+						ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+						//字符替换
+						columnCleanBean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+						//原字段
+						columnCleanBean.setField(StringUtil.string2Unicode("Larry Mccray"));
+						//替换字段
+						columnCleanBean.setReplace_feild(StringUtil.string2Unicode("Larry Mccray ----------------- zxz"));
+						columnCleanBeans.add(columnCleanBean);
+						collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+					}
+				}
+			}
+			if ("customer_demographics".equals(collectTableBean.getTable_name())) {
+				for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+					if ("cd_education_status".equals(collectTableColumnBean.getColumn_name())) {
+						List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+						ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+						//字符替换
+						columnCleanBean.setClean_type(CleanType.ZiFuTiHuan.getCode());
+						//原字段
+						columnCleanBean.setField(StringUtil.string2Unicode("Primary"));
+						//替换字段
+						columnCleanBean.setReplace_feild(StringUtil.string2Unicode("LarryMccray---------zxz"));
+						columnCleanBeans.add(columnCleanBean);
+						collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+					}
+				}
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择时间转换 、单表的cc_rec_start_date字段yyyy-mm-dd转换成yyyymmdd
+	 */
+	@Test
+	public void test40() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_rec_start_date".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//时间转换
+				columnCleanBean.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
+				//原各式
+				columnCleanBean.setOld_format("yyyy-mm-dd");
+				//转换后的格式
+				columnCleanBean.setConvert_format("yyyymmdd");
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择码值转换 、单表的cc_street_type字段Boulevard转换成Boulevard1、Way转换成Boulevard2、
+	 * RD转换成Boulevard3、Court转换成Boulevard4、Ct.转换成Boulevard5
+	 */
+	@Test
+	public void test41() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_street_type".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//码值转换
+				columnCleanBean.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
+				JSONArray array = new JSONArray();
+				JSONObject object1 = new JSONObject();
+				object1.put("orig_value", "Boulevard");
+				object1.put("code_value", "Boulevard1");
+				array.add(object1);
+				JSONObject object2 = new JSONObject();
+				object2.put("orig_value", "Way");
+				object2.put("code_value", "Boulevard2");
+				array.add(object2);
+				JSONObject object3 = new JSONObject();
+				object3.put("orig_value", "RD");
+				object3.put("code_value", "Boulevard3");
+				array.add(object3);
+				JSONObject object4 = new JSONObject();
+				object4.put("orig_value", "Court");
+				object4.put("code_value", "Boulevard4");
+				array.add(object4);
+				JSONObject object5 = new JSONObject();
+				object5.put("orig_value", "Ct.");
+				object5.put("code_value", "Boulevard5");
+				array.add(object5);
+				columnCleanBean.setCodeTransform(array.toJSONString());
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择列拆分、单表的cc_rec_start_date字段按分隔符-拆分成三个字段年、月、日
+	 */
+	@Test
+	public void test42() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_rec_start_date".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//列拆分
+				columnCleanBean.setClean_type(CleanType.ZiFuChaiFen.getCode());
+				List<Column_split> column_splitList = new ArrayList<>();
+				Column_split column_split1 = new Column_split();
+				column_split1.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
+				column_split1.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split1.setCol_type("varchar(10)");
+				column_split1.setCol_name("year");
+				column_split1.setCol_zhname("年");
+				column_split1.setSeq(0L);
+				column_splitList.add(column_split1);
+				Column_split column_split2 = new Column_split();
+				column_split2.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
+				column_split2.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split2.setCol_type("varchar(10)");
+				column_split2.setCol_name("month");
+				column_split2.setCol_zhname("月");
+				column_split2.setSeq(1L);
+				column_splitList.add(column_split2);
+				Column_split column_split3 = new Column_split();
+				column_split3.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
+				column_split3.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split3.setCol_type("varchar(10)");
+				column_split3.setCol_name("day");
+				column_split3.setCol_zhname("日");
+				column_split3.setSeq(2L);
+				column_splitList.add(column_split3);
+				columnCleanBean.setColumn_split_list(column_splitList);
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择列拆分、单表的cc_rec_start_date字段按偏移量-拆分成三个字段年、月、日
+	 */
+	@Test
+	public void test43() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_rec_start_date".equals(collectTableColumnBean.getColumn_name())) {
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				//列拆分
+				columnCleanBean.setClean_type(CleanType.ZiFuChaiFen.getCode());
+				List<Column_split> column_splitList = new ArrayList<>();
+				Column_split column_split1 = new Column_split();
+				column_split1.setSplit_type(CharSplitType.PianYiLiang.getCode());
+				//这个偏移量是下标从0开始，前包后不包
+				column_split1.setCol_offset("0,4");
+				column_split1.setCol_type("varchar(10)");
+				column_split1.setCol_name("year");
+				column_split1.setCol_zhname("年");
+				column_splitList.add(column_split1);
+				Column_split column_split2 = new Column_split();
+				column_split2.setSplit_type(CharSplitType.PianYiLiang.getCode());
+				column_split2.setCol_offset("5,7");
+				column_split2.setCol_type("varchar(10)");
+				column_split2.setCol_name("month");
+				column_split2.setCol_zhname("月");
+				column_splitList.add(column_split2);
+				Column_split column_split3 = new Column_split();
+				column_split3.setSplit_type(CharSplitType.PianYiLiang.getCode());
+				column_split3.setCol_offset("8,10");
+				column_split3.setCol_type("varchar(10)");
+				column_split3.setCol_name("day");
+				column_split3.setCol_zhname("日");
+				column_splitList.add(column_split3);
+				columnCleanBean.setColumn_split_list(column_splitList);
+				columnCleanBeans.add(columnCleanBean);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：清洗顺序默认、选择列合并、将表的cc_call_center_sk、cc_call_center_id、cc_rec_end_date字段合并成zzz_column1
+	 * cc_open_date_sk、cc_name合并成zzz_column2
+	 */
+	@Test
+	public void test44() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Column_merge> column_mergeList = new ArrayList<>();
+		Column_merge column_merge1 = new Column_merge();
+		column_merge1.setOld_name("cc_call_center_sk,cc_call_center_id,cc_rec_end_date");
+		column_merge1.setCol_name("zzz_column1");
+		column_merge1.setCol_zhname("合并的列1");
+		column_merge1.setCol_type("varchar(512)");
+		column_mergeList.add(column_merge1);
+		Column_merge column_merge2 = new Column_merge();
+		column_merge2.setOld_name("cc_open_date_sk,cc_name");
+		column_merge2.setCol_name("zzz_column2");
+		column_merge2.setCol_zhname("合并的列2");
+		column_merge2.setCol_type("varchar(512)");
+		column_mergeList.add(column_merge2);
+		collectTableBean.setColumn_merge_list(column_mergeList);
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 清洗：测试清洗顺序、字符去空、日期转换、列拆分、列合并
+	 * 选择列合并、将表的cc_call_center_sk、cc_call_center_id、cc_rec_end_date字段合并成zzz_column1
+	 * cc_open_date_sk、cc_name合并成zzz_column2
+	 */
+	@Test
+	public void test45() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Column_merge> column_mergeList = new ArrayList<>();
+		Column_merge column_merge1 = new Column_merge();
+		column_merge1.setOld_name("cc_call_center_sk,cc_call_center_id,cc_rec_end_date");
+		column_merge1.setCol_name("zzz_column1");
+		column_merge1.setCol_zhname("合并的列1");
+		column_merge1.setCol_type("varchar(512)");
+		column_mergeList.add(column_merge1);
+		Column_merge column_merge2 = new Column_merge();
+		column_merge2.setOld_name("cc_open_date_sk,cc_name");
+		column_merge2.setCol_name("zzz_column2");
+		column_merge2.setCol_zhname("合并的列2");
+		column_merge2.setCol_type("varchar(512)");
+		column_mergeList.add(column_merge2);
+		collectTableBean.setColumn_merge_list(column_mergeList);
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			if ("cc_rec_start_date".equals(collectTableColumnBean.getColumn_name())) {
+				//设置清洗顺序
+				JSONObject object = new JSONObject();
+				//字符替换
+				object.put(CleanType.ZiFuTiHuan.getCode(), 1);
+				//字符补齐
+				object.put(CleanType.ZiFuBuQi.getCode(), 2);
+				//字符trim
+				object.put(CleanType.ZiFuTrim.getCode(), 3);
+				//时间转换
+				object.put(CleanType.ShiJianZhuanHuan.getCode(), 4);
+				//字符拆分
+				object.put(CleanType.ZiFuChaiFen.getCode(), 5);
+				//码值转换
+				object.put(CleanType.MaZhiZhuanHuan.getCode(), 6);
+				collectTableColumnBean.setTc_or(object.toJSONString());
+				List<ColumnCleanBean> columnCleanBeans = new ArrayList<>();
+				//-----------------------------------------设置列拆分
+				ColumnCleanBean columnCleanBean = new ColumnCleanBean();
+				columnCleanBean.setClean_type(CleanType.ZiFuChaiFen.getCode());
+				List<Column_split> column_splitList = new ArrayList<>();
+				Column_split column_split1 = new Column_split();
+				column_split1.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
+				column_split1.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split1.setCol_type("varchar(10)");
+				column_split1.setCol_name("year");
+				column_split1.setCol_zhname("年");
+				column_split1.setSeq(0L);
+				column_splitList.add(column_split1);
+				Column_split column_split2 = new Column_split();
+				column_split2.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
+				column_split2.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split2.setCol_type("varchar(10)");
+				column_split2.setCol_name("month");
+				column_split2.setCol_zhname("月");
+				column_split2.setSeq(1L);
+				column_splitList.add(column_split2);
+				Column_split column_split3 = new Column_split();
+				column_split3.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
+				column_split3.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split3.setCol_type("varchar(10)");
+				column_split3.setCol_name("day");
+				column_split3.setCol_zhname("日");
+				column_split3.setSeq(2L);
+				column_splitList.add(column_split3);
+				columnCleanBean.setColumn_split_list(column_splitList);
+				columnCleanBeans.add(columnCleanBean);
+				//-----------------------------------------设置日期转换
+				ColumnCleanBean columnCleanBean2 = new ColumnCleanBean();
+				//时间转换
+				columnCleanBean2.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
+				//原各式
+				columnCleanBean2.setOld_format("yyyymmdd");
+				//转换后的格式
+				columnCleanBean2.setConvert_format("yyyy-mm-dd");
+				columnCleanBeans.add(columnCleanBean2);
+				//-----------------------------------------设置字符替换
+				ColumnCleanBean columnCleanBean3 = new ColumnCleanBean();
+				//字符替换
+				columnCleanBean3.setClean_type(CleanType.ZiFuTiHuan.getCode());
+				//原字段
+				columnCleanBean3.setField(StringUtil.string2Unicode("-"));
+				//替换字段
+				columnCleanBean3.setReplace_feild(StringUtil.string2Unicode(""));
+				columnCleanBeans.add(columnCleanBean3);
+				//-----------------------------------------设置字符trim
+				ColumnCleanBean columnCleanBean4 = new ColumnCleanBean();
+				//去空
+				columnCleanBean4.setClean_type(CleanType.ZiFuTrim.getCode());
+				columnCleanBeans.add(columnCleanBean4);
+				//-----------------------------------------设置字符补齐
+				ColumnCleanBean columnCleanBean5 = new ColumnCleanBean();
+				//字符补齐
+				columnCleanBean5.setClean_type(CleanType.ZiFuBuQi.getCode());
+				//后补齐
+				columnCleanBean5.setFilling_type(FillingType.HouBuQi.getCode());
+				//补齐长度
+				columnCleanBean5.setFilling_length(10L);
+				//补齐字符
+				columnCleanBean5.setCharacter_filling(StringUtil.string2Unicode(" "));
+				columnCleanBeans.add(columnCleanBean5);
+				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
 			}
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));

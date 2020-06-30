@@ -3,7 +3,6 @@ package hrds.agent.job.biz.dataclean;
 import hrds.commons.entity.Column_split;
 import org.apache.parquet.example.data.Group;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public class Clean {
 
 		if (!ordering.isEmpty()) {
 			Map<Integer, String> colMap = ordering.get(columnname.toUpperCase());
-			for (int i = colMap.size(); i >= 1; i--) {
+			for (int i = 1; i <= colMap.size(); i++) {
 				switch (colMap.get(i)) {
 					case "2":
 						columndata = allclean.replace(deleSpecialSpace, columndata, columnname);//字符替换
