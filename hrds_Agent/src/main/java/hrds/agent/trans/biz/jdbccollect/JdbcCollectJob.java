@@ -95,7 +95,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 			//6.将数据字典信息解析，并返回
 			dd_data = DataExtractUtil.parseJsonDictionary(dd_data, collectTableBean.getTable_name(),
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
-					collectTableBean.getData_extraction_def_list(), collectTableBean.getUnload_type(),
+					collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
 					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
 					, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
 		}

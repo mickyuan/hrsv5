@@ -12,7 +12,6 @@ import hrds.agent.job.biz.bean.JobParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.core.JobFactory;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Object_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ConnUtil;
@@ -53,34 +52,36 @@ public class ObjectCollectJob extends AgentBaseAction {
 				"", null).runJob();
 	}
 
-	@Method(desc = "解析半结构化采集数据字典获取表数据",
+	@Method(desc = "有数据字典时解析半结构化采集数据字典获取表数据",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.获取生成xml文件文件名" +
-					"3.判断是否存在数据字典，根据不同情况做不同处理" +
-					"4.有数据字典写xml文件获取数据字典数据" +
-					"5.数据字典不存在，获取当前日期下的数据文件数据" +
-					"6.返回解析后的数据字典所有表数据")
+					"3.有数据字典写xml文件获取数据字典数据" +
+					"5.返回解析后的数据字典所有表数据")
 	@Param(name = "file_path", desc = "文件存储路径", range = "不为空")
-	@Param(name = "is_dictionary", desc = "是否存在数据字典", range = "使用（IsFlag）代码项")
-	@Param(name = "data_date", desc = "数据日期", range = "是否存在数据字典选择否的时候必选", nullable = true)
-	@Param(name = "file_suffix", desc = "文件后缀名", range = "无限制")
 	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
-	public String getDicTable(String file_path, String file_suffix, String is_dictionary, String data_date) {
+	public String getDicTable(String file_path) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.获取生成xml文件文件名
 		String xmlName = ConnUtil.getDataBaseFile("", "", file_path, "");
-		// 3.判断是否存在数据字典，根据不同情况做不同处理
-		List<Object> jsonData;
-		if (IsFlag.Shi == (IsFlag.ofEnumByCode(is_dictionary))) {
-			// 4.有数据字典写xml文件获取数据字典数据
-			Xls2xml.toXml2(file_path, xmlName);
-			jsonData = ConnUtil.getDicTable(xmlName);
-		} else {
-			// 5.数据字典不存在，获取当前日期下的数据文件数据
-			jsonData = ConnUtil.getTableByNoDictionary(file_path, data_date, file_suffix);
-		}
-		// 6.返回解析后的数据字典所有表数据
-		return PackUtil.packMsg(JsonUtil.toJson(jsonData));
+		// 3.有数据字典写xml文件获取数据字典数据
+		Xls2xml.toXml2(file_path, xmlName);
+		List<Map<String, String>> dicTable = ConnUtil.getDicTable(xmlName);
+		// 4.返回解析后的数据字典所有表数据
+		return PackUtil.packMsg(JsonUtil.toJson(dicTable));
+	}
+
+	@Method(desc = "没有数据字典解析半结构化采集数据字典获取表数据",
+			logicStep = "1.数据字典不存在，获取当前日期下的数据文件数据" +
+					"2.返回解析后的数据字典所有表数据")
+	@Param(name = "file_path", desc = "文件存储路径", range = "不为空")
+	@Param(name = "data_date", desc = "数据日期", range = "是否存在数据字典选择否的时候必选", nullable = true)
+	@Param(name = "file_suffix", desc = "文件后缀名", range = "无限制")
+	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
+	public String getFirstLineData(String file_path, String file_suffix, String data_date) {
+		// 1.数据字典不存在，获取当前日期下的数据文件数据
+		List<Map<String, String>> tableByNoDictionary = ConnUtil.getTableByNoDictionary(file_path, data_date, file_suffix);
+		// 2.返回解析后的数据字典所有表数据
+		return PackUtil.packMsg(JsonUtil.toJson(tableByNoDictionary));
 	}
 
 	@Method(desc = "解析半结构化采集数据字典获取表数据",

@@ -2,7 +2,6 @@ package hrds.g.biz.enumerate;
 
 
 import fd.ng.core.annotation.DocClass;
-import hrds.commons.exception.AppSystemException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +17,7 @@ public enum StateType {
 	/**
 	 * 账号或密钥错误
 	 */
-	NOT_REST_USER("400", "该用户非接口用户"),
+	NOT_REST_USER("400", "该用户非接口用户或者用户不存在"),
 	/**
 	 * 账号或密钥错误
 	 */

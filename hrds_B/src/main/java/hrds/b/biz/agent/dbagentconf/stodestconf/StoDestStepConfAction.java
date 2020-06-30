@@ -328,7 +328,7 @@ public class StoDestStepConfAction extends BaseAction {
 					+ " t1 JOIN "
 					+ Dtab_relation_store.TableName
 					+ " t2 ON "
-					+ " t1.storage_id = t2.storage_id WHERE t1.table_id = ? AND t2.data_source = ?",
+					+ " t1.storage_id = t2.tab_id WHERE t1.table_id = ? AND t2.data_source = ?",
 				tableId, StoreLayerDataSource.DB.getCode());
 		// 4、如果获取不到，说明之前该表未定义过存储目的地，则直接返回结果集
 		if (tbStoRela.isEmpty()) {

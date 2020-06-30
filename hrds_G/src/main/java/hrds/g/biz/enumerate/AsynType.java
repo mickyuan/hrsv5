@@ -73,8 +73,8 @@ public enum AsynType {
 	 */
 	public static boolean isAsynType(String asynType) {
 		if (StringUtil.isNotBlank(asynType) && (AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)
-				|| AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)
-				|| AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType))) {
+				|| AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(asynType)
+				|| AsynType.ASYNPOLLING == AsynType.ofEnumByCode(asynType))) {
 			return true;
 		} else {
 			return false;

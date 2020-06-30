@@ -3,23 +3,24 @@ package hrds.g.biz.bean;
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.entity.anno.Table;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 
 @DocClass(desc = "单表查询参数实体", author = "dhw", createdate = "2020/4/1 15:36")
 @Table(tableName = "single_table")
-public class SingleTable {
+public class SingleTable extends ProjectTableEntity {
 
 	private static final long serialVersionUID = 321566870187324L;
 
 	public static final String TableName = "single_table";
 
-	@DocBean(name = "tableName", value = "表名称:", dataType = String.class,  required = false)
+	@DocBean(name = "tableName", value = "表名称:", dataType = String.class, required = false)
 	private String tableName;
 	@DocBean(name = "whereColumn", value = "条件Column:", dataType = String.class, required = false)
 	private String whereColumn;
 	@DocBean(name = "selectColumn", value = "查询Column:", dataType = String.class, required = false)
 	private String selectColumn;
 
-//	@DocBean(name = "jdbc", value = "0-表示使用JDBC查询/1-不使用JDBC:", dataType = String.class, required = true)
+	//	@DocBean(name = "jdbc", value = "0-表示使用JDBC查询/1-不使用JDBC:", dataType = String.class, required = true)
 //	private String jdbc;
 	@DocBean(name = "num", value = "显示条数:", dataType = Integer.class, required = false)
 	private Integer num;

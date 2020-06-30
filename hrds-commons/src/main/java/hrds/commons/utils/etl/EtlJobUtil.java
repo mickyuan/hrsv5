@@ -94,6 +94,7 @@ public class EtlJobUtil {
                 String sub_sys_desc = sub_sys_cd;
                 String etl_job = dm_datatable.getDatatable_en_name();
                 String etl_job_desc = dm_datatable.getDatatable_en_name();
+                //TODO 修改@
                 String param = pkId + "@" + BATCH_DATE;
                 jobCommonMethod(sub_name, sub_sys_desc, etl_job, etl_job_desc, param, dataSourceType, MARTPRONAME,
                         etl_sys_cd, sub_sys_cd, db);

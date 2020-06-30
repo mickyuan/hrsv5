@@ -9,7 +9,6 @@ import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.FileFormat;
@@ -91,8 +90,11 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//2.开启事务
 			db.beginTrans();
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
-			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-					Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
+			//取值的应该根据原来的类型来
+			List<String> sourceTypeList = StringUtil.split(tableBean.getColTypeMetaInfo(), Constant.METAINFOSPLIT);
+			//转换之后的类型用于建表语句
+//			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
+//					Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
 			//3.拼接batch插入数据库的sql
 			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
 					+ 1);
@@ -107,25 +109,25 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//是否包含表头
 			String is_header = tableBean.getIs_header();
 			if (FileFormat.CSV.getCode().equals(file_format)) {
-				count = readCsvToDataBase(db, columnList, typeList, batchSql, file_code, is_header);
+				count = readCsvToDataBase(db, columnList, sourceTypeList, batchSql, file_code, is_header);
 			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
-				count = readParquetToDataBase(db, columnList, typeList, batchSql);
+				count = readParquetToDataBase(db, columnList, sourceTypeList, batchSql);
 			} else if (FileFormat.ORC.getCode().equals(file_format)) {
-				count = readOrcToDataBase(db, typeList, batchSql);
+				count = readOrcToDataBase(db, sourceTypeList, batchSql);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
-				count = readSequenceToDataBase(db, columnList, typeList, batchSql);
+				count = readSequenceToDataBase(db, columnList, sourceTypeList, batchSql);
 			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
 				//分隔符为空
 				if (StringUtil.isEmpty(column_separator)) {
-					count = readDingChangToDataBase(db, columnList, typeList, batchSql,
+					count = readDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
 							file_code);
 				} else {
-					count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql,
+					count = readFeiDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
 							column_separator,
 							file_code);
 				}
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
-				count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql,
+				count = readFeiDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
 						column_separator,
 						file_code);
 			} else {

@@ -52,7 +52,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	//操作时间
 	protected String operateTime;
 	//操作人
-	protected long user_id;
+	protected String user_id;
 
 	public AbstractFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
 	                          TableBean tableBean, Data_extraction_def data_extraction_def) {
@@ -63,7 +63,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		this.data_extraction_def = data_extraction_def;
 		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
-		this.user_id = collectTableBean.getUser_id();
+		this.user_id = String.valueOf(collectTableBean.getUser_id());
 	}
 
 	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
@@ -144,8 +144,14 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		} else {
 			Object oj = resultSet.getObject(column_name);
 			if (null != oj) {
-				if (type == java.sql.Types.TIMESTAMP || type == java.sql.Types.DATE || type == java.sql.Types.TIME) {
+				if (type == java.sql.Types.TIMESTAMP) {
 					Date date = resultSet.getTimestamp(column_name);
+					reader2String = date.toString();
+				} else if (type == java.sql.Types.DATE) {
+					Date date = resultSet.getDate(column_name);
+					reader2String = date.toString();
+				} else if (type == java.sql.Types.TIME) {
+					Date date = resultSet.getTime(column_name);
 					reader2String = date.toString();
 				} else if (type == java.sql.Types.CHAR || type == java.sql.Types.VARCHAR
 						|| type == java.sql.Types.NVARCHAR || type == java.sql.Types.BINARY

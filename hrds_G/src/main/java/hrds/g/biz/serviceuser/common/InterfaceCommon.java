@@ -11,6 +11,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.util.Dbo;
 import hrds.commons.codes.InterfaceState;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Interface_file_info;
@@ -67,10 +68,10 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "user_password", desc = "密码", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> getTokenById(Long user_id, String user_password) {
+	public static Map<String, Object> getTokenById(DatabaseWrapper db, Long user_id, String user_password) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.根据用户id获取用户信息
-		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(user_id);
+		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(db, user_id);
 		// 3.判断用户信息是否为空，为空返回错误响应信息
 		if (null == queryInterfaceInfo) {
 			return StateType.getResponseInfo(StateType.NOT_REST_USER);
@@ -111,8 +112,7 @@ public class InterfaceCommon {
 						"token值为空时，user_id与user_password不能为空");
 			}
 			// 3.user_id与user_password不为空，获取token值
-			responseMap = getTokenById(checkParam.getUser_id(),
-					checkParam.getUser_password());
+			responseMap = getTokenById(db, checkParam.getUser_id(), checkParam.getUser_password());
 			// 4.判断获取token值是否成功
 			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
 				return responseMap;
@@ -121,12 +121,12 @@ public class InterfaceCommon {
 			token = responseMap.get("token").toString();
 		}
 		// 6.判断token值是否存在
-		if (InterfaceManager.existsToken(token)) {
+		if (InterfaceManager.existsToken(db, token)) {
 			// 6.1 token值存在,检查接口状态,开始日期,结束日期的合法性
 			QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
 			// 6.2判断接口是否有效
-			responseMap = interfaceInfoCheck(db, userByToken.getUser_id(),
-					checkParam.getUrl(), checkParam.getInterface_code());
+			responseMap = interfaceInfoCheck(db, userByToken.getUser_id(), checkParam.getUrl(),
+					checkParam.getInterface_code());
 			responseMap.put("token", token);
 			return responseMap;
 		}
@@ -262,7 +262,7 @@ public class InterfaceCommon {
 				return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 			}
 			// 5.从内存中获取当前表的字段信息
-			String table_en_column = InterfaceManager.getUserTableInfo(user_id,
+			String table_en_column = InterfaceManager.getUserTableInfo(Dbo.db(), user_id,
 					singleTable.getTableName()).getTable_en_column();
 			// 6.判断要查询列是否存在
 //			String selectColumn = singleTable.getSelectColumn();
@@ -833,11 +833,11 @@ public class InterfaceCommon {
 			return responseMap;
 		}
 		// 5.输出数据类型选择file,asynType选择异步回调
-		if (AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)) {
+		if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(asynType)) {
 			responseMap = checkBackUrl(responseMap, backUrl);
 		}
 		// 6.输出数据类型选择file,asynType选择异步轮询
-		if (AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)) {
+		if (AsynType.ASYNPOLLING == AsynType.ofEnumByCode(asynType)) {
 			responseMap = createFile(responseMap, filePath, fileName);
 		}
 		// 7.返回接口响应信息

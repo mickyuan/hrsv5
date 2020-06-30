@@ -66,6 +66,8 @@ public class AgentActionUtil {
 	public static final String GETALLDICCOLUMNS = "/hrds/agent/trans/biz/semistructured/getAllDicColumns";
 	//向agent发送一个半结构化直连解析数据字典获取所有表对应所有数据处理方式信息
 	public static final String GETALLHANDLETYPE = "/hrds/agent/trans/biz/semistructured/getAllHandleType";
+	//向agent发送一个半结构化直连获取没有数据字典时的第一行数据
+	public static final String GETFIRSTLINEDATA = "/hrds/agent/trans/biz/semistructured/getFirstLineData";
 	//向agent发送一个半结构化直连重写数据字典任务
 	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/semistructured/writeDictionary";
 
@@ -97,6 +99,7 @@ public class AgentActionUtil {
 		list.add(GETAlLLTABLECOLUMN);
 		list.add(GETALLTABLESTORAGE);
 		list.add(GETDICTIONARYJSON);
+		list.add(GETFIRSTLINEDATA);
 	}
 
 	private AgentActionUtil() {
