@@ -29,4 +29,12 @@
 ```  
 - 本地建立自己使用的 __.gitignore__ 文件，并且 __永远不要__ 提交这个文件
 
-
+### 打包发布
+- 使用gradle进行打包发布
+- 先执行gradle release -x test 项目进行打包
+- 再执行gradle moveBranch 会在项目的同级目录下生成app目录
+- 目录结构A、B...项目目录,每个项目下包括bin（启动脚本等）、dist（项目jar和resources）、logs（日志目录）、progout（项目输出目录，如上传文件等）
+- dbscript：建库脚本目录
+- frontend：前端目录，前端需要使用node单独打包拷贝
+- lib：项目依赖的所有的jar文件
+- Agent：包含agent.jar、hrds_Control.jar、hrds_Trigger.jar
