@@ -40,6 +40,15 @@
 - Agent：包含agent.jar、hrds_Control.jar、hrds_Trigger.jar
 
 ```
-|-app
-|
+|--app                           #根目录
+  |--sub sys name                #包含A、B、C、D、F、G、H、K、Receive
+     |--bin                      #启动脚本
+     |--dist                     #程序目录
+        |--xxx.jar               #可运行的jar文件
+        |--resources             #fdconfig、i18n、log4j2.xml
+     |--logs                     #每个项目生成的日志文件目录
+     |--progout                  #项目的输出文件目录，如上传文件等
+  |--Agent                       #hrds_Agent.jar、hrds_Control.jar、hrds_Trigger.jar
+  |--dbscript                    #01-create_table.sql ..................sql文件
+  |--frontend                    #前端部署的程序
 
