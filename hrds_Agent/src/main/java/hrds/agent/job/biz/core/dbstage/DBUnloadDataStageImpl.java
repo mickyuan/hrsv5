@@ -432,9 +432,18 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 */
 	private List<String> getSortJson(JSONObject json) {
 		List<String> sqlList = new ArrayList<>();
-		sqlList.add(json.getString("delete"));
-		sqlList.add(json.getString("update"));
-		sqlList.add(json.getString("insert"));
+		if (!StringUtil.isEmpty(json.getString("delete"))) {
+			sqlList.add(json.getString("delete"));
+		}
+		if (!StringUtil.isEmpty(json.getString("update"))) {
+			sqlList.add(json.getString("update"));
+		}
+		if (!StringUtil.isEmpty(json.getString("insert"))) {
+			sqlList.add(json.getString("insert"));
+		}
+		if (sqlList.size() == 0) {
+			throw new AppSystemException("请最少填写一个增量sql");
+		}
 		return sqlList;
 	}
 

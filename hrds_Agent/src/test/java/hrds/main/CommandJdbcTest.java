@@ -1234,9 +1234,10 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	/**
 	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
 	 * 仅生成非定长文件、选择同一目的地、选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
-	 * 清洗：测试清洗顺序、字符去空、日期转换、列拆分、列合并
+	 * 清洗：设置清洗顺序：时间转换、字符替换、字符补齐、字符拆分、字符trim、码值转换
 	 * 选择列合并、将表的cc_call_center_sk、cc_call_center_id、cc_rec_end_date字段合并成zzz_column1
-	 * cc_open_date_sk、cc_name合并成zzz_column2
+	 * cc_open_date_sk、cc_name、cc_rec_start_date合并成zzz_column2
+	 * XXX 列合并的值不受清洗影响，列合并不能合并拆分的字段，列拆分可能会因为清洗顺序导致异常，这一块待完善
 	 */
 	@Test
 	public void test45() {
@@ -1251,7 +1252,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 		column_merge1.setCol_type("varchar(512)");
 		column_mergeList.add(column_merge1);
 		Column_merge column_merge2 = new Column_merge();
-		column_merge2.setOld_name("cc_open_date_sk,cc_name");
+		column_merge2.setOld_name("cc_open_date_sk,cc_name,cc_rec_start_date");
 		column_merge2.setCol_name("zzz_column2");
 		column_merge2.setCol_zhname("合并的列2");
 		column_merge2.setCol_type("varchar(512)");
@@ -1261,16 +1262,16 @@ public class CommandJdbcTest extends WebBaseTestCase {
 			if ("cc_rec_start_date".equals(collectTableColumnBean.getColumn_name())) {
 				//设置清洗顺序
 				JSONObject object = new JSONObject();
-				//字符替换
-				object.put(CleanType.ZiFuTiHuan.getCode(), 1);
-				//字符补齐
-				object.put(CleanType.ZiFuBuQi.getCode(), 2);
-				//字符trim
-				object.put(CleanType.ZiFuTrim.getCode(), 3);
 				//时间转换
-				object.put(CleanType.ShiJianZhuanHuan.getCode(), 4);
+				object.put(CleanType.ShiJianZhuanHuan.getCode(), 1);
+				//字符替换
+				object.put(CleanType.ZiFuTiHuan.getCode(), 2);
+				//字符补齐
+				object.put(CleanType.ZiFuBuQi.getCode(), 3);
 				//字符拆分
-				object.put(CleanType.ZiFuChaiFen.getCode(), 5);
+				object.put(CleanType.ZiFuChaiFen.getCode(), 4);
+				//字符trim
+				object.put(CleanType.ZiFuTrim.getCode(), 5);
 				//码值转换
 				object.put(CleanType.MaZhiZhuanHuan.getCode(), 6);
 				collectTableColumnBean.setTc_or(object.toJSONString());
@@ -1280,28 +1281,26 @@ public class CommandJdbcTest extends WebBaseTestCase {
 				columnCleanBean.setClean_type(CleanType.ZiFuChaiFen.getCode());
 				List<Column_split> column_splitList = new ArrayList<>();
 				Column_split column_split1 = new Column_split();
-				column_split1.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
-				column_split1.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split1.setSplit_type(CharSplitType.PianYiLiang.getCode());
+				//这个偏移量是下标从0开始，前包后不包
+				column_split1.setCol_offset("0,4");
 				column_split1.setCol_type("varchar(10)");
 				column_split1.setCol_name("year");
 				column_split1.setCol_zhname("年");
-				column_split1.setSeq(0L);
 				column_splitList.add(column_split1);
 				Column_split column_split2 = new Column_split();
-				column_split2.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
-				column_split2.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split2.setSplit_type(CharSplitType.PianYiLiang.getCode());
+				column_split2.setCol_offset("4,6");
 				column_split2.setCol_type("varchar(10)");
 				column_split2.setCol_name("month");
 				column_split2.setCol_zhname("月");
-				column_split2.setSeq(1L);
 				column_splitList.add(column_split2);
 				Column_split column_split3 = new Column_split();
-				column_split3.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
-				column_split3.setSplit_sep(StringUtil.string2Unicode("-"));
+				column_split3.setSplit_type(CharSplitType.PianYiLiang.getCode());
+				column_split3.setCol_offset("6,10");
 				column_split3.setCol_type("varchar(10)");
 				column_split3.setCol_name("day");
 				column_split3.setCol_zhname("日");
-				column_split3.setSeq(2L);
 				column_splitList.add(column_split3);
 				columnCleanBean.setColumn_split_list(column_splitList);
 				columnCleanBeans.add(columnCleanBean);
@@ -1310,18 +1309,18 @@ public class CommandJdbcTest extends WebBaseTestCase {
 				//时间转换
 				columnCleanBean2.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
 				//原各式
-				columnCleanBean2.setOld_format("yyyymmdd");
+				columnCleanBean2.setOld_format("yyyy-mm-dd");
 				//转换后的格式
-				columnCleanBean2.setConvert_format("yyyy-mm-dd");
+				columnCleanBean2.setConvert_format("yyyymmdd");
 				columnCleanBeans.add(columnCleanBean2);
 				//-----------------------------------------设置字符替换
 				ColumnCleanBean columnCleanBean3 = new ColumnCleanBean();
 				//字符替换
 				columnCleanBean3.setClean_type(CleanType.ZiFuTiHuan.getCode());
 				//原字段
-				columnCleanBean3.setField(StringUtil.string2Unicode("-"));
+				columnCleanBean3.setField(StringUtil.string2Unicode("1998"));
 				//替换字段
-				columnCleanBean3.setReplace_feild(StringUtil.string2Unicode(""));
+				columnCleanBean3.setReplace_feild(StringUtil.string2Unicode("2018"));
 				columnCleanBeans.add(columnCleanBean3);
 				//-----------------------------------------设置字符trim
 				ColumnCleanBean columnCleanBean4 = new ColumnCleanBean();
@@ -1340,6 +1339,213 @@ public class CommandJdbcTest extends WebBaseTestCase {
 				columnCleanBean5.setCharacter_filling(StringUtil.string2Unicode(" "));
 				columnCleanBeans.add(columnCleanBean5);
 				collectTableColumnBean.setColumnCleanBeanList(columnCleanBeans);
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，填写新增、删除、更新的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test46() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，只有新增和删除 不填更新的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test47() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，只有更新和删除 不填新增的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test48() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，只有新增和更新 不填删除的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test49() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，只有新增的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test50() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "");
+		object.put("update", "");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，只有更新的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test51() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "");
+		object.put("delete", "");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，只有删除的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test52() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，不填写sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test53() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "");
+		object.put("delete", "");
+		object.put("update", "");
+		collectTableBean.setSql(object.toJSONString());
+		assertThat("执行失败", executeJdbcCollect(sourceDataConfBean), is(false));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，填写新增、删除、更新的sql，不选择主键
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 */
+	@Test
+	public void test54() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		for (CollectTableColumnBean collectTableColumnBean : collectTableBean.getCollectTableColumnBeanList()) {
+			collectTableColumnBean.setIs_primary_key(IsFlag.Fou.getCode());
+		}
+		assertThat("执行失败", executeJdbcCollect(sourceDataConfBean), is(false));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表，只有表call_center选择增量采集，填写新增、删除、更新的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK
+	 * 其他表默认配置执行
+	 */
+	@Test
+	public void test55() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		for(CollectTableBean collectTableBean : sourceDataConfBean.getCollectTableBeanArray()){
+			if("call_center".equals(collectTableBean.getTable_name())){
+				//设置增量卸数
+				collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+				//设置增量采集的sql
+				JSONObject object = new JSONObject();
+				object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+				object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+				object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+				collectTableBean.setSql(object.toJSONString());
 			}
 		}
 		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));

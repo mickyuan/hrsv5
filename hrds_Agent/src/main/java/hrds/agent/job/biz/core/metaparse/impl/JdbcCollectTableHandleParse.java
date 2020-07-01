@@ -80,6 +80,12 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 		colTypeMetaInfo.deleteCharAt(colTypeMetaInfo.length() - 1);//列类型
 		allType.deleteCharAt(allType.length() - 1);//列类型
 		primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//是否主键
+		//判断，如果增量写了更新sql，则必须要指定那个字段为主键，如果没有指定则报错
+		if (!StringUtil.isEmpty(JSONObject.parseObject(collectTableBean.getSql()).getString("update"))) {
+			if (!primaryKeyInfo.toString().contains(IsFlag.Shi.getCode())) {
+				throw new AppSystemException("数据库增量卸数更新sql不为空，则必须要指定主键");
+			}
+		}
 		// 页面定义的清洗格式进行卸数
 		tableBean.setAllColumns(allColumns.toString());
 		tableBean.setAllType(allType.toString());
