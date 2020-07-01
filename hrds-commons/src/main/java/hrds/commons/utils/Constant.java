@@ -80,6 +80,9 @@ public class Constant {
 	 * 存放采集页面配置的数据文件
 	 */
 	public static final String MESSAGEFILE = USER_DIR + File.separator + "messageFile" + File.separator;
+	//通信异常存储目录
+	public static final String COMMUNICATIONERRORFOLDER = USER_DIR + File.separator
+			+ "CommunicationError" + File.separator;
 	//定义并行抽取SQL开始条数占位符
 	/**
 	 * 定义并行抽取SQL开始条数占位符

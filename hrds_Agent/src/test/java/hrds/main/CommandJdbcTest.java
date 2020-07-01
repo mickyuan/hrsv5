@@ -30,7 +30,7 @@ import static org.hamcrest.core.Is.is;
 
 @DocClass(desc = "数据库采集测试用例", createdate = "2020/01/07 09:48", author = "zxz")
 public class CommandJdbcTest extends WebBaseTestCase {
-
+	//XXX collect_case 页面展现有点小优化，后台少一个字段
 	/**
 	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
 	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
