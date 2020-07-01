@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -54,11 +55,11 @@ public class JobConfigurationTest extends WebBaseTestCase {
 	// 初始化作业名称
 	private final String etl_job = "dhwzycs" + THREAD_ID;
 	// 初始化任务编号
-	private final String SubSysCd = "dhwrwcs1" + THREAD_ID;
-	private final String SubSysCd2 = "dhwrwcs2" + THREAD_ID;
-	private final String SubSysCd3 = "myrwcs1" + THREAD_ID;
-	private final String SubSysCd4 = "myrwcs2" + THREAD_ID;
-	private final String SubSysCd5 = "myrwcs3" + THREAD_ID;
+	private final String SubSysCd = "dhwrwcs1";
+	private final String SubSysCd2 = "dhwrwcs2";
+	private final String SubSysCd3 = "myrwcs1";
+	private final String SubSysCd4 = "myrwcs2";
+	private final String SubSysCd5 = "myrwcs3";
 	// 初始化系统参数编号
 	private final String ParaCd = "test_para";
 	private final String ParaCd2 = "test_para2";
@@ -152,7 +153,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			etl_job_temp.setEtl_temp_id(THREAD_ID + i);
 			if (i == 1) {
 				etl_job_temp.setEtl_temp_type("上传模板");
-				etl_job_temp.setPro_name("upload.shell");
+				etl_job_temp.setPro_name("hrds.upload.shell");
 			} else {
 				etl_job_temp.setEtl_temp_type("下载模板");
 				etl_job_temp.setPro_name("download.shell");
@@ -4528,8 +4529,9 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					"3.错误的数据访问2，表名不存在")
 	@Test
 	public void uploadExcelFile() {
-		File file = FileUtil.getFile(System.getProperty("user.dir")
-				+ "\\src\\test\\java\\upload\\Etl_resource.xlsx");
+		String filename = System.getProperty("user.dir")
+				+ "src/test/java/hrds/upload/Etl_resource.xlsx";
+		File file = FileUtil.getFile(FileNameUtils.normalize(filename));
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
 				.reset(SubmitMediaType.MULTIPART)

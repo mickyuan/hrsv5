@@ -31,9 +31,8 @@ public class JobLevelInterventionActionTest extends WebBaseTestCase {
 	private static final long USER_ID = testInitConfig.getLong("user_id");
 	//上面用户id所对应的密码
 	private static final String PASSWORD = testInitConfig.getString("password");
-	private final long nextId = PrimayKeyGener.getNextId();
 	//当前线程的id
-	private final long THREAD_ID = Thread.currentThread().getId() + nextId;
+	private final long THREAD_ID = Thread.currentThread().getId();
 	// 初始化工程编号
 	private final String EtlSysCd = "zygycs" + THREAD_ID;
 	// 初始化任务编号

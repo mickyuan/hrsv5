@@ -29,16 +29,15 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 	// 已经存在的用户ID,用于模拟登录
 	private static final long USER_ID = testInitConfig.getLong("user_id");
 	private static final String PASSWORD = testInitConfig.getString("password");
-	//主键ID
-	private long nextId = PrimayKeyGener.getNextId();
+//	//主键ID
+//	private long nextId = PrimayKeyGener.getNextId();
 	//当前线程的id
-	private long THREAD_ID = Thread.currentThread().getId() + nextId;
+	private long THREAD_ID = Thread.currentThread().getId();
 	// 初始化工程编号
 	private final String EtlSysCd = "xtgyglcs" + THREAD_ID;
 	private final String EtlSysCd2 = "xtgyglcs2" + THREAD_ID;
 	private final String EtlSysCd3 = "xtgyglcs3" + THREAD_ID;
 	// 初始化任务编号
-	private final String SubSysCd = "xtgyrwcs" + THREAD_ID;
 	private final String EventId = "time1" + THREAD_ID;
 	private final String HisEventId = "time2" + THREAD_ID;
 	private final String HisEventId2 = "time3" + THREAD_ID;
@@ -66,7 +65,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 			}
 			// 构造etl_sub_sys_list表测试数据
 			Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
-			etl_sub_sys_list.setSub_sys_cd(SubSysCd);
+			etl_sub_sys_list.setSub_sys_cd("xtgyrwcs");
 			etl_sub_sys_list.setEtl_sys_cd(EtlSysCd);
 			etl_sub_sys_list.setSub_sys_desc("任务测试");
 			etl_sub_sys_list.setComments("测试");
@@ -83,7 +82,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 			etl_job_cur.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
 			etl_job_cur.setPro_name("zy.shell");
 			etl_job_cur.setPro_type(Pro_Type.SHELL.getCode());
-			etl_job_cur.setSub_sys_cd(SubSysCd);
+			etl_job_cur.setSub_sys_cd("xtgyrwcs");
 			etl_job_cur.setDisp_type(Dispatch_Type.TPLUS0.getCode());
 			etl_job_cur.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
 			etl_job_cur.setExe_frequency(1L);
