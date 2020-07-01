@@ -1,13 +1,11 @@
 package hrds.c.biz.jobconfig;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
@@ -42,7 +40,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.*;
 
 @DocClass(desc = "作业调度配置管理", author = "dhw", createdate = "2019/10/28 11:36")
@@ -170,6 +167,9 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id关联进行权限控制
 		// 2.字段合法性验证
 		checkEtlSubSysField(etl_sub_sys_list);
+		if (!ETLJobUtil.isEtlSysExistById(etl_sub_sys_list.getEtl_sys_cd(), getUserId())) {
+			throw new BusinessException("当前工程已不存在！");
+		}
 		// 3.判断工程对应的任务是否已存在,不存在才添加
 		if (ETLJobUtil.isEtlSubSysExist(etl_sub_sys_list.getEtl_sys_cd(), etl_sub_sys_list.getSub_sys_cd())) {
 			throw new BusinessException("该工程对应的任务已存在，不能新增！");
@@ -181,13 +181,18 @@ public class JobConfiguration extends BaseAction {
 	@Method(desc = "更新保存任务",
 			logicStep = "1.数据可访问权限处理方式，通过user_id关联进行权限控制" +
 					"2.字段合法性验证" +
-					"3.修改任务信息")
+					"3.判断工程是否存在" +
+					"4.修改任务信息")
 	@Param(name = "etl_sub_sys_list", desc = "任务实体对象", range = "与数据库表字段规则一致", isBean = true)
 	public void updateEtlSubSys(Etl_sub_sys_list etl_sub_sys_list) {
 		// 1.数据可访问权限处理方式，通过user_id关联进行权限控制
 		// 2.字段合法性验证
 		checkEtlSubSysField(etl_sub_sys_list);
-		// 3.修改任务信息
+		// 3.判断工程是否存在
+		if (!ETLJobUtil.isEtlSysExistById(etl_sub_sys_list.getEtl_sys_cd(), getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
+		// 4.修改任务信息
 		etl_sub_sys_list.update(Dbo.db());
 	}
 
@@ -1049,8 +1054,7 @@ public class JobConfiguration extends BaseAction {
 
 	@Method(desc = "根据工程编号、资源类型查询资源定义信息",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
-					"2.判断当前工程下资源定义信息是否存在" +
-					"3.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段")
+					"2.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "resource_type", desc = "资源类型", range = "新增资源时生成")
 	@Return(desc = "返回根据工程编号、资源类型查询资源定义信息", range = "无限制")
@@ -1059,11 +1063,7 @@ public class JobConfiguration extends BaseAction {
 		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
 			throw new BusinessException("当前工程已不存在");
 		}
-		// 2.判断当前工程下资源定义信息是否存在
-		if (!ETLJobUtil.isEtlResourceExist(etl_sys_cd, resource_type)) {
-			throw new BusinessException("当前工程对应的资源已不存在！");
-		}
-		// 3.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段
+		// 2.返回根据工程编号、资源类型查询资源定义信息,实体字段基本都需要所以查询所有字段
 		return Dbo.queryOneObject("select * from " + Etl_resource.TableName + " where etl_sys_cd=?" +
 				" AND resource_type=?", etl_sys_cd, resource_type);
 	}
@@ -1210,6 +1210,9 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		// 2.字段合法性验证
 		checkEtlParaField(etl_para);
+		if (!ETLJobUtil.isEtlSysExistById(etl_para.getEtl_sys_cd(), getUserId())) {
+			throw new BusinessException("当前用户对应工程已不存在！");
+		}
 		// 3.系统参数变量名称需要拼接前缀！
 		String para_cd = PREFIX + etl_para.getPara_cd();
 		// 4.判断作业系统参数变量名称是否已存在
@@ -1248,6 +1251,9 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		// 2.字段合法性验证
 		checkEtlParaField(etl_para);
+		if (!ETLJobUtil.isEtlSysExistById(etl_para.getEtl_sys_cd(), getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 3.更新作业系统参数
 		etl_para.update(Dbo.db());
 	}
@@ -1380,6 +1386,9 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		// 2.验证作业依赖实体字段合法性
 		checkEtlDependencyField(etl_dependency);
+		if (!ETLJobUtil.isEtlSysExistById(etl_dependency.getEtl_sys_cd(), getUserId())) {
+			throw new BusinessException("当前工程已不存在");
+		}
 		// 3.判断当前依赖是否已存在，如果存在则不能新增
 		if (ETLJobUtil.isEtlDependencyExist(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
 				etl_dependency.getEtl_job(), etl_dependency.getPre_etl_job())) {

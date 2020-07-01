@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "作业调度配置管理测试类", author = "dhw", createdate = "2019/11/8 9:18")
@@ -4523,10 +4524,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
 
 	@Method(desc = "上传Excel文件",
 			logicStep = "1.正常的数据访问1，数据都正常" +
-					"2.错误的数据访问1，文件不存在")
+					"2.错误的数据访问1，文件不存在" +
+					"3.错误的数据访问2，表名不存在")
 	@Test
 	public void uploadExcelFile() {
-		File file = FileUtil.getFile("src//test//java//upload//Etl_resource.xlsx");
+		File file = FileUtil.getFile(System.getProperty("user.dir")
+				+ "\\src\\test\\java\\upload\\Etl_resource.xlsx");
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
 				.reset(SubmitMediaType.MULTIPART)
@@ -4545,16 +4548,24 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			assertThat("导入三条数据", etlResourceList.size(), is(3));
 		}
 		// 2.错误的数据访问1，文件不存在
+		File file2 = FileUtil.getFile("c:\\Etl_resources.xlsx");
 		bodyString = new HttpClient()
-				.addData("file", "c:\\Etl_resources.xlsx")
+				.reset(SubmitMediaType.MULTIPART)
+				.addFile("file", file2)
 				.addData("table_name", "Etl_resources")
+				.post(getActionUrl("uploadExcelFile"))
+				.getBodyString();
+		assertThat(bodyString, is(nullValue()));
+		// 3.错误的数据访问2，表名不存在
+		bodyString = new HttpClient()
+				.reset(SubmitMediaType.MULTIPART)
+				.addFile("file", file)
+				.addData("table_name", "aaaa")
 				.post(getActionUrl("uploadExcelFile"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接失败！！"));
 		assertThat(ar.isSuccess(), is(false));
-
-
 	}
 
 	@Method(desc = "生成excel文件",
@@ -4564,7 +4575,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
 	@Test
 	public void generateExcelTest() {
 		// 1.正确的数据访问1，数据都有效
-		String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+		String bodyString = new HttpClient()
+				.addData("etl_sys_cd", EtlSysCd)
 				.addData("tableName", "etl_sub_sys_list")
 				.post(getActionUrl("generateExcel")).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -4572,14 +4584,16 @@ public class JobConfigurationTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		assertThat(ar.getData().toString(), is("etl_sub_sys_list.xlsx"));
 		// 2.错误的数据访问1，etl_sys_cd不存在
-		bodyString = new HttpClient().addData("etl_sys_cd", "dlfsjl")
+		bodyString = new HttpClient()
+				.addData("etl_sys_cd", "dlfsjl")
 				.addData("tableName", "etl_sub_sys_list")
 				.post(getActionUrl("generateExcel")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接失败！！"));
 		assertThat(ar.isSuccess(), is(false));
 		// 3.错误的数据访问2，tableName不存在
-		bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
+		bodyString = new HttpClient()
+				.addData("etl_sys_cd", EtlSysCd)
 				.addData("tableName", "aaa")
 				.post(getActionUrl("generateExcel")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)

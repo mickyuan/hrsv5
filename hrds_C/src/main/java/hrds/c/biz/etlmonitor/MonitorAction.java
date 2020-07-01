@@ -107,10 +107,7 @@ public class MonitorAction extends BaseAction {
 				+ " FROM " + Etl_job_cur.TableName + " T1 INNER JOIN " + Etl_sys.TableName
 				+ " T3 ON T1.etl_sys_cd = T3.etl_sys_cd AND T1.curr_bath_date = T3.curr_bath_date"
 				+ " LEFT JOIN " + Etl_sub_sys_list.TableName + " T2 ON T1.sub_sys_cd = T2.sub_sys_cd "
-				+ " WHERE T1.etl_sys_cd = T2.etl_sys_cd");
-		if (StringUtils.isNotBlank(etl_sys_cd)) {
-			asmSql.addSql(" AND T1.etl_sys_cd = ? ");
-		}
+				+ " WHERE T1.etl_sys_cd = T2.etl_sys_cd AND T1.etl_sys_cd = ?");
 		asmSql.addSql(" GROUP BY T1.sub_sys_cd, T2.sub_sys_cd,T1.etl_sys_cd,sub_sys_desc");
 		addParamsToSql(etl_sys_cd, asmSql);
 		// 3.返回根据任务查询作业运行状态信息
@@ -124,9 +121,7 @@ public class MonitorAction extends BaseAction {
 		asmSql.addParam(Job_Status.DONE.getCode());
 		asmSql.addParam(Job_Status.STOP.getCode());
 		asmSql.addParam(Job_Status.ERROR.getCode());
-		if (StringUtils.isNotBlank(etl_sys_cd)) {
-			asmSql.addParam(etl_sys_cd);
-		}
+		asmSql.addParam(etl_sys_cd);
 	}
 
 	@Method(
@@ -136,7 +131,7 @@ public class MonitorAction extends BaseAction {
 					"3.查询当前系统运行任务下的作业信息")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
-	@Param(name = "curr_bath_date", desc = "当前批量日期", range = "yyyy-MM-dd格式的年月日")
+	@Param(name = "curr_bath_date", desc = "当前批量日期", range = "yyyyMMdd格式的年月日")
 	@Return(desc = "返回当前系统运行任务下的作业信息", range = "无限制")
 	public List<Map<String, Object>> searchMonitorJobStateBySubCd(
 			String etl_sys_cd, String sub_sys_cd, String curr_bath_date) {
@@ -151,7 +146,7 @@ public class MonitorAction extends BaseAction {
 		// 3.查询当前系统运行任务下的作业信息
 		return Dbo.queryList("select etl_job,curr_st_time,curr_st_time,curr_end_time,job_disp_status,"
 				+ "sub_sys_cd,curr_bath_date,etl_sys_cd FROM " + Etl_job_cur.TableName
-				+ " WHERE sub_sys_cd=? AND etl_sys_cd=? AND curr_bath_date=? "
+				+ " WHERE sub_sys_cd=? AND etl_sys_cd=? AND REPLACE(curr_bath_date,'-','')=? "
 				+ " ORDER BY curr_bath_date", sub_sys_cd, etl_sys_cd, curr_bath_date);
 	}
 
@@ -169,7 +164,7 @@ public class MonitorAction extends BaseAction {
 		}
 		// 2.当批量日期为空时默认批量日期为当天，因为查看的是历史批量，所以默认展示当天批量
 		if (StringUtil.isBlank(curr_bath_date)) {
-			curr_bath_date = DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString();
+			curr_bath_date = DateUtil.getSysDate();
 		}
 		// 3.查询历史批量信息
 		return Dbo.queryList("SELECT MAX(his.curr_end_time) AS curr_end_time,"
@@ -190,10 +185,10 @@ public class MonitorAction extends BaseAction {
 					"3.查询历史批量作业信息")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "sub_sys_cd", desc = "任务编号", range = "新增任务时生成")
-	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyy-MM-dd格式的年月日")
+	@Param(name = "curr_bath_date", desc = "批量日期", range = "yyyyMMdd格式的年月日")
 	@Return(desc = "返回历史批量作业信息", range = "无限制")
-	public List<Map<String, Object>> searchMonitorHisBatchJobBySubCd(
-			String etl_sys_cd, String sub_sys_cd, String curr_bath_date) {
+	public List<Map<String, Object>> searchMonitorHisBatchJobBySubCd(String etl_sys_cd, String sub_sys_cd,
+	                                                                 String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
 			throw new BusinessException("当前工程已不存在");
@@ -201,6 +196,9 @@ public class MonitorAction extends BaseAction {
 		// 2.判断工程下任务是否存在
 		if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd)) {
 			throw new BusinessException("当前工程对应的任务已不存在！");
+		}
+		if (curr_bath_date.length() == 10 && curr_bath_date.contains("-")) {
+			curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 		}
 		// 3.查询历史批量信息
 		return Dbo.queryList("SELECT t1.etl_sys_cd,t1.sub_sys_cd,t1.etl_job,"
@@ -266,8 +264,8 @@ public class MonitorAction extends BaseAction {
 					+ "6.如果作业为空，返回null")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成", nullable = true)
-	@Param(name = "start_date", desc = "开始批量日期", range = "yyyy-MM-dd格式年月日", nullable = true)
-	@Param(name = "end_date", desc = "结束批量日期", range = "yyyy-MM-dd格式年月日", nullable = true)
+	@Param(name = "start_date", desc = "开始批量日期", range = "yyyyMMdd格式年月日", nullable = true)
+	@Param(name = "end_date", desc = "结束批量日期", range = "yyyyMMdd格式年月日", nullable = true)
 	@Param(name = "isHistoryBatch", desc = "是否从历史批量跳转过来标志", range = "为空代表不是，不为空代表是", nullable = true)
 	@Return(desc = "返回监控历史作业信息", range = "无限制")
 	public List<Map<String, Object>> monitorHistoryJobInfo(String etl_sys_cd, String etl_job, String start_date,
@@ -323,8 +321,8 @@ public class MonitorAction extends BaseAction {
 					+ "2.2为空则表示该请求数据的连接是历史作业查询"
 					+ "2.2.1如果开始日期不为空，加条件查询"
 					+ "2.2.2如果结束日期不为空，加条件查询")
-	@Param(name = "start_date", desc = "开始批量日期", range = "yyyy-MM-dd格式年月日", nullable = true)
-	@Param(name = "end_date", desc = "结束批量日期", range = "yyyy-MM-dd格式年月日", nullable = true)
+	@Param(name = "start_date", desc = "开始批量日期", range = "yyyyMMdd格式年月日", nullable = true)
+	@Param(name = "end_date", desc = "结束批量日期", range = "yyyyMMdd格式年月日", nullable = true)
 	@Param(name = "isHistoryBatch", desc = "是否从历史批量的请求标志", range = "为空代表不是，不为空代表是", nullable = true)
 	private void isHistoryBatch(String start_date, String end_date, String isHistoryBatch) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
@@ -332,7 +330,7 @@ public class MonitorAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		if (StringUtil.isNotBlank(isHistoryBatch)) {
 			// 2.1不为空则表示该请求数据的连接是历史批量过来的
-			asmSql.addSql(" AND curr_bath_date=?");
+			asmSql.addSql(" AND REPLACE(curr_bath_date,'-','') =?");
 			asmSql.addParam(start_date);
 		} else {
 			// 2.2为空则表示该请求数据的连接是历史作业查询
@@ -795,15 +793,18 @@ public class MonitorAction extends BaseAction {
 		// 3.查询作业调度工程信息
 		Etl_sys etl_sys = Dbo.queryOneObject(Etl_sys.class,
 				"select * from " + Etl_sys.TableName + " where user_id=? and etl_sys_cd=?",
-				getUserId(), etl_sys_cd).orElseThrow(() -> new BusinessException("sql查询错误！"));
+				getUserId(), etl_sys_cd)
+				.orElseThrow(() -> new BusinessException("sql查询错误！"));
 		String curr_bath_date = etl_sys.getCurr_bath_date();
 		if (curr_bath_date.contains("-") && curr_bath_date.length() == 10) {
 			curr_bath_date = StringUtil.replace(curr_bath_date, "-", "");
 		}
 		// 4.查询作业信息
 		List<Object> logDicList = Dbo.queryOneColumnList(
-				"select log_dic from " + Etl_job_disp_his.TableName + " where etl_sys_cd=? AND etl_job=? " +
-						" and curr_bath_date=? order by curr_end_time desc", etl_sys_cd, etl_job, curr_bath_date);
+				"select log_dic from " + Etl_job_disp_his.TableName
+						+ " where etl_sys_cd=? AND etl_job=? and curr_bath_date=?"
+						+ " order by curr_end_time desc",
+				etl_sys_cd, etl_job, curr_bath_date);
 		// 5.获取日志目录
 		if (logDicList.isEmpty()) {
 			return null;
