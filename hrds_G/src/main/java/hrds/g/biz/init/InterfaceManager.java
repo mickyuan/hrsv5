@@ -455,7 +455,7 @@ public class InterfaceManager {
 				// 表中文名
 				queryInterfaceInfo.setOriginal_name(tableResult.getString(i, "original_name"));
 				// 表来源
-				queryInterfaceInfo.setTable_blsystem(tableResult.getString(i, "table_blsystem"));
+				queryInterfaceInfo.setTable_blsystem(tableResult.getString(i, "table_blsystem").trim());
 				// 表使用ID
 				queryInterfaceInfo.setUse_id(tableResult.getString(i, "use_id"));
 				// 3.3新增表使用信息

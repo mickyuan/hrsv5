@@ -41,7 +41,7 @@ public enum StateType {
 	/**
 	 * 没有使用权限
 	 */
-	NO_USR_PERMISSIONS("407", "没有表使用权限或者该表不存在"),
+	NO_USR_PERMISSIONS("407", "没有表使用权限"),
 	/**
 	 * 没有接口使用权限
 	 */

@@ -139,8 +139,7 @@ public class InterfaceCommon {
 			"3.获取文件路径" +
 			"4.判断文件是否存在，不存在创建" +
 			"5.开始写文件" +
-			"6.关闭流" +
-			"7.返回响应状态信息")
+			"6.返回响应状态信息")
 	@Param(name = "responseMap", desc = "接口响应信息", range = "无限制")
 	@Param(name = "filepath", desc = "文件路径", range = "无限制")
 	@Param(name = "filename", desc = "文件名称", range = "无限制")
@@ -148,27 +147,21 @@ public class InterfaceCommon {
 	public static Map<String, Object> createFile(Map<String, Object> responseMap, String filepath, String
 			filename) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		BufferedWriter writer;
+		BufferedWriter writer = null;
 		try {
 			File file = new File(filepath);
 			// 2.判断文件是否存在且是否是文件夹，不存在创建目录
-			if (!file.exists() && file.isDirectory()) {
+			if (!file.exists() && !file.isDirectory()) {
 				if (!file.mkdirs()) {
 					return StateType.getResponseInfo(StateType.CREATE_DIRECTOR_ERROR);
 				}
 			}
 			// 3.获取文件路径
-			if (!filepath.endsWith(File.separator)) {
-				// 文件的路径
-				filepath = filepath + File.separator + filename;
-			} else {
-				// 文件的路径
-				filepath = filepath + filename;
-			}
+			filepath = filepath + File.separator + filename;
 			// 4.判断文件是否存在，不存在创建
 			File writeFile = new File(filepath);
 			if (!writeFile.exists()) {
-				if (writeFile.createNewFile()) {
+				if (!writeFile.createNewFile()) {
 					return StateType.getResponseInfo(StateType.CREATE_FILE_ERROR);
 				}
 			}
@@ -176,13 +169,19 @@ public class InterfaceCommon {
 			writer = new BufferedWriter(new FileWriter(writeFile));
 			writer.write(responseMap.toString());
 			writer.flush();
-			// 6.关闭流
-			writer.close();
-			// 7.返回响应状态信息
+			// 6.返回响应状态信息
 			return responseMap;
 		} catch (IOException e) {
 			logger.error(e);
 			return StateType.getResponseInfo(StateType.SIGNAL_FILE_ERROR);
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					logger.info(e);
+				}
+			}
 		}
 	}
 
@@ -746,7 +745,7 @@ public class InterfaceCommon {
 	@Param(name = "filepath", desc = "文件路径", range = "asynType为2时必传", nullable = true)
 	@Return(desc = "返回响应状态信息", range = "无限制")
 	public static Map<String, Object> checkType(String dataType, String outType, String asynType,
-	                                            String backUrl, String fileName, String filepath) {
+	                                            String backUrl, String filepath, String fileName) {
 
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断输出数据类型是否合法

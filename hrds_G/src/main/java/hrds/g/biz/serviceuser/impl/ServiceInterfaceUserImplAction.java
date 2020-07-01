@@ -116,12 +116,15 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			"7.数据源类型为贴源层，关联查询表对应的字段、数据库对应表、源文件属性表查询字段中英文信息" +
 			"8.数据源类型为其他，查询源文件属性表信息获取字段中英文信息" +
 			"9.返回接口响应信息")
-	@Param(name = "tableName", desc = "要查询表名", range = "无限制")
+	@Param(name = "tableName", desc = "要查询表名", range = "无限制", nullable = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
 	public Map<String, Object> tableStructureQuery(String tableName, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
+		if (StringUtil.isBlank(tableName)) {
+			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
+		}
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
@@ -301,7 +304,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			"13.存在，遍历列集合，判断列是否包含.,包含.说明是有别名获取别名后的列名称，否则直接获取列名称" +
 			"14.判断列是否有权限" +
 			"15.判断sql是否是以；结尾，如果是删除" +
-			"16.根据sql获取搜索引擎并根据输出数据类型处理数据")
+			"16.根据sql查询数据" +
+			"17.根据输出数据类型处理数据")
 	@Param(name = "sqlSearch", desc = "sql查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -338,7 +342,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			}
 			// 9.获取表的有效列信息
 			QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(Dbo.db(), user_id, table);
-			columnList = StringUtil.split(userTableInfo.getTable_en_column().toLowerCase(), ",");
+			columnList = StringUtil.split(userTableInfo.getTable_en_column().toLowerCase(), Constant.METAINFOSPLIT);
 		}
 		// 10.如果为某些特定的用户,则不做字段的检测
 		if (!CommonVariables.AUTHORITY.contains(String.valueOf(user_id))) {
@@ -369,9 +373,13 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		if (sqlNew.endsWith(";")) {
 			sqlNew = sqlNew.substring(0, sqlNew.length() - 1);
 		}
-		// 16.根据sql获取搜索引擎并根据输出数据类型处理数据
-		return InterfaceCommon.getSqlData(Dbo.db(), sqlSearch.getOutType(), sqlSearch.getDataType(), sqlNew,
-				user_id, null);
+		// 16.根据sql查询数据
+		responseMap = InterfaceCommon.getSqlData(Dbo.db(), sqlSearch.getOutType(),
+				sqlSearch.getDataType(), sqlNew, user_id, null);
+		// 17.根据输出数据类型处理数据
+		return InterfaceCommon.operateInterfaceByType(sqlSearch.getDataType(), sqlSearch.getOutType(),
+				sqlSearch.getAsynType(), sqlSearch.getBackurl(), sqlSearch.getFilepath(),
+				sqlSearch.getFilename(), responseMap);
 	}
 
 	@Method(desc = "UUID数据下载", logicStep = "")
