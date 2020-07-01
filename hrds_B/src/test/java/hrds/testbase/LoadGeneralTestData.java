@@ -72,35 +72,10 @@ public class LoadGeneralTestData {
     //获取通用数据存储信息
     private List<Dtab_relation_store> DTAB_RELATION_STORE_S = null;
 
-    public static void main(String[] args) {
-        DatabaseWrapper db = null;
-        try {
-            db = new DatabaseWrapper();
-            //获取当前线程id
-            long thread_id = Thread.currentThread().getId() * 1000000;
-            LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData(thread_id);
-            //初始化通用数据
-            loadGeneralTestData.execute(db);
-            //提交数据库操作
-            db.commit();
-            //清理通用数据
-            loadGeneralTestData.cleanUp(db);
-            //提交数据库操作
-            db.commit();
-        } catch (RuntimeException e) {
-            if (null != db) {
-                db.rollback();
-            }
-            throw new BusinessProcessException("初始化通用数据失败!");
-        } finally {
-            if (null != db) {
-                db.close();
-            }
-        }
-    }
-
     public LoadGeneralTestData(long THREAD_ID) {
         this.THREAD_ID = THREAD_ID;
+        //根据线程id初始化通用数据
+        init();
     }
 
     @Method(desc = "初始化通用数据", logicStep = "初始化通用数据")
@@ -119,7 +94,6 @@ public class LoadGeneralTestData {
         GENERAL_CLASSIFY_ID = testInitConfig.getLong("general_classify_id") + THREAD_ID;
         //数据库设置id
         GENERAL_DATABASE_ID = testInitConfig.getLong("general_database_id") + THREAD_ID;
-        System.out.println(GENERAL_MN_USER_ID);
         //获取通用部门信息
         DEPARTMENT_INFO = getDepartmentInfo();
         //获取通用数据源和部门关系信息
@@ -146,10 +120,41 @@ public class LoadGeneralTestData {
         DTAB_RELATION_STORE_S = getDtabRelationStores();
     }
 
+    /**
+     * main
+     *
+     * @param args args
+     */
+    public static void main(String[] args) {
+        DatabaseWrapper db = null;
+        try {
+            db = new DatabaseWrapper();
+            //获取当前线程id
+            long thread_id = Thread.currentThread().getId() * 1000000;
+            LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData(thread_id);
+            //初始化通用数据
+            loadGeneralTestData.execute(db);
+            //提交数据库操作
+            db.commit();
+            //清理通用数据
+            loadGeneralTestData.cleanUp(db);
+            //提交数据库操作
+            db.commit();
+        } catch (RuntimeException e) {
+            if (null != db) {
+                db.rollback();
+            }
+            e.printStackTrace();
+            throw new BusinessProcessException("初始化通用数据失败!");
+        } finally {
+            if (null != db) {
+                db.close();
+            }
+        }
+    }
+
     @Method(desc = "加载通用数据", logicStep = "加载通用数据")
     public void execute(DatabaseWrapper db) {
-        //根据线程id初始化通用数据
-        init();
         //加载 Department_info
         if (null != DEPARTMENT_INFO) {
             DEPARTMENT_INFO.add(db);
@@ -203,97 +208,122 @@ public class LoadGeneralTestData {
     @Method(desc = "清理通用数据", logicStep = "清理通用数据")
     public void cleanUp(DatabaseWrapper db) {
         //清理 Department_info
-        SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?",
-                DEPARTMENT_INFO.getDep_id());
-        long dinum = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName +
-                " where dep_id =?", DEPARTMENT_INFO.getDep_id()).orElseThrow(()
-                -> new RuntimeException("count fail!"));
-        assertThat("Department_info 表此条数据删除后,记录数应该为0", dinum, is(0L));
+        if (null != DEPARTMENT_INFO) {
+            SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?",
+                    DEPARTMENT_INFO.getDep_id());
+            long dinum = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName +
+                    " where dep_id =?", DEPARTMENT_INFO.getDep_id()).orElseThrow(()
+                    -> new RuntimeException("count fail!"));
+            assertThat("Department_info 表此条数据删除后,记录数应该为0", dinum, is(0L));
+        }
         //清理 Source_relation_dep
-        SqlOperator.execute(db, "delete from " + Source_relation_dep.TableName + " where dep_id=? and source_id=?",
-                SOURCE_RELATION_DEP.getDep_id(), SOURCE_RELATION_DEP.getSource_id());
-        long srdnum = SqlOperator.queryNumber(db, "select count(1) from " + Source_relation_dep.TableName +
-                " where dep_id=? and source_id=?", DEPARTMENT_INFO.getDep_id(), SOURCE_RELATION_DEP.getSource_id())
-                .orElseThrow(() -> new RuntimeException("count fail!"));
-        assertThat("Source_relation_dep 表此条数据删除后,记录数应该为0", srdnum, is(0L));
+        if (null != SOURCE_RELATION_DEP) {
+            SqlOperator.execute(db, "delete from " + Source_relation_dep.TableName + " where dep_id=? and source_id=?",
+                    SOURCE_RELATION_DEP.getDep_id(), SOURCE_RELATION_DEP.getSource_id());
+            long srdnum = SqlOperator.queryNumber(db, "select count(1) from " + Source_relation_dep.TableName +
+                    " where dep_id=? and source_id=?", DEPARTMENT_INFO.getDep_id(), SOURCE_RELATION_DEP.getSource_id())
+                    .orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Source_relation_dep 表此条数据删除后,记录数应该为0", srdnum, is(0L));
+        }
         //清理 Data_store_layer
-        DATA_STORE_LAYER_S.forEach(data_store_layer -> {
-            SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id=?",
-                    data_store_layer.getDsl_id());
-            long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName +
-                    " where dsl_id =?", data_store_layer.getDsl_id()).orElseThrow(()
-                    -> new RuntimeException("count fail!"));
-            assertThat("Data_store_layer 表此条数据删除后,记录数应该为0", num, is(0L));
-        });
+        if (!DATA_STORE_LAYER_S.isEmpty()) {
+            DATA_STORE_LAYER_S.forEach(data_store_layer -> {
+                SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_id=?",
+                        data_store_layer.getDsl_id());
+                long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName +
+                        " where dsl_id =?", data_store_layer.getDsl_id()).orElseThrow(()
+                        -> new RuntimeException("count fail!"));
+                assertThat("Data_store_layer 表此条数据删除后,记录数应该为0", num, is(0L));
+            });
+        }
         //清理 Data_store_layer_attr
-        DATA_STORE_LAYER_ATTR_S.forEach(data_store_layer_attr -> {
-            SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id=?",
-                    data_store_layer_attr.getDsl_id());
-            long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
-                    " where dsl_id =?", data_store_layer_attr.getDsl_id()).orElseThrow(()
-                    -> new RuntimeException("count fail!"));
-            assertThat("Data_store_layer_attr 表此条数据删除后,记录数应该为0", num, is(0L));
-        });
+        if (!DATA_STORE_LAYER_ATTR_S.isEmpty()) {
+            DATA_STORE_LAYER_ATTR_S.forEach(data_store_layer_attr -> {
+                SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id=?",
+                        data_store_layer_attr.getDsl_id());
+                long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
+                        " where dsl_id =?", data_store_layer_attr.getDsl_id()).orElseThrow(()
+                        -> new RuntimeException("count fail!"));
+                assertThat("Data_store_layer_attr 表此条数据删除后,记录数应该为0", num, is(0L));
+            });
+        }
         //清理 Data_source
-        SqlOperator.execute(db, "delete from " + Data_source.TableName + " where source_id=?", DATA_SOURCE.getSource_id());
-        long dsnum = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName +
-                " where source_id =?", DATA_SOURCE.getSource_id()).orElseThrow(() -> new RuntimeException("count fail!"));
-        assertThat("Data_source 表此条数据删除后,记录数应该为0", dsnum, is(0L));
+        if (null != DATA_SOURCE) {
+            SqlOperator.execute(db, "delete from " + Data_source.TableName + " where source_id=?", DATA_SOURCE.getSource_id());
+            long dsnum = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName +
+                    " where source_id =?", DATA_SOURCE.getSource_id()).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Data_source 表此条数据删除后,记录数应该为0", dsnum, is(0L));
+        }
         //清理 Agent_info
-        SqlOperator.execute(db, "delete from " + Agent_info.TableName + " where agent_id=?", AGENT_INFO.getAgent_id());
-        long ainum = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName +
-                " where agent_id =?", AGENT_INFO.getAgent_id()).orElseThrow(() -> new RuntimeException("count fail!"));
-        assertThat("Agent_info 表此条数据删除后,记录数应该为0", ainum, is(0L));
+        if (null != AGENT_INFO) {
+            SqlOperator.execute(db, "delete from " + Agent_info.TableName + " where agent_id=?", AGENT_INFO.getAgent_id());
+            long ainum = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName +
+                    " where agent_id =?", AGENT_INFO.getAgent_id()).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Agent_info 表此条数据删除后,记录数应该为0", ainum, is(0L));
+        }
         //清理 Database_set
-        SqlOperator.execute(db, "delete from " + Database_set.TableName + " where database_id=?", DATABASE_SET.getDatabase_id());
-        long dbsnum = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName +
-                " where database_id =?", DATABASE_SET.getDatabase_id()).orElseThrow(() -> new RuntimeException("count fail!"));
-        assertThat("Database_set 表此条数据删除后,记录数应该为0", dbsnum, is(0L));
+        if (null != DATABASE_SET) {
+            SqlOperator.execute(db, "delete from " + Database_set.TableName + " where database_id=?", DATABASE_SET.getDatabase_id());
+            long dbsnum = SqlOperator.queryNumber(db, "select count(1) from " + Database_set.TableName +
+                    " where database_id =?", DATABASE_SET.getDatabase_id()).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Database_set 表此条数据删除后,记录数应该为0", dbsnum, is(0L));
+        }
         //清理 Collect_job_classify
-        SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " where classify_id=?",
-                COLLECT_JOB_CLASSIFY.getClassify_id());
-        long cjcnum = SqlOperator.queryNumber(db, "select count(1) from " + Collect_job_classify.TableName +
-                " where classify_id =?", COLLECT_JOB_CLASSIFY.getClassify_id())
-                .orElseThrow(() -> new RuntimeException("count fail!"));
-        assertThat("Collect_job_classify 表此条数据删除后,记录数应该为0", cjcnum, is(0L));
+        if (null != COLLECT_JOB_CLASSIFY) {
+            SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " where classify_id=?",
+                    COLLECT_JOB_CLASSIFY.getClassify_id());
+            long cjcnum = SqlOperator.queryNumber(db, "select count(1) from " + Collect_job_classify.TableName +
+                    " where classify_id =?", COLLECT_JOB_CLASSIFY.getClassify_id())
+                    .orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Collect_job_classify 表此条数据删除后,记录数应该为0", cjcnum, is(0L));
+        }
         //清理 Table_info
-        TABLE_INFO_S.forEach(table_info -> {
-            SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id=?", table_info.getTable_id());
-            long tinum = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName +
-                    " where table_id =?", table_info.getTable_id()).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Table_info 表此条数据删除后,记录数应该为0", tinum, is(0L));
-        });
+        if (!TABLE_INFO_S.isEmpty()) {
+            TABLE_INFO_S.forEach(table_info -> {
+                SqlOperator.execute(db, "delete from " + Table_info.TableName + " where table_id=?", table_info.getTable_id());
+                long tinum = SqlOperator.queryNumber(db, "select count(1) from " + Table_info.TableName +
+                        " where table_id =?", table_info.getTable_id()).orElseThrow(() -> new RuntimeException("count fail!"));
+                assertThat("Table_info 表此条数据删除后,记录数应该为0", tinum, is(0L));
+            });
+        }
         //清理 Data_store_reg
-        DATA_STORE_REG_S.forEach(data_store_reg -> {
-            SqlOperator.execute(db, "delete from " + Data_store_reg.TableName + " where file_id=?",
-                    data_store_reg.getFile_id());
-            long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_reg.TableName +
-                    " where file_id =?", data_store_reg.getFile_id()).orElseThrow(()
-                    -> new RuntimeException("count fail!"));
-            assertThat("Data_store_reg 表此条数据删除后,记录数应该为0", num, is(0L));
-        });
+        if (!DATA_STORE_REG_S.isEmpty()) {
+            DATA_STORE_REG_S.forEach(data_store_reg -> {
+                SqlOperator.execute(db, "delete from " + Data_store_reg.TableName + " where table_id=?",
+                        data_store_reg.getTable_id());
+                long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_reg.TableName +
+                        " where file_id =?", data_store_reg.getFile_id()).orElseThrow(()
+                        -> new RuntimeException("count fail!"));
+                assertThat("Data_store_reg 表此条数据删除后,记录数应该为0", num, is(0L));
+            });
+        }
         //清理 Table_storage_info
-        TABLE_STORAGE_INFO_S.forEach(table_storage_info -> {
-            SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where storage_id=?",
-                    table_storage_info.getStorage_id());
-            long num = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName +
-                    " where storage_id =?", table_storage_info.getStorage_id()).orElseThrow(()
-                    -> new RuntimeException("count fail!"));
-            assertThat("Table_storage_info 表此条数据删除后,记录数应该为0", num, is(0L));
-        });
+        if (!TABLE_STORAGE_INFO_S.isEmpty()) {
+            TABLE_STORAGE_INFO_S.forEach(table_storage_info -> {
+                SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " where storage_id=?",
+                        table_storage_info.getStorage_id());
+                long num = SqlOperator.queryNumber(db, "select count(1) from " + Table_storage_info.TableName +
+                        " where storage_id =?", table_storage_info.getStorage_id()).orElseThrow(()
+                        -> new RuntimeException("count fail!"));
+                assertThat("Table_storage_info 表此条数据删除后,记录数应该为0", num, is(0L));
+            });
+        }
         //清理 Dtab_relation_store
-        DTAB_RELATION_STORE_S.forEach(dtab_relation_store -> {
-            SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where tab_id=? and dsl_id=?",
-                    dtab_relation_store.getTab_id(), dtab_relation_store.getDsl_id());
-            long num = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName +
-                            " where tab_id=? and dsl_id=?", dtab_relation_store.getTab_id(),
-                    dtab_relation_store.getDsl_id()).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("Dtab_relation_store 表此条数据删除后,记录数应该为0", num, is(0L));
-        });
+        if (!DTAB_RELATION_STORE_S.isEmpty()) {
+            DTAB_RELATION_STORE_S.forEach(dtab_relation_store -> {
+                SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " where tab_id=? and dsl_id=?",
+                        dtab_relation_store.getTab_id(), dtab_relation_store.getDsl_id());
+                long num = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName +
+                                " where tab_id=? and dsl_id=?", dtab_relation_store.getTab_id(),
+                        dtab_relation_store.getDsl_id()).orElseThrow(() -> new RuntimeException("count fail!"));
+                assertThat("Dtab_relation_store 表此条数据删除后,记录数应该为0", num, is(0L));
+            });
+        }
+
     }
 
     @Method(desc = "获取部门表实体数据", logicStep = "获取部门表实体数据")
-    private Department_info getDepartmentInfo() {
+    public Department_info getDepartmentInfo() {
         //Department_info
         Department_info dep = new Department_info();
         dep.setDep_id(GENERAL_DEP_ID);
@@ -304,7 +334,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取数据源部门关系实体数据", logicStep = "获取数据源部门关系实体数据")
-    private Source_relation_dep getSourceRelationDep() {
+    public Source_relation_dep getSourceRelationDep() {
         //Source_relation_dep
         Source_relation_dep srd = new Source_relation_dep();
         srd.setSource_id(GENERAL_SOURCE_ID);
@@ -313,7 +343,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取初始化存储层表实体数据", logicStep = "获取初始化存储层表实体数据")
-    private static List<Data_store_layer> getDataStoreLayers() {
+    public List<Data_store_layer> getDataStoreLayers() {
         //初始化存储层信息列表
         List<Data_store_layer> dsls = new ArrayList<>();
         //Data_store_layer
@@ -322,7 +352,7 @@ public class LoadGeneralTestData {
             //测试数据库信息
             YamlMap test_database = TEST_STORAGE_LAYER_INFO_S.getMap(i);
             //存储层设置id
-            long DSL_ID = test_database.getLong("dsl_id");
+            long DSL_ID = test_database.getLong("dsl_id") + THREAD_ID;
             dsl = new Data_store_layer();
             dsl.setDsl_id(DSL_ID);
             dsl.setDsl_name("通用测试存储层-" + test_database.getString(StorageTypeKey.database_type));
@@ -335,7 +365,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取初始化存储层配置信息", logicStep = "获取初始化存储层配置信息")
-    private static List<Data_store_layer_attr> getDataStoreLayerAttrs() {
+    public List<Data_store_layer_attr> getDataStoreLayerAttrs() {
         //初始化存储层配置信息列表
         List<Data_store_layer_attr> dslas = new ArrayList<>();
         //Data_store_layer_attr
@@ -344,7 +374,7 @@ public class LoadGeneralTestData {
             //测试数据库信息
             YamlMap test_database = TEST_STORAGE_LAYER_INFO_S.getMap(i);
             //存储层设置id
-            long DSL_ID = test_database.getLong("dsl_id");
+            long DSL_ID = test_database.getLong("dsl_id") + THREAD_ID;
             //设置数据库类型
             dsla = new Data_store_layer_attr();
             dsla.setDsla_id(PrimayKeyGener.getNextId());
@@ -398,7 +428,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用数据源信息", logicStep = "获取通用数据源信息")
-    private Data_source getDataSource() {
+    public Data_source getDataSource() {
         //Data_source
         Data_source dataSource = new Data_source();
         dataSource.setSource_id(GENERAL_SOURCE_ID);
@@ -412,7 +442,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用Agent信息", logicStep = "获取通用Agent信息")
-    private Agent_info getAgentInfo() {
+    public Agent_info getAgentInfo() {
         //Agent_info
         Agent_info agentInfo = new Agent_info();
         agentInfo.setAgent_id(GENERAL_AGENT_ID);
@@ -429,7 +459,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用数据库设置信息", logicStep = "获取通用数据库设置信息")
-    private Database_set getDatabaseSet() {
+    public Database_set getDatabaseSet() {
         //Database_set
         Database_set databaseSet = new Database_set();
         databaseSet.setDatabase_id(GENERAL_DATABASE_ID);
@@ -443,7 +473,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用分类设置信息", logicStep = "获取通用分类设置信息")
-    private Collect_job_classify getCollectJobClassify() {
+    public Collect_job_classify getCollectJobClassify() {
         //Collect_job_classify
         Collect_job_classify collect_job_classify = new Collect_job_classify();
         collect_job_classify.setClassify_id(GENERAL_CLASSIFY_ID);
@@ -455,7 +485,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用TPCDS表信息", logicStep = "获取通用TPCDS表信息")
-    private List<Table_info> getTableInfos() {
+    public List<Table_info> getTableInfos() {
         //初始化表信息列表
         List<Table_info> table_info_s = new ArrayList<>();
         Table_info table_info;
@@ -481,7 +511,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用TPCDS表登记信息列表", logicStep = "获取通用TPCDS表登记信息列表")
-    private List<Data_store_reg> getDataStoreRegs() {
+    public List<Data_store_reg> getDataStoreRegs() {
         //初始化表存登记信息列表
         List<Data_store_reg> dsrs = new ArrayList<>();
         //Data_store_reg
@@ -508,7 +538,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用TPCDS表存储信息列表", logicStep = "获取通用TPCDS表存储信息列表")
-    private List<Table_storage_info> getTableStorageInfos() {
+    public List<Table_storage_info> getTableStorageInfos() {
         //初始化表存储信息列表
         List<Table_storage_info> tsis = new ArrayList<>();
         //Table_storage_info
@@ -528,7 +558,7 @@ public class LoadGeneralTestData {
     }
 
     @Method(desc = "获取通用TPCDS表存储关系列表", logicStep = "获取通用TPCDS表存储关系列表")
-    private List<Dtab_relation_store> getDtabRelationStores() {
+    public List<Dtab_relation_store> getDtabRelationStores() {
         //初始化存储关系列表
         List<Dtab_relation_store> drss = new ArrayList<>();
         //Dtab_relation_store
@@ -547,5 +577,4 @@ public class LoadGeneralTestData {
         });
         return drss;
     }
-
 }
