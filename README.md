@@ -41,7 +41,7 @@
 
 ```
 |--app                                      #根目录
-|  |--A、B、C、D、F、G、H、K、Receive目录     #包含
+|  |--A、B、C、D、F、G、H、K、Receive目录     #每一个子系统的文件夹目录
 |  |  |--bin                                #启动脚本
 |  |  |--dist                               #程序目录
 |  |  |   |--xxx.jar                        #可运行的jar文件
