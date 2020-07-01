@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.exception.BusinessProcessException;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
@@ -205,7 +206,10 @@ public class RuleConfigAction extends BaseAction {
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public void saveETLJob(String pro_id, String task_id, String reg_num) {
         //保存作业调度信息
-        EtlJobUtil.saveJob(reg_num, DataSourceType.DQC, pro_id, task_id, null);
+        int i = EtlJobUtil.saveJob(reg_num, DataSourceType.DQC, pro_id, task_id, null);
+        if (i != 0) {
+            throw new BusinessProcessException("保存到作业调度失败!");
+        }
     }
 
     @Method(desc = "搜索规则信息", logicStep = "搜索规则信息")
@@ -304,7 +308,7 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "获取指标3保存的结果数据,只取10条", logicStep = "获取指标3保存的结果数据,只取10条")
     @Param(name = "task_id", desc = "任务标号", range = "long类型")
     @Return(desc = "指标3保存的结果数据,只取10条", range = "指标3保存的结果数据,只取10条")
-    public List<Map<String, Object>> getCheckIndex3(long task_id) {
+    private List<Map<String, Object>> getCheckIndex3(long task_id) {
         //设置 Dq_index3record 对象
         Dq_index3record dq_index3record = new Dq_index3record();
         dq_index3record.setTask_id(task_id);
