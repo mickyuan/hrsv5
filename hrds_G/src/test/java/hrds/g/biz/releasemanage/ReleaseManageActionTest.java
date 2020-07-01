@@ -33,11 +33,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ReleaseManageActionTest extends WebBaseTestCase {
 
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	private static final String LOGIN_URL = testInfoConfig.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = agentInitConfig.getLong("user_id");
-	private static final String PASSWORD = agentInitConfig.getString("password");
-	private static final String DEP_ID = agentInitConfig.getString("dep_id");
+	private static final long USER_ID = testInfoConfig.getLong("user_id");
+	private static final String PASSWORD = testInfoConfig.getString("password");
+	private static final String DEP_ID = testInfoConfig.getString("dep_id");
 	//当前线程的id
 	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 
@@ -50,14 +50,12 @@ public class ReleaseManageActionTest extends WebBaseTestCase {
 			user.setCreate_id(USER_ID);
 			user.setDep_id(DEP_ID);
 			user.setRole_id("1001");
-			user.setUser_name("接口测试用户-dhw" + THREAD_ID);
+			user.setUser_name("接口测试用户-dhw");
 			user.setUser_password("1");
 			// 0：管理员，1：操作员
 			user.setUseris_admin(IsFlag.Shi.getCode());
 			user.setUser_type(UserType.RESTYongHu.getCode());
 			user.setUsertype_group(UserType.RESTYongHu.getCode() + "," + UserType.CaijiGuanLiYuan.getCode());
-			user.setLogin_ip("127.0.0.1");
-			user.setLogin_date("20191001");
 			user.setUser_state(UserState.ZhengChang.getCode());
 			user.setCreate_date(DateUtil.getSysDate());
 			user.setCreate_time(DateUtil.getSysTime());

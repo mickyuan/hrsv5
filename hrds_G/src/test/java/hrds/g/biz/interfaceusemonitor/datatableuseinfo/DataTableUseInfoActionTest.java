@@ -31,11 +31,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class DataTableUseInfoActionTest extends WebBaseTestCase {
 
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	private static final String LOGIN_URL = testInfoConfig.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = agentInitConfig.getLong("user_id");
-	private static final String PASSWORD = agentInitConfig.getString("password");
-	private static final String DEP_ID = agentInitConfig.getString("dep_id");
+	private static final long USER_ID = testInfoConfig.getLong("user_id");
+	private static final String PASSWORD = testInfoConfig.getString("password");
+	private static final String DEP_ID = testInfoConfig.getString("dep_id");
 	//当前线程的id
 	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 
@@ -86,7 +86,7 @@ public class DataTableUseInfoActionTest extends WebBaseTestCase {
 					sysreg_parameter_info.setTable_ch_column("PARA_VALUE");
 					sysreg_parameter_info.setTable_en_column("PARA_VALUE");
 				}
-				sysreg_parameter_info.setRemark("监控测试");
+				sysreg_parameter_info.setRemark("系统登记表参数信息测试");
 				sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
 				sysreg_parameter_info.setUse_id(THREAD_ID);
 				sysreg_parameter_info.setUser_id(USER_ID);
