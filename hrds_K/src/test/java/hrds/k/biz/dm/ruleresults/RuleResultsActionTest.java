@@ -90,8 +90,9 @@ public class RuleResultsActionTest extends WebBaseTestCase {
                     .addData("user_id", USER_ID)
                     .addData("password", PASSWORD)
                     .post(LOGIN_URL).getBodyString();
-            JsonUtil.toObjectSafety(bodyString, ActionResult.class).ifPresent(ar ->
-                    assertThat(ar.isSuccess(), is(true)));
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+                    -> new BusinessException("模拟登陆失败!"));
+            assertThat(ar.isSuccess(), is(true));
         }
     }
 
