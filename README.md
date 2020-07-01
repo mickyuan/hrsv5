@@ -41,7 +41,7 @@
 
 ```
 |--app                           #根目录
-|  |--sub sys name               #包含A、B、C、D、F、G、H、K、Receive
+|  |--[sub sys name]             #包含A、B、C、D、F、G、H、K、Receive
 |  |   |--bin                    #启动脚本
 |  |   |--dist                   #程序目录
 |  |   |   |--xxx.jar            #可运行的jar文件
