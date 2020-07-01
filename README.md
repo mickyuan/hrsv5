@@ -38,3 +38,8 @@
 - frontend：前端目录，前端需要使用node单独打包拷贝
 - lib：项目依赖的所有的jar文件
 - Agent：包含agent.jar、hrds_Control.jar、hrds_Trigger.jar
+
+```
+|-app
+|
+
