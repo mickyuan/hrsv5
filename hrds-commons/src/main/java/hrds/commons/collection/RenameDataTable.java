@@ -3,6 +3,7 @@ package hrds.commons.collection;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -58,53 +59,23 @@ public class RenameDataTable {
             //设置无效表名
             String invalid_table_name = Constant.DQC_INVALID_TABLE + tableName;
             //初始化重命名sql
-            String alterSQL = "";
+            String alterTableNameSQL = "";
             //获取当前操作数据层的数据层类型
             Store_type store_type = Store_type.ofEnumByCode(intoLayerBean.getStore_type());
             //set_invalid:设置无效(重命名为带无效标签的表名)
             if (operation_type.equals(Constant.DM_SET_INVALID_TABLE)) {
-                //TODO 需要考虑如果添加了表空间,不同类型数据库设置表空间语法不同的情况
-                if (store_type == Store_type.DATABASE) {
-                    alterSQL = "alter table " + tableName + " rename to " + invalid_table_name;
-                } else if (store_type == Store_type.HIVE) {
-                    //TODO 重命名 HIVE 层表配置暂未实现!
-                } else if (store_type == Store_type.HBASE) {
-                    //TODO 重命名 HBASE 层表配置暂未实现!
-                } else if (store_type == Store_type.SOLR) {
-                    //TODO 重命名 SOLR 层表配置暂未实现!
-                } else if (store_type == Store_type.ElasticSearch) {
-                    //TODO 重命名 ElasticSearch 层表配置暂未实现!
-                } else if (store_type == Store_type.MONGODB) {
-                    //TODO 重命名 MONGODB 层表配置暂未实现!
-                } else {
-                    throw new BusinessException("重命名为无效表时,未找到匹配的存储层类型!");
-                }
+                alterTableNameSQL = getAlterTableNameSQL(store_type, tableName, invalid_table_name);
             }
             //restore:恢复(重命名为带有效的表名)
             else if (operation_type.equals(Constant.DM_RESTORE_TABLE)) {
-                //TODO 需要考虑如果添加了表空间,不同类型数据库设置表空间语法不同的情况
-                if (store_type == Store_type.DATABASE) {
-                    alterSQL = "alter table " + invalid_table_name + " rename to " + tableName;
-                } else if (store_type == Store_type.HIVE) {
-                    //TODO 重命名 HIVE 层表配置暂未实现!
-                } else if (store_type == Store_type.HBASE) {
-                    //TODO 重命名 HBASE 层表配置暂未实现!
-                } else if (store_type == Store_type.SOLR) {
-                    //TODO 重命名 SOLR 层表配置暂未实现!
-                } else if (store_type == Store_type.ElasticSearch) {
-                    //TODO 重命名 ElasticSearch 层表配置暂未实现!
-                } else if (store_type == Store_type.MONGODB) {
-                    //TODO 重命名 MONGODB 层表配置暂未实现!
-                } else {
-                    throw new BusinessException("重命名为有效效表时,未找到匹配的存储层类型!");
-                }
+                alterTableNameSQL = getAlterTableNameSQL(store_type, invalid_table_name, tableName);
             }
             //执行sql
-            if (StringUtil.isBlank(alterSQL)) {
+            if (StringUtil.isBlank(alterTableNameSQL)) {
                 throw new BusinessException("修改数据表表名称的SQL为空!");
             }
             //执行修改sql
-            int execute = SqlOperator.execute(dbDataConn, alterSQL);
+            int execute = SqlOperator.execute(dbDataConn, alterTableNameSQL);
             //校验修改结果
             if (execute != 0) {
                 throw new BusinessException("修改关系型数据库表失败!");
@@ -113,5 +84,31 @@ public class RenameDataTable {
         } catch (Exception e) {
             throw new BusinessException("重命名表的sql执行失败!,请检查表名是否存在!");
         }
+    }
+
+    @Method(desc = "获取重命名表名的sql", logicStep = "获取重命名表名的sql")
+    @Param(name = "store_type", desc = "存储层类型", range = "存储层类型")
+    @Param(name = "old_table_name", desc = "原始表名", range = "原始表名")
+    @Param(name = "new_table_name", desc = "新表名", range = "新表名")
+    @Return(desc = "重命名表名的sql", range = "重命名表名的sql")
+    private static String getAlterTableNameSQL(Store_type store_type, String old_table_name, String new_table_name) {
+        //TODO 需要考虑如果添加了表空间,不同类型数据库设置表空间语法不同的情况
+        String alterTableNameSQL = "";
+        if (store_type == Store_type.DATABASE) {
+            alterTableNameSQL = "alter table " + old_table_name + " rename to " + new_table_name;
+        } else if (store_type == Store_type.HIVE) {
+            //TODO 重命名 HIVE 层表配置暂未实现!
+        } else if (store_type == Store_type.HBASE) {
+            //TODO 重命名 HBASE 层表配置暂未实现!
+        } else if (store_type == Store_type.SOLR) {
+            //TODO 重命名 SOLR 层表配置暂未实现!
+        } else if (store_type == Store_type.ElasticSearch) {
+            //TODO 重命名 ElasticSearch 层表配置暂未实现!
+        } else if (store_type == Store_type.MONGODB) {
+            //TODO 重命名 MONGODB 层表配置暂未实现!
+        } else {
+            throw new BusinessException("重命名为无效表时,未找到匹配的存储层类型!");
+        }
+        return alterTableNameSQL;
     }
 }
