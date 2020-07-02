@@ -4,8 +4,10 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import hrds.commons.exception.BusinessException;
 
 import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 
@@ -18,13 +20,25 @@ public class BeanUtils {
     @Param(name = "orig", desc = "原始实体对象", range = "Object类型")
     @Param(name = "dest", desc = "目标实体对象", range = "Object类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void copyProperties(Object orig, Object dest) throws Exception {
+    public static void copyProperties(Object orig, Object dest) {
 
         // 获取原始Bean属性
-        BeanInfo origBean = Introspector.getBeanInfo(orig.getClass(), Object.class);
+        BeanInfo origBean;
+        try {
+            origBean = Introspector.getBeanInfo(orig.getClass(), Object.class);
+        } catch (IntrospectionException e) {
+            e.printStackTrace();
+            throw new BusinessException("获取原始Bean实体失败:" + e.getMessage());
+        }
         PropertyDescriptor[] origProperty = origBean.getPropertyDescriptors();
         // 获取目标Bean属性
-        BeanInfo destBean = Introspector.getBeanInfo(dest.getClass(), java.lang.Object.class);
+        BeanInfo destBean;
+        try {
+            destBean = Introspector.getBeanInfo(dest.getClass(), Object.class);
+        } catch (IntrospectionException e) {
+            e.printStackTrace();
+            throw new BusinessException("获取目标Bean实体失败:" + e.getMessage());
+        }
         PropertyDescriptor[] destProperty = destBean.getPropertyDescriptors();
         //复制属性
         try {
@@ -38,7 +52,7 @@ public class BeanUtils {
                 }
             }
         } catch (Exception e) {
-            throw new Exception("属性复制失败:" + e.getMessage());
+            throw new BusinessException("属性复制失败:" + orig.toString() + e.getMessage());
         }
     }
 }
