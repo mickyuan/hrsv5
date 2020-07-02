@@ -133,6 +133,8 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			);
 			// 提交事务
 			SqlOperator.commitTransaction(db);
+		} catch (Exception e) {
+			throw new BusinessException("初始化数据失败");
 		}
 		// 模拟用户登录
 		String bodyString = new HttpClient()
@@ -153,7 +155,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 			etl_job_temp.setEtl_temp_id(THREAD_ID + i);
 			if (i == 1) {
 				etl_job_temp.setEtl_temp_type("上传模板");
-				etl_job_temp.setPro_name("hrds.upload.shell");
+				etl_job_temp.setPro_name("upload.shell");
 			} else {
 				etl_job_temp.setEtl_temp_type("下载模板");
 				etl_job_temp.setPro_name("download.shell");
@@ -409,7 +411,7 @@ public class JobConfigurationTest extends WebBaseTestCase {
 	public void searchEtlSubSysByPage() {
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient().addData("etl_sys_cd", EtlSysCd)
-				.addData("sub_sys_cd", "dhwrwcs")
+				.addData("sub_sys_cd", SubSysCd)
 				.addData("currPage", 1)
 				.addData("pageSize", 2)
 				.post(getActionUrl("searchEtlSubSysByPage"))
@@ -799,7 +801,18 @@ public class JobConfigurationTest extends WebBaseTestCase {
 				.orElseThrow(() -> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		Result etlJobTemplate = ar.getDataForResult();
-		assertThat("数量大于等于初始化数据", etlJobTemplate.getRowCount() >= 2, is(true));
+		for (int i = 0; i < etlJobTemplate.getRowCount(); i++) {
+			if (etlJobTemplate.getLong(i, "etl_temp_id") == THREAD_ID + 1) {
+				assertThat(etlJobTemplate.getString(i, "etl_temp_type"), is("上传模板"));
+				assertThat(etlJobTemplate.getString(i, "pro_dic"), is("/home/hyshf/zymb"));
+				assertThat(etlJobTemplate.getString(i, "pro_name"), is("upload.shell"));
+			} else {
+				assertThat(etlJobTemplate.getString(i, "etl_temp_type"), is("下载模板"));
+				assertThat(etlJobTemplate.getString(i, "pro_dic"), is("/home/hyshf/zymb"));
+				assertThat(etlJobTemplate.getString(i, "pro_name"), is("download.shell"));
+			}
+		}
+
 	}
 
 	@Method(desc = "关联查询作业模板表和作业模板参数表获取作业模板信息",
@@ -3259,7 +3272,6 @@ public class JobConfigurationTest extends WebBaseTestCase {
 					"select count(1) from " + Etl_job_resource_rela.TableName + " where etl_sys_cd=? and etl_job=?",
 					EtlSysCd, etl_job + 3)
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
-			;
 			assertThat("删除操作后，确认这条数据已删除", num, is(0L));
 			// 2.错误的数据访问1，etl_sys_cd不存在
 			bodyString = new HttpClient().addData("etl_sys_cd", "sccs1")
@@ -4526,11 +4538,12 @@ public class JobConfigurationTest extends WebBaseTestCase {
 	@Method(desc = "上传Excel文件",
 			logicStep = "1.正常的数据访问1，数据都正常" +
 					"2.错误的数据访问1，文件不存在" +
-					"3.错误的数据访问2，表名不存在")
+					"3.错误的数据访问2，表名不存在" +
+					"4.错误的数据访问3，校验excel内容不是指定表的数据")
 	@Test
 	public void uploadExcelFile() {
 		String filename = System.getProperty("user.dir")
-				+ "src/test/java/hrds/upload/Etl_resource.xlsx";
+				+ "//src/test/java/hrds/upload/Etl_resource.xlsx";
 		File file = FileUtil.getFile(FileNameUtils.normalize(filename));
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
@@ -4563,6 +4576,16 @@ public class JobConfigurationTest extends WebBaseTestCase {
 				.reset(SubmitMediaType.MULTIPART)
 				.addFile("file", file)
 				.addData("table_name", "aaaa")
+				.post(getActionUrl("uploadExcelFile"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，校验excel内容不是指定表的数据
+		bodyString = new HttpClient()
+				.reset(SubmitMediaType.MULTIPART)
+				.addFile("file", file)
+				.addData("table_name", Etl_job_def.TableName)
 				.post(getActionUrl("uploadExcelFile"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
