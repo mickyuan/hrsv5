@@ -93,7 +93,7 @@ public class MarketConfUtils {
               根据主键 datatable_id 查询出 集市表存储关系表
              */
             Dtab_relation_store dtabRelationStore = SqlOperator.queryOneObject(db, Dtab_relation_store.class,
-                    "select * from "+Dtab_relation_store.TableName+" where tab_id = ?", datatableId)
+                    "select * from " + Dtab_relation_store.TableName + " where tab_id = ?", datatableId)
                     .orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
                             Dtab_relation_store.TableName, "tab_id", datatableId)));
 
@@ -140,11 +140,11 @@ public class MarketConfUtils {
      */
     private static void handleFields(List<Datatable_field_info> datatableFields, boolean isMultipleInput) {
         if (datatableFields.size() == 0) {
-            throw new AppSystemException("状态错误,字段数量为0");
+            throw new AppSystemException("从数据库中获取的字段数量为0");
         }
 
         if (isMultipleInput) {
-            //添加 HYREN_MD5_VAL
+            //添加 HYREN_TABLE_ID
             Datatable_field_info tableIdField = new Datatable_field_info();
             tableIdField.setField_en_name(Constant.TABLE_ID_NAME);
             tableIdField.setField_type(DEFAULT_STRING_TYPE);
@@ -230,15 +230,12 @@ public class MarketConfUtils {
         }
     }
 
-    public static void serialize(MarketConf conf) {
+    public static void serialize(MarketConf conf) throws IOException {
 
         File serializeFile = FileUtil.getFile(MARKET_CONF_SERIALIZATION_PATH, conf.getDatatableId());
 
-        try {
+        if (serializeFile.exists())
             FileUtil.forceDelete(serializeFile);
-        } catch (IOException warn) {
-            log.warn("删除之前序列化文件失败", warn);
-        }
 
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(serializeFile))) {
             out.writeObject(conf);
