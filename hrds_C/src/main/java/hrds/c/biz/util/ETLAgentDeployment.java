@@ -9,7 +9,6 @@ import fd.ng.core.utils.FileUtil;
 import hrds.c.biz.util.conf.ETLConfParam;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
@@ -52,11 +51,7 @@ public class ETLAgentDeployment {
 	                               String password, String targetDir) {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
-			// 2.获取ETL下载地址
-			String agentPath = PropertyParaValue.getString("ETLpath", "");
-			// 3.根据文件路径获取文件信息
-			File sourceFile = new File(agentPath);
-			// 4.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
+			// 2.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
 			String tmp_conf_path = System.getProperty("user.dir") + SEPARATOR + "etlTempResources"
 					+ SEPARATOR + "fdconfig" + SEPARATOR;
 			File file = new File(tmp_conf_path);
@@ -66,24 +61,24 @@ public class ETLAgentDeployment {
 				}
 			}
 			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
-			// 5.生成control.conf配置文件
+			// 3.生成control.conf配置文件
 			Yaml.dump(ETLConfParam.getControlConfParam(), new File(tmp_conf_path
 					+ ETLConfParam.CONTROL_FILE_NAME));
-			// 6.生成trigger.conf配置文件
+			// 4.生成trigger.conf配置文件
 			Yaml.dump(ETLConfParam.getTriggerConfParam(), new File(tmp_conf_path
 					+ ETLConfParam.Trigger_FILE_NAME));
-			// 7.根据程序当前路径获取文件
+			// 5.根据程序当前路径获取文件
 			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
-			// 8.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
+			// 6.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
 			String hadoopConf = userDirFile + SEPARATOR + "conf" + SEPARATOR;
-			// 9.创建存放部署ETL连接信息的集合并封装属性
+			// 7.创建存放部署ETL连接信息的集合并封装属性
 			SFTPDetails sftpDetails = new SFTPDetails();
-			// 10.设置部署所需参数
+			// 8.设置部署所需参数
 			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir,
-					sourceFile.getName(), sourceFile.getParent(), hadoopConf, tmp_conf_path, sftpDetails);
-			// 11.ETL部署
+					hadoopConf, tmp_conf_path, sftpDetails);
+			// 9.开始ETL工程部署
 			SCPFileSender.etlScpToFrom(sftpDetails);
-			// 12.部署完成后删除本地临时配置文件
+			// 10.部署完成后删除本地临时配置文件
 			FileUtil.deleteDirectoryFiles(tmp_conf_path);
 		} catch (Exception e) {
 			throw new AppSystemException(e);
@@ -91,8 +86,7 @@ public class ETLAgentDeployment {
 	}
 
 	private static void setSFTPDetails(String etl_sys_cd, String etl_serv_ip, String etl_serv_port,
-	                                   String userName, String password, String targetDir,
-	                                   String sourceFileName, String source_path, String hadoopConf,
+	                                   String userName, String password, String targetDir, String hadoopConf,
 	                                   String tmp_conf_path, SFTPDetails sftpDetails) {
 		sftpDetails.setHost(etl_serv_ip);
 		// 部署agent服务器用户名
@@ -101,10 +95,6 @@ public class ETLAgentDeployment {
 		sftpDetails.setPwd(password);
 		// 部署agent服务器端口
 		sftpDetails.setPort(Integer.parseInt(etl_serv_port));
-		// 本地文件路径
-		sftpDetails.setSource_path(source_path + SEPARATOR);
-		// 本地文件名称
-		sftpDetails.setAgent_gz(sourceFileName);
 		// 集群conf配置文件
 		sftpDetails.setHADOOP_CONF(hadoopConf);
 		// 目标路径
