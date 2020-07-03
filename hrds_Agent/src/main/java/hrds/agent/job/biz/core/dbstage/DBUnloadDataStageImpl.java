@@ -90,15 +90,18 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 						+ "数据库抽数卸数方式类型不正确");
 			}
 			stageParamInfo.setTableBean(tableBean);
-			//数据字典的路径
-			String dictionaryPath = FileNameUtils.normalize(Constant.DICTIONARY + File.separator +
-					collectTableBean.getDatabase_id() + File.separator, true);
-			//写数据字典
-			DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
-					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
-					collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
-					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
-					, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
+			//根据系统参数配置是否写数据字典，因为页面提供了下载任务的数据字典，每次跑批再去写数据字典会影响效率
+			if (JobConstant.ISWRITEDICTIONARY) {
+				//数据字典的路径
+				String dictionaryPath = FileNameUtils.normalize(Constant.DICTIONARY + File.separator +
+						collectTableBean.getDatabase_id() + File.separator, true);
+				//写数据字典
+				DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
+						tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
+						collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
+						tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
+						, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
+			}
 			//卸数成功，删除重命名的目录
 			deleteRenameDir(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
@@ -178,7 +181,9 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 *
 	 * @param collectTableBean 表存储信息
 	 */
-	private void renameUnloadDir(CollectTableBean collectTableBean) {
+	private void renameUnloadDir(CollectTableBean collectTableBean) throws Exception {
+		//防止上一次异常退出导致bak文件存在，先删除bak文件
+		deleteRenameDir(collectTableBean);
 		//TODO 这边为啥不是直接在日期这一层重命名 抽数根据文件格式分为多个作业，所以到文件格式这一层
 		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {

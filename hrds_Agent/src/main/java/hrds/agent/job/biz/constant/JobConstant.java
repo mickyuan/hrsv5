@@ -27,6 +27,9 @@ public class JobConstant {
 	//是否添加isAddOperateInfo
 	public static final boolean ISADDOPERATEINFO = Boolean.parseBoolean(PropertyParaUtil.
 			getString("isAddOperateInfo", "false"));
+	//是否添加isWriteDictionary
+	public static final boolean ISWRITEDICTIONARY = Boolean.parseBoolean(PropertyParaUtil.
+			getString("isWriteDictionary", "false"));
 	//多线程指定线程池的默认线程数
 	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
 			String.valueOf(Runtime.getRuntime().availableProcessors())));

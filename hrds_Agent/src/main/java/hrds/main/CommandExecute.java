@@ -7,7 +7,6 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
-import hrds.agent.job.biz.core.metaparse.impl.DFCollectTableHandleParse;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
@@ -91,25 +90,10 @@ public class CommandExecute {
 	private static void startDbFileCollect(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		ExecutorService executor = null;
 		try {
-			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.JOBINFOPATH, Constant.DBFILEUNLOADFOLDER, Constant.XMLPATH};
-			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
-			//将json数据字典转为xml
-			String plane_url = sourceDataConfBean.getPlane_url();
-			//获取数据字典所在目录文件，根据数据字典计算xml文件名称
-			String xmlName = Math.abs(plane_url.hashCode()) + ".xml";
-			//DB文件采集将数据字典dd_data.xls转为xml
-			DFCollectTableHandleParse.toXml(plane_url, Constant.XMLPATH
-					+ sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
-			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
 			executor = Executors.newFixedThreadPool(1);
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确
-			//为了确保多个线程之间的值不互相干涉，复制对象的值。
-			SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
-					JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
-			DataFileJobImpl fileCollectJob = new DataFileJobImpl(sourceDataConfBean1, collectTableBean);
+			DataFileJobImpl fileCollectJob = new DataFileJobImpl(sourceDataConfBean, collectTableBean);
 			Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
 			list.add(submit);
 			//3.打印每个线程执行情况
@@ -126,17 +110,14 @@ public class CommandExecute {
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.JOBINFOPATH, Constant.DICTIONARY};
-			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
+			String[] paths = {Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
+			FileUtil.initPath(paths);
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行
 			executor = Executors.newFixedThreadPool(1);
 			List<Future<JobStatusInfo>> list = new ArrayList<>();
 			//2.校验对象的值是否正确
-			//为了确保多个线程之间的值不互相干涉，复制对象的值。
-			SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
-					JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
-			DataBaseJobImpl fileCollectJob = new DataBaseJobImpl(sourceDataConfBean1, collectTableBean);
+			DataBaseJobImpl fileCollectJob = new DataBaseJobImpl(sourceDataConfBean, collectTableBean);
 			Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
 			list.add(submit);
 			//3.打印每个线程执行情况

@@ -30,7 +30,9 @@ import static org.hamcrest.core.Is.is;
 
 @DocClass(desc = "数据库采集测试用例", createdate = "2020/01/07 09:48", author = "zxz")
 public class CommandJdbcTest extends WebBaseTestCase {
+
 	//XXX collect_case 页面展现有点小优化，后台少一个字段
+
 	/**
 	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
 	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
@@ -1536,8 +1538,8 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test55() {
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
-		for(CollectTableBean collectTableBean : sourceDataConfBean.getCollectTableBeanArray()){
-			if("call_center".equals(collectTableBean.getTable_name())){
+		for (CollectTableBean collectTableBean : sourceDataConfBean.getCollectTableBeanArray()) {
+			if ("call_center".equals(collectTableBean.getTable_name())) {
 				//设置增量卸数
 				collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
 				//设置增量采集的sql
@@ -1561,8 +1563,8 @@ public class CommandJdbcTest extends WebBaseTestCase {
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.JOBINFOPATH, Constant.DICTIONARY};
-			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
+			String[] paths = {Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
+			FileUtil.initPath(paths);
 			//1.获取json数组转成File_source的集合
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
@@ -1709,7 +1711,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	 */
 	private SourceDataConfBean getSingleTableSourceDataConfBean() {
 		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
-				getString("singleTableSourceDataConfPath")));
+				getString("singleJdbcTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
 		return replaceTestInfoConf(sourceDataConfBean);
@@ -1722,7 +1724,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	 */
 	private SourceDataConfBean getMultiTableSourceDataConfBean() {
 		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
-				getString("multiTableSourceDataConfPath")));
+				getString("multiJdbcTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
 		return replaceTestInfoConf(sourceDataConfBean);

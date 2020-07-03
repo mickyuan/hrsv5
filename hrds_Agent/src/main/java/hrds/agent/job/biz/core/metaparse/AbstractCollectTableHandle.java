@@ -30,7 +30,7 @@ import java.util.*;
  * author: zxz
  */
 public abstract class AbstractCollectTableHandle implements CollectTableHandle {
-	protected final static Logger LOGGER = LoggerFactory.getLogger(JdbcCollectTableHandleParse.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractCollectTableHandle.class);
 	protected static final String STRSPLIT = Constant.METAINFOSPLIT;
 
 	protected ResultSet getResultSet(String collectSQL, DatabaseWrapper db) {
