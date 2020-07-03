@@ -2,18 +2,20 @@ package hrds.agent.job.biz.utils;
 
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class FileUtil {
-
-	public static final String ENCODING = "UTF-8";
-	private static List<String> pathList = new ArrayList<String>();
+	//打印日志
+	private static final Log logger = LogFactory.getLog(FileUtil.class);
+	private static List<String> pathList = new ArrayList<>();
 
 	static {
 		pathList.add("/");
@@ -47,7 +49,6 @@ public class FileUtil {
 	 * @param context  文件内容，可为空字符
 	 * @return boolean    是否创建成功
 	 * @author 13616
-	 * @date 2019/7/31 9:52
 	 */
 	public static boolean createFile(String filePath, String context) {
 
@@ -59,7 +60,7 @@ public class FileUtil {
 		}
 
 		try {
-			FileUtils.write(file, context, ENCODING);
+			FileUtils.write(file, context, StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			throw new IllegalStateException(e.getMessage());
 		}
@@ -73,7 +74,6 @@ public class FileUtil {
 	 * @param dirPath 目录地址
 	 * @return boolean    目录是否创建成功
 	 * @author 13616
-	 * @date 2019/7/31 9:55
 	 */
 	public static boolean createDir(String dirPath) {
 
@@ -92,17 +92,10 @@ public class FileUtil {
 	 * @param dirPath 目录地址
 	 * @return boolean    是否有三种权限
 	 * @author 13616
-	 * @date 2019/7/31 9:57
 	 */
 	public static boolean checkDirWithAllAuth(String dirPath) {
-
 		File file = new File(dirPath);
-		if (!file.getParentFile().canRead() || !file.getParentFile().canWrite() ||
-				!file.getParentFile().canExecute()) {
-			return false;
-		}
-
-		return true;
+		return file.getParentFile().canRead() && file.getParentFile().canWrite() && file.getParentFile().canExecute();
 	}
 
 	/**
@@ -112,27 +105,22 @@ public class FileUtil {
 	 * @param fileSuffix 文件后缀
 	 * @return java.util.List<java.io.File>	文件List集合
 	 * @author 13616
-	 * @date 2019/7/31 9:58
 	 */
 	public static List<File> getAllFilesByFileSuffix(String dirPath, String fileSuffix) {
 
 		File file_root = new File(dirPath);
 		List<File> file_result = new ArrayList<>();
-		File[] files = file_root.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				if (pathname.isDirectory()) {
-					List<File> deep_files = FileUtil.getAllFilesByFileSuffix(pathname.getAbsolutePath(),
-							fileSuffix);
-					file_result.addAll(deep_files);
-				} else if (pathname.isFile() && pathname.getName().endsWith(fileSuffix)) {
-					return true;
-				}
-				return false;
+		File[] files = file_root.listFiles(file -> {
+			if (file.isDirectory()) {
+				file_result.addAll(getAllFilesByFileSuffix(file.getAbsolutePath(), fileSuffix));
+			} else {
+				return file.isFile() && file.getName().endsWith(fileSuffix);
 			}
+			return false;
 		});
-
-		file_result.addAll(Arrays.asList(files));
+		if (files != null) {
+			file_result.addAll(Arrays.asList(files));
+		}
 		return file_result;
 	}
 
@@ -142,13 +130,12 @@ public class FileUtil {
 	 * @param file File对象
 	 * @return java.lang.String    文件内容
 	 * @author 13616
-	 * @date 2019/7/31 10:01
 	 */
 	public static String readFile2String(File file) {
 
 		try {
 			if (file.exists() && file.isFile()) {
-				return FileUtils.readFileToString(file, ENCODING);
+				return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
 			} else {
 				throw new IllegalArgumentException(file.getName() + "：不是一个可读的文件");
 			}
@@ -163,7 +150,6 @@ public class FileUtil {
 	 * @param file File对象
 	 * @return java.lang.String    文件内容
 	 * @author 13616
-	 * @date 2019/7/31 10:01
 	 */
 	public static String readFile2String(File file, String charset) throws IOException, IllegalArgumentException {
 
@@ -194,22 +180,18 @@ public class FileUtil {
 		return new File(filePath).length();
 	}
 
-	public static void initPath(String task_id, String[] paths) {
+	public static void initPath(String[] paths) {
 		for (String path : paths) {
-			File file = new File(path + task_id);
+			File file = new File(path);
 			if (!file.exists()) {
-				if (!file.mkdirs()) {
-					throw new AppSystemException("创建文件夹" + file.getAbsolutePath() + "失败！");
-				}
+				boolean mkdirs = file.mkdirs();
+				logger.info("创建文件夹" + file.getAbsolutePath() + "===" + mkdirs);
 			}
 		}
 	}
 
 	/**
 	 * 判断目录是不是系统目录
-	 *
-	 * @param path
-	 * @return
 	 */
 	public static boolean isSysDir(String path) {
 		if (path.endsWith("/") || path.endsWith("\\")) {
