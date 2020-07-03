@@ -9,11 +9,37 @@ import hrds.commons.utils.PropertyParaValue;
 import java.util.HashMap;
 import java.util.Map;
 
-@DocClass(desc = "control/trigger配置文件参数Yaml数据", author = "dhw", createdate = "2020/3/20 16:05")
+@DocClass(desc = "control/trigger/appinfo配置文件参数Yaml数据", author = "dhw", createdate = "2020/3/20 16:05")
 public class ETLConfParam {
 
-	public static final String CONTROL_FILE_NAME = "control.conf";
-	public static final String Trigger_FILE_NAME = "trigger.conf";
+	public static final String CONTROL_CONF_NAME = "control.conf";
+	public static final String Trigger_CONF_NAME = "trigger.conf";
+	public static final String CONTROL_APPINFO = "control_appinfo.conf";
+	public static final String TRIGGER_APPINFO = "trigger_appinfo.conf";
+
+	@Method(desc = "获取Control appinfo配置信息", logicStep = "1.配置appinfo信息" +
+			"2.返回appinfo配置信息")
+	@Return(desc = "返回Control appinfo配置信息集合", range = "无限制")
+	public static Map<String, Object> getControlAppInfoConfParam() {
+		Map<String, Object> appInfoMap = new HashMap<>();
+		// 1.配置appinfo信息
+		appInfoMap.put("basePackage", "hrds");
+		appInfoMap.put("projectId", "Cont");
+		// 2.返回appinfo配置信息
+		return appInfoMap;
+	}
+
+	@Method(desc = "获取Trigger appinfo配置信息", logicStep = "1.配置appinfo信息" +
+			"2.返回Trigger appinfo配置信息")
+	@Return(desc = "返回Trigger appinfo配置信息集合", range = "无限制")
+	public static Map<String, Object> getTriggerAppInfoConfParam() {
+		Map<String, Object> appInfoMap = new HashMap<>();
+		// 1.配置appinfo信息
+		appInfoMap.put("basePackage", "hrds");
+		appInfoMap.put("projectId", "Trig");
+		// 2.返回appinfo配置信息
+		return appInfoMap;
+	}
 
 	@Method(desc = "获取control配置信息", logicStep = "1.配置消息推送notify信息" +
 			"2.设置redis配置信息" +
