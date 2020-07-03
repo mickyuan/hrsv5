@@ -22,6 +22,7 @@ import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.DataTableUtil;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
@@ -89,8 +90,8 @@ public class RuleConfigAction extends BaseAction {
     public void deleteDqDefinition(long reg_num) {
         //检查数据
         if (checkRegNumIsExist(reg_num)) {
-            Dbo.execute("delete from " + Dq_definition.TableName + " where user_id=? and reg_num=?", getUserId(),
-                    reg_num);
+            DboExecute.deletesOrThrow("通过编号删除数据失败!", "delete from " + Dq_definition.TableName +
+                    " where user_id=? and reg_num=?", getUserId(), reg_num);
         }
     }
 
