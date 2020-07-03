@@ -17,10 +17,8 @@ import hrds.commons.entity.Column_split;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.xlstoxml.Xls2xml;
 import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -37,8 +35,6 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
 	                                   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
-		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
-		String xmlName = Math.abs(sourceDataConfBean.getPlane_url().hashCode()) + ".xml";
 		//获取页面选择的需要采集的文件格式
 		Data_extraction_def sourceData_extraction_def = collectTableBean.getSourceData_extraction_def();
 		tableBean.setFile_format(sourceData_extraction_def.getDbfile_format());
@@ -55,9 +51,9 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
 		StringBuilder primaryKeyInfo = new StringBuilder();//是否为主键
 //		HashMap<String, Boolean> isCollectMap = new HashMap<>();//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集
-		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构(注数据字典中的是有序的)
-		List<String> cols = ColumnMeta.getColumnList(collectTableBean.getTable_name(),
-				Constant.XMLPATH + sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
+		//3.获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构(注数据字典中的是有序的)
+		List<String> cols = ColumnMeta.getColumnListByDictionary(collectTableBean.getTable_name(),
+				sourceDataConfBean.getPlane_url());
 		//遍历db文件数据字典里面列信息的集合
 		// XXX 注：DB文件采集，页面只允许查看列，不允许选择列，默认是全选，所有数据字典里面定义的列都采集。
 		//  页面选择了转存的情况下，不读取DB数据文件的HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
@@ -148,45 +144,44 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
 		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
 		tableBean.setParseJson(parseJson);
-
 		//查找增量数据的新增的、删除的、和修改的列信息
-		List<String> incrementColumnList = ColumnMeta.getIncrementColumnList(collectTableBean.getTable_name(),
-				Constant.XMLPATH + sourceDataConfBean.getDatabase_id() + File.separator + xmlName);
+		List<String> incrementColumnList = ColumnMeta.getIncrementColumnListByDictionary(collectTableBean.getTable_name(),
+				sourceDataConfBean.getPlane_url());
 		if (incrementColumnList != null && incrementColumnList.size() > 2) {
 			tableBean.setInsertColumnInfo(incrementColumnList.get(0));
 			tableBean.setUpdateColumnInfo(incrementColumnList.get(1));
 			tableBean.setDeleteColumnInfo(incrementColumnList.get(2));
 		}
-//		tableBean.setIsCollectMap(isCollectMap);
 		//返回表结构信息
 		return tableBean;
 	}
 
-	/**
-	 * 将数据字典文件格式转为xml格式
-	 *
-	 * @param plane_url 数据字典文件全路径
-	 * @param xmlName   xml文件名称
-	 */
-	public static void toXml(String plane_url, String xmlName) {
-		//根据文件全路径，判断是json还是excel格式，转为xml,进行读取
-		if (plane_url.endsWith("json")) {
-			Xls2xml.jsonToXml(plane_url, xmlName);
-		} else if (plane_url.endsWith("xls")) {
-			Xls2xml.XlsToXml(plane_url, xmlName);
-		} else {
-			throw new AppSystemException("数据字典的文件格式不正确");
-		}
-	}
+//	/**
+//	 * 将数据字典文件格式转为xml格式
+//	 *
+//	 * @param plane_url 数据字典文件全路径
+//	 * @param xmlName   xml文件名称
+//	 */
+//	public static void toXml(String plane_url, String xmlName) {
+//		//根据文件全路径，判断是json还是excel格式，转为xml,进行读取
+//		if (plane_url.endsWith("json")) {
+//			Xls2xml.jsonToXml(plane_url, xmlName);
+//		} else if (plane_url.endsWith("xls")) {
+//			Xls2xml.XlsToXml(plane_url, xmlName);
+//		} else {
+//			throw new AppSystemException("数据字典的文件格式不正确");
+//		}
+//	}
+
 
 	public static void main(String[] args) {
 		String p = "D:\\data\\dd_data.json";
-		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
-		String xmlName = Math.abs(p.hashCode()) + ".xml";
-		//2.DB文件采集将数据字典dd_data.xls转为xml
-		DFCollectTableHandleParse.toXml(p, Constant.XMLPATH + xmlName);
+//		//获取数据字典所在目录文件，根据数据字典计算xml文件名称
+//		String xmlName = Math.abs(p.hashCode()) + ".xml";
+//		//2.DB文件采集将数据字典dd_data.xls转为xml
+//		DFCollectTableHandleParse.toXml(p, Constant.XMLPATH + xmlName);
 		//3.读取xml获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构
-		List<String> cols = ColumnMeta.getColumnList("agent_info", Constant.XMLPATH + xmlName);
+		List<String> cols = ColumnMeta.getColumnListByDictionary("agent_info", p);
 		System.out.println(cols.size());
 	}
 }

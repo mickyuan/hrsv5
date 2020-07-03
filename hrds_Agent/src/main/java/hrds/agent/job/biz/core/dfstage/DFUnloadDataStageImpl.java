@@ -213,7 +213,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		//替换表名
 		root_path = root_path.replace("#{table}", table_name);
 		//替换文件格式
-		root_path = root_path.replace("#{文件格式}", Constant.fileFormatMap.get(file_format));
+		root_path = root_path.replace("#{file_format}", Constant.fileFormatMap.get(file_format));
 		return root_path;
 	}
 
