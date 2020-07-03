@@ -81,3 +81,5 @@ INSERT INTO sys_para VALUES ('192', 'determineFileChangesType', 'MD5', 'server.p
 --INSERT INTO sys_para VALUES ('193', 'availableProcessors', '8', 'server.properties', '多线程采集每个任务可用线程数,这一行默认不用存库，系统默认取最大值');
 INSERT INTO sys_para VALUES ('194', 'isAddOperateInfo', 'true', 'server.properties','采集是否添加操作时间、操作日期、操作人：true或false');
 INSERT INTO sys_para VALUES ('195', 'isWriteDictionary', 'false', 'server.properties','每次数据库抽取结束是否写数据字典：true或false');
+INSERT INTO sys_para VALUES ('196', 'controlPath', '/home/hyshf/HRDS/HrdsServer/etl/hrds_Control-5.0.jar','server.properties','CONTROL程序jar包地址');
+INSERT INTO sys_para VALUES ('197', 'triggerPath', '/home/hyshf/HRDS/HrdsServer/etl/hrds_Trigger-5.0.jar', 'server.properties','TRIGGER程序jar包地址');
