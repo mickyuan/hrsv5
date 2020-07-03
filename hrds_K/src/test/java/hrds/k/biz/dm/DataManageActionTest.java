@@ -9,10 +9,9 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Dq_result;
 import hrds.commons.exception.BusinessException;
-import hrds.testbase.LoadGeneralTestData;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -28,18 +27,14 @@ public class DataManageActionTest extends WebBaseTestCase {
     private static final long USER_ID = agentInitConfig.getLong("general_oper_user_id");
     //登录用户密码
     private static final long PASSWORD = agentInitConfig.getLong("general_password");
-    //初始化加载通用测试数据
-    private static final LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData(THREAD_ID);
 
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
-    @BeforeClass
-    public static void before() {
+    @Before
+    public void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //初始化通用测试数据
-            loadGeneralTestData.execute(db);
             //初始化 Dq_result
             Dq_result dq_result = new Dq_result();
-            dq_result.setTask_id(-1000L);
+            dq_result.setTask_id(-1000L + THREAD_ID);
             dq_result.setVerify_result("0");
             dq_result.setIs_saveindex1("1");
             dq_result.setIs_saveindex2("1");
@@ -62,15 +57,13 @@ public class DataManageActionTest extends WebBaseTestCase {
 
     @Method(desc = "测试案例执行完成后清理测试数据",
             logicStep = "测试案例执行完成后清理测试数据")
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //清理通用数据
-            loadGeneralTestData.cleanUp(db);
             //删除 Dq_result 表测试数据
-            SqlOperator.execute(db, "delete from " + Dq_result.TableName + " where reg_num=?", -1000L);
-            long num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_result.TableName + " where reg_num=?",
-                    -1000L).orElseThrow(() -> new RuntimeException("count fail!"));
+            SqlOperator.execute(db, "delete from " + Dq_result.TableName + " where task_id=?", -1000L + THREAD_ID);
+            long num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_result.TableName + " where task_id=?",
+                    -1000L + THREAD_ID).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("Dq_result 表此条数据删除后,记录数应该为0", num, is(0L));
             //提交数据库操作
             SqlOperator.commitTransaction(db);

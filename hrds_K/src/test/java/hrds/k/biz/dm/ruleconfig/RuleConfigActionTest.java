@@ -13,9 +13,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.LoadGeneralTestData;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.OptionalLong;
 
@@ -33,16 +31,14 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     //登录用户密码
     private static final long PASSWORD = agentInitConfig.getLong("general_password");
     //初始化加载通用测试数据
-    private static final LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData(THREAD_ID);
+    private static final LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData();
     //测试数据库设置id
     private static final long TABLE_ID = agentInitConfig.getArray("tpcds_table_info_s").getMap(13).getLong("table_id");
 
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
-    @BeforeClass
-    public static void before() {
+    @Before
+    public void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //初始化通用数据
-            loadGeneralTestData.execute(db);
             //初始化 Dq_definition
             Dq_definition dq_definition = new Dq_definition();
             dq_definition.setReg_num(-1000L + THREAD_ID);
@@ -211,11 +207,9 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     }
 
     @Method(desc = "测试案例执行完成后清理测试数据", logicStep = "测试案例执行完成后清理测试数据")
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //清理通用测试数据
-            loadGeneralTestData.cleanUp(db);
             long num;
             //删除 Dq_definition 表测试数据
             SqlOperator.execute(db, "delete from " + Dq_definition.TableName + " where reg_num in (?,?,?,?,?,?,?,?)",
@@ -298,6 +292,7 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     public void addDqDefinition() {
         String bodyString;
         ActionResult ar;
+        //FIXME  不正确的数据
         bodyString = new HttpClient()
                 .addData("reg_name", "hll-测试添加规则" + THREAD_ID)
                 .addData("case_type", "SQL")
@@ -397,7 +392,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
                 "获取规则信息列表失败!"));
         assertThat(ar.isSuccess(), is(true));
-        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 0, is(true));
+        //FIXME 大于0有问题需要校验实际条数
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 6, is(true));
     }
 
     @Method(desc = "获取规则信息", logicStep = "获取规则信息")
@@ -478,6 +474,7 @@ public class RuleConfigActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
                 new BusinessException("获取规则类型数据失败!"));
         assertThat(ar.isSuccess(), is(true));
+        //FIXME 校验保存结果
         //reg_num不存在
         bodyString = new HttpClient()
                 .addData("pro_id", "-1051" + THREAD_ID)
@@ -617,7 +614,8 @@ public class RuleConfigActionTest extends WebBaseTestCase {
     public void specifySqlCheck() {
         String bodyString;
         ActionResult ar;
-        //指定sql检查
+        //FIXME 其他类型校验加上
+        //指定sql检查 枚举
         bodyString = new HttpClient()
                 .addData("specify_sql", "SELECT COUNT(1) AS index1,COUNT(1) FROM call_center T1 WHERE" +
                         " cc_rec_start_date NOT IN ('1998-01-01','2000-01-02'); SELECT COUNT(1) AS index2 FROM " +

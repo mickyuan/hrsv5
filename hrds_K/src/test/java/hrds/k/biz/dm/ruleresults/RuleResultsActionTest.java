@@ -10,11 +10,8 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Dq_definition;
 import hrds.commons.entity.Dq_result;
 import hrds.commons.exception.BusinessException;
-import hrds.testbase.LoadGeneralTestData;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,12 +26,10 @@ public class RuleResultsActionTest extends WebBaseTestCase {
     private static final long USER_ID = agentInitConfig.getLong("general_oper_user_id");
     //登录用户密码
     private static final long PASSWORD = agentInitConfig.getLong("general_password");
-    //初始化加载通用测试数据
-    private static final LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData(THREAD_ID);
 
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
-    @BeforeClass
-    public static void before() {
+    @Before
+    public void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             //初始化 Dq_definition
             Dq_definition dq_definition = new Dq_definition();
@@ -97,8 +92,8 @@ public class RuleResultsActionTest extends WebBaseTestCase {
     }
 
     @Method(desc = "测试案例执行完成后清理测试数据", logicStep = "测试案例执行完成后清理测试数据")
-    @AfterClass
-    public static void after() {
+    @After
+    public void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             long num;
             //删除 Dq_definition 表测试数据
@@ -151,6 +146,7 @@ public class RuleResultsActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
                 "获取返回的ActionResult信息失败!"));
         assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 1, is(true));
         //开始日期
         bodyString = new HttpClient()
                 .addData("start_date", "20200202")
@@ -158,6 +154,7 @@ public class RuleResultsActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
                 "获取返回的ActionResult信息失败!"));
         assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 1, is(true));
         //规则来源rule_src
         bodyString = new HttpClient()
                 .addData("rule_src", "测试检索规则来源")
