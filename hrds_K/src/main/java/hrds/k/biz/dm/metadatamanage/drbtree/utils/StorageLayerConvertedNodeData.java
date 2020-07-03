@@ -13,8 +13,8 @@ import java.util.Map;
 
 public class StorageLayerConvertedNodeData {
 
-    @Method(desc = "数据管控-数据源列表转化DCL数据存储层信息为Node节点数据",
-            logicStep = "数据管控-数据源列表转化DCL数据存储层信息为Node节点数据")
+    @Method(desc = "数据管控-转化数据存储层信息为Node节点数据",
+            logicStep = "数据管控-转化数据存储层信息为Node节点数据")
     @Param(name = "dataStorageLayers", desc = "数据源列表下数据存储层信息List", range = "数据源列表下数据存储层信息List")
     @Param(name = "dataSourceType", desc = "DataSourceType对象", range = "DataSourceType对象")
     @Return(desc = "存储层信息的Node节点数据", range = "存储层信息的Node节点数据")
