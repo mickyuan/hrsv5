@@ -30,6 +30,8 @@ public class Clean_parameter extends ProjectTableEntity
 		__tmpPKS.add("c_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
+	private Long database_id;
 	@DocBean(name ="c_id",value="清洗参数编号:",dataType = Long.class,required = true)
 	private Long c_id;
 	@DocBean(name ="clean_type",value="清洗方式(CleanType):1-字符补齐<ZiFuBuQi> 2-字符替换<ZiFuTiHuan> 3-时间转换<ShiJianZhuanHuan> 4-码值转换<MaZhiZhuanHuan> 5-字符合并<ZiFuHeBing> 6-字符拆分<ZiFuChaiFen> 7-字符trim<ZiFuTrim> ",dataType = String.class,required = true)
@@ -44,9 +46,21 @@ public class Clean_parameter extends ProjectTableEntity
 	private String replace_feild;
 	@DocBean(name ="filling_type",value="补齐方式(FillingType):1-前补齐<QianBuQi> 2-后补齐<HouBuQi> ",dataType = String.class,required = false)
 	private String filling_type;
-	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = true)
-	private Long database_id;
 
+	/** 取得：数据库设置id */
+	public Long getDatabase_id(){
+		return database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(Long database_id){
+		this.database_id=database_id;
+	}
+	/** 设置：数据库设置id */
+	public void setDatabase_id(String database_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
+			this.database_id=new Long(database_id);
+		}
+	}
 	/** 取得：清洗参数编号 */
 	public Long getC_id(){
 		return c_id;
@@ -114,19 +128,5 @@ public class Clean_parameter extends ProjectTableEntity
 	/** 设置：补齐方式 */
 	public void setFilling_type(String filling_type){
 		this.filling_type=filling_type;
-	}
-	/** 取得：数据库设置id */
-	public Long getDatabase_id(){
-		return database_id;
-	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(Long database_id){
-		this.database_id=database_id;
-	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(String database_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
-			this.database_id=new Long(database_id);
-		}
 	}
 }
