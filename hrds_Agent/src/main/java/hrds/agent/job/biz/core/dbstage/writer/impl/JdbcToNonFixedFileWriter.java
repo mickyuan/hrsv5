@@ -65,6 +65,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(data_extraction_def.getDatabase_code()));
+			//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
+			writeHeader(writer, tableBean.getColumnMetaInfo());
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
@@ -75,7 +77,6 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
-
 			List<String> typeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
 			int numberOfColumns = selectColumnList.size();
 			log.info("type : " + typeList.size() + "  colName " + numberOfColumns);
@@ -135,6 +136,8 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
 								data_extraction_def.getDatabase_code()));
+						//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
+						writeHeader(writer, tableBean.getColumnMetaInfo());
 						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
@@ -163,6 +166,25 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 		fileInfo.append(counter);
 		//返回卸数一个或者多个文件名全路径和总的文件行数
 		return fileInfo.toString();
+	}
+
+	/**
+	 * 根据页面传过来的参数，决定是否写表头
+	 *
+	 * @param writer         定长的写文件的输出流
+	 * @param columnMetaInfo 所有字段的列
+	 */
+	private void writeHeader(BufferedWriter writer, String columnMetaInfo) throws Exception {
+		if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
+			if (!StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
+				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT,
+						data_extraction_def.getDatabase_separatorr());
+			} else {
+				throw new AppSystemException("非定长文件，列分隔符不能为空");
+			}
+			writer.write(columnMetaInfo);
+			writer.write(data_extraction_def.getRow_separator());
+		}
 	}
 
 	/**

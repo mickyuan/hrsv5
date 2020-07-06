@@ -1,15 +1,20 @@
 package hrds.main;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataFileJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.Test;
 
@@ -28,7 +33,9 @@ public class CommandDbFileTest extends WebBaseTestCase {
 	private CommandJdbcTest commandJdbcTest = new CommandJdbcTest();
 
 	/**
-	 * 测试最基本的单表db文件采集
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的非定长、linux换行符、`@^分隔符、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
 	 */
 	@Test
 	public void test1() {
@@ -40,15 +47,343 @@ public class CommandDbFileTest extends WebBaseTestCase {
 	}
 
 	/**
-	 * 测试最基本的多表db文件采集
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的非定长、linux换行符、`@^分隔符、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
 	 */
 	@Test
 	public void test2() {
 		//先执行数据库抽取
 		commandJdbcTest.test2();
 		//获取单表的db文件采集的页面配置信息
-		SourceDataConfBean singleTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Parquet、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test3() {
+		//先执行数据库抽取
+		commandJdbcTest.test15();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
+		}
 		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Parquet、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test4() {
+		//先执行数据库抽取
+		commandJdbcTest.test16();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanList = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanList) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的定长、linux换行符、`@^分隔符、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test5() {
+		//先执行数据库抽取
+		commandJdbcTest.test13();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的定长、linux换行符、没有列分隔符、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test6() {
+		//先执行数据库抽取
+		commandJdbcTest.test14();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanList = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanList) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+				data_extraction_def.setDatabase_separatorr("");
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Csv、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test7() {
+		//先执行数据库抽取
+		commandJdbcTest.test21();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Csv、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test8() {
+		//先执行数据库抽取
+		commandJdbcTest.test22();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的SequenceFile、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test9() {
+		//先执行数据库抽取
+		commandJdbcTest.test19();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的SequenceFile、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test10() {
+		//先执行数据库抽取
+		commandJdbcTest.test20();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.SEQUENCEFILE.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Orc、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test11() {
+		//先执行数据库抽取
+		commandJdbcTest.test17();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.ORC.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Orc、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test12() {
+		//先执行数据库抽取
+		commandJdbcTest.test18();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.ORC.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Csv、GBK字符集、包含表头
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test13() {
+		//先执行数据库抽取
+		commandJdbcTest.test56();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的Csv、GBK字符集、包含表头
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test14() {
+		//先执行数据库抽取
+		commandJdbcTest.test57();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+				data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的非定长、linux换行符、`@^分隔符、GBK字符集、包含表头
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test15() {
+		//先执行数据库抽取
+		commandJdbcTest.test58();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的非定长、linux换行符、`@^分隔符、GBK字符集、包含表头
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test16() {
+		//先执行数据库抽取
+		commandJdbcTest.test59();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件单表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的定长、linux换行符、`@^分隔符、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、保留天数为1天
+	 */
+	@Test
+	public void test17() {
+		//先执行数据库抽取
+		commandJdbcTest.test60();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean singleTableSourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = singleTableSourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+		}
+		assertThat("执行成功", executeDbCollect(singleTableSourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试db文件多表采集使用配置文件初始化默认配置
+	 * 不选择转存、文件格式为jdbc抽取的定长、linux换行符、没有列分隔符、GBK字符集
+	 * 存储目的地使用配置文件中的配置、拉链存储、存储方式为替换、数据保留天数为1天
+	 */
+	@Test
+	public void test18() {
+		//先执行数据库抽取
+		commandJdbcTest.test61();
+		//获取单表的db文件采集的页面配置信息
+		SourceDataConfBean multiTableSourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanList = multiTableSourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanList) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+				data_extraction_def.setDatabase_separatorr("");
+				data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			}
+		}
+		assertThat("执行成功", executeDbCollect(multiTableSourceDataConfBean), is(true));
 	}
 
 	/**
@@ -95,7 +430,7 @@ public class CommandDbFileTest extends WebBaseTestCase {
 		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
 				getString("singleDbTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
-		return JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
+		return replaceTestInfoConf(JSONObject.parseObject(taskInfo, SourceDataConfBean.class));
 	}
 
 	/**
@@ -107,7 +442,22 @@ public class CommandDbFileTest extends WebBaseTestCase {
 		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
 				getString("multiDbTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
-		return JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
+		return replaceTestInfoConf(JSONObject.parseObject(taskInfo, SourceDataConfBean.class));
+	}
+
+	/**
+	 * 替换掉采集进库的存储层配置
+	 *
+	 * @param sourceDataConfBean 数据库抽取源数据读取配置信息
+	 * @return 数据库抽取源数据读取配置信息
+	 */
+	private SourceDataConfBean replaceTestInfoConf(SourceDataConfBean sourceDataConfBean) {
+		List<DataStoreConfBean> dataStoreConfBean = JSONArray.parseArray(agentInitConfig.
+				getString("dataStoreConfBean"), DataStoreConfBean.class);
+		for (CollectTableBean collectTableBean : sourceDataConfBean.getCollectTableBeanArray()) {
+			collectTableBean.setDataStoreConfBean(dataStoreConfBean);
+		}
+		return sourceDataConfBean;
 	}
 
 }

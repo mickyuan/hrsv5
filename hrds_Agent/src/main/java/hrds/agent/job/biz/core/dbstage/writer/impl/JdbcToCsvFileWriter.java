@@ -70,11 +70,9 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称
-			List<String> allColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
+			List<String> columnMetaInfoList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//写表头
-			if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
-				writer.write(allColumnList);
-			}
+			writeHeader(writer, columnMetaInfoList);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			Map<String, Object> parseJson = tableBean.getParseJson();
@@ -148,9 +146,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 						writer = writerFile.getCsvWriter(DataBaseCode.ofValueByCode(
 								data_extraction_def.getDatabase_code()));
 						//写表头
-						if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
-							writer.write(allColumnList);
-						}
+						writeHeader(writer, columnMetaInfoList);
 						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
@@ -188,6 +184,18 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 			sb.add(operateDate);
 			sb.add(operateTime);
 			sb.add(user_id);
+		}
+	}
+
+	/**
+	 * 根据页面传过来的参数，决定是否写表头
+	 *
+	 * @param csvListWriter      csv的写文件的输出流
+	 * @param columnMetaInfoList 所有字段的列
+	 */
+	private void writeHeader(CsvListWriter csvListWriter, List<String> columnMetaInfoList) throws Exception {
+		if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
+			csvListWriter.write(columnMetaInfoList);
 		}
 	}
 

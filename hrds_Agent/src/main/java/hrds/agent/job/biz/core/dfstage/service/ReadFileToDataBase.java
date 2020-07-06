@@ -119,17 +119,14 @@ public class ReadFileToDataBase implements Callable<Long> {
 			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
 				//分隔符为空
 				if (StringUtil.isEmpty(column_separator)) {
-					count = readDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
-							file_code);
+					count = readDingChangToDataBase(db, columnList, sourceTypeList, batchSql, file_code, is_header);
 				} else {
 					count = readFeiDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
-							column_separator,
-							file_code);
+							column_separator, file_code, is_header);
 				}
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 				count = readFeiDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
-						column_separator,
-						file_code);
+						column_separator, file_code, is_header);
 			} else {
 				throw new AppSystemException("不支持的卸数文件格式");
 			}
@@ -150,17 +147,24 @@ public class ReadFileToDataBase implements Callable<Long> {
 
 	private long readFeiDingChangToDataBase(DatabaseWrapper db, List<String> columnList,
 	                                        List<String> typeList, String batchSql, String dataDelimiter,
-	                                        String database_code) {
+	                                        String database_code, String is_header) {
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			String line;
+			if (IsFlag.Shi.getCode().equals(is_header)) {
+				//判断包含表头，先读取表头
+				line = reader.readLine();
+				if (line != null) {
+					LOGGER.info("读取到表头为：" + line);
+				}
+			}
 			Object[] objs;
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				List<String> valueList = StringUtil.split(line, String.valueOf(dataDelimiter));
+				List<String> valueList = StringUtil.split(line, dataDelimiter);
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j));
 				}
@@ -193,7 +197,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readDingChangToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                     String batchSql, String database_code) {
+	                                     String batchSql, String database_code, String is_header) {
 		database_code = DataBaseCode.ofValueByCode(database_code);
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
@@ -206,6 +210,13 @@ public class ReadFileToDataBase implements Callable<Long> {
 			List<Integer> lengthList = new ArrayList<>();
 			for (String lengthStr : lengthStrList) {
 				lengthList.add(Integer.parseInt(lengthStr));
+			}
+			if (IsFlag.Shi.getCode().equals(is_header)) {
+				//判断包含表头，先读取表头
+				line = reader.readLine();
+				if (line != null) {
+					LOGGER.info("读取到表头为：" + line);
+				}
 			}
 			while ((line = reader.readLine()) != null) {
 				num++;
@@ -445,7 +456,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isEmpty(tmpValue) ? null : Boolean.parseBoolean(tmpValue.trim());
+			str = StringUtil.isBlank(tmpValue) ? null : Boolean.parseBoolean(tmpValue.trim());
 		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
@@ -453,11 +464,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isEmpty(tmpValue) ? null : new BigDecimal(tmpValue.trim());
-
+			str = StringUtil.isBlank(tmpValue) ? null : new BigDecimal(tmpValue.trim());
 		} else {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isEmpty(tmpValue) ? "" : tmpValue;
+			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue;
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
 		return str;

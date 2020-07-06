@@ -37,6 +37,9 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 */
 	protected void backupToDayTable(String todayTableName, DatabaseWrapper db) {
 		if (db.isExistTable(todayTableName)) {
+			if (db.isExistTable(todayTableName + "b")) {
+				db.execute("DROP TABLE " + todayTableName + "b");
+			}
 			//如果表存在
 			db.execute("ALTER TABLE " + todayTableName + " RENAME TO " + todayTableName + "b");
 		}
@@ -81,8 +84,8 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	/**
 	 * 执行失败，恢复上次进数的数据
 	 *
-	 * @param todayTableName    上次执行进数的表名
-	 * @param db                数据库连接
+	 * @param todayTableName 上次执行进数的表名
+	 * @param db             数据库连接
 	 */
 	protected void recoverBackupToDayTable(String todayTableName, DatabaseWrapper db) {
 		if (db.isExistTable(todayTableName + "b")) {

@@ -70,6 +70,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(database_code));
+			//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
+			writeHeader(writer, tableBean.getColumnMetaInfo());
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
@@ -147,6 +149,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
 								database_code));
+						//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
+						writeHeader(writer, tableBean.getColumnMetaInfo());
 						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
@@ -177,6 +181,25 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	}
 
 	/**
+	 * 根据页面传过来的参数，决定是否写表头
+	 *
+	 * @param writer         定长的写文件的输出流
+	 * @param columnMetaInfo 所有字段的列
+	 */
+	private void writeHeader(BufferedWriter writer, String columnMetaInfo) throws Exception {
+		if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
+			if (!StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
+				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT,
+						data_extraction_def.getDatabase_separatorr());
+			} else {
+				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT, ",");
+			}
+			writer.write(columnMetaInfo);
+			writer.write(data_extraction_def.getRow_separator());
+		}
+	}
+
+	/**
 	 * 添加操作日期、操作时间、操作人
 	 */
 	private void appendOperateInfo(StringBuilder sb, String database_separatorr) {
@@ -185,4 +208,5 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					.append(operateTime).append(database_separatorr).append(user_id);
 		}
 	}
+
 }

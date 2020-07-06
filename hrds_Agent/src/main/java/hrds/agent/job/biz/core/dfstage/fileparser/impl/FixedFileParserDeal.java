@@ -7,6 +7,7 @@ import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
@@ -45,6 +46,13 @@ public class FixedFileParserDeal extends FileParserAbstract {
 		List<String> valueList;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(
 				new FileInputStream(new File(readFile)), code))) {
+			if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+				//判断包含表头，先读取表头
+				lineValue = br.readLine();
+				if (lineValue != null) {
+					LOGGER.info("读取到表头为：" + lineValue);
+				}
+			}
 			while ((lineValue = br.readLine()) != null) {
 				fileRowCount++;
 				//获取定长文件，解析每行数据转为list

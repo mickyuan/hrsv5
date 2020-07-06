@@ -304,7 +304,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	/**
 	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
 	 * 列和表都不选择清洗、仅生成定长文件、选择同一目的地
-	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集
+	 * 选择linux换行符、列分隔符为空、字符集选择GBK、全量采集
 	 */
 	@Test
 	public void test14() {
@@ -1554,6 +1554,119 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	}
 
 	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成Csv文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集、生成表头
+	 */
+	@Test
+	public void test56() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成Csv文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集、生成表头
+	 */
+	@Test
+	public void test57() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+				data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集、生成表头
+	 */
+	@Test
+	public void test58() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成非定长文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集、生成表头
+	 */
+	@Test
+	public void test59() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成定长文件、选择同一目的地
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、全量采集、写表头
+	 */
+	@Test
+	public void test60() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择多表、不计算md5、不并行抽取、不添加sql过滤、不是自定义写sql并行抽取、
+	 * 列和表都不选择清洗、仅生成定长文件、选择同一目的地
+	 * 选择linux换行符、列分隔符为空、字符集选择GBK、全量采集、写表头
+	 */
+	@Test
+	public void test61() {
+		//获取多表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
+		List<CollectTableBean> collectTableBeanArray = sourceDataConfBean.getCollectTableBeanArray();
+		for (CollectTableBean collectTableBean : collectTableBeanArray) {
+			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+				data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+				data_extraction_def.setDatabase_separatorr("");
+				data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			}
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
 	 * 执行数据库采集的方法
 	 *
 	 * @param sourceDataConfBean 任务配置信息
@@ -1597,112 +1710,6 @@ public class CommandJdbcTest extends WebBaseTestCase {
 		}
 		return true;
 	}
-
-//	/**
-//	 * 执行数据库采集的主程序
-//	 *
-//	 * @param job_id      任务id
-//	 * @param collectType 采集类型
-//	 */
-//	private boolean execute(SourceDataConfBean sourceDataConfBean) {
-//		if (AgentType.WenJianXiTong.getCode().equals(collectType)) {
-//			return executeFileCollect(taskInfo);
-//		} else if (AgentType.ShuJuKu.getCode().equals(collectType)) {
-//			return executeJdbcCollect(taskInfo);
-//		} else if (AgentType.FTP.getCode().equals(collectType)) {
-//			return executeFtpCollect(taskInfo);
-//		} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
-//			return executeDbFileCollect(taskInfo);
-//		} else if (AgentType.DuiXiang.getCode().equals(collectType)) {
-//			return executeObjectFileCollect(taskInfo);
-//		} else {
-//			throw new AppSystemException("采集类型不正确");
-//		}
-//
-//	}
-
-//	/**
-//	 * 执行ftp采集的方法
-//	 *
-//	 * @param taskInfo 任务配置信息
-//	 * @return 成功失败值
-//	 */
-//	private boolean executeFtpCollect(String taskInfo) {
-//		try {
-//			//对配置信息解压缩并反序列化为Ftp_collect对象
-//			Ftp_collect ftp_collect = JSONObject.parseObject(taskInfo, Ftp_collect.class);
-//			//1.获取参数，校验对象的值是否正确
-//			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
-//			ExecutorService pool = Executors.newFixedThreadPool(1);
-//			JobInterface job = new FtpCollectJobImpl(ftp_collect);
-//			Future<JobStatusInfo> statusInfoFuture = pool.submit(job);
-//			JobStatusInfo jobStatusInfo = statusInfoFuture.get();
-//			System.out.println("作业执行情况" + jobStatusInfo.toString());
-//		} catch (Exception e) {
-//			return false;
-//		}
-//		return true;
-//	}
-//
-//	/**
-//	 * 执行非结构化文件采集的方法
-//	 *
-//	 * @param taskInfo 任务配置信息
-//	 * @return 成功失败值
-//	 */
-//	private boolean executeFileCollect(String taskInfo) {
-//		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(
-//				taskInfo, FileCollectParamBean.class);
-//		ThreadPoolExecutor executor = null;
-//		try {
-//			//初始化当前任务需要保存的文件的根目录
-//			String[] paths = {Constant.MAPDBPATH, Constant.JOBINFOPATH, Constant.FILEUNLOADFOLDER};
-//			FileUtil.initPath(fileCollectParamBean.getFcs_id(), paths);
-//			//1.获取json数组转成File_source的集合
-//			List<File_source> fileSourceList = fileCollectParamBean.getFile_sourceList();
-//			//使用多线程按照文件夹采集，核心线程5个，最大线程10个，队列里面50个，超出会报错
-//			executor = new ThreadPoolExecutor(5, 10,
-//					5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(50));
-//			List<Future<JobStatusInfo>> list = new ArrayList<>();
-//			//2.校验对象的值是否正确
-//			for (File_source file_source : fileSourceList) {
-//				//为了确保两个线程之间的值不互相干涉，复制对象的值。
-//				FileCollectParamBean fileCollectParamBean1 = JSONObject.parseObject(
-//						JSONObject.toJSONString(fileCollectParamBean), FileCollectParamBean.class);
-//				FileCollectJobImpl fileCollectJob = new FileCollectJobImpl(fileCollectParamBean1, file_source);
-//				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
-//				list.add(submit);
-//			}
-//			//3.打印每个线程执行情况
-//			JobStatusInfoUtil.printJobStatusInfo(list);
-//		} catch (Exception e) {
-//			return false;
-//		} finally {
-//			if (executor != null)
-//				executor.shutdown();
-//		}
-//		return true;
-//	}
-//
-//	/**
-//	 * 执行Db文件采集的方法
-//	 *
-//	 * @param taskInfo 任务配置信息
-//	 * @return 成功失败值
-//	 */
-//	private boolean executeDbFileCollect(String taskInfo) {
-//		return true;
-//	}
-//
-//	/**
-//	 * 执行对象采集的方法
-//	 *
-//	 * @param taskInfo 任务配置信息
-//	 * @return 成功失败值
-//	 */
-//	private boolean executeObjectFileCollect(String taskInfo) {
-//		return true;
-//	}
 
 	/**
 	 * 获取数据库抽取只选择单表的页面配置文件
