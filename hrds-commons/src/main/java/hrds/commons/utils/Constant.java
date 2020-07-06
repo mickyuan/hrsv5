@@ -221,4 +221,16 @@ public class Constant {
      * 数据管控创建表的默认表空间
      */
     public static final String DEFAULT_TABLE_SPACE = "hyshf";
+    /**
+     * 空格字符
+     */
+    public static final String SPACE = " ";
+    /**
+     * 左小括号
+     */
+    public static final String LXKH = "(";
+    /**
+     * 右小括号
+     */
+    public static final String RXKH = ")";
 }
