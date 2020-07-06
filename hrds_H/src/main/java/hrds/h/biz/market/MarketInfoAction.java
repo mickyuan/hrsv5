@@ -925,7 +925,11 @@ public class MarketInfoAction extends BaseAction {
 			String storeType = data_store_layer.toString();
 			String field_type = getDefaultFieldType(storeType);
 			//根据存储目的地 查看所有字段类型
-			List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct lower(replace(replace(trim(t1.target_type),'(',''),')','')) as target_type " +
+			List<Map<String, Object>> targetTypeList = Dbo.queryList("SELECT distinct " +
+					"CASE  WHEN position('(' IN t1.target_type) !=0 " +
+					"        THEN LOWER(SUBSTR(t1.target_type,0,position('(' IN t1.target_type))) " +
+					"        ELSE LOWER(t1.target_type) " +
+					"    END AS target_type " +
 					"FROM " + Type_contrast.TableName + " t1 LEFT JOIN " + Data_store_layer.TableName + " t2 ON t1.dtcs_id = t2.dtcs_id " +
 					"LEFT JOIN " + Dtab_relation_store.TableName + " t3 ON t2.dsl_id=t3.dsl_id" +
 					" WHERE t3.tab_id = ? and t3.data_source = ?", dm_datatable.getDatatable_id(), StoreLayerDataSource.DM.getCode());
