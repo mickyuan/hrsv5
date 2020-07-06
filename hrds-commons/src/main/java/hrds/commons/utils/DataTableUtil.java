@@ -188,11 +188,12 @@ public class DataTableUtil {
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "报错(提示在哪个存储层重复) 或者 false: 不存在")
     public static boolean tableIsRepeat(String tableName) {
-        if (tableIsExistInDataStoreReg(tableName)) {
-            throw new BusinessException("表在源文件表中已经存在!" + tableName);
+        boolean isRepeat = Boolean.FALSE;
+        if (tableIsExistInDCL(tableName)) {
+            isRepeat = Boolean.TRUE;
         }
-        if (tableIsExistInDatatableInfo(tableName)) {
-            throw new BusinessException("表在集市数据表中已经存在!" + tableName);
+        if (tableIsExistInDML(tableName)) {
+            isRepeat = Boolean.TRUE;
         }
 //		if (tableIsExistInEdwTable(tableName)) {
 //			throw new BusinessException("表在数据仓库表中已经存在!" + tableName);
@@ -203,17 +204,17 @@ public class DataTableUtil {
 //		if (tableIsExistInMlDatatableInfo(tableName)) {
 //			throw new BusinessException("表在机器学习数据信息表中已经存在!" + tableName);
 //		}
-//		if (tableIsExistInSysTableInfo(tableName)) {
-//			throw new BusinessException("表在系统表创建信息表中已经存在!" + tableName);
-//		}
-        return false;
+        if (tableIsExistInUDL(tableName)) {
+            isRepeat = Boolean.TRUE;
+        }
+        return isRepeat;
     }
 
     @Method(desc = "判断表是否在源文件信息表存在",
             logicStep = "1.判断表是否在源文件信息表存在")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-    private static boolean tableIsExistInDataStoreReg(String tableName) {
+    private static boolean tableIsExistInDCL(String tableName) {
         //1.判断表是否在源文件信息表存在
         return Dbo.queryNumber("SELECT count(1) count FROM " + Data_store_reg.TableName +
                         " WHERE lower(hyren_name) = ? AND collect_type IN (?,?)", tableName.toLowerCase(),
@@ -225,14 +226,14 @@ public class DataTableUtil {
             logicStep = "1.判断表是否在集市数据表存在")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-    private static boolean tableIsExistInDatatableInfo(String tableName) {
+    private static boolean tableIsExistInDML(String tableName) {
         //1.判断表是否在集市数据表存在
         return Dbo.queryNumber("SELECT count(1) count FROM " + Dm_datatable.TableName +
                 " WHERE lower(datatable_en_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
                 -> new BusinessException("检查表名称否重复在集市数据表的SQL编写错误")) != 0;
     }
 
-//	@Method(desc = "判断表是否在数据仓库表存在",
+    //	@Method(desc = "判断表是否在数据仓库表存在",
 //			logicStep = "1.判断表是否在数据仓库表存在")
 //	@Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
 //	@Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
@@ -265,14 +266,14 @@ public class DataTableUtil {
 //				-> new BusinessException("检查表名称否重复在机器学习数据信息表的SQL编写错误")) != 0;
 //	}
 //
-//	@Method(desc = "判断表是否在系统表创建信息表存在",
-//			logicStep = "1.判断表是否在系统表创建信息表存在")
-//	@Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
-//	@Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-//	private static boolean tableIsExistInSysTableInfo(String tableName) {
-//		//1.判断表是否在集市数据表存在
-//		return Dbo.queryNumber("SELECT count(1) count FROM " + Sys_table_info.TableName +
-//				" WHERE lower(table_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
-//				-> new BusinessException("检查表名称否重复在系统表创建信息表的SQL编写错误")) != 0;
-//	}
+    @Method(desc = "判断表是否在系统表创建信息表存在",
+            logicStep = "1.判断表是否在系统表创建信息表存在")
+    @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
+    @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
+    private static boolean tableIsExistInUDL(String tableName) {
+        //1.判断表是否在集市数据表存在
+        return Dbo.queryNumber("SELECT count(1) count FROM " + Dq_table_info.TableName +
+                " WHERE lower(table_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
+                -> new BusinessException("检查表名称否重复在系统表创建信息表的SQL编写错误")) != 0;
+    }
 }
