@@ -49,12 +49,11 @@ public class TableMetaInfoTool {
         MDMDataQuery.deleteDCLDataStoreRegInfo(file_id);
     }
 
-
-    @Method(desc = "数据管控-删除 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
+    @Method(desc = "数据管控-删除 DML 层批量数据下表元信息", logicStep = "数据管控-恢复 DML 层批量数据下表元信息")
     @Param(name = "datatable_id", desc = "集市表id", range = "集市表id")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     public static void setDMLTableInvalid(String datatable_id, DatabaseWrapper db) {
-        //获取 Data_store_reg
+        //获取 Dm_datatable
         Dm_datatable dm_datatable = MDMDataQuery.getDMLDmDatatableInfo(datatable_id);
         //放入回收站前先检查是否被其他表依赖
         IOnWayCtrl.checkExistsTask(dm_datatable.getDatatable_en_name(), DataSourceType.DML.getCode(), db);
@@ -73,7 +72,59 @@ public class TableMetaInfoTool {
         dq_failure_table.setRemark(String.join(",", dsl_id_s));
         dq_failure_table.add(db);
         //删除源表的数据
-        MDMDataQuery.deleteDMLDataStoreRegInfo(datatable_id);
+        MDMDataQuery.deleteDMLDmDataTable(datatable_id);
+    }
+
+    @Method(desc = "数据管控-删除 DQC 层批量数据下表元信息", logicStep = "数据管控-恢复 DQC 层批量数据下表元信息")
+    @Param(name = "file_id", desc = "集市表id", range = "集市表id")
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    public static void setDQCTableInvalid(String file_id, DatabaseWrapper db) {
+        //获取 Data_store_reg
+        Dq_index3record dq_index3record = MDMDataQuery.getDQCDqIndex3record(file_id);
+        //放入回收站前先检查是否被其他表依赖
+        IOnWayCtrl.checkExistsTask(dq_index3record.getTable_name(), DataSourceType.DQC.getCode(), db);
+        //重命名数据层表
+        List<String> dsl_id_s = RenameDataTable.renameTableByDataLayer("", dq_index3record.getTable_name(),
+                Constant.DM_SET_INVALID_TABLE, db);
+        //添加到回收站表
+        Dq_failure_table dq_failure_table = new Dq_failure_table();
+        dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
+        dq_failure_table.setFile_id(String.valueOf(dq_index3record.getRecord_id()));
+        dq_failure_table.setTable_cn_name(dq_index3record.getTable_name());
+        dq_failure_table.setTable_en_name(dq_index3record.getTable_name());
+        dq_failure_table.setTable_source(DataSourceType.DQC.getCode());
+        dq_failure_table.setTable_meta_info(JsonUtil.toJson(dq_index3record));
+        //remark字段存储的是该表对应存储层id列表
+        dq_failure_table.setRemark(String.join(",", dsl_id_s));
+        dq_failure_table.add(db);
+        //删除源表的数据
+        MDMDataQuery.deleteDQCDqIndex3record(String.valueOf(dq_index3record.getRecord_id()));
+    }
+
+    @Method(desc = "数据管控-删除 UDL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
+    @Param(name = "table_id", desc = "UDL表id", range = "集市表id")
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    public static void setUDLTableInvalid(String table_id, DatabaseWrapper db) {
+        //获取 Dq_table_info
+        Dq_table_info dq_table_info = MDMDataQuery.getUDLTableInfo(table_id);
+        //放入回收站前先检查是否被其他表依赖
+        IOnWayCtrl.checkExistsTask(dq_table_info.getTable_name(), DataSourceType.UDL.getCode(), db);
+        //重命名数据层表
+        List<String> dsl_id_s = RenameDataTable.renameTableByDataLayer("", dq_table_info.getTable_name(),
+                Constant.DM_SET_INVALID_TABLE, db);
+        //添加到回收站表
+        Dq_failure_table dq_failure_table = new Dq_failure_table();
+        dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
+        dq_failure_table.setFile_id(String.valueOf(dq_table_info.getTable_id()));
+        dq_failure_table.setTable_cn_name(dq_table_info.getCh_name());
+        dq_failure_table.setTable_en_name(dq_table_info.getTable_name());
+        dq_failure_table.setTable_source(DataSourceType.UDL.getCode());
+        dq_failure_table.setTable_meta_info(JsonUtil.toJson(dq_table_info));
+        //remark字段存储的是该表对应存储层id列表
+        dq_failure_table.setRemark(String.join(",", dsl_id_s));
+        dq_failure_table.add(db);
+        //删除源表的数据
+        MDMDataQuery.deleteUDLDqTableInfo(dq_table_info.getTable_id());
     }
 
     @Method(desc = "数据管控-恢复 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
@@ -99,12 +150,12 @@ public class TableMetaInfoTool {
         }
     }
 
-    @Method(desc = "数据管控-恢复 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
+    @Method(desc = "数据管控-恢复 DML 层批量数据下表元信息", logicStep = "数据管控-恢复 DML 层批量数据下表元信息")
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static void restoreDMLTableInfo(Dq_failure_table dq_failure_table, DatabaseWrapper db) {
-        //转换Mate信息为Data_store_reg实体对象
+        //转换Mate信息为 Dm_datatable 实体对象
         Dm_datatable dm_datatable = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
                 Dm_datatable.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dm_datatable) {
@@ -120,6 +171,54 @@ public class TableMetaInfoTool {
             restoreTableInfo(dm_datatable.getDatatable_en_name(), dq_failure_table.getRemark().split(","), db);
             //恢复表元信息
             dm_datatable.add(db);
+        }
+    }
+
+    @Method(desc = "数据管控-恢复 DQC 层批量数据下表元信息", logicStep = "数据管控-恢复 DQC 层批量数据下表元信息")
+    @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static void restoreDQCTableInfo(Dq_failure_table dq_failure_table, DatabaseWrapper db) {
+        //转换Mate信息为 Data_store_reg 实体对象
+        Dq_index3record dq_index3record = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
+                Dq_index3record.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
+        if (null != dq_index3record) {
+            //校验数据DQC层登记信息是否存在
+            boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dq_index3record.TableName + " where " +
+                    "table_name=?", dq_index3record.getTable_name())
+                    .orElseThrow(() -> new BusinessException("校验DQC表层登记信息的SQL错误")) == 1;
+            //恢复存储层表信息
+            if (boo) {
+                throw new BusinessException("恢复的数据表已经存在!");
+            }
+            //根据数据层id恢复 DQC 数据层对应存储层下的数据表
+            restoreTableInfo(dq_index3record.getTable_name(), dq_failure_table.getRemark().split(","), db);
+            //恢复表元信息
+            dq_index3record.add(db);
+        }
+    }
+
+    @Method(desc = "数据管控-恢复 UDL 层批量数据下表元信息", logicStep = "数据管控-恢复 UDL 层批量数据下表元信息")
+    @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static void restoreUDLTableInfo(Dq_failure_table dq_failure_table, DatabaseWrapper db) {
+        //转换Mate信息为 Dq_table_info 实体对象
+        Dq_table_info dq_table_info = JsonUtil.toObjectSafety(dq_failure_table.getTable_meta_info(),
+                Dq_table_info.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
+        if (null != dq_table_info) {
+            //校验数据UDL层登记信息是否存在
+            boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dq_table_info.TableName + " where " +
+                    "table_name=?", dq_table_info.getTable_name())
+                    .orElseThrow(() -> new BusinessException("校验UDL表层登记信息的SQL错误")) == 1;
+            //恢复存储层表信息
+            if (boo) {
+                throw new BusinessException("恢复的数据表已经存在!");
+            }
+            //根据数据层id恢复 DML 数据层对应存储层下的数据表
+            restoreTableInfo(dq_table_info.getTable_name(), dq_failure_table.getRemark().split(","), db);
+            //恢复表元信息
+            dq_table_info.add(db);
         }
     }
 
@@ -178,6 +277,32 @@ public class TableMetaInfoTool {
             dfi.setField_cn_name(columnInfoBean.getColumn_ch_name());
             //修改表字段
             dfi.update(db);
+        }
+    }
+
+
+    @Method(desc = "修改DML层下的表元信息",
+            logicStep = "修改DML层批量数据下的表元信息")
+    @Param(name = "table_id", desc = "数据表id", range = "String类型")
+    @Param(name = "table_ch_name", desc = "表中文名", range = "String类型", nullable = true)
+    @Param(name = "columnInfoBeans", desc = "自定义实体ColumnInfoBean[]", range = "ColumnInfoBean", isBean = true)
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    public static void updateUDLTableMetaInfo(String table_id, String table_ch_name,
+                                              ColumnInfoBean[] columnInfoBeans, DatabaseWrapper db) {
+        //设置 Dm_datatable 对象
+        Dq_table_info dq_table_info = new Dq_table_info();
+        dq_table_info.setTable_id(table_id);
+        dq_table_info.setCh_name(table_ch_name);
+        //修改集市数据表
+        dq_table_info.update(db);
+        //修改表字段信息
+        for (ColumnInfoBean columnInfoBean : columnInfoBeans) {
+            //设置 Table_column 对象
+            Dq_table_column dq_table_column = new Dq_table_column();
+            dq_table_column.setField_id(columnInfoBean.getColumn_id());
+            dq_table_column.setField_ch_name(columnInfoBean.getColumn_ch_name());
+            //修改表字段
+            dq_table_column.update(db);
         }
     }
 

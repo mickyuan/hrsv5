@@ -4,41 +4,54 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.JobExecuteState;
+import hrds.commons.codes.StoreLayerDataSource;
+import hrds.commons.collection.CreateDataTable;
 import hrds.commons.collection.DeleteDataTable;
-import hrds.commons.entity.Data_store_layer;
-import hrds.commons.entity.Data_store_reg;
-import hrds.commons.entity.Dm_datatable;
-import hrds.commons.entity.Dq_failure_table;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.background.query.DMLDataQuery;
 import hrds.commons.tree.background.query.TreeDataQuery;
+import hrds.commons.tree.background.query.UDLDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableFieldUtil;
 import hrds.commons.utils.DataTableUtil;
+import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.dm.metadatamanage.bean.ColumnInfoBean;
+import hrds.k.biz.dm.metadatamanage.bean.DqTableColumnBean;
+import hrds.k.biz.dm.metadatamanage.bean.DqTableInfoBean;
 import hrds.k.biz.dm.metadatamanage.commons.TableMetaInfoTool;
 import hrds.k.biz.dm.metadatamanage.drbtree.DRBTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.drbtree.MDMTreeNodeInfo;
 import hrds.k.biz.dm.metadatamanage.query.DRBDataQuery;
 import hrds.k.biz.dm.metadatamanage.query.MDMDataQuery;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @DocClass(desc = "数据管控-元数据管理", author = "BY-HLL", createdate = "2020/3/27 0027 下午 04:39")
 public class MetaDataManageAction extends BaseAction {
+
+    private static final Logger logger = LogManager.getLogger();
 
     @Method(desc = "数据管控-源数据列表树", logicStep = "获取数据管控-源数据列表树")
     @Return(desc = "源数据列表树", range = "源数据列表树")
@@ -131,7 +144,18 @@ public class MetaDataManageAction extends BaseAction {
         } else if (dataSourceType == DataSourceType.DQC) {
             throw new BusinessException(table_source + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(table_source + "层暂未实现!");
+            //转 Dq_table_info
+            Dq_table_info dq_table_info = JsonUtil.toObjectSafety(table_meta_info, Dq_table_info.class)
+                    .orElseThrow(() -> new BusinessException("类型转换错误,请检查meta格式的正确性!"));
+            //设置表id
+            table_id = dq_failure_table.getFailure_table_id().toString();
+            //设置表创建日期
+            create_date = dq_table_info.getCreate_date();
+            //获取字段信息列表
+            List<Map<String, Object>> udlTableColumns =
+                    UDLDataQuery.getUDLTableColumns(dq_table_info.getTable_id().toString());
+            //转化字段信息列表为meta_list
+            column_info_list = DataTableFieldUtil.metaInfoToList(udlTableColumns);
         } else {
             throw new BusinessException("未找到匹配的数据层!" + table_source);
         }
@@ -182,7 +206,7 @@ public class MetaDataManageAction extends BaseAction {
         } else if (dataSourceType == DataSourceType.DQC) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            TableMetaInfoTool.updateUDLTableMetaInfo(table_id, table_ch_name, columnInfoBeans, Dbo.db());
         } else {
             throw new BusinessException("未找到匹配的数据层!" + data_layer);
         }
@@ -216,9 +240,9 @@ public class MetaDataManageAction extends BaseAction {
         } else if (dataSourceType == DataSourceType.AML) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DQC) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            TableMetaInfoTool.restoreDQCTableInfo(dq_failure_table, Dbo.db());
         } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            TableMetaInfoTool.restoreUDLTableInfo(dq_failure_table, Dbo.db());
         } else {
             throw new BusinessException("未找到匹配的数据层!" + data_layer);
         }
@@ -231,7 +255,7 @@ public class MetaDataManageAction extends BaseAction {
     }
 
     @Method(desc = "恢复回收站数据层下所有表", logicStep = "恢复回收站所有表")
-    private void restoreDRBAllTable() {
+    public void restoreDRBAllTable() {
         //获取回收站所有表信息
         List<Dq_failure_table> allTableInfos = DRBDataQuery.getAllTableInfos();
         //循环每一张表逐条恢复
@@ -258,17 +282,16 @@ public class MetaDataManageAction extends BaseAction {
         } else if (dataSourceType == DataSourceType.AML) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DQC) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            TableMetaInfoTool.setDQCTableInvalid(file_id, Dbo.db());
         } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            TableMetaInfoTool.setUDLTableInvalid(file_id, Dbo.db());
         } else {
             throw new BusinessException("未找到匹配的数据层!" + data_layer);
         }
     }
 
     @Method(desc = "表放入回收站(所有表设置为无效)", logicStep = "表放入回收站(所有表设置为无效)")
-    private void allTableSetToInvalid() {
-        //TODO hrsv5.1
+    public void allTableSetToInvalid() {
         //获取回收站源树菜单列表
         List<Map<String, Object>> sourceTreeInfos = TreeDataQuery.getSourceTreeInfos(TreePageSource.DATA_MANAGEMENT);
         //根据源树菜单逐层处理
@@ -292,6 +315,16 @@ public class MetaDataManageAction extends BaseAction {
             } else if (dataSourceType == DataSourceType.DPL) {
                 throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
             } else if (dataSourceType == DataSourceType.DML) {
+                //获取DCL下存在表的所有数据存储层
+                List<Data_store_layer> dataStorageLayers = MDMDataQuery.getDMLExistTableDataStorageLayers();
+                //获取所有表的信息
+                dataStorageLayers.forEach(data_store_layer -> {
+                    //获取存储层下表信息
+                    MDMDataQuery.getDMLStorageLayerTableInfos(data_store_layer).forEach(dm_datatable -> {
+                        //根据查询到的表信息将表放入回收站
+                        tableSetToInvalid(dataSourceType.getCode(), dm_datatable.get("datatable_id").toString());
+                    });
+                });
                 throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
             } else if (dataSourceType == DataSourceType.SFL) {
                 throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
@@ -327,8 +360,7 @@ public class MetaDataManageAction extends BaseAction {
 
     @Method(desc = "数据管控-彻底删除所有表",
             logicStep = "数据管控-彻底删除所有表")
-    private void removeCompletelyAllTable() {
-        //TODO hrsv5.1
+    public void removeCompletelyAllTable() {
         //获取回收站所有表信息
         List<Dq_failure_table> allTableInfos = DRBDataQuery.getAllTableInfos();
         //循环每一张表逐条删除
@@ -340,31 +372,93 @@ public class MetaDataManageAction extends BaseAction {
         });
     }
 
-    @Method(desc = "数据管控-创建表", logicStep = "数据管控-创建表")
-    @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
-    @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
-    private void createTable(String data_layer, long dsl_id) {
-        //TODO hrsv5.1
-        //根据所属数据层创建表
-        DataSourceType dataSourceType = DataSourceType.ofEnumByCode(data_layer);
-        if (dataSourceType == DataSourceType.ISL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.DCL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.DPL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.DML) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.SFL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.AML) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.DQC) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
-        } else {
-            throw new BusinessException("未找到匹配的数据层!" + data_layer);
+    @Method(desc = "根据存储层id获取存储层配置信息", logicStep = "根据存储层id获取存储层配置信息")
+    @Param(name = "dsl_id", desc = "存储层id", range = "参数例子")
+    @Return(desc = "存储层配置信息", range = "dsl:存储层信息,dsl_attr:存储层配置信息,dsl_added:存储层附加信息,slfti:存储层支持的类型列表信息")
+    public Map<String, Object> getStorageLayerConfInfo(long dsl_id) {
+        //数据校验
+        Validator.notEmpty(String.valueOf(dsl_id), "存储层配置id不能为空! dsl_id=" + dsl_id);
+        //初始化返回结果
+        Map<String, Object> slci = new HashMap<>();
+        //获取存储层信息
+        Data_store_layer dsl = Dbo.queryOneObject(Data_store_layer.class,
+                "select * from " + Data_store_layer.TableName + " where dsl_id=?",
+                dsl_id).orElseThrow(() -> new BusinessException("获取存储层信息失败! dsl_id=" + dsl_id));
+        slci.put("dsl", dsl);
+        //获取存储层配置信息
+        List<Data_store_layer_attr> dsl_attr_s = Dbo.queryList(Data_store_layer_attr.class, "select * from " +
+                Data_store_layer_attr.TableName + " where dsl_id=?", dsl_id);
+        slci.put("dsl_attr_s", dsl_attr_s);
+        //获取存储层附加信息
+        List<Data_store_layer_added> dsl_added_s = Dbo.queryList(Data_store_layer_added.class, "select * from " +
+                Data_store_layer_added.TableName + " where dsl_id=?", dsl_id);
+        slci.put("dsl_added_s", dsl_added_s);
+        //存储层支持的类型列表信息 storageLayerFieldTypeInfos
+        List<String> slfti = Dbo.queryOneColumnList("select distinct tc.target_type from " +
+                Data_store_layer.TableName + " dsl left join " + Type_contrast_sum.TableName + " tcs" +
+                " on dsl.dtcs_id = tcs.dtcs_id left join " + Type_contrast.TableName + " tc" +
+                " on tcs.dtcs_id = tc.dtcs_id where dsl_id = ?", dsl_id);
+        //处理查询到的类型列表信息,去除括号
+        List<String> filedTypes = new ArrayList<>();
+        for (String s : slfti) {
+            if (s.contains(Constant.LXKH) && s.contains(Constant.RXKH)) {
+                filedTypes.add(s.substring(0, s.indexOf(Constant.LXKH)));
+            } else {
+                filedTypes.add(s);
+            }
         }
+        filedTypes = filedTypes.stream().distinct().collect(Collectors.toList());
+        slci.put("filedTypes", filedTypes);
+        return slci;
+    }
+
+    @Method(desc = "数据管控-创建表", logicStep = "数据管控-创建表")
+    @Param(name = "dsl_id", desc = "配置存储层id", range = "long 类型")
+    @Param(name = "dqTableInfoBean", desc = "自定义实体DqTableInfoBean", range = "DqTableInfoBean", isBean = true)
+    @Param(name = "dqTableColumnBeans", desc = "自定义实体DqTableColumnBean数组", range = "DqTableColumnBean[]", isBean = true)
+    public void createTable(long dsl_id, DqTableInfoBean dqTableInfoBean, DqTableColumnBean[] dqTableColumnBeans) {
+        //数据校验
+        Validator.notBlank(String.valueOf(dsl_id), "存储层id不能为空! dsl_id=" + dsl_id);
+        Validator.notNull(dqTableInfoBean, "表存储实体Bean不能为空! dqTableInfoBean");
+        Validator.notNull(dqTableColumnBeans, "表字段存储实体Bean[]不能为空! dqTableColumnBeans");
+        //设置表信息
+        Dq_table_info dqTableInfo = new Dq_table_info();
+        BeanUtils.copyProperties(dqTableInfoBean, dqTableInfo);
+        dqTableInfo.setTable_id(PrimayKeyGener.getNextId());
+        if (StringUtil.isBlank(dqTableInfo.getIs_trace())) {
+            dqTableInfo.setIs_trace(IsFlag.Fou.getCode());
+        }
+        dqTableInfo.setCreate_date(DateUtil.getSysDate());
+        dqTableInfo.setEnd_date(Constant.MAXDATE);
+        dqTableInfo.setCreate_id(getUserId());
+        //设置列信息列表
+        List<Dq_table_column> dqTableColumns = new ArrayList<>();
+        for (DqTableColumnBean dqTableColumnBean : dqTableColumnBeans) {
+            Dq_table_column dqTableColumn = new Dq_table_column();
+            if (StringUtil.isNotBlank(dqTableColumnBean.getColumn_name()) && StringUtil.isNotBlank(dqTableColumnBean.getColumn_type())) {
+                BeanUtils.copyProperties(dqTableColumnBean, dqTableColumn);
+                dqTableColumn.setField_id(PrimayKeyGener.getNextId());
+                dqTableColumn.setTable_id(dqTableInfo.getTable_id());
+                dqTableColumns.add(dqTableColumn);
+            }
+        }
+        //校验表名在系统中是否存在,存在则直接终止创建表
+        boolean isRepeat = DataTableUtil.tableIsRepeat(dqTableInfo.getTable_name());
+        if (isRepeat) {
+            throw new BusinessException("表: " + dqTableInfo.getCh_name() + "已经在系统中存在,请更换表名!" + dqTableInfo.getTable_name());
+        }
+        //保存表到指定的存储层下
+        CreateDataTable.createDataTableByStorageLayer(Dbo.db(), dqTableInfo, dqTableColumns, dsl_id);
+        //设置数据表存储关系
+        Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
+        dtab_relation_store.setDsl_id(dsl_id);
+        dtab_relation_store.setTab_id(dqTableInfo.getTable_id());
+        dtab_relation_store.setData_source(StoreLayerDataSource.DQ.getCode());
+        dtab_relation_store.setIs_successful(JobExecuteState.WanCheng.getCode());
+        //保存表源信息和表存储关系信息到配置库
+        dqTableInfo.add(Dbo.db());
+        dqTableColumns.forEach(dq_table_column -> dq_table_column.add(Dbo.db()));
+        dtab_relation_store.add(Dbo.db());
+        logger.info("保存表源信息到配置库成功! table_name: " + dqTableInfo.getTable_name());
     }
 }
