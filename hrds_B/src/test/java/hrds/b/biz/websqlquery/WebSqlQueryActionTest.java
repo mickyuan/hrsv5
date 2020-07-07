@@ -6,7 +6,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.exception.BusinessException;
-import hrds.testbase.LoadGeneralTestData;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -20,20 +19,18 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
     //当前线程的id
     private static long THREAD_ID = Thread.currentThread().getId() * 1000000;
     //获取模拟登陆的URL
-    private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+    private static final String LOGIN_URL = agentInitConfig.getString("login_url",
+            "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login");
     //登录用户id
-    private static final long USER_ID = agentInitConfig.getLong("general_oper_user_id");
+    private static final long USER_ID = agentInitConfig.getLong("general_oper_user_id", 2001);
     //登录用户密码
-    private static final long PASSWORD = agentInitConfig.getLong("general_password");
-    //初始化加载通用测试数据
-    private static final LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData(THREAD_ID);
+    private static final String PASSWORD = agentInitConfig.getString("general_password", "1");
 
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
     @BeforeClass
     public static void before() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             //加载通用测试数据
-            loadGeneralTestData.execute(db);
             //提交数据库操作
             db.commit();
             //模拟登陆
@@ -51,7 +48,6 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
     public static void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             //清理通用测试数据
-            loadGeneralTestData.cleanUp(db);
             //提交数据库操作
             db.commit();
         }
