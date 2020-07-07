@@ -107,9 +107,8 @@ public class ObjectCollectJob extends AgentBaseAction {
 					"3.有数据字典写xml文件获取数据字典数据" +
 					"4.返回有数据字典时的数据处理方式数据")
 	@Param(name = "file_path", desc = "文件存储路径", range = "不为空")
-	@Param(name = "table_name", desc = "表名称", range = "不为空")
 	@Return(desc = "返回解析后的数据文件数据", range = "不能为空")
-	public String getAllHandleType(String file_path, String table_name) {
+	public String getAllHandleType(String file_path) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.获取生成xml文件文件名
 		String xmlName = ConnUtil.getDataBaseFile("", "", file_path, "");
