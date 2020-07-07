@@ -145,8 +145,7 @@ public class DqcExecution {
                 }
             }
             //执行到此处则代表程序正常运行结束，开始记录指标3的数据
-            if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3())
-                    && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
+            if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
                 recordIndicator3Data(dq_result, beans);
             }
         }
@@ -235,7 +234,7 @@ public class DqcExecution {
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义bean类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    private static boolean recordIndicator3Data(Dq_result dq_result, Set<SysVarCheckBean> beans) {
+    private static void recordIndicator3Data(Dq_result dq_result, Set<SysVarCheckBean> beans) {
         //数据校验
         if (StringUtil.isBlank(dq_result.getTask_id().toString())) {
             throw new BusinessException("在记录指标3的数据时，传入的任务编号为空!");
@@ -277,7 +276,6 @@ public class DqcExecution {
             //提交数据库操作
             db.commit();
         }
-        return true;
     }
 
     @Method(desc = "执行sql检查", logicStep = "执行sql检查")
