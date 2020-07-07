@@ -517,20 +517,26 @@ public class ConnUtil {
 		List<?> xmlToList = getXmlToList(xmlName);
 		Map<String, List<Object_handle_type>> handleTypeMap = new HashMap<>();
 		for (Object o : xmlToList) {
-			List<Object_handle_type> handleTypeList = new ArrayList<>();
 			Element table = (Element) o;
 			Element handleType = XMLUtil.getChildElement(table, "handle_type");
 			Validator.notNull(handleType, "处理类型不能为空,生成xml数据或者数据字典有误");
+			List<Object_handle_type> handleTypeList = new ArrayList<>();
+
 			Object_handle_type object_handle_type = new Object_handle_type();
 			object_handle_type.setHandle_type(OperationType.INSERT.getCode());
 			object_handle_type.setHandle_value(handleType.getAttribute("insert"));
 			handleTypeList.add(object_handle_type);
-			object_handle_type.setHandle_type(OperationType.UPDATE.getCode());
-			object_handle_type.setHandle_value(handleType.getAttribute("update"));
-			handleTypeList.add(object_handle_type);
-			object_handle_type.setHandle_type(OperationType.DELETE.getCode());
-			object_handle_type.setHandle_value(handleType.getAttribute("delete"));
-			handleTypeList.add(object_handle_type);
+
+			Object_handle_type object_handle_type2 = new Object_handle_type();
+			object_handle_type2.setHandle_type(OperationType.UPDATE.getCode());
+			object_handle_type2.setHandle_value(handleType.getAttribute("update"));
+			handleTypeList.add(object_handle_type2);
+
+			Object_handle_type object_handle_type3 = new Object_handle_type();
+			object_handle_type3.setHandle_type(OperationType.DELETE.getCode());
+			object_handle_type3.setHandle_value(handleType.getAttribute("delete"));
+			handleTypeList.add(object_handle_type3);
+
 			handleTypeMap.put(table.getAttribute("table_name"), handleTypeList);
 		}
 		return handleTypeMap;
