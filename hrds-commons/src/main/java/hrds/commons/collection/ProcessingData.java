@@ -150,9 +150,35 @@ public abstract class ProcessingData {
                         + Dm_datatable.TableName + " dd join  " + Dtab_relation_store.TableName + " dtrs " +
                         "on dd.datatable_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl " +
                         "on dtrs.dsl_id = dsl.dsl_id where lower(datatable_en_name) = ? and dtrs.data_source = ?",
-		                tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
+                tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
         if (dslMap.size() != 0) {
             for (LayerBean map : dslMap) {
+                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                mapTaberLayer.add(map);
+            }
+            return mapTaberLayer;
+        }
+        //查询数据管控层(DQC)表信息, 通过规则校验保存结果3生成的数表
+        List<LayerBean> di3Map = SqlOperator.queryList(db, LayerBean.class,
+                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.DQC.getCode() + "' as dst from "
+                        + Dq_index3record.TableName + " di3 join " + Data_store_layer.TableName + " dsl" +
+                        " on di3.dsl_id=dsl.dsl_id where lower(di3.table_name) = ?", tableName.toLowerCase());
+        if (di3Map.size() != 0) {
+            for (LayerBean map : di3Map) {
+                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                mapTaberLayer.add(map);
+            }
+            return mapTaberLayer;
+        }
+        //查询自定义层(UDL)表信息, 通过数据管控创建的数表
+        List<LayerBean> dqtiMap = SqlOperator.queryList(db, LayerBean.class,
+                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.UDL.getCode() + "' as dst from "
+                        + Dq_table_info.TableName + " dqti join  " + Dtab_relation_store.TableName + " dtrs " +
+                        "on dqti.table_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl " +
+                        "on dtrs.dsl_id = dsl.dsl_id where lower(dqti.table_name) = ? and dtrs.data_source = ?",
+                tableName.toLowerCase(), StoreLayerDataSource.DQ.getCode());
+        if (dqtiMap.size() != 0) {
+            for (LayerBean map : dqtiMap) {
                 map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
                 mapTaberLayer.add(map);
             }

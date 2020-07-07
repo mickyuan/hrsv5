@@ -3,6 +3,8 @@ package hrds.commons.tree.background.utils;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Dq_index3record;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.background.query.DMLDataQuery;
@@ -85,8 +87,6 @@ public class TreeNodeDataQuery {
                 }
             });
         }
-
-
     }
 
     @Method(desc = "获取SFL数据层的节点数据", logicStep = "获取SFL数据层的节点数据")
@@ -112,11 +112,20 @@ public class TreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDQCDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        //获取数据管控层下检测表列表
-        List<Map<String, Object>> dqcDataInfos = DQCDataQuery.getDQCDataInfos();
-        //转换并添加到层次数据中
-        dataList.addAll(DataConvertedNodeData.conversionDQCTableInfos(dqcDataInfos));
-
+        //获取DQC数据层下存在数据表的存储层列表
+        List<Data_store_layer> data_store_layer_s = DQCDataQuery.getDQCDataInfos();
+        dataList.addAll(DataConvertedNodeData.conversionDQCDataInfos(data_store_layer_s));
+        //获取DQC对应存储层下数据表信息
+        if (!data_store_layer_s.isEmpty()) {
+            //获取存储层下数据表信息
+            data_store_layer_s.forEach(data_store_layer -> {
+                long dsl_id = data_store_layer.getDsl_id();
+                List<Map<String, Object>> dqcTableInfos = DQCDataQuery.getDQCTableInfos(dsl_id);
+                if (!dqcTableInfos.isEmpty()) {
+                    dataList.addAll(DataConvertedNodeData.conversionDQCTableInfos(dqcTableInfos));
+                }
+            });
+        }
     }
 
     @Method(desc = "获取UDL数据层的节点数据", logicStep = "获取UDL数据层的节点数据")
