@@ -10,7 +10,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;

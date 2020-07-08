@@ -8,7 +8,7 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;

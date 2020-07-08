@@ -1,4 +1,4 @@
-package hrds.b.biz.agent.datafileconf;
+package hrds.b.biz.agent;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;

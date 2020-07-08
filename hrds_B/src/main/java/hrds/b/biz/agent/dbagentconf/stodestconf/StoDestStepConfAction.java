@@ -11,7 +11,7 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.bean.DataStoRelaParam;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.DatabaseType;
