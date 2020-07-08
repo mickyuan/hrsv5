@@ -92,9 +92,9 @@ public class AgentListActionTest extends WebBaseTestCase {
 
 	private static final long SYS_USER_TABLE_ID = 7001L;
 	private static final long CODE_INFO_TABLE_ID = 7002L;
-
-	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
-	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
+	private static final BaseInitData baseInitData = new BaseInitData();
+	private static final JSONObject tableCleanOrder = baseInitData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = baseInitData.initColumnCleanOrder();
 
 	private static final long BASE_SYS_USER_PRIMARY = 2000L;
 
@@ -1815,10 +1815,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 				sysUsers.add(sysUserColumn);
 			}
 
-			List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
+			List<Table_column> codeInfos = baseInitData.buildCodeInfoTbColData();
 
 			//构造Orig_code_info表数据
-			List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
+			List<Orig_code_info> origCodeInfos = baseInitData.buildOrigCodeInfo();
 
 			/*
 			 * 构造column_clean表数据
