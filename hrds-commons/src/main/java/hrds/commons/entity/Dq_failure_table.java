@@ -44,6 +44,8 @@ public class Dq_failure_table extends ProjectTableEntity
 	private String remark;
 	@DocBean(name ="file_id",value="表文件ID:",dataType = String.class,required = true)
 	private String file_id;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
 
 	/** 取得：表id */
 	public Long getFailure_table_id(){
@@ -106,5 +108,19 @@ public class Dq_failure_table extends ProjectTableEntity
 	/** 设置：表文件ID */
 	public void setFile_id(String file_id){
 		this.file_id=file_id;
+	}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
+		}
 	}
 }

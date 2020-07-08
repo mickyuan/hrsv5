@@ -40,7 +40,7 @@ public class Dq_table_column extends ProjectTableEntity
 	private String column_name;
 	@DocBean(name ="column_type",value="字段类型:",dataType = String.class,required = true)
 	private String column_type;
-	@DocBean(name ="column_length",value="字段长度:",dataType = String.class,required = true)
+	@DocBean(name ="column_length",value="字段长度:",dataType = String.class,required = false)
 	private String column_length;
 	@DocBean(name ="is_null",value="是否可为空(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_null;

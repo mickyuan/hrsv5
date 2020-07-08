@@ -40,8 +40,6 @@ public class Dq_table_info extends ProjectTableEntity
 	private String table_name;
 	@DocBean(name ="ch_name",value="表中文名称:",dataType = String.class,required = false)
 	private String ch_name;
-	@DocBean(name ="table_type",value="表的类型:",dataType = String.class,required = false)
-	private String table_type;
 	@DocBean(name ="create_date",value="开始日期:",dataType = String.class,required = true)
 	private String create_date;
 	@DocBean(name ="end_date",value="结束日期:",dataType = String.class,required = true)
@@ -102,14 +100,6 @@ public class Dq_table_info extends ProjectTableEntity
 	/** 设置：表中文名称 */
 	public void setCh_name(String ch_name){
 		this.ch_name=ch_name;
-	}
-	/** 取得：表的类型 */
-	public String getTable_type(){
-		return table_type;
-	}
-	/** 设置：表的类型 */
-	public void setTable_type(String table_type){
-		this.table_type=table_type;
 	}
 	/** 取得：开始日期 */
 	public String getCreate_date(){

@@ -33,6 +33,7 @@ TABLE_CN_NAME                                     VARCHAR(512) NULL, --表中文
 TABLE_EN_NAME                                     VARCHAR(512) NOT NULL, --表英文名
 TABLE_SOURCE                                      CHAR(3) NOT NULL, --表来源
 TABLE_META_INFO                                   VARCHAR(2000) NOT NULL, --表元信息
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT DQ_FAILURE_TABLE_PK PRIMARY KEY(FAILURE_TABLE_ID)   );
 
@@ -278,7 +279,6 @@ TABLE_ID                                          BIGINT default 0 NOT NULL, --�
 TABLE_SPACE                                       VARCHAR(512) NOT NULL, --表空间名称
 TABLE_NAME                                        VARCHAR(512) NOT NULL, --表名
 CH_NAME                                           VARCHAR(512) NULL, --表中文名称
-TABLE_TYPE                                        CHAR(10) NULL, --表的类型
 CREATE_DATE                                       CHAR(8) NOT NULL, --开始日期
 END_DATE                                          CHAR(8) NOT NULL, --结束日期
 IS_TRACE                                          CHAR(1) NOT NULL, --是否数据溯源
@@ -304,7 +304,7 @@ FIELD_ID                                          BIGINT default 0 NOT NULL, --�
 FIELD_CH_NAME                                     VARCHAR(512) NULL, --字段中文名称
 COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段名称
 COLUMN_TYPE                                       VARCHAR(512) NOT NULL, --字段类型
-COLUMN_LENGTH                                     VARCHAR(200) NOT NULL, --字段长度
+COLUMN_LENGTH                                     VARCHAR(200) NULL, --字段长度
 IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
 COLSOURCETAB                                      VARCHAR(512) NULL, --字段来源表名称
 COLSOURCECOL                                      VARCHAR(512) NULL, --来源字段
