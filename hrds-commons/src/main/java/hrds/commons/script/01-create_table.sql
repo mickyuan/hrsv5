@@ -34,6 +34,7 @@ TABLE_EN_NAME                                     VARCHAR(512) NOT NULL, --表�
 TABLE_SOURCE                                      CHAR(3) NOT NULL, --表来源
 TABLE_META_INFO                                   VARCHAR(2000) NOT NULL, --表元信息
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
+DATA_SOURCE                                       CHAR(10) NULL, --存储层-数据来源
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT DQ_FAILURE_TABLE_PK PRIMARY KEY(FAILURE_TABLE_ID)   );
 
