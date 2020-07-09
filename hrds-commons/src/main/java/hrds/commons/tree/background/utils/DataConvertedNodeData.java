@@ -153,9 +153,8 @@ public class DataConvertedNodeData {
         return dmlTableNodes;
     }
 
-    @Method(desc = "集市层工程信息转换",
-            logicStep = "1.集市层工程信息转换")
-    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    @Method(desc = "管控层DQC下存储层信息转换", logicStep = "管控层DQC下存储层信息转换")
+    @Param(name = "data_store_layer_s", desc = "管控层下存在表的数据存储层", range = "取值范围说明")
     public static List<Map<String, Object>> conversionDQCDataInfos(List<Data_store_layer> data_store_layer_s) {
         List<Map<String, Object>> dqcDataNodes = new ArrayList<>();
         for (Data_store_layer data_store_layer : data_store_layer_s) {
@@ -164,6 +163,7 @@ public class DataConvertedNodeData {
             map.put("label", data_store_layer.getDsl_name());
             map.put("parent_id", DataSourceType.DQC.getCode());
             map.put("data_layer", DataSourceType.DQC.getCode());
+            map.put("dsl_id", data_store_layer.getDsl_id());
             map.put("description", "" +
                     "存储层编号：" + data_store_layer.getDsl_id() + "\n" +
                     "存储层名称：" + data_store_layer.getDsl_name() + "\n" +
@@ -190,6 +190,7 @@ public class DataConvertedNodeData {
             map.put("label", table_name);
             map.put("parent_id", DataSourceType.DQC.getCode() + "_" + dsl_id);
             map.put("data_layer", DataSourceType.DQC.getCode());
+            map.put("dsl_id", dsl_id);
             map.put("file_id", file_id);
             map.put("table_name", table_name);
             map.put("hyren_name", table_name);
