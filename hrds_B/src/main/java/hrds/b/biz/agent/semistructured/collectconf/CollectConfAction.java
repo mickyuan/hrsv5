@@ -10,13 +10,14 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.CheckParam;
+import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ObjectCollectType;
 import hrds.commons.entity.Object_collect;
 import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -60,12 +61,7 @@ public class CollectConfAction extends BaseAction {
 	public Map<String, Object> getObjectCollectConfById(long odc_id) {
 		// 1.数据可访问权限处理方式：通过agent_id进行访问权限限制
 		// 2.检查当前任务是否存在
-		long countNum = Dbo.queryNumber(
-				"SELECT COUNT(1) FROM  " + Object_collect.TableName + " WHERE odc_id = ?",
-				odc_id).orElseThrow(() -> new BusinessException("SQL查询错误"));
-		if (countNum == 0) {
-			CheckParam.throwErrorMsg("任务( %s )不存在!!!", odc_id);
-		}
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.根据对象采集id查询半结构化采集配置首页数据
 		return Dbo.queryOneObject(
 				"SELECT * FROM " + Object_collect.TableName + " WHERE odc_id = ?", odc_id);
@@ -130,7 +126,13 @@ public class CollectConfAction extends BaseAction {
 			object_collect.add(Dbo.db());
 		} else {
 			// 4.2 更新
-			object_collect.update(Dbo.db());
+			try {
+				object_collect.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+					throw new BusinessException(e.getMessage());
+				}
+			}
 		}
 		// 5.返回对象采集ID
 		return object_collect.getOdc_id();

@@ -7,12 +7,15 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+
+import java.util.List;
 
 @DocClass(desc = "半结构化采集存储层配置", author = "dhw", createdate = "2020/6/12 18:09")
 public class CollectStorageLayerConfAction extends BaseAction {
@@ -26,25 +29,33 @@ public class CollectStorageLayerConfAction extends BaseAction {
 	public Result getCollectStorageLayerInfo(long odc_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否已不存在
-		if (Dbo.queryNumber("select count(*) from " + Object_collect.TableName + " where odc_id=?",
-				odc_id).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-			throw new BusinessException("odc_id=" + odc_id + "对应的半结构化采集任务已不存在");
-		}
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.关联查询半结构化采集对应表信息与表对应存储信息获取存储配置信息
-		return Dbo.queryResult("select * from " + Object_collect_task.TableName + " oct left join "
+		Result collectStorageLayerInfo = Dbo.queryResult(
+				"select * from " + Object_collect_task.TableName + " oct left join "
 						+ Dtab_relation_store.TableName + " drs on oct.ocs_id=drs.tab_id "
-						+ " where odc_id=? and drs.data_source=?",
+						+ " where oct.odc_id=? and drs.data_source=?",
 				odc_id, StoreLayerDataSource.OBJ.getCode());
+		// 4.判断存储配置信息是否为空，为空说明新增直接返回对象采集对应信息
+		if (collectStorageLayerInfo.isEmpty()) {
+			return Dbo.queryResult("select * from " + Object_collect_task.TableName + " where odc_id=?",
+					odc_id);
+		}
+		// 5.返回存储配置信息
+		return collectStorageLayerInfo;
 	}
 
 	@Method(desc = "根据对象采集任务编号获取存储目的地数据信息",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.获取当前表对应存储信息，为空说明之前没有定义过存储目的地")
+					"2.判断当前对象采集对应信息是否存在" +
+					"3.获取当前表对应存储信息，为空说明之前没有定义过存储目的地")
 	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对应采集对应信息时生成")
 	@Return(desc = "返回根据对象采集任务编号获取存储目的地数据信息", range = "无限制，为空说明之前没有定义过存储目的地")
 	public Result getStorageLayerDestById(long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.获取当前表对应存储信息，为空说明之前没有定义过存储目的地
+		// 2.判断当前对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 3.获取当前表对应存储信息，为空说明之前没有定义过存储目的地
 		return Dbo.queryResult(
 				"select * from " + Object_collect_task.TableName + " oct left join "
 						+ Dtab_relation_store.TableName + " drs on oct.ocs_id=drs.tab_id "
@@ -53,37 +64,67 @@ public class CollectStorageLayerConfAction extends BaseAction {
 	}
 
 	@Method(desc = "根据存储层配置ID获取当前存储层配置属性信息",
-			logicStep = "1.根据存储层配置ID获取当前存储层配置属性信息")
+			logicStep = "1.判断当前数据存储层配置表信息是否存在" +
+					"2.根据存储层配置ID获取当前存储层配置属性信息")
 	@Param(name = "dsl_id", desc = "存储层配置ID", range = "新增存储层配置信息时生成")
 	@Return(desc = "返回根据存储层配置ID获取当前存储层配置属性信息", range = "无限制")
 	public Result getStorageLayerAttrById(long dsl_id) {
-		// 1.根据存储层配置ID获取当前存储层配置属性信息
+		// 1.判断当前数据存储层配置表信息是否存在
+		CommonUtils.isDataStoreLayerExist(dsl_id);
+		// 2.根据存储层配置ID获取当前存储层配置属性信息
 		return Dbo.queryResult(
 				"select * from " + Data_store_layer_attr.TableName + " where dsl_id=?", dsl_id);
 	}
 
 	@Method(desc = "获取当前表对应列存储信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.判断当前表对应的列信息是否存在" +
-			"3.获取当前表对应列存储信息")
+			"2.判断当前数据存储层配置表信息是否存在" +
+			"3.判断当前对象采集对应信息是否存在" +
+			"4.查询当前表对应列存储信息" +
+			"5.判断列存储信息是否为空，不为空直接返回列存储信息" +
+			"6.查询半结构化采集结构信息" +
+			"7.查询存储层附加属性信息" +
+			"8.设置附加属性到列结构信息中" +
+			"9.返回列存储信息为空时的列信息")
 	@Param(name = "dsl_id", desc = "存储层配置ID", range = "新增存储层配置信息时生成")
 	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对应采集对应信息时生成")
 	@Return(desc = "返回获取当前表对应列存储信息", range = "无限制")
 	public Result getColumnStorageLayerInfo(long dsl_id, long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.判断当前表对应的列信息是否存在
-		if (Dbo.queryNumber(
-				"select count(*) from " + Object_collect_struct.TableName + " where ocs_id=?",
-				ocs_id).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-			throw new BusinessException("当前表对应的列信息不存在，请检查");
-		}
-		// 3.获取当前表对应列存储信息
-		return Dbo.queryResult(
-				"select ocs.struct_id,ocs.column_name,ocs.data_desc,dsla.dsla_storelayer from "
-						+ Object_collect_struct.TableName + " ocs left join "
-						+ Dcol_relation_store.TableName + " drs on oct.struct_id=drs.col_id left join "
-						+ Data_store_layer_added.TableName + " dsla on drs.dsl_id=dsla.dsl_id " +
-						" where ocs_id=? and dsl_id=? and drs.data_source=?",
+		// 2.判断当前数据存储层配置表信息是否存在
+		CommonUtils.isDataStoreLayerExist(dsl_id);
+		// 3.判断当前对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 4.查询当前表对应列存储信息
+		Result columnStorageLayerInfo = Dbo.queryResult(
+				"select t1.struct_id,t1.column_name,t1.data_desc,t2.csi_number,t3.dsla_storelayer from "
+						+ Object_collect_struct.TableName + " t1 left join "
+						+ Dcol_relation_store.TableName + " t2 on t1.struct_id=t2.col_id left join "
+						+ Data_store_layer_added.TableName + " t3 on t2.dslad_id=t3.dslad_id " +
+						" where t1.ocs_id=? and t3.dsl_id=? and t2.data_source=?",
 				ocs_id, dsl_id, StoreLayerDataSource.OBJ.getCode());
+		// 5.判断列存储信息是否为空，不为空直接返回列存储信息
+		if (!columnStorageLayerInfo.isEmpty()) {
+			return columnStorageLayerInfo;
+		}
+		// 6.查询半结构化采集结构信息
+		Result objCollectStructResult = Dbo.queryResult(
+				"select ocs_id,struct_id,column_name,data_desc from " + Object_collect_struct.TableName
+						+ " where ocs_id=?",
+				ocs_id);
+		// 7.查询存储层附加属性信息
+		List<String> dslaStorelayerList = Dbo.queryOneColumnList(
+				"select t1.dsla_storelayer from "
+						+ Data_store_layer_added.TableName
+						+ " t1 join "
+						+ Data_store_layer.TableName
+						+ " t2 on t1.dsl_id = t2.dsl_id where t2.dsl_id = ?",
+				dsl_id);
+		// 8.设置附加属性到列结构信息中
+		for (int i = 0; i < objCollectStructResult.getRowCount(); i++) {
+			objCollectStructResult.setObject(i, "dsla_storelayer", dslaStorelayerList);
+		}
+		// 9.返回列存储信息为空时的列信息
+		return objCollectStructResult;
 	}
 
 	@Method(desc = "保存列存储层附加信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
@@ -124,28 +165,6 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		dcol_relation_store.add(Dbo.db());
 	}
 
-//	@Method(desc = "根据附加信息ID获取存储层类型", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-//			"2.通过字段存储附加信息ID获得存储层类型" +
-//			"3.如果获取不到或者获取到的值有多个说明存储类型有误" +
-//			"4.返回当前附加信息对应存储层类型")
-//	@Param(name = "dsladId", desc = "附件信息ID", range = "新增附加信息时生成")
-//	@Return(desc = "返回存储层类型", range = "不能为空")
-//	private String getStoreType(long dsladId) {
-//		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-//		// 2.通过字段存储附加信息ID获得存储层类型
-//		List<String> storeTypes = Dbo.queryOneColumnList(
-//				"select dsl.store_type from "
-//						+ Data_store_layer.TableName + " dsl, "
-//						+ Data_store_layer_added.TableName + " dsla "
-//						+ " where dsl.dsl_id = dsla.dsl_id and dsla.dslad_id = ?",
-//				dsladId);
-//		// 3.如果获取不到或者获取到的值有多个说明存储类型有误
-//		if (storeTypes.size() != 1) {
-//			throw new BusinessException("通过字段存储附加信息获得存储目的地类型出错，请检查");
-//		}
-//		return storeTypes.get(0);
-//	}
-
 	@Method(desc = "在配置字段存储信息时，更新字段中文名",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制"
 					+ "2、对集合的长度进行校验，如果集合为空说明获取字段信息失败"
@@ -179,11 +198,7 @@ public class CollectStorageLayerConfAction extends BaseAction {
 	public void saveDtabRelationStoreInfo(long odc_id, Dtab_relation_store[] dtabRelationStores) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前任务是否已不存在
-		if (Dbo.queryNumber(
-				"select count(*) from " + Object_collect.TableName + " where odc_id=?", odc_id)
-				.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-			throw new BusinessException("当前半结构化任务已不存在，odc_id=" + odc_id);
-		}
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.判断表存储目的地信息是否存在
 		if (dtabRelationStores == null || dtabRelationStores.length == 0) {
 			throw new BusinessException("未获取到表存储目的地信息");
