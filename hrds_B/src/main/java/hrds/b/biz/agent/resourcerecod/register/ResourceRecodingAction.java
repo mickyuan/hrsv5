@@ -148,6 +148,8 @@ public class ResourceRecodingAction extends BaseAction {
 	@Param(name = "databaseSet", desc = "贴源数据的实体信息", range = "不可以为空", isBean = true)
 	@Return(desc = "返回此次保存后生成的任务ID", range = "不可为空")
 	public Long updateRegisterData(Database_set databaseSet) {
+
+		Validator.notNull(databaseSet.getDatabase_id(), "更新时未获取到主键ID信息");
 		//1: 校验实体每个必须字段的数据不能为空
 		verifyDatabaseSetEntity(databaseSet);
 		//2: 检查任务名称不能重复
