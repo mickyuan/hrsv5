@@ -26,6 +26,7 @@ public class StorageLayerConvertedNodeData {
             Map<String, Object> map = new HashMap<>();
             map.put("id", dataSourceType.getCode() + "_" + data_store_layer.getDsl_id());
             map.put("label", data_store_layer.getDsl_name());
+            map.put("dsl_id", data_store_layer.getDsl_id());
             map.put("parent_id", dataSourceType.getCode());
             map.put("description", data_store_layer.getDsl_remark());
             map.put("data_layer", dataSourceType.getCode());

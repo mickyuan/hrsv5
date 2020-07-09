@@ -33,6 +33,10 @@ public class Node {
      */
     private String data_own_type;
     /**
+     * 数据表所属存储层id
+     */
+    private String dsl_id;
+    /**
      * 数据源id
      */
     private String data_source_id;
@@ -73,6 +77,7 @@ public class Node {
                 + ", parent_id : '" + parent_id + "'"
                 + ", description : '" + description + "'"
                 + ", data_layer : '" + data_layer + "'"
+                + ", dsl_id : '" + dsl_id + "'"
                 + ", data_own_type : '" + data_own_type + "'"
                 + ", data_source_id : '" + data_source_id + "'"
                 + ", agent_id : '" + agent_id + "'"
@@ -143,6 +148,14 @@ public class Node {
 
     public void setData_layer(String data_layer) {
         this.data_layer = data_layer;
+    }
+
+    public String getDsl_id() {
+        return dsl_id;
+    }
+
+    public void setDsl_id(String dsl_id) {
+        this.dsl_id = dsl_id;
     }
 
     public String getData_own_type() {

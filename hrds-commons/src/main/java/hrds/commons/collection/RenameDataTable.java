@@ -7,8 +7,10 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.util.Dbo;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.LayerBean;
+import hrds.commons.entity.Data_store_layer;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 
@@ -19,14 +21,13 @@ import java.util.Map;
 @DocClass(desc = "重命名数据表", author = "BY-HLL", createdate = "2020/5/22 0022 下午 03:49")
 public class RenameDataTable {
 
-    @Method(desc = "根据定义的存储层重命名表",
-            logicStep = "根据定义的存储层重命名表")
+    @Method(desc = "根据表名重命名所有存储层下的数表", logicStep = "根据表名重命名所有存储层下的数表")
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
     @Param(name = "tableSpace", desc = "表空间", range = "String类型")
     @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
-    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
-    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
-    public static List<String> renameTableByDataLayer(String tableSpace, String tableName, String operation_type,
-                                                      DatabaseWrapper db) {
+    public static List<String> renameTableByDataLayer(DatabaseWrapper db, String operation_type, String tableSpace,
+                                                      String tableName) {
         //初始化返回结果集
         List<String> dsl_id_s = new ArrayList<>();
         //获取sql中解析出来的表属于的存储实体Bean
@@ -38,20 +39,34 @@ public class RenameDataTable {
         tableLayers.forEach(tableLayer -> {
             //设置返回结果集
             dsl_id_s.add(tableLayer.getDsl_id().toString());
-            renameTableByDataLayer(tableSpace, tableName, operation_type, db, tableLayer);
+            renameTableByDataLayer(db, tableLayer, operation_type, tableSpace, tableName);
         });
         return dsl_id_s;
     }
 
-    @Method(desc = "根据定义的存储层重命名表",
-            logicStep = "根据定义的存储层重命名表")
+    @Method(desc = "根据存储层id重命名表", logicStep = "根据存储层id重命名表")
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
+    @Param(name = "dsl_id", desc = "所属存储层id", range = "long 类型")
+    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String类型")
     @Param(name = "tableSpace", desc = "表空间", range = "String类型")
     @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
-    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
+    public static void renameTableByDataLayer(DatabaseWrapper db, long dsl_id, String operation_type,
+                                              String tableSpace, String tableName) {
+        //获取存储层信息
+        LayerBean layerBean = Dbo.queryOneObject(LayerBean.class, "select * from " + Data_store_layer.TableName +
+                " where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
+        //重命名存储层下的表
+        renameTableByDataLayer(db, layerBean, operation_type, tableSpace, tableName);
+    }
+
+    @Method(desc = "根据表名重命名存储层下的数表", logicStep = "根据表名重命名存储层下的数表")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Param(name = "intoLayerBean", desc = "LayerBean对象", range = "LayerBean对象")
-    public static void renameTableByDataLayer(String tableSpace, String tableName, String operation_type,
-                                              DatabaseWrapper db, LayerBean intoLayerBean) {
+    @Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复", range = "String了类型")
+    @Param(name = "tableSpace", desc = "表空间", range = "String类型")
+    @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
+    public static void renameTableByDataLayer(DatabaseWrapper db, LayerBean intoLayerBean, String operation_type,
+                                              String tableSpace, String tableName) {
         //根据数据层获取数据层配置信息
         List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
                 "select * from data_store_layer_attr where dsl_id = ?", intoLayerBean.getDsl_id());
@@ -82,7 +97,7 @@ public class RenameDataTable {
             }
             SqlOperator.commitTransaction(dbDataConn);
         } catch (Exception e) {
-            throw new BusinessException("重命名表的sql执行失败!,请检查表名是否存在!");
+            throw new BusinessException("重命名表的sql执行失败!,请检查表名是否已经存在!");
         }
     }
 

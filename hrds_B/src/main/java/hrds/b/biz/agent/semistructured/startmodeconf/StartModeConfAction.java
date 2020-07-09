@@ -11,6 +11,7 @@ import hrds.b.biz.agent.bean.JobStartConf;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
@@ -295,7 +296,13 @@ public class StartModeConfAction extends BaseAction {
 
 				// 8.检查表名是否存在,存在更新，不存在新增
 				if (etlJobList.contains(etl_job_def.getEtl_job())) {
-					etl_job_def.update(Dbo.db());
+					try {
+						etl_job_def.update(Dbo.db());
+					} catch (Exception e) {
+						if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+							throw new BusinessException(e.getMessage());
+						}
+					}
 				} else {
 					// 新增
 					etl_job_def.add(Dbo.db());

@@ -11,13 +11,19 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.entity.Object_collect_struct;
+import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.Object_handle_type;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
@@ -44,7 +50,7 @@ public class CollectFileConfAction extends BaseAction {
 	public Map<String, Object> searchObjectCollectTask(long odc_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.判断当前半结构化采集任务是否已存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.获取解析数据字典向agent发送请求所需参数
 		Object_collect object_collect = getObjectCollect(odc_id);
 		object_collect.setOdc_id(odc_id);
@@ -166,14 +172,14 @@ public class CollectFileConfAction extends BaseAction {
 		return tableNameList;
 	}
 
-	@Method(desc = "获取集合Bean中的表名称", logicStep = "获取表名称")
-	@Param(name = "tableBeanList", desc = "集合Object_collect_struct数据集合", range = "可以为空")
-	@Return(desc = "返回处理后的数据信息集合,只要表的名称", range = "可以为空")
-	private List<String> getColumnName(List<Object_collect_struct> tableBeanList) {
-		List<String> tableNameList = new ArrayList<>();
-		tableBeanList.forEach(
-				Object_collect_struct -> tableNameList.add(Object_collect_struct.getColumn_name()));
-		return tableNameList;
+	@Method(desc = "获取集合Bean中的列名称", logicStep = "获取表名称")
+	@Param(name = "columnBeanList", desc = "集合Object_collect_struct数据集合", range = "可以为空")
+	@Return(desc = "返回处理后的数据信息集合,只要列的名称", range = "可以为空")
+	private List<String> getColumnName(List<Object_collect_struct> columnBeanList) {
+		List<String> columnNameList = new ArrayList<>();
+		columnBeanList.forEach(
+				object_collect_struct -> columnNameList.add(object_collect_struct.getColumn_name()));
+		return columnNameList;
 	}
 
 	@Method(desc = "数据字典表新增入库", logicStep = "1.object_collect_task表信息循环入库")
@@ -243,9 +249,9 @@ public class CollectFileConfAction extends BaseAction {
 	public List<Object_collect_struct> getObjectCollectStruct(long odc_id, long ocs_id, String en_name) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.判断对象采集对应信息是否存在
-		isObjectCollectTaskExist(ocs_id);
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
 		// 4.获取当前对象采集任务配置信息
 		Object_collect object_collect = getObjectCollect(odc_id);
 		// 5.判断数据字典是否存在
@@ -310,7 +316,7 @@ public class CollectFileConfAction extends BaseAction {
 	public JSONArray getFirstLineTreeInfo(long odc_id, long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.根据对象采集任务编号获取当前表的第一行数据
 		String firstLine = getFirstLineData(ocs_id);
 		Validator.notBlank(firstLine, "数据字典不存在时第一行数据不能为空");
@@ -376,17 +382,6 @@ public class CollectFileConfAction extends BaseAction {
 		return Dbo.queryOneObject(Object_collect_task.class,
 				"select * from " + Object_collect_task.TableName + " where ocs_id=?", ocs_id)
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
-	}
-
-	@Method(desc = "判断当前半结构化采集任务是否还存在", logicStep = "1.判断当前半结构化采集任务是否还存在")
-	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集配置信息时生成")
-	private void isObjectCollectExist(long odc_id) {
-		// 1.判断当前半结构化采集任务是否还存在
-		if (Dbo.queryNumber(
-				"select count(*) from " + Object_collect.TableName + " where odc_id=?",
-				odc_id).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
-			throw new BusinessException("任务" + odc_id + "已不存在，请检查");
-		}
 	}
 
 	@Method(desc = "新增数据字典多了的列数据入半结构化采集列结构表",
@@ -462,12 +457,18 @@ public class CollectFileConfAction extends BaseAction {
 	public void saveObjectHandleType(long ocs_id, Object_handle_type[] objectHandleTypes) {
 		// 1.数据可访问权限处理方式：该方法没有用户访问权限限制
 		// 2.判断当前对象采集对应信息是否存在
-		isObjectCollectTaskExist(ocs_id);
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
 		// 3.循环保存半结构化数据处理类型表信息
 		for (Object_handle_type objectHandleType : objectHandleTypes) {
 			if (objectHandleType.getObject_handle_id() != null) {
 				// 更新
-				objectHandleType.update(Dbo.db());
+				try {
+					objectHandleType.update(Dbo.db());
+				} catch (Exception e) {
+					if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+						throw new BusinessException(e.getMessage());
+					}
+				}
 			} else {
 				// 新增
 				objectHandleType.setObject_handle_id(PrimayKeyGener.getNextId());
@@ -475,6 +476,17 @@ public class CollectFileConfAction extends BaseAction {
 				objectHandleType.add(Dbo.db());
 			}
 		}
+	}
+
+	@Method(desc = "无数据字典时查询返回对象采集数据处理类型对应表信息(数据回显)", logicStep = "1.判断当前对象采集对应信息是否存在" +
+			"2.查询返回对象采集数据处理类型对应表信息")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
+	@Return(desc = "2.查询返回对象采集数据处理类型对应表信息", range = "无限制")
+	public Result getObjectHandleType(long ocs_id) {
+		// 1.判断当前对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 2.查询返回对象采集数据处理类型对应表信息
+		return Dbo.queryResult("select * from " + Object_handle_type.TableName + " where ocs_id=?", ocs_id);
 	}
 
 	@Method(desc = "解析没有数据字典的第一行数据",
@@ -574,9 +586,9 @@ public class CollectFileConfAction extends BaseAction {
 	public JSONArray getObjectCollectTreeInfo(long odc_id, long ocs_id, String location) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前任务是否存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.判断当前对象采集对应信息是否存在
-		isObjectCollectTaskExist(ocs_id);
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
 		// 4.根据对象采集任务编号获取当前表的第一行数据
 		String firstLine = getFirstLineData(ocs_id);
 		// 5.解析json获取树结构信息并返回
@@ -629,48 +641,37 @@ public class CollectFileConfAction extends BaseAction {
 					"3.判断对象采集对应信息是否存在" +
 					"4.过滤是否操作字段为是的字段" +
 					"5.判断操作字段是否为一个" +
-					"6.循环保存对象采集结构信息入库")
+					"6.删除原来的列信息,不关心删除几条" +
+					"8.循环保存对象采集结构信息入库")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集配置信息时生成")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Param(name = "objectCollectStructs", desc = "半结构化采集结构表实体对象数组", range = "不为空", isBean = true)
 	public void saveObjectCollectStruct(long odc_id, long ocs_id, Object_collect_struct[] objectCollectStructs) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.判断对象采集对应信息是否存在
-		isObjectCollectTaskExist(ocs_id);
-		List<Object_collect_struct> isOperateList = new ArrayList<>(objectCollectStructs.length);
-		Collections.addAll(isOperateList, objectCollectStructs);
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		List<Object_collect_struct> objectCollectStructList = new ArrayList<>(objectCollectStructs.length);
+		Collections.addAll(objectCollectStructList, objectCollectStructs);
 		// 4.过滤是否操作字段为是的字段
-		isOperateList = isOperateList.stream()
+		objectCollectStructList = objectCollectStructList.stream()
 				.filter(object_collect_struct ->
 						IsFlag.Shi == IsFlag.ofEnumByCode(object_collect_struct.getIs_operate()))
 				.collect(Collectors.toList());
 		// 5.判断操作字段是否为一个
-		if (isOperateList.size() != 1) {
+		if (objectCollectStructList.size() != 1) {
 			throw new BusinessException("操作字段只能为1个，请检查");
 		}
-		// 6.循环保存对象采集结构信息入库
+		// 6.删除原来的列信息,不关心删除几条
+		Dbo.execute("delete from " + Object_collect_struct.TableName + " where ocs_id=?", ocs_id);
+		// 7.循环保存对象采集结构信息入库
 		for (Object_collect_struct object_collect_struct : objectCollectStructs) {
-			if (object_collect_struct.getStruct_id() == null) {
-				object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
-				object_collect_struct.setOcs_id(ocs_id);
-				object_collect_struct.add(Dbo.db());
-			} else {
-				object_collect_struct.update(Dbo.db());
-			}
-		}
-	}
-
-	@Method(desc = "判断当前对象采集对应信息是否存在", logicStep = "1.判断当前对象采集对应信息是否存在")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
-	private void isObjectCollectTaskExist(long ocs_id) {
-		// 1.判断当前对象采集对应信息是否存在
-		if (Dbo.queryNumber(
-				"select count(*) from " + Object_collect_task.TableName + " where ocs_id=?",
-				ocs_id)
-				.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-			throw new BusinessException("当前对象采集对应信息已不存在，ocs_id=" + ocs_id);
+			object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
+			object_collect_struct.setData_desc(StringUtil.isBlank(object_collect_struct.getData_desc()) ?
+					object_collect_struct.getColumn_name() : object_collect_struct.getData_desc());
+			object_collect_struct.setOcs_id(ocs_id);
+			object_collect_struct.add(Dbo.db());
 		}
 	}
 
@@ -707,7 +708,9 @@ public class CollectFileConfAction extends BaseAction {
 					"2.检查中文名是否为空" +
 					"3.检查更新方式是否合法" +
 					"4.检查采集编码是否合法" +
-					"5.检查数据类型是否合法")
+					"5.检查数据类型是否合法" +
+					"6.检查采集列结构是否为空" +
+					"7.检查操作码表是否为空")
 	@Param(name = "objectCollectTasks", desc = "半结构化采集表实体对象数组", range = "与数组库表字段规则一致",
 			isBean = true)
 	private void checkFieldsForSaveObjectCollectTask(Object_collect_task[] objectCollectTasks) {
@@ -739,6 +742,22 @@ public class CollectFileConfAction extends BaseAction {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
 						"数据类型不合法，" + e.getMessage());
 			}
+			// 6.检查采集列结构是否为空
+			if (Dbo.queryNumber(
+					"select count(1) from " + Object_collect_struct.TableName + " where ocs_id=?",
+					objectCollectTasks[i].getOcs_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
+						"采集列结构信息不存在");
+			}
+			// 7.检查操作码表是否为空
+			if (Dbo.queryNumber(
+					"select count(1) from " + Object_handle_type.TableName + " where ocs_id=?",
+					objectCollectTasks[i].getOcs_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
+						"操作码表信息不存在");
+			}
 		}
 	}
 
@@ -760,7 +779,7 @@ public class CollectFileConfAction extends BaseAction {
 	private void rewriteDataDictionary(long odc_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前采集任务是否存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 重写数据字典集合
 		List<Object> dictionaryList = new ArrayList<>();
 		// 3.根据对象采集ID当前半结构化采集任务是否存在数据字典
@@ -845,14 +864,20 @@ public class CollectFileConfAction extends BaseAction {
 	public void saveObjectCollectTask(long agent_id, long odc_id, Object_collect_task[] objectCollectTasks) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.判断agent是否存在
-		isAgentExist(agent_id);
+		CommonUtils.isAgentExist(agent_id, getUserId());
 		// 3.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 4.保存对象采集对应信息时做其前置条件检查，字段合法性验证
 		checkFieldsForSaveObjectCollectTask(objectCollectTasks);
 		for (Object_collect_task object_collect_task : objectCollectTasks) {
 			// 5.更新对象采集对应信息表数据
-			object_collect_task.update(Dbo.db());
+			try {
+				object_collect_task.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+					throw new BusinessException(e.getMessage());
+				}
+			}
 		}
 	}
 
@@ -870,17 +895,5 @@ public class CollectFileConfAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "判断agent是否存在", logicStep = "1.判断agent是否存在")
-	@Param(name = "agent_id", desc = "agent ID", range = "新增agent时通过主键生成")
-	private void isAgentExist(long agent_id) {
-		// 1.判断agent是否存在
-		if (Dbo.queryNumber(
-				"SELECT count(*) FROM " + Agent_down_info.TableName + " t1 join " + Agent_info.TableName
-						+ " t2 on t1.agent_ip = t2.agent_ip and t1.agent_port=t2.agent_port " +
-						" where  t2.agent_id= ? and t2.user_id = ?",
-				agent_id, getUserId())
-				.orElseThrow(() -> new BusinessException("sql查询错误")) != 1) {
-			throw new BusinessException("agent未部署或者agent已不存在，agent_id=" + agent_id);
-		}
-	}
+
 }

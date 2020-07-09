@@ -31,6 +31,7 @@ public class DRBDataConvertedNodeData {
                     "表英文名：" + table_info.get("table_en_name") + "\n" +
                     "表中文名：" + table_info.get("table_cn_name"));
             map.put("data_layer", dataSourceType.getCode());
+            map.put("dsl_id", table_info.get("dsl_id"));
             map.put("table_name", table_info.get("table_en_name"));
             map.put("original_name", table_info.get("table_cn_name"));
             map.put("hyren_name", table_info.get("table_en_name"));

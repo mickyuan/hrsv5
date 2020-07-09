@@ -30,6 +30,7 @@ public class MDMDataConvertedNodeData {
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
                     "数据表名称：" + tableInfo.get("table_name"));
             map.put("data_layer", DataSourceType.DCL.getCode());
+            map.put("dsl_id", tableInfo.get("dsl_id"));
             map.put("table_name", tableInfo.get("table_name"));
             map.put("original_name", tableInfo.get("original_name"));
             map.put("hyren_name", tableInfo.get("hyren_name"));
@@ -56,6 +57,7 @@ public class MDMDataConvertedNodeData {
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
                     "数据表名称：" + tableInfo.get("datatable_en_name"));
             map.put("data_layer", DataSourceType.DML.getCode());
+            map.put("dsl_id", tableInfo.get("dsl_id"));
             map.put("table_name", tableInfo.get("datatable_en_name"));
             map.put("original_name", tableInfo.get("datatable_cn_name"));
             map.put("hyren_name", tableInfo.get("datatable_en_name"));
@@ -82,6 +84,7 @@ public class MDMDataConvertedNodeData {
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
                     "数据表名称：" + tableInfo.get("table_name"));
             map.put("data_layer", DataSourceType.UDL.getCode());
+            map.put("dsl_id", tableInfo.get("dsl_id"));
             map.put("table_name", tableInfo.get("table_name"));
             map.put("original_name", tableInfo.get("ch_name"));
             map.put("hyren_name", tableInfo.get("table_name"));
