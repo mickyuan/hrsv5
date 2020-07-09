@@ -12,6 +12,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Data_source;
+import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -60,7 +61,7 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 		List<Object[]> agentDownParams = new ArrayList<>();
 		Data_source data_source = new Data_source();
 		//准备数数据源测试数据
-		for(int i = -200; i < -190; i++) {
+		for (int i = -200; i < -190; i++) {
 			//数据源信息
 			int source_id = i;
 			String datasource_number = "ls_" + i;
@@ -68,7 +69,8 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 			String source_remark = "lqcs_" + i;
 			String create_date = DateUtil.getSysDate();
 			String create_time = DateUtil.getSysTime();
-			Object[] source = new Object[] { source_id, source_remark, datasource_name, datasource_number, create_date, create_time, CREATE_ID };
+			Object[] source = new Object[]{source_id, source_remark, datasource_name, datasource_number, create_date,
+				create_time, CREATE_ID};
 			sourceParams.add(source);
 			//对应的Agent信息
 			int agent_id = i;
@@ -78,40 +80,42 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 			String agent_port = "55555";
 			String agent_status = AgentStatus.WeiLianJie.getCode();
 
-			Object[] agent = new Object[] { agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date, create_time, source_id,
-							USER_ID };
+			Object[] agent = new Object[]{agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date,
+				create_time, source_id,
+				USER_ID};
 			agentParams.add(agent);
 			//Agent部署信息
 			int down_id = i;
 			String user_name = "root";
 			String passwd = "q1w2e3";
 			String deploy = IsFlag.Fou.getCode();
-			Object[] agentDown = new Object[] { down_id, agent_name, agent_ip, agent_port, user_name, passwd, save_dir, log_dir, deploy,
-							agent_type, agent_id,
-							USER_ID };
+			Object[] agentDown = new Object[]{down_id, agent_name, agent_ip, agent_port, user_name, passwd, save_dir,
+				log_dir, deploy,
+				agent_type, agent_id,
+				USER_ID};
 			agentDownParams.add(agentDown);
 		}
 		//批数据插入
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 
 			int[] sourceNums = db.execBatch(
-							"insert into " + Data_source.TableName +
-											"( source_id, source_remark, datasource_name, datasource_number, create_date, create_time, user_id) values(?,?,?,?,?,?,?)",
-							sourceParams
+				"insert into " + Data_source.TableName +
+					"( source_id, source_remark, datasource_name, datasource_number, create_date, create_time, user_id) values(?,?,?,?,?,?,?)",
+				sourceParams
 			);
 			assertThat("数据源测试数据初始化", sourceNums.length, is(Init_Rows));
 
 			int[] agentNums = db.execBatch(
-							"insert into " + Agent_info.TableName +
-											"( agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date, create_time, source_id, user_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-							agentParams
+				"insert into " + Agent_info.TableName +
+					"( agent_id, agent_name, agent_type, agent_ip, agent_port, agent_status, create_date, create_time, source_id, user_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				agentParams
 			);
 			assertThat("Agent测试数据初始化", agentNums.length, is(Init_Rows));
 
 			int[] agentDownNums = db.execBatch(
-							"insert into " + Agent_down_info.TableName +
-											"( down_id, agent_name, agent_ip, agent_port, user_name, passwd, save_dir, log_dir, deploy, agent_type, agent_id, user_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-							agentDownParams
+				"insert into " + Agent_down_info.TableName +
+					"( down_id, agent_name, agent_ip, agent_port, user_name, passwd, save_dir, log_dir, deploy, agent_type, agent_id, user_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				agentDownParams
 			);
 			assertThat("Agent部署测试数据初始化", agentDownNums.length, is(Init_Rows));
 			SqlOperator.commitTransaction(db);
@@ -131,35 +135,35 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 
 			//删除测试数据源信息
-			int deleteSourceNum = SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE user_id = ?", CREATE_ID);
+			int deleteSourceNum = SqlOperator
+				.execute(db, "delete from " + Data_source.TableName + " WHERE user_id = ?", CREATE_ID);
 
 			//删除agent测试数据
 			int deleteNum = SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE user_id = ?", USER_ID);
 
 			//删除agent测试数据
-			int deleteDownNum = SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " WHERE user_id = ?", USER_ID);
+			int deleteDownNum = SqlOperator
+				.execute(db, "delete from " + Agent_down_info.TableName + " WHERE user_id = ?", USER_ID);
 
 			//先commit删除的操作
 			SqlOperator.commitTransaction(db);
 
 			//在进行查询进行检测数据清除
-			long nums = SqlOperator.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE user_id = ?", CREATE_ID)
-							.orElseThrow(() -> new RuntimeException("count fail!"));
+			long nums = SqlOperator
+				.queryNumber(db, "select count(1) from " + Data_source.TableName + " WHERE user_id = ?", CREATE_ID)
+				.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("测试完成后删除的数据源数据为:" + deleteSourceNum, nums, is(0));
 
-			long agentNums = SqlOperator.queryNumber(db, "select count(1) from " + Agent_info.TableName + " WHERE user_id = ?", USER_ID)
-							.orElseThrow(() -> new RuntimeException("count fail!"));
+			long agentNums = SqlOperator
+				.queryNumber(db, "select count(1) from " + Agent_info.TableName + " WHERE user_id = ?", USER_ID)
+				.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("测试完成后删除的Agent数据为:" + deleteNum, agentNums, is(0));
 
-			long agentDownNum = SqlOperator.queryNumber(db, "select count(1) from " + Agent_down_info.TableName + " WHERE user_id = ?", USER_ID)
-							.orElseThrow(() -> new RuntimeException("count fail!"));
+			long agentDownNum = SqlOperator
+				.queryNumber(db, "select count(1) from " + Agent_down_info.TableName + " WHERE user_id = ?", USER_ID)
+				.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("测试完成后删除的Agent部署数据为:" + agentDownNum, agentNums, is(0));
 
-			//删除测试文件路径
-			File file = new File(log_dir);
-			if( file.exists() ) {
-				file.delete();
-			}
 		}
 	}
 
@@ -174,13 +178,14 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 	public void getDataSourceInfo() {
 
 		String bodyString = new HttpClient()
-						.addData("user_id", USER_ID)
-						.post(getActionUrl("getDataSourceInfo")).getBodyString();
-		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			.addData("user_id", USER_ID)
+			.post(getActionUrl("getDataSourceInfo")).getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+			.orElseThrow(() -> new BusinessException("请求失败"));
 		assertThat(ar.isSuccess(), is(true));
 
-		List<Map<String, Object>> result = (List<Map<String, Object>>)ar.getData();
-		Map<String, Object> sysParaList = (Map<String, Object>)result.get(0);
+		List<Map<String, Object>> result = (List<Map<String, Object>>) ar.getData();
+		Map<String, Object> sysParaList = (Map<String, Object>) result.get(0);
 		System.out.println(sysParaList);
 		assertThat(result.size(), is(Init_Rows));
 	}
@@ -196,13 +201,14 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 	public void getAgentInfo() {
 
 		String bodyString = new HttpClient()
-						.addData("user_id", USER_ID).addData("source_id", -200).addData("agent_type", AgentType.ShuJuKu.getCode())
-						.post(getActionUrl("getAgentInfo")).getBodyString();
-		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			.addData("user_id", USER_ID).addData("source_id", -200).addData("agent_type", AgentType.ShuJuKu.getCode())
+			.post(getActionUrl("getAgentInfo")).getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+			.orElseThrow(() -> new BusinessException("请求失败"));
 		assertThat(ar.isSuccess(), is(true));
 
-		Map<String, Object> result = (Map<String, Object>)ar.getData();
-		List<Map<String, Object>> sysParaList = (List<Map<String, Object>>)result.get("agentInfo");
+		Map<Object, Object> result = ar.getDataForMap();
+		List<Map<String, Object>> sysParaList = (List<Map<String, Object>>) result.get("agentInfo");
 		Map<String, Object> row = sysParaList.get(0);
 		//当前数据源source_id(-200)下只有一条数据信息
 		assertThat(sysParaList.size(), is(1));
@@ -219,13 +225,14 @@ public class AgentDeployActionTest extends WebBaseTestCase {
 	public void getAgentDownInfo() {
 
 		String bodyString = new HttpClient()
-						.addData("user_id", USER_ID).addData("agent_id", -200).addData("agent_type", AgentType.ShuJuKu.getCode())
-						.post(getActionUrl("getAgentInfo")).getBodyString();
-		ActionResult ar = JsonUtil.toObject(bodyString, ActionResult.class);
+			.addData("user_id", USER_ID).addData("agent_id", -200).addData("agent_type", AgentType.ShuJuKu.getCode())
+			.post(getActionUrl("getAgentInfo")).getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+			.orElseThrow(() -> new BusinessException("请求失败"));
 		assertThat(ar.isSuccess(), is(true));
 
-		Map<String, Object> result = (Map<String, Object>)ar.getData();
-		List<Map<String, Object>> sysParaList = (List<Map<String, Object>>)result.get("agentDownInfo");
+		Map<String, Object> result = (Map<String, Object>) ar.getData();
+		List<Map<String, Object>> sysParaList = (List<Map<String, Object>>) result.get("agentDownInfo");
 		Map<String, Object> row = sysParaList.get(0);
 		//当前agent_id(-200)下只有一条数据信息
 		assertThat(sysParaList.size(), is(1));

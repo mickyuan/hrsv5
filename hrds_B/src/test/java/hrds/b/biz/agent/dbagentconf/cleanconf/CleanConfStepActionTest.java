@@ -42,7 +42,7 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	private static final long FIRST_DATABASESET_ID = 1001L;
 	private static final long SECOND_DATABASESET_ID = 1002L;
 	private static final long UNEXPECTED_ID = 999999999L;
-
+	private static final BaseInitData baseInitData= new BaseInitData();
 	/**
 	 * 为每个方法的单元测试初始化测试数据
 	 *
@@ -97,15 +97,13 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *      16、构造orig_syso_info表测试数据，里面是当前系统中所有的码值信息,共有三条数据
 	 *      17、构造orig_code_info表测试数据,共有三条数据
 	 *
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Before
 	public void before(){
 		InitAndDestDataForCleanConf.before();
 		//模拟登陆
-		ActionResult actionResult = BaseInitData.simulatedLogin();
+		ActionResult actionResult = login();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
@@ -115,8 +113,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据
 	 * 错误的数据访问1：使用错误的colSetId访问，应该拿不到任何数据，但是不会报错，访问正常返回
 	 * 错误的测试用例未达到三组:getInitInfo只有一个参数
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -151,8 +147,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问2：构造没有补齐长度的访问
 	 * 错误的数据访问3：构造没有补齐方式的访问
 	 * 错误的数据访问4：构造没有关联表信息的访问
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -263,8 +257,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问2：构造没有补齐长度的访问
 	 * 错误的数据访问3：构造没有补齐方式的访问
 	 * 错误的数据访问4：构造没有关联列信息的访问
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -349,8 +341,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问2：构造正确的columnId进行测试(2001，对该列没有设置过字符补齐，但是对其所在的表设置过整表字符补齐)
 	 * 正确数据访问3：构造没有设置过列字符补齐，也没有设置过表字符补齐的columnId进行测试(3004)，拿到的应该是空的数据集
 	 * 错误的测试用例未达到三组:getColCompletionInfo方法的访问永远不会因为参数而导致访问失败，只会根据实际情况，不同的参数返回不同的值
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -401,8 +391,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：构造正确的tableId进行测试(7001，对该表设置过整表字符补齐)，应该能够得到数据
 	 * 正确数据访问2：构造正确的tableId进行测试(7002，没有对该表设置过整表字符补齐)，得不到数据
 	 * 错误的测试用例未达到三组:getTbCompletionInfo方法的访问永远不会因为参数而导致访问失败，只会根据实际情况，不同的参数返回不同的值
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -440,8 +428,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：保存时，不传递原字符
 	 * 错误的数据访问2：保存时，不传递替换后字符
 	 * 错误的测试用例未达到三组:saveSingleTbReplaceInfo方法目前还没有明确是否要对原字符和替换后的字符进行校验
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -623,8 +609,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：保存时，不传递原字符
 	 * 错误的数据访问2：保存时，不传递替换后字符
 	 * 错误的测试用例未达到三组:saveColReplaceInfo方法目前还没有明确是否要对原字符和替换后的字符进行校验
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -727,8 +711,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：尝试获取对sys_user表设置的字符替换规则，能够获取到一条数据
 	 * 正确数据访问2：尝试获取对code_info表设置的字符替换规则，由于初始化测试数据中没有对code_info表设置字符替换，所以获取不到
 	 * 错误的测试用例未达到三组:getSingleTbReplaceInfo方法的访问永远不会因为参数而导致访问失败，只会根据实际情况，不同的参数返回不同的值
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -766,9 +748,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问2：尝试获取对sys_user表中，user_pwd列设置的字符替换规则，由于没有对该列设置过字符替换规则，所以获取不到数据
 	 * 正确数据访问3：尝试获取对code_info表中，ci_sp_remark列的字符替换规则，由于在初始化数据中，没有对ci_sp_remark列和code_info表设置字符替换规则，所以无法拿不到任何数据
 	 * 错误的测试用例未达到三组:getColReplaceInfo方法的访问永远不会因为参数而导致访问失败，只会根据实际情况，不同的参数返回不同的值
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getColReplaceInfo(){
@@ -819,9 +798,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：尝试获取tableId为7002的表的所有列
 	 * 错误的数据访问1：尝试获取tableId为999999999的表的所有列，由于初始化时没有构造tableId为7006的数据，所以拿不到数据
 	 * 错误的测试用例未达到三组: getColumnInfo方法的访问永远不会因为参数而导致访问失败，只会根据实际情况，不同的参数返回不同的值
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getColumnInfo(){
@@ -863,8 +839,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误数据访问2：模拟只设置全表字符替换，但是缺少原字符串
 	 * 错误数据访问3：模拟只设置全表字符替换，但是缺少替换字符串
 	 *
-	 * @Param: 无
-	 * @return: 无
 	 * */
 	@Test
 	public void saveAllTbCleanConfigInfo(){
@@ -1187,8 +1161,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到一条字符替换规则
 	 * 错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
 	 * 错误的测试用例未达到三组: getAllTbCleanReplaceInfo不会因为正常情况下，不会因为参数不同而导致访问失败，只会因为参数的不同获取到的数据也不同
-	 * @Param: 无
-	 * @return: 无
 	 * */
 	@Test
 	public void getAllTbCleanReplaceInfo(){
@@ -1226,8 +1198,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟获取database_id为1001的数据库直连采集作业所有表清洗规则，能够获取到一条字符补齐规则
 	 * 错误的数据访问1：模拟获取database_id为1002的数据库直连采集作业所有表清洗规则，因为在这个作业中没有配置表，所以获取不到数据
 	 * 错误的测试用例未达到三组: getAllTbCleanCompInfo不会因为正常情况下，不会因为参数不同而导致访问失败，只会因为参数的不同获取到的数据也不同
-	 * @Param: 无
-	 * @return: 无
 	 * */
 	@Test
 	public void getAllTbCleanCompInfo(){
@@ -1265,9 +1235,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟获取sys_user表的login_date字段的日期格式化规则，由于之前在构造了初始化数据，所以可以查到
 	 * 正确数据访问2：模拟获取sys_user表的user_email字段的日期格式化规则，由于没有构造初始化数据，所以查不到
 	 * 错误的测试用例未达到三组:getDateFormatInfo()方法永远不会因为参数而导致方法访问失败，只会根据实际情况，根据不同的参数返回不同的结果集
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getDateFormatInfo(){
@@ -1303,8 +1270,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误数据访问1：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少原日期格式
 	 * 错误数据访问2：模拟修改对sys_user表的login_date字段设置日期格式化，但是缺少转换后日期格式
 	 * 错误数据访问3：模拟修改对sys_user表的login_date字段设置日期格式化，但是保存时没有关联字段ID
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -1375,9 +1340,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟查询为code_info表的ci_sp_classname(3003)字段设置的列拆分信息，应该能查到三条数据
 	 * 正确数据访问2：模拟查询为code_info表的ci_sp_class(3002)字段设置的列拆分信息，由于没有为其构造初始化数据，所以查不到数据
 	 * 错误的测试用例未达到三组:getColSplitInfo方法永远不会因为传递的参数导致访问失败，只会根据实际情况，返回不同的查询结果
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getColSplitInfo(){
@@ -1422,8 +1384,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：传入错误的colSplitId
 	 * 错误的数据访问2：传入错误的colCleanId
 	 * 错误的数据访问3：传入错误的colSplitId和colCleanId
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -1544,8 +1504,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问2：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时，由于是按照自定义符号进行拆分，但是缺少了自定义符号
 	 * 错误的数据访问3：模拟新增对code_info表的ci_sp_code设置字段拆分规则，但是保存时，由于是按照自定义符号进行拆分，但是缺少了值位置
 	 * 错误的数据访问4：模拟新增对code_info表的ci_sp_classname设置字段拆分规则，但是保存时，由于是按照偏移量进行拆分，但是缺少了偏移量
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -1928,8 +1886,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：获取column_id为2010的列的码值转换信息
 	 * 错误的数据访问1：获取column_id为2009的列的码值转换信息，因为在构造数据的时候没有设置过，所以获取不到
 	 * 错误的测试用例未达到三组:getCVConversionInfo永远不会因为参数不同而导致访问失败
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -1966,8 +1922,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：直接访问方法，断言获取到的数据是否正确
 	 * 错误的测试用例未达到三组:getSysCVInfo没有传参，只会根据当前系统的实际情况来返回相应的数据条数
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2004,8 +1958,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：使用origSysCode_one获取编码类型，能够获取到codeClassify_one
 	 * 错误的数据访问1：使用codeClassify_four获取编码类型，获取不到数据
 	 * 错误的测试用例未达到三组:getCVClassifyBySysCode方法不会因为参数而导致接口访问失败，只会根据实际情况返回不同的数据
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2041,8 +1993,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：使用code_classify(codeClassify_two)，orig_sys_code(origSysCode_two)查询，能够获得源码值为oriValue_two， 新码值为newValue_two
 	 * 错误的数据访问1：使用code_classify(codeClassify_one)，orig_sys_code(origSysCode_two)查询，获取不到数据
 	 * 错误的测试用例未达到三组:getCVInfo方法永远不会因为参数传递错误而导致访问失败，只会根据实际情况返回不同的数据
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2085,8 +2035,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问2：保存码值转换缺少码值系统名称
 	 * 错误的数据访问3：保存码值转换缺少列ID
 	 * 错误的数据访问4：保存码值转换,码值类型传空字符串
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2181,9 +2129,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：模拟查询为sys_user表设置的列合并信息
 	 * 正确数据访问2：模拟查询为code_info表设置的列合并信息
 	 * 错误的测试用例未达到三组: getColMergeInfo不会因为参数而导致访问失败，只会根据实际情况，按照不同的参数返回不同的值
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getColMergeInfo(){
@@ -2221,9 +2166,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：保存列合并时没有填写要合并的字段
 	 * 错误的数据访问2：保存列合并时没有填写合并后的字段名称
 	 * 错误的数据访问3：保存列合并时没有填写字段类型
-	 *
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2374,9 +2316,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *
 	 * 正确数据访问1：模拟删除对sys_user表设置的列合并规则
 	 * 错误的测试用例未达到三组:deleteColMergeInfo一条测试用例已经可以覆盖代码中的所有分支
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void deleteColMergeInfo(){
@@ -2427,9 +2366,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *                  4、字符合并
 	 * 错误的数据访问1：设置任务级别清洗优先级时，传递错误的colSetId
 	 * 错误的测试用例未达到三组: 一个测试用例已经可以覆盖代码中所有可能出现的场景
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void saveAllTbCleanOrder(){
@@ -2462,14 +2398,14 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 			//断言ID为1001的数据库采集任务下所有的表的清洗顺序是否全部被更新为了所有表清洗优先级
 			List<Object> tbOrders = SqlOperator.queryOneColumnList(db, "select ti_or from " + Table_info.TableName + " where database_id = ?", FIRST_DATABASESET_ID);
 			for(Object order : tbOrders){
-				assertThat("ID为1001的数据库采集任务下所有的表的清洗顺序全部被更新为了所有表清洗优先级", (String)order, is(newSort.toJSONString()));
+				assertThat("ID为1001的数据库采集任务下所有的表的清洗顺序全部被更新为了所有表清洗优先级", order, is(newSort.toJSONString()));
 			}
 
 			//断言ID为1001的数据库采集任务下所有的字段清洗顺序是否全部被更新为了所有表清洗优先级
 			List<Object> colOrders = SqlOperator.queryOneColumnList(db, "select tc_or from " + Table_column.TableName + " tc join "
 					+ Table_info.TableName + " ti on ti.table_id = tc.table_id where ti.database_id = ?", FIRST_DATABASESET_ID);
 			for(Object order : colOrders){
-				assertThat("ID为1001的数据库采集任务下所有的字段清洗顺序全部被更新为了所有表清洗优先级", (String)order, is(newSort.toJSONString()));
+				assertThat("ID为1001的数据库采集任务下所有的字段清洗顺序全部被更新为了所有表清洗优先级", order, is(newSort.toJSONString()));
 			}
 		}
 
@@ -2493,8 +2429,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *                  4、字符合并
 	 * 错误的数据访问1：获取任务级别清洗优先级时，传递错误的colSetId
 	 * 错误的测试用例未达到三组: 一个测试用例已经可以覆盖代码中所有可能出现的场景
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2555,8 +2489,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：构造sys_user表的全表清洗规则并保存
 	 * 错误的数据访问1：尝试保存agent_info表的全表清洗规则，但是本次采集作业并没有配置采集agent_info表
 	 * 错误的测试用例未达到三组:以上两种情况已经可以覆盖saveSingleTbCleanOrder表所有可能出现的情况了
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2616,9 +2548,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问1：尝试获取在构造初始化数据时对sys_user表定义的整表清洗优先级
 	 * 错误的数据访问1：传入错误的colSetId
 	 * 错误的测试用例未达到三组:以上两种情况已经可以覆盖getSingleTbCleanOrder表所有可能出现的情况了
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getSingleTbCleanOrder(){
@@ -2669,9 +2598,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 *                  6、字符补齐
 	 * 错误的数据访问1：尝试对一个本次采集作业中没有的列设置清洗优先级
 	 * 错误的测试用例未达到三组:以上两个测试用例已经可以覆盖saveColCleanOrder方法所有可能出现的情况了
-	 *
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test
@@ -2730,9 +2656,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 错误的数据访问1：尝试对一个不存在于sys_user表中的字段获取列清洗优先级
 	 * 错误的测试用例未达到三组:以上两个测试用例已经可以覆盖getColCleanOrder方法所有可能出现的情况了
 	 *
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void getColCleanOrder(){
@@ -2785,9 +2708,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问5：columnId为2010L，之前设置了码值转换，但是保存的时候取消了列拆分的勾选，同时做首尾去空
 	 *
 	 * 错误的测试用例未达到三组:上面三组测试用例是结合初始化数据进行的，比较有代表性的。
-	 * @Param: 无
-	 * @return: 无
-	 *
 	 * */
 	@Test
 	public void saveColCleanConfig(){
@@ -3001,8 +2921,6 @@ public class CleanConfStepActionTest extends WebBaseTestCase{
 	 * 正确数据访问2：colSetId为1001L，tableId为7001L，之前设置了字符替换，但是保存的时候取消了字符替换的勾选，同时做首尾去空
 	 * 正确数据访问3：colSetId为1001L，tableId为7001L，之前设置了字符替换和字符补齐，同时做了表首尾去空，但是在保存的时候，去掉了首尾去空的勾选
 	 * 错误的测试用例未达到三组: 上面三组测试用例是结合初始化数据进行的，比较有代表性的。
-	 * @Param: 无
-	 * @return: 无
 	 *
 	 * */
 	@Test

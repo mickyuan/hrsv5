@@ -1,5 +1,8 @@
 package hrds.b.biz.agent.dbagentconf.stodestconf;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.DateUtil;
@@ -7,15 +10,41 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.codes.*;
-import hrds.commons.entity.*;
+import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CountNum;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataExtractType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.FillingType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.Store_type;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Clean_parameter;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Column_clean;
+import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_added;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Dcol_relation_store;
+import hrds.commons.entity.Department_info;
+import hrds.commons.entity.Dtab_relation_store;
+import hrds.commons.entity.Orig_code_info;
+import hrds.commons.entity.Orig_syso_info;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.Table_clean;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_info;
+import hrds.commons.entity.Table_storage_info;
 import hrds.commons.utils.Constant;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "为StoDestStepConfActionTest初始化和销毁数据", author = "WangZhengcheng")
 /*
@@ -47,28 +76,28 @@ public class InitAndDestDataForStoDest {
 	private static final long DATA_STORE_LAYER_ADDED_ID = 439999L;
 
 	private static final long UNEXPECTED_ID = 999999999L;
-
-	private static final JSONObject tableCleanOrder = BaseInitData.initTableCleanOrder();
-	private static final JSONObject columnCleanOrder = BaseInitData.initColumnCleanOrder();
+	private static final BaseInitData baseInitData = new BaseInitData();
+	private static final JSONObject tableCleanOrder = baseInitData.initTableCleanOrder();
+	private static final JSONObject columnCleanOrder = baseInitData.initColumnCleanOrder();
 
 	public static void before(){
 		//1、构造sys_user表测试数据
-		Sys_user user = BaseInitData.buildSysUserData();
+//		Sys_user user = baseInitData.buildSysUserData();
 
 		//2、构造department_info表测试数据
-		Department_info departmentInfo = BaseInitData.buildDeptInfoData();
+		Department_info departmentInfo = baseInitData.buildDeptInfoData();
 
 		//3、构造data_source表测试数据
-		Data_source dataSource = BaseInitData.buildDataSourceData();
+		Data_source dataSource = baseInitData.buildDataSourceData();
 
 		//4、构造agent_info表测试数据
-		List<Agent_info> agents = BaseInitData.buildAgentInfosData();
+		List<Agent_info> agents = baseInitData.buildAgentInfosData();
 
 		//5、构造database_set表测试数据
-		List<Database_set> databases = BaseInitData.buildDbSetData();
+		List<Database_set> databases = baseInitData.buildDbSetData();
 
 		//6、构造Collect_job_classify表测试数据
-		List<Collect_job_classify> classifies = BaseInitData.buildClassifyData();
+		List<Collect_job_classify> classifies = baseInitData.buildClassifyData();
 
 		//7、构建table_info测试数据
 		List<Table_info> tableInfos = new ArrayList<>();
@@ -273,11 +302,11 @@ public class InitAndDestDataForStoDest {
 			sysUsers.add(sysUserColumn);
 		}
 
-		List<Table_column> codeInfos = BaseInitData.buildCodeInfoTbColData();
+		List<Table_column> codeInfos = baseInitData.buildCodeInfoTbColData();
 
-		List<Table_column> dataSources = BaseInitData.buildDataSourceTbColData();
+		List<Table_column> dataSources = baseInitData.buildDataSourceTbColData();
 
-		List<Table_column> agentInfos = BaseInitData.buildAgentInfoTbColData();
+		List<Table_column> agentInfos = baseInitData.buildAgentInfoTbColData();
 
 		//9、构造table_clean表测试数据
 		List<Table_clean> tableCleans = new ArrayList<>();
@@ -593,9 +622,9 @@ public class InitAndDestDataForStoDest {
 		mergeColumn.setValid_e_date(Constant.MAXDATE);
 
 		//19、由于需要测试码值转换功能，因为构造码值系统相关测试数据
-		List<Orig_syso_info> origSysoInfos = BaseInitData.buildOrigSysInfo();
+		List<Orig_syso_info> origSysoInfos = baseInitData.buildOrigSysInfo();
 
-		List<Orig_code_info> origCodeInfos = BaseInitData.buildOrigCodeInfo();
+		List<Orig_code_info> origCodeInfos = baseInitData.buildOrigCodeInfo();
 
 		//20、构造数据抽取定义相关测试数据
 		List<Data_extraction_def> extractionDefs = new ArrayList<>();
@@ -888,9 +917,9 @@ public class InitAndDestDataForStoDest {
 
 		//插入数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//插入用户表(sys_user)测试数据
-			int userCount = user.add(db);
-			assertThat("用户表测试数据初始化", userCount, is(1));
+//			//插入用户表(sys_user)测试数据
+//			int userCount = user.add(db);
+//			assertThat("用户表测试数据初始化", userCount, is(1));
 
 			//插入部门表(department_info)测试数据
 			int deptCount = departmentInfo.add(db);
