@@ -189,13 +189,16 @@ public class DataConvertedNodeData {
             map.put("id", DataSourceType.DQC.getCode() + "_" + dsl_id + "_" + file_id);
             map.put("label", table_name);
             map.put("parent_id", DataSourceType.DQC.getCode() + "_" + dsl_id);
+            map.put("description", "" +
+                    "存储层名称：" + table_info.get("dsl_name") + "\n" +
+                    "登记表名称：" + table_name + "\n" +
+                    "表中文名称：" + table_name + "\n" +
+                    "原始表名称：" + table_name);
             map.put("data_layer", DataSourceType.DQC.getCode());
             map.put("dsl_id", dsl_id);
             map.put("file_id", file_id);
             map.put("table_name", table_name);
             map.put("hyren_name", table_name);
-            map.put("description", "" +
-                    "系统表名：" + table_name);
             dqcTableNodes.add(map);
         });
         return dqcTableNodes;
