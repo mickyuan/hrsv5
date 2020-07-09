@@ -19,10 +19,7 @@ import hrds.commons.collection.DeleteDataTable;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
-import hrds.commons.tree.background.query.DCLDataQuery;
-import hrds.commons.tree.background.query.DMLDataQuery;
-import hrds.commons.tree.background.query.TreeDataQuery;
-import hrds.commons.tree.background.query.UDLDataQuery;
+import hrds.commons.tree.background.query.*;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.Constant;
@@ -142,7 +139,28 @@ public class MetaDataManageAction extends BaseAction {
         } else if (dataSourceType == DataSourceType.AML) {
             throw new BusinessException(table_source + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DQC) {
-            throw new BusinessException(table_source + "层暂未实现!");
+            //获取表信息
+            Dq_index3record dq_index3record = JsonUtil.toObjectSafety(table_meta_info, Dq_index3record.class)
+                    .orElseThrow(() -> new BusinessException("类型转换错误,请检查meta格式的正确性!"));
+            //设置表id
+            table_id = dq_failure_table.getFailure_table_id().toString();
+            //设置表创建日期
+            create_date = dq_index3record.getRecord_date();
+            //获取字段信息列表
+            List<Map<String, Object>> table_column_list = new ArrayList<>();
+            String[] columns = dq_index3record.getTable_col().split(",");
+            for (String column : columns) {
+                Map<String, Object> map = new HashMap<>();
+                String is_primary_key = IsFlag.Fou.getCode();
+                map.put("column_id", table_id);
+                map.put("column_name", column);
+                map.put("column_ch_name", column);
+                map.put("column_type", "varchar(--)");
+                map.put("is_primary_key", is_primary_key);
+                table_column_list.add(map);
+            }
+            //转化字段信息列表为meta_list
+            column_info_list = DataTableFieldUtil.metaInfoToList(table_column_list);
         } else if (dataSourceType == DataSourceType.UDL) {
             //转 Dq_table_info
             Dq_table_info dq_table_info = JsonUtil.toObjectSafety(table_meta_info, Dq_table_info.class)
@@ -265,26 +283,27 @@ public class MetaDataManageAction extends BaseAction {
 
     @Method(desc = "表放入回收站(表设置为无效)", logicStep = "表放入回收站(表设置为无效)")
     @Param(name = "data_layer", desc = "所属数据层", range = "String 类型")
-    @Param(name = "file_id", desc = "回收站表id", range = "long 类型")
-    public void tableSetToInvalid(String data_layer, String file_id) {
+    @Param(name = "dsl_id", desc = "所属存储层id", range = "long 类型")
+    @Param(name = "file_id", desc = "回收站表id", range = "String 类型")
+    public void tableSetToInvalid(String data_layer, long dsl_id, String file_id) {
         //根据数据层和表id放入回收站
         DataSourceType dataSourceType = DataSourceType.ofEnumByCode(data_layer);
         if (dataSourceType == DataSourceType.ISL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DCL) {
-            TableMetaInfoTool.setDCLTableInvalid(file_id, Dbo.db());
+            TableMetaInfoTool.setDCLTableInvalid(Dbo.db(), dsl_id, file_id);
         } else if (dataSourceType == DataSourceType.DPL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DML) {
-            TableMetaInfoTool.setDMLTableInvalid(file_id, Dbo.db());
+            TableMetaInfoTool.setDMLTableInvalid(Dbo.db(), dsl_id, file_id);
         } else if (dataSourceType == DataSourceType.SFL) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.AML) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DQC) {
-            TableMetaInfoTool.setDQCTableInvalid(file_id, Dbo.db());
+            TableMetaInfoTool.setDQCTableInvalid(Dbo.db(), dsl_id, file_id);
         } else if (dataSourceType == DataSourceType.UDL) {
-            TableMetaInfoTool.setUDLTableInvalid(file_id, Dbo.db());
+            TableMetaInfoTool.setUDLTableInvalid(Dbo.db(), dsl_id, file_id);
         } else {
             throw new BusinessException("未找到匹配的数据层!" + data_layer);
         }
@@ -309,7 +328,8 @@ public class MetaDataManageAction extends BaseAction {
                     //获取存储层下表信息
                     MDMDataQuery.getDCLStorageLayerTableInfos(data_store_layer).forEach(table_info -> {
                         //根据查询到的表信息将表放入回收站
-                        tableSetToInvalid(dataSourceType.getCode(), table_info.get("file_id").toString());
+                        tableSetToInvalid(dataSourceType.getCode(), data_store_layer.getDsl_id(),
+                                table_info.get("file_id").toString());
                     });
                 });
             } else if (dataSourceType == DataSourceType.DPL) {
@@ -322,7 +342,8 @@ public class MetaDataManageAction extends BaseAction {
                     //获取存储层下表信息
                     MDMDataQuery.getDMLStorageLayerTableInfos(data_store_layer).forEach(dm_datatable -> {
                         //根据查询到的表信息将表放入回收站
-                        tableSetToInvalid(dataSourceType.getCode(), dm_datatable.get("datatable_id").toString());
+                        tableSetToInvalid(dataSourceType.getCode(), data_store_layer.getDsl_id(),
+                                dm_datatable.get("datatable_id").toString());
                     });
                 });
                 throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
@@ -341,6 +362,7 @@ public class MetaDataManageAction extends BaseAction {
     }
 
     @Method(desc = "数据管控-彻底删除表", logicStep = "数据管控-彻底删除表")
+    @Param(name = "dsl_id", desc = "所属存储层id", range = "long 类型")
     @Param(name = "file_id", desc = "回收站表id", range = "long 类型")
     public void removeCompletelyTable(long file_id) {
         //获取 Dq_failure_table
