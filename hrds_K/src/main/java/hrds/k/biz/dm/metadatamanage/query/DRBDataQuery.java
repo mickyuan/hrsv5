@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.web.util.Dbo;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -21,6 +22,18 @@ public class DRBDataQuery {
         return Dbo.queryList(Dq_failure_table.class, "SELECT * FROM " + Dq_failure_table.TableName);
     }
 
+    @Method(desc = "数据管控-源数据列表获取数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Data_store_layer> getDCLExistTableDataStorageLayers() {
+        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
+                        " JOIN " + Dtab_relation_store.TableName + " dtrs ON dsl.dsl_id = dtrs.dsl_id" +
+                        " JOIN " + Table_storage_info.TableName + " tsi ON tsi.storage_id = dtrs.tab_id" +
+                        " JOIN " + Table_info.TableName + " ti ON ti.table_id = tsi.table_id" +
+                        " JOIN " + Dq_failure_table.TableName + " dft ON dft.file_id = CAST(ti.table_id AS VARCHAR(40))" +
+                        " WHERE dtrs.data_source in (?,?,?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DB.getCode(),
+                StoreLayerDataSource.DBA.getCode(), StoreLayerDataSource.OBJ.getCode());
+    }
+
     @Method(desc = "数据管控-数据回收站获取存储层下表信息", logicStep = "数据回收站获取存储层下表信息")
     @Return(desc = "指定数据存储下的无效表的列表", range = "无限制")
     public static List<Map<String, Object>> getDCLStorageLayerTableInfos() {
@@ -31,6 +44,15 @@ public class DRBDataQuery {
                         " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
                         " WHERE dtrs.data_source in (?,?,?)", StoreLayerDataSource.DB.getCode(),
                 StoreLayerDataSource.DBA.getCode(), StoreLayerDataSource.OBJ.getCode());
+    }
+
+    @Method(desc = "数据管控-源数据列表获取数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    public static List<Data_store_layer> getDMLExistTableDataStorageLayers() {
+        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Dq_failure_table.TableName + " dft" +
+                " JOIN " + Dtab_relation_store.TableName + " dtrs ON cast(dtrs.tab_id as varchar(40)) = dft.file_id" +
+                " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
+                " WHERE dtrs.data_source in (?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DM.getCode());
     }
 
     @Method(desc = "数据管控-数据回收站获取存储层下表信息", logicStep = "数据回收站获取存储层下表信息")
@@ -44,23 +66,37 @@ public class DRBDataQuery {
 
     @Method(desc = "数据管控-源数据列表获取数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static List<Data_store_layer> getDCLExistTableDataStorageLayers() {
-        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
-                        " JOIN " + Dtab_relation_store.TableName + " dtrs ON dsl.dsl_id = dtrs.dsl_id" +
-                        " JOIN " + Table_storage_info.TableName + " tsi ON tsi.storage_id = dtrs.tab_id" +
-                        " JOIN " + Table_info.TableName + " ti ON ti.table_id = tsi.table_id" +
-                        " JOIN " + Dq_failure_table.TableName + " dft ON dft.file_id = CAST(ti.table_id AS VARCHAR(40))" +
-                        " WHERE dtrs.data_source in (?,?,?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DB.getCode(),
-                StoreLayerDataSource.DBA.getCode(), StoreLayerDataSource.OBJ.getCode());
+    public static List<Data_store_layer> getDQCExistTableDataStorageLayers() {
+        //获取回收站DQC层存在数表的所有存储层
+        return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Dq_failure_table.TableName + " dqt" +
+                " JOIN " + Data_store_layer.TableName + " dsl ON dqt.remark = CAST(dsl.dsl_id AS VARCHAR(40))" +
+                " WHERE dqt.table_source = ?", DataSourceType.DQC.getCode());
+    }
+
+    @Method(desc = "数据管控-数据回收站获取存储层下表信息", logicStep = "数据回收站获取存储层下表信息")
+    @Return(desc = "指定数据存储下的无效表的列表", range = "无限制")
+    public static List<Map<String, Object>> getDQCStorageLayerTableInfos() {
+        return Dbo.queryList("SELECT dsl.*,dft.* FROM " + Dq_failure_table.TableName + " dft" +
+                " JOIN " + Data_store_layer.TableName + " dsl ON CAST(dsl.dsl_id AS VARCHAR(40)) = dft.remark" +
+                " WHERE dft.table_source=?", DataSourceType.DQC.getCode());
     }
 
     @Method(desc = "数据管控-源数据列表获取数据存储层信息", logicStep = "数据管控-源数据列表获取数据存储层信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static List<Data_store_layer> getDMLExistTableDataStorageLayers() {
+    public static List<Data_store_layer> getUDLExistTableDataStorageLayers() {
         return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Dq_failure_table.TableName + " dft" +
                 " JOIN " + Dtab_relation_store.TableName + " dtrs ON cast(dtrs.tab_id as varchar(40)) = dft.file_id" +
                 " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
-                " WHERE dtrs.data_source in (?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DM.getCode());
+                " WHERE dtrs.data_source in (?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DQ.getCode());
+    }
+
+    @Method(desc = "数据管控-数据回收站获取存储层下表信息", logicStep = "数据回收站获取存储层下表信息")
+    @Return(desc = "指定数据存储下的无效表的列表", range = "无限制")
+    public static List<Map<String, Object>> getUDLStorageLayerTableInfos() {
+        return Dbo.queryList("SELECT dsl.*,dft.* FROM " + Dq_failure_table.TableName + " dft" +
+                " JOIN " + Dtab_relation_store.TableName + " dtrs ON CAST(dtrs.tab_id AS VARCHAR(40)) = dft.file_id" +
+                " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
+                " WHERE dtrs.data_source in (?)", StoreLayerDataSource.DQ.getCode());
     }
 
     @Method(desc = "数据管控-数据回收站根据表的id获取表信息",

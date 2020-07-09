@@ -158,7 +158,7 @@ public class IOnWayCtrl {
         asmSql.addSql(sb.toString());
         Result rsMutex = Dbo.queryResult(db, asmSql.sql(), asmSql.params());
         if (!rsMutex.isEmpty()) {
-            throw new BusinessException("该数据表被其他数据表所依赖,请先删除所依赖的表!" + rsMutex);
+            throw new BusinessException(ERROR_MUTES + rsMutex);
         }
     }
 
@@ -183,7 +183,7 @@ public class IOnWayCtrl {
         asmSql.addSql(sql);
         Result rsMutex = Dbo.queryResult(db, asmSql.sql(), asmSql.params());
         if (!rsMutex.isEmpty()) {
-            throw new MutexException(ERROR_MUTES, rsMutex);
+            throw new BusinessException(ERROR_MUTES + rsMutex);
         }
     }
 }

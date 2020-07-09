@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.entity.Data_store_layer;
 import hrds.commons.utils.Constant;
 
 import java.util.ArrayList;
@@ -108,31 +109,6 @@ public class DataConvertedNodeData {
         return dclBatchTableNodes;
     }
 
-    @Method(desc = "转化DQC层下表数据为Node节点数据",
-            logicStep = "1.转化DQC层下表数据为Node节点数据")
-    @Param(name = "dclBatchTableRs", desc = "贴源层分类下的表信息", range = "贴源层分类下的表信息")
-    public static List<Map<String, Object>> conversionDQCTableInfos(List<Map<String, Object>> dqcDataInfos) {
-        List<Map<String, Object>> dqcTableNodes = new ArrayList<>();
-        dqcDataInfos.forEach(o -> {
-            Map<String, Object> map = new HashMap<>();
-            //文件源属性id
-            String file_id = o.get("record_id").toString();
-            //表名
-            String table_name = o.get("table_name").toString();
-            map.put("id", file_id);
-            map.put("label", table_name);
-            map.put("parent_id", DataSourceType.DQC.getCode());
-            map.put("data_layer", DataSourceType.DQC.getCode());
-            map.put("file_id", file_id);
-            map.put("table_name", table_name);
-            map.put("hyren_name", table_name);
-            map.put("description", "" +
-                    "系统表名：" + table_name);
-            dqcTableNodes.add(map);
-        });
-        return dqcTableNodes;
-    }
-
     @Method(desc = "集市层工程信息转换",
             logicStep = "1.集市层工程信息转换")
     @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
@@ -175,5 +151,52 @@ public class DataConvertedNodeData {
             dmlTableNodes.add(map);
         }
         return dmlTableNodes;
+    }
+
+    @Method(desc = "集市层工程信息转换",
+            logicStep = "1.集市层工程信息转换")
+    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    public static List<Map<String, Object>> conversionDQCDataInfos(List<Data_store_layer> data_store_layer_s) {
+        List<Map<String, Object>> dqcDataNodes = new ArrayList<>();
+        for (Data_store_layer data_store_layer : data_store_layer_s) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", DataSourceType.DQC.getCode() + "_" + data_store_layer.getDsl_id());
+            map.put("label", data_store_layer.getDsl_name());
+            map.put("parent_id", DataSourceType.DQC.getCode());
+            map.put("data_layer", DataSourceType.DQC.getCode());
+            map.put("description", "" +
+                    "存储层编号：" + data_store_layer.getDsl_id() + "\n" +
+                    "存储层名称：" + data_store_layer.getDsl_name() + "\n" +
+                    "存储层描述：" + data_store_layer.getDsl_remark());
+            dqcDataNodes.add(map);
+        }
+        return dqcDataNodes;
+    }
+
+    @Method(desc = "转化DQC层下表数据为Node节点数据",
+            logicStep = "1.转化DQC层下表数据为Node节点数据")
+    @Param(name = "dclBatchTableRs", desc = "贴源层分类下的表信息", range = "贴源层分类下的表信息")
+    public static List<Map<String, Object>> conversionDQCTableInfos(List<Map<String, Object>> dqcTableInfos) {
+        List<Map<String, Object>> dqcTableNodes = new ArrayList<>();
+        dqcTableInfos.forEach(table_info -> {
+            Map<String, Object> map = new HashMap<>();
+            //数据层id
+            String dsl_id = table_info.get("dsl_id").toString();
+            //文件源属性id
+            String file_id = table_info.get("record_id").toString();
+            //表名
+            String table_name = table_info.get("table_name").toString();
+            map.put("id", DataSourceType.DQC.getCode() + "_" + dsl_id + "_" + file_id);
+            map.put("label", table_name);
+            map.put("parent_id", DataSourceType.DQC.getCode() + "_" + dsl_id);
+            map.put("data_layer", DataSourceType.DQC.getCode());
+            map.put("file_id", file_id);
+            map.put("table_name", table_name);
+            map.put("hyren_name", table_name);
+            map.put("description", "" +
+                    "系统表名：" + table_name);
+            dqcTableNodes.add(map);
+        });
+        return dqcTableNodes;
     }
 }

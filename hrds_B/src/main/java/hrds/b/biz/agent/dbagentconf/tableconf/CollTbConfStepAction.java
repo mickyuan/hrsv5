@@ -39,6 +39,7 @@ import hrds.commons.entity.Table_column;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Table_storage_info;
 import hrds.commons.entity.Take_relation_etl;
+import hrds.commons.entity.fdentity.ProjectTableEntity.EntityDealZeroException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.Constant;
@@ -60,7 +61,7 @@ public class CollTbConfStepAction extends BaseAction {
 	private static final long DEFAULT_TABLE_ID = 999999L;
 	private static final JSONObject DEFAULT_TABLE_CLEAN_ORDER;
 	private static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER;
-	private static final String VALID_S_DATE = "99991231"; // FIXME 有公共的
+	private static final String VALID_S_DATE = Constant.MAXDATE;
 
 	static {
 		DEFAULT_TABLE_CLEAN_ORDER = new JSONObject();
@@ -893,7 +894,13 @@ public class CollTbConfStepAction extends BaseAction {
 		// 3、否则，遍历集合，获取每一个Table_column对象，设置新的table_id，并更新到数据库中
 		for (Table_column tableColumn : tableColumns) {
 			tableColumn.setTable_id(tableInfo.getTable_id());
-			tableColumn.update(Dbo.db());
+			try {
+				tableColumn.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof EntityDealZeroException)) {
+					throw new BusinessException("保存时更新列信息失败");
+				}
+			}
 		}
 	}
 
@@ -1444,6 +1451,7 @@ public class CollTbConfStepAction extends BaseAction {
 		desc = "数据库对应表ID，" + "数据抽取定义表、表存储信息表、列合并表、表清洗规则表、表对应字段表表外键",
 		range = "不为空")
 	private void deleteDirtyDataOfTb(long tableId) {
+
 		// 1、删除column_id做外键的的表脏数据
 		List<Object> columnIds =
 			Dbo.queryOneColumnList(

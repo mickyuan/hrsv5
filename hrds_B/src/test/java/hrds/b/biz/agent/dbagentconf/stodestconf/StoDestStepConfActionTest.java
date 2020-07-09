@@ -84,7 +84,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void before() {
 		InitAndDestDataForStoDest.before();
 		//模拟登陆
-		ActionResult actionResult = BaseInitData.simulatedLogin();
+		ActionResult actionResult = login();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 

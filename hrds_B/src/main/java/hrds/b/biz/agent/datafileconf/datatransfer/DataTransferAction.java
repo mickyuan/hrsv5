@@ -8,7 +8,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
@@ -226,7 +226,7 @@ public class DataTransferAction extends BaseAction {
 		}
 		// 1、根据colSetId和userId去数据库中查出DB连接信息
 		return Dbo.queryOneObject(
-			" SELECT t1.database_type, t1.database_ip, t1.database_port, t1.database_name, "
+			" SELECT t1.database_type, t1.database_ip, t1.database_port, t1.database_name,t1.is_reg, "
 				+ " t1.database_pad, t1.user_name, t1.database_drive, t1.jdbc_url, t1.agent_id, t1.db_agent, t1.plane_url"
 				+ " FROM "
 				+ Database_set.TableName
@@ -234,9 +234,9 @@ public class DataTransferAction extends BaseAction {
 				+ " LEFT JOIN "
 				+ Agent_info.TableName
 				+ " ai ON ai.agent_id = t1.agent_id"
-				+ " WHERE t1.database_id = ? and ai.user_id = ? ",
+				+ " WHERE t1.database_id = ? and ai.user_id = ? AND t1.is_reg = ?",
 			colSetId,
-			getUserId());
+			getUserId(), IsFlag.Fou.getCode());
 	}
 
 	@Method(

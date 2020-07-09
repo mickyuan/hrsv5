@@ -15,6 +15,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.background.query.DMLDataQuery;
 import hrds.commons.tree.background.query.DQCDataQuery;
+import hrds.commons.tree.background.query.UDLDataQuery;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,7 +94,15 @@ public class DataTableUtil {
             }
             column_info_list = DataTableFieldUtil.metaInfoToList(table_column_list);
         } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            //获取UDL表信息
+            Dq_table_info dq_table_info = UDLDataQuery.getUDLTableInfo(file_id);
+            table_id = dq_table_info.getTable_id().toString();
+            table_name = dq_table_info.getTable_name();
+            table_ch_name = dq_table_info.getCh_name();
+            create_date = dq_table_info.getCreate_date();
+            //获取UDL表字段信息
+            List<Map<String, Object>> table_column_list = new ArrayList<>();
+            column_info_list = DataTableFieldUtil.metaInfoToList(UDLDataQuery.getUDLTableColumns(table_id));
         } else {
             throw new BusinessException("未找到匹配的数据层!" + data_layer);
         }

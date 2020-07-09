@@ -6,7 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.FileFormat;
@@ -19,7 +19,6 @@ import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +49,7 @@ public class FileConfStepAction extends BaseAction {
 							+ " ded "
 							+ " on ti.table_id = ded.table_id where ti.database_id = ? AND ti.table_id = ? ",
 						colSetId,
-						(long) tableInfo.get("table_id"));
+						tableInfo.get("table_id"));
 				list.forEach(
 					item -> {
                 /*
@@ -276,8 +275,8 @@ public class FileConfStepAction extends BaseAction {
 	@Param(name = "dedId", desc = "抽取定义表的主键信息", range = "不可为空")
 	private void deleteDataExtractionDef(List<String> dedId) {
 
-		for (int i = 0; i < dedId.size(); i++) {
-			long ded_id = Long.parseLong(dedId.get(i));
+		for (String s : dedId) {
+			long ded_id = Long.parseLong(s);
 			long countNum = Dbo
 				.queryNumber("SELECT COUNT(1) FROM " + Data_extraction_def.TableName + " WHERE ded_id = ?",
 					ded_id)

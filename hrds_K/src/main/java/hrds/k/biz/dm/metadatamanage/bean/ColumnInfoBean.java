@@ -12,7 +12,7 @@ public class ColumnInfoBean extends ProjectTableEntity {
 
     //字段id
     @DocBean(name = "column_id", value = "字段id", dataType = Long.class)
-    private String column_id;
+    private Long column_id;
     //字段名
     @DocBean(name = "column_name", value = "字段名", dataType = String.class)
     private String column_name;
@@ -32,11 +32,11 @@ public class ColumnInfoBean extends ProjectTableEntity {
     @DocBean(name = "is_primary_key", value = "是否主键", dataType = String.class, required = false)
     private String is_primary_key;
 
-    public String getColumn_id() {
+    public Long getColumn_id() {
         return column_id;
     }
 
-    public void setColumn_id(String column_id) {
+    public void setColumn_id(Long column_id) {
         this.column_id = column_id;
     }
 
