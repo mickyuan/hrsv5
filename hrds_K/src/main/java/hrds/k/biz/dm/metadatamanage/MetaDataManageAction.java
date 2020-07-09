@@ -475,7 +475,7 @@ public class MetaDataManageAction extends BaseAction {
         Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
         dtab_relation_store.setDsl_id(dsl_id);
         dtab_relation_store.setTab_id(dqTableInfo.getTable_id());
-        dtab_relation_store.setData_source(StoreLayerDataSource.DQ.getCode());
+        dtab_relation_store.setData_source(StoreLayerDataSource.UD.getCode());
         dtab_relation_store.setIs_successful(JobExecuteState.WanCheng.getCode());
         //保存表源信息和表存储关系信息到配置库
         dqTableInfo.add(Dbo.db());
