@@ -161,7 +161,7 @@ public class MDMDataQuery {
                         " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.tab_id = dqt.table_id" +
                         " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
                         " WHERE dsl.dsl_id=? and is_successful=? and dtrs.data_source=?", data_store_layer.getDsl_id(),
-                JobExecuteState.WanCheng.getCode(), StoreLayerDataSource.DQ.getCode());
+                JobExecuteState.WanCheng.getCode(), StoreLayerDataSource.UD.getCode());
     }
 
     @Method(desc = "获取自定义层(UDL)下表信息", logicStep = "获取自定义层(UDL)下表信息")
@@ -174,6 +174,31 @@ public class MDMDataQuery {
         //查询自定义层数据表信息
         return Dbo.queryOneObject(Dq_table_info.class, "select * from " + Dq_table_info.TableName + " where table_id" +
                 "=?", dq_table_info.getTable_id()).orElseThrow(() -> new BusinessException("获取UDL数据表信息的sql失败!"));
+    }
+
+    @Method(desc = "根据表id和存储层id获取DCL层数据表登记关系信息", logicStep = "根据表id和存储层id获取DCL层数据表登记关系信息")
+    @Param(name = "dsl_id", desc = "存储层id", range = "long字符串,唯一")
+    @Param(name = "dti", desc = "Dq_table_info实体对象", range = "DCL数据层表登记信息")
+    @Return(desc = "数据表登记关系信", range = "数据表登记关系信")
+    public static Dtab_relation_store getUDLTableSpecifyStorageRelationship(long dsl_id, Dq_table_info dti) {
+        return Dbo.queryOneObject(Dtab_relation_store.class, "SELECT dtrs.* from " + Data_store_layer.TableName + " dsl" +
+                        " left join " + Dtab_relation_store.TableName + " dtrs on dsl.dsl_id=dtrs.dsl_id" +
+                        " left join " + Dq_table_info.TableName + " dti on dti.table_id=dtrs.tab_id" +
+                        " where dsl.dsl_id=? and dti.table_id and dtrs.data_source in (?)",
+                dsl_id, dti.getTable_name(), StoreLayerDataSource.UD.getCode())
+                .orElseThrow(() -> (new BusinessException("根据存储层id,表id和 存储层关系-数据来源 获取数据表的存储关系信息的SQL出错!")));
+    }
+
+    @Method(desc = "根据表id和存储层id获取DCL层数据表登记关系信息", logicStep = "根据表id和存储层id获取DCL层数据表登记关系信息")
+    @Param(name = "dsr", desc = "Data_store_reg实体对象", range = "DCL数据层表登记信息")
+    @Return(desc = "数据表登记关系信", range = "数据表登记关系信")
+    public static List<Dtab_relation_store> getUDLTableStorageRelationships(Dq_table_info dti) {
+        return Dbo.queryList(Dtab_relation_store.class, "SELECT dtrs.* from " + Data_store_layer.TableName + " dsl" +
+                        " left join " + Dtab_relation_store.TableName + " dtrs on dsl.dsl_id=dtrs.dsl_id" +
+                        " left join " + Dq_table_info.TableName + " dti on dti.table_id=dtrs.tab_id" +
+                        " where dti.table_id and dtrs.data_source in (?)",
+                dti.getTable_id(), StoreLayerDataSource.UD.getCode()
+        );
     }
 
     @Method(desc = "根据表id删除DCL层数据表登记信息", logicStep = "根据表id删除DCL层数据表登记信息")
