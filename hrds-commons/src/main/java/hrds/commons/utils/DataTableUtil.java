@@ -172,9 +172,10 @@ public class DataTableUtil {
     @Param(name = "table_name", desc = "登记表名", range = "String")
     @Return(desc = "字段信息列表", range = "字段信息列表")
     public static List<Map<String, Object>> getColumnByTableName(String table_name) {
-        //初始化查询Sql TODO 目前只考虑DCL,DML
+        //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
+        asmSql.addSql("SELECT * FROM (");
         //DCL
         asmSql.addSql("SELECT ti.table_id AS table_id,dsr.hyren_name AS table_name,tc.column_name AS column_name," +
                 " tc.column_ch_name AS column_ch_name, tc.column_type AS column_type FROM " + Data_store_reg.TableName +
@@ -187,9 +188,35 @@ public class DataTableUtil {
                 " column_name,dfi.field_cn_name AS column_ch_name,concat(field_type,'(',field_length,')') AS" +
                 " column_type FROM " + Datatable_field_info.TableName + " dfi JOIN " + Dm_datatable.TableName + " dd ON" +
                 " dd.datatable_id = dfi.datatable_id WHERE LOWER(dd.datatable_en_name) = LOWER(?)").addParam(table_name);
-        //DQC
-        //TODO DQC数据管控层5.1版本创建表开发完成后,添加管控表查询关联
-        return Dbo.queryList(asmSql.sql(), asmSql.params());
+        //UDL
+        asmSql.addSql("UNION");
+        asmSql.addSql("SELECT dti.table_id AS table_id, dti.table_name AS table_name, dtc.column_name AS column_name," +
+                " dtc.field_ch_name AS column_ch_name, dtc.column_type AS column_type FROM " + Dq_table_info.TableName + " dti" +
+                " JOIN " + Dq_table_column.TableName + " dtc ON dti.table_id=dtc.table_id WHERE LOWER(dti.table_name) = LOWER(?)");
+        asmSql.addParam(table_name);
+        asmSql.addSql(") tmp group by table_id,table_name,column_name,column_ch_name,column_type order by table_name");
+        List<Map<String, Object>> column_list = Dbo.queryList(asmSql.sql(), asmSql.params());
+        if (!column_list.isEmpty()) {
+            return column_list;
+        } else {
+            //DQC
+            asmSql.clean();
+            Dq_index3record di3 = Dbo.queryOneObject(Dq_index3record.class, "SELECT * FROM " + Dq_index3record.TableName + " WHERE" +
+                    " table_name = LOWER(?)", table_name).orElseThrow(()
+                    -> (new BusinessException("表: " + table_name + " 的字段信息不存在,请检查表是否登记成功!")));
+            String table_col_s = di3.getTable_col();
+            String[] column_s = table_col_s.split(",");
+            for (String column : column_s) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("table_id", di3.getRecord_id());
+                map.put("table_name", di3.getTable_name());
+                map.put("column_name", column);
+                map.put("column_ch_name", column);
+                map.put("column_type", "VARCHAR(--)");
+                column_list.add(map);
+            }
+        }
+        return column_list;
     }
 
     @Method(desc = "获取在所有存储层中是否存在该表",

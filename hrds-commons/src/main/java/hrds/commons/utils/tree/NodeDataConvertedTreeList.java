@@ -4,6 +4,8 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.JsonUtil;
+import hrds.commons.exception.BusinessException;
 
 import java.util.*;
 
@@ -31,6 +33,11 @@ public class NodeDataConvertedTreeList {
                 node.setData_layer("");
             } else {
                 node.setData_layer(dataRecord.get("data_layer").toString());
+            }
+            if (null == dataRecord.get("dsl_id")) {
+                node.setDsl_id("");
+            } else {
+                node.setDsl_id(dataRecord.get("dsl_id").toString());
             }
             if (null == dataRecord.get("data_own_type")) {
                 node.setData_own_type("");
@@ -83,14 +90,19 @@ public class NodeDataConvertedTreeList {
         for (Map.Entry<String, Node> nodeEntry : list) {
             Node treeNodeData;
             Node node = nodeEntry.getValue();
-            //当前节点的父id为null或者为"0"是,则说明该节点为根节点
-            if (node.getParent_id() == null || "0".equals(node.getParent_id())) {
-                treeNodeData = node;
-                treeList.add(treeNodeData);
-            }
-            //设置当前节点到父id一样节点的children子节点下
-            else {
-                nodeMap.get(node.getParent_id()).addChild(node);
+            try {
+                //当前节点的父id为null或者为"0"是,则说明该节点为根节点
+                if (node.getParent_id() == null || "0".equals(node.getParent_id())) {
+                    treeNodeData = node;
+                    treeList.add(treeNodeData);
+                }
+                //设置当前节点到父id一样节点的children子节点下
+                else {
+                    nodeMap.get(node.getParent_id()).addChild(node);
+                }
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                throw new BusinessException("当前节点信息 node: " + JsonUtil.toJson(node) + " 所属的父id parent_id: " + node.getParent_id());
             }
         }
         // 对多叉树进行横向排序
