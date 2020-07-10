@@ -28,7 +28,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * author: zxz
  */
 public class FtpCollectActionTest extends WebBaseTestCase {
-	private static final Logger LOGGER = LoggerFactory.getLogger(UnstructuredFileCollectActionTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(FtpCollectActionTest.class);
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = Constant.TESTINITCONFIG.getString("login_url", "");
 	// 请填写已有的已经部署并且启动的一个agent的agent_id
