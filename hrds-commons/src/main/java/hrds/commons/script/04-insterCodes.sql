@@ -1,14 +1,10 @@
 --　系统的引用值个数:61
---　本引用值的代码个数:2 -------i==1
-delete from code_info where ci_sp_class='76';
-INSERT INTO CODE_INFO  VALUES ('0', '76', '数据质量规则级别', '警告', 'EdRuleLevel');
-INSERT INTO CODE_INFO  VALUES ('1', '76', '数据质量规则级别', '严重', 'EdRuleLevel');
---　本引用值的代码个数:3 -------i==2
+--　本引用值的代码个数:3 -------i==1
 delete from code_info where ci_sp_class='78';
 INSERT INTO CODE_INFO  VALUES ('0', '78', '数据质量校验结果', '检查通过', 'DqcVerifyResult');
 INSERT INTO CODE_INFO  VALUES ('1', '78', '数据质量校验结果', '数据异常', 'DqcVerifyResult');
 INSERT INTO CODE_INFO  VALUES ('2', '78', '数据质量校验结果', '执行失败', 'DqcVerifyResult');
---　本引用值的代码个数:7 -------i==3
+--　本引用值的代码个数:7 -------i==2
 delete from code_info where ci_sp_class='79';
 INSERT INTO CODE_INFO  VALUES ('w', '79', '数据质量处理状态', '等待处理', 'DqcDlStat');
 INSERT INTO CODE_INFO  VALUES ('b', '79', '数据质量处理状态', '已退回', 'DqcDlStat');
@@ -17,11 +13,11 @@ INSERT INTO CODE_INFO  VALUES ('d', '79', '数据质量处理状态', '已处理
 INSERT INTO CODE_INFO  VALUES ('oki', '79', '数据质量处理状态', '处理完结', 'DqcDlStat');
 INSERT INTO CODE_INFO  VALUES ('okd', '79', '数据质量处理状态', '已忽略通过', 'DqcDlStat');
 INSERT INTO CODE_INFO  VALUES ('zc', '79', '数据质量处理状态', '正常', 'DqcDlStat');
---　本引用值的代码个数:2 -------i==4
+--　本引用值的代码个数:2 -------i==3
 delete from code_info where ci_sp_class='80';
 INSERT INTO CODE_INFO  VALUES ('MAN', '80', '数据质量执行方式', '手工', 'DqcExecMode');
 INSERT INTO CODE_INFO  VALUES ('AUTO', '80', '数据质量执行方式', '自动', 'DqcExecMode');
---　本引用值的代码个数:6 -------i==5
+--　本引用值的代码个数:6 -------i==4
 delete from code_info where ci_sp_class='81';
 INSERT INTO CODE_INFO  VALUES ('1', '81', 'hdfs文件类型', 'csv', 'HdfsFileType');
 INSERT INTO CODE_INFO  VALUES ('2', '81', 'hdfs文件类型', 'parquet', 'HdfsFileType');
@@ -29,15 +25,15 @@ INSERT INTO CODE_INFO  VALUES ('3', '81', 'hdfs文件类型', 'avro', 'HdfsFileT
 INSERT INTO CODE_INFO  VALUES ('4', '81', 'hdfs文件类型', 'orcfile', 'HdfsFileType');
 INSERT INTO CODE_INFO  VALUES ('5', '81', 'hdfs文件类型', 'sequencefile', 'HdfsFileType');
 INSERT INTO CODE_INFO  VALUES ('6', '81', 'hdfs文件类型', '其他', 'HdfsFileType');
---　本引用值的代码个数:2 -------i==6
+--　本引用值的代码个数:2 -------i==5
 delete from code_info where ci_sp_class='85';
 INSERT INTO CODE_INFO  VALUES ('1', '85', '数据表生命周期', '永久', 'TableLifeCycle');
 INSERT INTO CODE_INFO  VALUES ('2', '85', '数据表生命周期', '临时', 'TableLifeCycle');
---　本引用值的代码个数:2 -------i==7
+--　本引用值的代码个数:2 -------i==6
 delete from code_info where ci_sp_class='86';
 INSERT INTO CODE_INFO  VALUES ('0', '86', '数据表存储方式', '数据表', 'TableStorage');
 INSERT INTO CODE_INFO  VALUES ('1', '86', '数据表存储方式', '数据视图', 'TableStorage');
---　本引用值的代码个数:6 -------i==8
+--　本引用值的代码个数:6 -------i==7
 delete from code_info where ci_sp_class='87';
 INSERT INTO CODE_INFO  VALUES ('100', '87', '作业运行状态', '等待', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('101', '87', '作业运行状态', '运行', 'JobExecuteState');
@@ -45,20 +41,28 @@ INSERT INTO CODE_INFO  VALUES ('102', '87', '作业运行状态', '暂停', 'Job
 INSERT INTO CODE_INFO  VALUES ('103', '87', '作业运行状态', '中止', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('104', '87', '作业运行状态', '完成', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('105', '87', '作业运行状态', '失败', 'JobExecuteState');
---　本引用值的代码个数:3 -------i==9
+--　本引用值的代码个数:3 -------i==8
 delete from code_info where ci_sp_class='88';
 INSERT INTO CODE_INFO  VALUES ('1', '88', 'sql执行引擎', 'JDBC', 'SqlEngine');
 INSERT INTO CODE_INFO  VALUES ('2', '88', 'sql执行引擎', 'SPARK', 'SqlEngine');
 INSERT INTO CODE_INFO  VALUES ('3', '88', 'sql执行引擎', '默认', 'SqlEngine');
---　本引用值的代码个数:2 -------i==10
+--　本引用值的代码个数:2 -------i==9
 delete from code_info where ci_sp_class='90';
 INSERT INTO CODE_INFO  VALUES ('1', '90', '落地文件-卸数方式', '全量卸数', 'UnloadType');
 INSERT INTO CODE_INFO  VALUES ('2', '90', '落地文件-卸数方式', '增量卸数', 'UnloadType');
---　本引用值的代码个数:3 -------i==11
+--　本引用值的代码个数:3 -------i==10
 delete from code_info where ci_sp_class='91';
 INSERT INTO CODE_INFO  VALUES ('1', '91', '数据处理方式', '定值', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('2', '91', '数据处理方式', '自增', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('3', '91', '数据处理方式', '映射', 'ProcessType');
+--　本引用值的代码个数:6 -------i==11
+delete from code_info where ci_sp_class='93';
+INSERT INTO CODE_INFO  VALUES ('1', '93', '存储层关系-数据来源', 'db采集', 'StoreLayerDataSource');
+INSERT INTO CODE_INFO  VALUES ('2', '93', '存储层关系-数据来源', '数据库采集', 'StoreLayerDataSource');
+INSERT INTO CODE_INFO  VALUES ('3', '93', '存储层关系-数据来源', '对象采集', 'StoreLayerDataSource');
+INSERT INTO CODE_INFO  VALUES ('4', '93', '存储层关系-数据来源', '数据集市', 'StoreLayerDataSource');
+INSERT INTO CODE_INFO  VALUES ('5', '93', '存储层关系-数据来源', '数据管控', 'StoreLayerDataSource');
+INSERT INTO CODE_INFO  VALUES ('6', '93', '存储层关系-数据来源', '自定义', 'StoreLayerDataSource');
 --　本引用值的代码个数:35 -------i==12
 delete from code_info where ci_sp_class='17';
 INSERT INTO CODE_INFO  VALUES ('00', '17', '用户类型', '系统管理员', 'UserType');
@@ -409,10 +413,7 @@ INSERT INTO CODE_INFO  VALUES ('4', '72', '接口类型', '监控类', 'Interfac
 delete from code_info where ci_sp_class='73';
 INSERT INTO CODE_INFO  VALUES ('1', '73', '接口状态', '启用', 'InterfaceState');
 INSERT INTO CODE_INFO  VALUES ('2', '73', '接口状态', '禁用', 'InterfaceState');
---　本引用值的代码个数:5 -------i==61
-delete from code_info where ci_sp_class='93';
-INSERT INTO CODE_INFO  VALUES ('1', '93', '存储层关系-数据来源', 'db采集', 'StoreLayerDataSource');
-INSERT INTO CODE_INFO  VALUES ('2', '93', '存储层关系-数据来源', '数据库采集', 'StoreLayerDataSource');
-INSERT INTO CODE_INFO  VALUES ('3', '93', '存储层关系-数据来源', '对象采集', 'StoreLayerDataSource');
-INSERT INTO CODE_INFO  VALUES ('4', '93', '存储层关系-数据来源', '数据集市', 'StoreLayerDataSource');
-INSERT INTO CODE_INFO  VALUES ('5', '93', '存储层关系-数据来源', '数据管控', 'StoreLayerDataSource');
+--　本引用值的代码个数:2 -------i==61
+delete from code_info where ci_sp_class='76';
+INSERT INTO CODE_INFO  VALUES ('0', '76', '数据质量规则级别', '警告', 'EdRuleLevel');
+INSERT INTO CODE_INFO  VALUES ('1', '76', '数据质量规则级别', '严重', 'EdRuleLevel');

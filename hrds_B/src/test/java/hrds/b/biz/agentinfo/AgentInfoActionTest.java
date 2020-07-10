@@ -26,44 +26,48 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "agent增删改测试类", author = "dhw", createdate = "2019-09-18 10:49:51")
 public class AgentInfoActionTest extends WebBaseTestCase {
-	// 初始化登录用户ID
-	private static final long UserId = 6666L;
-	// 初始化创建用户ID
-	private static final long CreateId = 1000L;
+	//请填写测试用户需要做登录验证的A项目的登录验证的接口
+	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	// 已经存在的用户ID,用于模拟登录
+	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	// 已经存在的用户密码,用于模拟登录
+	private static final String PASSWORD = agentInitConfig.getString("password");
+	//获取当前线程ID
+	private final long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 初始化登录用户ID，更新agent时更新数据采集用户
-	private static final long UserId2 = 5556L;
+	private final long USER_ID2 = 5556L + THREAD_ID;
 	// 测试部门ID dep_id,测试第一部门
-	private static final long DepId1 = -200000001L;
+	private final long DepId1 = -200000001L + THREAD_ID;
 	// 测试部门ID dep_id 测试第二部门
-	private static final long DepId2 = -200000011L;
+	private final long DepId2 = -200000011L + THREAD_ID;
 	// 测试数据源 SourceId
-	private static final long SourceId = -100000000L;
+	private final long SourceId = -100000000L + THREAD_ID;
 	// 测试数据源 SourceId，agent存在，数据源被删了
-	private static final long SourceId2 = -100000001L;
+	private final long SourceId2 = -100000001L + THREAD_ID;
 	// 测试数据库 agent_id
-	private static final long DBAgentId = -200000060L;
+	private final long DBAgentId = -200000060L + THREAD_ID;
 	// 测试数据库 agent_id，agent存在，数据源被删了
-	private static final long DBAgentId2 = -200000061L;
+	private final long DBAgentId2 = -200000061L + THREAD_ID;
 	// 测试数据库 agent_id，更新agent时更新数据采集用户
-	private static final long DBAgentId3 = -200000062L;
+	private final long DBAgentId3 = -200000062L + THREAD_ID;
 	// 测试数据库 agent_id，数据源对应的agent下有任务，不能删除
-	private static final long DBAgentId4 = -200000064L;
+	private final long DBAgentId4 = -200000064L + THREAD_ID;
 	// 测试数据库 agent_id，用于测试正常删除的agent_id
-	private static final long DBAgentId5 = -200000065L;
+	private final long DBAgentId5 = -200000065L + THREAD_ID;
 	// 测试数据文件 agent_id
-	private static final long DFAgentId = -200000066L;
+	private final long DFAgentId = -200000066L + THREAD_ID;
 	// 测试非结构化 agent_id
-	private static final long UnsAgentId = -200000067L;
+	private final long UnsAgentId = -200000067L + THREAD_ID;
 	// 测试半结构化 agent_id
-	private static final long SemiAgentId = -200000068L;
+	private final long SemiAgentId = -200000068L + THREAD_ID;
 	// 测试FTP agent_id
-	private static final long FTPAgentId = -200000069L;
+	private final long FTPAgentId = -200000069L + THREAD_ID;
 	// 测试agent_down_info agent_id
-	private static final long DownId = -300000000L;
+	private final long DownId = -300000000L + THREAD_ID;
 	// 测试 分类ID，classify_id
-	private static final long ClassifyId = -400000000L;
+	private final long ClassifyId = -400000000L + THREAD_ID;
 	// 测试 数据库设置ID，DatabaseId
-	private static final long DatabaseId = -500000000L;
+	private final long DatabaseId = -500000000L + THREAD_ID;
 
 	@Method(desc = "初始化测试用例数据", logicStep = "1.构造数据源data_source表测试数据" +
 			"2.构造agent_info表测试数据" +
@@ -80,7 +84,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			"2.data_source表，有2条数据，SourceId为SourceId，SourceId2" +
 			"3.agent_down_info表，有1条数据，down_id为DownId,agent_id为DBAgentId" +
 			"4.database_set表，有1条数据，database_id为DatabaseId" +
-			"5.sys_user表，有1条数据，user_id为UserId" +
+			"5.sys_user表，有1条数据，user_id为USER_ID" +
 			"6.department_info表，有2条数据，dep_id为DepId1，DepId2")
 	@Before
 	public void before() {
@@ -90,11 +94,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			Data_source data_source = new Data_source();
 			// 封装data_source表数据
 			data_source.setSource_id(SourceId);
-			data_source.setDatasource_number("init");
-			data_source.setDatasource_name("dsName");
+			data_source.setDatasource_number("init" + THREAD_ID);
+			data_source.setDatasource_name("dsName" + THREAD_ID);
 			data_source.setCreate_date(DateUtil.getSysDate());
 			data_source.setCreate_time(DateUtil.getSysTime());
-			data_source.setCreate_user_id(UserId);
+			data_source.setCreate_user_id(USER_ID);
 			data_source.setSource_remark("数据源详细描述");
 			data_source.setDatasource_remark("备注");
 			// 初始化data_source表信息
@@ -109,82 +113,82 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				// 初始化不同类型的agent
 				if (i == 0) {
 					// 数据库 agent
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(DBAgentId);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-					agent_info.setAgent_name("sjkAgent");
+					agent_info.setAgent_name("sjkAgent" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.51");
 					agent_info.setAgent_port("3451");
 				} else if (i == 1) {
 					// 数据文件 Agent
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(DFAgentId);
 					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
-					agent_info.setAgent_name("DFAgent");
+					agent_info.setAgent_name("DFAgent" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.52");
 					agent_info.setAgent_port("3452");
 				} else if (i == 2) {
 					// 非结构化 Agent
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(UnsAgentId);
 					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
-					agent_info.setAgent_name("UnsAgent");
+					agent_info.setAgent_name("UnsAgent" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.53");
 					agent_info.setAgent_port("3453");
 				} else if (i == 3) {
 					// 半结构化 Agent
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(SemiAgentId);
 					agent_info.setAgent_type(AgentType.FTP.getCode());
-					agent_info.setAgent_name("SemiAgent");
+					agent_info.setAgent_name("SemiAgent" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.54");
 					agent_info.setAgent_port("3454");
 				} else if (i == 4) {
 					// FTP Agent
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(FTPAgentId);
 					agent_info.setAgent_type(AgentType.FTP.getCode());
-					agent_info.setAgent_name("FTPAgent");
+					agent_info.setAgent_name("FTPAgent" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.55");
 					agent_info.setAgent_port("3455");
 				} else if (i == 5) {
 					// 测试SourceId被删除，agent还存在
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId2);
 					agent_info.setAgent_id(DBAgentId2);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-					agent_info.setAgent_name("sjkAgent2");
+					agent_info.setAgent_name("sjkAgent2" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.56");
 					agent_info.setAgent_port("3456");
 				} else if (i == 6) {
 					// 测试更新agent时切换数据采集用户
-					agent_info.setUser_id(UserId2);
+					agent_info.setUser_id(USER_ID2);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(DBAgentId3);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-					agent_info.setAgent_name("sjkAgent3");
+					agent_info.setAgent_name("sjkAgent3" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.57");
 					agent_info.setAgent_port("3457");
 				} else if (i == 8) {
 					// 测试更新agent时切换数据采集用户
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(DBAgentId4);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-					agent_info.setAgent_name("sjkAgent4");
+					agent_info.setAgent_name("sjkAgent4" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.57");
 					agent_info.setAgent_port("3458");
 				} else {
-					agent_info.setUser_id(UserId);
+					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(DBAgentId5);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-					agent_info.setAgent_name("sjkAgent5");
+					agent_info.setAgent_name("sjkAgent5" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.55");
 					agent_info.setAgent_port("3459");
 				}
@@ -207,20 +211,20 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			Agent_down_info agent_down_info = new Agent_down_info();
 			agent_down_info.setDown_id(DownId);
 			agent_down_info.setAgent_id(DFAgentId);
-			agent_down_info.setAgent_name("DFAgent");
+			agent_down_info.setAgent_name("DFAgent" + THREAD_ID);
 			agent_down_info.setAgent_ip("10.71.4.51");
 			agent_down_info.setAgent_port("34567");
 			agent_down_info.setAgent_type(AgentType.DBWenJian.getCode());
 			agent_down_info.setDeploy(IsFlag.Fou.getCode());
 			agent_down_info.setLog_dir("/home/hyshf/sjkAgent_34567/log/");
 			agent_down_info.setPasswd("hyshf");
-			agent_down_info.setUser_id(UserId);
+			agent_down_info.setUser_id(USER_ID);
 			agent_down_info.setAi_desc("agent部署");
 			agent_down_info.setRemark("备注");
 			agent_down_info.setUser_name("hyshf");
 			agent_down_info.setSave_dir("/home/hyshf/sjkAgent_34567/");
 			agent_down_info.setAgent_context("/agent");
-			agent_down_info.setAgent_pattern("/hrds/agent/trans/biz/AgentServer/getSystemFileInfo");
+			agent_down_info.setAgent_pattern("/receives/*");
 			// 初始化agent_down_info表数据
 			agent_down_info.add(db);
 			// 4.构造database_set表测试数据
@@ -228,14 +232,12 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_id(DatabaseId);
 			databaseSet.setAgent_id(DBAgentId4);
 			databaseSet.setClassify_id(ClassifyId);
-//            databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			databaseSet.setDatabase_drive("org.postgresql.Driver");
 			databaseSet.setDatabase_ip("10.71.4.51");
 			databaseSet.setDatabase_name("数据库采集测试");
 			databaseSet.setDatabase_number("cs");
 			databaseSet.setDatabase_pad("hrsdxg");
 			databaseSet.setDatabase_port("34567");
-//            databaseSet.setDbfile_format(FileFormat.CSV.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
 			databaseSet.setTask_name("数据库测试");
@@ -245,13 +247,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			databaseSet.add(db);
 			// 5.构造sys_user表测试数据
 			Sys_user sysUser = new Sys_user();
-			sysUser.setUser_id(UserId);
-			sysUser.setCreate_id(CreateId);
+			sysUser.setUser_id(USER_ID);
+			sysUser.setCreate_id(USER_ID);
 			sysUser.setDep_id(DepId1);
 			sysUser.setCreate_date(DateUtil.getSysDate());
 			sysUser.setCreate_time(DateUtil.getSysTime());
 			sysUser.setRole_id("1001");
-			sysUser.setUser_name("数据源agent测试用户");
+			sysUser.setUser_name("数据源agent测试用户" + THREAD_ID);
 			sysUser.setUser_password("1");
 			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
 			sysUser.setUseris_admin(IsFlag.Shi.getCode());
@@ -264,10 +266,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
 					department_info.setDep_id(DepId1);
-					department_info.setDep_name("测试第一部门");
+					department_info.setDep_name("测试第一部门" + THREAD_ID);
 				} else {
 					department_info.setDep_id(DepId2);
-					department_info.setDep_name("测试第二部门");
+					department_info.setDep_name("测试第二部门" + THREAD_ID);
 				}
 				department_info.setCreate_date(DateUtil.getSysDate());
 				department_info.setCreate_time(DateUtil.getSysTime());
@@ -282,9 +284,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 8.模拟用户登录
 		String responseValue = new HttpClient()
 				.buildSession()
-				.addData("user_id", UserId)
-				.addData("password", "1")
-				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
+				.addData("user_id", USER_ID)
+				.addData("password", PASSWORD)
+				.post(LOGIN_URL)
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -377,10 +379,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", dsNum, is(0L));
 			// 7.测试完删除sys_user表测试数据
-			SqlOperator.execute(db, "delete from sys_user where user_id=?", UserId);
+			SqlOperator.execute(db, "delete from sys_user where user_id=?", USER_ID);
 			// 8.判断sys_user表数据是否被删除
 			long userNum = SqlOperator.queryNumber(db, "select count(1) from sys_user " +
-					" where user_id=?", UserId).orElseThrow(() -> new RuntimeException(
+					" where user_id=?", USER_ID).orElseThrow(() -> new RuntimeException(
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", userNum, is(0L));
 			// 9.测试完成后删除department_info表测试数据
@@ -426,7 +428,6 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 		assertThat(ar.isSuccess(), is(true));
-		// TODO 无法确认原表是否有数据，目前只能测试自己造的数据
 		Map<Object, Object> dataForMap = ar.getDataForMap();
 		List<Map<String, Object>> sjkAgent = (List<Map<String, Object>>) dataForMap.get("sjkAgent");
 		if (!sjkAgent.isEmpty()) {
@@ -434,8 +435,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				if (String.valueOf(DBAgentId).equals(map.get("agent_id").toString())) {
 					assertThat(map.get("agent_ip").toString(), is("10.71.4.51"));
 					assertThat(map.get("agent_port").toString(), is("3451"));
-					assertThat(map.get("agent_name").toString(), is("sjkAgent"));
-					assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+					assertThat(map.get("agent_name").toString(), is("sjkAgent" + THREAD_ID));
+					assertThat(map.get("user_name").toString(), is("数据源agent测试用户" + THREAD_ID));
 				}
 			}
 		}
@@ -445,8 +446,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				if (String.valueOf(DFAgentId).equals(map.get("agent_id").toString())) {
 					assertThat(map.get("agent_ip").toString(), is("10.71.4.52"));
 					assertThat(map.get("agent_port").toString(), is("3452"));
-					assertThat(map.get("agent_name").toString(), is("DFAgent"));
-					assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+					assertThat(map.get("agent_name").toString(), is("DFAgent" + THREAD_ID));
+					assertThat(map.get("user_name").toString(), is("数据源agent测试用户" + THREAD_ID));
 				}
 			}
 		}
@@ -456,8 +457,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				if (String.valueOf(UnsAgentId).equals(map.get("agent_id").toString())) {
 					assertThat(map.get("agent_ip").toString(), is("10.71.4.53"));
 					assertThat(map.get("agent_port").toString(), is("3453"));
-					assertThat(map.get("agent_name").toString(), is("UnsAgent"));
-					assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+					assertThat(map.get("agent_name").toString(), is("UnsAgent" + THREAD_ID));
+					assertThat(map.get("user_name").toString(), is("数据源agent测试用户" + THREAD_ID));
 				}
 			}
 		}
@@ -467,8 +468,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				if (String.valueOf(SemiAgentId).equals(map.get("agent_id").toString())) {
 					assertThat(map.get("agent_ip").toString(), is("10.71.4.54"));
 					assertThat(map.get("agent_port").toString(), is("3454"));
-					assertThat(map.get("agent_name").toString(), is("SemiAgent"));
-					assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+					assertThat(map.get("agent_name").toString(), is("SemiAgent" + THREAD_ID));
+					assertThat(map.get("user_name").toString(), is("数据源agent测试用户" + THREAD_ID));
 				}
 			}
 		}
@@ -478,17 +479,17 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				if (String.valueOf(FTPAgentId).equals(map.get("agent_id").toString())) {
 					assertThat(map.get("agent_ip").toString(), is("10.71.4.55"));
 					assertThat(map.get("agent_port").toString(), is("3455"));
-					assertThat(map.get("agent_name").toString(), is("FTPAgent"));
-					assertThat(map.get("user_name").toString(), is("数据源agent测试用户"));
+					assertThat(map.get("agent_name").toString(), is("FTPAgent" + THREAD_ID));
+					assertThat(map.get("user_name").toString(), is("数据源agent测试用户" + THREAD_ID));
 				}
 			}
 		}
-		assertThat(dataForMap.get("datasource_name"), is("dsName"));
+		assertThat(dataForMap.get("datasource_name"), is("dsName" + THREAD_ID));
 		assertThat(dataForMap.get("source_id").toString(), is(String.valueOf(SourceId)));
 		// 2.错误的数据访问1，source_id不存在
 		bodyString = new HttpClient()
 				.addData("source_id", 111)
-				.addData("datasource_name", "dsName")
+				.addData("datasource_name", "dsName" + THREAD_ID)
 				.post(getActionUrl("searchDatasourceAndAgentInfo")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -527,7 +528,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3451")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -543,7 +544,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("10.71.4.52", is(agentInfo.get().getAgent_ip()));
 			assertThat("3451", is(agentInfo.get().getAgent_port()));
 			assertThat(SourceId, is(agentInfo.get().getSource_id()));
-			assertThat(UserId, is(agentInfo.get().getUser_id()));
+			assertThat(USER_ID, is(agentInfo.get().getUser_id()));
 		}
 		// 2.正确的数组访问2，新增数据文件agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -552,7 +553,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -572,7 +573,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -592,7 +593,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3459")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -612,7 +613,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.53")
 				.addData("agent_port", "3460")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -632,7 +633,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -643,7 +644,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -655,7 +656,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -666,7 +667,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -678,7 +679,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -690,7 +691,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", " ")
 				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -702,7 +703,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "127.1.2.300")
 				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -714,7 +715,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -726,7 +727,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -738,7 +739,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "65536")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -750,7 +751,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
 				.addData("source_id", "")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -762,7 +763,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
 				.addData("source_id", " ")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -798,7 +799,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "34567")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -810,7 +811,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "3451")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -822,7 +823,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3461")
 				.addData("source_id", SourceId2)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -875,7 +876,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45678")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId2)
+				.addData("user_id", USER_ID2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -890,7 +891,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_name(), is("sjkUpAgent"));
 			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_ip(), is("10.71.4.52"));
 			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_port(), is("45678"));
-			assertThat("更新agent_info数据成功", sjkAgent.get().getUser_id(), is(UserId2));
+			assertThat("更新agent_info数据成功", sjkAgent.get().getUser_id(), is(USER_ID2));
 		}
 		// 2.正确的数组访问2，更新数据文件agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -900,7 +901,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45679")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId2)
+				.addData("user_id", USER_ID2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -921,7 +922,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("更新agent_info数据成功", dFileAgent.get().getAgent_port(),
 					is("45679"));
 			assertThat("更新agent_info数据成功", dFileAgent.get().getUser_id(),
-					is(UserId2));
+					is(USER_ID2));
 		}
 		// 3.正确的数组访问3，更新非结构化agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -931,7 +932,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45680")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId2)
+				.addData("user_id", USER_ID2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -952,7 +953,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("更新agent_info数据成功", unsUpAgent.get().getAgent_port(),
 					is("45680"));
 			assertThat("更新agent_info数据成功", unsUpAgent.get().getUser_id(),
-					is(UserId2));
+					is(USER_ID2));
 		}
 		// 4.正确的数组访问4，更新半结构化agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -962,7 +963,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45681")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId2)
+				.addData("user_id", USER_ID2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -984,7 +985,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("更新agent_info数据成功", semiUpAgent.get().getAgent_port(),
 					is("45681"));
 			assertThat("更新agent_info数据成功", semiUpAgent.get().getUser_id(),
-					is(UserId2));
+					is(USER_ID2));
 		}
 		// 5.正确的数组访问5，更新FTP agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -994,7 +995,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45682")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId2)
+				.addData("user_id", USER_ID2)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1015,7 +1016,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			assertThat("更新agent_info数据成功", ftpUpAgent.get().getAgent_port(),
 					is("45682"));
 			assertThat("更新agent_info数据成功", ftpUpAgent.get().getUser_id(),
-					is(UserId2));
+					is(USER_ID2));
 		}
 		// 6.错误的数据访问1，更新agent信息,agent_name为空
 		bodyString = new HttpClient()
@@ -1025,7 +1026,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1037,7 +1038,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1050,7 +1051,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1062,7 +1063,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1075,7 +1076,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "")
 				.addData("agent_port", "3457")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1088,7 +1089,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", " ")
 				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1101,7 +1102,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "127.1.2.300")
 				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1114,7 +1115,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1127,7 +1128,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1140,7 +1141,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "65536")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1153,7 +1154,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "")
 				.addData("source_id", "")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1166,7 +1167,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", " ")
 				.addData("source_id", " ")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1205,7 +1206,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.55")
 				.addData("agent_port", "3459")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1218,7 +1219,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45678")
 				.addData("source_id", SourceId)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1231,7 +1232,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_ip", "10.71.4.52")
 				.addData("agent_port", "45689")
 				.addData("source_id", SourceId2)
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -1256,10 +1257,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 这里list集合只有一条数据
 		assertThat(agentInfo.get("agent_ip"), is("10.71.4.51"));
 		assertThat(agentInfo.get("agent_port"), is("3451"));
-		assertThat(agentInfo.get("agent_name"), is("sjkAgent"));
-		assertThat(agentInfo.get("user_id").toString(), is(String.valueOf(UserId)));
+		assertThat(agentInfo.get("agent_name"), is("sjkAgent" + THREAD_ID));
+		assertThat(agentInfo.get("user_id").toString(), is(String.valueOf(USER_ID)));
 		assertThat(agentInfo.get("agent_id").toString(), is(String.valueOf(DBAgentId)));
-		assertThat(agentInfo.get("user_name"), is("数据源agent测试用户"));
+		assertThat(agentInfo.get("user_name"), is("数据源agent测试用户" + THREAD_ID));
 		// 2.错误的数据访问1，查询agent_info表数据，agent_id是一个不存在的数据
 		bodyString = new HttpClient().addData("agent_id", 100009L)
 				.addData("agent_type", AgentType.ShuJuKu.getCode())

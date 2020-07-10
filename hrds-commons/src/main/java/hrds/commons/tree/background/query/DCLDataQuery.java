@@ -158,7 +158,7 @@ public class DCLDataQuery {
             asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM data_store_reg t1 JOIN database_set t2 ON" +
                     " t1.database_id = t2.database_id JOIN collect_job_classify t3 ON" +
                     " t3.classify_id = t2.classify_id JOIN source_relation_dep t4 ON t1.source_id = t4.source_id "
-                + " WHERE t1.collect_type = ?");
+                    + " WHERE t1.collect_type = ?");
         } else {
             asmSql.addSql("SELECT t2.task_name,t1.*,t3.* FROM data_store_reg t1 JOIN database_set t2 ON" +
                     " t1.database_id = t2.database_id JOIN collect_job_classify t3 ON" +
@@ -187,13 +187,9 @@ public class DCLDataQuery {
     @Param(name = "file_id", desc = "表源属性id", range = "String字符串,唯一")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static Map<String, Object> getDCLBatchTableInfo(String file_id) {
-        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
-        asmSql.addSql("SELECT dsr.file_id,ti.table_ch_name,ti.table_name,ti.remark,ti.table_id,dsr.source_id,dsr" +
-                ".agent_id,ti.database_id,dsr.original_update_date FROM data_store_reg dsr JOIN table_info ti" +
-                " ON dsr.database_id = ti.database_id AND dsr.table_name = ti.table_name WHERE dsr.file_id =?");
-        asmSql.addParam(file_id);
-        return Dbo.queryOneObject(asmSql.sql(), asmSql.params());
+        return Dbo.queryOneObject("SELECT dsr.*,ti.* FROM " + Data_store_reg.TableName + " dsr" +
+                " JOIN " + Table_info.TableName + " ti ON dsr.database_id = ti.database_id AND dsr.table_name = ti.table_name" +
+                " WHERE dsr.file_id =?", file_id);
     }
 
     @Method(desc = "根据表id获取DCL层批量表字段",

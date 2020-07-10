@@ -45,14 +45,14 @@ public class CollectConfActionTest extends WebBaseTestCase {
 	// 已经部署过得agent
 	private static final long AGENT_ID = agentInitConfig.getLong("agent_id");
 	// 数据字典目录
-	private static final File DICTINARYFILE = FileUtil.getFile(System.getProperty("user_dir")
+	private final File DICTINARYFILE = FileUtil.getFile(System.getProperty("user_dir")
 			+ "/hrds_B/src/test/java/hrds/b/biz/agent/semistructured/dictionary");
 	// 无数据字典时的数据日期
-	private static final String DATA_DATE = "20200601";
+	private final String DATA_DATE = "20200601";
 	//对象采集设置表id
-	private static final long ODC_ID = PrimayKeyGener.getNextId();
+	private final long ODC_ID = PrimayKeyGener.getNextId();
 	//获取当前线程ID
-	private static final long THREAD_ID = Thread.currentThread().getId() * 1000000;
+	private final long THREAD_ID = Thread.currentThread().getId() * 1000000;
 
 	@Before
 	public void before() {
