@@ -114,7 +114,7 @@ subprojects {
         // sql解析
         compile group: 'com.alibaba', name: 'druid', version: '1.1.16'
         // json解析
-        compile group: 'com.alibaba', name: 'fastjson', version: '1.2.60'
+        compile group: 'com.alibaba', name: 'fastjson', version: '1.2.72'
         // office解析
         compile group: 'org.apache.poi', name: 'poi', version: '3.12'
         compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.12'
