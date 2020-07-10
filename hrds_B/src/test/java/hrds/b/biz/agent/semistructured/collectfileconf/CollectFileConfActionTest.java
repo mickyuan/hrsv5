@@ -9,7 +9,6 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.semistructured.InitObjectCollectData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.Object_collect_struct;
 import hrds.commons.entity.Object_collect_task;

@@ -1,4 +1,4 @@
-package hrds.b.biz.agent.semistructured;
+package hrds.b.biz.agent.semistructured.collectfileconf;
 
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;

@@ -1136,6 +1136,7 @@ public class JobConfiguration extends BaseAction {
 	@Param(name = "resource_type", desc = "资源类型的数组", range = "无限制")
 	public void batchDeleteEtlResource(String etl_sys_cd, String[] resource_type) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		// fixme 判断资源是否已经被使用
 		// 2.遍历所有资源类型
 		for (String resourceType : resource_type) {
 			// 3.循环删除作业资源定义信息
