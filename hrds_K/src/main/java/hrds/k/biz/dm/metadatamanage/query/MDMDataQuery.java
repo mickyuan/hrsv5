@@ -25,9 +25,9 @@ public class MDMDataQuery {
                         " JOIN " + Table_storage_info.TableName + " tsi ON tsi.table_id = ti.table_id" +
                         " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.tab_id = tsi.storage_id" +
                         " JOIN " + Data_store_layer.TableName + " dsl ON dsl.dsl_id = dtrs.dsl_id" +
-                        " WHERE dtrs.data_source in (?,?,?) GROUP BY dsl.dsl_id",
+                        " WHERE dtrs.data_source in (?,?,?) AND is_successful=? GROUP BY dsl.dsl_id",
                 StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode(),
-                StoreLayerDataSource.OBJ.getCode());
+                StoreLayerDataSource.OBJ.getCode(), JobExecuteState.WanCheng.getCode());
     }
 
     @Method(desc = "数据管控-源数据列表获取DCL数据存储层下的表信息",
@@ -86,9 +86,10 @@ public class MDMDataQuery {
     public static List<Data_store_layer> getDMLExistTableDataStorageLayers() {
         //获取数据存储层信息列表
         return Dbo.queryList(Data_store_layer.class, "SELECT dsl.* FROM " + Data_store_layer.TableName + " dsl" +
-                " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.dsl_id = dsl.dsl_id" +
-                " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = dtrs.tab_id" +
-                " WHERE dtrs.data_source in (?) GROUP BY dsl.dsl_id", StoreLayerDataSource.DM.getCode());
+                        " JOIN " + Dtab_relation_store.TableName + " dtrs ON dtrs.dsl_id = dsl.dsl_id" +
+                        " JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id = dtrs.tab_id" +
+                        " WHERE dtrs.data_source in (?) AND is_successful=? GROUP BY dsl.dsl_id", StoreLayerDataSource.DM.getCode(),
+                JobExecuteState.WanCheng.getCode());
     }
 
     @Method(desc = "数据管控-源数据列表获取DML数据存储层下的表信息", logicStep = "数据管控-源数据列表获取数据存储层下的表信息")
