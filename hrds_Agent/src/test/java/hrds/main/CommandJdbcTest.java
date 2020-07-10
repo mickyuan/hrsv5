@@ -602,7 +602,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test25() {
 		//获取路径
 		JSONArray multi_landing_directory = JSONArray.parseArray
-				(agentInitConfig.getString("multi_landing_directory"));
+				(Constant.TESTINITCONFIG.getString("multi_landing_directory"));
 		//获取单表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
 		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
@@ -673,7 +673,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	public void test26() {
 		//获取路径
 		JSONArray multi_landing_directory = JSONArray.parseArray
-				(agentInitConfig.getString("multi_landing_directory"));
+				(Constant.TESTINITCONFIG.getString("multi_landing_directory"));
 		//获取多表的页面配置基本信息
 		SourceDataConfBean sourceDataConfBean = getMultiTableSourceDataConfBean();
 		//获取单表的页面配置基本信息
@@ -1717,7 +1717,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	 * @return 数据库抽取源数据读取配置信息
 	 */
 	private SourceDataConfBean getSingleTableSourceDataConfBean() {
-		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
+		String taskInfo = FileUtil.readFile2String(new File(Constant.TESTINITCONFIG.
 				getString("singleJdbcTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
@@ -1730,7 +1730,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	 * @return 数据库抽取源数据读取配置信息
 	 */
 	private SourceDataConfBean getMultiTableSourceDataConfBean() {
-		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
+		String taskInfo = FileUtil.readFile2String(new File(Constant.TESTINITCONFIG.
 				getString("multiJdbcTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
@@ -1744,7 +1744,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	 * @return 数据库抽取源数据读取配置信息
 	 */
 	private SourceDataConfBean replaceTestInfoConf(SourceDataConfBean sourceDataConfBean) {
-		JSONObject object = JSONObject.parseObject(agentInitConfig.getString("source_database_info"));
+		JSONObject object = JSONObject.parseObject(Constant.TESTINITCONFIG.getString("source_database_info"));
 		sourceDataConfBean.setDatabase_drive(object.getString("database_drive"));
 		sourceDataConfBean.setDatabase_type(object.getString("database_type"));
 		sourceDataConfBean.setJdbc_url(object.getString("jdbc_url"));
@@ -1757,7 +1757,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 		for (CollectTableBean collectTableBean : collectTableBeanArray) {
 			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 			for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-				data_extraction_def.setPlane_url(agentInitConfig.getString("landing_directory"));
+				data_extraction_def.setPlane_url(Constant.TESTINITCONFIG.getString("landing_directory"));
 			}
 		}
 		return sourceDataConfBean;

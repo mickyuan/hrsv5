@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-@DocClass(desc = "数据库直连采集数据卸数阶段", author = "WangZhengcheng")
+@DocClass(desc = "数据库抽数数据卸数阶段", author = "WangZhengcheng")
 public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUnloadDataStageImpl.class);

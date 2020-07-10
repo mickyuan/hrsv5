@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 
-@DocClass(desc = "完成数据库直连采集的作业实现", author = "WangZhengcheng")
+@DocClass(desc = "完成数据库抽取的作业实现", author = "WangZhengcheng")
 public class DataBaseJobImpl implements JobInterface {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
 

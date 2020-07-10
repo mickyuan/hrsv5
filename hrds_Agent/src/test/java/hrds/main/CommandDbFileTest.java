@@ -15,6 +15,7 @@ import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.utils.Constant;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.Test;
 
@@ -427,7 +428,7 @@ public class CommandDbFileTest extends WebBaseTestCase {
 	 * @return 数据库抽取源数据读取配置信息
 	 */
 	private SourceDataConfBean getSingleTableSourceDataConfBean() {
-		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
+		String taskInfo = FileUtil.readFile2String(new File(Constant.TESTINITCONFIG.
 				getString("singleDbTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		return replaceTestInfoConf(JSONObject.parseObject(taskInfo, SourceDataConfBean.class));
@@ -439,7 +440,7 @@ public class CommandDbFileTest extends WebBaseTestCase {
 	 * @return 数据库抽取源数据读取配置信息
 	 */
 	private SourceDataConfBean getMultiTableSourceDataConfBean() {
-		String taskInfo = FileUtil.readFile2String(new File(agentInitConfig.
+		String taskInfo = FileUtil.readFile2String(new File(Constant.TESTINITCONFIG.
 				getString("multiDbTableSourceDataConfPath")));
 		//对配置信息解压缩并反序列化为SourceDataConfBean对象
 		return replaceTestInfoConf(JSONObject.parseObject(taskInfo, SourceDataConfBean.class));
@@ -452,7 +453,7 @@ public class CommandDbFileTest extends WebBaseTestCase {
 	 * @return 数据库抽取源数据读取配置信息
 	 */
 	private SourceDataConfBean replaceTestInfoConf(SourceDataConfBean sourceDataConfBean) {
-		List<DataStoreConfBean> dataStoreConfBean = JSONArray.parseArray(agentInitConfig.
+		List<DataStoreConfBean> dataStoreConfBean = JSONArray.parseArray(Constant.TESTINITCONFIG.
 				getString("dataStoreConfBean"), DataStoreConfBean.class);
 		for (CollectTableBean collectTableBean : sourceDataConfBean.getCollectTableBeanArray()) {
 			collectTableBean.setDataStoreConfBean(dataStoreConfBean);

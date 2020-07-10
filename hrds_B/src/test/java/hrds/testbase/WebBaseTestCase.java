@@ -1,20 +1,15 @@
 package hrds.testbase;
 
-import fd.ng.core.conf.ConfFileLoader;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.core.yaml.YamlFactory;
-import fd.ng.core.yaml.YamlMap;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.test.junit.FdBaseTestCase;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 
 public class WebBaseTestCase extends FdBaseTestCase {
-
-	//读取测试用例初始化数据
-	public static final YamlMap agentInitConfig = YamlFactory.load(ConfFileLoader.getConfFile("testinfo")).asMap();
 
 	protected String getHost() {
 		return (StringUtil.isBlank(HttpServerConf.confBean.getHost()) ? "localhost" : HttpServerConf.confBean.getHost());
@@ -46,7 +41,7 @@ public class WebBaseTestCase extends FdBaseTestCase {
 
 	protected String getActionPath() {
 		return getUrlActionPattern()
-			+ "/" + this.getClass().getPackage().getName().replace(".", "/");
+				+ "/" + this.getClass().getPackage().getName().replace(".", "/");
 	}
 
 	protected String getActionUrl(String actionMethodName) {
@@ -56,10 +51,10 @@ public class WebBaseTestCase extends FdBaseTestCase {
 
 	public static ActionResult login() {
 		String responseValue = new HttpClient().buildSession()
-			.addData("user_id", agentInitConfig.getString("user_id", "2001"))
-			.addData("password", agentInitConfig.getString("password", "1"))
-			.post(agentInitConfig.getString("login_url", "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login"))
-			.getBodyString();
+				.addData("user_id", Constant.TESTINITCONFIG.getString("user_id", "2001"))
+				.addData("password", Constant.TESTINITCONFIG.getString("password", "1"))
+				.post(Constant.TESTINITCONFIG.getString("login_url", "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login"))
+				.getBodyString();
 		return JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(() -> new BusinessException("连接失败"));
 	}
 }

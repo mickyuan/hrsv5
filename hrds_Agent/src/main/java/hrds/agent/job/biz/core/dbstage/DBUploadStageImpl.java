@@ -14,7 +14,7 @@ import hrds.commons.codes.AgentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@DocClass(desc = "数据库直连采集数据上传阶段", author = "WangZhengcheng")
+@DocClass(desc = "数据库抽数数据上传阶段", author = "WangZhengcheng")
 public class DBUploadStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//卸数到本地的文件绝对路径

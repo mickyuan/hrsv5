@@ -17,6 +17,7 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.File_collect_set;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
@@ -38,17 +39,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class UnstructuredFileCollectActionTest extends WebBaseTestCase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UnstructuredFileCollectActionTest.class);
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = agentInitConfig.getString("login_url", "");
+	private static final String LOGIN_URL = Constant.TESTINITCONFIG.getString("login_url", "");
 	// 请填写已有的已经部署并且启动的一个agent的agent_id
-	private static final long AGENT_ID = agentInitConfig.getLong("agent_id", 0L);
+	private static final long AGENT_ID = Constant.TESTINITCONFIG.getLong("agent_id", 0L);
 	//部署的agent所在机器的操作系统 填写linux或windows
-	private static final String OS_NAME = agentInitConfig.getString("agent_os_name", "");
+	private static final String OS_NAME = Constant.TESTINITCONFIG.getString("agent_os_name", "");
 	//windows上除了C:/下，可以读取的一个目录
-	private static final String WINDOWS_PATH = agentInitConfig.getString("windows_path", "");
+	private static final String WINDOWS_PATH = Constant.TESTINITCONFIG.getString("windows_path", "");
 	//一个已经存在的用户id
-	private static final long USER_ID = agentInitConfig.getLong("user_id", 0L);
+	private static final long USER_ID = Constant.TESTINITCONFIG.getLong("user_id", 0L);
 	//上面用户id所对应的密码
-	private static final String PASSWORD = agentInitConfig.getString("password", "");
+	private static final String PASSWORD = Constant.TESTINITCONFIG.getString("password", "");
 	//当前线程的id
 	private String id = String.valueOf(Thread.currentThread().getId());
 	// 向file_source表中初始化的数据条数
