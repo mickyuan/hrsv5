@@ -28,7 +28,9 @@ public class MDMDataConvertedNodeData {
             map.put("parent_id", DataSourceType.DCL.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
-                    "数据表名称：" + tableInfo.get("table_name"));
+                    "登记表名称：" + tableInfo.get("hyren_name") + "\n" +
+                    "表中文名称：" + tableInfo.get("original_name") + "\n" +
+                    "原始表名称：" + tableInfo.get("table_name"));
             map.put("data_layer", DataSourceType.DCL.getCode());
             map.put("dsl_id", tableInfo.get("dsl_id"));
             map.put("table_name", tableInfo.get("table_name"));
@@ -51,11 +53,13 @@ public class MDMDataConvertedNodeData {
         tableInfos.forEach(tableInfo -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", DataSourceType.DML.getCode() + "_" + tableInfo.get("dsl_id") + "_" + tableInfo.get("datatable_id"));
-            map.put("label", tableInfo.get("datatable_cn_name"));
+            map.put("label", tableInfo.get("datatable_en_name"));
             map.put("parent_id", DataSourceType.DML.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
-                    "数据表名称：" + tableInfo.get("datatable_en_name"));
+                    "登记表名称：" + tableInfo.get("datatable_en_name") + "\n" +
+                    "表中文名称：" + tableInfo.get("datatable_cn_name") + "\n" +
+                    "原始表名称：" + tableInfo.get("datatable_en_name"));
             map.put("data_layer", DataSourceType.DML.getCode());
             map.put("dsl_id", tableInfo.get("dsl_id"));
             map.put("table_name", tableInfo.get("datatable_en_name"));
@@ -82,7 +86,9 @@ public class MDMDataConvertedNodeData {
             map.put("parent_id", DataSourceType.UDL.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
-                    "数据表名称：" + tableInfo.get("table_name"));
+                    "登记表名称：" + tableInfo.get("table_name") + "\n" +
+                    "表中文名称：" + tableInfo.get("ch_name") + "\n" +
+                    "原始表名称：" + tableInfo.get("table_name"));
             map.put("data_layer", DataSourceType.UDL.getCode());
             map.put("dsl_id", tableInfo.get("dsl_id"));
             map.put("table_name", tableInfo.get("table_name"));

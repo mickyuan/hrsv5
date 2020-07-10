@@ -8,6 +8,8 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.JobExecuteState;
+import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.collection.RenameDataTable;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -36,15 +38,16 @@ public class TableMetaInfoTool {
         //根据存储层id,表id和 存储层关系-数据来源 获取数据表的存储关系信息
         Dtab_relation_store dtrs = MDMDataQuery.getDCLTableSpecifyStorageRelationship(dsl_id, dsr);
         //添加回收站表
-        Dq_failure_table dq_failure_table = new Dq_failure_table();
-        dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
-        dq_failure_table.setFile_id(dsr.getTable_id().toString());
-        dq_failure_table.setTable_cn_name(dsr.getOriginal_name());
-        dq_failure_table.setTable_en_name(dsr.getHyren_name());
-        dq_failure_table.setTable_source(DataSourceType.DCL.getCode());
-        dq_failure_table.setTable_meta_info(JsonUtil.toJson(dsr));
-        dq_failure_table.setDsl_id(dsl_id);
-        dq_failure_table.add(db);
+        Dq_failure_table dft = new Dq_failure_table();
+        dft.setFailure_table_id(PrimayKeyGener.getNextId());
+        dft.setFile_id(String.valueOf(dtrs.getTab_id()));
+        dft.setTable_cn_name(dsr.getOriginal_name());
+        dft.setTable_en_name(dsr.getHyren_name());
+        dft.setTable_source(DataSourceType.DCL.getCode());
+        dft.setTable_meta_info(JsonUtil.toJson(dsr));
+        dft.setDsl_id(dtrs.getDsl_id());
+        dft.setData_source(dtrs.getData_source());
+        dft.add(db);
         //删除表该存储层的登记关系信息
         dtrs.delete(db);
         //根据表id获取存储层的登记关系信息列表
@@ -69,15 +72,16 @@ public class TableMetaInfoTool {
         //根据存储层id,表id和 存储层关系-数据来源 获取数据表的存储关系信息
         Dtab_relation_store dtrs = MDMDataQuery.getDMLTableSpecifyStorageRelationship(dsl_id, dm_datatable);
         //添加到回收站表
-        Dq_failure_table dq_failure_table = new Dq_failure_table();
-        dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
-        dq_failure_table.setFile_id(datatable_id);
-        dq_failure_table.setTable_cn_name(dm_datatable.getDatatable_cn_name());
-        dq_failure_table.setTable_en_name(dm_datatable.getDatatable_en_name());
-        dq_failure_table.setTable_source(DataSourceType.DML.getCode());
-        dq_failure_table.setTable_meta_info(JsonUtil.toJson(dm_datatable));
-        dq_failure_table.setDsl_id(dsl_id);
-        dq_failure_table.add(db);
+        Dq_failure_table dft = new Dq_failure_table();
+        dft.setFailure_table_id(PrimayKeyGener.getNextId());
+        dft.setFile_id(String.valueOf(dtrs.getTab_id()));
+        dft.setTable_cn_name(dm_datatable.getDatatable_cn_name());
+        dft.setTable_en_name(dm_datatable.getDatatable_en_name());
+        dft.setTable_source(DataSourceType.DML.getCode());
+        dft.setTable_meta_info(JsonUtil.toJson(dm_datatable));
+        dft.setDsl_id(dtrs.getDsl_id());
+        dft.setData_source(dtrs.getData_source());
+        dft.add(db);
         //删除表该存储层的登记关系信息
         dtrs.delete(db);
         //根据表id获取存储层的登记关系信息列表
@@ -100,15 +104,16 @@ public class TableMetaInfoTool {
         //重命名数据层表
         RenameDataTable.renameTableByDataLayer(db, dsl_id, Constant.DM_SET_INVALID_TABLE, "", di3.getTable_name());
         //添加到回收站表
-        Dq_failure_table dq_failure_table = new Dq_failure_table();
-        dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
-        dq_failure_table.setFile_id(String.valueOf(di3.getRecord_id()));
-        dq_failure_table.setTable_cn_name(di3.getTable_name());
-        dq_failure_table.setTable_en_name(di3.getTable_name());
-        dq_failure_table.setTable_source(DataSourceType.DQC.getCode());
-        dq_failure_table.setTable_meta_info(JsonUtil.toJson(di3));
-        dq_failure_table.setDsl_id(dsl_id);
-        dq_failure_table.add(db);
+        Dq_failure_table dft = new Dq_failure_table();
+        dft.setFailure_table_id(PrimayKeyGener.getNextId());
+        dft.setFile_id(String.valueOf(di3.getRecord_id()));
+        dft.setTable_cn_name(di3.getTable_name());
+        dft.setTable_en_name(di3.getTable_name());
+        dft.setTable_source(DataSourceType.DQC.getCode());
+        dft.setTable_meta_info(JsonUtil.toJson(di3));
+        dft.setData_source(StoreLayerDataSource.DQ.getCode());
+        dft.setDsl_id(dsl_id);
+        dft.add(db);
         //删除源表的数据
         MDMDataQuery.deleteDQCDqIndex3record(String.valueOf(di3.getRecord_id()));
     }
@@ -124,18 +129,27 @@ public class TableMetaInfoTool {
         IOnWayCtrl.checkExistsTask(dti.getTable_name(), DataSourceType.UDL.getCode(), db);
         //重命名数据层表
         RenameDataTable.renameTableByDataLayer(db, dsl_id, Constant.DM_SET_INVALID_TABLE, "", dti.getTable_name());
+        //根据存储层id,表id和 存储层关系-数据来源 获取数据表的存储关系信息
+        Dtab_relation_store dtrs = MDMDataQuery.getUDLTableSpecifyStorageRelationship(dsl_id, dti);
         //添加到回收站表
-        Dq_failure_table dq_failure_table = new Dq_failure_table();
-        dq_failure_table.setFailure_table_id(PrimayKeyGener.getNextId());
-        dq_failure_table.setFile_id(String.valueOf(dti.getTable_id()));
-        dq_failure_table.setTable_cn_name(dti.getCh_name());
-        dq_failure_table.setTable_en_name(dti.getTable_name());
-        dq_failure_table.setTable_source(DataSourceType.UDL.getCode());
-        dq_failure_table.setTable_meta_info(JsonUtil.toJson(dti));
-        dq_failure_table.setDsl_id(dsl_id);
-        dq_failure_table.add(db);
-        //删除源表的数据
-        MDMDataQuery.deleteUDLDqTableInfo(dti.getTable_id());
+        Dq_failure_table dft = new Dq_failure_table();
+        dft.setFailure_table_id(PrimayKeyGener.getNextId());
+        dft.setFile_id(String.valueOf(dtrs.getTab_id()));
+        dft.setTable_cn_name(dti.getCh_name());
+        dft.setTable_en_name(dti.getTable_name());
+        dft.setTable_source(DataSourceType.UDL.getCode());
+        dft.setTable_meta_info(JsonUtil.toJson(dti));
+        dft.setDsl_id(dtrs.getDsl_id());
+        dft.setData_source(dtrs.getData_source());
+        dft.add(db);
+        //删除表该存储层的登记关系信息
+        dtrs.delete(db);
+        //根据表id获取存储层的登记关系信息列表
+        List<Dtab_relation_store> dtrs_list = MDMDataQuery.getUDLTableStorageRelationships(dti);
+        //如果表的存储层登记关系信息为空,则删除源表的数据
+        if (dtrs_list.isEmpty()) {
+            MDMDataQuery.deleteUDLDqTableInfo(dti.getTable_id());
+        }
     }
 
     @Method(desc = "数据管控-恢复 DCL 层批量数据下表元信息", logicStep = "数据管控-恢复 DCL 层批量数据下表元信息")
@@ -147,17 +161,22 @@ public class TableMetaInfoTool {
         Data_store_reg dsr = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
                 Data_store_reg.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dsr) {
+            //根据数据层id恢复 DCL 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dsr.getHyren_name());
+            //恢复表存储层登记关系
+            Dtab_relation_store dtrs = new Dtab_relation_store();
+            dtrs.setTab_id(dqt.getFile_id());
+            dtrs.setDsl_id(dqt.getDsl_id());
+            dtrs.setIs_successful(JobExecuteState.WanCheng.getCode());
+            dtrs.setData_source(dqt.getData_source());
+            dtrs.add(db);
             //校验数据DCL层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Data_store_reg.TableName + " where hyren_name=?",
                     dsr.getHyren_name()).orElseThrow(() -> new BusinessException("校验DCL表层登记信息的SQL错误")) == 1;
-            //恢复存储层表信息
-            if (boo) {
-                throw new BusinessException("恢复的数据表已经存在!");
+            //如果表登记信息不存在,则添加登记信息
+            if (!boo) {
+                dsr.add(db);
             }
-            //根据数据层id恢复 DCL 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dsr.getHyren_name());
-            //恢复表元信息
-            dsr.add(db);
         }
     }
 
@@ -170,18 +189,22 @@ public class TableMetaInfoTool {
         Dm_datatable dmd = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
                 Dm_datatable.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dmd) {
-            //校验数据DCL层登记信息是否存在
-            boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dm_datatable.TableName + " where " +
-                    "datatable_en_name=?", dmd.getDatatable_en_name())
-                    .orElseThrow(() -> new BusinessException("校验DML表层登记信息的SQL错误")) == 1;
-            //恢复存储层表信息
-            if (boo) {
-                throw new BusinessException("恢复的数据表已经存在!");
-            }
             //根据数据层id恢复 DML 数据层对应存储层下的数据表
             RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dmd.getDatatable_en_name());
-            //恢复表元信息
-            dmd.add(db);
+            //恢复表存储层登记关系
+            Dtab_relation_store dtrs = new Dtab_relation_store();
+            dtrs.setTab_id(dqt.getFile_id());
+            dtrs.setDsl_id(dqt.getDsl_id());
+            dtrs.setIs_successful(JobExecuteState.WanCheng.getCode());
+            dtrs.setData_source(dqt.getData_source());
+            dtrs.add(db);
+            //校验数据DML层登记信息是否存在
+            boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dm_datatable.TableName + " where datatable_en_name=?",
+                    dmd.getDatatable_en_name()).orElseThrow(() -> new BusinessException("校验DML表层登记信息的SQL错误")) == 1;
+            //如果表登记信息不存在,则添加登记信息
+            if (!boo) {
+                dmd.add(db);
+            }
         }
     }
 
@@ -194,18 +217,16 @@ public class TableMetaInfoTool {
         Dq_index3record di3 = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
                 Dq_index3record.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != di3) {
+            //根据数据层id恢复 DQC 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", di3.getTable_name());
             //校验数据DQC层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dq_index3record.TableName + " where " +
                     "table_name=?", di3.getTable_name())
                     .orElseThrow(() -> new BusinessException("校验DQC表层登记信息的SQL错误")) == 1;
-            //恢复存储层表信息
-            if (boo) {
-                throw new BusinessException("恢复的数据表已经存在!");
+            //如果表登记信息不存在,则添加登记信息
+            if (!boo) {
+                di3.add(db);
             }
-            //根据数据层id恢复 DQC 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", di3.getTable_name());
-            //恢复表元信息
-            di3.add(db);
         }
     }
 
@@ -218,18 +239,16 @@ public class TableMetaInfoTool {
         Dq_table_info dti = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
                 Dq_table_info.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dti) {
+            //根据数据层id恢复 DML 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dti.getTable_name());
             //校验数据UDL层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dq_table_info.TableName + " where " +
                     "table_name=?", dti.getTable_name())
                     .orElseThrow(() -> new BusinessException("校验UDL表层登记信息的SQL错误")) == 1;
-            //恢复存储层表信息
-            if (boo) {
-                throw new BusinessException("恢复的数据表已经存在!");
+            //如果表登记信息不存在,则添加登记信息
+            if (!boo) {
+                dti.add(db);
             }
-            //根据数据层id恢复 DML 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dti.getTable_name());
-            //恢复表元信息
-            dti.add(db);
         }
     }
 

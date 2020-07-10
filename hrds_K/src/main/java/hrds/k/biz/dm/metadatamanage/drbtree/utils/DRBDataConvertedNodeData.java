@@ -28,8 +28,10 @@ public class DRBDataConvertedNodeData {
             map.put("label", table_info.get("table_en_name"));
             map.put("parent_id", dataSourceType.getCode() + "_" + table_info.get("dsl_id"));
             map.put("description", "" +
-                    "表英文名：" + table_info.get("table_en_name") + "\n" +
-                    "表中文名：" + table_info.get("table_cn_name"));
+                    "存储层名称：" + table_info.get("dsl_name") + "\n" +
+                    "登记表名称：" + table_info.get("table_en_name") + "\n" +
+                    "表中文名称：" + table_info.get("table_cn_name") + "\n" +
+                    "原始表名称：" + table_info.get("table_en_name"));
             map.put("data_layer", dataSourceType.getCode());
             map.put("dsl_id", table_info.get("dsl_id"));
             map.put("table_name", table_info.get("table_en_name"));
