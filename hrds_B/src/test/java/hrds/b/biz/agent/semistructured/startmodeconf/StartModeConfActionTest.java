@@ -47,10 +47,11 @@ public class StartModeConfActionTest extends WebBaseTestCase {
 	}
 
 
-	@Method(desc = "获取半结构化采集作业配置", logicStep = "")
+	@Method(desc = "获取半结构化采集作业配置", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.错误的数据访问1，odc不存在")
 	@Test
 	public void getEtlJobConfInfoFromObj() {
-		// 1.正确的数据访问1，无数据字典
+		// 1.正确的数据访问1，数据都有效
 		String bodyString = new HttpClient()
 				.addData("odc_id", initStartModeData.ODC_ID)
 				.post(getActionUrl("getEtlJobConfInfoFromObj"))
@@ -100,7 +101,8 @@ public class StartModeConfActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "获取当前半结构化采集任务下的作业信息", logicStep = "")
+	@Method(desc = "获取当前半结构化采集任务下的作业信息", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.错误的数据访问1，odc不存在")
 	@Test
 	public void getPreviewJob() {
 		// 1.正确的数据访问1，数据都有效
@@ -140,7 +142,8 @@ public class StartModeConfActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "获取任务Agent的部署路径及日志目录", logicStep = "")
+	@Method(desc = "获取任务Agent的部署路径及日志目录", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.错误的数据访问1，odc不存在")
 	@Test
 	public void getAgentPath() {
 		// 1.正确的数据访问1，无数据字典
@@ -168,7 +171,8 @@ public class StartModeConfActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "保存半结构化采集启动方式配置", logicStep = "")
+	@Method(desc = "保存半结构化采集启动方式配置", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.错误的数据访问1，odc不存在")
 	@Test
 	public void saveStartModeConfData() {
 		List<Etl_job_def> etlJobDefList = new ArrayList<>();
@@ -237,5 +241,15 @@ public class StartModeConfActionTest extends WebBaseTestCase {
 			assertThat(etlJobList2.contains(etl_job), is(true));
 			assertThat(etlJobList2.contains(etl_job2), is(true));
 		}
+		// 2.错误的数据访问1，odc_id不存在
+		bodyString = new HttpClient()
+				.addData("odc_id", "111")
+				.addData("etlJobDefs", JsonUtil.toJson(etlJobDefList))
+				.addData("jobStartConfs", JsonUtil.toJson(jobStartConfs))
+				.post(getActionUrl("saveStartModeConfData"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 }
