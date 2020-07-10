@@ -45,7 +45,7 @@ public class CollectConfActionTest extends WebBaseTestCase {
 	// 已经部署过得agent
 	private static final long AGENT_ID = agentInitConfig.getLong("agent_id");
 	// 数据字典目录
-	private static final File DICTINARYFILE = FileUtil.getFile(System.getProperty("user_dir")
+	private final File DICTINARYFILE = FileUtil.getFile(System.getProperty("user_dir")
 			+ "/hrds_B/src/test/java/hrds/b/biz/agent/semistructured/dictionary");
 	// 无数据字典时的数据日期
 	private final String DATA_DATE = "20200601";
