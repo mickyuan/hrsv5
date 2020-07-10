@@ -36,7 +36,7 @@ public class DeleteDataTable {
     @Param(name = "tableName", desc = "查询数据的sql", range = "String类型")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Param(name = "dsl_id", desc = "存储层配置id", range = "long类型")
-    public static void dropTableByDataLayer(String tableName, DatabaseWrapper db, String dsl_id) {
+    public static void dropTableByDataLayer(String tableName, DatabaseWrapper db, long dsl_id) {
         //获取存储层信息
         LayerBean layerBean = Dbo.queryOneObject(LayerBean.class, "select * from " + Data_store_layer.TableName +
                 " where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
