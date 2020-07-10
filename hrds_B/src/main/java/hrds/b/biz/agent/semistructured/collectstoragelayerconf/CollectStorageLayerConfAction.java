@@ -10,6 +10,7 @@ import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.JobExecuteState;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -147,22 +148,14 @@ public class CollectStorageLayerConfAction extends BaseAction {
 							+ " AND data_source = ?",
 					ocs_id, StoreLayerDataSource.OBJ.getCode());
 			// 4.遍历列存储附加信息并保存入库
-			for (Dcol_relation_store dcolRelationStore : dcolRelationStores) {
-				// 6.遍历该列附加信息ID并保存数据字段存储关系入库
-				addDcolRelationStore(dcolRelationStore);
+			for (Dcol_relation_store dcol_relation_store : dcolRelationStores) {
+				Validator.notNull(dcol_relation_store.getDslad_id(), "附加信息ID不能为空");
+				Validator.notNull(dcol_relation_store.getCol_id(), "结构信息ID不能为空");
+				dcol_relation_store.setData_source(StoreLayerDataSource.OBJ.getCode());
+				// 2.新增数据字段存储关系表信息
+				dcol_relation_store.add(Dbo.db());
 			}
 		}
-	}
-
-	@Method(desc = "新增数据字段存储关系表信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.新增数据字段存储关系表信息")
-	@Param(name = "dcol_relation_store", desc = "数据字段存储关系实体对象", range = "与对应数据库表字段规则一致",
-			isBean = true)
-	private void addDcolRelationStore(Dcol_relation_store dcol_relation_store) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		dcol_relation_store.setData_source(StoreLayerDataSource.OBJ.getCode());
-		// 2.新增数据字段存储关系表信息
-		dcol_relation_store.add(Dbo.db());
 	}
 
 	@Method(desc = "在配置字段存储信息时，更新字段中文名",
@@ -181,7 +174,7 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		for (Object_collect_struct objectCollectStruct : objectCollectStructs) {
 			DboExecute.updatesOrThrow("更新字段" + objectCollectStruct.getColumn_name() + "的中文名失败",
 					"update " + Object_collect_struct.TableName + " set data_desc=? where struct_id=?",
-					objectCollectStruct.getColumn_name(), objectCollectStruct.getStruct_id());
+					objectCollectStruct.getData_desc(), objectCollectStruct.getStruct_id());
 		}
 	}
 
@@ -222,7 +215,7 @@ public class CollectStorageLayerConfAction extends BaseAction {
 			Validator.notNull(dtabRelationStore.getDsl_id(), "第" + (i + 1) + "张表未选择存储层");
 			Validator.notNull(dtabRelationStore.getTab_id(), "第" + (i + 1) + "张表ID为空");
 			dtabRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
-			dtabRelationStore.setIs_successful(IsFlag.Fou.getCode());
+			dtabRelationStore.setIs_successful(JobExecuteState.DengDai.getCode());
 			// 7.循环新增数据表存储关系表信息入库
 			dtabRelationStore.add(Dbo.db());
 		}
@@ -250,11 +243,11 @@ public class CollectStorageLayerConfAction extends BaseAction {
 					"保存第" + (i + 1) + "张表的表中文名必须填写");
 			// 3、遍历集合，更新每张表的中文名
 			DboExecute.updatesOrThrow(
-					"保存第" + i + "张表名称信息失败",
+					"保存第" + (i + 1) + "张表名称信息失败",
 					"update " + Object_collect_task.TableName + " set zh_name = ? " +
 							" where ocs_id = ? and en_name=?",
-					object_collect_task.getEn_name(), object_collect_task.getOcs_id(),
-					object_collect_task.getZh_name());
+					object_collect_task.getZh_name(), object_collect_task.getOcs_id(),
+					object_collect_task.getEn_name());
 		}
 	}
 
