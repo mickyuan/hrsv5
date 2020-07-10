@@ -6,7 +6,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.b.biz.agent.unstructuredfilecollect.UnstructuredFileCollectActionTest;
 import hrds.commons.codes.*;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
