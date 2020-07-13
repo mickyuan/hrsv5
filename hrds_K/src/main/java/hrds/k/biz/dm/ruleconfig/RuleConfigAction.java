@@ -309,7 +309,7 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "获取指标3保存的结果数据,只取10条", logicStep = "获取指标3保存的结果数据,只取10条")
     @Param(name = "task_id", desc = "任务标号", range = "long类型")
     @Return(desc = "指标3保存的结果数据,只取10条", range = "指标3保存的结果数据,只取10条")
-    private List<Map<String, Object>> getCheckIndex3(long task_id) {
+    public List<Map<String, Object>> getCheckIndex3(long task_id) {
         //设置 Dq_index3record 对象
         Dq_index3record dq_index3record = new Dq_index3record();
         dq_index3record.setTask_id(task_id);
