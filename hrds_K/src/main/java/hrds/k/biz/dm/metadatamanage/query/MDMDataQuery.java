@@ -185,8 +185,8 @@ public class MDMDataQuery {
         return Dbo.queryOneObject(Dtab_relation_store.class, "SELECT dtrs.* from " + Data_store_layer.TableName + " dsl" +
                         " left join " + Dtab_relation_store.TableName + " dtrs on dsl.dsl_id=dtrs.dsl_id" +
                         " left join " + Dq_table_info.TableName + " dti on dti.table_id=dtrs.tab_id" +
-                        " where dsl.dsl_id=? and dti.table_id and dtrs.data_source in (?)",
-                dsl_id, dti.getTable_name(), StoreLayerDataSource.UD.getCode())
+                        " where dsl.dsl_id=? and dti.table_id=? and dtrs.data_source in (?)",
+                dsl_id, dti.getTable_id(), StoreLayerDataSource.UD.getCode())
                 .orElseThrow(() -> (new BusinessException("根据存储层id,表id和 存储层关系-数据来源 获取数据表的存储关系信息的SQL出错!")));
     }
 
@@ -197,7 +197,7 @@ public class MDMDataQuery {
         return Dbo.queryList(Dtab_relation_store.class, "SELECT dtrs.* from " + Data_store_layer.TableName + " dsl" +
                         " left join " + Dtab_relation_store.TableName + " dtrs on dsl.dsl_id=dtrs.dsl_id" +
                         " left join " + Dq_table_info.TableName + " dti on dti.table_id=dtrs.tab_id" +
-                        " where dti.table_id and dtrs.data_source in (?)",
+                        " where dti.table_id=? and dtrs.data_source in (?)",
                 dti.getTable_id(), StoreLayerDataSource.UD.getCode()
         );
     }
