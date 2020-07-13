@@ -479,7 +479,7 @@ public class StoDestStepConfAction extends BaseAction {
 		// 4、在字段存储信息表中，关联数据存储附加信息表，找到该表中的特殊字段，根据列ID和结果集3进行匹配，最终形成结果集4
 		Result resultThree =
 			Dbo.queryResult(
-				"select csi.column_id, dsla.dsla_storelayer, csi_number from "
+				"select csi.col_id column_id, dsla.dsla_storelayer, csi_number from "
 					+ Dcol_relation_store.TableName
 					+ " csi left join "
 					+ Data_store_layer_added.TableName
