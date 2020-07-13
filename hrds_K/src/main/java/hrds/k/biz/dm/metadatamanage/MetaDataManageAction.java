@@ -275,10 +275,10 @@ public class MetaDataManageAction extends BaseAction {
     @Method(desc = "恢复回收站数据层下所有表", logicStep = "恢复回收站所有表")
     public void restoreDRBAllTable() {
         //获取回收站所有表信息
-        List<Dq_failure_table> allTableInfos = DRBDataQuery.getAllTableInfos();
+        List<Dq_failure_table> dq_failure_table_s = DRBDataQuery.getAllTableInfos();
         //循环每一张表逐条恢复
-        allTableInfos.forEach(
-                tableInfo -> restoreDRBTable(tableInfo.getTable_source(), tableInfo.getFailure_table_id()));
+        dq_failure_table_s.forEach(
+                dq_failure_table -> restoreDRBTable(dq_failure_table.getTable_source(), dq_failure_table.getFailure_table_id()));
     }
 
     @Method(desc = "表放入回收站(表设置为无效)", logicStep = "表放入回收站(表设置为无效)")
@@ -352,9 +352,29 @@ public class MetaDataManageAction extends BaseAction {
             } else if (dataSourceType == DataSourceType.AML) {
                 throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
             } else if (dataSourceType == DataSourceType.DQC) {
-                throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
+                //获取DQC下存在表的所有数据存储层
+                List<Data_store_layer> dataStorageLayers = DQCDataQuery.getDQCDataInfos();
+                //获取所有表的信息
+                dataStorageLayers.forEach(data_store_layer -> {
+                    //获取存储层下表信息
+                    DQCDataQuery.getDQCTableInfos(data_store_layer.getDsl_id()).forEach(di3 -> {
+                        //根据查询到的表信息将表放入回收站
+                        tableSetToInvalid(dataSourceType.getCode(), data_store_layer.getDsl_id(),
+                                di3.get("record_id").toString());
+                    });
+                });
             } else if (dataSourceType == DataSourceType.UDL) {
-                throw new BusinessException(dataSourceType.getCode() + "层表放入回收站未实现!");
+                //获取UDL下存在表的所有数据存储层
+                List<Data_store_layer> dataStorageLayers = MDMDataQuery.getUDLDataStorageLayers();
+                //获取所有表的信息
+                dataStorageLayers.forEach(data_store_layer -> {
+                    //获取存储层下表信息
+                    MDMDataQuery.getUDLStorageLayerTableInfos(data_store_layer).forEach(dq_table_info -> {
+                        //根据查询到的表信息将表放入回收站
+                        tableSetToInvalid(dataSourceType.getCode(), data_store_layer.getDsl_id(),
+                                dq_table_info.get("table_id").toString());
+                    });
+                });
             } else {
                 throw new BusinessException("未找到匹配的存储层!");
             }
@@ -362,7 +382,6 @@ public class MetaDataManageAction extends BaseAction {
     }
 
     @Method(desc = "数据管控-彻底删除表", logicStep = "数据管控-彻底删除表")
-    @Param(name = "dsl_id", desc = "所属存储层id", range = "long 类型")
     @Param(name = "file_id", desc = "回收站表id", range = "long 类型")
     public void removeCompletelyTable(long file_id) {
         //获取 Dq_failure_table
@@ -371,13 +390,24 @@ public class MetaDataManageAction extends BaseAction {
         if (StringUtil.isBlank(dft.getFailure_table_id().toString())) {
             throw new BusinessException("回收站的该表已经不存在!");
         }
-        //彻底删除各存储层中表
+        //设置失效表的表名
         String invalid_table_name = Constant.DQC_INVALID_TABLE + dft.getTable_en_name();
-        for (String dsl_id : dft.getRemark().split(",")) {
-            DeleteDataTable.dropTableByDataLayer(invalid_table_name, Dbo.db(), dsl_id);
-        }
         //将失效登记表的数据删除
         DRBDataQuery.deleteDqFailureTableInfo(dft.getFailure_table_id());
+        //表是否在配置库登记记录中存在
+        boolean isExist = DataTableUtil.tableIsRepeat(dft.getTable_en_name());
+        //表是否在回收站登记记录中存在
+        long count = Dbo.queryNumber("SELECT COUNT(table_en_name) FROM " + Dq_failure_table.TableName + " WHERE table_en_name=?",
+                dft.getTable_en_name()).orElseThrow(() -> new BusinessException("检查规则reg_num否存在的SQL错误"));
+        //如果该表的登记记录在配置库中不存在,并且该表信息在回收站登记信息中不存在,则删除该表对应的存储信息(对应的关联表记录)
+        if (!isExist && count == 0) {
+            //删除对应的关联表记录
+            StoreLayerDataSource dataSource = StoreLayerDataSource.ofEnumByCode(dft.getData_source());
+            TableMetaInfoTool.deleteTableRegistrationRecordData(dataSource, dft.getFile_id());
+        }
+        //彻底删除存储层中的数表
+        DeleteDataTable.dropTableByDataLayer(invalid_table_name, Dbo.db(), dft.getDsl_id());
+        logger.info("彻底删除存储层中相关的数表完成! table_name=" + invalid_table_name);
     }
 
     @Method(desc = "数据管控-彻底删除所有表",
@@ -386,12 +416,7 @@ public class MetaDataManageAction extends BaseAction {
         //获取回收站所有表信息
         List<Dq_failure_table> allTableInfos = DRBDataQuery.getAllTableInfos();
         //循环每一张表逐条删除
-        allTableInfos.forEach(dft -> {
-            //删除数据层下数据表
-            DeleteDataTable.dropTableByDataLayer(dft.getTable_en_name(), Dbo.db(), dft.getRemark());
-            //将失效登记表的数据删除
-            DRBDataQuery.deleteDqFailureTableInfo(dft.getFailure_table_id());
-        });
+        allTableInfos.forEach(dft -> removeCompletelyTable(dft.getFailure_table_id()));
     }
 
     @Method(desc = "根据存储层id获取存储层配置信息", logicStep = "根据存储层id获取存储层配置信息")
