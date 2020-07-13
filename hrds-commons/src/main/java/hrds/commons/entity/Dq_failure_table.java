@@ -46,8 +46,8 @@ public class Dq_failure_table extends ProjectTableEntity
 	private Long dsl_id;
 	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> 6-自定义<UD> ",dataType = String.class,required = false)
 	private String data_source;
-	@DocBean(name ="file_id",value="数据表ID:",dataType = String.class,required = true)
-	private String file_id;
+	@DocBean(name ="file_id",value="数据表ID:",dataType = Long.class,required = true)
+	private Long file_id;
 
 	/** 取得：表id */
 	public Long getFailure_table_id(){
@@ -126,11 +126,17 @@ public class Dq_failure_table extends ProjectTableEntity
 		this.data_source=data_source;
 	}
 	/** 取得：数据表ID */
-	public String getFile_id(){
+	public Long getFile_id(){
 		return file_id;
 	}
 	/** 设置：数据表ID */
-	public void setFile_id(String file_id){
+	public void setFile_id(Long file_id){
 		this.file_id=file_id;
+	}
+	/** 设置：数据表ID */
+	public void setFile_id(String file_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(file_id)){
+			this.file_id=new Long(file_id);
+		}
 	}
 }
