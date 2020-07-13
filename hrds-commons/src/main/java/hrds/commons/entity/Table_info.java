@@ -30,6 +30,12 @@ public class Table_info extends ProjectTableEntity
 		__tmpPKS.add("table_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
+	private Long table_id;
+	@DocBean(name ="table_name",value="表名:",dataType = String.class,required = true)
+	private String table_name;
+	@DocBean(name ="table_ch_name",value="中文名称:",dataType = String.class,required = true)
+	private String table_ch_name;
 	@DocBean(name ="table_count",value="记录数(CountNum):10000-1万左右<YiWan> 100000-10万左右<ShiWan> 1000000-100万左右<BaiWan> 10000000-1000万左右<Qianwan> 100000000-亿左右<Yi> 100000001-亿以上<YiYiShang> ",dataType = String.class,required = false)
 	private String table_count;
 	@DocBean(name ="source_tableid",value="源表ID:",dataType = String.class,required = false)
@@ -66,13 +72,37 @@ public class Table_info extends ProjectTableEntity
 	private String is_customize_sql;
 	@DocBean(name ="rec_num_date",value="数据获取时间:",dataType = String.class,required = true)
 	private String rec_num_date;
-	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = true)
-	private Long table_id;
-	@DocBean(name ="table_name",value="表名:",dataType = String.class,required = true)
-	private String table_name;
-	@DocBean(name ="table_ch_name",value="中文名称:",dataType = String.class,required = true)
-	private String table_ch_name;
 
+	/** 取得：表名ID */
+	public Long getTable_id(){
+		return table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(Long table_id){
+		this.table_id=table_id;
+	}
+	/** 设置：表名ID */
+	public void setTable_id(String table_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
+			this.table_id=new Long(table_id);
+		}
+	}
+	/** 取得：表名 */
+	public String getTable_name(){
+		return table_name;
+	}
+	/** 设置：表名 */
+	public void setTable_name(String table_name){
+		this.table_name=table_name;
+	}
+	/** 取得：中文名称 */
+	public String getTable_ch_name(){
+		return table_ch_name;
+	}
+	/** 设置：中文名称 */
+	public void setTable_ch_name(String table_ch_name){
+		this.table_ch_name=table_ch_name;
+	}
 	/** 取得：记录数 */
 	public String getTable_count(){
 		return table_count;
@@ -234,35 +264,5 @@ public class Table_info extends ProjectTableEntity
 	/** 设置：数据获取时间 */
 	public void setRec_num_date(String rec_num_date){
 		this.rec_num_date=rec_num_date;
-	}
-	/** 取得：表名ID */
-	public Long getTable_id(){
-		return table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(Long table_id){
-		this.table_id=table_id;
-	}
-	/** 设置：表名ID */
-	public void setTable_id(String table_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(table_id)){
-			this.table_id=new Long(table_id);
-		}
-	}
-	/** 取得：表名 */
-	public String getTable_name(){
-		return table_name;
-	}
-	/** 设置：表名 */
-	public void setTable_name(String table_name){
-		this.table_name=table_name;
-	}
-	/** 取得：中文名称 */
-	public String getTable_ch_name(){
-		return table_ch_name;
-	}
-	/** 设置：中文名称 */
-	public void setTable_ch_name(String table_ch_name){
-		this.table_ch_name=table_ch_name;
 	}
 }
