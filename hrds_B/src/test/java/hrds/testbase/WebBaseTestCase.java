@@ -7,7 +7,7 @@ import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.test.junit.FdBaseTestCase;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 
 public class WebBaseTestCase extends FdBaseTestCase {
 
@@ -51,9 +51,9 @@ public class WebBaseTestCase extends FdBaseTestCase {
 
 	public static ActionResult login() {
 		String responseValue = new HttpClient().buildSession()
-				.addData("user_id", Constant.TESTINITCONFIG.getString("user_id", "2001"))
-				.addData("password", Constant.TESTINITCONFIG.getString("password", "1"))
-				.post(Constant.TESTINITCONFIG.getString("login_url", "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login"))
+				.addData("user_id", ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"))
+				.addData("password", ParallerTestUtil.TESTINITCONFIG.getString("password", "1"))
+				.post(ParallerTestUtil.TESTINITCONFIG.getString("login_url", "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login"))
 				.getBodyString();
 		return JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(() -> new BusinessException("连接失败"));
 	}

@@ -236,7 +236,4 @@ public class Constant {
 	 */
 	public static final String RXKH = ")";
 
-	//读取测试用例初始化数据
-	public static final YamlMap TESTINITCONFIG = YamlFactory.load(new File(new File(USER_DIR).
-			getParent() + File.separator + "testinfo.conf")).asMap();
 }
