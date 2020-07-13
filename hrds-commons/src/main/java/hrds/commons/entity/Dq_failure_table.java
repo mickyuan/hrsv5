@@ -46,7 +46,7 @@ public class Dq_failure_table extends ProjectTableEntity
 	private String file_id;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;
-	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> ",dataType = String.class,required = false)
+	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> 6-自定义<UD> ",dataType = String.class,required = false)
 	private String data_source;
 
 	/** 取得：表id */
