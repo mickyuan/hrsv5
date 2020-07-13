@@ -9,7 +9,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.Ftp_collect;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
@@ -29,13 +29,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class FtpCollectActionTest extends WebBaseTestCase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FtpCollectActionTest.class);
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = Constant.TESTINITCONFIG.getString("login_url", "");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url", "");
 	// 请填写已有的已经部署并且启动的一个agent的agent_id
-	private static final long AGENT_ID = Constant.TESTINITCONFIG.getLong("agent_id", 0L);
+	private static final long AGENT_ID = ParallerTestUtil.TESTINITCONFIG.getLong("agent_id", 0L);
 	//一个已经存在的用户id
-	private static final long USER_ID = Constant.TESTINITCONFIG.getLong("user_id", 0L);
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 0L);
 	//上面用户id所对应的密码
-	private static final String PASSWORD = Constant.TESTINITCONFIG.getString("password", "");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password", "");
 	//当前线程的id
 	private String id = String.valueOf(Thread.currentThread().getId());
 	//ftp采集设置表id
