@@ -1,8 +1,8 @@
 package hrds.commons.utils;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.yaml.YamlFactory;
-import fd.ng.core.yaml.YamlMap;
+import hrds.commons.codes.CleanType;
 import hrds.commons.codes.FileFormat;
 
 import java.io.File;
@@ -205,7 +205,15 @@ public class Constant {
 	// 作业名称/描述之间的分割符
 	public static final String SPLITTER = "_";
 
-	/*
+	/**
+	 * 表默认清洗顺序
+	 */
+	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER  = new JSONObject();;
+	/**
+	 * 列默认清洗顺序
+	 */
+	public static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER  = new JSONObject();
+	/**
 	 * 数据库抽取卸数下来文件格式对应路径的关系
 	 */
 	static {
@@ -215,6 +223,18 @@ public class Constant {
 		fileFormatMap.put(FileFormat.PARQUET.getCode(), FileFormat.PARQUET.getValue());
 		fileFormatMap.put(FileFormat.ORC.getCode(), FileFormat.ORC.getValue());
 		fileFormatMap.put(FileFormat.SEQUENCEFILE.getCode(), FileFormat.SEQUENCEFILE.getValue());
+
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuHeBing.getCode(), 3);
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 4);
+
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuChaiFen.getCode(), 5);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 6);
 	}
 
 	// 项目bin目录路径 E:\hrsv5\bin
