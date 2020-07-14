@@ -161,19 +161,17 @@ public class TableMetaInfoTool {
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void restoreDCLTableInfo(Dq_failure_table dqt, DatabaseWrapper db) {
+    public static void restoreDCLTableInfo(Dq_failure_table dft, DatabaseWrapper db) {
         //转换Mate信息为Data_store_reg实体对象
-        Data_store_reg dsr = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
+        Data_store_reg dsr = JsonUtil.toObjectSafety(dft.getTable_meta_info(),
                 Data_store_reg.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dsr) {
-            //根据数据层id恢复 DCL 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dsr.getHyren_name());
             //恢复表存储层登记关系
             Dtab_relation_store dtrs = new Dtab_relation_store();
-            dtrs.setTab_id(dqt.getFile_id());
-            dtrs.setDsl_id(dqt.getDsl_id());
+            dtrs.setTab_id(dft.getFile_id());
+            dtrs.setDsl_id(dft.getDsl_id());
             dtrs.setIs_successful(JobExecuteState.WanCheng.getCode());
-            dtrs.setData_source(dqt.getData_source());
+            dtrs.setData_source(dft.getData_source());
             dtrs.add(db);
             //校验数据DCL层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Data_store_reg.TableName + " where hyren_name=?",
@@ -182,6 +180,8 @@ public class TableMetaInfoTool {
             if (!boo) {
                 dsr.add(db);
             }
+            //根据数据层id恢复 DCL 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dft.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dsr.getHyren_name());
         }
     }
 
@@ -189,19 +189,17 @@ public class TableMetaInfoTool {
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void restoreDMLTableInfo(Dq_failure_table dqt, DatabaseWrapper db) {
+    public static void restoreDMLTableInfo(Dq_failure_table dft, DatabaseWrapper db) {
         //转换Mate信息为 Dm_datatable 实体对象
-        Dm_datatable dmd = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
+        Dm_datatable dmd = JsonUtil.toObjectSafety(dft.getTable_meta_info(),
                 Dm_datatable.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dmd) {
-            //根据数据层id恢复 DML 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dmd.getDatatable_en_name());
             //恢复表存储层登记关系
             Dtab_relation_store dtrs = new Dtab_relation_store();
-            dtrs.setTab_id(dqt.getFile_id());
-            dtrs.setDsl_id(dqt.getDsl_id());
+            dtrs.setTab_id(dft.getFile_id());
+            dtrs.setDsl_id(dft.getDsl_id());
             dtrs.setIs_successful(JobExecuteState.WanCheng.getCode());
-            dtrs.setData_source(dqt.getData_source());
+            dtrs.setData_source(dft.getData_source());
             dtrs.add(db);
             //校验数据DML层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dm_datatable.TableName + " where datatable_en_name=?",
@@ -210,6 +208,8 @@ public class TableMetaInfoTool {
             if (!boo) {
                 dmd.add(db);
             }
+            //根据数据层id恢复 DML 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dft.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dmd.getDatatable_en_name());
         }
     }
 
@@ -217,13 +217,11 @@ public class TableMetaInfoTool {
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void restoreDQCTableInfo(Dq_failure_table dqt, DatabaseWrapper db) {
+    public static void restoreDQCTableInfo(Dq_failure_table dft, DatabaseWrapper db) {
         //转换Mate信息为 Data_store_reg 实体对象
-        Dq_index3record di3 = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
+        Dq_index3record di3 = JsonUtil.toObjectSafety(dft.getTable_meta_info(),
                 Dq_index3record.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != di3) {
-            //根据数据层id恢复 DQC 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", di3.getTable_name());
             //校验数据DQC层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dq_index3record.TableName + " where " +
                     "table_name=?", di3.getTable_name())
@@ -232,6 +230,8 @@ public class TableMetaInfoTool {
             if (!boo) {
                 di3.add(db);
             }
+            //根据数据层id恢复 DQC 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dft.getDsl_id(), Constant.DM_RESTORE_TABLE, "", di3.getTable_name());
         }
     }
 
@@ -239,13 +239,18 @@ public class TableMetaInfoTool {
     @Param(name = "dq_failure_table", desc = "Dq_failure_table的实体对象", range = "实体对象", isBean = true)
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static void restoreUDLTableInfo(Dq_failure_table dqt, DatabaseWrapper db) {
+    public static void restoreUDLTableInfo(Dq_failure_table dft, DatabaseWrapper db) {
         //转换Mate信息为 Dq_table_info 实体对象
-        Dq_table_info dti = JsonUtil.toObjectSafety(dqt.getTable_meta_info(),
+        Dq_table_info dti = JsonUtil.toObjectSafety(dft.getTable_meta_info(),
                 Dq_table_info.class).orElseThrow(() -> new BusinessException("类型转换错误,检查Meta的正确性!"));
         if (null != dti) {
-            //根据数据层id恢复 DML 数据层对应存储层下的数据表
-            RenameDataTable.renameTableByDataLayer(db, dqt.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dti.getTable_name());
+            //恢复表存储层登记关系
+            Dtab_relation_store dtrs = new Dtab_relation_store();
+            dtrs.setTab_id(dft.getFile_id());
+            dtrs.setDsl_id(dft.getDsl_id());
+            dtrs.setIs_successful(JobExecuteState.WanCheng.getCode());
+            dtrs.setData_source(dft.getData_source());
+            dtrs.add(db);
             //校验数据UDL层登记信息是否存在
             boolean boo = Dbo.queryNumber(db, "select count(*) from " + Dq_table_info.TableName + " where " +
                     "table_name=?", dti.getTable_name())
@@ -254,6 +259,8 @@ public class TableMetaInfoTool {
             if (!boo) {
                 dti.add(db);
             }
+            //根据数据层id恢复 DML 数据层对应存储层下的数据表
+            RenameDataTable.renameTableByDataLayer(db, dft.getDsl_id(), Constant.DM_RESTORE_TABLE, "", dti.getTable_name());
         }
     }
 
