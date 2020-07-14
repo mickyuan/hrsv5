@@ -5,17 +5,28 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Dq_definition;
+import hrds.commons.entity.Dq_index3record;
 import hrds.commons.entity.Dq_result;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ExcelUtil;
+import hrds.commons.utils.FileDownloadUtil;
 import hrds.k.biz.dm.ruleresults.bean.RuleResultSearchBean;
 import hrds.k.biz.utils.CheckBeanUtil;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,14 +103,12 @@ public class RuleResultsAction extends BaseAction {
     @Return(desc = "规则执行详细信息", range = "规则执行详细信息")
     public Dq_result getRuleDetectDetail(String task_id) {
         //数据校验
-        if (StringUtil.isBlank(task_id)) {
-            throw new BusinessException("查看的任务编号为空!");
-        }
+        Validator.notBlank(task_id, "查看的任务编号为空!");
         //设置查询对象
         Dq_result dq_result = new Dq_result();
         dq_result.setTask_id(task_id);
         //获取本任务的详细信息
-        return Dbo.queryOneObject(Dq_result.class, "SELECT * FROM dq_result WHERE task_id = ?",
+        return Dbo.queryOneObject(Dq_result.class, "SELECT * FROM " + Dq_result.TableName + " WHERE task_id = ?",
                 dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("任务执行详细信息的SQL失败!")));
     }
 
@@ -124,5 +133,70 @@ public class RuleResultsAction extends BaseAction {
         dq_result_map.put("dq_result_s", dq_result_s);
         dq_result_map.put("totalSize", page.getTotalSize());
         return dq_result_map;
+    }
+
+    @Method(desc = "导出指标3结果", logicStep = "导出指标3结果")
+    @Param(name = "task_id", desc = "检查结果id", range = "参数例子")
+    @Return(desc = "结果说明", range = "结果描述")
+    public void exportIndicator3Results(long task_id) {
+        //数据校验
+        Validator.notBlank(String.valueOf(task_id), "导出指标3结果时,需要的任务id为空!");
+        //设置 Dq_index3record
+        Dq_index3record di3 = new Dq_index3record();
+        di3.setTask_id(task_id);
+        //获取指标3存储记录信息
+        di3 = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
+                " where task_id=?", di3.getTask_id()).orElseThrow(() ->
+                (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+        //设置获取数据的sql
+        String sql = "select * from " + di3.getTable_name();
+        //初始化查询结果集
+        List<Map<String, Object>> check_index3_list = new ArrayList<>();
+        //根据指标3存储记录信息获取数据
+        List<String> cols;
+        try {
+            cols = new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) {
+
+                    check_index3_list.add(map);
+                    System.out.println(map);
+                }
+            }.getPageDataLayer(sql, Dbo.db(), 1, 10, di3.getDsl_id());
+        } catch (Exception e) {
+            throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+        }
+        //处理数据集
+        List<Object[]> data_list = new ArrayList<>();
+        check_index3_list.forEach(ci3 -> {
+            Object[] o_arr = new Object[ci3.size()];
+            for (int i = 0; i < cols.size(); i++) {
+                o_arr[i] = ci3.get(cols.get(i));
+            }
+            data_list.add(o_arr);
+        });
+        //得到文件的保存目录
+        String savePath = WebinfoConf.FileUpload_SavedDirName + File.separator + di3.getTable_name() + "." + ExcelUtil.XLSX;
+        File file = new File(savePath);
+        //判断文件是否存在不存在创建
+        if (!file.exists()) {
+            try {
+                if (!file.createNewFile()) {
+                    throw new BusinessException("创建文件失败,请检查是否拥有目录写权限！");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //声明一个工作薄
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        //生成一个sheet页
+        XSSFSheet sheet = workbook.createSheet(di3.getTable_name());
+        //写入数据到workbook对象
+        ExcelUtil.writeDataToWorkbook(cols, data_list, workbook, 0);
+        //写workbook对象到文件
+        ExcelUtil.writeWorkbookToFile(workbook, file);
+        //下载文件
+        FileDownloadUtil.downloadFile(file.getName());
     }
 }
