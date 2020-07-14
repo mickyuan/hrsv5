@@ -12,20 +12,24 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Dq_definition;
 import hrds.commons.entity.Dq_index3record;
 import hrds.commons.entity.Dq_result;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.ExcelUtil;
 import hrds.commons.utils.FileDownloadUtil;
 import hrds.k.biz.dm.ruleresults.bean.RuleResultSearchBean;
 import hrds.k.biz.utils.CheckBeanUtil;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.supercsv.io.CsvListWriter;
+import org.supercsv.prefs.CsvPreference;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +37,8 @@ import java.util.Map;
 
 @DocClass(desc = "数据管控-规则结果", author = "BY-HLL", createdate = "2020/4/11 0013 上午 09:39")
 public class RuleResultsAction extends BaseAction {
+
+    private static final Logger logger = LogManager.getLogger();
 
     @Method(desc = "获取规则检查结果信息", logicStep = "获取规则检查结果信息")
     @Return(desc = "规则检查结果信息", range = "规则检查结果信息")
@@ -145,6 +151,9 @@ public class RuleResultsAction extends BaseAction {
         Dq_index3record di3 = new Dq_index3record();
         di3.setTask_id(task_id);
         //获取指标3存储记录信息
+        Dq_result dr = Dbo.queryOneObject(Dq_result.class, "select * from " + Dq_result.TableName +
+                " where task_id=?", di3.getTask_id()).orElseThrow(() ->
+                (new BusinessException("获取任务指标3存储记录的SQL异常!")));
         di3 = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
                 " where task_id=?", di3.getTask_id()).orElseThrow(() ->
                 (new BusinessException("获取任务指标3存储记录的SQL异常!")));
@@ -160,7 +169,6 @@ public class RuleResultsAction extends BaseAction {
                 public void dealLine(Map<String, Object> map) {
 
                     check_index3_list.add(map);
-                    System.out.println(map);
                 }
             }.getPageDataLayer(sql, Dbo.db(), 1, 10, di3.getDsl_id());
         } catch (Exception e) {
@@ -176,7 +184,8 @@ public class RuleResultsAction extends BaseAction {
             data_list.add(o_arr);
         });
         //得到文件的保存目录
-        String savePath = WebinfoConf.FileUpload_SavedDirName + File.separator + di3.getTable_name() + "." + ExcelUtil.XLSX;
+        String fileName = dr.getTarget_tab() + "_" + dr.getVerify_date() + ".csv";
+        String savePath = WebinfoConf.FileUpload_SavedDirName + File.separator + fileName;
         File file = new File(savePath);
         //判断文件是否存在不存在创建
         if (!file.exists()) {
@@ -188,14 +197,36 @@ public class RuleResultsAction extends BaseAction {
                 e.printStackTrace();
             }
         }
-        //声明一个工作薄
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        //生成一个sheet页
-        XSSFSheet sheet = workbook.createSheet(di3.getTable_name());
-        //写入数据到workbook对象
-        ExcelUtil.writeDataToWorkbook(cols, data_list, workbook, 0);
-        //写workbook对象到文件
-        ExcelUtil.writeWorkbookToFile(workbook, file);
+        CsvListWriter writer = null;
+        try {
+            writer = new CsvListWriter(new OutputStreamWriter(new FileOutputStream(file),
+                    DataBaseCode.UTF_8.getValue()), CsvPreference.EXCEL_PREFERENCE);
+            //写表头
+            writer.write(cols);
+            //写表数据
+            long counter = 0;
+            for (Object[] objects : data_list) {
+                //计数器
+                counter++;
+                writer.write(objects);
+                if (counter % 50000 == 0) {
+                    logger.info("正在写入文件，已写入" + counter + "行");
+                    writer.flush();
+                }
+            }
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new BusinessException("创建文件流失败!");
+        } finally {
+            try {
+                if (writer != null)
+                    writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.error("关闭输出流失败!");
+            }
+        }
         //下载文件
         FileDownloadUtil.downloadFile(file.getName());
     }
