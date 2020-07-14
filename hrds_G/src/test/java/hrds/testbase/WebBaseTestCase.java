@@ -8,8 +8,6 @@ import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.test.junit.FdBaseTestCase;
 
 public class WebBaseTestCase extends FdBaseTestCase {
-	//读取测试用例初始化数据
-	protected static final YamlMap testInfoConfig = YamlFactory.load(ConfFileLoader.getConfFile("testinfo")).asMap();
 	protected String getHost() {
 		return (StringUtil.isBlank(HttpServerConf.confBean.getHost())?"localhost": HttpServerConf.confBean.getHost());
 	}

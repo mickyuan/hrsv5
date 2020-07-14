@@ -17,6 +17,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.g.biz.enumerate.AsynType;
@@ -40,13 +41,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = testInfoConfig.getLong("user_id");
-	private static final String PASSWORD = testInfoConfig.getString("password");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	// 已经存在的agent id
-	private static final long AgentId = testInfoConfig.getLong("agent_id");
+	private static final long AgentId = ParallerTestUtil.TESTINITCONFIG.getLong("agent_id");
 	// 已经存在的dep id
-	private static final long DEP_ID = testInfoConfig.getLong("dep_id");
-	private static final YamlArray TEST_DATABASES = testInfoConfig.getArray("test_databases");
+	private static final long DEP_ID = ParallerTestUtil.TESTINITCONFIG.getLong("dep_id");
+	private static final YamlArray TEST_DATABASES = ParallerTestUtil.TESTINITCONFIG.getArray("test_databases");
 	// 已经存在的表名
 	private final String TABLE_NAME = "customer";
 	// 要查询列
