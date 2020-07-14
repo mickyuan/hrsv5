@@ -18,6 +18,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
