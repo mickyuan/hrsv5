@@ -38,10 +38,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class JobConfigurationTest extends WebBaseTestCase {
 
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = testInitConfig.getString("login_url");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = testInitConfig.getLong("user_id");
-	private static final String PASSWORD = testInitConfig.getString("password");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	//主键ID
 	private long nextId = PrimayKeyGener.getNextId();
 	//当前线程的id
