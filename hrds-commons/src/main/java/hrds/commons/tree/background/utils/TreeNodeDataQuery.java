@@ -4,14 +4,12 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import hrds.commons.entity.Data_store_layer;
-import hrds.commons.entity.Dq_index3record;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.background.query.DCLDataQuery;
 import hrds.commons.tree.background.query.DMLDataQuery;
 import hrds.commons.tree.background.query.DQCDataQuery;
+import hrds.commons.tree.background.query.UDLDataQuery;
 import hrds.commons.utils.User;
-import hrds.commons.tree.background.query.DCLDataQuery;
-import hrds.commons.tree.background.query.SFLDataQuery;
 
 import java.util.List;
 import java.util.Map;
@@ -133,6 +131,17 @@ public class TreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getUDLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        //TODO 暂未配置该存储层
+        //获取自定义层下数据存储层信息列表
+        List<Data_store_layer> data_store_layers = UDLDataQuery.getUDLExistTableDataStorageLayers();
+        if (!data_store_layers.isEmpty()) {
+            dataList.addAll(DataConvertedNodeData.conversionUDLDataInfos(data_store_layers));
+            //根据存储层信息获取UDL层下表信息列表
+            data_store_layers.forEach(data_store_layer -> {
+                List<Map<String, Object>> udlStorageLayerTableInfos = UDLDataQuery.getUDLStorageLayerTableInfos(data_store_layer);
+                if (!udlStorageLayerTableInfos.isEmpty()) {
+                    dataList.addAll(DataConvertedNodeData.conversionUDLTableInfos(udlStorageLayerTableInfos));
+                }
+            });
+        }
     }
 }
