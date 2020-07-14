@@ -214,6 +214,7 @@ public class RuleResultsAction extends BaseAction {
                     writer.flush();
                 }
             }
+            logger.info("文件写入完成，写入" + counter + "行");
             writer.flush();
         } catch (IOException e) {
             e.printStackTrace();
