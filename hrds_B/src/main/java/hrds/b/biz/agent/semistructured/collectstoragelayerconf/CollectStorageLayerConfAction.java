@@ -9,7 +9,6 @@ import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.JobExecuteState;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
@@ -251,4 +250,13 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		}
 	}
 
+	@Method(desc = "查询数据存储层配置信息",
+			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
+					"2.查询所有数据存储层配置信息")
+	@Return(desc = "返回关联查询数据存储层信息", range = "无限制")
+	public Result searchDataStore() {
+		// 1.数据可访问权限处理方式，该方法不需要权限控制
+		// 2.查询所有数据存储层配置信息
+		return Dbo.queryResult("select * from " + Data_store_layer.TableName);
+	}
 }
