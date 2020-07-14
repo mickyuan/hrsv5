@@ -219,7 +219,7 @@ public class RuleConfigActionTest extends WebBaseTestCase {
             SqlOperator.execute(db, "delete from " + Dq_definition.TableName + " where reg_name=?",
                     "hll-测试添加规则" + THREAD_ID);
             num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_definition.TableName +
-                    " where user_id =?", USER_ID).orElseThrow(() -> new RuntimeException("count fail!"));
+                    " where reg_name=?", "hll-测试添加规则" + THREAD_ID).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("Dq_definition 表此条数据删除后,记录数应该为0", num, is(0L));
             //删除 Dq_rule_def 表测试数据
             SqlOperator.execute(db, "delete from " + Dq_rule_def.TableName + " where case_type=?", "hll_case_type" + THREAD_ID);
@@ -430,8 +430,7 @@ public class RuleConfigActionTest extends WebBaseTestCase {
                 .post(getActionUrl("getColumnsByTableName")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() ->
                 new BusinessException("获取规则类型数据失败!"));
-        assertThat(ar.isSuccess(), is(true));
-        assertThat(ar.getDataForResult().getRowCount(), is(0));
+        assertThat(ar.isSuccess(), is(false));
     }
 
     @Method(desc = "获取规则类型数据测试方法", logicStep = "获取规则类型数据测试方法")
