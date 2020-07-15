@@ -1668,6 +1668,80 @@ public class CommandJdbcTest extends WebBaseTestCase {
 	}
 
 	/**
+	 * 测试数据库抽取选择单表 增量采集，填写新增、删除、更新的sql
+	 * 选择linux换行符、列分隔符使用`@^、字符集选择GBK、文件格式为定长,写表头
+	 */
+	@Test
+	public void test62() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		for (Data_extraction_def data_extraction_def : collectTableBean.getData_extraction_def_list()) {
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，填写新增、删除、更新的sql
+	 * 选择linux换行符、不填写列分隔符、字符集选择GBK、文件格式为定长,写表头
+	 */
+	@Test
+	public void test63() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		for (Data_extraction_def data_extraction_def : collectTableBean.getData_extraction_def_list()) {
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			data_extraction_def.setDbfile_format(FileFormat.DingChang.getCode());
+			data_extraction_def.setDatabase_separatorr("");
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
+	 * 测试数据库抽取选择单表 增量采集，填写新增、删除、更新的sql
+	 * 选择linux换行符、不填写列分隔符、字符集选择GBK、文件格式为Csv,写表头
+	 */
+	@Test
+	public void test64() {
+		//获取单表的页面配置基本信息
+		SourceDataConfBean sourceDataConfBean = getSingleTableSourceDataConfBean();
+		CollectTableBean collectTableBean = sourceDataConfBean.getCollectTableBeanArray().get(0);
+		//设置增量卸数
+		collectTableBean.setUnload_type(UnloadType.ZengLiangXieShu.getCode());
+		//设置增量采集的sql
+		JSONObject object = new JSONObject();
+		object.put("insert", "select * from call_center where cc_market_manager = 'Julius Durham'");
+		object.put("delete", "select cc_call_center_sk from call_center where cc_call_center_id = 'AAAAAAAABAAAAAAA'");
+		object.put("update", "select * from call_center where cc_market_manager = 'Gary Colburn'");
+		collectTableBean.setSql(object.toJSONString());
+		for (Data_extraction_def data_extraction_def : collectTableBean.getData_extraction_def_list()) {
+			data_extraction_def.setIs_header(IsFlag.Shi.getCode());
+			data_extraction_def.setDbfile_format(FileFormat.CSV.getCode());
+			data_extraction_def.setDatabase_separatorr("");
+		}
+		assertThat("执行成功", executeJdbcCollect(sourceDataConfBean), is(true));
+	}
+
+	/**
 	 * 执行数据库采集的方法
 	 *
 	 * @param sourceDataConfBean 任务配置信息

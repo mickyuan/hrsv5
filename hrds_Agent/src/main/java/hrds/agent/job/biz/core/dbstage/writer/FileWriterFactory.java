@@ -24,13 +24,26 @@ public class FileWriterFactory {
 
 	public static FileWriterInterface getFileWriterImpl(ResultSet resultSet, CollectTableBean collectTableBean,
 	                                                    int pageNum, TableBean tableBean,
-	                                                    Data_extraction_def data_extraction_def) {
+	                                                    Data_extraction_def data_extraction_def, boolean writeHeaderFlag) {
 		UnloadType unload_type = UnloadType.ofEnumByCode(collectTableBean.getUnload_type());
 		FileFormat format = FileFormat.ofEnumByCode(data_extraction_def.getDbfile_format());
 		FileWriterInterface fileWriterInterface;
 		if (UnloadType.ZengLiangXieShu == unload_type) {
-			fileWriterInterface = new JdbcToIncrementFileWriter(resultSet, collectTableBean, pageNum,
-					tableBean, data_extraction_def);
+			if (FileFormat.CSV == format) {
+				//写CSV文件实现类
+				fileWriterInterface = new JdbcToCsvIncrementFileWriter(resultSet, collectTableBean, pageNum,
+						tableBean, data_extraction_def, writeHeaderFlag);
+			} else if (FileFormat.DingChang == format) {
+				//写定长文件实现类
+				fileWriterInterface = new JdbcToFixedIncrementFileWriter(resultSet, collectTableBean, pageNum,
+						tableBean, data_extraction_def, writeHeaderFlag);
+			} else if (FileFormat.FeiDingChang == format) {
+				//写非定长文件实现类
+				fileWriterInterface = new JdbcToNonFixedIncrementFileWriter(resultSet, collectTableBean, pageNum,
+						tableBean, data_extraction_def, writeHeaderFlag);
+			} else {
+				throw new AppSystemException("增量数据库抽取落地平台仅支持落地CSV/定长/非定长数据文件");
+			}
 		} else if (UnloadType.QuanLiangXieShu == unload_type) {
 			if (FileFormat.CSV == format) {
 				//写CSV文件实现类
@@ -57,7 +70,8 @@ public class FileWriterFactory {
 				fileWriterInterface = new JdbcToNonFixedFileWriter(resultSet, collectTableBean, pageNum,
 						tableBean, data_extraction_def);
 			} else {
-				throw new AppSystemException("系统仅支持落地CSV/PARQUET/ORC/SEQUENCE/定长/非定长数据文件");
+				throw new AppSystemException("全量数据库抽取落地平台" +
+						"仅支持落地CSV/PARQUET/ORC/SEQUENCE/定长/非定长数据文件");
 			}
 		} else {
 			throw new AppSystemException("数据库抽取方式参数不正确");

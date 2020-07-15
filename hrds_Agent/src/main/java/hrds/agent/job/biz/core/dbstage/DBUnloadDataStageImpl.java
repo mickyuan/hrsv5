@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -104,6 +105,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			}
 			//卸数成功，删除重命名的目录
 			deleteRenameDir(collectTableBean);
+			//卸数成功，写ok文件
+			createOKFile(collectTableBean);
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------表" + collectTableBean.getTable_name()
 					+ "数据库抽数卸数阶段成功------------------执行时间为："
@@ -122,6 +125,26 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, AgentType.ShuJuKu.getCode());
 		return stageParamInfo;
+	}
+
+	/**
+	 * 数据库抽取成功，写ok文件
+	 *
+	 * @param collectTableBean 采集抽取表的基本信息
+	 */
+	private void createOKFile(CollectTableBean collectTableBean) {
+		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
+		for (Data_extraction_def extraction_def : data_extraction_def_list) {
+			//只操作作业调度指定的文件格式
+			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
+				continue;
+			}
+			String targetName = extraction_def.getPlane_url() + File.separator + collectTableBean.getEtlDate()
+					+ File.separator + collectTableBean.getTable_name() + File.separator +
+					Constant.fileFormatMap.get(extraction_def.getDbfile_format()) + File.separator
+					+ Constant.COLLECTOKFILE;
+			fd.ng.core.utils.FileUtil.createOrReplaceFile(targetName, "", StandardCharsets.UTF_8);
+		}
 	}
 
 	/**
@@ -227,6 +250,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			List<String> incrementSqlList = getSortJson(JSONObject.parseObject(incrementSql));
 			String[] operateArray = {"delete", "update", "insert"};
 			//遍历json根据json的key执行sql,拼接对应的操作方式,增量抽取是写到同一个文件，因此这里不使用多线程
+			//因为增量采集是写到同一个文件追加写入，所以只在第一次写文件时需要表头
+			boolean writeHeaderFlag = true;
 			for (int i = 0; i < incrementSqlList.size(); i++) {
 				//获取增量的sql
 				String sql = incrementSqlList.get(i);
@@ -243,7 +268,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					ResultSetParser parser = new ResultSetParser();
 					//文件路径
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, 0,
-							tableBean, collectTableBean.getTransSeparatorExtractionList().get(0));
+							tableBean, collectTableBean.getTransSeparatorExtractionList().get(0), writeHeaderFlag);
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
 						//返回值为卸数文件全路径拼接卸数文件的条数
 						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);
@@ -252,6 +277,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 						fileResult.addAll(unLoadInfoList);
 						pageCountResult.add(Long.parseLong(pageCount));
 					}
+					writeHeaderFlag = false;
 				}
 			}
 			countResult(fileResult, pageCountResult, stageParamInfo);

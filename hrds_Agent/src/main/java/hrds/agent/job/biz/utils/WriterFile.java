@@ -92,6 +92,16 @@ public class WriterFile implements Closeable {
 		return csvWriter;
 	}
 
+	public CsvListWriter getIncrementCsvWriter(String charset) {
+		try {
+			csvWriter = new CsvListWriter(new OutputStreamWriter(new FileOutputStream(filePath, true), charset)
+					, CsvPreference.EXCEL_PREFERENCE);
+		} catch (IOException e) {
+			logger.error(e);
+		}
+		return csvWriter;
+	}
+
 	public BufferedWriter getBufferedWriter(String charset) {
 		try {
 			bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath), charset));

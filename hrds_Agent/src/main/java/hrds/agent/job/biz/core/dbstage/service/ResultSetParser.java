@@ -33,7 +33,7 @@ public class ResultSetParser {
 	@Return(desc = "当前线程生成数据文件的路径", range = "不会为null")
 	//TODO pageNum和pageRow一起，在写文件的时候，用于判断文件是否过大，如果文件过大，可以对单个数据文件进行拆分
 	public String parseResultSet(ResultSet rs, CollectTableBean collectTableBean, int pageNum,
-	                             TableBean tableBean, Data_extraction_def data_extraction_def) {
+	                             TableBean tableBean, Data_extraction_def data_extraction_def,boolean writeHeaderFlag) {
 		//XXX 文件后缀现在页面没有，默认给dat
 		if (StringUtil.isEmpty(data_extraction_def.getFile_suffix())) {
 			data_extraction_def.setFile_suffix("dat");
@@ -41,6 +41,6 @@ public class ResultSetParser {
 		//当前线程生成的数据文件的路径，用于返回
 		//8、写文件结束，返回本线程生成数据文件的路径和一个写出数据量
 		return FileWriterFactory.getFileWriterImpl(rs,
-				collectTableBean, pageNum, tableBean, data_extraction_def).writeFiles();
+				collectTableBean, pageNum, tableBean, data_extraction_def,writeHeaderFlag).writeFiles();
 	}
 }

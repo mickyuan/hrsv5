@@ -83,8 +83,7 @@ public class JdbcToCsvFileWriter extends AbstractFileWriter {
 					parseJson.get("splitIng");
 			Clean cl = new Clean(parseJson, allclean);
 			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
-			List<Object> sb = new ArrayList<>(StringUtil.split(tableBean.getColumnMetaInfo()
-					, Constant.METAINFOSPLIT).size());//用来写一行数据
+			List<Object> sb = new ArrayList<>(columnMetaInfoList.size());//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					Constant.METAINFOSPLIT);

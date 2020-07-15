@@ -256,4 +256,6 @@ public class Constant {
 	 */
 	public static final String RXKH = ")";
 
+	public static final String COLLECTOKFILE = "hyren_collect_flag.ok";
+
 }
