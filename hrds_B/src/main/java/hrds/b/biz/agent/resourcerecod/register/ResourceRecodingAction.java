@@ -192,12 +192,12 @@ public class ResourceRecodingAction extends BaseAction {
 		Validator.notBlank(databaseSet.getDatabase_number(), "保存贴源登记信息时作业编号不为能空，并且长度不能超过10");
 		// 4、校验数据库驱动不能为空
 		Validator.notBlank(databaseSet.getDatabase_drive(), "保存贴源登记信息时数据库驱动不能为空");
-		// 5、校验数据库名称不能为空
-		Validator.notBlank(databaseSet.getDatabase_name(), "保存贴源登记信息时数据库名称不能为空");
-		// 6、校验数据库IP不能为空
-		Validator.notBlank(databaseSet.getDatabase_ip(), "保存贴源登记信息时数据库IP地址不能为空");
-		// 7、校验数据库端口号不能为空
-		Validator.notBlank(databaseSet.getDatabase_port(), "保存贴源登记信息时数据库端口号不能为空");
+//		// 5、校验数据库名称不能为空
+//		Validator.notBlank(databaseSet.getDatabase_name(), "保存贴源登记信息时数据库名称不能为空");
+//		// 6、校验数据库IP不能为空
+//		Validator.notBlank(databaseSet.getDatabase_ip(), "保存贴源登记信息时数据库IP地址不能为空");
+//		// 7、校验数据库端口号不能为空
+//		Validator.notBlank(databaseSet.getDatabase_port(), "保存贴源登记信息时数据库端口号不能为空");
 		// 8、校验用户名不能为空
 		Validator.notBlank(databaseSet.getUser_name(), "保存贴源登记信息时数据库用户名不能为空");
 		// 9、校验数据库密码不能为空

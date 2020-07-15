@@ -46,29 +46,6 @@ public class DictionaryTableAction extends BaseAction {
   // 日志打印
   private static final Log logger = LogFactory.getLog(DictionaryTableAction.class);
 
-  // 表的默认清洗顺序
-  private static final JSONObject DEFAULT_TABLE_CLEAN_ORDER;
-  // 列的默认清洗顺序
-  private static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER;
-
-  static {
-	DEFAULT_TABLE_CLEAN_ORDER = new JSONObject();
-	DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
-	DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
-	DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuHeBing.getCode(), 3);
-	DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 4);
-
-	// TODO 按照目前agent程序的逻辑是，列合并永远是排在清洗顺序的最后一个去做，因此这边定义默认的清洗顺序的时候，只定义了6种，而没有定义列合并
-	// TODO 所以是否前端需要把列合并去掉
-	DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject();
-	DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
-	DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
-	DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-	DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-	DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuChaiFen.getCode(), 5);
-	DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 6);
-  }
-
   @Method(
 	  desc = "获取表信息",
 	  logicStep =
@@ -285,7 +262,7 @@ public class DictionaryTableAction extends BaseAction {
 		// 设置任务主键
 		tableInfo.setDatabase_id(colSetId);
 		// 设置默认的表清洗顺序
-		tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+		tableInfo.setTi_or(Constant.DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		// 设置表的有效开始时间为当天入库的时间
 		tableInfo.setValid_s_date(DateUtil.getSysDate());
 		// 设置表的有效使用时间为 99991231
@@ -400,7 +377,7 @@ public class DictionaryTableAction extends BaseAction {
 		  // 设置表的列主键
 		  table_column.setColumn_id(PrimayKeyGener.getNextId());
 		  // 设置默认清洗顺序
-		  table_column.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+		  table_column.setTc_or(Constant.DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 		  // 设置表的有效开始日期为当天
 		  table_column.setValid_s_date(DateUtil.getSysDate());
 		  // 设置列的有效结束日期为 99991231
