@@ -494,8 +494,6 @@ public class MetaDataManageAction extends BaseAction {
         if (isRepeat) {
             throw new BusinessException("表: " + dqTableInfo.getCh_name() + "已经在系统中存在,请更换表名!" + dqTableInfo.getTable_name());
         }
-        //保存表到指定的存储层下
-        CreateDataTable.createDataTableByStorageLayer(Dbo.db(), dqTableInfo, dqTableColumns, dsl_id);
         //设置数据表存储关系
         Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
         dtab_relation_store.setDsl_id(dsl_id);
@@ -506,6 +504,8 @@ public class MetaDataManageAction extends BaseAction {
         dqTableInfo.add(Dbo.db());
         dqTableColumns.forEach(dq_table_column -> dq_table_column.add(Dbo.db()));
         dtab_relation_store.add(Dbo.db());
+        //创建表到指定的存储层下
+        CreateDataTable.createDataTableByStorageLayer(Dbo.db(), dqTableInfo, dqTableColumns, dsl_id);
         logger.info("保存表源信息到配置库成功! table_name: " + dqTableInfo.getTable_name());
     }
 }
