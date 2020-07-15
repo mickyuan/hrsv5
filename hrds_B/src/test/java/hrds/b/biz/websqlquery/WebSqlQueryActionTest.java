@@ -6,6 +6,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -19,12 +20,12 @@ public class WebSqlQueryActionTest extends WebBaseTestCase {
     //当前线程的id
     private static long THREAD_ID = Thread.currentThread().getId() * 1000000;
     //获取模拟登陆的URL
-    private static final String LOGIN_URL = agentInitConfig.getString("login_url",
+    private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url",
             "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login");
     //登录用户id
-    private static final long USER_ID = agentInitConfig.getLong("general_oper_user_id", 2001);
+    private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("general_oper_user_id", 2001);
     //登录用户密码
-    private static final String PASSWORD = agentInitConfig.getString("general_password", "1");
+    private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("general_password", "1");
 
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
     @BeforeClass
