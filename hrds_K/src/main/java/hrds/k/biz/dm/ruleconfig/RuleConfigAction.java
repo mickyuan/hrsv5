@@ -343,14 +343,14 @@ public class RuleConfigAction extends BaseAction {
     @Method(desc = "获取作业工程信息", logicStep = "获取作业工程信息")
     @Return(desc = "作业工程信息", range = "作业工程信息")
     public List<Etl_sys> getProInfos() {
-        return EtlJobUtil.getProInfo(getUserId());
+        return EtlJobUtil.getProInfo(Dbo.db(), getUserId());
     }
 
     @Method(desc = "获取作业某个工程下的任务信息", logicStep = "获取作业某个工程下的任务信息")
     @Param(name = "etl_sys_cd", desc = "工程代码", range = "String类型")
     @Return(desc = "工程下的任务信息", range = "工程下的任务信息")
     public List<Etl_sub_sys_list> getTaskInfo(String etl_sys_cd) {
-        return EtlJobUtil.getTaskInfo(etl_sys_cd);
+        return EtlJobUtil.getTaskInfo(Dbo.db(), etl_sys_cd);
     }
 
     @Method(desc = "查看规则调度状态",
