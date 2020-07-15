@@ -170,7 +170,7 @@ public class RuleResultsAction extends BaseAction {
 
                     check_index3_list.add(map);
                 }
-            }.getPageDataLayer(sql, Dbo.db(), 1, 10, di3.getDsl_id());
+            }.getDataLayer(sql, Dbo.db());
         } catch (Exception e) {
             throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
         }
