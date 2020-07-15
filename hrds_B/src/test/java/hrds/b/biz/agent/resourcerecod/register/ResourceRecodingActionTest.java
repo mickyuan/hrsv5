@@ -305,29 +305,29 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
 		assertThat(actionResult.isSuccess(), is(false));
 		//5: 模拟没有设置数据库名称数据情况
-		database_set = initDataBaseData("");
-		database_set.setDatabase_name("");
-		saveRegisterData = new HttpClient().addData("databaseSet", database_set).post(getActionUrl("saveRegisterData"))
-			.getBodyString();
-		actionResult = JsonUtil.toObjectSafety(saveRegisterData, ActionResult.class)
-			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
-		assertThat(actionResult.isSuccess(), is(false));
-		//6: 模拟没有设置数据库IP地址数据情况
-		database_set = initDataBaseData("");
-		database_set.setDatabase_ip("");
-		saveRegisterData = new HttpClient().addData("databaseSet", database_set).post(getActionUrl("saveRegisterData"))
-			.getBodyString();
-		actionResult = JsonUtil.toObjectSafety(saveRegisterData, ActionResult.class)
-			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
-		assertThat(actionResult.isSuccess(), is(false));
-		//7: 模拟没有设置数据库端口号数据情况
-		database_set = initDataBaseData("");
-		database_set.setDatabase_port("");
-		saveRegisterData = new HttpClient().addData("databaseSet", database_set).post(getActionUrl("saveRegisterData"))
-			.getBodyString();
-		actionResult = JsonUtil.toObjectSafety(saveRegisterData, ActionResult.class)
-			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
-		assertThat(actionResult.isSuccess(), is(false));
+//		database_set = initDataBaseData("");
+//		database_set.setDatabase_name("");
+//		saveRegisterData = new HttpClient().addData("databaseSet", database_set).post(getActionUrl("saveRegisterData"))
+//			.getBodyString();
+//		actionResult = JsonUtil.toObjectSafety(saveRegisterData, ActionResult.class)
+//			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
+//		assertThat(actionResult.isSuccess(), is(false));
+//		//6: 模拟没有设置数据库IP地址数据情况
+//		database_set = initDataBaseData("");
+//		database_set.setDatabase_ip("");
+//		saveRegisterData = new HttpClient().addData("databaseSet", database_set).post(getActionUrl("saveRegisterData"))
+//			.getBodyString();
+//		actionResult = JsonUtil.toObjectSafety(saveRegisterData, ActionResult.class)
+//			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
+//		assertThat(actionResult.isSuccess(), is(false));
+//		//7: 模拟没有设置数据库端口号数据情况
+//		database_set = initDataBaseData("");
+//		database_set.setDatabase_port("");
+//		saveRegisterData = new HttpClient().addData("databaseSet", database_set).post(getActionUrl("saveRegisterData"))
+//			.getBodyString();
+//		actionResult = JsonUtil.toObjectSafety(saveRegisterData, ActionResult.class)
+//			.orElseThrow(() -> new RuntimeException("接口返回的数据处理异常"));
+//		assertThat(actionResult.isSuccess(), is(false));
 		//8: 模拟没有设置数据库用户名数据情况
 		database_set = initDataBaseData("");
 		database_set.setUser_name("");
