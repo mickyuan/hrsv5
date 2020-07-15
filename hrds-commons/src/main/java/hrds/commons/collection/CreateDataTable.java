@@ -138,7 +138,7 @@ public class CreateDataTable {
                 logger.info("创建表时发生异常,回滚此次存储层的db操作!");
             }
             e.printStackTrace();
-            throw new BusinessException("");
+            throw new BusinessException("创建存储层数表发生异常!" + e.getMessage());
         } finally {
             if (null != dbDataConn) {
                 dbDataConn.close();
