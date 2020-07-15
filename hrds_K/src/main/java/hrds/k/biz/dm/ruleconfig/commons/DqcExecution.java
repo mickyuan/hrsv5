@@ -8,7 +8,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
 import hrds.commons.collection.LoadingData;
 import hrds.commons.collection.ProcessingData;
@@ -154,11 +153,12 @@ public class DqcExecution {
 
     @Method(desc = "指定SQL（校验SQL）的系统变量对应结果bean",
             logicStep = "指定SQL（校验SQL）的系统变量对应结果bean")
+    @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Return(desc = "对应结果bean的List", range = "对应结果bean的List")
-    public static Set<SysVarCheckBean> getSysVarCheckBean(Dq_definition dqd) {
+    public static Set<SysVarCheckBean> getSysVarCheckBean(DatabaseWrapper db, Dq_definition dqd) {
         //获取变量信息
-        List<Dq_sys_cfg> dq_sys_cfg_s = Dbo.queryList(Dq_sys_cfg.class, "select * from " + Dq_sys_cfg.TableName);
+        List<Dq_sys_cfg> dq_sys_cfg_s = SqlOperator.queryList(db, Dq_sys_cfg.class, "select * from " + Dq_sys_cfg.TableName);
         //转换变量信息为map
         Map<String, String> dq_sys_cfg_map = new HashMap<>();
         dq_sys_cfg_s.forEach(dq_sys_cfg -> dq_sys_cfg_map.put(dq_sys_cfg.getVar_name(), dq_sys_cfg.getVar_value()));
@@ -189,7 +189,7 @@ public class DqcExecution {
     @Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Return(desc = "有效依赖作业List", range = "有效依赖作业List")
-    public static List<Map<String, Object>> getEffDepJobs(Dq_definition dq_definition) {
+    public static List<Map<String, Object>> getEffDepJobs(DatabaseWrapper db, Dq_definition dq_definition) {
         if (StringUtil.isBlank(dq_definition.getReg_num().toString())) {
             throw new BusinessException("规则编号为空!");
         }
@@ -207,7 +207,7 @@ public class DqcExecution {
         asmSql.addSql("SELECT etl_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_disp_his.TableName +
                 " WHERE job_eff_flag = ?").addParam(Job_Effective_Flag.YES.getCode());
         asmSql.addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%');
-        return Dbo.queryList(asmSql.sql(), asmSql.params());
+        return SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
     }
 
 

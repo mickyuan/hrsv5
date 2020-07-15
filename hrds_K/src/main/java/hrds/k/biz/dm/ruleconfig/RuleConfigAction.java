@@ -156,7 +156,8 @@ public class RuleConfigAction extends BaseAction {
         Dq_definition dq_definition = new Dq_definition();
         for (Map<String, Object> dqd : dqd_list) {
             dq_definition.setReg_num(dqd.get("reg_num").toString());
-            if (DqcExecution.getEffDepJobs(dq_definition).size() > 0) {
+            List<Map<String, Object>> effDepJobs = DqcExecution.getEffDepJobs(Dbo.db(), dq_definition);
+            if (!effDepJobs.isEmpty()) {
                 dqd.put("job_status", Job_Effective_Flag.YES.getCode());
             }
         }
@@ -251,7 +252,7 @@ public class RuleConfigAction extends BaseAction {
             dqd.put("job_status", Job_Effective_Flag.NO.getCode());
             dq_definition.setReg_num(dqd.get("reg_num").toString());
             //根据规则编号获取有效依赖作业信息
-            List<Map<String, Object>> effDepJobs = DqcExecution.getEffDepJobs(dq_definition);
+            List<Map<String, Object>> effDepJobs = DqcExecution.getEffDepJobs(Dbo.db(), dq_definition);
             //如果有效依赖作业大于0,则改规则处于有效调度状态
             if (effDepJobs.size() > 0) {
                 dqd.put("job_status", Job_Effective_Flag.YES.getCode());
@@ -301,7 +302,7 @@ public class RuleConfigAction extends BaseAction {
                 + Dq_definition.TableName + " " + "WHERE reg_num=?", dqd.getReg_num()).orElseThrow(()
                 -> (new BusinessException("获取配置信息的SQL失败!")));
         //系统变量对应结果
-        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(Dbo.db(), dq_definition);
         //执行规则,返回执行的任务id
         return DqcExecution.executionRule(dq_definition, verify_date, beans, DqcExecMode.ShouGong.getCode());
     }
@@ -400,7 +401,7 @@ public class RuleConfigAction extends BaseAction {
             throw new BusinessException("指定SQL为空!");
         }
         //系统变量对应结果
-        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(Dbo.db(), dq_definition);
         //获取检查结果 成功:success,失败:具体报错信息
         String check_is_success = DqcExecution.executionSqlCheck(beans, dq_definition.getSpecify_sql().split(";"));
         //初始化检查结果
@@ -420,7 +421,7 @@ public class RuleConfigAction extends BaseAction {
             throw new BusinessException("指定SQL为空!");
         }
         //系统变量对应结果
-        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(dq_definition);
+        Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(Dbo.db(), dq_definition);
         //获取检查结果 成功:success,失败:具体报错信息
         String check_is_success = DqcExecution.executionSqlCheck(beans, dq_definition.getErr_data_sql());
         //初始化检查结果
