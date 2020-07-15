@@ -49,7 +49,9 @@ public class CreateDataTable {
         dbConfBean.setDatabase_pad(dbConfigMap.get("database_pwd"));
         dbConfBean.setDatabase_type(dbConfigMap.get("database_type"));
         //使用存储层配置自定义Bean创建存储层链接
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dbConfBean)) {
+        DatabaseWrapper dbDataConn = null;
+        try {
+            dbDataConn = ConnectionTool.getDBWrapper(dbConfBean);
             //获取表空间
             String table_space = dqTableInfo.getTable_space();
             //获取表名
@@ -114,6 +116,8 @@ public class CreateDataTable {
                     logger.error("指定存储层创建表失败! table_name: " + table_name);
                     throw new BusinessException("表已经存在! table_name: " + table_name);
                 }
+                //提交db操作
+                dbDataConn.commit();
                 logger.info("指定存储层创建表成功! table_name: " + table_name);
             } else if (store_type == Store_type.HIVE) {
                 //TODO 暂不支持
@@ -127,6 +131,18 @@ public class CreateDataTable {
                 //TODO 暂不支持
             } else {
                 throw new BusinessException("不支持的存储层类型!" + store_type.getValue());
+            }
+        } catch (Exception e) {
+            if (null != dbDataConn) {
+                dbDataConn.rollback();
+                logger.info("创建表时发生异常,回滚此次存储层的db操作!");
+            }
+            e.printStackTrace();
+            throw new BusinessException("");
+        } finally {
+            if (null != dbDataConn) {
+                dbDataConn.close();
+                logger.info("关闭存储层db连接成功!");
             }
         }
     }
