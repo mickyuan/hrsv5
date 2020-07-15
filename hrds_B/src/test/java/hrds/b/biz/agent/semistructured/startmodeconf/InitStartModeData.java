@@ -8,6 +8,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 
@@ -61,27 +62,27 @@ public class InitStartModeData {
 			data_source.setDatasource_name(TEST_NAME);
 			data_source.setCreate_date(DateUtil.getSysDate());
 			data_source.setCreate_time(DateUtil.getSysTime());
-			data_source.setCreate_user_id(WebBaseTestCase.agentInitConfig.getString("user_id", "2001"));
+			data_source.setCreate_user_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
 			data_source.add(db);
 			//Agent信息
 			Agent_info agent_info = new Agent_info();
 			agent_info.setAgent_id(AGENT_ID);
 			agent_info.setAgent_name(AGENT_NAME);
 			agent_info.setAgent_type(AgentType.DuiXiang.getCode());
-			agent_info.setAgent_ip(WebBaseTestCase.agentInitConfig.getString("agent_ip", "127.0.0.1"));
-			agent_info.setAgent_port(WebBaseTestCase.agentInitConfig.getString("agent_port", "55555"));
+			agent_info.setAgent_ip(ParallerTestUtil.TESTINITCONFIG.getString("agent_ip", "127.0.0.1"));
+			agent_info.setAgent_port(ParallerTestUtil.TESTINITCONFIG.getString("agent_port", "55555"));
 			agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
 			agent_info.setCreate_date(DateUtil.getSysDate());
 			agent_info.setCreate_time(DateUtil.getSysTime());
-			agent_info.setUser_id(WebBaseTestCase.agentInitConfig.getString("user_id", "2001"));
+			agent_info.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
 			agent_info.setSource_id(SOURCE_ID);
 			agent_info.add(db);
 			//Agent下载地址
 			Agent_down_info down_info = new Agent_down_info();
 			down_info.setDown_id(AGENT_DOWN_ID);
 			down_info.setAgent_name(AGENT_NAME);
-			down_info.setAgent_ip(WebBaseTestCase.agentInitConfig.getString("agent_ip", "127.0.0.1"));
-			down_info.setAgent_port(WebBaseTestCase.agentInitConfig.getString("agent_port", "55555"));
+			down_info.setAgent_ip(ParallerTestUtil.TESTINITCONFIG.getString("agent_ip", "127.0.0.1"));
+			down_info.setAgent_port(ParallerTestUtil.TESTINITCONFIG.getString("agent_port", "55555"));
 			down_info.setUser_name(TEST_NAME);
 			down_info.setPasswd(TEST_NAME);
 			down_info.setSave_dir(AGENT_PATH);
@@ -92,14 +93,14 @@ public class InitStartModeData {
 			down_info.setAgent_type(AgentType.ShuJuKu.getCode());
 			down_info.setAgent_id(AGENT_ID);
 			down_info.setAi_desc(AGENT_PATH);
-			down_info.setUser_id(WebBaseTestCase.agentInitConfig.getString("user_id", "2001"));
+			down_info.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
 			down_info.add(db);
 			//分类信息
 			Collect_job_classify classify = new Collect_job_classify();
 			classify.setClassify_id(CLASSIFY_ID);
 			classify.setClassify_num(TEST_NAME);
 			classify.setClassify_name("测试" + threadId);
-			classify.setUser_id(WebBaseTestCase.agentInitConfig.getString("user_id", "2001"));
+			classify.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
 			classify.setAgent_id(AGENT_ID);
 			classify.add(db);
 			//初始化采集任务信息
@@ -116,7 +117,7 @@ public class InitStartModeData {
 			Etl_sys etl_sys = new Etl_sys();
 			etl_sys.setEtl_sys_cd(ETL_SYS_CD);
 			etl_sys.setEtl_sys_name(TEST_NAME);
-			etl_sys.setUser_id(WebBaseTestCase.agentInitConfig.getString("user_id", "2001"));
+			etl_sys.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
 			etl_sys.add(db);
 			//初始化作业调度的任务数据
 			Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
@@ -129,7 +130,7 @@ public class InitStartModeData {
 			object_collect.setObject_collect_type(ObjectCollectType.HangCaiJi.getCode());
 			object_collect.setObj_number(TEST_NAME);
 			object_collect.setObj_collect_name(TEST_NAME);
-			object_collect.setSystem_name(WebBaseTestCase.agentInitConfig.getString("agent_os_name"));
+			object_collect.setSystem_name(ParallerTestUtil.TESTINITCONFIG.getString("agent_os_name"));
 			object_collect.setHost_name("mine");
 			object_collect.setLocal_time(DateUtil.getDateTime());
 			object_collect.setServer_date(DateUtil.getSysDate());

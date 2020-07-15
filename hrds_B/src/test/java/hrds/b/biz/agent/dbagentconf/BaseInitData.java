@@ -18,6 +18,7 @@ import hrds.commons.entity.Orig_code_info;
 import hrds.commons.entity.Orig_syso_info;
 import hrds.commons.entity.Table_column;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class BaseInitData {
 	/**
 	 * 测试数据用户ID
 	 */
-	public final long TEST_USER_ID = WebBaseTestCase.agentInitConfig.getLong("user_id", 2001);
+	public final long TEST_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 2001);
 	/**
 	 * 测试部门ID
 	 */

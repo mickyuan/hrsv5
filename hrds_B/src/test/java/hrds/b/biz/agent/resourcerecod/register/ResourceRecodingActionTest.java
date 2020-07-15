@@ -18,6 +18,7 @@ import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import java.util.List;
@@ -35,15 +36,15 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 	/**
 	 * 获取测试用户ID
 	 */
-	private final long USER_ID = WebBaseTestCase.agentInitConfig.getLong("user_id", 0);
+	private final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 0);
 	/**
 	 * 获取存储层ID主键
 	 */
-	private final long DSL_ID = WebBaseTestCase.agentInitConfig.getLong("dsl_id", 0);
+	private final long DSL_ID = ParallerTestUtil.TESTINITCONFIG.getLong("dsl_id", 0);
 	/**
 	 * 获取存储层ID主键
 	 */
-	private final long SOURCE_ID = WebBaseTestCase.agentInitConfig.getLong("source_id", 0);
+	private final long SOURCE_ID = ParallerTestUtil.TESTINITCONFIG.getLong("source_id", 0);
 	/**
 	 * Agent ID
 	 */
