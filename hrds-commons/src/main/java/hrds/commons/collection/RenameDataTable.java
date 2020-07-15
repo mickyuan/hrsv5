@@ -7,7 +7,6 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.web.util.Dbo;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Data_store_layer;
@@ -53,7 +52,7 @@ public class RenameDataTable {
     public static void renameTableByDataLayer(DatabaseWrapper db, long dsl_id, String operation_type,
                                               String tableSpace, String tableName) {
         //获取存储层信息
-        LayerBean layerBean = Dbo.queryOneObject(LayerBean.class, "select * from " + Data_store_layer.TableName +
+        LayerBean layerBean = SqlOperator.queryOneObject(db, LayerBean.class, "select * from " + Data_store_layer.TableName +
                 " where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
         //重命名存储层下的表
         renameTableByDataLayer(db, layerBean, operation_type, tableSpace, tableName);

@@ -5,7 +5,6 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.web.util.Dbo;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Data_store_layer;
 import hrds.commons.exception.AppSystemException;
@@ -38,7 +37,7 @@ public class DeleteDataTable {
     @Param(name = "dsl_id", desc = "存储层配置id", range = "long类型")
     public static void dropTableByDataLayer(String tableName, DatabaseWrapper db, long dsl_id) {
         //获取存储层信息
-        LayerBean layerBean = Dbo.queryOneObject(LayerBean.class, "select * from " + Data_store_layer.TableName +
+        LayerBean layerBean = SqlOperator.queryOneObject(db, LayerBean.class, "select * from " + Data_store_layer.TableName +
                 " where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
         dropTableByDataLayer(tableName, db, layerBean);
     }

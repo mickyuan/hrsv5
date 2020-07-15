@@ -4,7 +4,6 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.web.util.Dbo;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.DbConfBean;
@@ -28,7 +27,7 @@ public class CreateDataTable {
     public static void createDataTableByStorageLayer(DatabaseWrapper db, Dq_table_info dqTableInfo,
                                                      List<Dq_table_column> dqTableColumns, long dsl_id) {
         //获取存储层信息
-        LayerBean layerBean = Dbo.queryOneObject(LayerBean.class, "select * from " + Data_store_layer.TableName +
+        LayerBean layerBean = SqlOperator.queryOneObject(db, LayerBean.class, "select * from " + Data_store_layer.TableName +
                 " where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
         //根据存储层定义创建数据表
         createDataTableByStorageLayer(db, dqTableInfo, dqTableColumns, layerBean);

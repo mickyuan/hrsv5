@@ -51,8 +51,8 @@ public abstract class ProcessingData {
     @Param(name = "begin", desc = "开始条数", range = "int类型,大于等于1")
     @Param(name = "end", desc = "结束条数", range = "int类型,大于1")
     @Return(desc = "查询出来的rs", range = "数据")
-    public List<String> getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end) {
-        return getPageDataLayer(sql, db, begin, end, false);
+    public void getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end) {
+        getPageDataLayer(sql, db, begin, end, false);
     }
 
     @Method(desc = "根据sql和指定存储层信息获取指定存储层下的数据表数据",
