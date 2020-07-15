@@ -130,9 +130,6 @@ public class DqcExecution {
                     dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
                 }
             }
-            //保存检查结果
-            dq_result.add(db);
-            db.commit();
             //如果规则级别是严重且发生了异常，则在记录异常信息后异常退出
             if (EdRuleLevel.YanZhong.getCode().equals(dq_rule_level) && has_exception) {
                 //如果是手工执行抛异常
@@ -147,6 +144,9 @@ public class DqcExecution {
             if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
                 recordIndicator3Data(dq_result, beans);
             }
+            //保存检查结果
+            dq_result.add(db);
+            db.commit();
         }
         return dq_result.getTask_id();
     }
