@@ -16,6 +16,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "半结构化采集存储层配置", author = "dhw", createdate = "2020/6/12 18:09")
 public class CollectStorageLayerConfAction extends BaseAction {
@@ -88,15 +89,15 @@ public class CollectStorageLayerConfAction extends BaseAction {
 	@Param(name = "dsl_id", desc = "存储层配置ID", range = "新增存储层配置信息时生成")
 	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对应采集对应信息时生成")
 	@Return(desc = "返回获取当前表对应列存储信息", range = "无限制")
-	public Result getColumnStorageLayerInfo(long dsl_id, long ocs_id) {
+	public Object getColumnStorageLayerInfo(long dsl_id, long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前数据存储层配置表信息是否存在
 		CommonUtils.isDataStoreLayerExist(dsl_id);
 		// 3.判断当前对象采集对应信息是否存在
 		CommonUtils.isObjectCollectTaskExist(ocs_id);
 		// 4.查询当前表对应列存储信息
-		Result columnStorageLayerInfo = Dbo.queryResult(
-				"select t1.struct_id,t1.column_name,t1.data_desc,t2.csi_number,t3.dsla_storelayer from "
+		List<Map<String, Object>> columnStorageLayerInfo = Dbo.queryList(
+				"select t1.struct_id,t1.column_name,t1.data_desc,t2.*,t3.dsla_storelayer from "
 						+ Object_collect_struct.TableName + " t1 left join "
 						+ Dcol_relation_store.TableName + " t2 on t1.struct_id=t2.col_id left join "
 						+ Data_store_layer_added.TableName + " t3 on t2.dslad_id=t3.dslad_id " +
@@ -107,24 +108,21 @@ public class CollectStorageLayerConfAction extends BaseAction {
 			return columnStorageLayerInfo;
 		}
 		// 6.查询半结构化采集结构信息
-		Result objCollectStructResult = Dbo.queryResult(
+		List<Map<String, Object>> objCollectStructList = Dbo.queryList(
 				"select ocs_id,struct_id,column_name,data_desc from " + Object_collect_struct.TableName
 						+ " where ocs_id=?",
 				ocs_id);
 		// 7.查询存储层附加属性信息
-		List<String> dslaStorelayerList = Dbo.queryOneColumnList(
-				"select t1.dsla_storelayer from "
+		List<Map<String, Object>> dslaStorelayerList = Dbo.queryList(
+				"select t1.dsla_storelayer,t1.dslad_id from "
 						+ Data_store_layer_added.TableName
 						+ " t1 join "
 						+ Data_store_layer.TableName
 						+ " t2 on t1.dsl_id = t2.dsl_id where t2.dsl_id = ?",
 				dsl_id);
-		// 8.设置附加属性到列结构信息中
-		for (int i = 0; i < objCollectStructResult.getRowCount(); i++) {
-			objCollectStructResult.setObject(i, "dsla_storelayer", dslaStorelayerList);
-		}
+		objCollectStructList.get(0).put("dslaStorelayerList", dslaStorelayerList);
 		// 9.返回列存储信息为空时的列信息
-		return objCollectStructResult;
+		return objCollectStructList;
 	}
 
 	@Method(desc = "保存列存储层附加信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
