@@ -541,7 +541,7 @@ public class StoDestStepConfAction extends BaseAction {
 			// 3、如果反序列化得到的List集合不为空，则遍历集合
 			for (ColStoParam param : colStoParams) {
 				Long columnId = param.getColumnId();
-				long[] dsladIds = param.getDsladIds();
+				Long[] dsladIds = param.getDsladIds();
 				if (dsladIds == null || !(dsladIds.length > 0)) {
 					throw new BusinessException("请检查配置信息，并为待保存的字段选择其是否具有特殊性质");
 				}

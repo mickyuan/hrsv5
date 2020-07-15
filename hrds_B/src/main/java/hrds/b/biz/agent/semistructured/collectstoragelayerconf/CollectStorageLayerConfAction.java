@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.JobExecuteState;
@@ -132,12 +133,12 @@ public class CollectStorageLayerConfAction extends BaseAction {
 			"5.判断附加属性ID信息是否为空，为空说明没有选择附加信息" +
 			"6.遍历该列附加信息ID并保存数据字段存储关系入库")
 	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对象采集对应信息时生成")
-	@Param(name = "dcolRelationStores", desc = "数据字段存储关系实体对象数组", range = "与对应数据库表字段规则一致",
+	@Param(name = "colStoParams", desc = "定义字段存储目的地参数实体数组", range = "自定义实体对象",
 			isBean = true)
-	public void saveColRelationStoreInfo(long ocs_id, Dcol_relation_store[] dcolRelationStores) {
+	public void saveColRelationStoreInfo(long ocs_id, ColStoParam[] colStoParams) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断列存储信息是否为空,为空说明该表对应字段没有附加信息
-		if (dcolRelationStores != null && dcolRelationStores.length != 0) {
+		if (colStoParams != null && colStoParams.length != 0) {
 			// 3、在每保存一个字段的存储目的地前，先在dcol_relation_store表中删除该表所有列的信息，不关心删除多少条
 			Dbo.execute(
 					"delete from " + Dcol_relation_store.TableName + " where col_id in " +
@@ -145,12 +146,21 @@ public class CollectStorageLayerConfAction extends BaseAction {
 							+ " AND data_source = ?",
 					ocs_id, StoreLayerDataSource.OBJ.getCode());
 			// 4.遍历列存储附加信息并保存入库
-			for (Dcol_relation_store dcol_relation_store : dcolRelationStores) {
-				Validator.notNull(dcol_relation_store.getDslad_id(), "附加信息ID不能为空");
-				Validator.notNull(dcol_relation_store.getCol_id(), "结构信息ID不能为空");
-				dcol_relation_store.setData_source(StoreLayerDataSource.OBJ.getCode());
-				// 2.新增数据字段存储关系表信息
-				dcol_relation_store.add(Dbo.db());
+			for (ColStoParam colStoParam : colStoParams) {
+				Long[] dsladIds = colStoParam.getDsladIds();
+				Validator.notNull(dsladIds, "附加信息ID不能为空");
+				Validator.notNull(colStoParam.getColumnId(), "结构信息ID不能为空");
+				for (long dsladId : dsladIds) {
+					Dcol_relation_store dcol_relation_store = new Dcol_relation_store();
+					dcol_relation_store.setDslad_id(dsladId);
+					if (colStoParam.getCsiNumber() != null) {
+						dcol_relation_store.setCsi_number(colStoParam.getCsiNumber());
+					}
+					dcol_relation_store.setCol_id(colStoParam.getColumnId());
+					dcol_relation_store.setData_source(StoreLayerDataSource.OBJ.getCode());
+					// 2.新增数据字段存储关系表信息
+					dcol_relation_store.add(Dbo.db());
+				}
 			}
 		}
 	}
