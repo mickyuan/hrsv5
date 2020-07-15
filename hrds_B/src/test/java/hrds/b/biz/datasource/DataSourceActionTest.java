@@ -15,6 +15,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
@@ -39,11 +40,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class DataSourceActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	// 已经存在的用户密码,用于模拟登录
-	private static final String PASSWORD = agentInitConfig.getString("password");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	//获取当前线程ID
 	private final long THREAD_ID = Thread.currentThread().getId();
 	// 测试数据采集用户
@@ -1287,7 +1288,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(dataAuth.get().getAuth_type(), is(AuthType.YiCi.getCode()));
 			assertThat(dataAuth.get().getDa_id(), is(DaId + 2));
 			assertThat(dataAuth.get().getUser_id(), is(USER_ID));
-			assertThat(dataAuth.get().getAudit_name(), is("数据源功能测试"+THREAD_ID));
+			assertThat(dataAuth.get().getAudit_name(), is("数据源功能测试" + THREAD_ID));
 		}
 		// 2.错误的数据访问1，数据申请审批，daId不存在
 		bodyString = new HttpClient()
@@ -1351,10 +1352,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// TODO 不能确定原表是否有数据，目前只能测试自己造的数据
 		for (Department_info departmentInfo : departmentInfoList) {
 			if (departmentInfo.getDep_id() == DepId1) {
-				assertThat("测试第1部门"+THREAD_ID, is(departmentInfo.getDep_name()));
+				assertThat("测试第1部门" + THREAD_ID, is(departmentInfo.getDep_name()));
 			}
 			if (departmentInfo.getDep_id() == DepId2) {
-				assertThat("测试第2部门"+THREAD_ID, is(departmentInfo.getDep_name()));
+				assertThat("测试第2部门" + THREAD_ID, is(departmentInfo.getDep_name()));
 			}
 		}
 	}
@@ -1512,16 +1513,16 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// 验证查询结果的正确性
 		assertThat(String.valueOf(SourceId), is(dataResource.get("source_id").toString()));
 		assertThat(String.valueOf(USER_ID), is(dataResource.get("create_user_id").toString()));
-		assertThat("dsName0"+THREAD_ID, is(dataResource.get("datasource_name").toString()));
-		assertThat("ds01"+THREAD_ID, is(dataResource.get("datasource_number").toString()));
+		assertThat("dsName0" + THREAD_ID, is(dataResource.get("datasource_name").toString()));
+		assertThat("ds01" + THREAD_ID, is(dataResource.get("datasource_number").toString()));
 		assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
 		List<Map<String, Object>> depNameAndId = (List<Map<String, Object>>) dataResource.get("depNameAndId");
 		for (Map<String, Object> map : depNameAndId) {
 			String dep_id = map.get("dep_id").toString();
 			if (dep_id.equals(String.valueOf(DepId1))) {
-				assertThat("测试第1部门"+THREAD_ID, is(map.get("dep_name")));
+				assertThat("测试第1部门" + THREAD_ID, is(map.get("dep_name")));
 			} else if (dep_id.equals(String.valueOf(DepId2))) {
-				assertThat("测试第2部门"+THREAD_ID, is(map.get("dep_name")));
+				assertThat("测试第2部门" + THREAD_ID, is(map.get("dep_name")));
 			}
 		}
 		// 2.错误的数据访问1，查询数据源信息，此数据源下没有数据

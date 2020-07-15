@@ -19,7 +19,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "半结构化启动方式数据初始化", author = "dhw", createdate = "2020/7/10 9:14")
-public class InitStartModeData {
+public class InitStartModeData extends WebBaseTestCase {
 
 	//数据源ID
 	public final long SOURCE_ID = PrimayKeyGener.getNextId();

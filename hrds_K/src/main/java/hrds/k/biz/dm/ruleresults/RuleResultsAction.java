@@ -5,23 +5,40 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.Dq_definition;
+import hrds.commons.entity.Dq_index3record;
 import hrds.commons.entity.Dq_result;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.FileDownloadUtil;
 import hrds.k.biz.dm.ruleresults.bean.RuleResultSearchBean;
 import hrds.k.biz.utils.CheckBeanUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.supercsv.io.CsvListWriter;
+import org.supercsv.prefs.CsvPreference;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "数据管控-规则结果", author = "BY-HLL", createdate = "2020/4/11 0013 上午 09:39")
 public class RuleResultsAction extends BaseAction {
+
+    private static final Logger logger = LogManager.getLogger();
 
     @Method(desc = "获取规则检查结果信息", logicStep = "获取规则检查结果信息")
     @Return(desc = "规则检查结果信息", range = "规则检查结果信息")
@@ -92,14 +109,12 @@ public class RuleResultsAction extends BaseAction {
     @Return(desc = "规则执行详细信息", range = "规则执行详细信息")
     public Dq_result getRuleDetectDetail(String task_id) {
         //数据校验
-        if (StringUtil.isBlank(task_id)) {
-            throw new BusinessException("查看的任务编号为空!");
-        }
+        Validator.notBlank(task_id, "查看的任务编号为空!");
         //设置查询对象
         Dq_result dq_result = new Dq_result();
         dq_result.setTask_id(task_id);
         //获取本任务的详细信息
-        return Dbo.queryOneObject(Dq_result.class, "SELECT * FROM dq_result WHERE task_id = ?",
+        return Dbo.queryOneObject(Dq_result.class, "SELECT * FROM " + Dq_result.TableName + " WHERE task_id = ?",
                 dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("任务执行详细信息的SQL失败!")));
     }
 
@@ -124,5 +139,96 @@ public class RuleResultsAction extends BaseAction {
         dq_result_map.put("dq_result_s", dq_result_s);
         dq_result_map.put("totalSize", page.getTotalSize());
         return dq_result_map;
+    }
+
+    @Method(desc = "导出指标3结果", logicStep = "导出指标3结果")
+    @Param(name = "task_id", desc = "检查结果id", range = "参数例子")
+    @Return(desc = "结果说明", range = "结果描述")
+    public void exportIndicator3Results(long task_id) {
+        //数据校验
+        Validator.notBlank(String.valueOf(task_id), "导出指标3结果时,需要的任务id为空!");
+        //设置 Dq_index3record
+        Dq_index3record di3 = new Dq_index3record();
+        di3.setTask_id(task_id);
+        //获取指标3存储记录信息
+        Dq_result dr = Dbo.queryOneObject(Dq_result.class, "select * from " + Dq_result.TableName +
+                " where task_id=?", di3.getTask_id()).orElseThrow(() ->
+                (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+        di3 = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
+                " where task_id=?", di3.getTask_id()).orElseThrow(() ->
+                (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+        //设置获取数据的sql
+        String sql = "select * from " + di3.getTable_name();
+        //初始化查询结果集
+        List<Map<String, Object>> check_index3_list = new ArrayList<>();
+        //根据指标3存储记录信息获取数据
+        List<String> cols;
+        try {
+            cols = new ProcessingData() {
+                @Override
+                public void dealLine(Map<String, Object> map) {
+
+                    check_index3_list.add(map);
+                }
+            }.getPageDataLayer(sql, Dbo.db(), 1, 10, di3.getDsl_id());
+        } catch (Exception e) {
+            throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+        }
+        //处理数据集
+        List<Object[]> data_list = new ArrayList<>();
+        check_index3_list.forEach(ci3 -> {
+            Object[] o_arr = new Object[ci3.size()];
+            for (int i = 0; i < cols.size(); i++) {
+                o_arr[i] = ci3.get(cols.get(i));
+            }
+            data_list.add(o_arr);
+        });
+        //得到文件的保存目录
+        String fileName = dr.getTarget_tab() + "_" + dr.getVerify_date() + ".csv";
+        String savePath = WebinfoConf.FileUpload_SavedDirName + File.separator + fileName;
+        File file = new File(savePath);
+        //判断文件是否存在不存在创建
+        if (!file.exists()) {
+            try {
+                if (!file.createNewFile()) {
+                    throw new BusinessException("创建文件失败,请检查是否拥有目录写权限！");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        CsvListWriter writer = null;
+        try {
+            writer = new CsvListWriter(new OutputStreamWriter(new FileOutputStream(file),
+                    DataBaseCode.UTF_8.getValue()), CsvPreference.EXCEL_PREFERENCE);
+            //写表头
+            writer.write(cols);
+            //写表数据
+            long counter = 0;
+            for (Object[] objects : data_list) {
+                //计数器
+                counter++;
+                writer.write(objects);
+                if (counter % 50000 == 0) {
+                    logger.info("正在写入文件，已写入" + counter + "行");
+                    writer.flush();
+                }
+            }
+            logger.info("文件写入完成，写入" + counter + "行");
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new BusinessException("创建文件流失败!");
+        } finally {
+            try {
+                if (writer != null)
+                    writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.error("关闭输出流失败!");
+            }
+        }
+        //下载文件
+        FileDownloadUtil.downloadFile(file.getName());
     }
 }

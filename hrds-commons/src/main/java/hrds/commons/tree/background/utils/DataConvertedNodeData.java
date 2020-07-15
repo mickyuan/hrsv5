@@ -203,4 +203,56 @@ public class DataConvertedNodeData {
         });
         return dqcTableNodes;
     }
+
+    @Method(desc = "自定义层(UDL)下存储层信息转换", logicStep = "自定义层(UDL)下存储层信息转换")
+    @Param(name = "data_store_layer_s", desc = "自定义层(UDL)下存储层信息", range = "取值范围说明")
+    public static List<Map<String, Object>> conversionUDLDataInfos(List<Data_store_layer> data_store_layer_s) {
+        List<Map<String, Object>> udlDataNodes = new ArrayList<>();
+        for (Data_store_layer data_store_layer : data_store_layer_s) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", DataSourceType.UDL.getCode() + "_" + data_store_layer.getDsl_id());
+            map.put("label", data_store_layer.getDsl_name());
+            map.put("parent_id", DataSourceType.UDL.getCode());
+            map.put("data_layer", DataSourceType.UDL.getCode());
+            map.put("dsl_id", data_store_layer.getDsl_id());
+            map.put("description", "" +
+                    "存储层编号：" + data_store_layer.getDsl_id() + "\n" +
+                    "存储层名称：" + data_store_layer.getDsl_name() + "\n" +
+                    "存储层描述：" + data_store_layer.getDsl_remark());
+            udlDataNodes.add(map);
+        }
+        return udlDataNodes;
+    }
+
+    @Method(desc = "转化UDL层下表数据为Node节点数据", logicStep = "转化UDL层下表数据为Node节点数据")
+    @Param(name = "dclBatchTableRs", desc = "贴源层分类下的表信息", range = "贴源层分类下的表信息")
+    public static List<Map<String, Object>> conversionUDLTableInfos(List<Map<String, Object>> dqcTableInfos) {
+        List<Map<String, Object>> udlTableNodes = new ArrayList<>();
+        dqcTableInfos.forEach(table_info -> {
+            Map<String, Object> map = new HashMap<>();
+            //数据层id
+            String dsl_id = table_info.get("dsl_id").toString();
+            //文件源属性id
+            String file_id = table_info.get("table_id").toString();
+            //表名
+            String table_name = table_info.get("table_name").toString();
+            //表中文名
+            String table_ch_name = table_info.get("ch_name").toString();
+            map.put("id", DataSourceType.UDL.getCode() + "_" + dsl_id + "_" + file_id);
+            map.put("label", table_name);
+            map.put("parent_id", DataSourceType.UDL.getCode() + "_" + dsl_id);
+            map.put("description", "" +
+                    "存储层名称：" + table_info.get("dsl_name") + "\n" +
+                    "登记表名称：" + table_name + "\n" +
+                    "表中文名称：" + table_ch_name + "\n" +
+                    "原始表名称：" + table_name);
+            map.put("data_layer", DataSourceType.UDL.getCode());
+            map.put("dsl_id", dsl_id);
+            map.put("file_id", file_id);
+            map.put("table_name", table_name);
+            map.put("hyren_name", table_name);
+            udlTableNodes.add(map);
+        });
+        return udlTableNodes;
+    }
 }

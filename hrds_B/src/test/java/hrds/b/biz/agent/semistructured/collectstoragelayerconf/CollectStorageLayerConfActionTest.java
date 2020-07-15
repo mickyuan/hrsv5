@@ -17,6 +17,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
@@ -33,16 +34,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "半结构化采集存储层配置", author = "dhw", createdate = "2020/7/8 8:54")
 public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = agentInitConfig.getLong("user_id");
-	private static final String PASSWORD = agentInitConfig.getString("password");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	// 已经存在的dep id
-	private static final YamlArray TEST_DATABASES = agentInitConfig.getArray("test_databases");
+	private static final YamlArray TEST_DATABASES = ParallerTestUtil.TESTINITCONFIG.getArray("test_databases");
 	// agent所在机器的操作系统linux|windows
-	private static final String AGENT_OS_NAME = agentInitConfig.getString("agent_os_name");
+	private static final String AGENT_OS_NAME = ParallerTestUtil.TESTINITCONFIG.getString("agent_os_name");
 	// 已经部署过得agent
-	private static final long AGENT_ID = agentInitConfig.getLong("agent_id");
+	private static final long AGENT_ID = ParallerTestUtil.TESTINITCONFIG.getLong("agent_id");
 	// 数据字典目录
 	private final String filepath = FileUtil.getFile(
 			"src/test/java/hrds/b/biz/agent/semistructured/dictionary").getAbsolutePath();

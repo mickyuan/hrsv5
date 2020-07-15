@@ -10,6 +10,7 @@ import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
@@ -22,11 +23,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class InitObjectCollectData extends WebBaseTestCase {
 	// 已经存在的dep id
-	public static final YamlArray TEST_DATABASES = agentInitConfig.getArray("test_databases");
+	public static final YamlArray TEST_DATABASES = ParallerTestUtil.TESTINITCONFIG.getArray("test_databases");
 	// agent所在机器的操作系统linux|windows
-	public static final String AGENT_OS_NAME = agentInitConfig.getString("agent_os_name");
+	public static final String AGENT_OS_NAME = ParallerTestUtil.TESTINITCONFIG.getString("agent_os_name");
 	// 已经部署过得agent
-	public static final long AGENT_ID = agentInitConfig.getLong("agent_id");
+	public static final long AGENT_ID = ParallerTestUtil.TESTINITCONFIG.getLong("agent_id");
 	// 数据字典目录
 	public final String filepath = FileUtil.getFile(
 			"src/test/java/hrds/b/biz/agent/semistructured/dictionary").getAbsolutePath();

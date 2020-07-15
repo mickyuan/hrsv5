@@ -176,7 +176,7 @@ public abstract class ProcessingData {
                         + Dq_table_info.TableName + " dqti join  " + Dtab_relation_store.TableName + " dtrs " +
                         "on dqti.table_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl " +
                         "on dtrs.dsl_id = dsl.dsl_id where lower(dqti.table_name) = ? and dtrs.data_source = ?",
-                tableName.toLowerCase(), StoreLayerDataSource.DQ.getCode());
+                tableName.toLowerCase(), StoreLayerDataSource.UD.getCode());
         if (dqtiMap.size() != 0) {
             for (LayerBean map : dqtiMap) {
                 map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));

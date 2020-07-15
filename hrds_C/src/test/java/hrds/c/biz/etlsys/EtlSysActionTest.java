@@ -17,6 +17,7 @@ import hrds.commons.entity.Etl_sub_sys_list;
 import hrds.commons.entity.Etl_sys;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -30,14 +31,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "作业调度工程测试", author = "dhw", createdate = "2019/11/25 17:22")
 public class EtlSysActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = testInitConfig.getString("login_url");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = testInitConfig.getLong("user_id");
-	private static final String PASSWORD = testInitConfig.getString("password");
-	private static final String ETL_SERV_IP = testInitConfig.getString("etl_serv_ip");
-	private static final String USER_NAME = testInitConfig.getString("user_name");
-	private static final String USER_PWD = testInitConfig.getString("user_pwd");
-	private static final String serv_file_path = testInitConfig.getString("serv_file_path");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
+	private static final String ETL_SERV_IP = ParallerTestUtil.TESTINITCONFIG.getString("etl_serv_ip");
+	private static final String USER_NAME = ParallerTestUtil.TESTINITCONFIG.getString("user_name");
+	private static final String USER_PWD = ParallerTestUtil.TESTINITCONFIG.getString("user_pwd");
+	private static final String serv_file_path = ParallerTestUtil.TESTINITCONFIG.getString("serv_file_path");
 	//当前线程的id
 	private String THREAD_ID = String.valueOf(Thread.currentThread().getId() * 1000000);
 	// 初始化作业工程编号

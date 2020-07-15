@@ -11,6 +11,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -27,11 +28,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "agent增删改测试类", author = "dhw", createdate = "2019-09-18 10:49:51")
 public class AgentInfoActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = agentInitConfig.getLong("user_id");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	// 已经存在的用户密码,用于模拟登录
-	private static final String PASSWORD = agentInitConfig.getString("password");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	//获取当前线程ID
 	private final long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 初始化登录用户ID，更新agent时更新数据采集用户
