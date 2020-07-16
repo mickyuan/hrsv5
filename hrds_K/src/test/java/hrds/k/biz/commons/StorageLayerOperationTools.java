@@ -60,13 +60,13 @@ public class StorageLayerOperationTools {
     }
 
     @Method(desc = "清理存储层数表", logicStep = "清理存储层数表")
-    public static void cleanUpDataTable(DatabaseWrapper db, DbConfBean dbConfBean, String table_name) {
+    public static void dropDataTable(DatabaseWrapper db, DbConfBean dbConfBean, String table_name) {
         //使用存储层配置自定义Bean创建存储层链接
         DatabaseWrapper dbDataConn = null;
         try {
             dbDataConn = ConnectionTool.getDBWrapper(dbConfBean);
             //删除数表
-            int i = dbDataConn.ExecDDL("DROP TABLE " + table_name);
+            int i = dbDataConn.ExecDDL("DROP TABLE IF EXISTS " + table_name);
             if (i != 0) {
                 throw new BusinessException("表已经不存在! table_name: " + table_name);
             }

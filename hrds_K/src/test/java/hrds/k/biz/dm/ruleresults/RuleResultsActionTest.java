@@ -294,7 +294,7 @@ public class RuleResultsActionTest extends WebBaseTestCase {
                     "获取返回的ActionResult信息失败!"));
             assertThat(ar.isSuccess(), is(false));
             //清理存储层数表
-            StorageLayerOperationTools.cleanUpDataTable(db, dbConfBean, dqc_table_name);
+            StorageLayerOperationTools.dropDataTable(db, dbConfBean, dqc_table_name);
             //清理 Dq_result
             dq_result.delete(db);
             //清理 Dq_index3record
