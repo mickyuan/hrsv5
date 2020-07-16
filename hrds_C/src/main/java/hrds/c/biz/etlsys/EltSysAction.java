@@ -9,8 +9,8 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
-import hrds.c.biz.util.DownloadLogUtil;
 import hrds.c.biz.util.ETLAgentDeployment;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
@@ -23,10 +23,7 @@ import hrds.commons.entity.Etl_resource;
 import hrds.commons.entity.Etl_sub_sys_list;
 import hrds.commons.entity.Etl_sys;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.Constant;
-import hrds.commons.utils.DboExecute;
-import hrds.commons.utils.PropertyParaValue;
-import hrds.commons.utils.ReadLog;
+import hrds.commons.utils.*;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -64,7 +61,7 @@ public class EltSysAction extends BaseAction {
 	public Etl_sys searchEtlSysById(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// 2.根据工程编号查询工程信息
-		return ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		return ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 	}
 
 	@Method(
@@ -91,7 +88,7 @@ public class EltSysAction extends BaseAction {
 		// 跑批日期默认为当天
 		etl_sys.setCurr_bath_date(DateUtil.getSysDate());
 		// 4.检查工程编号是否已存在，存在不能新增,这里user_id传值为空，因为不管是什么用户工程编号都不能重复
-		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd())) {
+		if (ETLJobUtil.isEtlSysExist(etl_sys.getEtl_sys_cd(), Dbo.db())) {
 			throw new BusinessException("工程编号已存在，不能新增！");
 		}
 		// 5.新增保存工程
@@ -159,7 +156,7 @@ public class EltSysAction extends BaseAction {
 	                                        String user_name, String user_pwd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.判断系统是否正在运行中，如果正在运行中不允许部署
-		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能部署");
 		}
@@ -195,7 +192,7 @@ public class EltSysAction extends BaseAction {
 	public void startControl(String etl_sys_cd, String isResumeRun, String isAutoShift, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.根据工程编号获取工程信息
-		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 		// 3.判断工程是否已部署
 		ETLJobUtil.isETLDeploy(etlSys);
 		// 4.判断是否续跑，如果续跑日期从数据库查询当前批量日期，因为续跑是续跑当前跑批的
@@ -205,7 +202,7 @@ public class EltSysAction extends BaseAction {
 		}
 		// 5.如果日切方式不是自动日切且工程下作业列表为空，则不能启动
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(isAutoShift)) {
-			if (!ETLJobUtil.isEtlJObDefExistBySysCd(etl_sys_cd)) {
+			if (!ETLJobUtil.isEtlJObDefExistBySysCd(etl_sys_cd, Dbo.db())) {
 				throw new BusinessException("如果日切方式不是自动日切且工程下作业列表为空，则不能启动!");
 			}
 		}
@@ -231,7 +228,7 @@ public class EltSysAction extends BaseAction {
 	public void startTrigger(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.根据工程编号获取工程信息
-		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 		// 3.获取系统状态,如果不是运行说明CONTROL还未启动，不能启动TRIGGER
 		if (Job_Status.RUNNING != Job_Status.ofEnumByCode(etlSys.getSys_run_status())) {
 			throw new BusinessException("CONTROL还未启动，不能启动TRIGGER");
@@ -259,7 +256,7 @@ public class EltSysAction extends BaseAction {
 
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.根据工程编号获取工程信息
-		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 		// 3.判断工程是否已部署
 		ETLJobUtil.isETLDeploy(etlSys);
 		// 4.获取当前日期
@@ -310,7 +307,7 @@ public class EltSysAction extends BaseAction {
 		try {
 			// 1.数据可访问权限处理方式，通过user_id进行权限控制
 			// 2.根据工程编号获取工程信息
-			Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+			Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 			// 3.判断工程是否已部署
 			ETLJobUtil.isETLDeploy(etlSys);
 			// 4.修改批量日期格式
@@ -340,7 +337,7 @@ public class EltSysAction extends BaseAction {
 			// 8.与工程部署服务器进行交互压缩日志文件
 			ETLJobUtil.interactingWithTheAgentServer(compressCommand, etlSys, sftpDetails1);
 			// 9.获取文件下载路径
-			String localPath = ETLJobUtil.getFilePath(null);
+			String localPath = WebinfoConf.FileUpload_SavedDirName + File.separator;
 			logger.info("==========control/trigger文件下载本地路径=========" + localPath);
 			// 10.从服务器下载文件到本地
 			if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
@@ -350,9 +347,9 @@ public class EltSysAction extends BaseAction {
 				// TRIGGER日志文件名称
 				logDir = logDir + "_TriggerLog.tar.gz";
 			}
-			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails1);
+			FileDownloadUtil.downloadLogFile(logDir, localPath, sftpDetails1);
 			// 11.下载完删除压缩包
-			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
+			FileDownloadUtil.deleteLogFileBySFTP(logDir, sftpDetails1);
 			if (curr_bath_date.contains("-")) {
 				curr_bath_date = curr_bath_date.replaceAll("-", "");
 			}
@@ -389,7 +386,7 @@ public class EltSysAction extends BaseAction {
 	public void downloadFile(String fileName) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.下载文件
-		DownloadLogUtil.downloadFile(fileName);
+		FileDownloadUtil.downloadFile(fileName);
 	}
 
 	@Method(desc = "删除作业调度工程", logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
