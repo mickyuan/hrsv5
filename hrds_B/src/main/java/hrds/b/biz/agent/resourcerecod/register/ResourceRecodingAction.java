@@ -133,6 +133,8 @@ public class ResourceRecodingAction extends BaseAction {
 		}
 		databaseSet.setDatabase_id(PrimayKeyGener.getNextId());
 		databaseSet.setIs_reg(IsFlag.Shi.getCode());
+		databaseSet.setDb_agent(IsFlag.Fou.getCode());
+		databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 		databaseSet.setCp_or(CLEAN_OBJ.toJSONString());
 		databaseSet.add(Dbo.db());
 		// 4: 返回此次任务的采集ID
