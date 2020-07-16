@@ -67,7 +67,7 @@ public class SysLevelInterventionAction extends BaseAction {
 	@Return(desc = "返回查询系统级当前干预情况", range = "无限制")
 	public List<Map<String, Object>> searchSysLevelCurrInterventionInfo(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.查询系统级当前干预情况
@@ -121,7 +121,7 @@ public class SysLevelInterventionAction extends BaseAction {
 	@Param(name = "curr_bath_date", desc = "当前批量日期", range = "无限制")
 	public void sysLevelInterventionOperate(String etl_sys_cd, String etl_hand_type, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.封装实体字段属性值
@@ -137,7 +137,7 @@ public class SysLevelInterventionAction extends BaseAction {
 				DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
 		etl_job_hand.setPro_para(etl_sys_cd + "," + curr_bath_date);
 		// 3.判断工程下有作业是否正在干预
-		if (ETLJobUtil.isEtlJobHandExist(etl_sys_cd)) {
+		if (ETLJobUtil.isEtlJobHandExist(etl_sys_cd, Dbo.db())) {
 			throw new BusinessException("工程下有作业正在干预！");
 		}
 		// 4.检查etl_hand_type是否合法

@@ -463,7 +463,7 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 		// 1.正确的数据访问1，数据都有效
 		String bodyString = new HttpClient()
 				.addData("dsl_id", 2)
-				.addData("ocs_id", OCS_ID + 1)
+				.addData("ocs_id", OCS_ID)
 				.post(getActionUrl("getColumnStorageLayerInfo"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()

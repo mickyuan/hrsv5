@@ -10,8 +10,8 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
-import hrds.c.biz.util.DownloadLogUtil;
 import hrds.c.biz.util.ETLJobUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.Dispatch_Frequency;
@@ -19,6 +19,7 @@ import hrds.commons.codes.Dispatch_Type;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.FileDownloadUtil;
 import hrds.commons.utils.ReadLog;
 import hrds.commons.utils.jsch.SFTPDetails;
 import it.uniroma1.dis.wsngroup.gexf4j.core.*;
@@ -52,7 +53,7 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回系统运行状态信息与当前运行状态信息", range = "无限制")
 	public Map<String, Object> monitorCurrentBatchInfo(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.当前工程批量运行状态汇总
@@ -90,7 +91,7 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回根据任务查询作业运行状态信息", range = "无限制")
 	public List<Map<String, Object>> monitorCurrentBatchInfoByTask(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.获取当前工程下的每个任务作业状态
@@ -136,11 +137,11 @@ public class MonitorAction extends BaseAction {
 	public List<Map<String, Object>> searchMonitorJobStateBySubCd(
 			String etl_sys_cd, String sub_sys_cd, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.判断工程对应任务是否存在
-		if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd)) {
+		if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd, Dbo.db())) {
 			throw new BusinessException("当前工程对应任务已不存在！");
 		}
 		// 3.查询当前系统运行任务下的作业信息
@@ -159,7 +160,7 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回历史批量信息", range = "无限制")
 	public List<Map<String, Object>> monitorHistoryBatchInfo(String etl_sys_cd, String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.当批量日期为空时默认批量日期为当天，因为查看的是历史批量，所以默认展示当天批量
@@ -190,11 +191,11 @@ public class MonitorAction extends BaseAction {
 	public List<Map<String, Object>> searchMonitorHisBatchJobBySubCd(String etl_sys_cd, String sub_sys_cd,
 	                                                                 String curr_bath_date) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.判断工程下任务是否存在
-		if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd)) {
+		if (!ETLJobUtil.isEtlSubSysExist(etl_sys_cd, sub_sys_cd, Dbo.db())) {
 			throw new BusinessException("当前工程对应的任务已不存在！");
 		}
 		if (curr_bath_date.length() == 10 && curr_bath_date.contains("-")) {
@@ -230,12 +231,12 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回监控当前作业信息", range = "无限制")
 	public Map<String, Object> monitorCurrJobInfo(String etl_sys_cd, String etl_job) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.判断作业名称不为空时作业是否存在
 		if (StringUtil.isNotBlank(etl_job)) {
-			if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
+			if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job, Dbo.db())) {
 				throw new BusinessException("当前工程对应作业名称已不存在！");
 			}
 		}
@@ -271,12 +272,12 @@ public class MonitorAction extends BaseAction {
 	public List<Map<String, Object>> monitorHistoryJobInfo(String etl_sys_cd, String etl_job, String start_date,
 	                                                       String end_date, String isHistoryBatch) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.判断作业名称不为空时作业是否存在
 		if (StringUtil.isNotBlank(etl_job)) {
-			if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
+			if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job, Dbo.db())) {
 				throw new BusinessException("当前工程对应作业名称已不存在！");
 			}
 		}
@@ -360,11 +361,11 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回该工程下作业以及作业资源分配信息", range = "无限制")
 	public Map<String, Object> monitorJobDependencyInfo(String etl_sys_cd, String etl_job) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.判断当前工程下作业是否存在
-		if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
+		if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job, Dbo.db())) {
 			throw new BusinessException("当前工程下的作业已不存在！");
 		}
 		// 3.封装作业依赖属性信息
@@ -484,7 +485,7 @@ public class MonitorAction extends BaseAction {
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Return(desc = "返回gexf格式的xml的依赖作业数据", range = "无限制")
 	public String monitorBatchEtlJobDependencyInfo(String etl_sys_cd) {
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		try {
@@ -736,7 +737,7 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回系统资源信息以及当前工程下运行的作业信息", range = "取值范围")
 	public Map<String, Object> monitorSystemResourceInfo(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.获取资源信息
@@ -783,11 +784,11 @@ public class MonitorAction extends BaseAction {
 	@Return(desc = "返回日志文件信息", range = "无限制")
 	public String readHistoryJobLogInfo(String etl_sys_cd, String etl_job, Integer readNum) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.判断工程对应作业是否存在
-		if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job)) {
+		if (!ETLJobUtil.isEtlJobDefExist(etl_sys_cd, etl_job, Dbo.db())) {
 			throw new BusinessException("当前工程对应作业已不存在！");
 		}
 		// 3.查询作业调度工程信息
@@ -849,7 +850,7 @@ public class MonitorAction extends BaseAction {
 	public String downHistoryJobLog(String etl_sys_cd, String etl_job, String curr_bath_date) {
 		try {
 			// 1.数据可访问权限处理方式，通过user_id进行权限控制
-			if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+			if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 				throw new BusinessException("当前工程已不存在");
 			}
 			// 2.判断日期格式并修改成8位
@@ -872,7 +873,7 @@ public class MonitorAction extends BaseAction {
 			String compressCommand = "tar -zvcPf " + logDir + curr_bath_date + "_" + etl_job + ".tar.gz"
 					+ " " + logDir + etl_job + "_" + curr_bath_date + "*.log ";
 			// 6.根据工程编号获取工程信息
-			Etl_sys etlSysInfo = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId());
+			Etl_sys etlSysInfo = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 			// 7.检查工程部署参数是否为空
 			ETLJobUtil.isETLDeploy(etlSysInfo);
 			SFTPDetails sftpDetails = new SFTPDetails();
@@ -881,7 +882,7 @@ public class MonitorAction extends BaseAction {
 			// 9.获取远程文件名
 			String remoteFileName = curr_bath_date + "_" + etl_job + ".tar.gz";
 			// 10.本地下载路径
-			String localPath = ETLJobUtil.getFilePath(null);
+			String localPath = WebinfoConf.FileUpload_SavedDirName + File.separator;
 			logger.info("==========历史日志文件下载本地路径=========" + localPath);
 			// 11.判断路径是否以分隔符结尾，如果不是加分隔符拼接文件名
 			if (logDir.endsWith(File.separator)) {
@@ -890,9 +891,9 @@ public class MonitorAction extends BaseAction {
 				logDir = logDir + remoteFileName;
 			}
 			// 12.从服务器下载文件
-			DownloadLogUtil.downloadLogFile(logDir, localPath, sftpDetails);
+			FileDownloadUtil.downloadLogFile(logDir, localPath, sftpDetails);
 			// 13.下载完删除压缩包
-			DownloadLogUtil.deleteLogFileBySFTP(logDir, sftpDetails);
+			FileDownloadUtil.deleteLogFileBySFTP(logDir, sftpDetails);
 			// 14.返回文件名
 			return remoteFileName;
 		} catch (JSchException e) {
