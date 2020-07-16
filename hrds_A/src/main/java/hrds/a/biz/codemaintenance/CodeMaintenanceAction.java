@@ -57,7 +57,6 @@ public class CodeMaintenanceAction extends BaseAction {
 
 	@Method(desc = "校验编码信息表实体字段合法性", logicStep = "1.校验编码信息表实体字段合法性")
 	@Param(name = "hyren_code_info", desc = "编码信息表实体对象", range = "与数据库表对应规则一致")
-	@Return(desc = "", range = "")
 	private void checkHyrenCodeInfoFields(Hyren_code_info hyren_code_info) {
 		// 1.校验编码信息表实体字段合法性
 		Validator.notBlank(hyren_code_info.getCode_classify(), "编码分类不能为空");
@@ -67,7 +66,7 @@ public class CodeMaintenanceAction extends BaseAction {
 	}
 
 	@Method(desc = "更新统一编码信息", logicStep = "1.校验实体字段合法性" +
-			"3.更新统一编码信息")
+			"2.更新统一编码信息")
 	@Param(name = "hyren_code_infos", desc = "编码信息表实体对象数组", range = "与数据库表对应规则一致", isBean = true)
 	public void updateCodeInfo(Hyren_code_info[] hyren_code_infos) {
 		// 数据可访问权限处理方式：该方法没有访问权限限制
@@ -86,7 +85,7 @@ public class CodeMaintenanceAction extends BaseAction {
 
 	}
 
-	@Method(desc = "删除编码信息表数据", logicStep = "1.判断当前分类是否被使用" +
+	@Method(desc = "删除统一编码信息", logicStep = "1.判断当前分类是否被使用" +
 			"2.删除编码信息表数据")
 	@Param(name = "code_classify", desc = "编码分类", range = "无限制")
 	public void deleteCodeInfo(String code_classify) {
@@ -108,6 +107,25 @@ public class CodeMaintenanceAction extends BaseAction {
 		// 数据可访问权限处理方式：该方法没有访问权限限制
 		// 1.查询源系统信息
 		return Dbo.queryResult("select * from " + Orig_syso_info.TableName);
+	}
+
+	@Method(desc = "新增源系统信息", logicStep = "1.校验源系统信息表字段合法性验证" +
+			"2.检查源系统信息是否存在" +
+			"3.新增源系统信息")
+	@Param(name = "orig_syso_info", desc = "源系统信息表实体对象", range = "与数据库对应规则一致", isBean = true)
+	public void addOrigSysInfo(Orig_syso_info orig_syso_info) {
+		// 1.校验源系统信息表字段合法性验证
+		Validator.notBlank(orig_syso_info.getOrig_sys_code(), "码值系统编码不能为空");
+		Validator.notBlank(orig_syso_info.getOrig_sys_name(), "码值系统名称不能为空");
+		// 2.检查源系统信息是否存在
+		if (Dbo.queryNumber(
+				"select count(*) from " + Orig_syso_info.TableName + " where orig_sys_code=?",
+				orig_syso_info.getOrig_sys_code())
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException(orig_syso_info.getOrig_sys_code() + "对应的源系统信息已存在，不能新增");
+		}
+		// 3.新增源系统信息
+		orig_syso_info.add(Dbo.db());
 	}
 
 	@Method(desc = "查询初始化源系统编码信息", logicStep = "1.检查源系统信息是否存在" +

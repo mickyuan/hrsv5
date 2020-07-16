@@ -79,9 +79,9 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 			Orig_syso_info orig_syso_info = new Orig_syso_info();
 			orig_syso_info.setOrig_sys_code("dhw" + i + THREAD_ID);
 			if (i == 0) {
-				orig_syso_info.setOrig_sys_name("财务系统" + THREAD_ID);
+				orig_syso_info.setOrig_sys_name("财务系统");
 			} else {
-				orig_syso_info.setOrig_sys_name("房屋系统" + THREAD_ID);
+				orig_syso_info.setOrig_sys_name("房屋系统");
 			}
 			orig_syso_infos.add(orig_syso_info);
 		}
@@ -443,6 +443,53 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 	}
 
 	@Test
+	public void addOrigSysInfo() {
+		Orig_syso_info orig_syso_info = new Orig_syso_info();
+		orig_syso_info.setOrig_sys_code("addOrigSys" + THREAD_ID);
+		orig_syso_info.setOrig_sys_name("新增源系统信息测试");
+		// 1.正确的数据访问1.数据有效
+		String bodyString = new HttpClient()
+				.addData("orig_syso_info", orig_syso_info)
+				.post(getActionUrl("addOrigSysInfo"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(true));
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Orig_syso_info origSysoInfo = SqlOperator.queryOneObject(db, Orig_syso_info.class,
+					"select * from " + Orig_syso_info.TableName + " where orig_sys_code=?",
+					orig_syso_info.getOrig_sys_code())
+					.orElseThrow(() -> new BusinessException("sql查询错误或映射实体失败"));
+			assertThat(origSysoInfo.getOrig_sys_name(), is(orig_syso_info.getOrig_sys_name()));
+			// 测试完删除新增测试数据
+			deleteAddOrigSysoInfo(orig_syso_info, db);
+		}
+		// 2.错误的数据访问1.源系统编码已存在
+		orig_syso_info = new Orig_syso_info();
+		orig_syso_info.setOrig_sys_code("dhw0" + THREAD_ID);
+		orig_syso_info.setOrig_sys_name("财务系统");
+		bodyString = new HttpClient()
+				.addData("orig_syso_info", orig_syso_info)
+				.post(getActionUrl("addOrigSysInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+	}
+
+	private void deleteAddOrigSysoInfo(Orig_syso_info orig_syso_info, DatabaseWrapper db) {
+		SqlOperator.execute(db,
+				"delete from " + Orig_syso_info.TableName + " where orig_sys_code=?",
+				orig_syso_info.getOrig_sys_code());
+		long num = SqlOperator.queryNumber(db,
+				"select count(*) from " + Orig_syso_info.TableName + " where orig_sys_code=?",
+				orig_syso_info.getOrig_sys_code())
+				.orElseThrow(() -> new BusinessException("sql查询错误"));
+		assertThat(num, is(0L));
+		db.commit();
+	}
+
+	@Test
 	public void getOrigCodeInfo() {
 		// 1.正确的数据访问1.数据有效
 		String bodyString = new HttpClient()
@@ -689,6 +736,53 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(false));
+	}
+
+	@Test
+	public void deleteOrigCodeInfo() {
+		// 1.正确的数据访问1.数据有效
+		// 删除前查询确认数据存在
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			long num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Orig_code_info.TableName
+							+ " where code_classify=? and orig_sys_code=?",
+					OperationType.CodeName + THREAD_ID, "dhw0" + THREAD_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(3L));
+			String bodyString = new HttpClient()
+					.addData("code_classify", OperationType.CodeName + THREAD_ID)
+					.addData("orig_sys_code", "dhw0" + THREAD_ID)
+					.post(getActionUrl("deleteOrigCodeInfo"))
+					.getBodyString();
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+			assertThat(ar.isSuccess(), is(true));
+			// 删除后查询确认数据已删除
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Orig_code_info.TableName
+							+ " where code_classify=? and orig_sys_code=?",
+					OperationType.CodeName + THREAD_ID, "dhw0" + THREAD_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			// 2.错误的数据访问1，code_classify不存在
+			bodyString = new HttpClient()
+					.addData("code_classify", "aaa")
+					.addData("orig_sys_code", "dhw0" + THREAD_ID)
+					.post(getActionUrl("deleteOrigCodeInfo"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+			assertThat(ar.isSuccess(), is(false));
+			// 3.错误的数据访问2，code_classify不存在
+			bodyString = new HttpClient()
+					.addData("code_classify", OperationType.CodeName + THREAD_ID)
+					.addData("orig_sys_code", "aaa")
+					.post(getActionUrl("deleteOrigCodeInfo"))
+					.getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+			assertThat(ar.isSuccess(), is(false));
+		}
 	}
 
 	@Test
