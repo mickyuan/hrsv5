@@ -7,18 +7,17 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.collection.ConnectionTool;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Dq_definition;
 import hrds.commons.entity.Dq_index3record;
 import hrds.commons.entity.Dq_result;
 import hrds.commons.exception.BusinessException;
+import hrds.k.biz.commons.StorageLayerOperationTools;
 import hrds.testbase.LoadGeneralTestData;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.*;
-
-import java.util.List;
-import java.util.Map;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -253,22 +252,12 @@ public class RuleResultsActionTest extends WebBaseTestCase {
     @Test
     public void exportIndicator3Results() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //根据数据层获取存储层配置信息
-            List<Map<String, Object>> dataStoreConfBean =
-                    SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", DSL_ID);
-            //获取存储层配置Map信息
-            Map<String, String> dbConfigMap = ConnectionTool.getLayerMap(dataStoreConfBean);
-            //根据存储层配置Map信息设置 DbConfBean
-            DbConfBean dbConfBean = new DbConfBean();
-            dbConfBean.setDatabase_drive(dbConfigMap.get("database_driver"));
-            dbConfBean.setJdbc_url(dbConfigMap.get("jdbc_url"));
-            dbConfBean.setUser_name(dbConfigMap.get("user_name"));
-            dbConfBean.setDatabase_pad(dbConfigMap.get("database_pwd"));
-            dbConfBean.setDatabase_type(dbConfigMap.get("database_type"));
+            //获取DbConfBean
+            DbConfBean dbConfBean = StorageLayerOperationTools.getDbConfBean(db, DSL_ID);
             //设置表名
             String dqc_table_name = "dqc_" + THREAD_ID;
             //初始化存储层下的数表
-            createDataTable(db, dbConfBean, dqc_table_name);
+            StorageLayerOperationTools.createDataTable(db, dbConfBean, dqc_table_name);
             //初始化 Dq_result
             Dq_result dq_result = new Dq_result();
             dq_result.setTask_id(THREAD_ID);
@@ -305,67 +294,13 @@ public class RuleResultsActionTest extends WebBaseTestCase {
                     "获取返回的ActionResult信息失败!"));
             assertThat(ar.isSuccess(), is(false));
             //清理存储层数表
-            cleanUpDataTable(db, dbConfBean, dqc_table_name);
+            StorageLayerOperationTools.cleanUpDataTable(db, dbConfBean, dqc_table_name);
             //清理 Dq_result
             dq_result.delete(db);
             //清理 Dq_index3record
             di3.delete(db);
             //提交db操作
             db.commit();
-        }
-    }
-
-    @Method(desc = "存储层创建数表", logicStep = "存储层创建数表")
-    private static void createDataTable(DatabaseWrapper db, DbConfBean dbConfBean, String dqc_table_name) {
-        //使用存储层配置自定义Bean创建存储层链接
-        DatabaseWrapper dbDataConn = null;
-        try {
-            dbDataConn = ConnectionTool.getDBWrapper(dbConfBean);
-            //创建数表
-            int i = dbDataConn.ExecDDL("CREATE TABLE IF NOT EXISTS " + dqc_table_name + " (id int, name varchar(20))");
-            if (i != 0) {
-                throw new BusinessException("表已经存在! table_name: " + dqc_table_name);
-            }
-            //导入数据
-            dbDataConn.execute("INSERT INTO dqc_" + THREAD_ID + " VALUES (1,'a'),(2,'b')");
-            //提交db操作
-            dbDataConn.commit();
-        } catch (Exception e) {
-            if (null != dbDataConn) {
-                dbDataConn.rollback();
-            }
-            e.printStackTrace();
-            throw new BusinessException("创建存储层数表发生异常!" + e.getMessage());
-        } finally {
-            if (null != dbDataConn) {
-                dbDataConn.close();
-            }
-        }
-    }
-
-    @Method(desc = "清理存储层数表", logicStep = "清理存储层数表")
-    private static void cleanUpDataTable(DatabaseWrapper db, DbConfBean dbConfBean, String dqc_table_name) {
-        //使用存储层配置自定义Bean创建存储层链接
-        DatabaseWrapper dbDataConn = null;
-        try {
-            dbDataConn = ConnectionTool.getDBWrapper(dbConfBean);
-            //删除数表
-            int i = dbDataConn.ExecDDL("DROP TABLE " + dqc_table_name);
-            if (i != 0) {
-                throw new BusinessException("表已经不存在! table_name: " + dqc_table_name);
-            }
-            //提交db操作
-            dbDataConn.commit();
-        } catch (Exception e) {
-            if (null != dbDataConn) {
-                dbDataConn.rollback();
-            }
-            e.printStackTrace();
-            throw new BusinessException("删除存储层数表发生异常!" + e.getMessage());
-        } finally {
-            if (null != dbDataConn) {
-                dbDataConn.close();
-            }
         }
     }
 }
