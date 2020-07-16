@@ -82,11 +82,10 @@ public class CollectStorageLayerConfAction extends BaseAction {
 			"2.判断当前数据存储层配置表信息是否存在" +
 			"3.判断当前对象采集对应信息是否存在" +
 			"4.查询当前表对应列存储信息" +
-			"5.判断列存储信息是否为空，不为空直接返回列存储信息" +
-			"6.查询半结构化采集结构信息" +
-			"7.查询存储层附加属性信息" +
-			"8.设置附加属性到列结构信息中" +
-			"9.返回列存储信息为空时的列信息")
+			"5.查询存储层附加属性信息" +
+			"6.判断列存储信息是否为空，不为空直接返回列存储信息" +
+			"7.查询半结构化采集结构信息" +
+			"8.返回列存储信息为空时的列信息")
 	@Param(name = "dsl_id", desc = "存储层配置ID", range = "新增存储层配置信息时生成")
 	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对应采集对应信息时生成")
 	@Return(desc = "返回获取当前表对应列存储信息", range = "无限制")
@@ -104,16 +103,7 @@ public class CollectStorageLayerConfAction extends BaseAction {
 						+ Data_store_layer_added.TableName + " t3 on t2.dslad_id=t3.dslad_id " +
 						" where t1.ocs_id=? and t3.dsl_id=? and t2.data_source=?",
 				ocs_id, dsl_id, StoreLayerDataSource.OBJ.getCode());
-		// 5.判断列存储信息是否为空，不为空直接返回列存储信息
-		if (!columnStorageLayerInfo.isEmpty()) {
-			return columnStorageLayerInfo;
-		}
-		// 6.查询半结构化采集结构信息
-		List<Map<String, Object>> objCollectStructList = Dbo.queryList(
-				"select ocs_id,struct_id,column_name,data_desc from " + Object_collect_struct.TableName
-						+ " where ocs_id=?",
-				ocs_id);
-		// 7.查询存储层附加属性信息
+		// 5.查询存储层附加属性信息
 		List<Map<String, Object>> dslaStorelayerList = Dbo.queryList(
 				"select t1.dsla_storelayer,t1.dslad_id from "
 						+ Data_store_layer_added.TableName
@@ -121,8 +111,18 @@ public class CollectStorageLayerConfAction extends BaseAction {
 						+ Data_store_layer.TableName
 						+ " t2 on t1.dsl_id = t2.dsl_id where t2.dsl_id = ?",
 				dsl_id);
+		// 6.判断列存储信息是否为空，不为空直接返回列存储信息
+		if (!columnStorageLayerInfo.isEmpty()) {
+			columnStorageLayerInfo.get(0).put("dslaStorelayerList", dslaStorelayerList);
+			return columnStorageLayerInfo;
+		}
+		// 7.查询半结构化采集结构信息
+		List<Map<String, Object>> objCollectStructList = Dbo.queryList(
+				"select ocs_id,struct_id,column_name,data_desc from " + Object_collect_struct.TableName
+						+ " where ocs_id=?",
+				ocs_id);
 		objCollectStructList.get(0).put("dslaStorelayerList", dslaStorelayerList);
-		// 9.返回列存储信息为空时的列信息
+		// 8.返回列存储信息为空时的列信息
 		return objCollectStructList;
 	}
 
@@ -148,9 +148,9 @@ public class CollectStorageLayerConfAction extends BaseAction {
 			// 4.遍历列存储附加信息并保存入库
 			for (ColStoParam colStoParam : colStoParams) {
 				Long[] dsladIds = colStoParam.getDsladIds();
-				Validator.notNull(dsladIds, "附加信息ID不能为空");
 				Validator.notNull(colStoParam.getColumnId(), "结构信息ID不能为空");
-				for (long dsladId : dsladIds) {
+				for (Long dsladId : dsladIds) {
+					Validator.notNull(dsladId, "附加信息ID不能为空");
 					Dcol_relation_store dcol_relation_store = new Dcol_relation_store();
 					dcol_relation_store.setDslad_id(dsladId);
 					if (colStoParam.getCsiNumber() != null) {
@@ -158,7 +158,6 @@ public class CollectStorageLayerConfAction extends BaseAction {
 					}
 					dcol_relation_store.setCol_id(colStoParam.getColumnId());
 					dcol_relation_store.setData_source(StoreLayerDataSource.OBJ.getCode());
-					// 2.新增数据字段存储关系表信息
 					dcol_relation_store.add(Dbo.db());
 				}
 			}
