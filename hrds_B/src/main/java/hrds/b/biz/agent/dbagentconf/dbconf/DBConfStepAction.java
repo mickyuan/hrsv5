@@ -59,20 +59,20 @@ public class DBConfStepAction extends BaseAction {
 	@Return(desc = "数据源信息查询结果集", range = "不会为null")
 	public Result getDBConfInfo(long databaseId) {
 		// 1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
-		Database_set dbSet =
-			Dbo.queryOneObject(
-				Database_set.class,
-				"SELECT das.* "
-					+ " FROM "
-					+ Database_set.TableName
-					+ " das "
-					+ " JOIN "
-					+ Agent_info.TableName
-					+ " ai ON ai.agent_id = das.agent_id "
-					+ " WHERE das.database_id=? AND ai.user_id = ? ",
-				databaseId,
-				getUserId())
-				.orElseThrow(() -> new BusinessException("未能找到该任务"));
+//		Database_set dbSet =
+//			Dbo.queryOneObject(
+//				Database_set.class,
+//				"SELECT das.* "
+//					+ " FROM "
+//					+ Database_set.TableName
+//					+ " das "
+//					+ " JOIN "
+//					+ Agent_info.TableName
+//					+ " ai ON ai.agent_id = das.agent_id "
+//					+ " WHERE das.database_id=? AND ai.user_id = ? AND das.is_reg = ? ",
+//				databaseId,
+//				getUserId(), IsFlag.Fou.getCode())
+//				.orElseThrow(() -> new BusinessException("未能找到该任务"));
 		// 数据可访问权限处理方式
 		// 以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 
@@ -82,7 +82,7 @@ public class DBConfStepAction extends BaseAction {
 		//		}
 		// 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
 		return Dbo.queryResult(
-			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name, "
+			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.is_reg, "
 				+ " t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, "
 				+ " t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, "
 				+ " t2.classify_name, t2.remark "
@@ -92,8 +92,8 @@ public class DBConfStepAction extends BaseAction {
 				+ " left join "
 				+ Collect_job_classify.TableName
 				+ " t2 on "
-				+ " t1.classify_id = t2.classify_id  where database_id = ?",
-			databaseId);
+				+ " t1.classify_id = t2.classify_id  where database_id = ? AND t1.is_reg = ? ",
+			databaseId, IsFlag.Fou.getCode());
 	}
 
 	@Method(desc = "新增时获取数据库采集的数据", logicStep = "使用是否发生完成的标识来获取上次为配置文采的任务")
@@ -411,7 +411,7 @@ public class DBConfStepAction extends BaseAction {
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			//			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setCp_or(CLEANOBJ.toJSONString());
-
+			databaseSet.setIs_reg(IsFlag.Fou.getCode());
 			databaseSet.update(Dbo.db());
 		} else {
 			// 4、如果不存在，则新增信息
