@@ -99,21 +99,23 @@ public class TableRegisterAction extends BaseAction {
 		+ "2: 查询任务存在的表信息,返回表集合信息")
 	@Param(name = "databaseId", desc = "采集任务的ID", range = "不可为空")
 	@Return(desc = "返回当前任务存储层链接下的表信息", range = "为空表示没有该表信息")
-	public List<Table_info> getTableData(long databaseId) {
+	public List<Map<String, Object>> getTableData(long databaseId) {
 
 		//1: 检查当前任务是否存在
 		checkDatabaseSetExist(databaseId);
 
 		//2: 查询任务存在的表信息,返回表集合信息
 		return Dbo
-			.queryList(Table_info.class, "SELECT * FROM " + Table_info.TableName + " WHERE database_id = ?", databaseId);
+			.queryList("SELECT * FROM " + Table_info.TableName + " WHERE database_id = ? ",
+				databaseId);
 
 	}
 
 	private void checkDatabaseSetExist(long databaseId) {
 		//1: 检查当前任务是否存在
 		long countNum = Dbo
-			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?", databaseId)
+			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ? AND is_reg = ?",
+				databaseId, IsFlag.Shi.getCode())
 			.orElseThrow(() -> new BusinessException("SQL查询异常"));
 		if (countNum == 0) {
 			CheckParam.throwErrorMsg("任务ID(%s)不存在", databaseId);
