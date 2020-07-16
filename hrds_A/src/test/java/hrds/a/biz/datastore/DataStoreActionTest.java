@@ -16,6 +16,7 @@ import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
@@ -36,10 +37,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class DataStoreActionTest extends WebBaseTestCase {
 
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
-	private static final String LOGIN_URL = testInfoConfig.getString("login_url");
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = testInfoConfig.getLong("user_id");
-	private static final String PASSWORD = testInfoConfig.getString("password");
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	//当前线程的id
 	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 初始化数据存储层配置ID
