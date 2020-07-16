@@ -465,9 +465,13 @@ public class MetaDataManageAction extends BaseAction {
     @Param(name = "dqTableColumnBeans", desc = "自定义实体DqTableColumnBean数组", range = "DqTableColumnBean[]", isBean = true)
     public void createTable(long dsl_id, DqTableInfoBean dqTableInfoBean, DqTableColumnBean[] dqTableColumnBeans) {
         //数据校验
-        Validator.notBlank(String.valueOf(dsl_id), "存储层id不能为空! dsl_id=" + dsl_id);
+        if (Dbo.queryNumber("SELECT COUNT(*) FROM " + Data_store_layer.TableName + " WHERE dsl_id=?",
+                dsl_id).orElseThrow(() -> new BusinessException("获取存储层信息失败! dsl_id=" + dsl_id)) == 0) {
+            throw new BusinessException("该存储层已经不存在! dsl_id=" + dsl_id);
+        }
         Validator.notNull(dqTableInfoBean, "表存储实体Bean不能为空! dqTableInfoBean");
         Validator.notNull(dqTableColumnBeans, "表字段存储实体Bean[]不能为空! dqTableColumnBeans");
+        Validator.notBlank(dqTableInfoBean.getTable_name(), "表名不能为空!");
         //设置表信息
         Dq_table_info dqTableInfo = new Dq_table_info();
         BeanUtils.copyProperties(dqTableInfoBean, dqTableInfo);
@@ -492,7 +496,7 @@ public class MetaDataManageAction extends BaseAction {
         //校验表名在系统中是否存在,存在则直接终止创建表
         boolean isRepeat = DataTableUtil.tableIsRepeat(dqTableInfo.getTable_name());
         if (isRepeat) {
-            throw new BusinessException("表: " + dqTableInfo.getCh_name() + "已经在系统中存在,请更换表名!" + dqTableInfo.getTable_name());
+            throw new BusinessException("表: " + dqTableInfo.getTable_name() + ",已经在系统中存在,请更换表名!" + dqTableInfo.getTable_name());
         }
         //设置数据表存储关系
         Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
