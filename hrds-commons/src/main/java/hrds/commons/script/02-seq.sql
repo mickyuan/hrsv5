@@ -115,7 +115,9 @@ delete from department_info;
 INSERT INTO department_info (dep_id,dep_name,create_date,create_time,dep_remark) VALUES ('1000000001','第一部门','20160101','120500','');
 
 delete from sys_user;
-INSERT INTO sys_user(USER_ID, CREATE_ID, DEP_ID, ROLE_ID, USER_NAME, USER_PASSWORD, USER_EMAIL, USER_MOBILE, useris_admin,USER_TYPE, usertype_group,LOGIN_IP, LOGIN_DATE, USER_STATE, CREATE_DATE, CREATE_TIME, UPDATE_DATE, UPDATE_TIME, USER_REMARK, TOKEN, VALID_TIME) VALUES ('1000','1000','1000000001','1001','超级管理员', '1', 'ccc@vv.com', '1234567890', '0','00', '92,99,98,97,95','11', '11', '1', '88888888', '111111', '88888888', '111111', '888','0', '0');
+INSERT INTO sys_user(USER_ID, CREATE_ID, DEP_ID, ROLE_ID, USER_NAME, USER_PASSWORD, USER_EMAIL,
+USER_MOBILE, useris_admin,USER_TYPE, usertype_group,LOGIN_IP, LOGIN_DATE, USER_STATE, CREATE_DATE,
+CREATE_TIME, UPDATE_DATE, UPDATE_TIME, USER_REMARK, TOKEN, VALID_TIME) VALUES ('1000','1000','1000000001','1001','超级管理员', '1', 'ccc@vv.com', '1234567890', '0','00', '91,92,99,98,97,95','11', '11', '1', '88888888', '111111', '88888888', '111111', '888','0', '0');
 INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (1001, 1000, 1000000001, '1001', '全功能管理员', '1', 'ccc@vv.com', '1234567890','0','01', '01,04,11,55', null, null, '1', '20181015', '145752', '20181015', '145752', '','0', '0');
 INSERT INTO sys_user(user_id, create_id, dep_id, role_id, user_name, user_password, user_email, user_mobile, useris_admin,user_type, usertype_group, login_ip, login_date, user_state, create_date, create_time, update_date, update_time, user_remark, token, valid_time) VALUES (2001, 1000, 1000000001, '1001', '全功能操作员', '1', 'ccc@vv.com', '1234567890','0','02', '37,02,27,12,14,04,24', null, null, '1', '20181015', '145752', '20181015', '145752', '', '0', '0');
 
