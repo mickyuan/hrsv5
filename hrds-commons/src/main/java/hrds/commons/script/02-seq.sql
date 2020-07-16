@@ -108,7 +108,7 @@ INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_re
 INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000004, '/dataQuery', '27', '资源管理', 'A000', 'el-icon-files');
 INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000008, '/dataStoreLayer', '95', '数据存储层定义', 'A000', 'el-icon-s-unfold');
 INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000092,'/logReview', '92', '日志审查', 'A000', 'el-icon-document');
-INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000093,'/codeMaintenance', '93', '码值维护', 'A000', 'el-icon-folder-checked');
+INSERT INTO component_menu(menu_id,menu_path,user_type,menu_name,comp_id,menu_remark) VALUES (1000000091,'/codeMaintenance', '91', '码值维护', 'A000', 'el-icon-folder-checked');
 
 
 delete from department_info;
