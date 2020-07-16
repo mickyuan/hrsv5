@@ -122,7 +122,7 @@ public class CodeMaintenanceAction extends BaseAction {
 				"select count(*) from " + Orig_syso_info.TableName + " where orig_sys_code=?",
 				orig_syso_info.getOrig_sys_code())
 				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException(orig_syso_info.getOrig_sys_code() + "对应的源系统信息已存在，不能新增");
+			throw new BusinessException("源系统编号已存在，不能新增");
 		}
 		// 3.新增源系统信息
 		orig_syso_info.add(Dbo.db());
