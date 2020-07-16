@@ -388,11 +388,9 @@ public class TableMetaInfoTool {
             if (!deds.isEmpty()) {
                 deds.forEach(ded -> {
                     //删除抽数作业关系表
-                    DboExecute.deletesOrThrow("删除抽数作业关系表失败",
-                            "delete from " + Take_relation_etl.TableName + " where ded_id=?", ded.getDed_id());
+                    Dbo.execute("delete from " + Take_relation_etl.TableName + " where ded_id=?", ded.getDed_id());
                     //删除数据抽取定义
-                    DboExecute.deletesOrThrow("删除数据抽取定义失败",
-                            "delete from " + Data_extraction_def.TableName + " where table_id=?", ti.getTable_id());
+                    Dbo.execute("delete from " + Data_extraction_def.TableName + " where table_id=?", ti.getTable_id());
                 });
             }
             logger.info("删除" + StoreLayerDataSource.DB.getValue() + "登记的相关的表数据完成!");
@@ -410,8 +408,7 @@ public class TableMetaInfoTool {
             //删除对象采集数据处理类型对应表
             Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id=?", oct.getOcs_id());
             //删除对象作业关系表
-            DboExecute.deletesOrThrow("删除对象作业关系表数据失败",
-                    "delete from " + Obj_relation_etl.TableName + " where ocs_id=?", oct.getOcs_id());
+            Dbo.execute("delete from " + Obj_relation_etl.TableName + " where ocs_id=?", oct.getOcs_id());
             //删除对象采集结构信息及相关表数据
             List<Object_collect_struct> ocss = Dbo.queryList(Object_collect_struct.class,
                     "select * from " + Object_collect_struct.TableName + " where ocs_id=?", oct.getOcs_id());
