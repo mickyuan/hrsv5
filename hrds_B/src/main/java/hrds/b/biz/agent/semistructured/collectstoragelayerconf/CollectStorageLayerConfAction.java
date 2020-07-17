@@ -15,6 +15,8 @@ import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Map;
 
 @DocClass(desc = "半结构化采集存储层配置", author = "dhw", createdate = "2020/6/12 18:09")
 public class CollectStorageLayerConfAction extends BaseAction {
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "获取半结构化采集存储层配置初始化信息",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
@@ -122,22 +125,25 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		if (columnStorageLayerInfo.isEmpty()) {
 			return objCollectStructResult;
 		}
+		logger.info("====columnStorageLayerInfo======"+columnStorageLayerInfo);
 		// 8.封装列附加属性信息
-		List<String> dsla_storelayers = new ArrayList<>();
-		for (int i = 0; i < columnStorageLayerInfo.getRowCount(); i++) {
-			long struct_id = columnStorageLayerInfo.getLong(i, "struct_id");
-			for (int j = 0; j < objCollectStructResult.getRowCount(); j++) {
-				long struct_id1 = objCollectStructResult.getLong(j, "struct_id");
-				if (struct_id == struct_id1) {
+		for (int j = 0; j < objCollectStructResult.getRowCount(); j++) {
+			long struct_id = objCollectStructResult.getLong(j, "struct_id");
+			Long csi_number = null;
+			List<String> dsla_storelayers = new ArrayList<>();
+			for (int i = 0; i < columnStorageLayerInfo.getRowCount(); i++) {
+				long col_id = columnStorageLayerInfo.getLong(i, "col_id");
+				if (col_id == struct_id) {
+					logger.info("=========================" + dsla_storelayers + "==========" + col_id);
 					String dsla_storelayer = columnStorageLayerInfo.getString(i, "dsla_storelayer");
 					if (!dsla_storelayers.contains(dsla_storelayer)) {
 						dsla_storelayers.add(dsla_storelayer);
 					}
-					objCollectStructResult.setObject(j, "dsla_storelayer", dsla_storelayers);
-					objCollectStructResult.setObject(j, "csi_number",
-							columnStorageLayerInfo.getLong(i, "csi_number"));
+					csi_number = columnStorageLayerInfo.getLong(i, "csi_number");
 				}
 			}
+			objCollectStructResult.setObject(j, "dsla_storelayer", dsla_storelayers);
+			objCollectStructResult.setObject(j, "csi_number", csi_number);
 		}
 		// 9.返回列存储信息为空时的列信息
 		return objCollectStructResult;

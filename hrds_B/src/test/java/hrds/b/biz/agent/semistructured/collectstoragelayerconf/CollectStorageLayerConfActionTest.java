@@ -13,6 +13,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -26,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -136,11 +138,22 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 		List<Dcol_relation_store> dcolRelationStores = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
 			Dcol_relation_store dcolRelationStore = new Dcol_relation_store();
-			dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
-			dcolRelationStore.setCsi_number("1");
-			dcolRelationStore.setDslad_id(Dslad_id + i);
-			dcolRelationStore.setCol_id(STRUCT_ID + i);
-			dcolRelationStores.add(dcolRelationStore);
+			if (i == 0) {
+				dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
+				dcolRelationStore.setDslad_id(Dslad_id);
+				dcolRelationStore.setCol_id(STRUCT_ID + i);
+				dcolRelationStores.add(dcolRelationStore);
+				dcolRelationStore = new Dcol_relation_store();
+				dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
+				dcolRelationStore.setDslad_id(Dslad_id + TEST_DATABASES.size());
+				dcolRelationStore.setCol_id(STRUCT_ID + i);
+				dcolRelationStores.add(dcolRelationStore);
+			} else {
+				dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
+				dcolRelationStore.setDslad_id(Dslad_id);
+				dcolRelationStore.setCol_id(STRUCT_ID + i);
+				dcolRelationStores.add(dcolRelationStore);
+			}
 		}
 		return dcolRelationStores;
 	}
@@ -187,11 +200,24 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 			YamlMap test_database = TEST_DATABASES.getMap(i);
 			//存储层设置id
 			long dsl_id = test_database.getLong("dsl_id");
-			Data_store_layer_added data_store_layer_added = new Data_store_layer_added();
-			data_store_layer_added.setDsl_id(dsl_id);
-			data_store_layer_added.setDslad_id(Dslad_id + i);
-			data_store_layer_added.setDsla_storelayer(StoreLayerAdded.ZhuJian.getCode());
-			dataStoreLayerAddeds.add(data_store_layer_added);
+			if (i == 0) {
+				Data_store_layer_added data_store_layer_added = new Data_store_layer_added();
+				data_store_layer_added.setDsl_id(dsl_id);
+				data_store_layer_added.setDslad_id(Dslad_id + i);
+				data_store_layer_added.setDsla_storelayer(StoreLayerAdded.ZhuJian.getCode());
+				dataStoreLayerAddeds.add(data_store_layer_added);
+				data_store_layer_added = new Data_store_layer_added();
+				data_store_layer_added.setDsl_id(dsl_id);
+				data_store_layer_added.setDslad_id(Dslad_id + i + TEST_DATABASES.size());
+				data_store_layer_added.setDsla_storelayer(StoreLayerAdded.SuoYinLie.getCode());
+				dataStoreLayerAddeds.add(data_store_layer_added);
+			} else {
+				Data_store_layer_added data_store_layer_added = new Data_store_layer_added();
+				data_store_layer_added.setDsl_id(dsl_id);
+				data_store_layer_added.setDslad_id(Dslad_id + i);
+				data_store_layer_added.setDsla_storelayer(StoreLayerAdded.ZhuJian.getCode());
+				dataStoreLayerAddeds.add(data_store_layer_added);
+			}
 		}
 		return dataStoreLayerAddeds;
 	}
@@ -460,9 +486,9 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 			"4.错误的数据访问2，ocs_id不存在")
 	@Test
 	public void getColumnStorageLayerInfo() {
-		// 1.正确的数据访问1，数据都有效
+		// 1.正确的数据访问1，数据都有效，有附加属性配置
 		String bodyString = new HttpClient()
-				.addData("dsl_id", 2)
+				.addData("dsl_id", 1)
 				.addData("ocs_id", OCS_ID)
 				.post(getActionUrl("getColumnStorageLayerInfo"))
 				.getBodyString();
@@ -471,6 +497,30 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 		Result result = ar.getDataForResult();
 		for (int i = 0; i < result.getRowCount(); i++) {
+			List<String> dslaStorelayers = JsonUtil.toObject(result.getString(i, "dsla_storelayer"),
+					new TypeReference<List<String>>() {
+					}.getType());
+			assertThat(dslaStorelayers.contains(StoreLayerAdded.ZhuJian.getCode()), is(true));
+			if (i == 0) {
+				assertThat(result.getString(i, "column_name"), is("case_number"));
+				assertThat(result.getString(i, "data_desc"), is("case_number"));
+				assertThat(dslaStorelayers.contains(StoreLayerAdded.SuoYinLie.getCode()), is(true));
+			} else {
+				assertThat(result.getString(i, "column_name"), is("ops_flag"));
+				assertThat(result.getString(i, "data_desc"), is("ops_flag"));
+			}
+		}
+		// 2.正确的数据访问2，数据都有效,无附加属性配置
+		bodyString = new HttpClient()
+				.addData("dsl_id", 1)
+				.addData("ocs_id", OCS_ID + 1)
+				.post(getActionUrl("getColumnStorageLayerInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+				-> new BusinessException("连接失败！"));
+		assertThat(ar.isSuccess(), is(true));
+		result = ar.getDataForResult();
+		for (int i = 0; i < result.getRowCount(); i++) {
 			if (i == 0) {
 				assertThat(result.getString(i, "column_name"), is("status"));
 				assertThat(result.getString(i, "data_desc"), is("status"));
@@ -478,24 +528,7 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 				assertThat(result.getString(i, "column_name"), is("operate"));
 				assertThat(result.getString(i, "data_desc"), is("operate"));
 			}
-			List<String> dslaStorelayers = JsonUtil.toObject(result.getString(i, "dsla_storelayer"),
-					new TypeReference<List<String>>() {
-					}.getType());
-			assertThat(dslaStorelayers.contains(StoreLayerAdded.ZhuJian.getCode()), is(true));
 		}
-		// 2.正确的数据访问2，数据都有效
-		bodyString = new HttpClient()
-				.addData("dsl_id", 1)
-				.addData("ocs_id", OCS_ID)
-				.post(getActionUrl("getColumnStorageLayerInfo"))
-				.getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
-				-> new BusinessException("连接失败！"));
-		assertThat(ar.isSuccess(), is(true));
-		result = ar.getDataForResult();
-		assertThat(result.getString(0, "column_name"), is("case_number"));
-		assertThat(result.getString(0, "data_desc"), is("case_number"));
-		assertThat(result.getString(0, "dsla_storelayer"), is(StoreLayerAdded.ZhuJian.getCode()));
 		// 3.错误的数据访问1，dsl_id不存在
 		bodyString = new HttpClient()
 				.addData("dsl_id", "123")
@@ -522,18 +555,22 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 			"4.错误的数据访问3，col_id不存在")
 	@Test
 	public void saveColRelationStoreInfo() {
-		List<Dcol_relation_store> dcolRelationStores = new ArrayList<>();
+		List<ColStoParam> colStoParams = new ArrayList<>();
+		List<Long> dsladIdList = Arrays.asList(Dslad_id, Dslad_id + TEST_DATABASES.size());
 		for (int i = 0; i < 2; i++) {
-			Dcol_relation_store dcolRelationStore = new Dcol_relation_store();
-			dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
-			dcolRelationStore.setDslad_id(Dslad_id + i);
-			dcolRelationStore.setCol_id(STRUCT_ID + i);
-			dcolRelationStores.add(dcolRelationStore);
+			ColStoParam colStoParam = new ColStoParam();
+			if (i == 0) {
+				colStoParam.setDsladIds(new Long[]{Dslad_id});
+			} else {
+				colStoParam.setDsladIds(new Long[]{Dslad_id, Dslad_id + TEST_DATABASES.size()});
+			}
+			colStoParam.setColumnId(STRUCT_ID + i);
+			colStoParams.add(colStoParam);
 		}
 		// 1.正确的数据访问1，数据都有效
 		String bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
-				.addData("dcolRelationStores", JsonUtil.toJson(dcolRelationStores))
+				.addData("colStoParams", JsonUtil.toJson(colStoParams))
 				.post(getActionUrl("saveColRelationStoreInfo"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
@@ -544,50 +581,54 @@ public class CollectStorageLayerConfActionTest extends WebBaseTestCase {
 					SqlOperator.queryList(db, Dcol_relation_store.class,
 							"select * from " + Dcol_relation_store.TableName + " where col_id in(?,?)",
 							STRUCT_ID, STRUCT_ID + 1);
-			assertThat(dcolRelationStoreList.size(), is(2));
-			for (int i = 0; i < dcolRelationStoreList.size(); i++) {
-				Dcol_relation_store dcolRelationStore = dcolRelationStoreList.get(i);
+			for (Dcol_relation_store dcolRelationStore : dcolRelationStoreList) {
+				Long col_id = dcolRelationStore.getCol_id();
+				if (col_id == STRUCT_ID) {
+					assertThat(dcolRelationStore.getDslad_id(), is(Dslad_id));
+				} else {
+					assertThat(dsladIdList.contains(dcolRelationStore.getDslad_id()), is(true));
+				}
 				assertThat(dcolRelationStore.getData_source(), is(StoreLayerDataSource.OBJ.getCode()));
-				assertThat(dcolRelationStore.getDslad_id(), is(Dslad_id + i));
-				assertThat(dcolRelationStore.getCol_id(), is(STRUCT_ID + i));
 			}
 		}
 		// 2.错误的数据访问1，ocs_id不存在
 		bodyString = new HttpClient()
 				.addData("ocs_id", "123")
-				.addData("dcolRelationStores", JsonUtil.toJson(dcolRelationStores))
+				.addData("colStoParams", JsonUtil.toJson(colStoParams))
 				.post(getActionUrl("saveColRelationStoreInfo"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 		// 3.错误的数据访问2，dslad_id不存在
-		dcolRelationStores = new ArrayList<>();
+		colStoParams = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
-			Dcol_relation_store dcolRelationStore = new Dcol_relation_store();
-			dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
-			dcolRelationStore.setCol_id(String.valueOf(i));
-			dcolRelationStores.add(dcolRelationStore);
+			ColStoParam colStoParam = new ColStoParam();
+			colStoParam.setColumnId(STRUCT_ID + i);
+			colStoParams.add(colStoParam);
 		}
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
-				.addData("dcolRelationStores", JsonUtil.toJson(dcolRelationStores))
+				.addData("colStoParams", JsonUtil.toJson(colStoParams))
 				.post(getActionUrl("saveColRelationStoreInfo"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败！"));
 		assertThat(ar.isSuccess(), is(false));
 		// 4.错误的数据访问3，col_id不存在
-		dcolRelationStores = new ArrayList<>();
+		colStoParams = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
-			Dcol_relation_store dcolRelationStore = new Dcol_relation_store();
-			dcolRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
-			dcolRelationStore.setDslad_id(Dslad_id + i);
-			dcolRelationStores.add(dcolRelationStore);
+			ColStoParam colStoParam = new ColStoParam();
+			if (i == 0) {
+				colStoParam.setDsladIds(new Long[]{Dslad_id});
+			} else {
+				colStoParam.setDsladIds(new Long[]{Dslad_id, Dslad_id + TEST_DATABASES.size()});
+			}
+			colStoParams.add(colStoParam);
 		}
 		bodyString = new HttpClient()
 				.addData("ocs_id", OCS_ID)
-				.addData("dcolRelationStores", JsonUtil.toJson(dcolRelationStores))
+				.addData("colStoParams", JsonUtil.toJson(colStoParams))
 				.post(getActionUrl("saveColRelationStoreInfo"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
