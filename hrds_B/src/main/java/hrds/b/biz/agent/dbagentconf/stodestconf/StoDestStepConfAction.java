@@ -799,7 +799,7 @@ public class StoDestStepConfAction extends BaseAction {
 				Long tableIdFromParam = param.getTableId();
 				if (tableIdFromTSI.equals(tableIdFromParam)) {
 					// 将该张表的存储目的地保存到数据存储关系表中，有几个目的地，就保存几条
-					long[] dslIds = param.getDslIds();
+					Long[] dslIds = param.getDslIds();
 					if (dslIds == null || !(dslIds.length > 0)) {
 						throw new BusinessException("请检查配置信息，并为每张入库的表选择至少一个存储目的地");
 					}

@@ -270,7 +270,7 @@ public class CollectStorageLayerConfAction extends BaseAction {
 						+ " AND data_source = ?",
 				odc_id, StoreLayerDataSource.OBJ.getCode());
 		for (DataStoRelaParam dataStoRelaParam : dataStoRelaParams) {
-			long[] dslIds = dataStoRelaParam.getDslIds();
+			Long[] dslIds = dataStoRelaParam.getDslIds();
 			for (long dslId : dslIds) {
 				// 5.新增数据表存储表信息
 				addDtabRelationStore(dataStoRelaParam.getTableId(), dslId);
