@@ -204,9 +204,10 @@ public class MetaDataManageAction extends BaseAction {
     public void saveMetaData(String data_layer, String file_id, String table_id, String table_ch_name,
                              ColumnInfoBean[] columnInfoBeans) {
         //数据校验
-        if (StringUtil.isBlank(table_id)) {
-            throw new BusinessException("编辑的元数据信息id为空!");
-        }
+        Validator.notBlank(data_layer, "数据层为空!");
+        Validator.notBlank(file_id, "编辑的元数据信息id为空!");
+        Validator.notBlank(table_id, "编辑数据表id为空!");
+        Validator.notNull(columnInfoBeans, "自定义实体ColumnInfoBean的对象为空!");
         //根据数据层修改不同层下的数据
         DataSourceType dataSourceType = DataSourceType.ofEnumByCode(data_layer);
         if (dataSourceType == DataSourceType.ISL) {
@@ -222,7 +223,7 @@ public class MetaDataManageAction extends BaseAction {
         } else if (dataSourceType == DataSourceType.AML) {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DQC) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            throw new BusinessException(data_layer + "层表结构不允许编辑!");
         } else if (dataSourceType == DataSourceType.UDL) {
             TableMetaInfoTool.updateUDLTableMetaInfo(table_id, table_ch_name, columnInfoBeans, Dbo.db());
         } else {
@@ -442,11 +443,14 @@ public class MetaDataManageAction extends BaseAction {
         slci.put("dsl_added_s", dsl_added_s);
         //存储层支持的类型列表信息 storageLayerFieldTypeInfos
         List<String> slfti = Dbo.queryOneColumnList("select distinct tc.target_type from " +
-                Data_store_layer.TableName + " dsl left join " + Type_contrast_sum.TableName + " tcs" +
-                " on dsl.dtcs_id = tcs.dtcs_id left join " + Type_contrast.TableName + " tc" +
+                Data_store_layer.TableName + " dsl join " + Type_contrast_sum.TableName + " tcs" +
+                " on dsl.dtcs_id = tcs.dtcs_id join " + Type_contrast.TableName + " tc" +
                 " on tcs.dtcs_id = tc.dtcs_id where dsl_id = ?", dsl_id);
         //处理查询到的类型列表信息,去除括号
         List<String> filedTypes = new ArrayList<>();
+        if (slfti.isEmpty()) {
+            throw new BusinessException("存储层: " + dsl.getDsl_name() + "对应支持的数据类型为空,请先配置的类型配置信息!");
+        }
         for (String s : slfti) {
             if (s.contains(Constant.LXKH) && s.contains(Constant.RXKH)) {
                 filedTypes.add(s.substring(0, s.indexOf(Constant.LXKH)));
