@@ -8,6 +8,7 @@ import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.bean.ColStoParam;
+import hrds.b.biz.agent.bean.DataStoRelaParam;
 import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.JobExecuteState;
@@ -125,7 +126,7 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		if (columnStorageLayerInfo.isEmpty()) {
 			return objCollectStructResult;
 		}
-		logger.info("====columnStorageLayerInfo======"+columnStorageLayerInfo);
+		logger.info("====columnStorageLayerInfo======" + columnStorageLayerInfo);
 		// 8.封装列附加属性信息
 		for (int j = 0; j < objCollectStructResult.getRowCount(); j++) {
 			long struct_id = objCollectStructResult.getLong(j, "struct_id");
@@ -210,43 +211,83 @@ public class CollectStorageLayerConfAction extends BaseAction {
 	@Method(desc = "保存数据表存储关系表信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 			"2.判断当前任务是否已不存在" +
 			"3.判断表存储目的地信息是否存在" +
-			"4.查询半结构化采集所有入库的表" +
-			"5.判断入库的表与选择存储目的地的表个数是否相同，保证入库的表都选择了存储目的地" +
-			"6.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条" +
-			"7.循环新增数据表存储关系表信息入库")
+			"4.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条" +
+			"5.新增数据表存储关系表信息入库")
 	@Param(name = "odc_id", desc = "对象采集ID", range = "新增对象采集配置时生成")
-	@Param(name = "dtabRelationStores", desc = "数据表存储关系实体对象", range = "与数据库对应实体字段规则一致",
-			isBean = true)
-	public void saveDtabRelationStoreInfo(long odc_id, Dtab_relation_store[] dtabRelationStores) {
+	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对象采集对应信息时生成")
+	@Param(name = "dslIds", desc = "存储层配置ID数组", range = "无限制")
+	public void saveDtabRelationStoreInfo(long odc_id, long ocs_id, long[] dslIds) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前任务是否已不存在
 		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.判断表存储目的地信息是否存在
-		if (dtabRelationStores == null || dtabRelationStores.length == 0) {
+		if (dslIds == null || dslIds.length == 0) {
 			throw new BusinessException("未获取到表存储目的地信息");
 		}
-		// 4.查询半结构化采集所有入库的表
-		long num = Dbo.queryNumber(
-				"select count(*) from " + Object_collect_task.TableName + " where odc_id=?", odc_id)
-				.orElseThrow(() -> new BusinessException("sql查询错误"));
-		// 5.判断入库的表与选择存储目的地的表个数是否相同，保证入库的表都选择了存储目的地
-		if (num != dtabRelationStores.length) {
-			throw new BusinessException("请确保入库的表都选择了存储目的地");
+		// 4.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条
+		Dbo.execute(
+				"delete from " + Dtab_relation_store.TableName + " where tab_id =? AND data_source = ?",
+				ocs_id, StoreLayerDataSource.OBJ.getCode());
+		for (long dslId : dslIds) {
+			// 5.新增数据表存储表信息
+			addDtabRelationStore(ocs_id, dslId);
 		}
-		// 6.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条
+	}
+
+	@Method(desc = "新增数据表存储表信息", logicStep = "1.新增数据表存储关系表信息入库")
+	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对象采集对应信息时生成")
+	@Param(name = "dslId", desc = "存储层配置Id", range = "无限制")
+	private void addDtabRelationStore(long ocs_id, long dslId) {
+		Dtab_relation_store dtabRelationStore = new Dtab_relation_store();
+		Validator.notNull(dslId, "ocs_id=" + ocs_id + "对应表未选择存储层,请检查");
+		dtabRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
+		dtabRelationStore.setIs_successful(JobExecuteState.DengDai.getCode());
+		dtabRelationStore.setTab_id(ocs_id);
+		dtabRelationStore.setDsl_id(dslId);
+		// 1.新增数据表存储关系表信息入库
+		dtabRelationStore.add(Dbo.db());
+	}
+
+	@Method(desc = "批量保存数据表存储关系表信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+			"2.判断当前任务是否已不存在" +
+			"3.判断表存储目的地信息是否存在" +
+			"4.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条" +
+			"5.新增数据表存储表信息")
+	@Param(name = "odc_id", desc = "对象采集ID", range = "新增对象采集配置时生成")
+	@Param(name = "dataStoRelaParams", desc = "数据存储关系参数表实体数组", range = "hyren_name字段为空", isBean = true)
+	public void batchSaveDtabRelationStoreInfo(long odc_id, DataStoRelaParam[] dataStoRelaParams) {
+		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+		// 2.判断当前任务是否已不存在
+		CommonUtils.isObjectCollectExist(odc_id);
+		// 3.判断表存储目的地信息是否存在
+		if (dataStoRelaParams == null || dataStoRelaParams.length == 0) {
+			throw new BusinessException("未获取到表存储目的地信息");
+		}
+		// 4.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条
 		Dbo.execute(
 				"delete from " + Dtab_relation_store.TableName + " where tab_id in"
 						+ " (select ocs_id from " + Object_collect_task.TableName + " where odc_id = ?)"
 						+ " AND data_source = ?",
 				odc_id, StoreLayerDataSource.OBJ.getCode());
-		for (int i = 0; i < dtabRelationStores.length; i++) {
-			Dtab_relation_store dtabRelationStore = dtabRelationStores[i];
-			Validator.notNull(dtabRelationStore.getDsl_id(), "第" + (i + 1) + "张表未选择存储层");
-			Validator.notNull(dtabRelationStore.getTab_id(), "第" + (i + 1) + "张表ID为空");
-			dtabRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
-			dtabRelationStore.setIs_successful(JobExecuteState.DengDai.getCode());
-			// 7.循环新增数据表存储关系表信息入库
-			dtabRelationStore.add(Dbo.db());
+		for (DataStoRelaParam dataStoRelaParam : dataStoRelaParams) {
+			long[] dslIds = dataStoRelaParam.getDslIds();
+			for (long dslId : dslIds) {
+				// 5.新增数据表存储表信息
+				addDtabRelationStore(dataStoRelaParam.getTableId(), dslId);
+			}
+		}
+	}
+
+	@Method(desc = "检查是否所有的表都选择了存储目的地", logicStep = "1.保证入库的表都选择了存储目的地")
+	@Param(name = "ocsIds", desc = "对象采集任务编号数组", range = "无限制")
+	public void checkDtabRelationStore(long[] ocsIds) {
+		// 1.保证入库的表都选择了存储目的地
+		for (long ocs_id : ocsIds) {
+			if (Dbo.queryNumber(
+					"select count(*) from " + Dtab_relation_store.TableName + " where tab_id=?", ocs_id)
+					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+				throw new BusinessException("ocs_id=" + ocs_id + "对应的表为选择存储层,请检查");
+			}
 		}
 	}
 
