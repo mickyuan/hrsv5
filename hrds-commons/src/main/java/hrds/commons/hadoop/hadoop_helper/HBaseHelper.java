@@ -219,6 +219,16 @@ public class HBaseHelper implements Closeable {
 		admin.disableTable(table);
 	}
 
+	public void enableTable(String table) throws IOException {
+
+		enableTable(TableName.valueOf(table));
+	}
+
+	public void enableTable(TableName table) throws IOException {
+
+		admin.enableTable(table);
+	}
+
 	public void dropTable(String table) throws IOException {
 
 		dropTable(TableName.valueOf(table));
@@ -347,6 +357,12 @@ public class HBaseHelper implements Closeable {
 
 		admin.snapshot(snapshotName, TableName.valueOf(tableName));
 		logger.info("create " + snapshotName + " successful!");
+	}
+
+	public void cloneSnapshot(String snapshotName, String tableName) throws IOException {
+
+		admin.cloneSnapshot(snapshotName, TableName.valueOf(tableName));
+		logger.info("clone " + snapshotName + " successful!");
 	}
 
 	public void restoreSnapshot(String snapshotName, String tableName) throws IOException {

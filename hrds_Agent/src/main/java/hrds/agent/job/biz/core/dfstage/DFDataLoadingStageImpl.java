@@ -4,6 +4,7 @@ import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
@@ -11,6 +12,7 @@ import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dfstage.bulkload.*;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -19,14 +21,20 @@ import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.hadoop_helper.HashChoreWoker;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,12 +68,13 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			} else if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 				for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
+					String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
+					String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
 					//根据存储类型上传到目的地
 					if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//传统数据库有两种情况，支持外部表和不支持外部表
 						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//支持外部表
-							String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
 							//通过外部表加载数据到todayTableName
 							createExternalTableLoadData(todayTableName, collectTableBean, dataStoreConfBean,
 									stageParamInfo.getTableBean(), stageParamInfo.getFileNameArr());
@@ -80,8 +89,6 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 						//hive库有两种情况，有客户端和没有客户端
 						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//有客户端
-							String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
-							String hdfsFilePath = DFUploadStageImpl.getUploadHdfsPath(collectTableBean);
 							//通过load方式加载数据到hive
 							createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
 									stageParamInfo.getTableBean());
@@ -93,7 +100,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 									+ "错误的是否标识");
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-						LOGGER.warn("DB文件采集数据加载进HBASE没有实现");
+						//根据文件类型bulkload加载数据进hbase
+						bulkloadLoadDataToHbase(todayTableName, hdfsFilePath, collectTableBean.getEtlDate(),
+								dataStoreConfBean, stageParamInfo.getTableBean());
+//						LOGGER.warn("DB文件采集数据加载进HBASE没有实现");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 						LOGGER.warn("DB文件采集数据加载进SOLR没有实现");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
@@ -125,6 +135,103 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
+	}
+
+	private void bulkloadLoadDataToHbase(String todayTableName, String hdfsFilePath, String etlDate,
+	                                     DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
+		int run;
+		String isMd5 = IsFlag.Fou.getCode();
+		String file_format = tableBean.getFile_format();
+		String columnMetaInfo = tableBean.getColumnMetaInfo();
+		List<String> columnList = StringUtil.split(columnMetaInfo, Constant.METAINFOSPLIT);
+		StringBuilder rowKeyIndex = new StringBuilder();
+		//获取配置的hbase的rowkey列
+		Map<String, Map<String, Integer>> additInfoFieldMap = dataStoreConfBean.getAdditInfoFieldMap();
+		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
+			Map<String, Integer> column_map = additInfoFieldMap.get(StoreLayerAdded.RowKey.getCode());
+			if (column_map != null && !column_map.isEmpty()) {
+				//获取配置rowKey的列在文件中的下标
+				for (String key : column_map.keySet()) {
+					for (int i = 0; i < columnList.size(); i++) {
+						if (key.equalsIgnoreCase(columnList.get(i))) {
+							rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
+						}
+					}
+				}
+			}
+		}
+		if (rowKeyIndex.length() == 0) {
+			//择表示没有选择rowkey，则默认使用md5值
+			if (columnList.contains(Constant.MD5NAME)) {
+				for (int i = 0; i < columnList.size(); i++) {
+					if (Constant.MD5NAME.equals(columnList.get(i))) {
+						rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
+					}
+				}
+			} else {
+				//没有算MD5，则使用全字段的值，这里的全字段的值，算md5,不包括海云拼接的字段
+				for (int i = 0; i < columnList.size(); i++) {
+					String colName = columnList.get(i);
+					if (!(Constant.SDATENAME.equals(colName) || Constant.EDATENAME.equals(colName)
+							|| Constant.HYREN_OPER_DATE.equals(colName) || Constant.HYREN_OPER_TIME.equals(colName)
+							|| Constant.HYREN_OPER_PERSON.equals(colName))) {
+						rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
+					}
+				}
+				isMd5 = IsFlag.Shi.getCode();
+			}
+		}
+		rowKeyIndex.delete(rowKeyIndex.length() - Constant.METAINFOSPLIT.length(), rowKeyIndex.length());
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH
+				+ dataStoreConfBean.getDsl_name() + File.separator, true);
+		String[] args = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
+				isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name)};
+		//如果表已经存在，先删除当天的表
+		try (HBaseHelper helper = HBaseHelper.getHelper(configPath)) {
+			// 预分区建表
+			if (!helper.existsTable(todayTableName)) {
+				HashChoreWoker worker = new HashChoreWoker(1000000, 10);
+				byte[][] splitKeys = worker.calcSplitKeys();
+				//默认是压缩
+				helper.createTable(todayTableName, splitKeys, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
+			} else {
+				//存在表，先禁用再删除
+				helper.disableTable(todayTableName);
+				helper.dropTable(todayTableName);
+				HashChoreWoker worker = new HashChoreWoker(1000000, 10);
+				byte[][] splitKeys = worker.calcSplitKeys();
+				helper.createTable(todayTableName, splitKeys, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
+			}
+			//表名
+			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
+				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new SequeceBulkLoadJob(), args);
+			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
+				//非定长需要文件分隔符
+				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
+						isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name),
+						tableBean.getColumn_separator()};
+				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new NonFixedBulkLoadJob(), args2);
+			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
+				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new ParquetBulkLoadJob(), args);
+			} else if (FileFormat.ORC.getCode().equals(file_format)) {
+				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new OrcBulkLoadJob(), args);
+			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
+				//定长需要根据文件的编码去获取字节长度,需要每一列的长度
+				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
+						isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name),
+						DataBaseCode.ofValueByCode(tableBean.getFile_code()), tableBean.getColLengthInfo()};
+				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new FixedBulkLoadJob(), args2);
+			} else if (FileFormat.CSV.getCode().equals(file_format)) {
+				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new CsvBulkLoadJob(), args);
+			} else {
+				throw new AppSystemException("暂不支持定长或者其他类型直接加载到hive表");
+			}
+			if (run != 0) {
+				throw new AppSystemException("db文件采集数据加载table hbase 失败 " + todayTableName);
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("db文件采集数据加载table hbase 失败 " + todayTableName, e);
+		}
 	}
 
 	private void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean

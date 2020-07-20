@@ -161,7 +161,9 @@ public class DFUploadStageImpl extends AbstractJobStage {
 						throw new AppSystemException("错误的是否标识");
 					}
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
+//					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
+					//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
+					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 					LOGGER.warn("DB文件采集数据上传进SOLR没有实现");
 				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {

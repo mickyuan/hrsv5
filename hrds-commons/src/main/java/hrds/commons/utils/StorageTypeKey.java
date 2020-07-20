@@ -58,6 +58,9 @@ public class StorageTypeKey {
 	//数据库的编码
 	public static final String database_code = "database_code";
 
+	//HBase计算增量的引擎
+	public static final String increment_engine = "increment_engine";
+
 	static {
 		//数据库，不支持外部表
 		List<String> databaseKeys = new ArrayList<>(Arrays.
@@ -91,7 +94,7 @@ public class StorageTypeKey {
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode(), hiveKeys);
 
 		List<String> hbaseKeys = new ArrayList<>(Arrays.
-				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5));
+				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5, increment_engine));
 		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
 		List<String> solrKeys = new ArrayList<>(Collections.singletonList(solr_url));

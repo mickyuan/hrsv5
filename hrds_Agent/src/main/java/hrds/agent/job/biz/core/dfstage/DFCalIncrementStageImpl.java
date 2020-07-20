@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core.dfstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
@@ -12,7 +13,11 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.databaseadditinfo.DatabaseAdditInfoOperateInterface;
 import hrds.agent.job.biz.core.databaseadditinfo.impl.OracleAdditInfoOperateImpl;
 import hrds.agent.job.biz.core.databaseadditinfo.impl.PostgresqlAdditInfoOperateImpl;
+import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
+import hrds.agent.job.biz.core.increasement.Increasement;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
+import hrds.agent.job.biz.core.increasement.impl.HBaseIncreasementByHive;
+import hrds.agent.job.biz.core.increasement.impl.HBaseIncreasementByPhoenix;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementBySpark;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -65,24 +70,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 							DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
 							increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
 									collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name());
-							if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-								LOGGER.info("----------------------------增量--------------------------------");
-								//计算增量
-								increase.calculateIncrement();
-								//合并增量表
-								increase.mergeIncrement();
-							} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
-								LOGGER.info("----------------------------追加--------------------------------");
-								//追加
-								increase.append();
-							} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
-								LOGGER.info("----------------------------替换--------------------------------");
-								//替换
-								increase.replace();
-							} else {
-								throw new AppSystemException("表" + collectTableBean.getHbase_name()
-										+ "请选择正确的存储方式！");
-							}
+							execIncreasement(increase);
 							//配置附加属性
 							configureAdditInfo(collectTableBean.getHbase_name(), dataStoreConf.getAdditInfoFieldMap(),
 									dataStoreConf.getData_store_connect_attr().get(StorageTypeKey.database_type), db);
@@ -97,13 +85,27 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 								increase.close();
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
-						LOGGER.info("数据进Hbase待实现");
+						HBaseIncreasement increase = null;
+						try {
+							increase = getHBaseIncreasement(tableBean, collectTableBean.getHbase_name(),
+									collectTableBean.getEtlDate(), dataStoreConf);
+							execIncreasement(increase);
+						} catch (Exception e) {
+							if (increase != null) {
+								//报错删除当次跑批数据
+								increase.restore(collectTableBean.getStorage_type());
+							}
+							throw new AppSystemException("计算增量失败");
+						} finally {
+							if (increase != null)
+								increase.close();
+						}
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
-						LOGGER.info("数据进Solr待实现");
+						LOGGER.warn("数据进Solr待实现");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {
-						LOGGER.info("数据进ElasticSearch待实现");
+						LOGGER.warn("数据进ElasticSearch待实现");
 					} else if (Store_type.MONGODB.getCode().equals(dataStoreConf.getStore_type())) {
-						LOGGER.info("数据进MONGODB待实现");
+						LOGGER.warn("数据进MONGODB待实现");
 					} else {
 						//TODO 上面的待补充。
 						throw new AppSystemException("表" + collectTableBean.getHbase_name()
@@ -127,6 +129,40 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, AgentType.DBWenJian.getCode());
 		return stageParamInfo;
+	}
+
+	/**
+	 * 获取HBase执行增量逻辑的实现
+	 *
+	 * @param tableBean     表结构信息
+	 * @param hbase_name    表名
+	 * @param etlDate       跑批日期
+	 * @param dataStoreConf 存储层配置信息
+	 */
+	private HBaseIncreasement getHBaseIncreasement(TableBean tableBean, String hbase_name, String etlDate,
+	                                               DataStoreConfBean dataStoreConf) {
+		HBaseIncreasement hbaseIncreasement;
+		Map<String, String> data_store_connect_attr = dataStoreConf.getData_store_connect_attr();
+		String dsl_name = dataStoreConf.getDsl_name();
+		//存储层定义增加一个Phoenix还是Hive算增量的判断标识 TODO hive和phoenix是否要增加代码项
+		if ("hive".equalsIgnoreCase(data_store_connect_attr.get(StorageTypeKey.increment_engine))) {
+			if (StringUtil.isBlank(StorageTypeKey.jdbc_url)) {
+				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name, null);
+			} else {
+				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
+				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name, db);
+			}
+		} else if ("phoenix".equalsIgnoreCase(data_store_connect_attr.get(StorageTypeKey.increment_engine))) {
+			if (StringUtil.isBlank(StorageTypeKey.jdbc_url)) {
+				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name, null);
+			} else {
+				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
+				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name, db);
+			}
+		} else {
+			throw new AppSystemException("HBase算增量不支持其他计算引擎");
+		}
+		return hbaseIncreasement;
 	}
 
 	/**
@@ -187,6 +223,32 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 			increasement = new IncreasementByMpp(tableBean, hbase_name, etlDate, db, dsl_name);
 		}
 		return increasement;
+	}
+
+	/**
+	 * 执行增量逻辑
+	 *
+	 * @param increasement 执行增量的接口
+	 */
+	private void execIncreasement(Increasement increasement) throws Exception {
+		if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+			LOGGER.info("----------------------------增量--------------------------------");
+			//计算增量
+			increasement.calculateIncrement();
+			//合并增量表
+			increasement.mergeIncrement();
+		} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
+			LOGGER.info("----------------------------追加--------------------------------");
+			//追加
+			increasement.append();
+		} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
+			LOGGER.info("----------------------------替换--------------------------------");
+			//替换
+			increasement.replace();
+		} else {
+			throw new AppSystemException("表" + collectTableBean.getHbase_name()
+					+ "请选择正确的存储方式！");
+		}
 	}
 
 	@Override
