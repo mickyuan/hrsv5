@@ -243,6 +243,32 @@ public class HBaseHelper implements Closeable {
 		}
 	}
 
+	public void renameTable(String source_table, String target_table) throws IOException {
+		//将原表变为不可用
+		disableTable(source_table);
+		//创建快照
+		createSnapshot(source_table + "_hy_snapshot", source_table);
+		//克隆
+		cloneSnapshot(source_table + "_hy_snapshot", target_table);
+		//删除快照
+		deleteSnapshot(source_table + "_hy_snapshot");
+		//删除原表
+		dropTable(source_table);
+	}
+
+	public void cloneTable(String source_table, String target_table) throws IOException {
+		//将原表变为不可用
+		disableTable(source_table);
+		//创建快照
+		createSnapshot(source_table + "_hy_snapshot", source_table);
+		//克隆
+		cloneSnapshot(source_table + "_hy_snapshot", target_table);
+		//删除快照
+		deleteSnapshot(source_table + "_hy_snapshot");
+		//将原表变为可用
+		enableTable(source_table);
+	}
+
 	public void put(String table, String row, String fam, String qual, String val) throws IOException {
 
 		put(TableName.valueOf(table), row, fam, qual, val);

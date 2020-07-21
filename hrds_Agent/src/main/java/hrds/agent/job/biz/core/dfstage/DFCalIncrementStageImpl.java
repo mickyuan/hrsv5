@@ -95,7 +95,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 								//报错删除当次跑批数据
 								increase.restore(collectTableBean.getStorage_type());
 							}
-							throw new AppSystemException("计算增量失败");
+							throw new AppSystemException("计算增量失败", e);
 						} finally {
 							if (increase != null)
 								increase.close();
@@ -146,14 +146,14 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 		String dsl_name = dataStoreConf.getDsl_name();
 		//存储层定义增加一个Phoenix还是Hive算增量的判断标识 TODO hive和phoenix是否要增加代码项
 		if ("hive".equalsIgnoreCase(data_store_connect_attr.get(StorageTypeKey.increment_engine))) {
-			if (StringUtil.isBlank(StorageTypeKey.jdbc_url)) {
+			if (StringUtil.isBlank(data_store_connect_attr.get(StorageTypeKey.jdbc_url))) {
 				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name, null);
 			} else {
 				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
 				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name, db);
 			}
 		} else if ("phoenix".equalsIgnoreCase(data_store_connect_attr.get(StorageTypeKey.increment_engine))) {
-			if (StringUtil.isBlank(StorageTypeKey.jdbc_url)) {
+			if (StringUtil.isBlank(data_store_connect_attr.get(StorageTypeKey.jdbc_url))) {
 				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name, null);
 			} else {
 				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());

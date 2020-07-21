@@ -2,6 +2,7 @@ package hrds.commons.hadoop.readconfig;
 
 
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -64,7 +65,7 @@ public class HDFSFileSystem {
 				fileSystem = FileSystem.get(conf);
 				log.info("fic80 FileSystem inited ");
 			} else {
-				throw new BusinessException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
+				throw new AppSystemException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
 			}
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);

@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -187,21 +188,17 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		String[] args = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
 				isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name)};
 		//如果表已经存在，先删除当天的表
-		try (HBaseHelper helper = HBaseHelper.getHelper(configPath)) {
+		HBaseHelper helper = null;
+		try {
+			helper = HBaseHelper.getHelper(configPath);
+			//备份表
+			backupToDayTable(todayTableName, helper);
 			// 预分区建表
-			if (!helper.existsTable(todayTableName)) {
-				HashChoreWoker worker = new HashChoreWoker(1000000, 10);
-				byte[][] splitKeys = worker.calcSplitKeys();
-				//默认是压缩
-				helper.createTable(todayTableName, splitKeys, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
-			} else {
-				//存在表，先禁用再删除
-				helper.disableTable(todayTableName);
-				helper.dropTable(todayTableName);
-				HashChoreWoker worker = new HashChoreWoker(1000000, 10);
-				byte[][] splitKeys = worker.calcSplitKeys();
-				helper.createTable(todayTableName, splitKeys, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
-			}
+			HashChoreWoker worker = new HashChoreWoker(1000000, 10);
+			byte[][] splitKeys = worker.calcSplitKeys();
+			//默认是压缩   TODO 是否压缩需要从页面配置
+			helper.createTable(todayTableName, splitKeys, true,
+					Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
 			//表名
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
 				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new SequeceBulkLoadJob(), args);
@@ -229,8 +226,21 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			if (run != 0) {
 				throw new AppSystemException("db文件采集数据加载table hbase 失败 " + todayTableName);
 			}
+			//根据表存储期限备份每张表存储期限内进数的数据
+			backupPastTable(collectTableBean, helper);
 		} catch (Exception e) {
+			if (helper != null) {
+				//执行失败，恢复上次进数的数据
+				recoverBackupToDayTable(todayTableName, helper);
+			}
 			throw new AppSystemException("db文件采集数据加载table hbase 失败 " + todayTableName, e);
+		} finally {
+			try {
+				if (helper != null)
+					helper.close();
+			} catch (IOException e) {
+				LOGGER.warn("关闭HBaseHelper异常", e);
+			}
 		}
 	}
 
@@ -508,10 +518,13 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 
 	private void createHiveTableLoadData(String todayTableName, String hdfsFilePath,
 	                                     DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
-		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
+		DatabaseWrapper db = null;
+		try {
+			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 			List<String> sqlList = new ArrayList<>();
-			//1.如果表已存在则删除
-			sqlList.add("DROP TABLE IF EXISTS " + todayTableName);
+			//1.如果表已存在,备份表上次执行进数的数据
+			backupToDayTable(todayTableName, db);
+//			sqlList.add("DROP TABLE IF EXISTS " + todayTableName);
 			//2.创建表
 			String file_format = tableBean.getFile_format();
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format) || FileFormat.PARQUET.getCode()
@@ -529,8 +542,18 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);
 			//4.执行sql语句
 			HSqlExecute.executeSql(sqlList, db);
+			//根据表存储期限备份每张表存储期限内进数的数据
+			backupPastTable(collectTableBean, db);
 		} catch (Exception e) {
+			if (db != null) {
+				//执行失败，恢复上次进数的数据
+				recoverBackupToDayTable(todayTableName, db);
+			}
 			throw new AppSystemException("执行hive加载数据的sql报错", e);
+		} finally {
+			if (db != null) {
+				db.close();
+			}
 		}
 	}
 

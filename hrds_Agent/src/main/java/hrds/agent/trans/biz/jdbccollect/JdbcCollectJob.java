@@ -5,16 +5,25 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @DocClass(desc = "数据库采集接收消息接口", author = "zxz", createdate = "2019/12/2 10:35")
 public class JdbcCollectJob extends AgentBaseAction {
@@ -36,8 +45,9 @@ public class JdbcCollectJob extends AgentBaseAction {
 //		ExecutorService executor = null;
 //		try {
 //			//初始化当前任务需要保存的文件的根目录
-//			String[] paths = {Constant.JOBINFOPATH, Constant.DICTIONARY};
-//			FileUtil.initPath(sourceDataConfBean.getDatabase_id(), paths);
+//			String[] paths = {Constant.JOBINFOPATH + sourceDataConfBean.getDatabase_id(),
+//					Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
+//			FileUtil.initPath(paths);
 //			//1.获取json数组转成File_source的集合
 //			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 //			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
