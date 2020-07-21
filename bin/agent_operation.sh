@@ -27,6 +27,8 @@ main(){
     # if no parameter is passed to script then show how to use.
     if [[ $# -eq 0 ]]; then usage; fi
     if [[ $# -ne 4 ]]; then usage; fi
+    # file add execute permission
+    if [[ -d ${AGENT_DEPLOYMENT_DIR} ]]; then chmod -R 755 ${AGENT_DEPLOYMENT_DIR}; fi
     # Check the legality of the file
     if [[ ! -f ${AGENT_JAR_NAME} ]]; then echo "Agent service package file does not exist, please check !" ; fi
     # Log directory initialization
@@ -93,10 +95,6 @@ function start_agent(){
         #source ~/.bash_profile; source ~/.bashrc;
         ## Enter the script directory
         cd ${SH_EXEC_DIR}
-        ## When the log parameter value is a directory, specify the log file name
-        if [[ "VAR_${AGENT_LOG_FILE}" == "VAR_${AGENT_LOG_DIR}/" ]]; then
-            AGENT_LOG_FILE="${AGENT_LOG_DIR}/${AGENT_PORT}.out"
-        fi
         ## Check jre environment
         if [[ ! -d "${SH_EXEC_DIR}/jre" ]]; then echo "jre does not exist, please check the jre env." ; exit 1; fi
         ## Start the agent service
@@ -105,7 +103,7 @@ function start_agent(){
             -Dport=${AGENT_PORT} \
             -Dproject.dir=${AGENT_DEPLOYMENT_DIR} \
             -Dproject.name=${AGENT_TAG} \
-            -jar ${AGENT_JAR_NAME} > ${AGENT_LOG_FILE} 2>&1 &
+            -jar ${AGENT_JAR_NAME} &
         # After the startup is executed, check agent service startup status
         ## Wait for the port to start
         waiting_proc_status ${AGENT_PORT} "start" 0
