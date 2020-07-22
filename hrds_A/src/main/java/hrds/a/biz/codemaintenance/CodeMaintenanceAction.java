@@ -15,7 +15,6 @@ import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.key.PrimayKeyGener;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -129,33 +128,18 @@ public class CodeMaintenanceAction extends BaseAction {
 	}
 
 	@Method(desc = "查询初始化源系统编码信息", logicStep = "1.检查源系统信息是否存在" +
-			"2.查询该系统下已经存在的分类" +
-			"3.初始化页面查询源系统编码信息" +
-			"4.返回初始化页面查询源系统编码信息")
+			"2.查询初始化源系统编码信息并返回")
 	@Param(name = "orig_sys_code", desc = "码值系统编码", range = "无限制")
 	@Return(desc = "返回源系统编码信息", range = "无限制")
-	public List<List<Map<String, Object>>> getOrigCodeInfo(String orig_sys_code) {
+	public Result getOrigCodeInfo(String orig_sys_code) {
 		// 数据可访问权限处理方式：该方法没有访问权限限制
 		// 1.检查源系统信息是否存在
 		isOrigSysoInfoExist(orig_sys_code);
-		// 2.查询该系统下已经存在的分类
-		List<String> codeClassifyList = Dbo.queryOneColumnList(
-				"select code_classify from " + Orig_code_info.TableName
-						+ " where orig_sys_code=? group by code_classify",
-				orig_sys_code);
-		// 3.初始化页面查询源系统编码信息
-		List<List<Map<String, Object>>> origCodeInfo = new ArrayList<>();
-		for (String code_classify : codeClassifyList) {
-			List<Map<String, Object>> list = Dbo.queryList(
-					"select t1.*,t2.orig_value from "
-							+ Hyren_code_info.TableName + " t1," + Orig_code_info.TableName + " t2" +
-							" where t1.code_classify=t2.code_classify AND t1.code_value=t2.code_value" +
-							" AND t1.code_classify=? AND t2.orig_sys_code=?",
-					code_classify, orig_sys_code);
-			origCodeInfo.add(list);
-		}
-		// 4.返回初始化页面查询源系统编码信息
-		return origCodeInfo;
+		// 2.查询初始化源系统编码信息并返回
+		return Dbo.queryResult(
+				"select * from " + Orig_code_info.TableName + " where code_classify in( select " +
+						"code_classify from "
+						+ Hyren_code_info.TableName + " GROUP BY code_classify)");
 	}
 
 	@Method(desc = "查询新增源系统编码信息(根据分类编码查询统一编码信息)", logicStep = "1.查询新增源系统编码信息")
