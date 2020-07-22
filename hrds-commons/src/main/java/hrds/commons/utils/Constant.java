@@ -212,11 +212,13 @@ public class Constant {
 	/**
 	 * 表默认清洗顺序
 	 */
-	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER  = new JSONObject();;
+	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER = new JSONObject();
+	;
 	/**
 	 * 列默认清洗顺序
 	 */
-	public static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER  = new JSONObject();
+	public static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject();
+
 	/**
 	 * 数据库抽取卸数下来文件格式对应路径的关系
 	 */
@@ -261,5 +263,8 @@ public class Constant {
 	public static final String RXKH = ")";
 
 	public static final String COLLECTOKFILE = "hyren_collect_flag.ok";
+
+	// 集市分类分隔符
+	public static final String MARKETDELIMITER = "-->";
 
 }
