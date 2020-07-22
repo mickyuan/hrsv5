@@ -11,8 +11,8 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.entity.Hyren_code_info;
 import hrds.commons.entity.Orig_code_info;
 import hrds.commons.entity.Orig_syso_info;
-import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 import java.util.List;
@@ -64,23 +64,18 @@ public class CodeMaintenanceAction extends BaseAction {
 		Validator.notBlank(hyren_code_info.getCode_value(), "编码类型值不能为空");
 	}
 
-	@Method(desc = "更新统一编码信息", logicStep = "1.校验实体字段合法性" +
-			"2.更新统一编码信息")
+	@Method(desc = "更新统一编码信息", logicStep = "1.更新前先删除存在的编码分类" +
+			"3.更新统一编码信息")
 	@Param(name = "hyren_code_infos", desc = "编码信息表实体对象数组", range = "与数据库表对应规则一致", isBean = true)
 	public void updateCodeInfo(Hyren_code_info[] hyren_code_infos) {
 		// 数据可访问权限处理方式：该方法没有访问权限限制
-		for (Hyren_code_info hyren_code_info : hyren_code_infos) {
-			// 1.校验编码信息表实体字段合法性
-			checkHyrenCodeInfoFields(hyren_code_info);
-			try {
-				// 2.更新统一编码信息
-				hyren_code_info.update(Dbo.db());
-			} catch (Exception e) {
-				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
-					throw new BusinessException(e.getMessage());
-				}
-			}
-		}
+		Validator.notBlank("更新时编码分类不能为空", hyren_code_infos[0].getCode_classify());
+		// 1.更新前先删除存在的编码分类
+		DboExecute.deletesOrThrow(hyren_code_infos.length, "更新前先删除存在的编码分类信息失败",
+				"delete from " + Hyren_code_info.TableName + " where code_classify=?",
+				hyren_code_infos[0].getCode_classify());
+		// 2.更新统一编码信息
+		saveCodeInfo(hyren_code_infos);
 
 	}
 

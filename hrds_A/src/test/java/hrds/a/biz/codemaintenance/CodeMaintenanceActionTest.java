@@ -311,10 +311,10 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			List<Hyren_code_info> hyrenCodeInfoList = SqlOperator.queryList(db, Hyren_code_info.class,
 					"select * from " + Hyren_code_info.TableName + " where code_classify=?",
-					AgentStatus.CodeName + THREAD_ID);
+					AgentType.CodeName + THREAD_ID);
 			for (Hyren_code_info hyrenCodeInfo : hyrenCodeInfoList) {
-				assertThat(hyrenCodeInfo.getCode_classify(), is(AgentStatus.CodeName + THREAD_ID));
-				assertThat(hyrenCodeInfo.getCode_classify_name(), is("agent状态2"));
+				assertThat(hyrenCodeInfo.getCode_classify(), is(AgentType.CodeName + THREAD_ID));
+				assertThat(hyrenCodeInfo.getCode_classify_name(), is("agent类别2"));
 				assertThat(codeTypeList.contains(hyrenCodeInfo.getCode_type_name()), is(true));
 				assertThat(codeValueList.contains(hyrenCodeInfo.getCode_value()), is(true));
 			}
