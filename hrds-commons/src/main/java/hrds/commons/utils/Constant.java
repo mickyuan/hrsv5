@@ -206,6 +206,10 @@ public class Constant {
 	public static final String SPLITTER = "_";
 
 	/**
+	 * Agent启动脚本名称
+	 */
+	public static final String START_AGENT  = "agent_operation.sh";
+	/**
 	 * 表默认清洗顺序
 	 */
 	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER  = new JSONObject();;
