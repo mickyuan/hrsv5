@@ -19,7 +19,7 @@ import java.util.List;
  * Description: 通过spark sql跑增量
  */
 public class IncreasementBySpark extends JDBCIncreasement {
-	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
+	private static final Log logger = LogFactory.getLog(IncreasementBySpark.class);
 
 	public IncreasementBySpark(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
 	                           String dsl_name) {
