@@ -104,32 +104,26 @@ public class AgentDeploy {
 	@Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
 	//  @Return(desc = "返回部署是否操作成功", range = "true-成功/false-失败")
 	public static String agentConfDeploy(
-		Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
-		try {
+		Agent_down_info down_info, String oldAgentPath, String oldLogPath) throws Exception {
 
-			// 一 : 将配置文件信息写到本地.然后在 SFTP 到对应的Agent下面
-			/* 第一种文件( contrast.conf )内容 :" */
-			Yaml.dump(QueryContrast.getDclContrast(), new File(CONFPATH + QueryContrast.CONF_FILE_NAME));
+		// 一 : 将配置文件信息写到本地.然后在 SFTP 到对应的Agent下面
+		/* 第一种文件( contrast.conf )内容 :" */
+		Yaml.dump(QueryContrast.getDclContrast(), new File(CONFPATH + QueryContrast.CONF_FILE_NAME));
 
-			/* 第二种文件( sysparam.conf )内容 */
-			Yaml.dump(new SysPara().yamlDataFormat(), new File(CONFPATH + SysPara.CONF_FILE_NAME));
+		/* 第二种文件( sysparam.conf )内容 */
+		Yaml.dump(new SysPara().yamlDataFormat(), new File(CONFPATH + SysPara.CONF_FILE_NAME));
 
-			/* 第三种文件( httpserver.conf )内容 */
-			Map<String, List<HttpYaml>> httpServerMap =
-				HttpServer.httpserverConfData(
-					down_info.getAgent_context(),
-					down_info.getAgent_pattern(),
-					down_info.getAgent_ip(),
-					down_info.getAgent_port());
-			Yaml.dump(httpServerMap, new File(CONFPATH + HttpServer.HTTP_CONF_NAME));
-			// 二 : resources/fdconfig/ 下的全部文件SCP 到agent目录下
-			/* 开始将本地写好的文件SCP到Agent目下, */
-			return sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
-
-		} catch (Exception e) {
-			logger.error(e);
-			throw new BusinessException(e.getMessage());
-		}
+		/* 第三种文件( httpserver.conf )内容 */
+		Map<String, List<HttpYaml>> httpServerMap =
+			HttpServer.httpserverConfData(
+				down_info.getAgent_context(),
+				down_info.getAgent_pattern(),
+				down_info.getAgent_ip(),
+				down_info.getAgent_port());
+		Yaml.dump(httpServerMap, new File(CONFPATH + HttpServer.HTTP_CONF_NAME));
+		// 二 : resources/fdconfig/ 下的全部文件SCP 到agent目录下
+		/* 开始将本地写好的文件SCP到Agent目下, */
+		return sftpAgentToTargetMachine(down_info, oldAgentPath, oldLogPath);
 	}
 
 	@Method(
@@ -147,7 +141,7 @@ public class AgentDeploy {
 	@Param(name = "oldLogPath", desc = "旧的,Agent部署日志地址", range = "可以为空,为空表示为第一次部署")
 	@Return(desc = "", range = "")
 	private static String sftpAgentToTargetMachine(
-		Agent_down_info down_info, String oldAgentPath, String oldLogPath) {
+		Agent_down_info down_info, String oldAgentPath, String oldLogPath) throws Exception {
 
 		// 这里先将配置的agent名称转换为拼音在和端口组合在一起,当做agent部署的目录
 		String agentDirName =
@@ -276,9 +270,6 @@ public class AgentDeploy {
 						.getAgent_port() + " " + " start");
 			}
 			return targetDir;
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw new BusinessException(e.getMessage());
 		} finally {
 			if (shellSession != null) {
 				shellSession.disconnect();
