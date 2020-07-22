@@ -269,8 +269,8 @@ public class AgentDeploy {
 			updateLog4jXml(chSftp, targetDir + SEPARATOR + "resources", "Property", down_info.getLog_dir());
 			// 六 : 判断是否启动agent
 			if (IsFlag.Shi.getCode().equals(down_info.getDeploy())) {
-
-				SFTPChannel.execCommandByJSch(shellSession,
+				//TODO 这里需要接收脚本执行的状态结果吗,目前是忽略的
+				SFTPChannel.execCommandByJSchNoRs(shellSession,
 					"cd " + targetDir + ";sh " + Constant.START_AGENT + " " + file.getName() + " " + down_info.getLog_dir()
 						+ " " + down_info
 						.getAgent_port() + " " + " start");
