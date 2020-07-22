@@ -203,7 +203,6 @@ public class CodeMaintenanceAction extends BaseAction {
 		// 1.检查源系统编码实体字段合法性
 		Validator.notBlank(orig_code_info.getCode_classify(), "编码分类不能为空");
 		Validator.notBlank(orig_code_info.getCode_value(), "编码类型值不能为空");
-		Validator.notBlank(orig_code_info.getOrig_value(), "源系统编码值不能为空");
 		isHyrenCodeInfoExist(orig_code_info.getCode_classify());
 	}
 
