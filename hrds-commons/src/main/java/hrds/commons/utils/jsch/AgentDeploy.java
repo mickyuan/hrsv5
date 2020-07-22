@@ -305,7 +305,7 @@ public class AgentDeploy {
 			for (int j = 0; j < childNodes.getLength(); j++) {
 				Node childItem = childNodes.item(j);
 				if (i == 0) {
-					childItem.setNodeValue(logFile.getParent());
+					childItem.setNodeValue(logFile.getParent() + SEPARATOR);
 				} else {
 					childItem.setNodeValue(logFile.getName());
 				}
