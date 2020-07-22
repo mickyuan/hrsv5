@@ -17,7 +17,7 @@ public class SFTPChannel {
 	private Session session = null;
 	private static final String ENCODING = "UTF-8";
 
-	private static final Logger logger = LogManager.getLogger(SFTPChannel.class.getName());
+	private static final Logger logger = LogManager.getLogger();
 
 	// FIXME 不要使用Map做参数！使用多个明确的参数，或者提供一个构建参数BEAN：本类的一个public static class
 	public ChannelSftp getChannel(SFTPDetails sftpDetails, int timeout) throws JSchException {
@@ -28,12 +28,12 @@ public class SFTPChannel {
 		channel = session.openChannel("sftp"); // 打开SFTP通道
 		channel.connect(); // 建立SFTP通道的连接
 		logger.debug(
-				"Connected successfully to ftpHost = "
-						+ sftpDetails.getHost()
-						+ ",as ftpUserName = "
-						+ sftpDetails.getUser_name()
-						+ ", returning: "
-						+ channel);
+			"Connected successfully to ftpHost = "
+				+ sftpDetails.getHost()
+				+ ",as ftpUserName = "
+				+ sftpDetails.getUser_name()
+				+ ", returning: "
+				+ channel);
 		return (ChannelSftp) channel;
 	}
 
@@ -44,8 +44,8 @@ public class SFTPChannel {
 	}
 
 	public Session getJSchSession(
-			String ftpHost, String ftpUserName, String ftpPassword, int ftpPort, int timeout)
-			throws JSchException {
+		String ftpHost, String ftpUserName, String ftpPassword, int ftpPort, int timeout)
+		throws JSchException {
 		return getJSchSession(getSftpDetails(ftpHost, ftpUserName, ftpPassword, ftpPort), timeout);
 	}
 
@@ -61,10 +61,10 @@ public class SFTPChannel {
 
 		JSch jsch = new JSch(); // 创建JSch对象
 		Session session =
-				jsch.getSession(
-						sftpDetails.getUser_name(),
-						sftpDetails.getHost(),
-						sftpDetails.getPort()); // 根据用户名，主机ip，端口获取一个Session对象
+			jsch.getSession(
+				sftpDetails.getUser_name(),
+				sftpDetails.getHost(),
+				sftpDetails.getPort()); // 根据用户名，主机ip，端口获取一个Session对象
 		logger.debug("Session created.");
 		String ftpPassword = sftpDetails.getPwd();
 		if (ftpPassword != null) {
@@ -93,7 +93,7 @@ public class SFTPChannel {
 	}
 
 	public static String execCommandByJSch(Session session, String command)
-			throws JSchException, IOException {
+		throws JSchException, IOException {
 		command = FileNameUtils.normalize(command, true);
 		logger.info("执行命令为 : " + command);
 		ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
@@ -134,7 +134,7 @@ public class SFTPChannel {
 	}
 
 	public static String execCommandByJSchToReadLine(Session session, String command)
-			throws JSchException, Exception {
+		throws JSchException, Exception {
 
 		logger.info("执行命令为 : ", command);
 		ChannelExec channelExec = (ChannelExec) session.openChannel("exec");
@@ -175,7 +175,7 @@ public class SFTPChannel {
 	 * @return Map<String, String>
 	 */
 	private static SFTPDetails getSftpDetails(
-			String ftpHost, String ftpUserName, String ftpPassword, int ftpPort) {
+		String ftpHost, String ftpUserName, String ftpPassword, int ftpPort) {
 		return new SFTPDetails(ftpHost, ftpUserName, ftpPassword, ftpPort);
 	}
 }
