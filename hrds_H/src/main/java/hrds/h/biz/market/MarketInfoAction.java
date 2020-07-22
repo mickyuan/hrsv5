@@ -8,10 +8,12 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.exception.BusinessSystemException;
-import fd.ng.core.utils.*;
+import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
@@ -29,14 +31,13 @@ import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
-import hrds.main.AppMain;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,7 +50,10 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.awt.Color;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.*;
@@ -97,11 +101,10 @@ public class MarketInfoAction extends BaseAction {
 	private void updatebean(ProjectTableEntity bean) {
 		try {
 			bean.update(Dbo.db());
-		} catch (ProjectTableEntity.EntityDealZeroException e) {
-			logger.info("更新表" + bean.getClass().getName() + "数据为0条，无误");
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
+			if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+				throw new BusinessException(e.getMessage());
+			}
 		}
 	}
 
@@ -154,7 +157,8 @@ public class MarketInfoAction extends BaseAction {
 					"4.保存data_source信息")
 	@Param(name = "dm_info", desc = "Dm_info整表bean信息", range = "与Dm_info表字段规则一致",
 			isBean = true)
-	public void addMarket(Dm_info dm_info) {
+	@Param(name = "dmCategories", desc = "集市分类实体对象数组", range = "与数据库表字段规则一致", isBean = true)
+	public long addMarket(Dm_info dm_info) {
 		//1.检查数据合法性
 		String mart_name = dm_info.getMart_name();
 		String mart_number = dm_info.getMart_number();
@@ -183,13 +187,370 @@ public class MarketInfoAction extends BaseAction {
 				throw new BusinessException("集市名称重复，请重新填写");
 			}
 			//3.对dm_info初始化一些非页面传值
-			dm_info.setData_mart_id(PrimayKeyGener.getNextId());
+			data_mart_id = PrimayKeyGener.getNextId();
+			dm_info.setData_mart_id(data_mart_id);
 			dm_info.setMart_storage_path("");
 			dm_info.setCreate_date(DateUtil.getSysDate());
 			dm_info.setCreate_time(DateUtil.getSysTime());
 			dm_info.setCreate_id(getUserId());
 			//4.保存data_source信息
 			dm_info.add(Dbo.db());
+		}
+		return data_mart_id;
+	}
+
+	@Method(desc = "保存集市分类", logicStep = "1.判断集市工程是否存在" +
+			"2.实体字段合法性检查" +
+			"3.判断是新增还是更新集市分类" +
+			"4.判断分类名称时候已存在，已存在不能新增" +
+			"4.1新增集市分类" +
+			"5.更新集市分类")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "dmCategories", desc = "集市分类实体对象数组", range = "与数据库表字段规则一致", isBean = true)
+	public void saveDmCategory(long data_mart_id, Dm_category[] dmCategories) {
+		// 1.判断集市工程是否存在
+		isDmInfoExist(data_mart_id);
+		for (Dm_category dm_category : dmCategories) {
+			// 2.实体字段合法性检查
+			checkDmCategoryFields(dm_category);
+			// 3.判断是新增还是更新集市分类
+			// 因为更新的时候也有可能再新增分类，所以这里新增编辑放在一个方法里
+			if (dm_category.getCategory_id() == null) {
+				// 4.判断集市分类名称与分类编号是否已存在，已存在不能新增
+				isCategoryNameOrNumExist(data_mart_id, dm_category.getCategory_name(), dm_category.getCategory_num());
+				// 4.1新增集市分类
+				addDmCategory(data_mart_id, dm_category);
+			} else {
+				// 5.更新集市分类
+				Validator.notNull(dm_category.getParent_category_id(), "更新分类时上级分类ID不能为空");
+				isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
+				updatebean(dm_category);
+			}
+		}
+	}
+
+	@Method(desc = "判断上级分类是否与分类ID相同", logicStep = "1.判断上级分类是否与分类ID相同")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Param(name = "parent_category_id", desc = "集市分类ID", range = "不能与分类ID相同")
+	private void isEqualsCategoryId(long category_id, long parent_category_id, long data_mart_id) {
+		// 1.判断上级分类是否与分类ID相同
+		if (data_mart_id != parent_category_id && category_id == parent_category_id) {
+			throw new BusinessException("不能选择同名的分类");
+		}
+	}
+
+	@Method(desc = "根据集市分类id删除集市分类", logicStep = "1.判断集市分类是否被使用" +
+			"2.删除集市分类")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	public void deleteDmCategory(long category_id) {
+		// 1.判断集市分类是否被使用
+		isDmDatatableExist(category_id);
+		// 2.判断该分类下是否还有分类
+		if (Dbo.queryNumber("select count(*) from " + Dm_category.TableName + " where parent_category_id=?",
+				category_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException(category_id + "对应集市分类下还有分类");
+		}
+		// 2.删除集市分类
+		DboExecute.deletesOrThrow("删除集市分类失败，可能分类不存在",
+				"delete from " + Dm_category.TableName + " where category_id=?",
+				category_id);
+	}
+
+	@Method(desc = "根据数据集市id查询集市分类信息", logicStep = "1.根据数据集市id查询集市分类信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Return(desc = "返回集市分类信息", range = "无限制")
+	public Result getDmCategoryInfo(long data_mart_id) {
+		// 1.根据数据集市id查询集市分类信息
+		return Dbo.queryResult(
+				"select * from " + Dm_category.TableName + " where data_mart_id = ?",
+				data_mart_id);
+	}
+
+	@Method(desc = "获取集市分类树数据", logicStep = "1.判断集市工程是否存在" +
+			"2.查询当前集市工程下的所有分类" +
+			"3.获取当前分类的上级分类" +
+			"4.获取当前分类的子分类" +
+			"5.返回转换后的集市分类树数据")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Return(desc = "返回转换后的集市分类树数据", range = "无限制")
+	public List<Node> getDmCategoryTreeData(long data_mart_id) {
+		// 1.判断集市工程是否存在
+		isDmInfoExist(data_mart_id);
+		// 2.查询当前集市工程下的所有分类
+		List<Long> categoryIdList = Dbo.queryOneColumnList(
+				"select category_id from " + Dm_category.TableName + " where data_mart_id = ?",
+				data_mart_id);
+		if (categoryIdList.isEmpty()) {
+			throw new BusinessException("当前集市工程下没有集市分类，请检查");
+		}
+		List<Map<String, Object>> treeList = new ArrayList<>();
+		for (long category_id : categoryIdList) {
+			// 3.获取当前分类的上级分类
+			Dm_category dm_category = Dbo.queryOneObject(Dm_category.class,
+					"select parent_category_id from " + Dm_category.TableName + " where category_id = ?",
+					category_id)
+					.orElseThrow(() -> new BusinessException("sql查询错误或映射实体失败"));
+			if (dm_category.getParent_category_id() == data_mart_id) {
+				// 集市ID等于上级分类ID,获取集市名称
+				Dm_info dm_info = Dbo.queryOneObject(Dm_info.class,
+						"select mart_name from " + Dm_info.TableName + " where data_mart_id = ?",
+						data_mart_id)
+						.orElseThrow(() -> new BusinessException("sql查询错误或映射实体失败"));
+				Map<String, Object> treeMap = new HashMap<>();
+				treeMap.put("id", data_mart_id);
+				treeMap.put("label", dm_info.getMart_name());
+				treeMap.put("parent_id", IsFlag.Fou.getCode());
+				treeMap.put("description", dm_info.getMart_name());
+				treeList.add(treeMap);
+			}
+			// 4.获取当前分类的子分类
+			getChildDmCategoryTreeNodeData(data_mart_id, data_mart_id, treeList);
+		}
+		// 5.返回转换后的集市分类树数据
+		return NodeDataConvertedTreeList.dataConversionTreeInfo(treeList);
+	}
+
+	@Method(desc = "获取所有分类节点信息", logicStep = "1.判断集市工程是否存在" +
+			"2.根据集市ID获取集市工程信息" +
+			"3.获取所有子分类信息" +
+			"4.封装所有分类子节点信息并返回")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Return(desc = "返回所有分类子节点信息", range = "无限制")
+	public List<Map<String, Object>> getDmCategoryNodeInfo(long data_mart_id) {
+		// 1.判断集市工程是否存在
+		isDmInfoExist(data_mart_id);
+		// 2.根据集市ID获取集市工程信息
+		Dm_info dm_info = getdminfo(String.valueOf(data_mart_id));
+		List<Map<String, Object>> categoryList = new ArrayList<>();
+		Map<String, Object> categoryMap = new HashMap<>();
+		categoryMap.put("id", data_mart_id);
+		categoryMap.put("isroot", true);
+		categoryMap.put("topic", dm_info.getMart_name());
+		categoryMap.put("direction", "left");
+		categoryList.add(categoryMap);
+		// 3.获取所有子分类信息
+		getChildDmCategoryNodeInfo(data_mart_id, data_mart_id, categoryList);
+		// 4.封装所有分类子节点信息并返回
+		return categoryList;
+	}
+
+	@Method(desc = "获取所有子分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息" +
+			"2.获取所有子分类信息" +
+			"3.根据父分类ID查询集市分类信息不存在，查询当前分类信息并封装数据")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
+	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
+	                                        List<Map<String, Object>> categoryList) {
+		// 1.根据集市ID与父分类ID查询集市分类信息
+		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
+		if (!dmCategoryList.isEmpty()) {
+			for (Dm_category dm_category : dmCategoryList) {
+				Map<String, Object> categoryMap = new HashMap<>();
+				categoryMap.put("id", dm_category.getCategory_id());
+				categoryMap.put("parent_id", category_id);
+				categoryMap.put("isroot", true);
+				categoryMap.put("topic", dm_category.getCategory_name());
+				categoryMap.put("direction", "right");
+				if (!categoryList.contains(categoryMap)) {
+					categoryList.add(categoryMap);
+				}
+				// 2.获取所有子分类信息
+				getChildDmCategoryNodeInfo(data_mart_id, dm_category.getCategory_id(), categoryList);
+			}
+		}
+	}
+
+	@Method(desc = "更新集市分类名称", logicStep = "1.更新集市分类名称")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Param(name = "category_name", desc = "集市分类名称", range = "无限制")
+	public void updateDmCategoryName(long category_id, String category_name) {
+		// 1.更新集市分类名称
+		DboExecute.updatesOrThrow("更新集市分类名称失败",
+				"update " + Dm_category.TableName + " set category_name=? where category_id=?",
+				category_name, category_id);
+	}
+
+	@Method(desc = "根据集市分类获取所有数据表信息", logicStep = "1.判断集市工程是否存在" +
+			"2.关联查询集市数据表与集市分类表获取数据表信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Return(desc = "返回数据表信息", range = "无限制")
+	public Result getDmDataTableByDmCategory(long data_mart_id) {
+		// 1.判断集市工程是否存在
+		isDmInfoExist(data_mart_id);
+		// 2.关联查询集市数据表与集市分类表获取数据表信息
+		return Dbo.queryResult(
+				"select t1.datatable_id,t1.datatable_en_name,t1.datatable_cn_name,t1.category_id," +
+						"t2.category_name,t2.parent_category_id from "
+						+ Dm_datatable.TableName + " t1 left join " + Dm_category.TableName
+						+ " t2 on t1.category_id=t2.category_id and t1.data_mart_id=t2.data_mart_id"
+						+ " where t1.data_mart_id=? order by t1.category_id desc",
+				data_mart_id);
+	}
+
+	@Method(desc = "获取数据表所有分类信息集合", logicStep = "1.判断集市工程是否存在" +
+			"2.根据集市ID与父分类ID查询集市分类信息" +
+			"3.获取所有分类信息并返回")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Return(desc = "返回数据表所有分类信息集合", range = "无限制")
+	public List<Map<String, Object>> getDmCategoryForDmDataTable(long data_mart_id) {
+		// 1.判断集市工程是否存在
+		isDmInfoExist(data_mart_id);
+		// 2.根据集市ID与父分类ID查询集市分类信息
+		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, data_mart_id);
+		List<Map<String, Object>> categoryList = new ArrayList<>();
+		// 3.获取所有分类信息并返回
+		for (Dm_category dm_category : dmCategoryList) {
+			Map<String, Object> categoryMap = new HashMap<>();
+			categoryMap.put("category_id", dm_category.getCategory_id());
+			categoryMap.put("category_name", dm_category.getCategory_name());
+			categoryList.add(categoryMap);
+			getChildDmCategoryForDmDataTable(data_mart_id, dm_category.getCategory_id(),
+					dm_category.getCategory_name(), categoryList);
+		}
+		return categoryList;
+	}
+
+	@Method(desc = "根据集市ID与父分类ID查询集市分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "parent_category_id", desc = "父分类ID", range = "无限制")
+	@Return(desc = "返回集市分类信息", range = "无限制")
+	private List<Dm_category> getDm_categories(long data_mart_id, long parent_category_id) {
+		// 1.根据集市ID与父分类ID查询集市分类信息
+		return Dbo.queryList(Dm_category.class,
+				"select category_id,category_name from " + Dm_category.TableName
+						+ " where parent_category_id=? and data_mart_id=?",
+				parent_category_id, data_mart_id);
+	}
+
+	@Method(desc = "获取所有子分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息" +
+			"2.获取所有子分类信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "parent_category_id", desc = "父分类ID", range = "无限制")
+	@Param(name = "category_name", desc = "分类名称", range = "新增集市分类时生成")
+	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
+	@Return(desc = "返回子分类信息", range = "无限制")
+	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
+	                                              String category_name, List<Map<String, Object>> categoryList) {
+		// 1.根据集市ID与父分类ID查询集市分类信息
+		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
+		// 2.获取所有子分类信息
+		if (!dmCategoryList.isEmpty()) {
+			for (Dm_category dm_category : dmCategoryList) {
+				Map<String, Object> categoryMap = new HashMap<>();
+				category_name = category_name + Constant.MARKETDELIMITER + dm_category.getCategory_name();
+				categoryMap.put("category_id", dm_category.getCategory_id());
+				categoryMap.put("category_name", category_name);
+				categoryList.add(categoryMap);
+				getChildDmCategoryForDmDataTable(data_mart_id, dm_category.getCategory_id(), category_name,
+						categoryList);
+			}
+		}
+	}
+
+	@Method(desc = "据父分类ID查询子节点集市分类信息", logicStep = "1.根据父分类ID查询集市分类信息" +
+			"2.判断根据父分类ID查询集市分类信息是否存在做不同处理" +
+			"3.循环判断根据父分类ID查询集市分类信息是否存在" +
+			"4.据父分类ID查询集市分类信息不存在，查询当前分类信息")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Param(name = "treeList", desc = "集市分类数据集合", range = "无限制")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	private void getChildDmCategoryTreeNodeData(long data_mart_id, long category_id, List<Map<String,
+			Object>> treeList) {
+		// 1.根据父分类ID查询集市分类信息
+		List<Dm_category> dmCategories = getDm_categories(data_mart_id, category_id);
+		// 2.判断根据父分类ID查询集市分类信息是否存在做不同处理
+		if (!dmCategories.isEmpty()) {
+			for (Dm_category dmCategory : dmCategories) {
+				Map<String, Object> treeMap = new HashMap<>();
+				treeMap.put("id", dmCategory.getCategory_id());
+				treeMap.put("label", dmCategory.getCategory_name());
+				treeMap.put("parent_id", category_id);
+				treeMap.put("description", dmCategory.getCategory_name());
+				if (!treeList.contains(treeMap)) {
+					treeList.add(treeMap);
+				}
+				// 3.循环判断根据父分类ID查询集市分类信息是否存在
+				getChildDmCategoryTreeNodeData(data_mart_id, dmCategory.getCategory_id(), treeList);
+			}
+		}
+	}
+
+	@Method(desc = "判断集市分类是否被使用", logicStep = "1.判断集市分类是否被使用")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	private void isDmDatatableExist(long category_id) {
+		// 1.判断集市分类是否被使用
+		if (Dbo.queryNumber(
+				"select count(1) from " + Dm_datatable.TableName + " WHERE category_id = ?",
+				category_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException(category_id + "对应集市分类正在被使用不能删除");
+		}
+	}
+
+	@Method(desc = "新增集市分类", logicStep = "1.如果上级分类ID为空，设置上级分类ID为集市ID" +
+			"2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类" +
+			"3.新增集市分类")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "dm_category", desc = "集市分类实体对象", range = "与数据库表字段规则一致", isBean = true)
+	private void addDmCategory(long data_mart_id, Dm_category dm_category) {
+		dm_category.setCategory_id(PrimayKeyGener.getNextId());
+		dm_category.setData_mart_id(data_mart_id);
+		dm_category.setCreate_id(getUserId());
+		dm_category.setCreate_date(DateUtil.getSysDate());
+		dm_category.setCreate_time(DateUtil.getSysTime());
+		// 1.如果上级分类ID为空，设置上级分类ID为集市ID
+		if (dm_category.getParent_category_id() == null) {
+			dm_category.setParent_category_id(dm_category.getData_mart_id());
+		}
+		// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
+		isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
+		// 3.新增集市分类
+		dm_category.add(Dbo.db());
+	}
+
+	@Method(desc = "判断集市分类名称与分类编号是否已存在", logicStep = "1.判断分类名称是否已存在")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "category_name", desc = "集市分类名称", range = "无限制")
+	@Param(name = "category_num", desc = "集市分类编号", range = "无限制")
+	private void isCategoryNameOrNumExist(long data_mart_id, String category_name, String category_num) {
+		// 1.判断集市分类名称是否已存在
+		if (Dbo.queryNumber(
+				"select count(*) from " + Dm_category.TableName
+						+ " where category_name=? and data_mart_id=?",
+				category_name, data_mart_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("集市分类名称" + category_name + "已存在");
+		}
+		// 2.判断集市分类编号是否已存在
+		if (Dbo.queryNumber(
+				"select count(*) from " + Dm_category.TableName
+						+ " where category_num=? and data_mart_id=?",
+				category_num, data_mart_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("集市分类编号" + category_num + "已存在");
+		}
+	}
+
+	@Method(desc = "集市分类表字段合法性检查", logicStep = "1.集市分类表字段合法性检查")
+	@Param(name = "dm_category", desc = "Dm_category表实体对象", range = "与Dm_category表字段规则一致",
+			isBean = true)
+	private void checkDmCategoryFields(Dm_category dm_category) {
+		// 1.集市分类表字段合法性检查
+		Validator.notBlank(dm_category.getCategory_name(), "集市分类名称不能为空");
+		Validator.notBlank(dm_category.getCategory_num(), "集市分类编号不能为空");
+	}
+
+	@Method(desc = "判断集市工程是否存在", logicStep = "1.判断集市工程是否存在")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	private void isDmInfoExist(long data_mart_id) {
+		// 1.判断集市工程是否存在
+		if (Dbo.queryNumber(
+				"select count(*) from " + Dm_info.TableName + " where data_mart_id=?",
+				data_mart_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+			throw new BusinessException(data_mart_id + "对应集市工程已不存在");
 		}
 	}
 
@@ -332,6 +693,7 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(dm_datatable.getStorage_type(), "进数方式");
 		CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
 		CheckColummn(dm_datatable.getRepeat_flag(), "表名可能重复");
+		Validator.notNull(dm_datatable.getCategory_id(), "集市分类ID不能为空");
 		if (TableLifeCycle.YongJiu.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
 			dm_datatable.setDatatable_due_date(Constant.MAXDATE);
 		} else {
@@ -360,7 +722,6 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatac_time(DateUtil.getSysTime());
 		dm_datatable.setSoruce_size(Zero);
 		dm_datatable.setEtl_date(ZeroDate);
-		dm_datatable.setCategory_id(datatable_id);
 		//4.保存dm_datatable信息
 		dm_datatable.add(Dbo.db());
 		//5.新增数据至Dtab_relation_store
@@ -414,7 +775,6 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
 	@Return(desc = "查询结果", range = "返回值取值范围")
 	public List<Dm_datatable> getTableIdFromSameNameTableId(String datatable_id) {
-		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		return Dbo.queryList(Dm_datatable.class, "select datatable_id  from " + Dm_datatable.TableName + " where datatable_en_name in (select datatable_en_name from "
@@ -483,8 +843,12 @@ public class MarketInfoAction extends BaseAction {
 	public List<Map<String, Object>> queryDMDataTableByDataTableId(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		return Dbo.queryList("select * from " + Dm_datatable.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 " +
-				"on t1.datatable_id = t2.tab_id where t1.datatable_id= ? and t2.data_source = ?", dm_datatable.getDatatable_id(), StoreLayerDataSource.DM.getCode());
+		return Dbo.queryList("select t1.*,t2.*,t3.category_name from "
+						+ Dm_datatable.TableName + " t1 left join "
+						+ Dtab_relation_store.TableName + " t2 on t1.datatable_id = t2.tab_id left join "
+						+ Dm_category.TableName + " t3 on t3.category_id=t1.category_id" +
+						" where t1.datatable_id= ? and t2.data_source=?",
+				dm_datatable.getDatatable_id(), StoreLayerDataSource.DM.getCode());
 	}
 
 	@Method(desc = "根据数据集市表英文名 检查表名是否重复",
@@ -721,7 +1085,8 @@ public class MarketInfoAction extends BaseAction {
 	 * @param dsl_id
 	 * @return
 	 */
-	private Map<String, String> getFieldType(String sourcetable, String sourcecolumn, String field_type, String dsl_id) {
+	private Map<String, String> getFieldType(String sourcetable, String sourcecolumn, String
+			field_type, String dsl_id) {
 		Map<String, String> resultmap = new HashMap<>();
 		//根据表名,寻找表来自哪一层
 		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(sourcetable, Dbo.db());
@@ -975,7 +1340,8 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
 	@Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
 	@Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
-	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id, Dcol_relation_store[] dm_column_storage, String querysql, String hbasesort) {
+	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String
+			datatable_id, Dcol_relation_store[] dm_column_storage, String querysql, String hbasesort) {
 		Map<String, Object> resultmap = new HashMap<>();
 		//循环 检查数据合法性
 		for (int i = 0; i < datatable_field_info.length; i++) {
@@ -1295,8 +1661,8 @@ public class MarketInfoAction extends BaseAction {
 			Data_store_reg data_store_reg = new Data_store_reg();
 			data_store_reg.setFile_id(id);
 			List<Map<String, Object>> maps = Dbo.queryList("select column_name as columnname,column_type as columntype,false as selectionstate from " + Table_column.TableName +
-					" t1 left join " + Data_store_reg.TableName + " t2 on t1.table_id = t2.table_id where t2.file_id = ? and upper(column_name) not in (?,?,?,?,?,?)", data_store_reg.getFile_id(),
-					Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME,Constant.HYREN_OPER_DATE,Constant.HYREN_OPER_TIME,Constant.HYREN_OPER_PERSON);
+							" t1 left join " + Data_store_reg.TableName + " t2 on t1.table_id = t2.table_id where t2.file_id = ? and upper(column_name) not in (?,?,?,?,?,?)", data_store_reg.getFile_id(),
+					Constant.SDATENAME, Constant.EDATENAME, Constant.MD5NAME, Constant.HYREN_OPER_DATE, Constant.HYREN_OPER_TIME, Constant.HYREN_OPER_PERSON);
 			resultmap.put("columnresult", maps);
 			List<Map<String, Object>> tablenamelist = Dbo.queryList("select hyren_name as tablename from " + Data_store_reg.TableName + " where file_id = ?", data_store_reg.getFile_id());
 			if (tablenamelist.isEmpty()) {
@@ -1327,7 +1693,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
 	@Param(name = "date", desc = "date", range = "String类型跑批日期")
 	@Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
-	public void excutMartJob(String datatable_id, String date, String parameter) throws IOException {
+	public void excutMartJob(String datatable_id, String date, String parameter) {
 		try {
 			MainClass.run(datatable_id, date, parameter);
 		} catch (Throwable e) {
@@ -1394,7 +1760,7 @@ public class MarketInfoAction extends BaseAction {
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
-			 XSSFWorkbook workbook = new XSSFWorkbook();) {
+		     XSSFWorkbook workbook = new XSSFWorkbook();) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -1779,6 +2145,9 @@ public class MarketInfoAction extends BaseAction {
 			if (asLong > 0) {
 				throw new BusinessSystemException("工程下还存在表，请先删除表");
 			} else {
+				// 删除集市工程时先删除集市分类
+				Dbo.execute("delete from " + Dm_category.TableName + " where data_mart_id = ?",
+						dm_datatable.getData_mart_id());
 				deletesql(" from " + Dm_info.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id(), Dm_info.TableName);
 			}
 		}
