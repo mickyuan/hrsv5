@@ -37,6 +37,10 @@ public class Node {
      */
     private String dsl_id;
     /**
+     * 存储层类型
+     */
+    private String dsl_store_type;
+    /**
      * 数据源id
      */
     private String data_source_id;
@@ -156,6 +160,14 @@ public class Node {
 
     public void setDsl_id(String dsl_id) {
         this.dsl_id = dsl_id;
+    }
+
+    public String getDsl_store_type() {
+        return dsl_store_type;
+    }
+
+    public void setDsl_store_type(String dsl_store_type) {
+        this.dsl_store_type = dsl_store_type;
     }
 
     public String getData_own_type() {

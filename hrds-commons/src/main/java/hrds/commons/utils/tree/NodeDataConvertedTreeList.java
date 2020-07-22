@@ -39,6 +39,11 @@ public class NodeDataConvertedTreeList {
             } else {
                 node.setDsl_id(dataRecord.get("dsl_id").toString());
             }
+            if (null == dataRecord.get("dsl_store_type")) {
+                node.setDsl_store_type("");
+            } else {
+                node.setDsl_store_type(dataRecord.get("dsl_store_type").toString());
+            }
             if (null == dataRecord.get("data_own_type")) {
                 node.setData_own_type("");
             } else {
