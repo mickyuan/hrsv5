@@ -137,9 +137,13 @@ public class CodeMaintenanceAction extends BaseAction {
 		isOrigSysoInfoExist(orig_sys_code);
 		// 2.查询初始化源系统编码信息并返回
 		return Dbo.queryResult(
-				"select * from " + Orig_code_info.TableName + " where code_classify in( select " +
-						"code_classify from "
-						+ Hyren_code_info.TableName + " GROUP BY code_classify)");
+				"select t1.*,t2.code_classify_name,t2.code_type_name from "
+						+ Orig_code_info.TableName + " t1," + Hyren_code_info.TableName + " t2"
+						+ " where t1.code_classify=t2.code_classify AND t1.code_value=t2.code_value"
+						+ " AND t1.orig_sys_code=? AND t2.code_classify in ("
+						+ " select code_classify from " + Hyren_code_info.TableName + " GROUP BY code_classify)",
+				orig_sys_code);
+
 	}
 
 	@Method(desc = "查询新增源系统编码信息(根据分类编码查询统一编码信息)", logicStep = "1.查询新增源系统编码信息")
