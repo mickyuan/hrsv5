@@ -185,9 +185,9 @@ public class AgentDeploy {
 			SFTPChannel.execCommandByJSch(
 				shellSession, "rm -rf " + down_info.getSave_dir() + SEPARATOR + agentDirName);
 
-			//建立日志目录
-			SFTPChannel.execCommandByJSch(
-				shellSession, "mkdir -p " + down_info.getLog_dir() + SEPARATOR + agentDirName);
+//			//建立日志目录
+//			SFTPChannel.execCommandByJSch(
+//				shellSession, "mkdir -p " + down_info.getLog_dir() + SEPARATOR + agentDirName);
 
 			// 创建远程目录
 			mkdirToTarget(shellSession, down_info.getSave_dir() + SEPARATOR + agentDirName);
