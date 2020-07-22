@@ -271,7 +271,8 @@ public class AgentDeploy {
 			if (IsFlag.Shi.getCode().equals(down_info.getDeploy())) {
 
 				SFTPChannel.execCommandByJSch(shellSession,
-					"sh " + Constant.START_AGENT + " " + file.getName() + " " + down_info.getLog_dir() + " " + down_info
+					"cd " + targetDir + ";sh " + Constant.START_AGENT + " " + file.getName() + " " + down_info.getLog_dir()
+						+ " " + down_info
 						.getAgent_port() + " " + " start");
 			}
 			return targetDir;
