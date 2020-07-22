@@ -796,6 +796,53 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 		assertThat(codeClassifyList.contains(AgentType.CodeName + THREAD_ID), is(true));
 	}
 
+	@Test
+	public void getOrigCodeInfoByCode() {
+		// 1.正确的数据访问1，数据都有效
+		String rightString = new HttpClient()
+				.addData("code_classify", OperationType.CodeName + THREAD_ID)
+				.addData("orig_sys_code", "dhw0" + THREAD_ID)
+				.post(getActionUrl("getOrigCodeInfoByCode"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(rightString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败!"));
+		assertThat(ar.isSuccess(), is(true));
+		Result result = ar.getDataForResult();
+		List<String> codeTypeList = new ArrayList<>();
+		List<String> codeValueList = new ArrayList<>();
+		List<String> origValueList = new ArrayList<>();
+		for (OperationType operationType : OperationType.values()) {
+			codeTypeList.add(operationType.getValue());
+			codeValueList.add(operationType.getCode());
+			origValueList.add(operationType.getCode() + THREAD_ID);
+		}
+		for (int i = 0; i < result.getRowCount(); i++) {
+			assertThat(codeTypeList.contains(result.getString(i, "code_type_name")), is(true));
+			assertThat(codeValueList.contains(result.getString(i, "code_value")), is(true));
+			assertThat(origValueList.contains(result.getString(i, "orig_value")), is(true));
+			assertThat(result.getString(i, "code_classify"), is("OperationType1"));
+			assertThat(result.getString(i, "code_classify_name"), is("operationType类型"));
+		}
+		// 2.错误的数据访问1，code_classify不存在
+		rightString = new HttpClient()
+				.addData("code_classify", "aaa")
+				.addData("orig_sys_code", "dhw0" + THREAD_ID)
+				.post(getActionUrl("getOrigCodeInfoByCode"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(rightString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败!"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，orig_sys_code不存在
+		rightString = new HttpClient()
+				.addData("code_classify", OperationType.CodeName + THREAD_ID)
+				.addData("orig_sys_code", "aaa")
+				.post(getActionUrl("getOrigCodeInfoByCode"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(rightString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败!"));
+		assertThat(ar.isSuccess(), is(false));
+	}
+
 
 	@After
 	public void after() {

@@ -146,7 +146,7 @@ public class CodeMaintenanceAction extends BaseAction {
 
 	}
 
-	@Method(desc = "查询新增源系统编码信息(根据分类编码查询统一编码信息)", logicStep = "1.查询新增源系统编码信息")
+	@Method(desc = "根据分类编码查询统一编码信息", logicStep = "1.查询新增源系统编码信息")
 	@Param(name = "code_classify", desc = "编码分类", range = "无限制")
 	@Return(desc = "返回源系统编码信息", range = "无限制")
 	public List<Map<String, Object>> getCodeInfoByCodeClassify(String code_classify) {
@@ -261,4 +261,23 @@ public class CodeMaintenanceAction extends BaseAction {
 				"select code_classify from " + Hyren_code_info.TableName + " group by code_classify");
 	}
 
+	@Method(desc = "根据码值系统编码与编码分类获取源系统编码信息", logicStep = "1.检查源系统信息是否存在" +
+			"2.检查统一编码信息是否存在" +
+			"3.3.根据码值系统编码与编码分类获取源系统编码信息")
+	@Param(name = "orig_sys_code", desc = "码值系统编码", range = "无限制")
+	@Param(name = "code_classify", desc = "编码分类", range = "无限制")
+	@Return(desc = "返回源系统编码信息", range = "无限制")
+	public Result getOrigCodeInfoByCode(String orig_sys_code, String code_classify) {
+		// 1.检查源系统信息是否存在
+		isOrigSysoInfoExist(orig_sys_code);
+		// 2.检查统一编码信息是否存在
+		isHyrenCodeInfoExist(code_classify);
+		// 3.根据码值系统编码与编码分类获取源系统编码信息
+		return Dbo.queryResult(
+				"select t1.*,t2.code_classify_name,t2.code_type_name from "
+						+ Orig_code_info.TableName + " t1," + Hyren_code_info.TableName + " t2"
+						+ " where t1.code_classify=t2.code_classify AND t1.code_value=t2.code_value"
+						+ " AND t1.orig_sys_code=? AND t2.code_classify =?",
+				orig_sys_code, code_classify);
+	}
 }
