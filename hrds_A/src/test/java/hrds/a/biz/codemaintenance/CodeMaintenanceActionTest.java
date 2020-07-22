@@ -1,6 +1,5 @@
 package hrds.a.biz.codemaintenance;
 
-import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -24,7 +23,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -510,11 +508,11 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 			origValueList.add(operationType.getCode() + THREAD_ID);
 		}
 		for (int i = 0; i < result.getRowCount(); i++) {
-			assertThat(codeTypeList.contains(result.getString(i,"code_type_name")), is(true));
-			assertThat(codeValueList.contains(result.getString(i,"code_value").toString()), is(true));
-			assertThat(origValueList.contains(result.getString(i,"orig_value").toString()), is(true));
-			assertThat(result.getString(i,"code_classify"), is("OperationType1"));
-			assertThat(result.getString(i,"code_classify_name"), is("operationType类型"));
+			assertThat(codeTypeList.contains(result.getString(i, "code_type_name")), is(true));
+			assertThat(codeValueList.contains(result.getString(i, "code_value")), is(true));
+			assertThat(origValueList.contains(result.getString(i, "orig_value")), is(true));
+			assertThat(result.getString(i, "code_classify"), is("OperationType1"));
+			assertThat(result.getString(i, "code_classify_name"), is("operationType类型"));
 		}
 	}
 
