@@ -29,6 +29,7 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
@@ -196,30 +197,31 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			// 预分区建表
 			HashChoreWoker worker = new HashChoreWoker(1000000, 10);
 			byte[][] splitKeys = worker.calcSplitKeys();
-			//默认是压缩   TODO 是否压缩需要从页面配置
-			helper.createTable(todayTableName, splitKeys, true,
+			//默认是不压缩   TODO 是否压缩需要从页面配置
+			helper.createTable(todayTableName, splitKeys, false,
 					Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
-			//表名
+			Configuration conf = ConfigReader.getConfiguration(configPath);
+			//根据文件类型使用bulkload解析文件生成HFile，加载数据到HBase表
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
-				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new SequeceBulkLoadJob(), args);
+				run = ToolRunner.run(conf, new SequeceBulkLoadJob(), args);
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 				//非定长需要文件分隔符
 				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
 						isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name),
 						tableBean.getColumn_separator()};
-				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new NonFixedBulkLoadJob(), args2);
+				run = ToolRunner.run(conf, new NonFixedBulkLoadJob(), args2);
 			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
-				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new ParquetBulkLoadJob(), args);
+				run = ToolRunner.run(conf, new ParquetBulkLoadJob(), args);
 			} else if (FileFormat.ORC.getCode().equals(file_format)) {
-				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new OrcBulkLoadJob(), args);
+				run = ToolRunner.run(conf, new OrcBulkLoadJob(), args);
 			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
 				//定长需要根据文件的编码去获取字节长度,需要每一列的长度
 				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
 						isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name),
 						DataBaseCode.ofValueByCode(tableBean.getFile_code()), tableBean.getColLengthInfo()};
-				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new FixedBulkLoadJob(), args2);
+				run = ToolRunner.run(conf, new FixedBulkLoadJob(), args2);
 			} else if (FileFormat.CSV.getCode().equals(file_format)) {
-				run = ToolRunner.run(ConfigReader.getConfiguration(configPath), new CsvBulkLoadJob(), args);
+				run = ToolRunner.run(conf, new CsvBulkLoadJob(), args);
 			} else {
 				throw new AppSystemException("暂不支持定长或者其他类型直接加载到hive表");
 			}
