@@ -160,7 +160,8 @@ public class CodeMaintenanceAction extends BaseAction {
 
 	@Method(desc = "新增源系统编码信息", logicStep = "1.检查源系统信息是否存在" +
 			"2.检查源系统编码实体字段合法性" +
-			"3.新增源系统编码信息")
+			"3.检查当前编码分类对应的源系统编码信息是否存在,存在就不添加，不存在则添加" +
+			"4.新增源系统编码信息")
 	@Param(name = "orig_code_infos", desc = "源系统编码信息表实体数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "orig_sys_code", desc = "码值系统编码", range = "无限制")
 	public void addOrigCodeInfo(Orig_code_info[] orig_code_infos, String orig_sys_code) {
@@ -170,10 +171,16 @@ public class CodeMaintenanceAction extends BaseAction {
 		for (Orig_code_info orig_code_info : orig_code_infos) {
 			// 2.检查源系统编码实体字段合法性
 			checkOrigCodeInfoFields(orig_code_info);
-			orig_code_info.setOrig_sys_code(orig_sys_code);
-			orig_code_info.setOrig_id(PrimayKeyGener.getNextId());
-			// 3.新增源系统编码信息
-			orig_code_info.add(Dbo.db());
+			// 3.检查当前编码分类对应的源系统编码信息是否存在,存在就不添加，不存在则添加
+			if (Dbo.queryNumber(
+					"select count(*) from " + Orig_code_info.TableName + " where code_classify=?",
+					orig_code_info.getCode_classify())
+					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+				orig_code_info.setOrig_sys_code(orig_sys_code);
+				orig_code_info.setOrig_id(PrimayKeyGener.getNextId());
+				// 4.新增源系统编码信息
+				orig_code_info.add(Dbo.db());
+			}
 		}
 	}
 
@@ -190,14 +197,13 @@ public class CodeMaintenanceAction extends BaseAction {
 	}
 
 	@Method(desc = "检查源系统编码实体字段合法性", logicStep = "1.检查源系统编码实体字段合法性" +
-			"2.检查统一编码信息是否存在")
+			"2.检查当前编码分类对应的源系统编码信息是否存在")
 	@Param(name = "orig_code_info", desc = "源系统编码信息表实体", range = "与数据库对应表规则一致")
 	private void checkOrigCodeInfoFields(Orig_code_info orig_code_info) {
 		// 1.检查源系统编码实体字段合法性
 		Validator.notBlank(orig_code_info.getCode_classify(), "编码分类不能为空");
 		Validator.notBlank(orig_code_info.getCode_value(), "编码类型值不能为空");
 		Validator.notBlank(orig_code_info.getOrig_value(), "源系统编码值不能为空");
-		// 2.检查统一编码信息是否存在
 		isHyrenCodeInfoExist(orig_code_info.getCode_classify());
 	}
 
