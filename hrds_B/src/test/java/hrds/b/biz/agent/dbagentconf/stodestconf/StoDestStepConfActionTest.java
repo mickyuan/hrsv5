@@ -1012,7 +1012,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramOne = new DataStoRelaParam();
 		paramOne.setTableId(AGENT_INFO_TABLE_ID);
-		long[] dslIds = {4400L};
+		Long[] dslIds = {4400L};
 		paramOne.setDslIds(dslIds);
 
 		dataStoRelaParams.add(paramOne);
@@ -1094,7 +1094,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramTwo = new DataStoRelaParam();
 		paramTwo.setTableId(DATA_SOURCE_TABLE_ID);
-		long[] dslIdsTwo = {4400L, 4403L};
+		Long[] dslIdsTwo = {4400L, 4403L};
 		paramTwo.setDslIds(dslIdsTwo);
 
 		dataStoRelaParams.add(paramTwo);
@@ -1175,7 +1175,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramThree = new DataStoRelaParam();
 		paramThree.setTableId(TABLE_INFO_TABLE_ID);
-		long[] dslIdsThree = {4400L, 4399L};
+		Long[] dslIdsThree = {4400L, 4399L};
 		paramThree.setDslIds(dslIdsThree);
 
 		dataStoRelaParams.add(paramThree);
@@ -1263,7 +1263,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramFour = new DataStoRelaParam();
 		paramFour.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsFour = {4400L, 4399L};
+		Long[] dslIdsFour = {4400L, 4399L};
 		paramFour.setDslIds(dslIdsFour);
 
 		dataStoRelaParams.add(paramFour);
@@ -1352,7 +1352,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramSeven = new DataStoRelaParam();
 		paramSeven.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsSeven = {};
+		Long[] dslIdsSeven = {};
 		paramSeven.setDslIds(dslIdsSeven);
 
 		dataStoRelaParams.add(paramSeven);
@@ -1378,7 +1378,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		//错误的数据访问2：新增采集table_column表的存储目的地，但是在数据抽取定义表中没有构造table_column表的抽取信息
 		DataStoRelaParam param = new DataStoRelaParam();
 		param.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdes = {4399L, 4400L};
+		Long[] dslIdes = {4399L, 4400L};
 		param.setDslIds(dslIdes);
 
 		dataStoRelaParams.add(param);
@@ -1420,7 +1420,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramFive = new DataStoRelaParam();
 		paramFive.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsFive = {4399};
+		Long[] dslIdsFive = {4399L};
 		paramFive.setDslIds(dslIdsFive);
 
 		dataStoRelaParams.add(paramFive);
@@ -1601,7 +1601,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramOne = new DataStoRelaParam();
 		paramOne.setTableId(AGENT_INFO_TABLE_ID);
-		long[] dslIds = {4400L};
+		Long[] dslIds = {4400L};
 		paramOne.setDslIds(dslIds);
 
 		dataStoRelaParams.add(paramOne);
@@ -1616,7 +1616,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramTwo = new DataStoRelaParam();
 		paramTwo.setTableId(DATA_SOURCE_TABLE_ID);
-		long[] dslIdsTwo = {4400L, 4403L};
+		Long[] dslIdsTwo = {4400L, 4403L};
 		paramTwo.setDslIds(dslIdsTwo);
 
 		dataStoRelaParams.add(paramTwo);
@@ -1631,7 +1631,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramThree = new DataStoRelaParam();
 		paramThree.setTableId(TABLE_INFO_TABLE_ID);
-		long[] dslIdsThree = {4400L, 4399L};
+		Long[] dslIdsThree = {4400L, 4399L};
 		paramThree.setDslIds(dslIdsThree);
 
 		dataStoRelaParams.add(paramThree);
