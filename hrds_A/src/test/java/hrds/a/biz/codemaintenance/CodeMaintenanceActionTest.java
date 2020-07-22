@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.AgentStatus;
@@ -499,9 +500,7 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
-		List<List<Map<String, Object>>> list = JsonUtil.toObject(ar.getData().toString(),
-				new TypeReference<List<List<Map<String, Object>>>>() {
-				}.getType());
+		Result result = ar.getDataForResult();
 		List<String> codeTypeList = new ArrayList<>();
 		List<String> codeValueList = new ArrayList<>();
 		List<String> origValueList = new ArrayList<>();
@@ -510,12 +509,12 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 			codeValueList.add(operationType.getCode());
 			origValueList.add(operationType.getCode() + THREAD_ID);
 		}
-		for (List<Map<String, Object>> mapList : list) {
-			assertThat(codeTypeList.contains(mapList.get(0).get("code_type_name").toString()), is(true));
-			assertThat(codeValueList.contains(mapList.get(0).get("code_value").toString()), is(true));
-			assertThat(origValueList.contains(mapList.get(0).get("orig_value").toString()), is(true));
-			assertThat(mapList.get(0).get("code_classify"), is("OperationType1"));
-			assertThat(mapList.get(0).get("code_classify_name"), is("operationType类型"));
+		for (int i = 0; i < result.getRowCount(); i++) {
+			assertThat(codeTypeList.contains(result.getString(i,"code_type_name")), is(true));
+			assertThat(codeValueList.contains(result.getString(i,"code_value").toString()), is(true));
+			assertThat(origValueList.contains(result.getString(i,"orig_value").toString()), is(true));
+			assertThat(result.getString(i,"code_classify"), is("OperationType1"));
+			assertThat(result.getString(i,"code_classify_name"), is("operationType类型"));
 		}
 	}
 
