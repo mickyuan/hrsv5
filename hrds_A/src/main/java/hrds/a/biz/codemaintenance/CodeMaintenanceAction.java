@@ -190,14 +190,12 @@ public class CodeMaintenanceAction extends BaseAction {
 	}
 
 	@Method(desc = "检查源系统编码实体字段合法性", logicStep = "1.检查源系统编码实体字段合法性" +
-			"2.检查统一编码信息是否存在")
+			"2.检查当前编码分类对应的源系统编码信息是否存在")
 	@Param(name = "orig_code_info", desc = "源系统编码信息表实体", range = "与数据库对应表规则一致")
 	private void checkOrigCodeInfoFields(Orig_code_info orig_code_info) {
 		// 1.检查源系统编码实体字段合法性
 		Validator.notBlank(orig_code_info.getCode_classify(), "编码分类不能为空");
 		Validator.notBlank(orig_code_info.getCode_value(), "编码类型值不能为空");
-		Validator.notBlank(orig_code_info.getOrig_value(), "源系统编码值不能为空");
-		// 2.检查统一编码信息是否存在
 		isHyrenCodeInfoExist(orig_code_info.getCode_classify());
 	}
 
