@@ -19,15 +19,15 @@ public class DqTableInfoBean extends ProjectTableEntity {
     //表中文名
     @DocBean(name = "ch_name", value = "表中文名", dataType = String.class)
     private String ch_name;
-    //表类型
-    @DocBean(name = "table_type", value = "表类型", dataType = String.class)
-    private String table_type;
     //是否数据溯源
     @DocBean(name = "is_trace", value = "是否数据溯源", dataType = String.class)
     private String is_trace;
     //备注
     @DocBean(name = "dq_remark", value = "备注", dataType = String.class)
     private String dq_remark;
+    //HBase的RowKey排序信息
+    @DocBean(name = "hbase_sort_columns", value = "HBase的RowKey排序信息", dataType = String[].class)
+    private String[] hbase_sort_columns;
 
     public String getTable_space() {
         return table_space;
@@ -53,14 +53,6 @@ public class DqTableInfoBean extends ProjectTableEntity {
         this.ch_name = ch_name;
     }
 
-    public String getTable_type() {
-        return table_type;
-    }
-
-    public void setTable_type(String table_type) {
-        this.table_type = table_type;
-    }
-
     public String getIs_trace() {
         return is_trace;
     }
@@ -75,5 +67,13 @@ public class DqTableInfoBean extends ProjectTableEntity {
 
     public void setDq_remark(String dq_remark) {
         this.dq_remark = dq_remark;
+    }
+
+    public String[] getHbase_sort_columns() {
+        return hbase_sort_columns;
+    }
+
+    public void setHbase_sort_columns(String[] hbase_sort_columns) {
+        this.hbase_sort_columns = hbase_sort_columns;
     }
 }
