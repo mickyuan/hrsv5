@@ -63,8 +63,8 @@ public abstract class ProcessingData {
     @Param(name = "end", desc = "结束条数", range = "int类型,大于1")
     @Param(name = "dsl_id", desc = "存储层配置id", range = "long类型")
     @Return(desc = "查询出来的rs", range = "数据")
-    public List<String> getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end, long dsl_id) {
-        return getPageDataLayer(sql, db, begin, end, dsl_id, false);
+    public void getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end, long dsl_id) {
+        getPageDataLayer(sql, db, begin, end, dsl_id, false);
     }
 
     @Method(desc = "根据sql和指定存储层信息获取指定存储层下的数据表数据",
@@ -120,7 +120,7 @@ public abstract class ProcessingData {
     @Param(name = "tableName", desc = "表名", range = "取值范围说明")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "表的存储位置", range = "表的存储位置")
-    public static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
+    private static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
         //初始化表的存储位置
         List<LayerBean> mapTaberLayer = new ArrayList<>();
         //查询贴元表信息，也就是通过数据采集过来的数据表
@@ -139,7 +139,7 @@ public abstract class ProcessingData {
                             + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", table_id, StoreLayerDataSource.DB.getCode());
             //记录数据表在哪个系统存储层
             for (LayerBean map : maps) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -153,7 +153,7 @@ public abstract class ProcessingData {
                 tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
         if (dslMap.size() != 0) {
             for (LayerBean map : dslMap) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -165,7 +165,7 @@ public abstract class ProcessingData {
                         " on di3.dsl_id=dsl.dsl_id where lower(di3.table_name) = ?", tableName.toLowerCase());
         if (di3Map.size() != 0) {
             for (LayerBean map : di3Map) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -179,7 +179,7 @@ public abstract class ProcessingData {
                 tableName.toLowerCase(), StoreLayerDataSource.UD.getCode());
         if (dqtiMap.size() != 0) {
             for (LayerBean map : dqtiMap) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -214,19 +214,6 @@ public abstract class ProcessingData {
     }
 
     /**
-     * 根据存储层ID获取存储层的配置信息
-     *
-     * @param dsl_id {@link Long} 存储层id
-     * @param db     {@link DatabaseWrapper} db
-     * @return 存储层的配置信息
-     */
-    private static Map<String, String> getDslidByLayer(Long dsl_id, DatabaseWrapper db) {
-        List<Map<String, Object>> dataStoreConfBean =
-                SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        return ConnectionTool.getLayerMap(dataStoreConfBean);
-    }
-
-    /**
      * 获取所有的表是不是在同一个存储层，且是jdbc或其他
      *
      * @param sql {@link String} sql语句
@@ -258,7 +245,7 @@ public abstract class ProcessingData {
          */
         Map<String, LayerBean> allTableLayer = new HashMap<>();
         for (String tableName : allTableList) {
-            List<LayerBean> tableLayer = getTableLayer(tableName, db);
+            List<LayerBean> tableLayer = getLayerByTable(tableName, db);
             if (tableLayer == null)
                 throw new AppSystemException("根据解析的表没有找到对应存储层信息，请确认数据是否正确");
             //更加table获取每张表不同的存储信息，有可能一张表存储不同的目的地，所以这里是list
@@ -327,9 +314,7 @@ public abstract class ProcessingData {
      * @param dsl_id 存储层id
      */
     private List<String> getResultSet(String sql, DatabaseWrapper db, long dsl_id, int begin, int end, boolean isCountTotal) {
-        List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
-                "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
+        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, dsl_id)) {
             return getSQLData(sql, dbDataConn, begin, end, isCountTotal);
         } catch (Exception e) {
             throw new AppSystemException("系统不支持该数据库类型", e);
