@@ -7,7 +7,9 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.hadoop_helper.HashChoreWoker;
 import hrds.commons.utils.Constant;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.Closeable;
 import java.io.File;
@@ -70,6 +72,21 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 		}
 		if (helper != null) {
 			helper.close();
+		}
+	}
+
+	/**
+	 * 创建默认预分区的HBase表
+	 */
+	public static void createDefaultPrePartTable(HBaseHelper helper, String table,
+	                                             boolean snappycompress) {
+		try {
+			// 预分区建表
+			HashChoreWoker worker = new HashChoreWoker(1000000, 10);
+			byte[][] splitKeys = worker.calcSplitKeys();
+			helper.createTable(table, splitKeys, snappycompress, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
+		} catch (IOException e) {
+			throw new AppSystemException("创建默认预分区的HBase表失败", e);
 		}
 	}
 

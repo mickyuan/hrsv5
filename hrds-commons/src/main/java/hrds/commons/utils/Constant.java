@@ -267,4 +267,6 @@ public class Constant {
 	// 集市分类分隔符
 	public static final String MARKETDELIMITER = "-->";
 
+	//hive映射HBase的rowkey的列名
+	public static final String HIVEMAPPINGROWKEY = "rowkey_hyren";
 }

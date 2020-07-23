@@ -27,6 +27,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.orc.mapred.OrcStruct;
 import org.apache.orc.mapreduce.OrcInputFormat;
+import org.apache.parquet.hadoop.ParquetInputFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -111,7 +112,7 @@ public class OrcBulkLoadJob extends Configured implements Tool {
 			job.setJarByClass(OrcBulkLoadJob.class);
 
 			job.setInputFormatClass(OrcInputFormat.class);
-			OrcInputFormat.setInputPaths(job, hdfsFilePath);
+			ParquetInputFormat.setInputPaths(job, hdfsFilePath);
 
 			String outputPath = PathUtil.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
 			Path tmpPath = new Path(outputPath);

@@ -26,6 +26,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetInputFormat;
+import org.apache.parquet.hadoop.example.ExampleInputFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -110,7 +111,7 @@ public class ParquetBulkLoadJob extends Configured implements Tool {
 			Job job = Job.getInstance(conf, "ParquetBulkLoadJob_" + todayTableName);
 			job.setJarByClass(ParquetBulkLoadJob.class);
 
-			job.setInputFormatClass(ParquetInputFormat.class);
+			job.setInputFormatClass(ExampleInputFormat.class);
 			ParquetInputFormat.setInputPaths(job, hdfsFilePath);
 
 			String outputPath = PathUtil.TMPDIR + "/bulkload/output" + System.currentTimeMillis();

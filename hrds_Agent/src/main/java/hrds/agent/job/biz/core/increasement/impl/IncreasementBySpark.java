@@ -44,7 +44,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		//6、将比较之后的要delete(拉链中的闭链)的结果插入到临时表中
 		getDeleteDataSql(sqlList);
 		//7、把全量数据中的除了有效数据且关链的数据以外的所有数据插入到临时表中
-		getdeltaDataSql(sqlList);
+		getDeltaDataSql(sqlList);
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
@@ -180,7 +180,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		sqlList.add("DROP TABLE IF EXISTS " + tableName);
 	}
 
-	private void getdeltaDataSql(ArrayList<String> sqlList) {
+	private void getDeltaDataSql(ArrayList<String> sqlList) {
 		String deltaDatasql = "insert into " + deltaTableName;
 		deltaDatasql += " select * from " + yesterdayTableName;
 		deltaDatasql += " where ";

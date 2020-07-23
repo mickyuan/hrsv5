@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.parquet.hadoop.ParquetInputFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -112,7 +113,7 @@ public class SequeceBulkLoadJob extends Configured implements Tool {
 			job.setJarByClass(SequeceBulkLoadJob.class);
 
 			job.setInputFormatClass(SequenceFileInputFormat.class);
-			SequenceFileInputFormat.setInputPaths(job, hdfsFilePath);
+			ParquetInputFormat.setInputPaths(job, hdfsFilePath);
 
 			String outputPath = PathUtil.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
 			Path tmpPath = new Path(outputPath);

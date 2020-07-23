@@ -13,6 +13,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.bulkload.*;
+import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -22,7 +23,6 @@ import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
-import hrds.commons.hadoop.hadoop_helper.HashChoreWoker;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
@@ -194,12 +194,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			helper = HBaseHelper.getHelper(configPath);
 			//备份表
 			backupToDayTable(todayTableName, helper);
-			// 预分区建表
-			HashChoreWoker worker = new HashChoreWoker(1000000, 10);
-			byte[][] splitKeys = worker.calcSplitKeys();
 			//默认是不压缩   TODO 是否压缩需要从页面配置
-			helper.createTable(todayTableName, splitKeys, false,
-					Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
+			HBaseIncreasement.createDefaultPrePartTable(helper, todayTableName, false);
 			Configuration conf = ConfigReader.getConfiguration(configPath);
 			//根据文件类型使用bulkload解析文件生成HFile，加载数据到HBase表
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
