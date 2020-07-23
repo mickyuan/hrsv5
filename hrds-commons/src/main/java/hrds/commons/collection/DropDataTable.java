@@ -11,10 +11,9 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 
 import java.util.List;
-import java.util.Map;
 
 @DocClass(desc = "删除数据类", author = "BY-HLL", createdate = "2020/5/22 0022 下午 03:18")
-public class DeleteDataTable {
+public class DropDataTable {
 
     @Method(desc = "删除存储层下的数据表",
             logicStep = "删除存储层下的数据表")

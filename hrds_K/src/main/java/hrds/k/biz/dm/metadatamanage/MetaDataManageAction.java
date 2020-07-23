@@ -10,12 +10,9 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.JobExecuteState;
-import hrds.commons.codes.StoreLayerDataSource;
+import hrds.commons.codes.*;
 import hrds.commons.collection.CreateDataTable;
-import hrds.commons.collection.DeleteDataTable;
+import hrds.commons.collection.DropDataTable;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.bean.TreeConf;
@@ -407,7 +404,7 @@ public class MetaDataManageAction extends BaseAction {
             TableMetaInfoTool.deleteTableRegistrationRecordData(dataSource, dft.getFile_id());
         }
         //彻底删除存储层中的数表
-        DeleteDataTable.dropTableByDataLayer(invalid_table_name, Dbo.db(), dft.getDsl_id());
+        DropDataTable.dropTableByDataLayer(invalid_table_name, Dbo.db(), dft.getDsl_id());
         logger.info("彻底删除存储层中相关的数表完成! table_name=" + invalid_table_name);
     }
 
@@ -469,13 +466,13 @@ public class MetaDataManageAction extends BaseAction {
     @Param(name = "dqTableColumnBeans", desc = "自定义实体DqTableColumnBean数组", range = "DqTableColumnBean[]", isBean = true)
     public void createTable(long dsl_id, DqTableInfoBean dqTableInfoBean, DqTableColumnBean[] dqTableColumnBeans) {
         //数据校验
-        if (Dbo.queryNumber("SELECT COUNT(*) FROM " + Data_store_layer.TableName + " WHERE dsl_id=?",
-                dsl_id).orElseThrow(() -> new BusinessException("获取存储层信息失败! dsl_id=" + dsl_id)) == 0) {
-            throw new BusinessException("该存储层已经不存在! dsl_id=" + dsl_id);
-        }
+        Data_store_layer dsl = Dbo.queryOneObject(Data_store_layer.class, "SELECT * FROM " + Data_store_layer.TableName +
+                " WHERE dsl_id=?", dsl_id).orElseThrow(() -> new BusinessException("获取存储层信息失败! dsl_id=" + dsl_id));
         Validator.notNull(dqTableInfoBean, "表存储实体Bean不能为空! dqTableInfoBean");
         Validator.notNull(dqTableColumnBeans, "表字段存储实体Bean[]不能为空! dqTableColumnBeans");
         Validator.notBlank(dqTableInfoBean.getTable_name(), "表名不能为空!");
+        //获取HBase表设置为RowKey的字段排序信息
+        String[] hbase_sort_columns = dqTableInfoBean.getHbase_sort_columns();
         //设置表信息
         Dq_table_info dqTableInfo = new Dq_table_info();
         BeanUtils.copyProperties(dqTableInfoBean, dqTableInfo);
@@ -488,15 +485,51 @@ public class MetaDataManageAction extends BaseAction {
         dqTableInfo.setCreate_id(getUserId());
         //设置列信息列表
         List<Dq_table_column> dqTableColumns = new ArrayList<>();
-        for (DqTableColumnBean dqTableColumnBean : dqTableColumnBeans) {
+        for (int i = 0; i < dqTableColumnBeans.length; i++) {
+            //获取表字段自定义实体信息
+            DqTableColumnBean dqTableColumnBean = dqTableColumnBeans[i];
+            //初始化表字段实体
             Dq_table_column dqTableColumn = new Dq_table_column();
+            //如果表的字段名和字段类型不为空,则设置字段实体信息和字段存储附加信息关系
             if (StringUtil.isNotBlank(dqTableColumnBean.getColumn_name()) && StringUtil.isNotBlank(dqTableColumnBean.getColumn_type())) {
+                //实体转换,设置字段实体
                 BeanUtils.copyProperties(dqTableColumnBean, dqTableColumn);
                 dqTableColumn.setField_id(PrimayKeyGener.getNextId());
                 dqTableColumn.setTable_id(dqTableInfo.getTable_id());
                 dqTableColumns.add(dqTableColumn);
+                //设置数据字段存储关系表
+                Dcol_relation_store dcol_relation_store;
+                if (dqTableColumnBean.getDslad_id_s().length > 0) {
+                    for (long dslad_id : dqTableColumnBean.getDslad_id_s()) {
+                        //获取数据存储附加信息
+                        Data_store_layer_added dsla = Dbo.queryOneObject(Data_store_layer_added.class,
+                                "SELECT * FROM " + Data_store_layer_added.TableName + " WHERE dslad_id=?",
+                                dslad_id).orElseThrow(() -> new BusinessException("获取数据存储附加信息失败!"));
+                        StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dsla.getDsla_storelayer());
+                        //设置字段存储序号位置,字段序号
+                        long csi_number = i;
+                        //如果字段附加信息是rowkey,则设置字段的序号位置,
+                        if (storeLayerAdded == StoreLayerAdded.RowKey) {
+                            for (int j = 0; j < hbase_sort_columns.length; j++) {
+                                //如果当前字段和排序一样,则去排序字段的顺序做序号位置
+                                if (dqTableColumnBean.getColumn_name().equalsIgnoreCase(hbase_sort_columns[j])) {
+                                    csi_number = j;
+                                }
+                            }
+                        }
+                        //设置存储关系信息
+                        dcol_relation_store = new Dcol_relation_store();
+                        dcol_relation_store.setCol_id(dqTableColumn.getField_id());
+                        dcol_relation_store.setDslad_id(dslad_id);
+                        dcol_relation_store.setData_source(StoreLayerDataSource.UD.getCode());
+                        dcol_relation_store.setCsi_number(csi_number);
+                        dcol_relation_store.add(Dbo.db());
+                    }
+                }
+                //设置字段序号信息
             }
         }
+
         //校验表名在系统中是否存在,存在则直接终止创建表
         boolean isRepeat = DataTableUtil.tableIsRepeat(dqTableInfo.getTable_name());
         if (isRepeat) {
