@@ -33,8 +33,6 @@ public class DataTableUtil {
     public static Map<String, Object> getTableInfoAndColumnInfo(String data_layer, String file_id) {
         //初始化返回结果Map
         Map<String, Object> data_meta_info = new HashMap<>();
-        //初始化表信息
-        Map<String, Object> table_info_map;
         //初始化字段解析结果List
         List<Map<String, String>> column_info_list;
         String table_id, table_name, table_ch_name, create_date;
@@ -44,15 +42,15 @@ public class DataTableUtil {
             throw new BusinessException(data_layer + "层暂未实现!");
         } else if (dataSourceType == DataSourceType.DCL) {
             //获取表信息
-            table_info_map = DCLDataQuery.getDCLBatchTableInfo(file_id);
+            Map<String, Object> table_info = DCLDataQuery.getDCLBatchTableInfo(file_id);
             //校验查询结果集
-            if (table_info_map.isEmpty()) {
+            if (table_info.isEmpty()) {
                 throw new BusinessException("表登记信息已经不存在!");
             }
-            table_id = table_info_map.get("table_id").toString();
-            table_name = table_info_map.get("table_name").toString();
-            table_ch_name = table_info_map.get("table_ch_name").toString();
-            create_date = table_info_map.get("original_update_date").toString();
+            table_id = table_info.get("table_id").toString();
+            table_name = table_info.get("table_name").toString();
+            table_ch_name = table_info.get("table_ch_name").toString();
+            create_date = table_info.get("original_update_date").toString();
             //获取并转换字段信息List
             column_info_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
         } else if (dataSourceType == DataSourceType.DPL) {
