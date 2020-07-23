@@ -192,9 +192,9 @@ subprojects {
 
     def createDir = {
         path->
-            File dir=new File(path);
+            File dir=new File(path)
             if (!dir.exists()){
-                dir.mkdirs();
+                dir.mkdirs()
             }
     }
     task moveSQL(type: Copy) {
@@ -211,16 +211,16 @@ subprojects {
                 && project.name != "hrds_Control"
                 && project.name != "hrds_Agent") {
             delete "$buildDir/libs/lib"
-            appname = appname.replace("hrds_","");
+            appname = appname.replace("hrds_","")
             from "build/libs"
             into "$rootDir/../app/" + appname + "/dist"
 
            def paths = ["$rootDir/../app/" + appname + "/logs",
                         "$rootDir/../app/" + appname + "/progout",
                         "$rootDir/../app/" + appname + "/bin",
-                        "$rootDir/../app/frontend"];
+                        "$rootDir/../app/frontend"]
             doFirst {
-                paths.forEach(createDir);
+                paths.forEach(createDir)
             }
         }
         if (project.name == "hrds_Trigger"
