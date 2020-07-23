@@ -22,7 +22,7 @@ public class DeleteDataTable {
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     public static void dropTableByDataLayer(String tableName, DatabaseWrapper db) {
         //获取sql中解析出来的表属于的存储实体Bean
-        List<LayerBean> tableLayers = ProcessingData.getTableLayer(tableName, db);
+        List<LayerBean> tableLayers = ProcessingData.getLayerByTable(tableName, db);
         if (null == tableLayers) {
             throw new BusinessException("该表未在任何存储层中存在!");
         }

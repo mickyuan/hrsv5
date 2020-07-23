@@ -30,7 +30,7 @@ public class RenameDataTable {
         //初始化返回结果集
         List<String> dsl_id_s = new ArrayList<>();
         //获取sql中解析出来的表属于的存储实体Bean
-        List<LayerBean> tableLayers = ProcessingData.getTableLayer(tableName, db);
+        List<LayerBean> tableLayers = ProcessingData.getLayerByTable(tableName, db);
         if (null == tableLayers) {
             throw new BusinessException("该表未在任何存储层中存在!");
         }

@@ -120,7 +120,7 @@ public abstract class ProcessingData {
     @Param(name = "tableName", desc = "表名", range = "取值范围说明")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Return(desc = "表的存储位置", range = "表的存储位置")
-    public static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
+    private static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
         //初始化表的存储位置
         List<LayerBean> mapTaberLayer = new ArrayList<>();
         //查询贴元表信息，也就是通过数据采集过来的数据表
@@ -258,7 +258,7 @@ public abstract class ProcessingData {
          */
         Map<String, LayerBean> allTableLayer = new HashMap<>();
         for (String tableName : allTableList) {
-            List<LayerBean> tableLayer = getTableLayer(tableName, db);
+            List<LayerBean> tableLayer = getLayerByTable(tableName, db);
             if (tableLayer == null)
                 throw new AppSystemException("根据解析的表没有找到对应存储层信息，请确认数据是否正确");
             //更加table获取每张表不同的存储信息，有可能一张表存储不同的目的地，所以这里是list
