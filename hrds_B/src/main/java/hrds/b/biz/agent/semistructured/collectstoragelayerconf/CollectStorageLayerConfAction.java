@@ -16,8 +16,6 @@ import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +23,6 @@ import java.util.Map;
 
 @DocClass(desc = "半结构化采集存储层配置", author = "dhw", createdate = "2020/6/12 18:09")
 public class CollectStorageLayerConfAction extends BaseAction {
-	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "获取半结构化采集存储层配置初始化信息",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
@@ -126,7 +123,6 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		if (columnStorageLayerInfo.isEmpty()) {
 			return objCollectStructResult;
 		}
-		logger.info("====columnStorageLayerInfo======" + columnStorageLayerInfo);
 		// 8.封装列附加属性信息
 		for (int j = 0; j < objCollectStructResult.getRowCount(); j++) {
 			long struct_id = objCollectStructResult.getLong(j, "struct_id");
@@ -135,7 +131,6 @@ public class CollectStorageLayerConfAction extends BaseAction {
 			for (int i = 0; i < columnStorageLayerInfo.getRowCount(); i++) {
 				long col_id = columnStorageLayerInfo.getLong(i, "col_id");
 				if (col_id == struct_id) {
-					logger.info("=========================" + dsla_storelayers + "==========" + col_id);
 					String dsla_storelayer = columnStorageLayerInfo.getString(i, "dsla_storelayer");
 					if (!dsla_storelayers.contains(dsla_storelayer)) {
 						dsla_storelayers.add(dsla_storelayer);
@@ -208,38 +203,11 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "保存数据表存储关系表信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.判断当前任务是否已不存在" +
-			"3.判断表存储目的地信息是否存在" +
-			"4.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条" +
-			"5.新增数据表存储关系表信息入库")
-	@Param(name = "odc_id", desc = "对象采集ID", range = "新增对象采集配置时生成")
-	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对象采集对应信息时生成")
-	@Param(name = "dslIds", desc = "存储层配置ID数组", range = "无限制")
-	public void saveDtabRelationStoreInfo(long odc_id, long ocs_id, long[] dslIds) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.判断当前任务是否已不存在
-		CommonUtils.isObjectCollectExist(odc_id);
-		// 3.判断表存储目的地信息是否存在
-		if (dslIds == null || dslIds.length == 0) {
-			throw new BusinessException("未获取到表存储目的地信息");
-		}
-		// 4.先删除原来该半结构化采集任务下的表存储信息，不关心删除几条
-		Dbo.execute(
-				"delete from " + Dtab_relation_store.TableName + " where tab_id =? AND data_source = ?",
-				ocs_id, StoreLayerDataSource.OBJ.getCode());
-		for (long dslId : dslIds) {
-			// 5.新增数据表存储表信息
-			addDtabRelationStore(ocs_id, dslId);
-		}
-	}
-
 	@Method(desc = "新增数据表存储表信息", logicStep = "1.新增数据表存储关系表信息入库")
 	@Param(name = "ocs_id", desc = "对象采集对应表信息主键ID", range = "新增对象采集对应信息时生成")
 	@Param(name = "dslId", desc = "存储层配置Id", range = "无限制")
 	private void addDtabRelationStore(long ocs_id, long dslId) {
 		Dtab_relation_store dtabRelationStore = new Dtab_relation_store();
-		Validator.notNull(dslId, "ocs_id=" + ocs_id + "对应表未选择存储层,请检查");
 		dtabRelationStore.setData_source(StoreLayerDataSource.OBJ.getCode());
 		dtabRelationStore.setIs_successful(JobExecuteState.DengDai.getCode());
 		dtabRelationStore.setTab_id(ocs_id);
@@ -270,23 +238,14 @@ public class CollectStorageLayerConfAction extends BaseAction {
 						+ " AND data_source = ?",
 				odc_id, StoreLayerDataSource.OBJ.getCode());
 		for (DataStoRelaParam dataStoRelaParam : dataStoRelaParams) {
+			Validator.notNull(dataStoRelaParam.getTableId(), "对象采集任务编号不能为空");
 			Long[] dslIds = dataStoRelaParam.getDslIds();
+			if (dslIds == null || dslIds.length == 0) {
+				throw new BusinessException("ocs_id=" + dataStoRelaParam.getTableId() + "对应表未选择存储层,请检查");
+			}
 			for (long dslId : dslIds) {
 				// 5.新增数据表存储表信息
 				addDtabRelationStore(dataStoRelaParam.getTableId(), dslId);
-			}
-		}
-	}
-
-	@Method(desc = "检查是否所有的表都选择了存储目的地", logicStep = "1.保证入库的表都选择了存储目的地")
-	@Param(name = "ocsIds", desc = "对象采集任务编号数组", range = "无限制")
-	public void checkDtabRelationStore(long[] ocsIds) {
-		// 1.保证入库的表都选择了存储目的地
-		for (long ocs_id : ocsIds) {
-			if (Dbo.queryNumber(
-					"select count(*) from " + Dtab_relation_store.TableName + " where tab_id=?", ocs_id)
-					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-				throw new BusinessException("ocs_id=" + ocs_id + "对应的表为选择存储层,请检查");
 			}
 		}
 	}
