@@ -12,6 +12,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.collection.bean.DbConfBean;
+import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.StorageTypeKey;
@@ -72,11 +73,8 @@ public class ConnectionTool {
 
     @Method(desc = "根据存储层配置Map信息获取DbConfBean", logicStep = "根据存储层配置Map信息获取DbConfBean")
     public static DbConfBean getDbConfBean(DatabaseWrapper db, long dsl_id) {
-        //根据数据层获取存储层配置信息
-        List<Map<String, Object>> dataStoreConf =
-                SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
         //获取存储层配置Map信息
-        Map<String, String> dbConfigMap = getLayerMap(dataStoreConf);
+        Map<String, String> dbConfigMap = getLayerMap(getLayerList(db, dsl_id));
         //根据存储层配置Map信息设置 DbConfBean
         DbConfBean dbConfBean = new DbConfBean();
         dbConfBean.setDatabase_drive(dbConfigMap.get("database_driver"));
@@ -85,30 +83,6 @@ public class ConnectionTool {
         dbConfBean.setDatabase_pad(dbConfigMap.get("database_pwd"));
         dbConfBean.setDatabase_type(dbConfigMap.get("database_type"));
         return dbConfBean;
-    }
-
-    /**
-     * 使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val
-     */
-    public static Map<String, String> getLayerMap(List<Map<String, Object>> dbConfig) {
-        Map<String, String> dbConfigMap = new HashMap<>();
-        for (Map<String, Object> dbMap : dbConfig) {
-            String key = dbMap.get("storage_property_key").toString();
-            String val = dbMap.get("storage_property_val").toString();
-            dbConfigMap.put(key, val);
-        }
-        return dbConfigMap;
-    }
-
-    /**
-     * 使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val
-     */
-    public static Map<String, String> getLayerMap(DatabaseWrapper db, long dsl_id) {
-        //根据存储层id获取存储层配置信息列表
-        List<Map<String, Object>> dbConfig =
-                SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        //处理配置信息,以map的方式返回，key为用户输入的key，val为val
-        return getLayerMap(dbConfig);
     }
 
     public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig) {
@@ -160,20 +134,37 @@ public class ConnectionTool {
     @Method(desc = "根据定义的存储层id返回存储层连接", logicStep = "根据定义的存储层id返回存储层连接")
     public static DatabaseWrapper getDBWrapper(DatabaseWrapper db, long dsl_id) {
         //根据数据层获取存储层配置信息
-        List<Map<String, Object>> dataStoreConf =
-                SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        //获取存储层配置Map信息
-        Map<String, String> dbConfigMap = ConnectionTool.getLayerMap(dataStoreConf);
-        //根据存储层配置Map信息设置 DbConfBean
-        DbConfBean dbConfBean = new DbConfBean();
-        dbConfBean.setDatabase_drive(dbConfigMap.get("database_driver"));
-        dbConfBean.setJdbc_url(dbConfigMap.get("jdbc_url"));
-        dbConfBean.setUser_name(dbConfigMap.get("user_name"));
-        dbConfBean.setDatabase_pad(dbConfigMap.get("database_pwd"));
-        dbConfBean.setDatabase_type(dbConfigMap.get("database_type"));
+        DbConfBean dbConfBean = getDbConfBean(db, dsl_id);
         //返回DBWrapper
         return getDBWrapper(dbConfBean.getDatabase_drive(), dbConfBean.getJdbc_url(), dbConfBean.getUser_name(),
                 dbConfBean.getDatabase_pad(), dbConfBean.getDatabase_type());
+    }
+
+    @Method(desc = "使用数据库信息，返回一个存储层的信息，以list的方式返回存储层配置信息",
+            logicStep = "返回一个存储层的信息")
+    public static List<Map<String, Object>> getLayerList(DatabaseWrapper db, long dsl_id) {
+        //根据存储层id获取存储层配置信息列表
+        return SqlOperator.queryList(db, "select * from " + Data_store_layer_attr.TableName + " where dsl_id = ?", dsl_id);
+    }
+
+    @Method(desc = "使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val",
+            logicStep = "返回一个存储层的信息")
+    public static Map<String, String> getLayerMap(DatabaseWrapper db, long dsl_id) {
+        //根据存储层id获取存储层配置信息列表,处理配置信息,以map的方式返回，key为用户输入的key，val为val
+        return getLayerMap(getLayerList(db, dsl_id));
+    }
+
+    @Method(desc = "使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val",
+            logicStep = "返回一个存储层的信息")
+    private static Map<String, String> getLayerMap(List<Map<String, Object>> dbConfig) {
+        //处理配置信息,以map的方式返回，key为用户输入的key，val为val
+        Map<String, String> dbConfigMap = new HashMap<>();
+        for (Map<String, Object> dbMap : dbConfig) {
+            String key = dbMap.get("storage_property_key").toString();
+            String val = dbMap.get("storage_property_val").toString();
+            dbConfigMap.put(key, val);
+        }
+        return dbConfigMap;
     }
 
     private static Dbtype getDbType(String database_type) {

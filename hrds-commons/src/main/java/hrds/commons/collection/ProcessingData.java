@@ -314,9 +314,7 @@ public abstract class ProcessingData {
      * @param dsl_id 存储层id
      */
     private List<String> getResultSet(String sql, DatabaseWrapper db, long dsl_id, int begin, int end, boolean isCountTotal) {
-        List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
-                "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
+        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, dsl_id)) {
             return getSQLData(sql, dbDataConn, begin, end, isCountTotal);
         } catch (Exception e) {
             throw new AppSystemException("系统不支持该数据库类型", e);

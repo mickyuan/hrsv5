@@ -17,7 +17,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-import java.util.Map;
 
 @DocClass(desc = "创建数据表", author = "BY-HLL", createdate = "2020/7/2 0002 下午 03:41")
 public class CreateDataTable {
@@ -36,9 +35,6 @@ public class CreateDataTable {
 
     public static void createDataTableByStorageLayer(DatabaseWrapper db, Dq_table_info dqTableInfo,
                                                      List<Dq_table_column> dqTableColumns, LayerBean intoLayerBean) {
-        //根据数据层获取存储层配置信息
-        List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
-                "select * from data_store_layer_attr where dsl_id = ?", intoLayerBean.getDsl_id());
         //获取存储层配置Map信息
         DbConfBean dbConfBean = ConnectionTool.getDbConfBean(db, intoLayerBean.getDsl_id());
         //使用存储层配置自定义Bean创建存储层链接

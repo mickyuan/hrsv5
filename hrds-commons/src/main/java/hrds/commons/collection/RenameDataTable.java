@@ -66,10 +66,7 @@ public class RenameDataTable {
     @Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
     public static void renameTableByDataLayer(DatabaseWrapper db, LayerBean intoLayerBean, String operation_type,
                                               String tableSpace, String tableName) {
-        //根据数据层获取数据层配置信息
-        List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
-                "select * from data_store_layer_attr where dsl_id = ?", intoLayerBean.getDsl_id());
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
+        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, intoLayerBean.getDsl_id())) {
             //设置无效表名
             String invalid_table_name = Constant.DQC_INVALID_TABLE + tableName;
             //初始化重命名sql
