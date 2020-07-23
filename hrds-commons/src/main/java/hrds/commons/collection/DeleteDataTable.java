@@ -42,15 +42,12 @@ public class DeleteDataTable {
         dropTableByDataLayer(tableName, db, layerBean);
     }
 
-    @Method(desc = "根据定义的存储层删除表",
-            logicStep = "根据定义的存储层删除表")
+    @Method(desc = "根据定义的存储层删除表", logicStep = "根据定义的存储层删除表")
     @Param(name = "tableName", desc = "查询数据的sql", range = "String类型")
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Param(name = "intoLayerBean", desc = "LayerBean对象", range = "LayerBean对象")
     public static void dropTableByDataLayer(String tableName, DatabaseWrapper db, LayerBean intoLayerBean) {
-        List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
-                "select * from data_store_layer_attr where dsl_id = ?", intoLayerBean.getDsl_id());
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(dataStoreConfBean)) {
+        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db,intoLayerBean.getDsl_id())) {
             SqlOperator.execute(dbDataConn, "drop table " + tableName);
             SqlOperator.commitTransaction(dbDataConn);
         } catch (Exception e) {

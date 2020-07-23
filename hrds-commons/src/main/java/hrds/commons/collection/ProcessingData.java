@@ -63,8 +63,8 @@ public abstract class ProcessingData {
     @Param(name = "end", desc = "结束条数", range = "int类型,大于1")
     @Param(name = "dsl_id", desc = "存储层配置id", range = "long类型")
     @Return(desc = "查询出来的rs", range = "数据")
-    public List<String> getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end, long dsl_id) {
-        return getPageDataLayer(sql, db, begin, end, dsl_id, false);
+    public void getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end, long dsl_id) {
+        getPageDataLayer(sql, db, begin, end, dsl_id, false);
     }
 
     @Method(desc = "根据sql和指定存储层信息获取指定存储层下的数据表数据",
@@ -139,7 +139,7 @@ public abstract class ProcessingData {
                             + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", table_id, StoreLayerDataSource.DB.getCode());
             //记录数据表在哪个系统存储层
             for (LayerBean map : maps) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -153,7 +153,7 @@ public abstract class ProcessingData {
                 tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
         if (dslMap.size() != 0) {
             for (LayerBean map : dslMap) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -165,7 +165,7 @@ public abstract class ProcessingData {
                         " on di3.dsl_id=dsl.dsl_id where lower(di3.table_name) = ?", tableName.toLowerCase());
         if (di3Map.size() != 0) {
             for (LayerBean map : di3Map) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -179,7 +179,7 @@ public abstract class ProcessingData {
                 tableName.toLowerCase(), StoreLayerDataSource.UD.getCode());
         if (dqtiMap.size() != 0) {
             for (LayerBean map : dqtiMap) {
-                map.setLayerAttr(getDslidByLayer(map.getDsl_id(), db));
+                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
             return mapTaberLayer;
@@ -211,19 +211,6 @@ public abstract class ProcessingData {
             laytable.put(tableName, layerByTable);
         }
         return laytable;
-    }
-
-    /**
-     * 根据存储层ID获取存储层的配置信息
-     *
-     * @param dsl_id {@link Long} 存储层id
-     * @param db     {@link DatabaseWrapper} db
-     * @return 存储层的配置信息
-     */
-    private static Map<String, String> getDslidByLayer(Long dsl_id, DatabaseWrapper db) {
-        List<Map<String, Object>> dataStoreConfBean =
-                SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        return ConnectionTool.getLayerMap(dataStoreConfBean);
     }
 
     /**

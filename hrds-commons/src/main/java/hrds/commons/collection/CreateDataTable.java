@@ -40,14 +40,7 @@ public class CreateDataTable {
         List<Map<String, Object>> dataStoreConfBean = SqlOperator.queryList(db,
                 "select * from data_store_layer_attr where dsl_id = ?", intoLayerBean.getDsl_id());
         //获取存储层配置Map信息
-        Map<String, String> dbConfigMap = ConnectionTool.getLayerMap(dataStoreConfBean);
-        //根据存储层配置Map信息设置 DbConfBean
-        DbConfBean dbConfBean = new DbConfBean();
-        dbConfBean.setDatabase_drive(dbConfigMap.get("database_driver"));
-        dbConfBean.setJdbc_url(dbConfigMap.get("jdbc_url"));
-        dbConfBean.setUser_name(dbConfigMap.get("user_name"));
-        dbConfBean.setDatabase_pad(dbConfigMap.get("database_pwd"));
-        dbConfBean.setDatabase_type(dbConfigMap.get("database_type"));
+        DbConfBean dbConfBean = ConnectionTool.getDbConfBean(db, intoLayerBean.getDsl_id());
         //使用存储层配置自定义Bean创建存储层链接
         DatabaseWrapper dbDataConn = null;
         try {

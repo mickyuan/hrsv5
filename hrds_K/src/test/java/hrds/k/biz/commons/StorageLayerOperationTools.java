@@ -16,19 +16,7 @@ public class StorageLayerOperationTools {
 
     @Method(desc = "根据存储层配置Map信息获取DbConfBean", logicStep = "根据存储层配置Map信息获取DbConfBean")
     public static DbConfBean getDbConfBean(DatabaseWrapper db, long dsl_id) {
-        //根据数据层获取存储层配置信息
-        List<Map<String, Object>> dataStoreConf =
-                SqlOperator.queryList(db, "select * from data_store_layer_attr where dsl_id = ?", dsl_id);
-        //获取存储层配置Map信息
-        Map<String, String> dbConfigMap = ConnectionTool.getLayerMap(dataStoreConf);
-        //根据存储层配置Map信息设置 DbConfBean
-        DbConfBean dbConfBean = new DbConfBean();
-        dbConfBean.setDatabase_drive(dbConfigMap.get("database_driver"));
-        dbConfBean.setJdbc_url(dbConfigMap.get("jdbc_url"));
-        dbConfBean.setUser_name(dbConfigMap.get("user_name"));
-        dbConfBean.setDatabase_pad(dbConfigMap.get("database_pwd"));
-        dbConfBean.setDatabase_type(dbConfigMap.get("database_type"));
-        return dbConfBean;
+        return ConnectionTool.getDbConfBean(db, dsl_id);
     }
 
     @Method(desc = "存储层创建数表", logicStep = "存储层创建数表")
