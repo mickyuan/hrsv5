@@ -14,6 +14,7 @@ import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DruidParseQuerySql;
 
 import java.sql.ResultSet;
@@ -128,23 +129,21 @@ public abstract class ProcessingData {
                 .addSql("select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and lower(hyren_name) = ?")
                 .addParam(AgentType.DBWenJian.getCode()).addParam(AgentType.ShuJuKu.getCode())
                 .addParam(tableName.toLowerCase());
-        Optional<Data_store_reg> opdsr = SqlOperator.queryOneObject(db, Data_store_reg.class, asmSql.sql(), asmSql.params());
-        if (opdsr.isPresent()) {
-            Data_store_reg dsr = opdsr.get();
-            Long table_id = dsr.getTable_id();
-            List<LayerBean> maps = SqlOperator.queryList(db, LayerBean.class,
-                    "select dsl.dsl_id,dsl.dsl_name,dsl.store_type,'" + DataSourceType.DCL.getCode() + "'  as dst from "
-                            + Table_storage_info.TableName + " tsi join " + Dtab_relation_store.TableName + " dtrs "
-                            + "on tsi.storage_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl "
-                            + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", table_id, StoreLayerDataSource.DB.getCode());
-            //记录数据表在哪个系统存储层
-            for (LayerBean map : maps) {
-                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
-                mapTaberLayer.add(map);
-            }
-            return mapTaberLayer;
+        //查询贴源层(DCL)表信息，通过采集产生的数表
+        Data_store_reg dsr = SqlOperator.queryOneObject(db, Data_store_reg.class, asmSql.sql(), asmSql.params())
+                .orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
+        List<LayerBean> maps = SqlOperator.queryList(db, LayerBean.class,
+                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type,'" + DataSourceType.DCL.getCode() + "'  as dst from "
+                        + Table_storage_info.TableName + " tsi join " + Dtab_relation_store.TableName + " dtrs "
+                        + "on tsi.storage_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl "
+                        + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", dsr.getTable_id(),
+                StoreLayerDataSource.DB.getCode());
+        //记录数据表在哪个系统存储层
+        for (LayerBean map : maps) {
+            map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
+            mapTaberLayer.add(map);
         }
-        //查询集市表信息，通过数据集市产生的数表
+        //查询集市表(DML)信息，通过数据集市产生的数表
         List<LayerBean> dslMap = SqlOperator.queryList(db, LayerBean.class,
                 "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.DML.getCode() + "' as dst from "
                         + Dm_datatable.TableName + " dd join  " + Dtab_relation_store.TableName + " dtrs " +
@@ -156,7 +155,6 @@ public abstract class ProcessingData {
                 map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
-            return mapTaberLayer;
         }
         //查询数据管控层(DQC)表信息, 通过规则校验保存结果3生成的数表
         List<LayerBean> di3Map = SqlOperator.queryList(db, LayerBean.class,
@@ -168,7 +166,6 @@ public abstract class ProcessingData {
                 map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
-            return mapTaberLayer;
         }
         //查询自定义层(UDL)表信息, 通过数据管控创建的数表
         List<LayerBean> dqtiMap = SqlOperator.queryList(db, LayerBean.class,
@@ -182,10 +179,9 @@ public abstract class ProcessingData {
                 map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
                 mapTaberLayer.add(map);
             }
-            return mapTaberLayer;
         }
         //TODO 这里以后需要添加加工数据、机器学习、流数据、系统管理维护的表、系统管理等
-        return null;
+        return mapTaberLayer;
     }
 
     /**
@@ -246,8 +242,9 @@ public abstract class ProcessingData {
         Map<String, LayerBean> allTableLayer = new HashMap<>();
         for (String tableName : allTableList) {
             List<LayerBean> tableLayer = getLayerByTable(tableName, db);
-            if (tableLayer == null)
+            if (tableLayer.isEmpty()) {
                 throw new AppSystemException("根据解析的表没有找到对应存储层信息，请确认数据是否正确");
+            }
             //更加table获取每张表不同的存储信息，有可能一张表存储不同的目的地，所以这里是list
             for (LayerBean objectMap : tableLayer) {
                 String layer_id = String.valueOf(objectMap.getDsl_id());
