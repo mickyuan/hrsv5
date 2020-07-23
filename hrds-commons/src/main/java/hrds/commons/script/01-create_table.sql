@@ -1246,13 +1246,12 @@ CREATE TABLE DBM_DTABLE_INFO(
 DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
 TABLE_CNAME                                       VARCHAR(100) NOT NULL, --表中文名称
 TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表英文名称
+SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
 IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
 TABLE_REMARK                                      VARCHAR(512) NULL, --表描述信息
 DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
 TABLE_ID                                          BIGINT default 0 NULL, --表名ID
-SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
+DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
 
 --数据对标标准对标检测字段信息表
@@ -1271,9 +1270,6 @@ DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
 DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
 DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
 COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
-DATABASE_ID                                       BIGINT default 0 NULL, --数据库设置id
-AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
-SOURCE_ID                                         BIGINT default 0 NULL, --数据源ID
 CONSTRAINT DBM_DTCOL_INFO_PK PRIMARY KEY(COL_ID)   );
 
 --数据对标标准对标检测结果表
@@ -1294,9 +1290,7 @@ DROP TABLE IF EXISTS DBM_NORMBM_DETECT ;
 CREATE TABLE DBM_NORMBM_DETECT(
 DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
 DETECT_NAME                                       VARCHAR(512) NOT NULL, --检测记名
-SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
-IS_IMPORT                                         CHAR(1) NOT NULL, --是否为外部导入数据
-DETECT_STATUS                                     CHAR(1) NOT NULL, --检测状态(是否发布)
+DETECT_STATUS                                     CHAR(1) NOT NULL, --对标检查状态
 DBM_MODE                                          CHAR(1) NULL, --对标方式
 CREATE_USER                                       VARCHAR(100) NOT NULL, --创建人
 DETECT_SDATE                                      CHAR(8) NOT NULL, --检测开始日期

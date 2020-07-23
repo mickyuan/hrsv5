@@ -44,12 +44,10 @@ public class Dbm_dtable_info extends ProjectTableEntity
 	private String detect_id;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;
-	@DocBean(name ="source_id",value="数据源ID:",dataType = Long.class,required = false)
-	private Long source_id;
-	@DocBean(name ="agent_id",value="Agent_id:",dataType = Long.class,required = false)
-	private Long agent_id;
-	@DocBean(name ="database_id",value="数据库设置id:",dataType = Long.class,required = false)
-	private Long database_id;
+	@DocBean(name ="source_type",value="数据来源类型(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
+	private String source_type;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
+	private Long dsl_id;
 
 	/** 取得：检测表主键 */
 	public Long getDbm_tableid(){
@@ -119,46 +117,26 @@ public class Dbm_dtable_info extends ProjectTableEntity
 			this.table_id=new Long(table_id);
 		}
 	}
-	/** 取得：数据源ID */
-	public Long getSource_id(){
-		return source_id;
+	/** 取得：数据来源类型 */
+	public String getSource_type(){
+		return source_type;
 	}
-	/** 设置：数据源ID */
-	public void setSource_id(Long source_id){
-		this.source_id=source_id;
+	/** 设置：数据来源类型 */
+	public void setSource_type(String source_type){
+		this.source_type=source_type;
 	}
-	/** 设置：数据源ID */
-	public void setSource_id(String source_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(source_id)){
-			this.source_id=new Long(source_id);
-		}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
 	}
-	/** 取得：Agent_id */
-	public Long getAgent_id(){
-		return agent_id;
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
 	}
-	/** 设置：Agent_id */
-	public void setAgent_id(Long agent_id){
-		this.agent_id=agent_id;
-	}
-	/** 设置：Agent_id */
-	public void setAgent_id(String agent_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(agent_id)){
-			this.agent_id=new Long(agent_id);
-		}
-	}
-	/** 取得：数据库设置id */
-	public Long getDatabase_id(){
-		return database_id;
-	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(Long database_id){
-		this.database_id=database_id;
-	}
-	/** 设置：数据库设置id */
-	public void setDatabase_id(String database_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(database_id)){
-			this.database_id=new Long(database_id);
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
 		}
 	}
 }
