@@ -8,13 +8,18 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.DbmMode;
+import hrds.commons.codes.DbmState;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
@@ -58,7 +63,7 @@ public class TSBAction extends BaseAction {
     @Return(desc = "字段信息列表", range = "字段信息列表")
     public List<Map<String, Object>> getColumnByFileId(String data_layer, String data_own_type, String file_id) {
         //设置 Dbm_normbm_detect 对象
-        setDbmNormbmDetect(data_layer);
+        setDbmNormbmDetect();
         //设置 Dbm_dtable_info 对象
         setDbmDtableInfo(file_id, data_layer);
         //数据层获取不同表结构
@@ -68,8 +73,14 @@ public class TSBAction extends BaseAction {
     @Method(desc = "预测对标结果", logicStep = "预测对标结果")
     @Param(name = "dbmColInfos", desc = "待保存字段信息集合", range = "DbmColInfo自定义实体类型", isBean = true)
     public void predictBenchmarking(DbmColInfo[] dbmColInfos) {
+        //保存对标记录信息
+        tsbConf.getDbm_normbm_detect().add(Dbo.db());
+        //保存对标检测表信息
+        tsbConf.getDbm_dtable_info().add(Dbo.db());
         //设置待检测字段信息
         setDbmDtcolInfo(dbmColInfos);
+        //保存检测字段信息
+        tsbConf.getDbm_dtcol_info_list().forEach(dbm_dtcol_info -> dbm_dtcol_info.add(Dbo.db()));
         //获取待检测字段信息
         List<Dbm_dtcol_info> dbm_dtcol_infos = tsbConf.getDbm_dtcol_info_list();
         //获取预测接口地址信息
@@ -125,6 +136,8 @@ public class TSBAction extends BaseAction {
         });
         //设置 Dbm_normbmd_result
         setDbmNormbmdResult(dbm_normbmd_info_list);
+        //保存对标结果信息
+        tsbConf.getDbm_normbmd_result_list().forEach(dbm_normbmd_result -> dbm_normbmd_result.add(Dbo.db()));
     }
 
     @Method(desc = "获取预测结果信息", logicStep = "获取预测结果信息")
@@ -248,25 +261,18 @@ public class TSBAction extends BaseAction {
         tsbConf.getDbm_normbmd_result_list().clear();
     }
 
-    @Method(desc = "设置对标检测记录",
-            logicStep = "设置对标检测记录")
-    @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
-    private void setDbmNormbmDetect(String data_layer) {
-        //数据校验
-        if (StringUtil.isBlank(data_layer)) {
-            throw new BusinessException("数据来源类型为空!");
-        }
+    @Method(desc = "设置对标检测记录", logicStep = "设置对标检测记录")
+    private void setDbmNormbmDetect() {
         //设置 Dbm_normbm_detect
         Dbm_normbm_detect dbm_normbm_detect = new Dbm_normbm_detect();
-        dbm_normbm_detect.setDetect_id(String.valueOf(PrimayKeyGener.getNextId()));
-        dbm_normbm_detect.setDetect_name(dbm_normbm_detect.getDetect_id());
-        dbm_normbm_detect.setSource_type(data_layer);
-        dbm_normbm_detect.setIs_import(IsFlag.Fou.getCode());
-        dbm_normbm_detect.setDetect_status(IsFlag.Shi.getCode());
+        dbm_normbm_detect.setDetect_id(PrimayKeyGener.getNextId());
+        dbm_normbm_detect.setDetect_name(String.valueOf(dbm_normbm_detect.getDetect_id()));
+        dbm_normbm_detect.setDetect_status(DbmState.NotRuning.getCode());
         dbm_normbm_detect.setDbm_mode(DbmMode.BiaoJieGouDuiBiao.getCode());
         dbm_normbm_detect.setCreate_user(getUserId().toString());
         dbm_normbm_detect.setDetect_sdate(DateUtil.getSysDate());
         dbm_normbm_detect.setDetect_stime(DateUtil.getSysTime());
+        dbm_normbm_detect.setDnd_remark("");
         tsbConf.setDbm_normbm_detect(dbm_normbm_detect);
     }
 
@@ -274,6 +280,8 @@ public class TSBAction extends BaseAction {
     @Param(name = "file_id", desc = "表源属性id", range = "String类型")
     @Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
     private void setDbmDtableInfo(String file_id, String data_layer) {
+        //数据校验
+        Validator.notBlank(data_layer, "表来源数据层信息不能为空");
         //根据表源属性id获取表信息
         Map<String, Object> tableInfo = DataTableUtil.getTableInfoAndColumnInfo(data_layer, file_id);
         if (tableInfo.isEmpty()) {
@@ -284,6 +292,9 @@ public class TSBAction extends BaseAction {
         dbm_dtable_info.setDbm_tableid(PrimayKeyGener.getNextId());
         dbm_dtable_info.setTable_cname(tableInfo.get("table_ch_name").toString());
         dbm_dtable_info.setTable_ename(tableInfo.get("table_name").toString());
+        DataSourceType dataSourceType = DataSourceType.ofEnumByCode(data_layer);
+        dbm_dtable_info.setSource_type(dataSourceType.getCode());
+        //TODO 是否外部表预留,默认给 0: 否
         dbm_dtable_info.setIs_external(IsFlag.Fou.getCode());
         //如果源表的描述为null,则设置为""
         if (null == tableInfo.get("remark")) {
@@ -293,21 +304,14 @@ public class TSBAction extends BaseAction {
         }
         dbm_dtable_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
         dbm_dtable_info.setTable_id(tableInfo.get("table_id").toString());
-        if (null == tableInfo.get("source_id")) {
-            dbm_dtable_info.setSource_id("");
-        } else {
-            dbm_dtable_info.setSource_id(tableInfo.get("source_id").toString());
+        //获取表存储的存储层信息
+        List<LayerBean> layerBeans = ProcessingData.getLayerByTable(dbm_dtable_info.getTable_ename(), Dbo.db());
+        if (layerBeans.isEmpty()) {
+            throw new BusinessException("当前表未在任何存储层中存在!");
         }
-        if (null == tableInfo.get("agent_id")) {
-            dbm_dtable_info.setAgent_id("");
-        } else {
-            dbm_dtable_info.setAgent_id(tableInfo.get("agent_id").toString());
-        }
-        if (null == tableInfo.get("database_id")) {
-            dbm_dtable_info.setDatabase_id("");
-        } else {
-            dbm_dtable_info.setDatabase_id(tableInfo.get("database_id").toString());
-        }
+        //TODO 如果有多个存储层,去查询结果的第一条
+        long dsl_id = layerBeans.get(0).getDsl_id();
+        dbm_dtable_info.setDsl_id(dsl_id);
         tsbConf.setDbm_dtable_info(dbm_dtable_info);
     }
 
@@ -328,6 +332,7 @@ public class TSBAction extends BaseAction {
             } else {
                 dbm_dtcol_info.setCol_remark(col_info.getTc_remark());
             }
+            //解析类型信息为map
             Map<String, String> col_type_map = DataTableFieldUtil.parsingFiledType(col_info.getColumn_type());
             dbm_dtcol_info.setData_type(col_type_map.get("data_type"));
             dbm_dtcol_info.setData_len(col_type_map.get("data_len"));
@@ -338,9 +343,6 @@ public class TSBAction extends BaseAction {
             dbm_dtcol_info.setDbm_tableid(tsbConf.getDbm_dtable_info().getDbm_tableid());
             dbm_dtcol_info.setDetect_id(tsbConf.getDbm_normbm_detect().getDetect_id());
             dbm_dtcol_info.setColumn_id(col_info.getColumn_id());
-            dbm_dtcol_info.setDatabase_id(col_info.getDatabase_id());
-            dbm_dtcol_info.setAgent_id(col_info.getAgent_id());
-            dbm_dtcol_info.setSource_id(col_info.getSource_id());
             dbm_dtcol_info_list.add(dbm_dtcol_info);
             tsbConf.setDbm_dtcol_info_list(dbm_dtcol_info_list);
         }
