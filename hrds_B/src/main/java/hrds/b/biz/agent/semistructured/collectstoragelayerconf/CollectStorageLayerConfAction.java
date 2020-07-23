@@ -34,6 +34,8 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否已不存在
 		CommonUtils.isObjectCollectExist(odc_id);
+		Result result = Dbo.queryResult("select * from " + Object_collect_task.TableName + " where odc_id=?",
+				odc_id);
 		// 3.关联查询半结构化采集对应表信息与表对应存储信息获取存储配置信息
 		Result collectStorageLayerInfo = Dbo.queryResult(
 				"select * from " + Object_collect_task.TableName + " oct left join "
@@ -41,12 +43,24 @@ public class CollectStorageLayerConfAction extends BaseAction {
 						+ " where oct.odc_id=? and drs.data_source=?",
 				odc_id, StoreLayerDataSource.OBJ.getCode());
 		// 4.判断存储配置信息是否为空，为空说明新增直接返回对象采集对应信息
-		if (collectStorageLayerInfo.isEmpty()) {
-			return Dbo.queryResult("select * from " + Object_collect_task.TableName + " where odc_id=?",
-					odc_id);
+		if (!collectStorageLayerInfo.isEmpty()) {
+			for (int j = 0; j < result.getRowCount(); j++) {
+				long struct_id = result.getLong(j, "ocs_id");
+				List<String> dslIds = new ArrayList<>();
+				for (int i = 0; i < collectStorageLayerInfo.getRowCount(); i++) {
+					long col_id = collectStorageLayerInfo.getLong(i, "tab_id");
+					if (col_id == struct_id) {
+						String dslId = collectStorageLayerInfo.getString(i, "dsl_id");
+						if (!dslIds.contains(dslId)) {
+							dslIds.add(dslId);
+						}
+					}
+				}
+				result.setObject(j, "dsl_id", dslIds);
+			}
 		}
 		// 5.返回存储配置信息
-		return collectStorageLayerInfo;
+		return result;
 	}
 
 	@Method(desc = "根据对象采集任务编号获取存储目的地数据信息",
@@ -120,26 +134,25 @@ public class CollectStorageLayerConfAction extends BaseAction {
 				dsl_id);
 		// 7.判断列存储信息是否为空，为空直接返回列信息
 		objCollectStructResult.setObject(0, "dslaStorelayerList", dslaStorelayerList);
-		if (columnStorageLayerInfo.isEmpty()) {
-			return objCollectStructResult;
-		}
-		// 8.封装列附加属性信息
-		for (int j = 0; j < objCollectStructResult.getRowCount(); j++) {
-			long struct_id = objCollectStructResult.getLong(j, "struct_id");
-			Long csi_number = null;
-			List<String> dsla_storelayers = new ArrayList<>();
-			for (int i = 0; i < columnStorageLayerInfo.getRowCount(); i++) {
-				long col_id = columnStorageLayerInfo.getLong(i, "col_id");
-				if (col_id == struct_id) {
-					String dsla_storelayer = columnStorageLayerInfo.getString(i, "dsla_storelayer");
-					if (!dsla_storelayers.contains(dsla_storelayer)) {
-						dsla_storelayers.add(dsla_storelayer);
+		if (!columnStorageLayerInfo.isEmpty()) {
+			// 8.封装列附加属性信息
+			for (int j = 0; j < objCollectStructResult.getRowCount(); j++) {
+				long struct_id = objCollectStructResult.getLong(j, "struct_id");
+				Long csi_number = null;
+				List<String> dsla_storelayers = new ArrayList<>();
+				for (int i = 0; i < columnStorageLayerInfo.getRowCount(); i++) {
+					long col_id = columnStorageLayerInfo.getLong(i, "col_id");
+					if (col_id == struct_id) {
+						String dsla_storelayer = columnStorageLayerInfo.getString(i, "dsla_storelayer");
+						if (!dsla_storelayers.contains(dsla_storelayer)) {
+							dsla_storelayers.add(dsla_storelayer);
+						}
+						csi_number = columnStorageLayerInfo.getLong(i, "csi_number");
 					}
-					csi_number = columnStorageLayerInfo.getLong(i, "csi_number");
 				}
+				objCollectStructResult.setObject(j, "dsla_storelayer", dsla_storelayers);
+				objCollectStructResult.setObject(j, "csi_number", csi_number);
 			}
-			objCollectStructResult.setObject(j, "dsla_storelayer", dsla_storelayers);
-			objCollectStructResult.setObject(j, "csi_number", csi_number);
 		}
 		// 9.返回列存储信息为空时的列信息
 		return objCollectStructResult;

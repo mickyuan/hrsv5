@@ -329,8 +329,9 @@ public class StartModeConfAction extends BaseAction {
 		List<String> reduceDeleteList = relationEtl.stream().filter(item -> !etlJobList.contains(item))
 				.collect(Collectors.toList());
 		reduceDeleteList.forEach(etl_job ->
-				DboExecute.deletesOrThrow("删除作业" + etl_job + "失败",
-						"delete from " + Obj_relation_etl.TableName + " where etl_job =?", etl_job));
+				Dbo.execute("delete from " + Obj_relation_etl.TableName
+								+ " where etl_job =? and ocs_id=?",
+						etl_job, jobStartConf.getOcs_id()));
 		// 2.判断当前的作业信息是否存在,如果不存在则添加
 		if (!relationEtl.contains(etl_job_def.getEtl_job())) {
 			Obj_relation_etl obj_relation_etl = new Obj_relation_etl();
