@@ -29,6 +29,8 @@ public class CodesItem{
 	protected static final String processType=new String("ProcessType");
 	/**存储层关系-数据来源   */
 	protected static final String storeLayerDataSource=new String("StoreLayerDataSource");
+	/**对标-状态   */
+	protected static final String dbmState=new String("DbmState");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
 	/**是否标识   */
@@ -129,8 +131,6 @@ public class CodesItem{
 	protected static final String interfaceState=new String("InterfaceState");
 	/**数据质量规则级别   */
 	protected static final String edRuleLevel=new String("EdRuleLevel");
-	/**对标-状态   */
-	protected static final String dbmState=new String("DbmState");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -146,6 +146,7 @@ public class CodesItem{
 		mapCat.put(unloadType,UnloadType.class);
 		mapCat.put(processType,ProcessType.class);
 		mapCat.put(storeLayerDataSource,StoreLayerDataSource.class);
+		mapCat.put(dbmState,DbmState.class);
 		mapCat.put(userType,UserType.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
@@ -196,7 +197,6 @@ public class CodesItem{
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
 		mapCat.put(edRuleLevel,EdRuleLevel.class);
-		mapCat.put(dbmState,DbmState.class);
 	}
 
 

@@ -40,8 +40,8 @@ public class Dbm_data_sort extends ProjectTableEntity
 	private String dds_remark;
 	@DocBean(name ="basic_id",value="标准元主键:",dataType = Long.class,required = true)
 	private Long basic_id;
-	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = false)
-	private String detect_id;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = Long.class,required = false)
+	private Long detect_id;
 
 	/** 取得：对标分类结构ID */
 	public Long getDds_id(){
@@ -96,11 +96,17 @@ public class Dbm_data_sort extends ProjectTableEntity
 		}
 	}
 	/** 取得：检测主键 */
-	public String getDetect_id(){
+	public Long getDetect_id(){
 		return detect_id;
 	}
 	/** 设置：检测主键 */
-	public void setDetect_id(String detect_id){
+	public void setDetect_id(Long detect_id){
 		this.detect_id=detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(detect_id)){
+			this.detect_id=new Long(detect_id);
+		}
 	}
 }

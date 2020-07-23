@@ -52,8 +52,8 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 	private Long dbm_tableid;
 	@DocBean(name ="col_remark",value="字段描述:",dataType = String.class,required = false)
 	private String col_remark;
-	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
-	private String detect_id;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = Long.class,required = true)
+	private Long detect_id;
 	@DocBean(name ="column_id",value="字段ID:",dataType = Long.class,required = false)
 	private Long column_id;
 
@@ -170,12 +170,18 @@ public class Dbm_dtcol_info extends ProjectTableEntity
 		this.col_remark=col_remark;
 	}
 	/** 取得：检测主键 */
-	public String getDetect_id(){
+	public Long getDetect_id(){
 		return detect_id;
 	}
 	/** 设置：检测主键 */
-	public void setDetect_id(String detect_id){
+	public void setDetect_id(Long detect_id){
 		this.detect_id=detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(detect_id)){
+			this.detect_id=new Long(detect_id);
+		}
 	}
 	/** 取得：字段ID */
 	public Long getColumn_id(){

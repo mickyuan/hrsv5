@@ -40,8 +40,8 @@ public class Dbm_dtable_info extends ProjectTableEntity
 	private String table_remark;
 	@DocBean(name ="is_external",value="是否为外部数据源(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_external;
-	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
-	private String detect_id;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = Long.class,required = true)
+	private Long detect_id;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;
 	@DocBean(name ="source_type",value="数据来源类型(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
@@ -96,12 +96,18 @@ public class Dbm_dtable_info extends ProjectTableEntity
 		this.is_external=is_external;
 	}
 	/** 取得：检测主键 */
-	public String getDetect_id(){
+	public Long getDetect_id(){
 		return detect_id;
 	}
 	/** 设置：检测主键 */
-	public void setDetect_id(String detect_id){
+	public void setDetect_id(Long detect_id){
 		this.detect_id=detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(detect_id)){
+			this.detect_id=new Long(detect_id);
+		}
 	}
 	/** 取得：表名ID */
 	public Long getTable_id(){

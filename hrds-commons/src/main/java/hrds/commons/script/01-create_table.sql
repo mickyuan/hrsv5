@@ -1249,7 +1249,7 @@ TABLE_ENAME                                       VARCHAR(512) NOT NULL, --表�
 SOURCE_TYPE                                       CHAR(3) NOT NULL, --数据来源类型
 IS_EXTERNAL                                       CHAR(1) NOT NULL, --是否为外部数据源
 TABLE_REMARK                                      VARCHAR(512) NULL, --表描述信息
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+DETECT_ID                                         BIGINT default 0 NOT NULL, --检测主键
 TABLE_ID                                          BIGINT default 0 NULL, --表名ID
 DSL_ID                                            BIGINT default 0 NOT NULL, --存储层配置ID
 CONSTRAINT DBM_DTABLE_INFO_PK PRIMARY KEY(DBM_TABLEID)   );
@@ -1268,7 +1268,7 @@ IS_KEY                                            CHAR(1) NOT NULL, --是否作�
 IS_NULL                                           CHAR(1) NOT NULL, --是否可为空
 DEFAULT_VALUE                                     VARCHAR(80) NULL, --默认值
 DBM_TABLEID                                       BIGINT default 0 NOT NULL, --检测表主键
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+DETECT_ID                                         BIGINT default 0 NOT NULL, --检测主键
 COLUMN_ID                                         BIGINT default 0 NULL, --字段ID
 CONSTRAINT DBM_DTCOL_INFO_PK PRIMARY KEY(COL_ID)   );
 
@@ -1278,7 +1278,7 @@ CREATE TABLE DBM_NORMBMD_RESULT(
 RESULT_ID                                         VARCHAR(32) NOT NULL, --结果主键
 COL_SIMILARITY                                    DECIMAL(16,2) default 0 NOT NULL, --字段相似度
 REMARK_SIMILARITY                                 DECIMAL(16,2) default 0 NOT NULL, --描述相似度
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+DETECT_ID                                         BIGINT default 0 NOT NULL, --检测主键
 COL_ID                                            BIGINT default 0 NOT NULL, --字段主键
 BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
 IS_ARTIFICIAL                                     CHAR(1) NOT NULL, --是否人工
@@ -1288,7 +1288,7 @@ CONSTRAINT DBM_NORMBMD_RESULT_PK PRIMARY KEY(RESULT_ID)   );
 --数据对标标准对标检测记录表
 DROP TABLE IF EXISTS DBM_NORMBM_DETECT ;
 CREATE TABLE DBM_NORMBM_DETECT(
-DETECT_ID                                         VARCHAR(32) NOT NULL, --检测主键
+DETECT_ID                                         BIGINT default 0 NOT NULL, --检测主键
 DETECT_NAME                                       VARCHAR(512) NOT NULL, --检测记名
 DETECT_STATUS                                     CHAR(1) NOT NULL, --对标检查状态
 DBM_MODE                                          CHAR(1) NULL, --对标方式
@@ -1308,7 +1308,7 @@ DDS_NAME                                          VARCHAR(512) NOT NULL, --分�
 DDS_NUMBER                                        VARCHAR(100) NOT NULL, --分类编号
 DDS_REMARK                                        VARCHAR(512) NULL, --分类备注
 BASIC_ID                                          BIGINT default 0 NOT NULL, --标准元主键
-DETECT_ID                                         VARCHAR(32) NULL, --检测主键
+DETECT_ID                                         BIGINT default 0 NULL, --检测主键
 CONSTRAINT DBM_DATA_SORT_PK PRIMARY KEY(DDS_ID)   );
 
 --分类对应的表字段

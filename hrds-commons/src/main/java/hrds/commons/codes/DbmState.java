@@ -9,7 +9,9 @@ public enum DbmState {
 	/**失败<Failure>  */
 	Failure("F","失败","94","对标-状态"),
 	/**运行<Runing>  */
-	Runing("R","运行","94","对标-状态");
+	Runing("R","运行","94","对标-状态"),
+	/**未运行<NotRuning>  */
+	NotRuning("N","未运行","94","对标-状态");
 
 	private final String code;
 	private final String value;

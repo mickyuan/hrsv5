@@ -30,11 +30,11 @@ public class Dbm_normbm_detect extends ProjectTableEntity
 		__tmpPKS.add("detect_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
-	private String detect_id;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = Long.class,required = true)
+	private Long detect_id;
 	@DocBean(name ="detect_name",value="检测记名:",dataType = String.class,required = true)
 	private String detect_name;
-	@DocBean(name ="detect_status",value="对标检查状态(DbmState):S-成功<Successful> F-失败<Failure> R-运行<Runing> ",dataType = String.class,required = true)
+	@DocBean(name ="detect_status",value="对标检查状态(DbmState):S-成功<Successful> F-失败<Failure> R-运行<Runing> N-未运行<NotRuning> ",dataType = String.class,required = true)
 	private String detect_status;
 	@DocBean(name ="detect_sdate",value="检测开始日期:",dataType = String.class,required = true)
 	private String detect_sdate;
@@ -52,12 +52,18 @@ public class Dbm_normbm_detect extends ProjectTableEntity
 	private String dbm_mode;
 
 	/** 取得：检测主键 */
-	public String getDetect_id(){
+	public Long getDetect_id(){
 		return detect_id;
 	}
 	/** 设置：检测主键 */
-	public void setDetect_id(String detect_id){
+	public void setDetect_id(Long detect_id){
 		this.detect_id=detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(detect_id)){
+			this.detect_id=new Long(detect_id);
+		}
 	}
 	/** 取得：检测记名 */
 	public String getDetect_name(){
