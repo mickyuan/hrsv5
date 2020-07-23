@@ -130,12 +130,9 @@ public class StartModeConfAction extends BaseAction {
 		}
 		// 4.查询当前半结构化采集任务下的表信息
 		List<Map<String, Object>> tableList = Dbo.queryList(
-				"select oct.ocs_id,oct.en_name,oct.zh_name,ai.agent_type,ds.datasource_number,"
-						+ "ds.datasource_name,oc.obj_number,oc.obj_collect_name,ai.agent_id,ai.agent_name from "
+				"select oct.ocs_id,oct.en_name,oct.zh_name,oc.obj_number,oc.obj_collect_name from "
 						+ Object_collect_task.TableName + " oct left join "
-						+ Object_collect.TableName + " oc on oc.odc_id = oct.odc_id join "
-						+ Agent_info.TableName + " ai on oc.agent_id = ai.agent_id join "
-						+ Data_source.TableName + " ds on ai.source_id=ai.source_id "
+						+ Object_collect.TableName + " oc on oc.odc_id = oct.odc_id"
 						+ " where oct.odc_id = ? ORDER BY oct.en_name", odc_id);
 	    /*
 		     5.将表的信息和任务的信息进行组装成作业信息,组合的形式为
