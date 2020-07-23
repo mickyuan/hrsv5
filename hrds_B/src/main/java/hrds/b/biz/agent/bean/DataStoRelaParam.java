@@ -16,7 +16,7 @@ public class DataStoRelaParam extends ProjectTableEntity {
 
 	@DocBean(name = "tableId", value = "表ID:", dataType = Long.class, required = false)
 	private Long tableId;
-	@DocBean(name = "dsladIds", value = "数据存储层配置表ID:由于一张抽取并入库的表可以选择多个存储目的地，所以这里用数组表示",
+	@DocBean(name = "dslIds", value = "数据存储层配置表ID:由于一张抽取并入库的表可以选择多个存储目的地，所以这里用数组表示",
 			dataType = Long[].class, required = false)
 	private Long[] dslIds;
 	@DocBean(name = "hyren_name", value = "最终的落地数据表名称:半结构化采集时不传递", dataType = String.class)
