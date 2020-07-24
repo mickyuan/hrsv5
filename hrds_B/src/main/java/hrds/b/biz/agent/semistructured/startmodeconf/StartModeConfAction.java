@@ -380,10 +380,10 @@ public class StartModeConfAction extends BaseAction {
 				objects[5] = Main_Server_Sync.YES.getCode();
 				etlDepList.add(objects);
 			}
+			// 3.批量插入数据
+			Dbo.executeBatch("insert into " + Etl_dependency.TableName
+					+ "(etl_sys_cd,pre_etl_sys_cd,etl_job,pre_etl_job,status,main_serv_sync)"
+					+ " values(?,?,?,?,?,?)", etlDepList);
 		}
-		// 3.批量插入数据
-		Dbo.executeBatch("insert into " + Etl_dependency.TableName
-				+ "(etl_sys_cd,pre_etl_sys_cd,etl_job,pre_etl_job,status,main_serv_sync)"
-				+ " values(?,?,?,?,?,?)", etlDepList);
 	}
 }
