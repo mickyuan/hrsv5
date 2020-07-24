@@ -121,7 +121,7 @@ public class FileConfStepAction extends BaseAction {
 
 		//    3: 循环卸数配置信息并进行保存
 //	    verifySeqConf(extractionDefString);
-			for (int i = 0; i < extractionDefString.length; i++) {
+		for (int i = 0; i < extractionDefString.length; i++) {
 
 			Data_extraction_def def = extractionDefString[i];
 
@@ -139,7 +139,7 @@ public class FileConfStepAction extends BaseAction {
 
 			FileFormat fileFormat = FileFormat.ofEnumByCode(def.getDbfile_format());
 			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang) {
+				|| fileFormat == FileFormat.FeiDingChang || fileFormat == FileFormat.CSV) {
 				// 检查行分隔符不能为空
 				String row_separator = def.getRow_separator();
 				if (StringUtil.isBlank(row_separator)) {
@@ -161,9 +161,10 @@ public class FileConfStepAction extends BaseAction {
 			else if (fileFormat == FileFormat.ORC
 				|| fileFormat == FileFormat.SEQUENCEFILE
 				|| fileFormat == FileFormat.PARQUET
-				|| fileFormat == FileFormat.CSV) {
+			) {
 				def.setDatabase_separatorr("");
 				def.setRow_separator("");
+				def.setIs_header(IsFlag.Fou.getCode());
 			} else {
 				throw new BusinessException("传递的数据文件格式不存在在代码项中,此次获取的数据文件格式是: " + def.getDbfile_format());
 			}
@@ -177,7 +178,7 @@ public class FileConfStepAction extends BaseAction {
 			}
 
 			// TODO data_extraction_def表is_header字段设置默认值为"否"，后期可能会修改
-			def.setIs_header(IsFlag.Fou.getCode());
+//			def.setIs_header(IsFlag.Fou.getCode());
 			def.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			def.add(Dbo.db());
 		}
