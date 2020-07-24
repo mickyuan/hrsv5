@@ -22,7 +22,7 @@ public class DropDataTable {
     public static void dropTableByDataLayer(String tableName, DatabaseWrapper db) {
         //获取sql中解析出来的表属于的存储实体Bean
         List<LayerBean> tableLayers = ProcessingData.getLayerByTable(tableName, db);
-        if (null == tableLayers) {
+        if (tableLayers.isEmpty()) {
             throw new BusinessException("该表未在任何存储层中存在!");
         }
         //根据存储层删除对应存储层下的表
@@ -46,7 +46,7 @@ public class DropDataTable {
     @Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
     @Param(name = "intoLayerBean", desc = "LayerBean对象", range = "LayerBean对象")
     public static void dropTableByDataLayer(String tableName, DatabaseWrapper db, LayerBean intoLayerBean) {
-        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db,intoLayerBean.getDsl_id())) {
+        try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, intoLayerBean.getDsl_id())) {
             SqlOperator.execute(dbDataConn, "drop table " + tableName);
             SqlOperator.commitTransaction(dbDataConn);
         } catch (Exception e) {
