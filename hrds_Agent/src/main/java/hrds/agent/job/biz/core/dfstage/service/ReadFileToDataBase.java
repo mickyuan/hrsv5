@@ -451,7 +451,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return str;
 	}
 
-	private static Object getValue(String type, String tmpValue) {
+	static Object getValue(String type, String tmpValue) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {

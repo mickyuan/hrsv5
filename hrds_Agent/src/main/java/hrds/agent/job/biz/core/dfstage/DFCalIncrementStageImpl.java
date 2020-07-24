@@ -101,7 +101,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 								increase.close();
 						}
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
-						LOGGER.warn("数据进Solr待实现");
+						LOGGER.info("数据进Solr计算增量不做任何操作....");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {
 						LOGGER.warn("数据进ElasticSearch待实现");
 					} else if (Store_type.MONGODB.getCode().equals(dataStoreConf.getStore_type())) {

@@ -17,6 +17,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessInterface;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
+import hrds.agent.job.biz.core.dfstage.service.ReadFileToSolr;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -133,7 +134,6 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
-				long count = 0;
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//数据库类型
@@ -143,7 +143,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//不支持外部表的方式
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
-						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+						exeBatch(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
 								stageParamInfo.getTableBean());
 					} else {
 						throw new AppSystemException("错误的是否标识");
@@ -155,7 +155,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有hadoop客户端
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
-						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+						exeBatch(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
 								stageParamInfo.getTableBean());
 					} else {
 						throw new AppSystemException("错误的是否标识");
@@ -165,7 +165,11 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
 					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-					LOGGER.warn("DB文件采集数据上传进SOLR没有实现");
+//					LOGGER.info("DB文件采集数据上传进SOLR没有实现");
+					//没有hadoop客户端
+					executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+					exeBatchSolr(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
+							stageParamInfo.getTableBean());
 				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
 					LOGGER.warn("DB文件采集数据上传进ElasticSearch没有实现");
 				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
@@ -181,6 +185,39 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		} finally {
 			if (executor != null)
 				executor.shutdown();
+		}
+	}
+
+	/**
+	 * batch将数据导入到solr
+	 *
+	 * @param dataStoreConfBean 存储层配置信息
+	 * @param executor          线程池的执行器
+	 * @param fileArr           需要采集的DB文件的全路径的数组
+	 * @param tableBean         文件的结构化信息
+	 */
+	private void exeBatchSolr(DataStoreConfBean dataStoreConfBean, ExecutorService executor,
+	                          String[] fileArr, TableBean tableBean) {
+		long count = 0;
+		List<Future<Long>> list = new ArrayList<>();
+		try {
+			//读取文件进solr
+			for (String fileAbsolutePath : fileArr) {
+				ReadFileToSolr readFileToSolr = new ReadFileToSolr(fileAbsolutePath, tableBean,
+						collectTableBean, dataStoreConfBean);
+				//TODO 这个状态是不是可以在这里
+				Future<Long> submit = executor.submit(readFileToSolr);
+				list.add(submit);
+			}
+			for (Future<Long> future : list) {
+				count += future.get();
+			}
+			if (count < 0) {
+				throw new AppSystemException("数据进" + dataStoreConfBean.getDsl_name() + "异常");
+			}
+			LOGGER.info("数据成功进" + dataStoreConfBean.getDsl_name() + ",总计进数" + count + "条");
+		} catch (Exception e) {
+			throw new AppSystemException("多线程读取文件batch进" + dataStoreConfBean.getDsl_name() + "异常", e);
 		}
 	}
 
@@ -365,8 +402,9 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 使用batch方式进数
 	 */
-	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor, long count,
+	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor,
 	                      String[] localFiles, TableBean tableBean) {
+		long count = 0;
 		List<Future<Long>> list = new ArrayList<>();
 		String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
 		DatabaseWrapper db = null;

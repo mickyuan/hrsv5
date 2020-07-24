@@ -54,6 +54,8 @@ public class StorageTypeKey {
 
 	public static final String solr_url = "solr_url";
 
+	public static final String collection = "collection";
+
 	public static final String zkhost = "zkhost";
 	//数据库的编码
 	public static final String database_code = "database_code";
@@ -97,7 +99,7 @@ public class StorageTypeKey {
 				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5, increment_engine));
 		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
-		List<String> solrKeys = new ArrayList<>(Collections.singletonList(solr_url));
+		List<String> solrKeys = new ArrayList<>(Arrays.asList(solr_url, collection));
 		FINALLY_STORAGE_KEYS.put(Store_type.SOLR.getCode(), solrKeys);
 
 		UPDATE_FINALLY_STORAGE_KEYS.add(core_site);

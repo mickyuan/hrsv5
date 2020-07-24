@@ -30,7 +30,6 @@ import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ToolRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +106,9 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 								dataStoreConfBean, stageParamInfo.getTableBean());
 //						LOGGER.warn("DB文件采集数据加载进HBASE没有实现");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-						LOGGER.warn("DB文件采集数据加载进SOLR没有实现");
+//						LOGGER.info("DB文件采集数据加载进SOLR");
+						//进solr在upload阶段以及做了，此处跳过
+						continue;
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
 						LOGGER.warn("DB文件采集数据加载进ElasticSearch没有实现");
 					} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
