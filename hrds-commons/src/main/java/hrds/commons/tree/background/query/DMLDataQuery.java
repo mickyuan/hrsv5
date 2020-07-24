@@ -122,17 +122,13 @@ public class DMLDataQuery {
     @Param(name = "datatable_id", desc = "集市表id,唯一", range = "String类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getDMLTableColumns(String datatable_id) {
-        //初始化sql
-        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
         //设置集市表对象
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         //查询表字段信息
-        asmSql.addSql("select datatable_field_id AS column_id,field_en_name as column_name," +
-                " field_cn_name as column_ch_name,concat(field_type,'(',field_length,')') AS column_type," +
-                " '0' AS is_primary_key FROM " + Datatable_field_info.TableName + " WHERE datatable_id= ?");
-        asmSql.addParam(dm_datatable.getDatatable_id());
-        return Dbo.queryList(asmSql.sql(), asmSql.params());
+        return Dbo.queryList("select datatable_field_id AS column_id,field_en_name as column_name," +
+                        " field_cn_name as column_ch_name,concat(field_type,'(',field_length,')') AS column_type," +
+                        " '0' AS is_primary_key FROM " + Datatable_field_info.TableName + " WHERE datatable_id= ?",
+                dm_datatable.getDatatable_id());
     }
 }

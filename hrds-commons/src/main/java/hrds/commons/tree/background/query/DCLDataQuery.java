@@ -200,14 +200,14 @@ public class DCLDataQuery {
         //设置 Data_store_reg 对象
         Data_store_reg dsr = new Data_store_reg();
         dsr.setFile_id(file_id);
-        //初始化查询Sql
-        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
-        asmSql.addSql("SELECT tc.column_ch_name,tc.column_name,tc.tc_remark,tc.column_type,tc.is_primary_key," +
-                "tc.column_id,ti.database_id,dsr.agent_id,dsr.source_id FROM data_store_reg dsr JOIN " +
-                "table_info ti ON dsr.database_id = ti.database_id AND dsr.table_name = ti.table_name JOIN " +
-                "table_column tc ON ti.table_id = tc.table_id  WHERE dsr.file_id = ?").addParam(dsr.getFile_id());
-        List<Map<String, Object>> column_list = Dbo.queryList(asmSql.sql(), asmSql.params());
+        //查询Sql
+        List<Map<String, Object>> column_list = Dbo.queryList(
+                "SELECT tc.column_id as column_id, tc.column_name as column_name,tc.column_ch_name as column_ch_name," +
+                        " tc.tc_remark as remark,tc.column_type as column_type,tc.is_primary_key as is_primary_key" +
+                        " FROM " + Data_store_reg.TableName + " dsr" +
+                        " JOIN " + Table_info.TableName + " ti ON dsr.database_id=ti.database_id AND dsr.table_name=ti.table_name" +
+                        " JOIN " + Table_column.TableName + " tc ON ti.table_id=tc.table_id" +
+                        " WHERE dsr.file_id = ?", dsr.getFile_id());
         if (column_list.isEmpty()) {
             throw new BusinessException("表的Mate信息查询结果为空!");
         }
@@ -223,14 +223,13 @@ public class DCLDataQuery {
         //设置 Data_store_reg 对象
         Data_store_reg dsr = new Data_store_reg();
         dsr.setTable_id(table_id);
-        //初始化查询Sql
-        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
-        asmSql.addSql("SELECT tc.column_ch_name,tc.column_name,tc.tc_remark,tc.column_type,tc.is_primary_key," +
-                " tc.column_id,ti.database_id FROM table_info ti JOIN table_column tc" +
-                " ON ti.table_id = tc.table_id WHERE ti.table_id = ?")
-                .addParam(dsr.getTable_id());
-        List<Map<String, Object>> column_list = Dbo.queryList(asmSql.sql(), asmSql.params());
+        //查询Sql
+        List<Map<String, Object>> column_list = Dbo.queryList(
+                "SELECT tc.column_id as column_id, tc.column_name as column_name,tc.column_ch_name as column_ch_name," +
+                        " tc.tc_remark as remark,tc.column_type as column_type,tc.is_primary_key as is_primary_key" +
+                        " FROM " + Table_info.TableName + " ti" +
+                        " JOIN " + Table_column.TableName + " tc ON ti.table_id=tc.table_id WHERE ti.table_id = ?",
+                dsr.getTable_id());
         if (column_list.isEmpty()) {
             throw new BusinessException("表的Mate信息查询结果为空!");
         }
