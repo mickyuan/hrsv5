@@ -22,7 +22,7 @@ import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.tree.background.TreeNodeInfo;
+import hrds.commons.tree.TreeData;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.DataTableFieldUtil;
@@ -30,7 +30,6 @@ import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
-import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.dbm.normbasic.DbmNormbasicAction;
 import hrds.k.biz.tsb.bean.DbmColInfo;
 import hrds.k.biz.tsb.bean.TSBConf;
@@ -49,11 +48,8 @@ public class TSBAction extends BaseAction {
         //配置树不显示文件采集的数据
         TreeConf treeConf = new TreeConf();
         treeConf.setShowFileCollection(Boolean.FALSE);
-        //根据源菜单信息获取节点数据列表
-        List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_BENCHMARKING, getUser()
-                , treeConf);
-        //转换节点数据列表为分叉树列表
-        return NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
+        //返回分叉树列表
+        return TreeData.initTreeData(TreePageSource.DATA_BENCHMARKING, treeConf, getUser());
     }
 
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
