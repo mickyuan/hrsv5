@@ -6,11 +6,10 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.codes.StoreLayerDataSource;
-import hrds.commons.entity.Data_store_layer;
-import hrds.commons.entity.Dq_table_column;
-import hrds.commons.entity.Dq_table_info;
-import hrds.commons.entity.Dtab_relation_store;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 
 import java.util.List;
@@ -39,11 +38,28 @@ public class UDLDataQuery {
         Dq_table_info dq_table_info = new Dq_table_info();
         dq_table_info.setTable_id(table_id);
         //查询表字段信息
-        return Dbo.queryList(
+        List<Map<String, Object>> column_list = Dbo.queryList(
                 "select field_id AS column_id,column_name as column_name, field_ch_name as column_ch_name," +
                         " concat(column_type,'(',column_length,')') AS column_type,'0' AS is_primary_key" +
                         " FROM " + Dq_table_column.TableName + " WHERE table_id=?",
                 dq_table_info.getTable_id());
+        //获取表字段的附加信息
+        for (Map<String, Object> column_map : column_list) {
+            List<String> dsla_storelayers = Dbo.queryOneColumnList(
+                    "SELECT dsladd.dsla_storelayer FROM " + Dq_table_column.TableName + " dtc" +
+                            " JOIN " + Dcol_relation_store.TableName + " dcrs ON dtc.field_id=dcrs.col_id" +
+                            " JOIN " + Data_store_layer_added.TableName + " dsladd ON dsladd.dslad_id=dcrs.dslad_id" +
+                            " WHERE dtc.field_id=?", column_map.get("column_id"));
+            if (!dsla_storelayers.isEmpty()) {
+                dsla_storelayers.forEach(dsla_storelayer -> {
+                    StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dsla_storelayer);
+                    if (storeLayerAdded == StoreLayerAdded.ZhuJian) {
+                        column_map.put("is_primary_key", IsFlag.Shi.getCode());
+                    }
+                });
+            }
+        }
+        return column_list;
     }
 
     @Method(desc = "UDL数据层下,获取配置登记的所有数据存储层信息", logicStep = "UDL数据层下,获取配置登记的所有数据存储层信息")
