@@ -6,7 +6,7 @@ import fd.ng.core.annotation.DocClass;
 public class TreeConf {
 
     //是否显示文件采集数据
-    private Boolean isShowFileCollection;
+    private Boolean isShowFileCollection = Boolean.FALSE;
     //0:入HBase树菜单,1:创建二级索引树菜单,"":默认获取所有表
     private String isIntoHBase = "";
     //是否显示DCL层的实时数据,默认不显示
