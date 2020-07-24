@@ -9,7 +9,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
-import hrds.commons.collection.DeleteDataTable;
+import hrds.commons.collection.DropDataTable;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -239,6 +239,7 @@ public class MetaDataManageActionTest extends WebBaseTestCase {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             //加载测试获取回收站DCL表字段信息数据
             Dq_failure_table dcl_dft = loadTestDCLGetDRBTableColumnInfo(db);
+            //TODO 还需要添加DML DQC UDL层实现
             //提交数据库操作
             db.commit();
             //正确参数,保存DCL层表元数据
@@ -766,7 +767,7 @@ public class MetaDataManageActionTest extends WebBaseTestCase {
             dtrs.delete(db);
             dtcs.forEach(dtc -> dtc.delete(db));
             //清理对应存储层中数据
-            DeleteDataTable.dropTableByDataLayer(dti.getTable_name(), db, DSL_ID);
+            DropDataTable.dropTableByDataLayer(dti.getTable_name(), db, DSL_ID);
             //提交数据库操作
             db.commit();
         }
