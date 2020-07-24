@@ -36,7 +36,7 @@ public class DqTableColumnBean extends ProjectTableEntity {
     private String dq_remark;
     //附加属性id数组
     @DocBean(name = "dslad_id_s", value = "附加属性id数组", dataType = Long[].class)
-    private long[] dslad_id_s;
+    private Long[] dslad_id_s;
 
     public String getField_ch_name() {
         return field_ch_name;
@@ -102,11 +102,11 @@ public class DqTableColumnBean extends ProjectTableEntity {
         this.dq_remark = dq_remark;
     }
 
-    public long[] getDslad_id_s() {
+    public Long[] getDslad_id_s() {
         return dslad_id_s;
     }
 
-    public void setDslad_id_s(long[] dslad_id_s) {
+    public void setDslad_id_s(Long[] dslad_id_s) {
         this.dslad_id_s = dslad_id_s;
     }
 }
