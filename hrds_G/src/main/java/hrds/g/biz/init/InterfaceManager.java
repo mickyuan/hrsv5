@@ -288,7 +288,8 @@ public class InterfaceManager {
 	private static void userInfo(DatabaseWrapper db) {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		// 2.查询接口用户信息
-		Result userResult = SqlOperator.queryResult(db, "SELECT user_id,user_password,user_name FROM "
+		Result userResult = SqlOperator.queryResult(db,
+				"SELECT user_id,user_password,user_name,valid_time FROM "
 						+ Sys_user.TableName + " WHERE user_type = ? OR usertype_group LIKE ?",
 				UserType.RESTYongHu.getCode(), "%" + UserType.RESTYongHu.getCode() + "%");
 		// 3.判断接口用户信息是否为空
@@ -307,8 +308,7 @@ public class InterfaceManager {
 				queryInterfaceInfo.setUser_id(user_id);
 				queryInterfaceInfo.setUser_name(userResult.getString(i, "user_name"));
 				String user_password = userResult.getString(i, "user_password");
-				queryInterfaceInfo.setUser_password(Base64.getEncoder().encodeToString(user_password.getBytes()));
-				queryInterfaceInfo.setUse_valid_date(userResult.getString(i, "user_name"));
+				queryInterfaceInfo.setUse_valid_date(userResult.getString(i, "valid_time"));
 				// 7.判断密码是否加密 fixme 这个国密是不是应该去掉
 				if (user_password.endsWith("==")) {
 					// 7.1国密

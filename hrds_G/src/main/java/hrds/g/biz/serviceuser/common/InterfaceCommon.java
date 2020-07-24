@@ -9,25 +9,34 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.InterfaceState;
+import hrds.commons.codes.Store_type;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
 import hrds.g.biz.bean.SingleTable;
+import hrds.g.biz.bean.TableData;
 import hrds.g.biz.commons.LocalFile;
 import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
 import hrds.g.biz.init.InterfaceManager;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -403,20 +412,6 @@ public class InterfaceCommon {
 		}
 		// 8.获取查询sql
 		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTableName() + condition;
-//		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.getTableName(), db);
-//		if (layerByTable == null || layerByTable.isEmpty()) {
-//			return StateType.getResponseInfo(StateType.STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE.getCode(),
-//					"当前表对应的存储层信息不存在");
-//		}
-//		String database_type = layerByTable.get(0).getLayerAttr().get("database_type");
-//		if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle9i) {
-//			return StateType.getResponseInfo(StateType.ORACLE9I_NOT_SUPPORT.getCode(),
-//					"系统不支持Oracle9i及以下");
-//		} else if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle10g) {
-//			sqlSb = sqlSb + " where rownum<=" + num;
-//		} else {
-//			sqlSb = sqlSb + " LIMIT " + num;
-//		}
 		// 9.获取新sql，判断视图
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
 		String newSql = druidParseQuerySql.GetNewSql(sqlSb);
@@ -866,4 +861,105 @@ public class InterfaceCommon {
 		db.commit();
 		return num;
 	}
+
+	@Method(desc = "根据表名称删除表数据", logicStep = "1.根据表名获取存储层的信息" +
+			"2.判断当前表对应的存储层信息是否存在" +
+			"3.获取当前表对应存储层的db连接" +
+			"4.存储层类型为关系型数据库" +
+			"4.1从内存中获取当前表的字段信息" +
+			"4.2获取当前表对应数据库的列名称集合" +
+			"4.3.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件" +
+			"4.4 拼接删除数据表数据sql" +
+			"4.5 删除数据表数据" +
+			"5.删除hbase表数据")
+	@Param(name = "db", desc = "db连接对象", range = "无限制")
+	@Param(name = "tableData", desc = "表数据接口参数实体对象", range = "自定义实体")
+	@Param(name = "user_id", desc = "当前登录用户ID", range = "新增用户时生成")
+	@Param(name = "responseMap", desc = "接口响应信息", range = "无限制")
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	public static Map<String, Object> deleteTableDataByTableName(DatabaseWrapper db, TableData tableData,
+	                                                             Long user_id) {
+		// 1.根据表名获取存储层的信息
+		List<LayerBean> tableLayerList = ProcessingData.getLayerByTable(tableData.getTableName(), db);
+		// 2.判断当前表对应的存储层信息是否存在
+		if (tableLayerList.isEmpty()) {
+			return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
+		}
+		for (LayerBean layerBean : tableLayerList) {
+			// 3.获取当前表对应存储层的db连接
+			try (DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper(db, layerBean.getDsl_id())) {
+				String store_type = layerBean.getStore_type();
+				if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type)) {
+					// 4.存储层类型为关系型数据库
+					// 4.1从内存中获取当前表的字段信息
+					String table_en_column = InterfaceManager.getUserTableInfo(Dbo.db(), user_id,
+							tableData.getTableName()).getTable_en_column();
+					// 4.2获取当前表对应数据库的列名称集合
+					List<String> columns = StringUtil.split(table_en_column.toLowerCase(), Constant.METAINFOSPLIT);
+					String whereColumn = tableData.getWhereColumn();
+					String condition = "";
+					if (StringUtil.isNotBlank(whereColumn)) {
+						// 4.3.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件
+						responseMap =
+								InterfaceCommon.getSqlSelectCondition(columns, whereColumn);
+						if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+							return responseMap;
+						}
+						condition = responseMap.get("condition").toString();
+					}
+					// 4.4 拼接删除数据表数据sql
+					String deleteSql = "delete from " + tableData.getTableName() + condition;
+					// 4.5 删除数据表数据
+					SqlOperator.execute(dbWrapper, deleteSql);
+					SqlOperator.commitTransaction(dbWrapper);
+				} else if (Store_type.ofEnumByCode(store_type) == Store_type.HBASE) {
+					// 5.删除hbase表数据
+					return deleteHbaseData(tableData.getTableName(), tableData.getRowKeys());
+				} else {
+					return StateType.getResponseInfo(StateType.STORE_TYPE_NOT_EXIST);
+				}
+			} catch (Exception e) {
+				return StateType.getResponseInfo(StateType.DELETE_TABLE_DATA_FAILED);
+			}
+		}
+		return StateType.getResponseInfo(StateType.NORMAL);
+	}
+
+	@Method(desc = "删除hbase表数据", logicStep = "")
+	@Param(name = "tableName", desc = "表名称", range = "无限制")
+	@Param(name = "rowKeys", desc = "hbase rowkey数组", range = "无限制")
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	private static Map<String, Object> deleteHbaseData(String tableName, String[] rowKeys) {
+		try (HBaseHelper helper = HBaseHelper.getHelper()) {
+			if (helper.existsTable(tableName)) {
+				try (Table table = helper.getTable(tableName)) {
+					List<Delete> deleteList = new ArrayList<>();
+					List<String> rowkeyList = new ArrayList<>();
+					for (String rowkey : rowKeys) {
+						Get get = new Get(rowkey.getBytes());
+						if (!table.get(get).isEmpty()) {
+							// 获取要删除的数据
+							Delete delete = new Delete(rowkey.getBytes());
+							deleteList.add(delete);
+						} else {
+							rowkeyList.add(rowkey);
+						}
+					}
+					// 判断根据rowkey要删除的表数据是否存在
+					if (rowkeyList.size() > 0) {
+						return StateType.getResponseInfo(StateType.TABLE_DATA_NOT_EXIST_BY_ROWKEY);
+					} else {
+						// 删除hbase数据
+						table.delete(deleteList);
+					}
+				}
+			} else {
+				return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
+			}
+		} catch (Exception e) {
+			return StateType.getResponseInfo(StateType.EXCEPTION);
+		}
+		return StateType.getResponseInfo(StateType.NORMAL);
+	}
+
 }

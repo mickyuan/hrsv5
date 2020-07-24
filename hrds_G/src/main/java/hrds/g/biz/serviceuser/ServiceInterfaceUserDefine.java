@@ -46,12 +46,11 @@ public interface ServiceInterfaceUserDefine {
 //	@Return(desc = "返回接口响应信息", range = "无限制")
 //	Map<String, Object> fullTextSearch(QueryBean queryBean, CheckParam checkParam);
 
-//	@Method(desc = "单表数据删除接口", logicStep = "")
-//	@Param(name = "tableName", desc = "表名", range = "无限制")
-//	@Param(name = "rowKey", desc = "主键", range = "无限制")
-//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-//	@Return(desc = "返回接口响应信息", range = "无限制")
-//	Map<String, Object> singleTableDataDelete(String tableName, String[] rowKey, CheckParam checkParam);
+	@Method(desc = "单表数据删除接口", logicStep = "")
+	@Param(name = "tableData", desc = "表数据接口参数实体对象", range = "自定义实体")
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	Map<String, Object> singleTableDataDelete(TableData tableData, CheckParam checkParam);
 //
 //	@Method(desc = "单表删除接口", logicStep = "")
 //	@Param(name = "tableName", desc = "表名", range = "无限制")
@@ -64,6 +63,12 @@ public interface ServiceInterfaceUserDefine {
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	Map<String, Object> tableStructureQuery(String tableName, CheckParam checkParam);
+
+	@Method(desc = "表结构查询-获取json信息接口", logicStep = "")
+	@Param(name = "tableName", desc = "表名", range = "无限制")
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	Map<String, Object> tableSearchGetJson(String tableName, CheckParam checkParam);
 
 //	@Method(desc = "文章相似度比较接口", logicStep = "")
 //	@Param(name = "file", desc = "文件流", range = "无限制")
@@ -109,7 +114,7 @@ public interface ServiceInterfaceUserDefine {
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	Map<String, Object> rowKeySearch(RowKeySearch rowKeySearch, CheckParam checkParam);
 
-//	@Method(desc = "solr查询接口", logicStep = "")
+	//	@Method(desc = "solr查询接口", logicStep = "")
 //	@Param(name = "solrSearch", desc = "solr查询参数实体", range = "无限制", isBean = true)
 //	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 //	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -122,11 +127,11 @@ public interface ServiceInterfaceUserDefine {
 //	Map<String, Object> singleTableSecondIndexQuery(SecondIndexQuery secondIndexQuery,
 //	                                                CheckParam checkParam);
 //
-//	@Method(desc = "表数据批量更新接口", logicStep = "")
-//	@Param(name = "dataBatchUpdate", desc = "表数据批量更新参数实体", range = "无限制", isBean = true)
-//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-//	@Return(desc = "返回接口响应信息", range = "无限制")
-//	Map<String, Object> tableDataBatchUpdate(DataBatchUpdate dataBatchUpdate, CheckParam checkParam);
+	@Method(desc = "单表数据批量更新接口", logicStep = "")
+	@Param(name = "dataBatchUpdate", desc = "表数据批量更新参数实体", range = "无限制", isBean = true)
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	Map<String, Object> tableDataBatchUpdate(DataBatchUpdate dataBatchUpdate, CheckParam checkParam);
 
 //	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
 //	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)

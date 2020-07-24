@@ -171,9 +171,9 @@ public enum StateType {
 	 */
 	JSONCONVERSION_EXCEPTION("439", "json转换对象失败"),
 	/**
-	 * 要删除的表不存在
+	 * 根据rowkey要删除的表数据不存在
 	 */
-	TABLE_NON_EXISTENT("440", "要删除的表不存在"),
+	TABLE_DATA_NOT_EXIST_BY_ROWKEY("440", "根据rowkey要删除的表数据不存在"),
 	/**
 	 * uuid不能为空或uuid错误
 	 */
@@ -181,7 +181,7 @@ public enum StateType {
 	/**
 	 * 当前表对应的存储层信息不存在
 	 */
-	STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE("442", "当前表对应的存储层信息不存在"),
+	STORAGELAYER_NOT_EXIST_BY_TABLE("442", "当前表对应的存储层信息不存在"),
 	/**
 	 * 当前表对应的存储层信息不存在
 	 */
@@ -198,6 +198,14 @@ public enum StateType {
 	 * url未填或填写错误
 	 */
 	URL_NOT_EXIST("446", "url未填或填写错误"),
+	/**
+	 * 不支持的存储层类型
+	 */
+	STORE_TYPE_NOT_EXIST("447", "不支持的存储层类型"),
+	/**
+	 * 删除表数据失败
+	 */
+	DELETE_TABLE_DATA_FAILED("448", "删除表数据失败"),
 	/**
 	 * 系统错误
 	 */

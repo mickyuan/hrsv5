@@ -11,6 +11,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
@@ -30,13 +31,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "接口服务实现类（接口api）", author = "dhw", createdate = "2020/3/30 15:39")
-public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction implements ServiceInterfaceUserDefine {
+public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
+		implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
 
@@ -107,6 +110,34 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 				singleTable.getFilename(), responseMap);
 	}
 
+	@Method(desc = "单表数据删除接口", logicStep = "1.判断表是否存在" +
+			"2.检查token以及接口是否有效" +
+			"3.判断表是否有效" +
+			"4.根据表名称删除表数据")
+	@Param(name = "tableData", desc = "表数据接口参数实体对象", range = "自定义实体")
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	@Override
+	public Map<String, Object> singleTableDataDelete(TableData tableData, CheckParam checkParam) {
+		// 数据可访问权限处理方式：该方法通过user_id进行访问权限限制
+		// 1.判断表是否存在
+		if (isParamExist(tableData.getTableName()))
+			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
+		// 2.检查token以及接口是否有效
+		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
+		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+			return responseMap;
+		}
+		Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+		// 3.判断表是否有效
+		if (!InterfaceManager.existsTable(Dbo.db(), user_id, tableData.getTableName())) {
+			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
+		}
+		// 4.根据表名称删除表数据
+		return InterfaceCommon.deleteTableDataByTableName(Dbo.db(), tableData, user_id);
+	}
+
+
 	@Method(desc = "表结构查询接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.检查token以及接口是否有效" +
 			"3.判断表是否有效" +
@@ -115,16 +146,15 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			"6.数据源类型为加工" +
 			"7.数据源类型为贴源层，关联查询表对应的字段、数据库对应表、源文件属性表查询字段中英文信息" +
 			"8.数据源类型为其他，查询源文件属性表信息获取字段中英文信息" +
-			"9.返回接口响应信息")
+			"9.返回接口响应信息" +
+			"10.没有表使用权限")
 	@Param(name = "tableName", desc = "要查询表名", range = "无限制", nullable = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
 	public Map<String, Object> tableStructureQuery(String tableName, CheckParam checkParam) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		if (StringUtil.isBlank(tableName)) {
-			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
-		}
+		if (isParamExist(tableName)) return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
@@ -139,6 +169,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			String sysreg_name = userTableInfo.getSysreg_name();
 			Map<String, Object> res = new HashMap<>();
 			res.put("table_type", type);
+			// fixme 这里应该使用StoreLayerDataSource代码项做判断查询
 			if (DataSourceType.DML == DataSourceType.ofEnumByCode(type)) {
 				// 5.数据源类型为集市，关联查询数据表字段信息表以及数据表查询字段中英文信息
 				List<Map<String, Object>> list = SqlOperator.queryList(Dbo.db(), "SELECT field_en_name," +
@@ -165,8 +196,52 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			// 9.返回接口响应信息
 			return StateType.getResponseInfo(StateType.NORMAL.getCode(), res);
 		} else {
-			return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), "没有对应的表，请确认后尝试");
+			// 10.没有表使用权限
+			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 		}
+	}
+
+	@Method(desc = "表结构查询-获取json信息接口", logicStep = "1.判断表名是否存在" +
+			"2.检查token以及接口是否有效" +
+			"3.判断表是否有使用权限" +
+			"4.获取表列结构json信息" +
+			"5.判断表对应存储层是否存在" +
+			"6.返回表列结构json信息")
+	@Param(name = "tableName", desc = "表名", range = "无限制", nullable = true)
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	@Override
+	public Map<String, Object> tableSearchGetJson(String tableName, CheckParam checkParam) {
+		// 数据可访问权限处理方式：该方法通过user_id进行访问权限限制
+		// 1.判断表名是否存在
+		if (isParamExist(tableName)) return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
+		// 2.检查token以及接口是否有效
+		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
+		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+			return responseMap;
+		}
+		Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+		// 3.判断表是否有使用权限
+		if (!InterfaceManager.existsTable(Dbo.db(), user_id, tableName)) {
+			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
+		}
+		try {
+			// 4.获取表列结构json信息
+			List<Map<String, Object>> columns = ProcessingData.getColumnsByTableName(tableName, Dbo.db());
+			// 5.判断表对应存储层是否存在
+			if (columns == null) {
+				return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
+			}
+			// 6.返回表列结构json信息
+			return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
+		} catch (SQLException e) {
+			logger.info(e);
+			return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
+		}
+	}
+
+	private boolean isParamExist(String tableName) {
+		return StringUtil.isBlank(tableName);
 	}
 
 	@Method(desc = "文件属性搜索接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -328,9 +403,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 			return responseMap;
 		}
 		// 6.检查sql是否正确
-		if (StringUtil.isBlank(sqlSearch.getSql())) {
+		if (isParamExist(sqlSearch.getSql()))
 			return StateType.getResponseInfo(StateType.SQL_IS_INCORRECT);
-		}
 		// 7.根据sql获取表名的集合
 		List<String> tableList = DruidParseQuerySql.parseSqlTableToList(sqlSearch.getSql());
 		List<String> columnList = new ArrayList<>();
@@ -468,6 +542,17 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction imp
 		responseMap.put("enTable", rowKeySearch.getEnTable());
 		return responseMap;
 	}
+
+	@Method(desc = "单表数据批量更新接口", logicStep = "")
+	@Param(name = "dataBatchUpdate", desc = "表数据批量更新参数实体", range = "无限制", isBean = true)
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	@Override
+	public Map<String, Object> tableDataBatchUpdate(DataBatchUpdate dataBatchUpdate, CheckParam
+			checkParam) {
+		return null;
+	}
+
 
 }
 

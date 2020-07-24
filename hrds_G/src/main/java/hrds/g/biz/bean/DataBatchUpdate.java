@@ -4,7 +4,7 @@ import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.entity.anno.Table;
 
-@DocClass(desc = "表数据批量更新参数实体", author = "dhw", createdate = "2020/4/1 15:36")
+@DocClass(desc = "单表数据批量更新参数实体", author = "dhw", createdate = "2020/4/1 15:36")
 @Table(tableName = "data_batch_update")
 public class DataBatchUpdate {
 	private static final long serialVersionUID = 321566870187324L;
