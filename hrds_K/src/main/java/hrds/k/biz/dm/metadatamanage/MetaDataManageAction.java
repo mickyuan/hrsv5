@@ -499,7 +499,7 @@ public class MetaDataManageAction extends BaseAction {
                 dqTableColumns.add(dqTableColumn);
                 //设置数据字段存储关系表
                 Dcol_relation_store dcol_relation_store;
-                if (dqTableColumnBean.getDslad_id_s().length > 0) {
+                if (null != dqTableColumnBean.getDslad_id_s() && dqTableColumnBean.getDslad_id_s().length > 0) {
                     for (long dslad_id : dqTableColumnBean.getDslad_id_s()) {
                         //获取数据存储附加信息
                         Data_store_layer_added dsla = Dbo.queryOneObject(Data_store_layer_added.class,
