@@ -35,18 +35,15 @@ public class UDLDataQuery {
     @Param(name = "table_id", desc = "表id,唯一", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getUDLTableColumns(String table_id) {
-        //初始化sql
-        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-        asmSql.clean();
         //设置自定义层数据表
         Dq_table_info dq_table_info = new Dq_table_info();
         dq_table_info.setTable_id(table_id);
         //查询表字段信息
-        asmSql.addSql("select field_id AS column_id,column_name as column_name," +
-                " field_ch_name as column_ch_name,concat(column_type,'(',column_length,')') AS column_type," +
-                " '0' AS is_primary_key FROM " + Dq_table_column.TableName + " WHERE table_id=?");
-        asmSql.addParam(dq_table_info.getTable_id());
-        return Dbo.queryList(asmSql.sql(), asmSql.params());
+        return Dbo.queryList(
+                "select field_id AS column_id,column_name as column_name, field_ch_name as column_ch_name," +
+                        " concat(column_type,'(',column_length,')') AS column_type,'0' AS is_primary_key" +
+                        " FROM " + Dq_table_column.TableName + " WHERE table_id=?",
+                dq_table_info.getTable_id());
     }
 
     @Method(desc = "UDL数据层下,获取配置登记的所有数据存储层信息", logicStep = "UDL数据层下,获取配置登记的所有数据存储层信息")
