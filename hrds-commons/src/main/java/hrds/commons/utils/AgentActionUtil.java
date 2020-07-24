@@ -52,6 +52,10 @@ public class AgentActionUtil {
 	public static final String ADDDATASTOREREG = "/hrds/server/addDataStoreReg";
 	//向agent端发送一个数据库采集抽取任务
 	public static final String SENDJDBCCOLLECTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
+	//向agent端发送一个数据库采集抽取立即执行的任务
+	public static final String JDBCCOLLECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/jdbccollect/executeImmediately";
+	//向agent端发送一个db文件采集立即执行的任务
+	public static final String DBCOLLECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/dbfilecollect/executeImmediately";
 	//向agent端发送页面配置，生成数据库抽取的数据字典
 	public static final String GETDICTIONARYJSON = "/hrds/agent/trans/biz/jdbccollect/getDictionaryJson";
 	//向agent端发送一个db文件采集任务
@@ -100,6 +104,8 @@ public class AgentActionUtil {
 		list.add(GETALLTABLESTORAGE);
 		list.add(GETDICTIONARYJSON);
 		list.add(GETFIRSTLINEDATA);
+		list.add(DBCOLLECTEXECUTEIMMEDIATELY);
+		list.add(JDBCCOLLECTEXECUTEIMMEDIATELY);
 	}
 
 	private AgentActionUtil() {
