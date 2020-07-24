@@ -31,9 +31,6 @@ public class RenameDataTable {
         List<String> dsl_id_s = new ArrayList<>();
         //获取sql中解析出来的表属于的存储实体Bean
         List<LayerBean> tableLayers = ProcessingData.getLayerByTable(tableName, db);
-        if (tableLayers.isEmpty()) {
-            throw new BusinessException("该表未在任何存储层中存在!");
-        }
         //根据存储层删除对应存储层下的表
         tableLayers.forEach(tableLayer -> {
             //设置返回结果集

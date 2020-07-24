@@ -123,65 +123,69 @@ public abstract class ProcessingData {
     @Return(desc = "表的存储位置", range = "表的存储位置")
     private static List<LayerBean> getTableLayer(String tableName, DatabaseWrapper db) {
         //初始化表的存储位置
-        List<LayerBean> mapTaberLayer = new ArrayList<>();
+        List<LayerBean> tableStorageLayerBeans = new ArrayList<>();
         //查询贴元表信息，也就是通过数据采集过来的数据表
-        SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance()
-                .addSql("select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and lower(hyren_name) = ?")
-                .addParam(AgentType.DBWenJian.getCode()).addParam(AgentType.ShuJuKu.getCode())
-                .addParam(tableName.toLowerCase());
-        //查询贴源层(DCL)表信息，通过采集产生的数表
-        Data_store_reg dsr = SqlOperator.queryOneObject(db, Data_store_reg.class, asmSql.sql(), asmSql.params())
-                .orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
-        List<LayerBean> maps = SqlOperator.queryList(db, LayerBean.class,
-                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type,'" + DataSourceType.DCL.getCode() + "'  as dst from "
-                        + Table_storage_info.TableName + " tsi join " + Dtab_relation_store.TableName + " dtrs "
-                        + "on tsi.storage_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl "
-                        + "on dtrs.dsl_id = dsl.dsl_id where tsi.table_id = ? and dtrs.data_source = ?", dsr.getTable_id(),
-                StoreLayerDataSource.DB.getCode());
-        //记录数据表在哪个系统存储层
-        for (LayerBean map : maps) {
-            map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
-            mapTaberLayer.add(map);
+        Optional<Data_store_reg> dsr_optional = SqlOperator.queryOneObject(db, Data_store_reg.class,
+                "select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and lower(hyren_name) = ?",
+                AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase());
+        //如果登记表存在数据,则设置改表登记的存储层信息
+        if (dsr_optional.isPresent()) {
+            Data_store_reg dsr = dsr_optional.get();
+            List<LayerBean> dcl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
+                    "select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst from " + Table_storage_info.TableName + " tsi" +
+                            " join " + Dtab_relation_store.TableName + " dtrs on tsi.storage_id = dtrs.tab_id" +
+                            " join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+                            " where tsi.table_id = ? and dtrs.data_source = ?", dsr.getTable_id(),
+                    StoreLayerDataSource.DB.getCode());
+            //记录数据表在哪个系统存储层
+            for (LayerBean layerBean : dcl_layerBeans) {
+                layerBean.setLayerAttr(ConnectionTool.getLayerMap(db, layerBean.getDsl_id()));
+                tableStorageLayerBeans.add(layerBean);
+            }
         }
         //查询集市表(DML)信息，通过数据集市产生的数表
-        List<LayerBean> dslMap = SqlOperator.queryList(db, LayerBean.class,
-                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.DML.getCode() + "' as dst from "
-                        + Dm_datatable.TableName + " dd join  " + Dtab_relation_store.TableName + " dtrs " +
-                        "on dd.datatable_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl " +
-                        "on dtrs.dsl_id = dsl.dsl_id where lower(datatable_en_name) = ? and dtrs.data_source = ?",
+        List<LayerBean> dml_layerBeans = SqlOperator.queryList(db, LayerBean.class,
+                "select dsl.*,'" + DataSourceType.DML.getCode() + "' as dst from " + Dm_datatable.TableName + " dd" +
+                        " join  " + Dtab_relation_store.TableName + " dtrs on dd.datatable_id = dtrs.tab_id" +
+                        " join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+                        " where lower(datatable_en_name) = ? and dtrs.data_source = ?",
                 tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
-        if (dslMap.size() != 0) {
-            for (LayerBean map : dslMap) {
-                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
-                mapTaberLayer.add(map);
+        if (dml_layerBeans.size() != 0) {
+            for (LayerBean layerBean : dml_layerBeans) {
+                layerBean.setLayerAttr(ConnectionTool.getLayerMap(db, layerBean.getDsl_id()));
+                tableStorageLayerBeans.add(layerBean);
             }
         }
         //查询数据管控层(DQC)表信息, 通过规则校验保存结果3生成的数表
-        List<LayerBean> di3Map = SqlOperator.queryList(db, LayerBean.class,
-                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.DQC.getCode() + "' as dst from "
-                        + Dq_index3record.TableName + " di3 join " + Data_store_layer.TableName + " dsl" +
-                        " on di3.dsl_id=dsl.dsl_id where lower(di3.table_name) = ?", tableName.toLowerCase());
-        if (di3Map.size() != 0) {
-            for (LayerBean map : di3Map) {
-                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
-                mapTaberLayer.add(map);
+        List<LayerBean> dqc_layerBeans = SqlOperator.queryList(db, LayerBean.class,
+                "select dsl.*,'" + DataSourceType.DQC.getCode() + "' as dst from " + Dq_index3record.TableName + " di3" +
+                        " join " + Data_store_layer.TableName + " dsl on di3.dsl_id=dsl.dsl_id" +
+                        " where lower(di3.table_name) = ?",
+                tableName.toLowerCase());
+        if (dqc_layerBeans.size() != 0) {
+            for (LayerBean layerBean : dqc_layerBeans) {
+                layerBean.setLayerAttr(ConnectionTool.getLayerMap(db, layerBean.getDsl_id()));
+                tableStorageLayerBeans.add(layerBean);
             }
         }
         //查询自定义层(UDL)表信息, 通过数据管控创建的数表
-        List<LayerBean> dqtiMap = SqlOperator.queryList(db, LayerBean.class,
-                "select dsl.dsl_id,dsl.dsl_name,dsl.store_type ,'" + DataSourceType.UDL.getCode() + "' as dst from "
-                        + Dq_table_info.TableName + " dqti join  " + Dtab_relation_store.TableName + " dtrs " +
-                        "on dqti.table_id = dtrs.tab_id join " + Data_store_layer.TableName + " dsl " +
-                        "on dtrs.dsl_id = dsl.dsl_id where lower(dqti.table_name) = ? and dtrs.data_source = ?",
+        List<LayerBean> udl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
+                "select dsl.*,'" + DataSourceType.UDL.getCode() + "' as dst from " + Dq_table_info.TableName + " dqti" +
+                        " join  " + Dtab_relation_store.TableName + " dtrs on dqti.table_id = dtrs.tab_id" +
+                        " join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+                        " where lower(dqti.table_name) = ? and dtrs.data_source = ?",
                 tableName.toLowerCase(), StoreLayerDataSource.UD.getCode());
-        if (dqtiMap.size() != 0) {
-            for (LayerBean map : dqtiMap) {
-                map.setLayerAttr(ConnectionTool.getLayerMap(db, map.getDsl_id()));
-                mapTaberLayer.add(map);
+        if (udl_layerBeans.size() != 0) {
+            for (LayerBean mlayerBeanp : udl_layerBeans) {
+                mlayerBeanp.setLayerAttr(ConnectionTool.getLayerMap(db, mlayerBeanp.getDsl_id()));
+                tableStorageLayerBeans.add(mlayerBeanp);
             }
         }
         //TODO 这里以后需要添加加工数据、机器学习、流数据、系统管理维护的表、系统管理等
-        return mapTaberLayer;
+        if (tableStorageLayerBeans.isEmpty()) {
+            throw new BusinessException("该表未在任何存储层中存在!");
+        }
+        return tableStorageLayerBeans;
     }
 
     /**
@@ -242,9 +246,6 @@ public abstract class ProcessingData {
         Map<String, LayerBean> allTableLayer = new HashMap<>();
         for (String tableName : allTableList) {
             List<LayerBean> tableLayer = getLayerByTable(tableName, db);
-            if (tableLayer.isEmpty()) {
-                throw new AppSystemException("根据解析的表没有找到对应存储层信息，请确认数据是否正确");
-            }
             //更加table获取每张表不同的存储信息，有可能一张表存储不同的目的地，所以这里是list
             for (LayerBean objectMap : tableLayer) {
                 String layer_id = String.valueOf(objectMap.getDsl_id());
