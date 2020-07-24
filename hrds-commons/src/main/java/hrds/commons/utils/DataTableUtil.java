@@ -25,6 +25,74 @@ import java.util.Map;
 @DocClass(desc = "数据表工具类", author = "BY-HLL", createdate = "2019/11/4 0004 下午 02:35")
 public class DataTableUtil {
 
+
+    @Method(desc = "获取表信息", logicStep = "获取表信息")
+    @Param(name = "data_layer", desc = "数据层", range = "String类型 DCL,DML")
+    @Param(name = "file_id", desc = "表源属性id或表id", range = "String")
+    @Return(desc = "表信息Map", range = "表信息Map")
+    public static Map<String, Object> getTableInfoByFileId(String data_layer, String file_id) {
+        //初始化返回结果Map
+        Map<String, Object> tableInfoMap = new HashMap<>();
+        String table_id, table_name, table_ch_name, create_date;
+        //根据数据层获取不同层下的数据
+        DataSourceType dataSourceType = DataSourceType.ofEnumByCode(data_layer);
+        if (dataSourceType == DataSourceType.ISL) {
+            throw new BusinessException(data_layer + "层暂未实现!");
+        } else if (dataSourceType == DataSourceType.DCL) {
+            //获取表信息
+            Map<String, Object> table_info = DCLDataQuery.getDCLBatchTableInfo(file_id);
+            //校验查询结果集
+            if (table_info.isEmpty()) {
+                throw new BusinessException("表登记信息已经不存在!");
+            }
+            table_id = table_info.get("table_id").toString();
+            table_name = table_info.get("table_name").toString();
+            table_ch_name = table_info.get("table_ch_name").toString();
+            create_date = table_info.get("original_update_date").toString();
+        } else if (dataSourceType == DataSourceType.DPL) {
+            throw new BusinessException(data_layer + "层暂未实现!");
+        } else if (dataSourceType == DataSourceType.DML) {
+            //获取表信息
+            Dm_datatable dm_datatable = DMLDataQuery.getDMLTableInfo(file_id);
+            //校验查询结果集
+            if (StringUtil.isBlank(dm_datatable.getDatatable_id().toString())) {
+                throw new BusinessException("表登记信息已经不存在!");
+            }
+            table_id = dm_datatable.getDatatable_id().toString();
+            table_name = dm_datatable.getDatatable_en_name();
+            table_ch_name = dm_datatable.getDatatable_cn_name();
+            create_date = dm_datatable.getDatatable_create_date();
+        } else if (dataSourceType == DataSourceType.SFL) {
+            throw new BusinessException(data_layer + "层暂未实现!");
+        } else if (dataSourceType == DataSourceType.AML) {
+            throw new BusinessException(data_layer + "层暂未实现!");
+        } else if (dataSourceType == DataSourceType.DQC) {
+            //获取表信息
+            Dq_index3record dq_index3record = DQCDataQuery.getDQCTableInfo(file_id);
+            table_id = dq_index3record.getRecord_id().toString();
+            table_name = dq_index3record.getTable_name();
+            table_ch_name = dq_index3record.getTable_name();
+            create_date = dq_index3record.getRecord_date();
+        } else if (dataSourceType == DataSourceType.UDL) {
+            //获取UDL表信息
+            Dq_table_info dq_table_info = UDLDataQuery.getUDLTableInfo(file_id);
+            table_id = dq_table_info.getTable_id().toString();
+            table_name = dq_table_info.getTable_name();
+            table_ch_name = dq_table_info.getCh_name();
+            create_date = dq_table_info.getCreate_date();
+        } else {
+            throw new BusinessException("未找到匹配的数据层!" + data_layer);
+        }
+        //设置返回结果map
+        tableInfoMap.put("file_id", file_id);
+        tableInfoMap.put("table_id", table_id);
+        tableInfoMap.put("data_layer", data_layer);
+        tableInfoMap.put("table_name", table_name);
+        tableInfoMap.put("table_ch_name", table_ch_name);
+        tableInfoMap.put("create_date", create_date);
+        return tableInfoMap;
+    }
+
     @Method(desc = "获取表信息和表的字段信息",
             logicStep = "获取表信息和表的字段信息")
     @Param(name = "data_layer", desc = "数据层", range = "String类型 DCL,DML")
@@ -159,7 +227,8 @@ public class DataTableUtil {
             }
             col_info_s = table_column_list;
         } else if (dataSourceType == DataSourceType.UDL) {
-            throw new BusinessException(data_layer + "层暂未实现!");
+            //获取UDL表字段信息
+            col_info_s = UDLDataQuery.getUDLTableColumns(file_id);
         } else {
             throw new BusinessException("未找到匹配的数据层!" + data_layer);
         }
