@@ -708,7 +708,8 @@ public class AgentListAction extends BaseAction {
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	@Param(name = "is_download", range = "可以为空,默认为不下载", desc = "是否为数据字典下载", nullable = true, valueIfNull = "false")
-	public void sendJDBCCollectTaskById(long colSetId, String is_download) {
+	@Param(name = "etl_date", range = "不可为空", desc = "任务的跑批日期", nullable = true)
+	public void sendJDBCCollectTaskById(long colSetId, String is_download, String etl_date) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
 			Dbo.queryNumber(
@@ -987,21 +988,25 @@ public class AgentListAction extends BaseAction {
 		// return sourceDBConfObj.toJSONString();
 		// 3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
 		String methodName = AgentActionUtil.SENDJDBCCOLLECTTASKINFO;
+		// 立即执行的Agent接口
+		if (StringUtil.isNotBlank(etl_date)) {
+			methodName = AgentActionUtil.JDBCCOLLECTEXECUTEIMMEDIATELY;
+		}
+		//检查是否为下载
 		if (Boolean.parseBoolean(is_download)) {
 			methodName = AgentActionUtil.GETDICTIONARYJSON;
 		}
-		// TODO 前端调用这个方法应该传入跑批日期，作业调度同样
 		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
-		String dataDic = (String)SendMsgUtil.sendDBCollectTaskInfo(
+		String dataDic = (String) SendMsgUtil.sendDBCollectTaskInfo(
 			sourceDBConfObj.getLong("database_id"),
 			sourceDBConfObj.getLong("agent_id"),
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			DateUtil.getSysDate());
+			etl_date);
 
 		if (Boolean.parseBoolean(is_download)) {
-			responseFile("dd_json.json",dataDic.getBytes());
+			responseFile("dd_json.json", dataDic.getBytes());
 		}
 	}
 
@@ -1025,7 +1030,8 @@ public class AgentListAction extends BaseAction {
 				+ "       2-4-8、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息"
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
-	public void sendDBCollectTaskById(long colSetId) {
+	@Param(name = "etl_date", desc = "立即执行的跑批日期", range = "如果是立即执行时,此参数不可为空", nullable = true)
+	public void sendDBCollectTaskById(long colSetId, String etl_date) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
 			Dbo.queryNumber(
@@ -1342,7 +1348,10 @@ public class AgentListAction extends BaseAction {
 		// return sourceDBConfObj.toJSONString();
 		// 3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
 		String methodName = AgentActionUtil.SENDDBCOLLECTTASKINFO;
-		// TODO 前端调用这个方法应该传入跑批日期，作业调度同样
+		// TODO 前端调用这个方法应该传入跑批日期，作业调度同样, 只有在立即执行时此判断才会生效
+		if (StringUtil.isNotBlank(etl_date)) {
+			methodName = AgentActionUtil.DBCOLLECTEXECUTEIMMEDIATELY;
+		}
 		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
 		SendMsgUtil.sendDBCollectTaskInfo(
 			sourceDBConfObj.getLong("database_id"),
@@ -1350,7 +1359,7 @@ public class AgentListAction extends BaseAction {
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			DateUtil.getSysDate());
+			etl_date);
 	}
 
 	@Method(

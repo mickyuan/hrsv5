@@ -411,7 +411,6 @@ public class DBConfStepAction extends BaseAction {
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			//			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setCp_or(CLEANOBJ.toJSONString());
-			databaseSet.setIs_reg(IsFlag.Fou.getCode());
 			databaseSet.update(Dbo.db());
 		} else {
 			// 4、如果不存在，则新增信息
@@ -429,6 +428,7 @@ public class DBConfStepAction extends BaseAction {
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+			databaseSet.setIs_reg(IsFlag.Fou.getCode());
 			// 任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
 			databaseSet.setCp_or(CLEANOBJ.toJSONString());
 
