@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dfstage.service;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
@@ -11,6 +12,7 @@ import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.solr.ISolrOperator;
@@ -41,10 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +60,10 @@ public class ReadFileToSolr implements Callable<Long> {
 	private TableBean tableBean;
 	//文件对应存储的目的地信息
 	private DataStoreConfBean dataStoreConfBean;
+	//是否是追加
+	private boolean is_append;
+	//跑批日期
+	private String etl_date;
 
 	/**
 	 * 读取文件到数据库构造方法
@@ -80,6 +83,8 @@ public class ReadFileToSolr implements Callable<Long> {
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
 		this.tableBean = tableBean;
+		this.is_append = StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type());
+		this.etl_date = collectTableBean.getEtlDate();
 	}
 
 	@Method(desc = "执行读取文件batch提交到数据库的方法", logicStep = "")
@@ -87,12 +92,14 @@ public class ReadFileToSolr implements Callable<Long> {
 	public Long call() {
 		long count;
 		//获取solr的配置
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH
+				+ dataStoreConfBean.getDsl_name() + File.separator, true);
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		SolrParam solrParam = new SolrParam();
 		solrParam.setSolrUrl(data_store_connect_attr.get(StorageTypeKey.solr_url));
 		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
 		try (ISolrOperator os = SolrFactory.getInstance(PropertyParaUtil.
-				getString("solrclassname", ""), solrParam);
+				getString("solrclassname", ""), solrParam, configPath);
 		     SolrClient server = os.getServer()) {
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//取值的应该根据原来的类型来
@@ -214,8 +221,14 @@ public class ReadFileToSolr implements Callable<Long> {
 				doc.addField("tf-" + columnList.get(j), value);
 			} else {
 				if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(j))) {
-					doc.addField("id", collectTableBean.getHbase_name() + "_"
-							+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j)));
+					if (is_append) {
+						doc.addField("id", collectTableBean.getHbase_name() + "_"
+								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j)) + "_" + etl_date);
+					} else {
+						doc.addField("id", collectTableBean.getHbase_name() + "_"
+								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j)));
+					}
+
 				} else {
 					doc.addField("tf-" + columnList.get(j), ReadFileToDataBase.
 							getValue(typeList.get(j), valueList.get(j)));
@@ -223,8 +236,13 @@ public class ReadFileToSolr implements Callable<Long> {
 			}
 		}
 		if (isMd5) {
-			doc.addField("id", collectTableBean.getHbase_name() + "_"
-					+ MD5Util.md5String(sb.toString()));
+			if (is_append) {
+				doc.addField("id", collectTableBean.getHbase_name() + "_"
+						+ MD5Util.md5String(sb.toString()) + "_" + etl_date);
+			} else {
+				doc.addField("id", collectTableBean.getHbase_name() + "_"
+						+ MD5Util.md5String(sb.toString()));
+			}
 		}
 		docs.add(doc);
 		if (num % JobConstant.BUFFER_ROW == 0) {
@@ -298,8 +316,14 @@ public class ReadFileToSolr implements Callable<Long> {
 							doc.addField("tf-" + columnList.get(i), value);
 						} else {
 							if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(i))) {
-								doc.addField("id", collectTableBean.getHbase_name() + "_"
-										+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i)));
+								if (is_append) {
+									doc.addField("id", collectTableBean.getHbase_name() + "_"
+											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i))
+											+ "_" + etl_date);
+								} else {
+									doc.addField("id", collectTableBean.getHbase_name() + "_"
+											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i)));
+								}
 							} else {
 								doc.addField("tf-" + columnList.get(i),
 										ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i)));
@@ -307,8 +331,13 @@ public class ReadFileToSolr implements Callable<Long> {
 						}
 					}
 					if (isMd5) {
-						doc.addField("id", collectTableBean.getHbase_name() + "_"
-								+ MD5Util.md5String(sb.toString()));
+						if (is_append) {
+							doc.addField("id", collectTableBean.getHbase_name() + "_"
+									+ MD5Util.md5String(sb.toString()) + "_" + etl_date);
+						} else {
+							doc.addField("id", collectTableBean.getHbase_name() + "_"
+									+ MD5Util.md5String(sb.toString()));
+						}
 					}
 					docs.add(doc);
 				}
@@ -346,8 +375,14 @@ public class ReadFileToSolr implements Callable<Long> {
 						doc.addField("tf-" + columnList.get(j), value);
 					} else {
 						if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(j))) {
-							doc.addField("id", collectTableBean.getHbase_name() + "_"
-									+ ReadFileToDataBase.getParquetValue(typeList.get(j), line, columnList.get(j)));
+							if (is_append) {
+								doc.addField("id", collectTableBean.getHbase_name() + "_"
+										+ ReadFileToDataBase.getParquetValue(typeList.get(j), line,
+										columnList.get(j)) + "_" + etl_date);
+							} else {
+								doc.addField("id", collectTableBean.getHbase_name() + "_"
+										+ ReadFileToDataBase.getParquetValue(typeList.get(j), line, columnList.get(j)));
+							}
 						} else {
 							doc.addField("tf-" + columnList.get(j),
 									ReadFileToDataBase.getParquetValue(typeList.get(j), line, columnList.get(j)));
@@ -355,8 +390,13 @@ public class ReadFileToSolr implements Callable<Long> {
 					}
 				}
 				if (isMd5) {
-					doc.addField("id", collectTableBean.getHbase_name() + "_"
-							+ MD5Util.md5String(sb.toString()));
+					if (is_append) {
+						doc.addField("id", collectTableBean.getHbase_name() + "_"
+								+ MD5Util.md5String(sb.toString()) + "_" + etl_date);
+					} else {
+						doc.addField("id", collectTableBean.getHbase_name() + "_"
+								+ MD5Util.md5String(sb.toString()));
+					}
 				}
 				docs.add(doc);
 				if (num % JobConstant.BUFFER_ROW == 0) {

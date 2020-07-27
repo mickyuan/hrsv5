@@ -4,7 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import hrds.commons.exception.BusinessException;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.CommonVariables;
 
 import java.lang.reflect.Constructor;
@@ -13,47 +13,65 @@ import java.lang.reflect.Constructor;
 public class SolrFactory {
 
 
-    @Method(desc = "获取solr具体实现类实例", logicStep = "获取solr具体实现类实例")
-    @Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
-    public static ISolrOperator getInstance() {
-        return getInstance(CommonVariables.SOLR_IMPL_CLASS_NAME);
-    }
+	@Method(desc = "获取solr具体实现类实例", logicStep = "获取solr具体实现类实例")
+	@Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
+	public static ISolrOperator getInstance() {
+		return getInstance(CommonVariables.SOLR_IMPL_CLASS_NAME);
+	}
 
-    @Method(desc = "获取solr具体实现类实例", logicStep = "获取solr具体实现类实例,远程solr库")
-    @Param(name = "solrParam", desc = "连接远程solr库的url", range = "取值范围说明")
-    @Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
-    public static ISolrOperator getInstance(SolrParam solrParam) {
-        return getInstance(CommonVariables.SOLR_IMPL_CLASS_NAME, solrParam);
-    }
+	@Method(desc = "获取solr具体实现类实例", logicStep = "获取solr具体实现类实例,远程solr库")
+	@Param(name = "solrParam", desc = "连接远程solr库的url", range = "取值范围说明")
+	@Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
+	public static ISolrOperator getInstance(SolrParam solrParam) {
+		return getInstance(CommonVariables.SOLR_IMPL_CLASS_NAME, solrParam);
+	}
 
-    @Method(desc = "获取solr具体实现类实例",
-            logicStep = "获取solr具体实现类实例")
-    @Param(name = "className", desc = "实现类全名", range = "取值范围说明")
-    @Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
-    public static ISolrOperator getInstance(String className) {
-        ISolrOperator solr;
-        try {
-            solr = (ISolrOperator) Class.forName(className).newInstance();
-        } catch (Exception e) {
-            throw new BusinessException("初始化Solr实例实现类失败...！");
-        }
-        return solr;
-    }
+	@Method(desc = "获取solr具体实现类实例",
+			logicStep = "获取solr具体实现类实例")
+	@Param(name = "className", desc = "实现类全名", range = "取值范围说明")
+	@Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
+	public static ISolrOperator getInstance(String className) {
+		ISolrOperator solr;
+		try {
+			solr = (ISolrOperator) Class.forName(className).newInstance();
+		} catch (Exception e) {
+			throw new AppSystemException("初始化Solr实例实现类失败...！");
+		}
+		return solr;
+	}
 
-    @Method(desc = "获取solr具体实现类实例",
-            logicStep = "获取solr具体实现类实例")
-    @Param(name = "className", desc = "实现类全名", range = "实现类全名")
-    @Param(name = "solrParam", desc = "连接远程solr库的url", range = "url")
-    @Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
-    public static ISolrOperator getInstance(String ClassName, SolrParam solrParam) {
-        ISolrOperator solr;
-        try {
-            Class<?> cl = Class.forName(ClassName);
-            Constructor<?> cc = cl.getConstructor(SolrParam.class);
-            solr = (ISolrOperator) cc.newInstance(solrParam);
-        } catch (Exception e) {
-            throw new BusinessException("初始化Solr实例实现类失败...远程!");
-        }
-        return solr;
-    }
+	@Method(desc = "获取solr具体实现类实例",
+			logicStep = "获取solr具体实现类实例")
+	@Param(name = "className", desc = "实现类全名", range = "实现类全名")
+	@Param(name = "solrParam", desc = "连接远程solr库的url", range = "url")
+	@Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
+	public static ISolrOperator getInstance(String ClassName, SolrParam solrParam) {
+		ISolrOperator solr;
+		try {
+			Class<?> cl = Class.forName(ClassName);
+			Constructor<?> cc = cl.getConstructor(SolrParam.class);
+			solr = (ISolrOperator) cc.newInstance(solrParam);
+		} catch (Exception e) {
+			throw new AppSystemException("初始化Solr实例实现类失败...远程!", e);
+		}
+		return solr;
+	}
+
+	@Method(desc = "获取solr具体实现类实例",
+			logicStep = "获取solr具体实现类实例")
+	@Param(name = "className", desc = "实现类全名", range = "实现类全名")
+	@Param(name = "solrParam", desc = "连接远程solr库的url", range = "url")
+	@Param(name = "configPath", desc = "需要读取的配置文件所在的目录，包括认证文件等", range = "path")
+	@Return(desc = "solr具体实现类实例", range = "solr具体实现类实例")
+	public static ISolrOperator getInstance(String ClassName, SolrParam solrParam, String configPath) {
+		ISolrOperator solr;
+		try {
+			Class<?> cl = Class.forName(ClassName);
+			Constructor<?> cc = cl.getConstructor(SolrParam.class, String.class);
+			solr = (ISolrOperator) cc.newInstance(solrParam, configPath);
+		} catch (Exception e) {
+			throw new AppSystemException("初始化Solr实例实现类失败...远程!", e);
+		}
+		return solr;
+	}
 }

@@ -26,8 +26,12 @@ import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
+import hrds.commons.hadoop.solr.ISolrOperator;
+import hrds.commons.hadoop.solr.SolrFactory;
+import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
+import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.FileProgressMonitor;
 import hrds.commons.utils.jsch.SFTPChannel;
@@ -35,6 +39,7 @@ import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.solr.client.solrj.SolrClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,8 +170,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
 					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-//					LOGGER.info("DB文件采集数据上传进SOLR没有实现");
-					//没有hadoop客户端
+					clearSolrData(dataStoreConfBean);
+					//数据进solr
 					executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
 					exeBatchSolr(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
 							stageParamInfo.getTableBean());
@@ -185,6 +190,38 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		} finally {
 			if (executor != null)
 				executor.shutdown();
+		}
+	}
+
+	/**
+	 * 追加或者替换清理solr中的数据
+	 *
+	 * @param dataStoreConfBean 存储层配置
+	 */
+	private void clearSolrData(DataStoreConfBean dataStoreConfBean) {
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH
+				+ dataStoreConfBean.getDsl_name() + File.separator, true);
+		//获取solr的配置
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		SolrParam solrParam = new SolrParam();
+		solrParam.setSolrUrl(data_store_connect_attr.get(StorageTypeKey.solr_url));
+		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
+		try (ISolrOperator os = SolrFactory.getInstance(PropertyParaUtil.
+				getString("solrclassname", ""), solrParam, configPath);
+		     SolrClient server = os.getServer()) {
+			//判断是追加或者增量先清理表的数据
+			if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
+				String query = Constant.SDATENAME + ":" + collectTableBean.getEtlDate() +
+						" and table-name:" + collectTableBean.getHbase_name();
+				server.deleteByQuery(query);
+			} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
+				String query = "table-name:" + collectTableBean.getHbase_name();
+				server.deleteByQuery(query);
+			} else {
+				throw new AppSystemException("数据进solr不支持增量");
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("清理solr无效数据失败", e);
 		}
 	}
 

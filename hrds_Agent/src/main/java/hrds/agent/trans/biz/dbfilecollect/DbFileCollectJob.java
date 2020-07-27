@@ -12,6 +12,7 @@ import hrds.agent.job.biz.core.DataFileJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
@@ -82,7 +83,7 @@ public class DbFileCollectJob extends AgentBaseAction {
 			JobStatusInfoUtil.printJobStatusInfo(list);
 		} catch (Exception e) {
 			log.error(e);
-			throw new BusinessException("执行db文件采集入库任务失败:" + e.getMessage());
+			throw new AppSystemException("执行db文件采集入库任务失败:" + e.getMessage());
 		} finally {
 			if (executor != null)
 				executor.shutdown();

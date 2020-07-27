@@ -16,6 +16,7 @@ import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
@@ -97,7 +98,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 			JobStatusInfoUtil.printJobStatusInfo(list);
 		} catch (Exception e) {
 			log.error(e);
-			throw new BusinessException("执行数据库抽取任务失败:" + e.getMessage());
+			throw new AppSystemException("执行数据库抽取任务失败:" + e.getMessage());
 		} finally {
 			if (executor != null)
 				executor.shutdown();
