@@ -69,15 +69,17 @@ public class SolrOperatorImpl5_3_1 extends SolrOperatorImpl implements ISolrOper
 			setSecConfig();
 		}
 		try {
-			String collection;
-			if (solrParam != null && !StringUtil.isEmpty(solrParam.getCollection())) {
-				collection = solrParam.getCollection();
-			} else {
-				throw new AppSystemException("远程连接为空！！！");
+			if (StringUtil.isEmpty(solrParam.getCollection())) {
+				throw new AppSystemException("远程连接solr的collection为空！！！");
 			}
-			logger.info("zookeeper address:" + solrParam.getSolrUrl());
+			if (StringUtil.isEmpty(solrParam.getSolrUrl())) {
+				throw new AppSystemException("远程连接solr的solrUrl为空！！！");
+			}
+			String solrUrl = solrParam.getSolrUrl();
+			String collection = solrParam.getCollection();
+			logger.info("zookeeper address:" + solrUrl);
 			logger.info("collection's name:" + collection);
-			server$ = new CloudSolrClient(solrParam.getSolrUrl());
+			server$ = new CloudSolrClient(solrUrl);
 			server$.setDefaultCollection(collection);
 			server$.setZkClientTimeout(60000);
 			server$.setZkConnectTimeout(60000);
