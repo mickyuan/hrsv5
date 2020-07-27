@@ -17,6 +17,7 @@ import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.*;
@@ -808,20 +809,26 @@ public class DataStoreAction extends BaseAction {
 	@Return(desc = "返回根据存储层类型获取数据存储层配置属性key", range = "无限制")
 	public Map<String, Object> getDataLayerAttrKey(String store_type) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
+		Store_type.ofEnumByCode(store_type);
 		// 2.获取到存储层配置存储类型的所有key
 		Map<String, List<String>> storageKeys = StorageTypeKey.getFinallyStorageKeys();
 		// 3.获取文件属性的key
 		List<String> updateStorageKeys = StorageTypeKey.getUpdateFinallyStorageKeys();
-		try {
-			Store_type.ofEnumByCode(store_type);
-		} catch (Exception e) {
-			throw new BusinessException("根据该值找不到对应代码项值，请检查，store_type=" + store_type);
-		}
-		List<String> fileKey = new ArrayList<>();
-		List<String> jdbcKey = new ArrayList<>();
 		// 4.根据存储层类型获取数据存储层配置属性key并返回
 		List<String> keyList = storageKeys.get(store_type);
-		// 5.遍历判断是否包含文件属性key，分别返回文件属性key以及jdbc连接key
+		return getAttrKeyByIsFile(updateStorageKeys, keyList);
+	}
+
+	@Method(desc = "根据是否上传文件属性封装数据",
+			logicStep = "1.遍历判断是否包含文件属性key，分别返回文件属性key以及jdbc连接key" +
+					"2.封装返回配置属性key值")
+	@Param(name = "updateStorageKeys", desc = "文件属性的key", range = "无限制")
+	@Param(name = "keyList", desc = "数据存储层配置属性key", range = "无限制")
+	@Return(desc = "返回配置属性key值", range = "无限制")
+	private Map<String, Object> getAttrKeyByIsFile(List<String> updateStorageKeys, List<String> keyList) {
+		List<String> fileKey = new ArrayList<>();
+		List<String> jdbcKey = new ArrayList<>();
+		// 1.遍历判断是否包含文件属性key，分别返回文件属性key以及jdbc连接key
 		if (keyList != null) {
 			for (String key : keyList) {
 				if (updateStorageKeys.contains(key)) {
@@ -831,40 +838,55 @@ public class DataStoreAction extends BaseAction {
 				}
 			}
 		}
+		// 2.封装返回配置属性key值
 		Map<String, Object> keyMap = new HashMap<>();
 		keyMap.put("jdbcKey", jdbcKey);
 		keyMap.put("fileKey", fileKey);
 		return keyMap;
 	}
 
-	@Method(desc = "根据存储层类型、是否支持外部表、数据库类型获取数据存储层配置属性key",
+	@Method(desc = "获取支持外部表的属性key值", logicStep = "1.判断是否支持外部表" +
+			"2.获取到存储层配置存储类型的所有key" +
+			"3.获取文件属性的key" +
+			"4.获取支持外部表的配置属性key")
+	@Param(name = "store_type", desc = "存储层配置存储类型", range = "使用（Store_type）代码项")
+	@Param(name = "is_hadoopclient", desc = "是否支持外部表", range = "使用（IsFlag）代码项")
+	@Return(desc = "返回支持外部表的配置属性key", range = "无限制")
+	public Map<String, Object> getAttrKeyIsSupportExternalTable(String store_type, String is_hadoopclient) {
+		Store_type.ofEnumByCode(store_type);
+		// 1.判断是否支持外部表
+		if (IsFlag.ofEnumByCode(is_hadoopclient) != IsFlag.Shi) {
+			throw new BusinessException("是否支持外部表应该选是");
+		}
+		// 2.获取到存储层配置存储类型的所有key
+		Map<String, List<String>> storageKeys = StorageTypeKey.getFinallyStorageKeys();
+		// 3.获取文件属性的key
+		List<String> updateStorageKeys = StorageTypeKey.getUpdateFinallyStorageKeys();
+		List<String> keyList = storageKeys.get(store_type + "_" + IsFlag.Shi.getCode());
+		// 4.获取支持外部表的配置属性key
+		return getAttrKeyByIsFile(updateStorageKeys, keyList);
+	}
+
+	@Method(desc = "根据数据库类型获取数据存储层配置属性key",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
 					"2.获取到存储层配置存储类型的所有key" +
-					"3.判断是否支持外部表，如果支持返回外部表对应的属性key" +
-					"4.不支持外部表，返回不支持外部表对应的属性key")
+					"3.判断是否支持外部表，如果支持返回外部表对应的属性key")
 	@Param(name = "store_type", desc = "存储层配置存储类型", range = "使用（Store_type）代码项")
 	@Param(name = "is_hadoopclient", desc = "是否支持外部表", range = "使用（IsFlag）代码项")
 	@Param(name = "database_type", desc = "数据库类型", range = "使用（DatabaseType）代码项")
 	@Return(desc = "返回根据存储层类型获取数据存储层配置属性key", range = "无限制")
-	public List<String> getAttrKeyIsSupportExternalTable(String store_type, String is_hadoopclient,
-	                                                     String database_type) {
+	public List<String> getAttrKeyByDatabaseType(String store_type, String is_hadoopclient,
+	                                             String database_type) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
+		Store_type.ofEnumByCode(store_type);
+		DatabaseType.ofEnumByCode(database_type);
 		// 2.获取到存储层配置存储类型的所有key
 		Map<String, List<String>> storageKeys = StorageTypeKey.getFinallyStorageKeys();
-		try {
-			Store_type.ofEnumByCode(store_type);
-		} catch (Exception e) {
-			throw new BusinessException("根据该值找不到对应代码项值，请检查，store_type=" + store_type);
-		}
 		// 3.判断是否支持外部表，如果支持返回外部表对应的属性key
-		List<String> jdbcKey = null;
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(is_hadoopclient)) {
-			jdbcKey = storageKeys.get(database_type + "_" + IsFlag.Shi.getCode());
+			// 关系型数据库支持外部表获取属性key
+			return storageKeys.get(database_type + "_" + IsFlag.Shi.getCode());
 		}
-		// 4.不支持外部表，返回不支持外部表对应的属性key
-		if (jdbcKey == null) {
-			jdbcKey = storageKeys.get(store_type);
-		}
-		return jdbcKey;
+		return null;
 	}
 }

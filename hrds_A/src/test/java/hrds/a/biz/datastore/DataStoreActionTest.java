@@ -1674,54 +1674,51 @@ public class DataStoreActionTest extends WebBaseTestCase {
 	}
 
 	@Test
-	public void getAttrKeyIsSupportExternalTable() {
+	public void getAttrKeyByDatabaseType() {
 		// 1.正常的数据访问1，数据都正常
 		String bodyString = new HttpClient()
 				.addData("store_type", Store_type.DATABASE.getCode())
 				.addData("is_hadoopclient", IsFlag.Shi.getCode())
 				.addData("database_type", DatabaseType.Postgresql.getCode())
-				.post(getActionUrl("getAttrKeyIsSupportExternalTable"))
+				.post(getActionUrl("getAttrKeyByDatabaseType"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
-//		bodyString = new HttpClient()
-//				.addData("store_type", Store_type.HIVE.getCode())
-//				.post(getActionUrl("getAttrKeyIsSupportExternalTable"))
-//				.getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//		assertThat(ar.isSuccess(), is(true));
-//		bodyString = new HttpClient()
-//				.addData("store_type", Store_type.DATABASE.getCode())
-//				.post(getActionUrl("getAttrKeyIsSupportExternalTable"))
-//				.getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//		assertThat(ar.isSuccess(), is(true));
-//		bodyString = new HttpClient()
-//				.addData("store_type", Store_type.HIVE.getCode())
-//				.post(getActionUrl("getAttrKeyIsSupportExternalTable"))
-//				.getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//		assertThat(ar.isSuccess(), is(true));
-//		// 2.错误的数据访问1，store_type为空
-//		bodyString = new HttpClient()
-//				.addData("store_type", "")
-//				.post(getActionUrl("getAttrKeyIsSupportExternalTable"))
-//				.getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//		assertThat(ar.isSuccess(), is(false));
-//		// 3.错误的数据访问2，store_type不存在
-//		bodyString = new HttpClient()
-//				.addData("store_type", "11")
-//				.post(getActionUrl("getAttrKeyIsSupportExternalTable"))
-//				.getBodyString();
-//		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-//				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
-//		assertThat(ar.isSuccess(), is(false));
+		List<String> keyList = ar.getDataForEntityList(String.class);
+		List<String> psqlKeyList = StorageTypeKey.getFinallyStorageKeys()
+				.get(DatabaseType.Postgresql.getCode() + "_" + IsFlag.Shi.getCode());
+		assertThat(keyList.containsAll(psqlKeyList), is(true));
+		// 2.错误的数据访问1，store_type不存在
+		bodyString = new HttpClient()
+				.addData("store_type", "111")
+				.addData("is_hadoopclient", IsFlag.Shi.getCode())
+				.addData("database_type", DatabaseType.Postgresql.getCode())
+				.post(getActionUrl("getAttrKeyByDatabaseType"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，is_hadoopclient不存在
+		bodyString = new HttpClient()
+				.addData("store_type", Store_type.DATABASE.getCode())
+				.addData("is_hadoopclient", "3")
+				.addData("database_type", DatabaseType.Postgresql.getCode())
+				.post(getActionUrl("getAttrKeyByDatabaseType"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，database_type不存在
+		bodyString = new HttpClient()
+				.addData("store_type", Store_type.DATABASE.getCode())
+				.addData("is_hadoopclient", IsFlag.Shi.getCode())
+				.addData("database_type", "111")
+				.post(getActionUrl("getAttrKeyByDatabaseType"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	@Method(desc = "测试完删除测试数据",
