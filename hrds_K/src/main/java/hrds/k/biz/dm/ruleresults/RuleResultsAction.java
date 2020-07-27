@@ -91,6 +91,9 @@ public class RuleResultsAction extends BaseAction {
             asmSql.addLikeParam(" cast(t1.reg_num as varchar(100))",
                     '%' + ruleResultSearchBean.getReg_num() + '%');
         }
+        if (null != ruleResultSearchBean.getCase_type() && ruleResultSearchBean.getCase_type().length > 0) {
+            asmSql.addORParam("t1.case_type", ruleResultSearchBean.getCase_type());
+        }
         if (null != ruleResultSearchBean.getExec_mode() && ruleResultSearchBean.getExec_mode().length > 0) {
             asmSql.addORParam("t1.exec_mode", ruleResultSearchBean.getExec_mode());
         }
