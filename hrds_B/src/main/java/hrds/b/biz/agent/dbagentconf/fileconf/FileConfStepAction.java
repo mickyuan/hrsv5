@@ -139,7 +139,7 @@ public class FileConfStepAction extends BaseAction {
 
 			FileFormat fileFormat = FileFormat.ofEnumByCode(def.getDbfile_format());
 			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang || fileFormat == FileFormat.CSV) {
+				|| fileFormat == FileFormat.FeiDingChang) {
 				// 检查行分隔符不能为空
 				String row_separator = def.getRow_separator();
 				if (StringUtil.isBlank(row_separator)) {
