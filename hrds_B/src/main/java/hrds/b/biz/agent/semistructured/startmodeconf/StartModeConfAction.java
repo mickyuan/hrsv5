@@ -254,56 +254,60 @@ public class StartModeConfAction extends BaseAction {
 						+ " WHERE t1.etl_sys_cd = t2.etl_sys_cd "
 						+ " AND t1.sub_sys_cd = t2.sub_sys_cd AND t1.odc_id = ?)",
 				odc_id);
-		for (JobStartConf jobStartConf : jobStartConfs) {
+		for (Etl_job_def etl_job_def : etlJobDefs) {
+			Validator.notBlank(etl_job_def.getEtl_job(), "作业名称不能为空!!!");
+			Validator.notBlank(etl_job_def.getEtl_sys_cd(), "工程编号不能为空!!!");
+			Validator.notBlank(etl_job_def.getSub_sys_cd(), "任务编号不能为空!!!");
+			Validator.notBlank(etl_job_def.getPro_type(), "作业程序类型不能为空!!!");
 			// 3.检查作业系统参数的作业程序目录，不存在则添加
-			EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), jobStartConf.getEtl_sys_cd(), Constant.PARA_HYRENBIN,
-					jobStartConf.getPro_dic() + File.separator);
+			EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), etl_job_def.getEtl_sys_cd(), Constant.PARA_HYRENBIN,
+					etl_job_def.getPro_dic() + File.separator);
 			// 4.检查作业系统参数的作业日志是否存在，不存在则添加
-			EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), jobStartConf.getEtl_sys_cd(), Constant.PARA_HYRENLOG,
-					jobStartConf.getLog_dic());
+			EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), etl_job_def.getEtl_sys_cd(), Constant.PARA_HYRENLOG,
+					etl_job_def.getLog_dic());
 			// 5.默认增加一个资源类型,先检查是否存在,不存在则添加
-			EtlJobUtil.setDefaultEtlResource(Dbo.db(), jobStartConf.getEtl_sys_cd());
+			EtlJobUtil.setDefaultEtlResource(Dbo.db(), etl_job_def.getEtl_sys_cd());
 			// 6.获取作业资源关系信息
-			List<String> jobResource = EtlJobUtil.getJobResource(Dbo.db(), jobStartConf.getEtl_sys_cd());
+			List<String> jobResource = EtlJobUtil.getJobResource(Dbo.db(), etl_job_def.getEtl_sys_cd());
 			// 7.先获取当前作业调度工程任务下的作业名称
-			List<String> etlJobList = EtlJobUtil.getEtlJob(Dbo.db(), jobStartConf.getEtl_sys_cd(),
-					jobStartConf.getSub_sys_cd());
-			for (Etl_job_def etl_job_def : etlJobDefs) {
-				Validator.notBlank(etl_job_def.getEtl_job(), "作业名称不能为空!!!");
-				// 作业的程序路径
-				etl_job_def.setPro_dic(jobStartConf.getPro_dic() + File.separator);
-				// 作业的日志程序路径
-				etl_job_def.setLog_dic(Constant.HYRENLOG);
-				// 默认作业都是有效的
-				etl_job_def.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
-				// 默认当天调度作业信息
-				etl_job_def.setToday_disp(Today_Dispatch_Flag.YES.getCode());
-				// 作业的更新信息时间
-				etl_job_def.setUpd_time(
-						DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
-								+ " "
-								+ DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
+			List<String> etlJobList = EtlJobUtil.getEtlJob(Dbo.db(), etl_job_def.getEtl_sys_cd(),
+					etl_job_def.getSub_sys_cd());
+			// 作业的程序路径
+			etl_job_def.setPro_dic(etl_job_def.getPro_dic() + File.separator);
+			// 作业的日志程序路径
+			etl_job_def.setLog_dic(Constant.HYRENLOG);
+			// 默认作业都是有效的
+			etl_job_def.setJob_eff_flag(Job_Effective_Flag.YES.getCode());
+			// 默认当天调度作业信息
+			etl_job_def.setToday_disp(Today_Dispatch_Flag.YES.getCode());
+			// 作业的更新信息时间
+			etl_job_def.setUpd_time(
+					DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate())
+							+ " "
+							+ DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
 
-				// 8.检查表名是否存在,存在更新，不存在新增
-				if (etlJobList.contains(etl_job_def.getEtl_job())) {
-					try {
-						etl_job_def.update(Dbo.db());
-					} catch (Exception e) {
-						if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
-							throw new BusinessException(e.getMessage());
-						}
+			// 8.检查表名是否存在,存在更新，不存在新增
+			if (etlJobList.contains(etl_job_def.getEtl_job())) {
+				try {
+					etl_job_def.update(Dbo.db());
+				} catch (Exception e) {
+					if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+						throw new BusinessException(e.getMessage());
 					}
-				} else {
-					// 新增
-					etl_job_def.add(Dbo.db());
 				}
+			} else {
+				// 新增
+				etl_job_def.add(Dbo.db());
+			}
+			// 10.对每个采集作业定义资源分配 ,检查作业所需资源是否存在,如果存在则跳过
+			EtlJobUtil.setEtl_job_resource_rela(Dbo.db(), etl_job_def.getEtl_sys_cd(), etl_job_def,
+					jobResource);
+			// 11.获取对象作业关系信息
+			List<String> relationEtl = getObjRelationEtl(odc_id);
+			for (JobStartConf jobStartConf : jobStartConfs) {
 				// 9.保存每个作业的上游依赖关系
-				saveEtlDependencies(jobStartConf.getEtl_sys_cd(), jobStartConf.getEtl_job(),
+				saveEtlDependencies(etl_job_def.getEtl_sys_cd(), jobStartConf.getEtl_job(),
 						jobStartConf.getPre_etl_job());
-				// 10.对每个采集作业定义资源分配 ,检查作业所需资源是否存在,如果存在则跳过
-				EtlJobUtil.setEtl_job_resource_rela(Dbo.db(), jobStartConf.getEtl_sys_cd(), etl_job_def, jobResource);
-				// 11.获取对象作业关系信息
-				List<String> relationEtl = getObjRelationEtl(odc_id);
 				// 12.保存对象作业关系表,检查作业名称是否存在,如果存在则更新,反之新增
 				addObjRelationEtl(etl_job_def, relationEtl, jobStartConf, odc_id);
 			}
@@ -328,6 +332,8 @@ public class StartModeConfAction extends BaseAction {
 			Obj_relation_etl obj_relation_etl = new Obj_relation_etl();
 			BeanUtils.copyProperties(jobStartConf, obj_relation_etl);
 			obj_relation_etl.setOdc_id(odc_id);
+			obj_relation_etl.setEtl_sys_cd(etl_job_def.getEtl_sys_cd());
+			obj_relation_etl.setSub_sys_cd(etl_job_def.getSub_sys_cd());
 			obj_relation_etl.add(Dbo.db());
 		}
 	}
