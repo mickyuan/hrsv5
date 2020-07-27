@@ -305,7 +305,7 @@ public class StartModeConfAction extends BaseAction {
 				// 11.获取对象作业关系信息
 				List<String> relationEtl = getObjRelationEtl(odc_id);
 				// 12.保存对象作业关系表,检查作业名称是否存在,如果存在则更新,反之新增
-				setObjRelationEtl(etl_job_def, relationEtl, etlJobList, jobStartConf, odc_id);
+				addObjRelationEtl(etl_job_def, relationEtl, jobStartConf, odc_id);
 			}
 			// 13.把是否发送状态改为是，表示为当前的配置任务完成
 			DboExecute.updatesOrThrow(
@@ -315,24 +315,15 @@ public class StartModeConfAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "保存作业所需的资源信息", logicStep = "1.获取差集,删除的作业" +
-			"2.判断当前的作业信息是否存在,如果不存在则添加")
-	@Param(name = "etlJobList", desc = "当前作业调度工程任务下的作业名称集合", range = "无限制")
-	@Param(name = "etl_job_def", desc = "作业资源的信息集合", range = "不可为空", isBean = true)
+	@Method(desc = "保存作业所需的资源信息", logicStep = "1.判断当前的作业信息是否存在,如果不存在则添加")
+	@Param(name = "etl_job_def", desc = "作业实体对象", range = "不可为空", isBean = true)
 	@Param(name = "relationEtl", desc = "对象作业关系信息集合", range = "可为空")
 	@Param(name = "obj_relation_etl", desc = "对象作业关系表实体对象", range = "与数据库对应表字段规则一致",
 			isBean = true)
 	@Param(name = "odc_id", desc = "采集任务ID", range = "新增半结构化采集配置时生成")
-	private void setObjRelationEtl(Etl_job_def etl_job_def, List<String> relationEtl,
-	                               List<String> etlJobList, JobStartConf jobStartConf, long odc_id) {
-		// 1.获取差集,删除不存在的作业
-		List<String> reduceDeleteList = relationEtl.stream().filter(item -> !etlJobList.contains(item))
-				.collect(Collectors.toList());
-		reduceDeleteList.forEach(etl_job ->
-				Dbo.execute("delete from " + Obj_relation_etl.TableName
-								+ " where etl_job =? and ocs_id=?",
-						etl_job, jobStartConf.getOcs_id()));
-		// 2.判断当前的作业信息是否存在,如果不存在则添加
+	private void addObjRelationEtl(Etl_job_def etl_job_def, List<String> relationEtl,
+	                               JobStartConf jobStartConf, long odc_id) {
+		// 1.判断当前的作业信息是否存在,如果不存在则添加
 		if (!relationEtl.contains(etl_job_def.getEtl_job())) {
 			Obj_relation_etl obj_relation_etl = new Obj_relation_etl();
 			BeanUtils.copyProperties(jobStartConf, obj_relation_etl);
@@ -347,9 +338,10 @@ public class StartModeConfAction extends BaseAction {
 	private List<String> getObjRelationEtl(long odc_id) {
 		return Dbo.queryOneColumnList(
 				"SELECT t1.etl_job FROM " + Obj_relation_etl.TableName + " t1 JOIN "
-						+ Object_collect.TableName + " t2 ON t1.odc_id = t2.odc_id JOIN "
-						+ Agent_info.TableName + " t3 ON t2.agent_id = t3.agent_id JOIN "
-						+ Data_source.TableName + " t4 ON t3.source_id = t3.source_id"
+						+ Object_collect_task.TableName + " t2 ON t1.ocs_id = t2.ocs_id JOIN "
+						+ Object_collect.TableName + " t3 ON t2.odc_id = t3.odc_id JOIN "
+						+ Agent_info.TableName + " t4 ON t3.agent_id = t4.agent_id JOIN "
+						+ Data_source.TableName + " t5 ON t4.source_id = t5.source_id"
 						+ " WHERE t2.odc_id = ?", odc_id);
 	}
 

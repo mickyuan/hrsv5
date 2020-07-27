@@ -123,6 +123,7 @@ public class CollectConfAction extends BaseAction {
 			isObjNumberExist(object_collect.getObj_number());
 			// 新增
 			object_collect.setOdc_id(PrimayKeyGener.getNextId());
+			object_collect.setIs_sendok(IsFlag.Fou.getCode());
 			object_collect.add(Dbo.db());
 		} else {
 			// 4.2 更新
