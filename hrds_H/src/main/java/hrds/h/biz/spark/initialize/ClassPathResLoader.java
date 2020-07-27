@@ -8,7 +8,6 @@ import java.net.URLClassLoader;
 public class ClassPathResLoader {
 
 	private static Method addURL = initAddMethod();
-	private static URLClassLoader classloader = (URLClassLoader)ClassLoader.getSystemClassLoader();
 
 	/** 
 	    * 初始化addUrl 方法.
@@ -76,13 +75,13 @@ public class ClassPathResLoader {
 
 	/**
 	 * 通过filepath加载文件到classpath。
-	 * @param filePath 文件路径
 	 * @return URL
 	 * @throws Exception 异常
 	 */
 	private static void addURL(File file) {
 
 		try {
+			URLClassLoader classloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
 			addURL.invoke(classloader, new Object[] { file.toURI().toURL() });
 		}
 		catch(Exception e) {
