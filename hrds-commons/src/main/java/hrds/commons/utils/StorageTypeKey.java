@@ -96,7 +96,8 @@ public class StorageTypeKey {
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode(), hiveKeys);
 
 		List<String> hbaseKeys = new ArrayList<>(Arrays.
-				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5, increment_engine));
+				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5, increment_engine, database_driver,
+						jdbc_url, user_name, database_pwd, database_name));
 		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
 		List<String> solrKeys = new ArrayList<>(Arrays.asList(solr_url, collection));
