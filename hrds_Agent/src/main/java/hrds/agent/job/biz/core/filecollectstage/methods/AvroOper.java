@@ -14,8 +14,6 @@ import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
-import hrds.commons.utils.PathUtil;
-import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.ReadFileUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -56,12 +54,6 @@ public class AvroOper {
 			+ "is_increasement" + "\",\"type\":\"string\"}," + "{\"name\":\"" + "is_cache" + "\",\"type\":\"string\"}" + "]}";
 	//Avro文件的SCHEMA
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
-	//大文件的阈值，超过此大小则认为是大文件，默认为25M
-	private static final long THRESHOLD_FILE_SIZE = Long.valueOf(PropertyParaUtil.getString("thresholdFileSize", "26214400"));
-	//设定单个Avro文件带下的阈值 默认为128M
-	private static final long SINGLE_AVRO_SIZE = Long.valueOf(PropertyParaUtil.getString("singleAvroSize", "134217728"));
-	//solr中摘要获取行数，默认获取前3行
-	private static final int SUMVOL = Integer.valueOf(PropertyParaUtil.getString("summary_volumn", "3"));
 	//文件采集传递参数的实体
 	private FileCollectParamBean fileCollectParamBean;
 	//文件采集的监听器
@@ -84,9 +76,8 @@ public class AvroOper {
 		this.fileNameHTreeMap = fileNameHTreeMap;
 		//XXX 下面这个方法改造，不能直接对数据库进行操作
 		collectionWatcher = new CollectionWatcher(fileCollectParamBean);
-		fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
-				"/hrds") + File.separator + DataSourceType.DCL.getCode() + File.separator +
-				fileCollectParamBean.getFcs_id() + File.separator
+		fileCollectHdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator +
+				DataSourceType.DCL.getCode() + File.separator + fileCollectParamBean.getFcs_id() + File.separator
 				+ fileCollectParamBean.getFile_source_id() + File.separator, true);
 		bigFileCollectHdfsPath = FileNameUtils.normalize(fileCollectHdfsPath +
 				File.separator + BIGFILENAME + File.separator, true);
@@ -133,7 +124,7 @@ public class AvroOper {
 			}
 			//记录该文件在Avro中的块号，为今后方便查找该文件
 			record.put("file_avro_block", syncBlock);
-			if (file.length() > THRESHOLD_FILE_SIZE) {
+			if (file.length() > JobConstant.THRESHOLD_FILE_SIZE) {
 				String bigFileHdfs = bigFileCollectHdfsPath + fileName;
 				//如果是大文件，就是大文件所在的路径加文件名称
 				record.put("file_avro_path", bigFileHdfs);
@@ -156,7 +147,7 @@ public class AvroOper {
 				String text = ReadFileUtil.file2String(file);
 				try {
 					record.put("file_summary", normalizeSummary(TextRankSentence.
-							getTopSentenceList(text, SUMVOL).toString()));
+							getTopSentenceList(text, JobConstant.SUMMARY_VOLUMN).toString()));
 				} catch (OutOfMemoryError e) {
 					record.put("file_summary", file.getName());
 				}
@@ -238,7 +229,7 @@ public class AvroOper {
 			if (files.size() > 0) {
 				for (String filePath : files) {
 					//控制avro文件大小第一次运行或者avro文件大小已经达到阈值会进入此条件
-					if (avroFileTotalSize > SINGLE_AVRO_SIZE || avroFileTotalSize == 0L) {
+					if (avroFileTotalSize > JobConstant.SINGLE_AVRO_SIZE || avroFileTotalSize == 0L) {
 						avroFileTotalSize = 0L;
 					/*关闭writer和outputStream，每写一个SINGLE_AVRO_SIZE大小的avro
 					文件需要重新创建一个writer和outputStream对象。*/

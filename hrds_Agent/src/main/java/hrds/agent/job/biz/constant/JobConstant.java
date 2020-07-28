@@ -22,6 +22,15 @@ public class JobConstant {
 	//判断文件变化的类型是否是MD5
 	public static final boolean FILECHANGESTYPEMD5 = "MD5".equals(PropertyParaUtil.getString(
 			"determineFileChangesType", ""));
+	//文件采集进solr摘要获取行数，默认获取前3行
+	public static final int SUMMARY_VOLUMN = Integer.valueOf(PropertyParaUtil.getString("summary_volumn",
+			"3"));
+	//文件采集设定单个Avro文件带下的阈值 默认为128M
+	public static final long SINGLE_AVRO_SIZE = Long.valueOf(PropertyParaUtil.getString("singleAvroSize",
+			"134217728"));
+	//文件采集大文件的阈值，超过此大小则认为是大文件，默认为25M
+	public static final long THRESHOLD_FILE_SIZE = Long.valueOf(PropertyParaUtil.getString("thresholdFileSize",
+			"26214400"));
 	//文件上传到hdfs的顶层目录
 	public static final String PREFIX = PropertyParaUtil.getString("pathprefix", "/hrds");
 	//是否添加isAddOperateInfo
@@ -33,5 +42,11 @@ public class JobConstant {
 	//多线程指定线程池的默认线程数
 	public static final int AVAILABLEPROCESSORS = Integer.parseInt(PropertyParaUtil.getString("availableProcessors",
 			String.valueOf(Runtime.getRuntime().availableProcessors())));
+	//solr进数的实现类
+	public static final String SOLRCLASSNAME = PropertyParaUtil.getString("solrclassname", "");
+	//XXX 文件采集进solr没做选择存储层临时使用
+	public static final String SOLRZKHOST = PropertyParaUtil.getString("zkHost", "");
+	//XXX 文件采集进solr没做选择存储层临时使用
+	public static final String SOLRCOLLECTION = PropertyParaUtil.getString("collection", "");
 }
 

@@ -5,6 +5,7 @@ import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
@@ -16,7 +17,6 @@ import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
-import hrds.commons.utils.PropertyParaUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -349,10 +349,9 @@ public class AvroBeanProcess {
 		int count = 0;
 		int commitNumber = 500;
 		SolrParam solrParam = new SolrParam();
-		solrParam.setSolrUrl(PropertyParaUtil.getString("zkHost",""));
-		solrParam.setCollection(PropertyParaUtil.getString("collection",""));
-		try (ISolrOperator os = SolrFactory.getInstance(PropertyParaUtil.
-				getString("solrclassname", ""),solrParam)) {
+		solrParam.setSolrUrl(JobConstant.SOLRZKHOST);
+		solrParam.setCollection(JobConstant.SOLRCOLLECTION);
+		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam)) {
 			SolrClient server = os.getServer();
 			List<SolrInputDocument> docs = new ArrayList<>();
 			SolrInputDocument doc;

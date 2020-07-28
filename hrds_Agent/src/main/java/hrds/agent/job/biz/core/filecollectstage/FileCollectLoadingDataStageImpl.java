@@ -15,7 +15,6 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import hrds.commons.hadoop.utils.BatchShell;
 import hrds.commons.utils.MapDBHelper;
-import hrds.commons.utils.PropertyParaUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,8 +42,7 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 		this.mapDBHelper = mapDBHelper;
 		this.fileNameHTreeMap = fileNameHTreeMap;
 		this.fileCollectParamBean = paramBean;
-		String fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
-				"/hrds") + File.separator + DataSourceType.DCL.getCode() + File.separator + paramBean.getFcs_id()
+		String fileCollectHdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator + DataSourceType.DCL.getCode() + File.separator + paramBean.getFcs_id()
 				+ File.separator + paramBean.getFile_source_id() + File.separator + BIGFILENAME, true);
 		if (JobConstant.HAS_HADOOP_ENV) {
 			//创建hdfs文件夹

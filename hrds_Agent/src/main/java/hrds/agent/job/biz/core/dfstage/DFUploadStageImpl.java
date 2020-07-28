@@ -31,7 +31,6 @@ import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.FileProgressMonitor;
 import hrds.commons.utils.jsch.SFTPChannel;
@@ -206,8 +205,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		SolrParam solrParam = new SolrParam();
 		solrParam.setSolrUrl(data_store_connect_attr.get(StorageTypeKey.solr_url));
 		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
-		try (ISolrOperator os = SolrFactory.getInstance(PropertyParaUtil.
-				getString("solrclassname", ""), solrParam, configPath);
+		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam, configPath);
 		     SolrClient server = os.getServer()) {
 			//判断是追加或者增量先清理表的数据
 			if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
