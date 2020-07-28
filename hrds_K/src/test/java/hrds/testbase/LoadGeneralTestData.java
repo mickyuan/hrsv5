@@ -517,7 +517,7 @@ public class LoadGeneralTestData {
         Data_store_reg dsr;
         for (Table_info tableInfo : table_infos) {
             dsr = new Data_store_reg();
-            dsr.setFile_id(String.valueOf(PrimayKeyGener.getNextId()));
+            dsr.setFile_id(String.valueOf(tableInfo.getTable_id()));
             dsr.setCollect_type(AgentType.DBWenJian.getCode());
             dsr.setOriginal_update_date(DateUtil.getSysDate());
             dsr.setOriginal_update_time(DateUtil.getSysTime());
