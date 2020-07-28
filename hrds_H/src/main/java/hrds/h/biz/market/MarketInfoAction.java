@@ -157,7 +157,6 @@ public class MarketInfoAction extends BaseAction {
 					"4.保存data_source信息")
 	@Param(name = "dm_info", desc = "Dm_info整表bean信息", range = "与Dm_info表字段规则一致",
 			isBean = true)
-	@Param(name = "dmCategories", desc = "集市分类实体对象数组", range = "与数据库表字段规则一致", isBean = true)
 	public long addMarket(Dm_info dm_info) {
 		//1.检查数据合法性
 		String mart_name = dm_info.getMart_name();
