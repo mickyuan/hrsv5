@@ -14,21 +14,21 @@ import java.util.Map;
 /**
  * 本类获取数据库sys_para中的数据，将数据一次性加载到内存中 ，如果配置修改了，必须重新启动
  */
-    public class PropertyParaValue {
+public class PropertyParaValue {
     private static final Logger logger = LogManager.getLogger(PropertyParaValue.class.getName());
     private static Map<String, String> mapParaType;
 
-    /**
+    /*
      * 根据类型，将参数表中的数据全部加载到内存中，以key为map的key，因为key不可能重复
      *
      * 1、通过sql查询出参数类型的数据
      * 2、将数据加载到静态块的map中
      */
     static {
-        mapParaType = new HashMap<String, String>();
+        mapParaType = new HashMap<>();
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             //1、通过sql查询出参数类型的数据
-            List<Sys_para> sys_paras = SqlOperator.queryList(db, Sys_para.class, "select para_name,para_value from sys_para where para_type = ?", "server.properties");
+            List<Sys_para> sys_paras = SqlOperator.queryList(db, Sys_para.class, "select para_name,para_value from " + Sys_para.TableName);
             for (Sys_para sys_para : sys_paras) {
                 String para_name = sys_para.getPara_name();
                 String para_value = sys_para.getPara_value();
@@ -113,7 +113,7 @@ import java.util.Map;
     public static double getDouble(String name, double defaultValue) {
 
         try {
-            return Double.valueOf(mapParaType.get(name)).doubleValue();
+            return Double.parseDouble(mapParaType.get(name));
         } catch (Exception e) {
             return defaultValue;
         }
