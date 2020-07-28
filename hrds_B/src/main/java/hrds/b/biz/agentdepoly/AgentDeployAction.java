@@ -14,6 +14,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Data_source;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.AgentDeploy;
@@ -155,7 +156,8 @@ public class AgentDeployAction extends BaseAction {
 		try {
 			deployFinalDir = AgentDeploy.agentConfDeploy(agent_down_info, oldAgentDir, oldLogPath);
 		} catch (Exception e) {
-			throw new BusinessException(e.getMessage());
+			throw new AppSystemException(e);
+//			throw new BusinessException(e.getMessage());
 		}
 
 		agent_down_info.setAi_desc(deployFinalDir);

@@ -26,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.omg.CORBA.Object;
 
 @DocClass(desc = "定义启动方式Action测试类", author = "Mr.Lee")
 public class StartWayConfActionTest extends WebBaseTestCase {
