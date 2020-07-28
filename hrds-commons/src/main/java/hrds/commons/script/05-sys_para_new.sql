@@ -1,4 +1,4 @@
-﻿delete from sys_para where 1==1;
+﻿truncate table sys_para;
 -- 系统配置
 INSERT INTO sys_para VALUES ('1', 'sys_Name', '海云数服', 'system.properties', '系统名称最多输入8个字');
 INSERT INTO sys_para VALUES ('2', 'logo_img', 'hyrenlogo.png', 'system.properties', '系统logo图片名称');
