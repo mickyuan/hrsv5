@@ -79,7 +79,7 @@ public enum UserType {
 	/**数据存储层定义<ShuJunCunChuCengDingYi>  */
 	ShuJunCunChuCengDingYi("95","数据存储层定义","17","用户类型"),
 	/**版本管理<BanBenGuanLi>  */
-	BanBenGuanLi("96","版本管理","17","用户类型");
+	BanBenGuanLi("94","版本管理","17","用户类型");
 
 	private final String code;
 	private final String value;

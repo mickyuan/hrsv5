@@ -110,7 +110,7 @@ INSERT INTO CODE_INFO  VALUES ('98', '17', '用户类型', '部门管理', 'User
 INSERT INTO CODE_INFO  VALUES ('97', '17', '用户类型', '系统参数管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('96', '17', '用户类型', '数据整理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('95', '17', '用户类型', '数据存储层定义', 'UserType');
-INSERT INTO CODE_INFO  VALUES ('96', '17', '用户类型', '版本管理', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('94', '17', '用户类型', '版本管理', 'UserType');
 --　本引用值的代码个数:2 -------i==14
 delete from code_info where ci_sp_class='18';
 INSERT INTO CODE_INFO  VALUES ('1', '18', '是否标识', '是', 'IsFlag');
