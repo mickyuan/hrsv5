@@ -149,8 +149,8 @@ public class SysUserAction extends BaseAction {
           UserType.ZuoYeCaoZuoYuan.getCode(),
           UserType.ShuJuKSHGuanLiYuan.getCode(),
           UserType.JiQiXueXiYongHu.getCode(),
-          UserType.ShuJuDuiBiaoGuanLi.getCode(),
-          UserType.ShuJuDuiBiaoCaoZuo.getCode(),
+          UserType.BiaoZhunYuanGuanLi.getCode(),
+          UserType.BiaoZhunYuanChaKan.getCode(),
           UserType.ZiYuanGuanLi.getCode()
         };
     asmSql.clean();
@@ -205,7 +205,7 @@ public class SysUserAction extends BaseAction {
       //      menuList.add(UserType.LiuShuJuGuanLiYuan.getCode());
       //      menuList.add(UserType.ShuJuKuPeiZhi.getCode());
       //      menuList.add(UserType.ZiZhuFenXiGuanLi.getCode());
-      menuList.add(UserType.ShuJuDuiBiaoGuanLi.getCode());
+      menuList.add(UserType.BiaoZhunYuanGuanLi.getCode());
     } else if (IsFlag.Shi.getCode().equalsIgnoreCase(userIsAdmin)) {
       // 2.操作员功能菜单
       menuList.add(UserType.CaiJiYongHu.getCode());
@@ -222,7 +222,7 @@ public class SysUserAction extends BaseAction {
       //      menuList.add(UserType.LiuShuJuXiaoFeiYongHu.getCode());
       menuList.add(UserType.ShuJuGuanKongGuanLiYuan.getCode());
       //      menuList.add(UserType.ZiZhuFenXiCaoZuo.getCode());
-      menuList.add(UserType.ShuJuDuiBiaoCaoZuo.getCode());
+      menuList.add(UserType.BiaoZhunYuanChaKan.getCode());
       menuList.add(UserType.ZiYuanGuanLi.getCode());
     }
     // 3.返回功能菜单列表
