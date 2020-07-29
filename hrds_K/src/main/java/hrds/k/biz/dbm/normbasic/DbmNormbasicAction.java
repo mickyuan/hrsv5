@@ -138,11 +138,11 @@ public class DbmNormbasicAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where");
         //如果用户是对标管理员,则校验并根据状态和创建用户查询
-        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+        if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanGuanLi.getCode())) {
             asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
         }
         //如果是对标操作员,则检索已经发布的
-        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        else if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanChaKan.getCode())) {
             asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标数据权限!");
@@ -165,11 +165,11 @@ public class DbmNormbasicAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select basic_id,norm_cname from " + Dbm_normbasic.TableName + " where");
         //如果用户是对标管理员,则校验并根据状态和创建用户查询
-        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+        if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanGuanLi.getCode())) {
             asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
         }
         //如果是对标操作员,则检索已经发布的
-        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        else if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanChaKan.getCode())) {
             asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标数据权限!");
@@ -203,9 +203,9 @@ public class DbmNormbasicAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where sort_id = ?").addParam(sort_id);
         //如果是对标操作员,则检索已经发布的
-        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+        if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanGuanLi.getCode())) {
             asmSql.addSql(" and create_user = ?").addParam(getUserId().toString());
-        } else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        } else if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanChaKan.getCode())) {
             asmSql.addSql(" and norm_status = ?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标数据权限!");
@@ -232,14 +232,14 @@ public class DbmNormbasicAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where");
         //如果用户是对标管理员,则校验并根据状态和创建用户查询
-        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+        if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanGuanLi.getCode())) {
             asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
             if (StringUtil.isNotBlank(norm_status)) {
                 asmSql.addSql(" and norm_status = ?").addParam(norm_status);
             }
         }
         //如果是对标操作员,则检索已经发布的
-        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        else if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanChaKan.getCode())) {
             asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标-标准数据数据权限!");
@@ -268,14 +268,14 @@ public class DbmNormbasicAction extends BaseAction {
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_normbasic.TableName + " where");
         //如果用户是对标管理员,则校验并根据状态和创建用户查询
-        if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+        if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanGuanLi.getCode())) {
             asmSql.addSql(" create_user = ?").addParam(getUserId().toString());
             if (StringUtil.isNotBlank(status)) {
                 asmSql.addSql(" and norm_status = ?").addParam(status);
             }
         }
         //如果是对标操作员,则检索已经发布的
-        else if (getUser().getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        else if (getUser().getUserTypeGroup().contains(UserType.BiaoZhunYuanChaKan.getCode())) {
             asmSql.addSql(" norm_status = ?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标数据权限!");
