@@ -8,10 +8,13 @@ FIELD_EN_NAME                                     VARCHAR(512) NOT NULL, --字�
 FIELD_TYPE                                        VARCHAR(30) NOT NULL, --字段类型
 FIELD_DESC                                        VARCHAR(200) NULL, --字段描述
 FIELD_PROCESS                                     CHAR(1) NOT NULL, --处理方式
-PROCESS_PARA                                      VARCHAR(512) NULL, --处理方式对应参数
+PROCESS_MAPPING                                   VARCHAR(512) NULL, --映射规则mapping
+GROUP_MAPPING                                     VARCHAR(200) NULL, --分组映射对应规则
 FIELD_LENGTH                                      VARCHAR(200) NULL, --字段长度
 FIELD_SEQ                                         BIGINT default 0 NOT NULL, --字段序号
 REMARK                                            VARCHAR(6000) NULL, --备注
+START_DATE                                        CHAR(8) NOT NULL, --开始日期
+END_DATE                                          CHAR(8) NOT NULL, --结束日期
 CONSTRAINT DATATABLE_FIELD_INFO_PK PRIMARY KEY(DATATABLE_FIELD_ID)   );
 
 --抽数作业关系表
@@ -1682,8 +1685,11 @@ DROP TABLE IF EXISTS DM_OPERATION_INFO ;
 CREATE TABLE DM_OPERATION_INFO(
 ID                                                BIGINT default 0 NOT NULL, --信息表id
 DATATABLE_ID                                      BIGINT default 0 NOT NULL, --数据表id
-EXECUTE_SQL                                       VARCHAR(6000) NOT NULL, --执行的sql语句
+VIEW_SQL                                          VARCHAR(6000) NOT NULL, --预览sql语句
+EXECUTE_SQL                                       VARCHAR(6000) NULL, --执行sql语句
 SEARCH_NAME                                       VARCHAR(512) NULL, --join类型
 REMARK                                            VARCHAR(512) NULL, --备注
+START_DATE                                        CHAR(8) NOT NULL, --开始日期
+END_DATE                                          CHAR(8) NOT NULL, --结束日期
 CONSTRAINT DM_OPERATION_INFO_PK PRIMARY KEY(ID)   );
 

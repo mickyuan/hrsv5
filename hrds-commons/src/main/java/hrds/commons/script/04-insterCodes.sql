@@ -50,11 +50,13 @@ INSERT INTO CODE_INFO  VALUES ('3', '88', 'sql执行引擎', '默认', 'SqlEngin
 delete from code_info where ci_sp_class='90';
 INSERT INTO CODE_INFO  VALUES ('1', '90', '落地文件-卸数方式', '全量卸数', 'UnloadType');
 INSERT INTO CODE_INFO  VALUES ('2', '90', '落地文件-卸数方式', '增量卸数', 'UnloadType');
---　本引用值的代码个数:3 -------i==10
+--　本引用值的代码个数:5 -------i==10
 delete from code_info where ci_sp_class='91';
 INSERT INTO CODE_INFO  VALUES ('1', '91', '数据处理方式', '定值', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('2', '91', '数据处理方式', '自增', 'ProcessType');
-INSERT INTO CODE_INFO  VALUES ('3', '91', '数据处理方式', '映射', 'ProcessType');
+INSERT INTO CODE_INFO  VALUES ('3', '91', '数据处理方式', '映射赋值', 'ProcessType');
+INSERT INTO CODE_INFO  VALUES ('4', '91', '数据处理方式', '函数映射', 'ProcessType');
+INSERT INTO CODE_INFO  VALUES ('5', '91', '数据处理方式', '分组映射', 'ProcessType');
 --　本引用值的代码个数:6 -------i==11
 delete from code_info where ci_sp_class='93';
 INSERT INTO CODE_INFO  VALUES ('1', '93', '存储层关系-数据来源', 'db采集', 'StoreLayerDataSource');
@@ -69,7 +71,7 @@ INSERT INTO CODE_INFO  VALUES ('S', '94', '对标-状态', '成功', 'DbmState')
 INSERT INTO CODE_INFO  VALUES ('F', '94', '对标-状态', '失败', 'DbmState');
 INSERT INTO CODE_INFO  VALUES ('R', '94', '对标-状态', '运行', 'DbmState');
 INSERT INTO CODE_INFO  VALUES ('N', '94', '对标-状态', '未运行', 'DbmState');
---　本引用值的代码个数:35 -------i==13
+--　本引用值的代码个数:38 -------i==13
 delete from code_info where ci_sp_class='17';
 INSERT INTO CODE_INFO  VALUES ('00', '17', '用户类型', '系统管理员', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('01', '17', '用户类型', '采集管理', 'UserType');
@@ -99,13 +101,16 @@ INSERT INTO CODE_INFO  VALUES ('24', '17', '用户类型', '数据管控', 'User
 INSERT INTO CODE_INFO  VALUES ('25', '17', '用户类型', '自主分析管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('27', '17', '用户类型', '资源管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('26', '17', '用户类型', '自主分析操作', 'UserType');
-INSERT INTO CODE_INFO  VALUES ('37', '17', '用户类型', '数据对标操作', 'UserType');
-INSERT INTO CODE_INFO  VALUES ('55', '17', '用户类型', '数据对标管理', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('37', '17', '用户类型', '标准元管理', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('38', '17', '用户类型', '表结构对标', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('39', '17', '用户类型', '表数据对标', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('55', '17', '用户类型', '标准元查看', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('99', '17', '用户类型', '用户管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('98', '17', '用户类型', '部门管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('97', '17', '用户类型', '系统参数管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('96', '17', '用户类型', '数据整理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('95', '17', '用户类型', '数据存储层定义', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('96', '17', '用户类型', '版本管理', 'UserType');
 --　本引用值的代码个数:2 -------i==14
 delete from code_info where ci_sp_class='18';
 INSERT INTO CODE_INFO  VALUES ('1', '18', '是否标识', '是', 'IsFlag');
