@@ -109,8 +109,7 @@ public class DataConvertedNodeData {
         return dclBatchTableNodes;
     }
 
-    @Method(desc = "集市层工程信息转换",
-            logicStep = "1.集市层工程信息转换")
+    @Method(desc = "集市层工程信息转换", logicStep = "1.集市层工程信息转换")
     @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
     public static List<Map<String, Object>> conversionDMLDataInfos(List<Map<String, Object>> dmlDataInfos) {
         List<Map<String, Object>> dmlDataNodes = new ArrayList<>();
@@ -129,6 +128,26 @@ public class DataConvertedNodeData {
         return dmlDataNodes;
     }
 
+    @Method(desc = "集市层工程下分类信息转换", logicStep = "1.集市层工程下分类信息转换")
+    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    public static List<Map<String, Object>> conversionDMLCategoryInfos(List<Map<String, Object>> dmlCategoryInfos) {
+        List<Map<String, Object>> dmlDataNodes = new ArrayList<>();
+        for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", dmlCategoryInfo.get("category_id"));
+            map.put("label", dmlCategoryInfo.get("category_name"));
+            map.put("parent_id", dmlCategoryInfo.get("parent_category_id"));
+            map.put("classify_id", dmlCategoryInfo.get("category_id"));
+            map.put("data_layer", DataSourceType.DML.getCode());
+            map.put("description", "" +
+                    "分类编号：" + dmlCategoryInfo.get("category_id") + "\n" +
+                    "分类名称：" + dmlCategoryInfo.get("category_name") + "\n" +
+                    "分类描述：" + dmlCategoryInfo.get("category_desc"));
+            dmlDataNodes.add(map);
+        }
+        return dmlDataNodes;
+    }
+
     @Method(desc = "集市层工程信息下表信息转换",
             logicStep = "1.集市层工程信息下表信息转换")
     @Param(name = "dmlTableInfos", desc = "集市层工程信息转换", range = "取值范围说明")
@@ -138,7 +157,8 @@ public class DataConvertedNodeData {
             Map<String, Object> map = new HashMap<>();
             map.put("id", dmlTableInfo.get("datatable_id"));
             map.put("label", dmlTableInfo.get("datatable_en_name"));
-            map.put("parent_id", dmlTableInfo.get("data_mart_id"));
+            map.put("parent_id", dmlTableInfo.get("category_id"));
+            map.put("classify_id", dmlTableInfo.get("category_id"));
             map.put("file_id", dmlTableInfo.get("datatable_id"));
             map.put("table_name", dmlTableInfo.get("datatable_en_name"));
             map.put("hyren_name", dmlTableInfo.get("datatable_en_name"));

@@ -76,14 +76,25 @@ public class TreeNodeDataQuery {
         //添加DML层下节点数据
         dataList.addAll(DataConvertedNodeData.conversionDMLDataInfos(dmlDataInfos));
         if (!dmlDataInfos.isEmpty()) {
-            //获取集市下表信息
-            dmlDataInfos.forEach(dmlDataInfo -> {
-                String data_mart_id = dmlDataInfo.get("data_mart_id").toString();
-                List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(data_mart_id, user);
-                if (!dmlTableInfos.isEmpty()) {
-                    dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
+            //根据DML层工程信息获取工程下的分类信息
+            for (Map<String, Object> dmlDataInfo : dmlDataInfos) {
+                long data_mart_id = (long) dmlDataInfo.get("data_mart_id");
+                //获取集市工程下分类信息
+                List<Map<String, Object>> dmlCategoryInfos = DMLDataQuery.getDMLCategoryInfos(data_mart_id);
+                if (!dmlCategoryInfos.isEmpty()) {
+                    dataList.addAll(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfos));
                 }
-            });
+                if (!dmlCategoryInfos.isEmpty()) {
+                    for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
+                        long category_id = (long) dmlCategoryInfo.get("category_id");
+                        //获取分类下表信息
+                        List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(category_id);
+                        if (!dmlTableInfos.isEmpty()) {
+                            dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
+                        }
+                    }
+                }
+            }
         }
     }
 
