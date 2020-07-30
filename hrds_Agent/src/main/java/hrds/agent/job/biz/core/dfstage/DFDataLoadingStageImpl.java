@@ -275,8 +275,13 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				}
 				//如果表已存在则删除
 				IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
-				sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
-						"AS SELECT * FROM  " + tmpTodayTableName);
+				//判断是否包含表头，包含表头就不能并行
+				if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+					sqlList.add(" CREATE TABLE " + todayTableName + " AS SELECT * FROM  " + tmpTodayTableName);
+				} else {
+					sqlList.add(" CREATE TABLE " + todayTableName + " parallel (degree 4) nologging  " +
+							"AS SELECT * FROM  " + tmpTodayTableName);
+				}
 				//4.执行sql语句
 				HSqlExecute.executeSql(sqlList, db);
 				//判断是否有bad文件，有则抛异常
@@ -461,6 +466,10 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		sql.append(" DEFAULT DIRECTORY ").append(external_directory);
 		sql.append(" ACCESS PARAMETERS( ");
 		sql.append(" records delimited by newline");
+		//判断是否包含表头
+		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+			sql.append(" skip 1");
+		}
 		sql.append(" fields terminated by '").append(tableBean.getColumn_separator()).append("' ");
 //            sql.append(" optionally enclosed by '\"' ");
 		sql.append(" missing field values are null  ");
@@ -630,7 +639,12 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 		sql.deleteCharAt(sql.length() - 1);
 		sql.append(") ROW FORMAT DELIMITED FIELDS TERMINATED BY  '").append(database_separatorr)
-				.append("' stored as textfile ");
+				.append("'").append("stored as textfile");
+		//判断是否有表头
+		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+			//包含表头，跳过第一行
+			sql.append("tblproperties (\"skip.header.line.count\"=\"1\")");
+		}
 		return sql.toString();
 	}
 }
