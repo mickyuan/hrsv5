@@ -1050,7 +1050,8 @@ public class MarketInfoAction extends BaseAction {
 			//设置默认值
 			map.put("field_en_name", everyColumnName);
 			map.put("field_cn_name", everyColumnName);
-			map.put("process_para", i);
+			map.put("process_mapping",everyColumnName);
+			map.put("group_mapping","");
 			//根据字段名称，获取改字段的血缘关系
 			Object object = bloodRelationMap.get(everyColumnName);
 			//如果没有获取到血缘关系，则提供默认的字段类型
@@ -1246,13 +1247,13 @@ public class MarketInfoAction extends BaseAction {
 		Datatable_field_info datatable_field_info = new Datatable_field_info();
 		for (Map<String, Object> map : list) {
 			String datatable_field_id = map.get("datatable_field_id").toString();
-			String process_para = map.get("process_para").toString();
-			if (process_para != null) {
-				//如果是数字，把他转成数字类型
-				if (!StringUtils.isEmpty(process_para) && StringUtils.isNumeric(process_para)) {
-					map.put("process_para", Integer.valueOf(process_para));
-				}
-			}
+//			String process_para = map.get("process_para").toString();
+//			if (process_para != null) {
+//				//如果是数字，把他转成数字类型
+//				if (!StringUtils.isEmpty(process_para) && StringUtils.isNumeric(process_para)) {
+//					map.put("process_para", Integer.valueOf(process_para));
+//				}
+//			}
 			datatable_field_info.setDatatable_field_id(datatable_field_id);
 			//查看 附件属性的字段的勾选情况
 			List<Map<String, Object>> list2 = Dbo.queryList("select dsla_storelayer from " + Data_store_layer_added.TableName + "" +
@@ -1496,7 +1497,7 @@ public class MarketInfoAction extends BaseAction {
 		boolean flag = true;
 		//1.根据datatable_field_info信息拼接所有查询列的信息
 		StringBuilder sb = new StringBuilder(1024);
-		sb.append("SELECT");
+		sb.append("SELECT ");
 		for (Datatable_field_info field_info : datatable_field_info) {
 			ProcessType processType = ProcessType.ofEnumByCode(field_info.getField_process());
 			if (ProcessType.DingZhi == processType) {

@@ -169,8 +169,10 @@ public class MarketConf implements Serializable {
 		List<Datatable_field_info> datatable_field_infos = new ArrayList<>();
 		Datatable_field_info datatable_field_info = null;
 		for (Datatable_field_info field_info : datatableFields) {
+
 			//如果有分组映射，只保留第一个分组映射的值
-			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+			if (field_info.getField_process() != null &&
+					ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
 				//第一次进来
 				//TODO 分组列的类型，长度是否给默认值
 				if (flag) {
