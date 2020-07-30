@@ -10,8 +10,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.exception.BusinessSystemException;
-import fd.ng.core.utils.*;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.*;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
@@ -30,6 +30,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.DruidParseQuerySql;
@@ -38,6 +39,7 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
+import hrds.h.biz.bean.CategoryRelationBean;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,6 +59,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
@@ -205,25 +208,51 @@ public class MarketInfoAction extends BaseAction {
 			"4.1新增集市分类" +
 			"5.更新集市分类")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "dmCategories", desc = "集市分类实体对象数组", range = "与数据库表字段规则一致", isBean = true)
-	public void saveDmCategory(long data_mart_id, Dm_category[] dmCategories) {
+	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+	public void saveDmCategory(long data_mart_id, CategoryRelationBean[] categoryRelationBeans) {
 		// 1.判断集市工程是否存在
 		isDmInfoExist(data_mart_id);
-		for (Dm_category dm_category : dmCategories) {
+		List<Map<String, Long>> idNameList = new ArrayList<>();
+		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
+			if (categoryRelationBean.getCategory_id() == null &&
+					categoryRelationBean.getParent_category_id() == null) {
+				Map<String, Long> idNameMap = new HashMap<>();
+				categoryRelationBean.setCategory_id(PrimayKeyGener.getNextId());
+				idNameMap.put(categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_id());
+				idNameList.add(idNameMap);
+			}
+		}
+		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
 			// 2.实体字段合法性检查
-			checkDmCategoryFields(dm_category);
+			checkDmCategoryFields(categoryRelationBean);
 			// 3.判断是新增还是更新集市分类
 			// 因为更新的时候也有可能再新增分类，所以这里新增编辑放在一个方法里
-			if (dm_category.getCategory_id() == null) {
-				// 4.判断集市分类名称与分类编号是否已存在，已存在不能新增
-				isCategoryNameOrNumExist(data_mart_id, dm_category.getCategory_name(), dm_category.getCategory_num());
+			long num = Dbo.queryNumber(
+					"select count(*) from " + Dm_category.TableName + " where category_id=?",
+					categoryRelationBean.getCategory_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			// 4.判断集市分类名称与分类编号是否已存在，已存在不能新增
+			if (num == 0) {
+				if (isCategoryNameExist(data_mart_id, categoryRelationBean.getCategory_name())) {
+					throw new BusinessException("分类名称已存在" + categoryRelationBean.getCategory_name());
+				}
+				if (isCategoryNumExist(data_mart_id, categoryRelationBean.getCategory_num())) {
+					throw new BusinessException("分类编号已存在" + categoryRelationBean.getCategory_num());
+				}
 				// 4.1新增集市分类
-				addDmCategory(data_mart_id, dm_category);
+				addDmCategory(data_mart_id, categoryRelationBean, idNameList);
 			} else {
 				// 5.更新集市分类
-				Validator.notNull(dm_category.getParent_category_id(), "更新分类时上级分类ID不能为空");
-				isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
-				updatebean(dm_category);
+				Validator.notNull(categoryRelationBean.getParent_category_id(), "更新分类时上级分类ID不能为空");
+				isEqualsCategoryId(categoryRelationBean.getCategory_id(),
+						categoryRelationBean.getParent_category_id(), data_mart_id);
+				Dbo.execute(
+						"update " + Dm_category.TableName
+								+ " set category_name=?,category_num=?,parent_category_id=?,category_desc=?"
+								+ " where category_id=?",
+						categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_num(),
+						categoryRelationBean.getParent_category_id(), categoryRelationBean.getCategory_desc(),
+						categoryRelationBean.getCategory_id());
 			}
 		}
 	}
@@ -518,49 +547,75 @@ public class MarketInfoAction extends BaseAction {
 			"3.新增集市分类")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Param(name = "dm_category", desc = "集市分类实体对象", range = "与数据库表字段规则一致", isBean = true)
-	private void addDmCategory(long data_mart_id, Dm_category dm_category) {
-		dm_category.setCategory_id(PrimayKeyGener.getNextId());
-		dm_category.setData_mart_id(data_mart_id);
-		dm_category.setCreate_id(getUserId());
-		dm_category.setCreate_date(DateUtil.getSysDate());
-		dm_category.setCreate_time(DateUtil.getSysTime());
-		// 1.如果上级分类ID为空，设置上级分类ID为集市ID
-		if (dm_category.getParent_category_id() == null) {
-			dm_category.setParent_category_id(dm_category.getData_mart_id());
+	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
+	                           List<Map<String, Long>> idNameList) {
+		if (categoryRelationBean.getParent_category_id() == null) {
+			for (Map<String, Long> map : idNameList) {
+				for (Map.Entry<String, Long> entry : map.entrySet()) {
+					if (entry.getKey().equals(categoryRelationBean.getCategory_name())) {
+						Dm_category dm_category = new Dm_category();
+						dm_category.setCategory_id(entry.getValue());
+						for (Map<String, Long> parentMap : idNameList) {
+							for (Map.Entry<String, Long> parentEntry : parentMap.entrySet()) {
+								if (parentEntry.getKey().equals(categoryRelationBean.getParent_category_name())) {
+									BeanUtils.copyProperties(categoryRelationBean, dm_category);
+									dm_category.setData_mart_id(data_mart_id);
+									dm_category.setCreate_id(getUserId());
+									dm_category.setCreate_date(DateUtil.getSysDate());
+									dm_category.setCreate_time(DateUtil.getSysTime());
+									dm_category.setParent_category_id(parentEntry.getValue());
+									// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
+									isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
+									// 3.新增集市分类
+									dm_category.add(Dbo.db());
+								}
+							}
+						}
+					}
+				}
+			}
+		} else {
+			Dm_category dm_category = new Dm_category();
+			BeanUtils.copyProperties(categoryRelationBean, dm_category);
+			dm_category.setData_mart_id(data_mart_id);
+			dm_category.setCreate_id(getUserId());
+			dm_category.setCreate_date(DateUtil.getSysDate());
+			dm_category.setCreate_time(DateUtil.getSysTime());
+			// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
+			isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
+			// 3.新增集市分类
+			dm_category.add(Dbo.db());
 		}
-		// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
-		isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
-		// 3.新增集市分类
-		dm_category.add(Dbo.db());
 	}
 
-	@Method(desc = "判断集市分类名称与分类编号是否已存在", logicStep = "1.判断分类名称是否已存在")
+	@Method(desc = "判断集市分类名称是否已存在", logicStep = "1.判断分类名称是否已存在")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Param(name = "category_name", desc = "集市分类名称", range = "无限制")
-	@Param(name = "category_num", desc = "集市分类编号", range = "无限制")
-	private void isCategoryNameOrNumExist(long data_mart_id, String category_name, String category_num) {
+	private boolean isCategoryNameExist(long data_mart_id, String category_name) {
 		// 1.判断集市分类名称是否已存在
-		if (Dbo.queryNumber(
+		return Dbo.queryNumber(
 				"select count(*) from " + Dm_category.TableName
 						+ " where category_name=? and data_mart_id=?",
 				category_name, data_mart_id)
-				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException("集市分类名称" + category_name + "已存在");
-		}
-		// 2.判断集市分类编号是否已存在
-		if (Dbo.queryNumber(
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
+	}
+
+	@Method(desc = "判断集市分类编号是否已存在", logicStep = "1.判断集市分类编号是否已存在")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "category_num", desc = "集市分类编号", range = "无限制")
+	private boolean isCategoryNumExist(long data_mart_id, String category_num) {
+		// 1.判断集市分类编号是否已存在
+		return Dbo.queryNumber(
 				"select count(*) from " + Dm_category.TableName
 						+ " where category_num=? and data_mart_id=?",
 				category_num, data_mart_id)
-				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException("集市分类编号" + category_num + "已存在");
-		}
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
 	}
 
 	@Method(desc = "集市分类表字段合法性检查", logicStep = "1.集市分类表字段合法性检查")
 	@Param(name = "dm_category", desc = "Dm_category表实体对象", range = "与Dm_category表字段规则一致",
 			isBean = true)
-	private void checkDmCategoryFields(Dm_category dm_category) {
+	private void checkDmCategoryFields(CategoryRelationBean dm_category) {
 		// 1.集市分类表字段合法性检查
 		Validator.notBlank(dm_category.getCategory_name(), "集市分类名称不能为空");
 		Validator.notBlank(dm_category.getCategory_num(), "集市分类编号不能为空");
@@ -2111,10 +2166,12 @@ public class MarketInfoAction extends BaseAction {
 	 */
 	private byte[] getdownloadFile(String data_mart_id) {
 		Map<String, Object> resultmap = new HashMap<>();
-		Dm_info dm_info = new Dm_info();
-		dm_info.setData_mart_id(data_mart_id);
+		Dm_info dmInfo = new Dm_info();
+		dmInfo.setData_mart_id(data_mart_id);
 		//集市工程表
-		List<Dm_info> dm_infos = Dbo.queryList(Dm_info.class, "select * from " + Dm_info.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
+		Dm_info dm_info = Dbo.queryOneObject(Dm_info.class, "select * from " + Dm_info.TableName + " where " +
+				"data_mart_id = ?", dmInfo.getData_mart_id())
+				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
 		//集市表表
 		List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where data_mart_id = ?", dm_info.getData_mart_id());
 		//sql表
@@ -2141,7 +2198,11 @@ public class MarketInfoAction extends BaseAction {
 		//前后置作业表
 		List<Dm_relevant_info> dm_relevant_infos = Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id in " +
 				"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )", dm_info.getData_mart_id());
-		resultmap.put("dm_infos", dm_infos);
+		//集市分类表
+		List<Dm_category> dm_categories = Dbo.queryList(Dm_category.class,
+				"select * from " + Dm_category.TableName + " where data_mart_id =? ",
+				dm_info.getData_mart_id());
+		resultmap.put("dm_info", dm_info);
 		resultmap.put("dm_datatables", dm_datatables);
 		resultmap.put("dm_operation_infos", dm_operation_infos);
 		resultmap.put("dm_datatable_sources", dm_datatable_sources);
@@ -2151,8 +2212,10 @@ public class MarketInfoAction extends BaseAction {
 		resultmap.put("dm_relation_datatables", dm_relation_datatables);
 		resultmap.put("dm_column_storages", dm_column_storages);
 		resultmap.put("dm_relevant_infos", dm_relevant_infos);
-		byte[] bytes = JSON.toJSONString(resultmap).getBytes();
-		return bytes;
+		resultmap.put("dm_categories", dm_categories);
+		// 加密
+		String martResult = Base64.getEncoder().encodeToString(JSON.toJSONString(resultmap).getBytes());
+		return martResult.getBytes();
 	}
 
 
@@ -2161,66 +2224,226 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "file", desc = "上传文件名称（全路径），上传要导入的集市工程", range = "不能为空以及空格")
 	@UploadFile
 	public void uploadFile(String file) throws Exception {
-//        try {
-		// 3.通过文件名称获取文件
+		// 通过文件名称获取文件
 		File uploadedFile = FileUploadUtil.getUploadedFile(file);
 		if (!uploadedFile.exists()) {
 			throw new BusinessException("上传文件不存在！");
 		}
 		String strTemp = new String(Files.readAllBytes(uploadedFile.toPath()));
+		// 解密
+		strTemp = new String(Base64.getDecoder().decode(strTemp));
 		JSONObject jsonObject = JSONObject.parseObject(strTemp);
-		//工程表
-		List<Dm_info> dm_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_infos").toJSONString(), Dm_info.class);
-		for (Dm_info dm_info : dm_infos) {
+		//集市工程表
+		Dm_info dm_info = JSONObject.parseObject(jsonObject.getJSONObject("dm_info").toJSONString(), Dm_info.class);
+		long num = Dbo.queryNumber(
+				"select count(*) from " + Dm_info.TableName + " where data_mart_id=? and mart_number=?",
+				dm_info.getData_mart_id(), dm_info.getMart_number())
+				.orElseThrow(() -> new BusinessException("sql查询错误"));
+		if (num == 0) {
+			// 不存在，新增
 			dm_info.add(Dbo.db());
 		}
-		//集市表
+		//集市分类表
+		List<Dm_category> dm_categories = JSONObject.parseArray(jsonObject.getJSONArray("dm_categories").toJSONString(), Dm_category.class);
+		for (Dm_category dm_category : dm_categories) {
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dm_category.TableName + " where category_id=?",
+					dm_category.getCategory_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0 && !isCategoryNumExist(dm_category.getData_mart_id(), dm_category.getCategory_num())
+					&& !isCategoryNameExist(dm_category.getData_mart_id(), dm_category.getCategory_name())) {
+				// 不存在，新增
+				dm_info.add(Dbo.db());
+			}
+		}
+		//集市数据表
 		List<Dm_datatable> dm_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatables").toJSONString(), Dm_datatable.class);
 		for (Dm_datatable dm_datatable : dm_datatables) {
-			dm_datatable.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dm_datatable.TableName + " where datatable_id=?",
+					dm_datatable.getDatatable_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_datatable.add(Dbo.db());
+			}
 		}
 		//sql表
 		List<Dm_operation_info> dm_operation_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_operation_infos").toJSONString(), Dm_operation_info.class);
 		for (Dm_operation_info dm_operation_info : dm_operation_infos) {
-			dm_operation_info.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dm_operation_info.TableName + " where id=?",
+					dm_operation_info.getId())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_operation_info.add(Dbo.db());
+			}
 		}
 		//关系表
 		List<Dtab_relation_store> dm_relation_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_relation_datatables").toJSONString(), Dtab_relation_store.class);
 		for (Dtab_relation_store dm_relation_datatable : dm_relation_datatables) {
-			dm_relation_datatable.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dtab_relation_store.TableName
+							+ " where dsl_id=? and tab_id=?",
+					dm_relation_datatable.getDsl_id(), dm_relation_datatable.getTab_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_relation_datatable.add(Dbo.db());
+			}
 		}
 		//字段表
 		List<Datatable_field_info> datatable_field_infos = JSONObject.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
 		for (Datatable_field_info datatable_field_info : datatable_field_infos) {
-			datatable_field_info.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Datatable_field_info.TableName
+							+ " where datatable_field_id=?",
+					datatable_field_info.getDatatable_field_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				datatable_field_info.add(Dbo.db());
+			}
 		}
 		//字段关系表
 		List<Dcol_relation_store> dm_column_storages = JSONObject.parseArray(jsonObject.getJSONArray("dm_column_storages").toJSONString(), Dcol_relation_store.class);
 		for (Dcol_relation_store dm_column_storage : dm_column_storages) {
-			dm_column_storage.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dcol_relation_store.TableName
+							+ " where dslad_id=? and col_id=?",
+					dm_column_storage.getDslad_id(), dm_column_storage.getCol_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_column_storage.add(Dbo.db());
+			}
 		}
-		//血缘表1
+		//数据表已选数据源信息-血缘表1
 		List<Dm_datatable_source> dm_datatable_sources = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatable_sources").toJSONString(), Dm_datatable_source.class);
 		for (Dm_datatable_source dm_datatable_source : dm_datatable_sources) {
-			dm_datatable_source.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dm_datatable_source.TableName + " where own_dource_table_id=?",
+					dm_datatable_source.getOwn_dource_table_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_datatable_source.add(Dbo.db());
+			}
 		}
-		//血缘表2
+		//结果映射信息表-血缘表2
 		List<Dm_etlmap_info> dm_etlmap_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_etlmap_infos").toJSONString(), Dm_etlmap_info.class);
 		for (Dm_etlmap_info dm_etlmap_info : dm_etlmap_infos) {
-			dm_etlmap_info.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dm_etlmap_info.TableName + " where etl_id=?",
+					dm_etlmap_info.getEtl_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_etlmap_info.add(Dbo.db());
+			}
 		}
-		//血缘表3
+		//数据源表字段-血缘表3
 		List<Own_source_field> own_source_fields = JSONObject.parseArray(jsonObject.getJSONArray("own_source_fields").toJSONString(), Own_source_field.class);
 		for (Own_source_field own_source_field : own_source_fields) {
-			own_source_field.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Own_source_field.TableName + " where own_field_id=?",
+					own_source_field.getOwn_field_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				own_source_field.add(Dbo.db());
+			}
 		}
 		//前后置作业表
 		List<Dm_relevant_info> dm_relevant_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_relevant_infos").toJSONString(), Dm_relevant_info.class);
 		for (Dm_relevant_info dm_relevant_info : dm_relevant_infos) {
-			dm_relevant_info.add(Dbo.db());
+			num = Dbo.queryNumber(
+					"select count(*) from " + Dm_relevant_info.TableName + " where rel_id=?",
+					dm_relevant_info.getRel_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				dm_relevant_info.add(Dbo.db());
+			}
 		}
 	}
 
+	@Method(desc = "集市导入审核", logicStep = "")
+	@Param(name = "file", desc = "上传文件名称（全路径），上传要导入的集市工程", range = "不能为空以及空格")
+	@UploadFile
+	public void importReview(String file) {
+		try {
+			// 通过文件名称获取文件
+			File uploadedFile = FileUploadUtil.getUploadedFile(file);
+			if (!uploadedFile.exists()) {
+				throw new BusinessException("上传文件不存在！");
+			}
+			String strTemp = new String(Files.readAllBytes(uploadedFile.toPath()));
+			// 解密
+			strTemp = new String(Base64.getDecoder().decode(strTemp));
+			JSONObject jsonObject = JSONObject.parseObject(strTemp);
+			//集市工程表
+			Dm_info dm_info = JSONObject.parseObject(jsonObject.getJSONArray("dm_infos").toJSONString(), Dm_info.class);
+			// 数据库集市工程表
+			List<Dm_datatable> dmDatatableList = Dbo.queryList(Dm_datatable.class,
+					"select * from " + Dm_datatable.TableName + " where data_mart_id=?",
+					dm_info.getData_mart_id());
+			//集市数据表
+			List<Dm_datatable> dm_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatables").toJSONString(), Dm_datatable.class);
+			// 导入新增的
+			List<Dm_datatable> reduceImport =
+					dm_datatables.stream().filter(item -> !dmDatatableList.contains(item))
+							.collect(Collectors.toList());
+			// 数据库多余的
+			List<Dm_datatable> reduceDataBase =
+					dmDatatableList.stream().filter(item -> !dm_datatables.contains(item))
+							.collect(Collectors.toList());
+//			if (!dm_datatables.equals(dmDatatableList)) {
+//				Map<String, List<Object>> differenceMap = new HashMap<>();
+//				// 导入新增的
+//				List<Object> addList = new ArrayList<>();
+//				// 数据库变化的
+//				List<Object> updateList = new ArrayList<>();
+//				List<Object> deleteList = new ArrayList<>();
+//				List<Long> datatableIdList =
+//						dmDatatableList.stream().map(Dm_datatable::getDatatable_id).collect(Collectors.toList());
+//				for (Dm_datatable dmDatatable : dmDatatableList) {
+//					Map<String, String> updateMap = new HashMap<>();
+//					for (Dm_datatable dm_datatable : dm_datatables) {
+//						if (datatableIdList.contains(dm_datatable.getDatatable_id())) {
+//							if (!dm_datatable.getDatatable_en_name().equals(dmDatatable.getDatatable_en_name())) {
+//								updateList.add(dm_datatable);
+//							}
+//						} else {
+//							// 导入新增的
+//							addList.add(dm_datatable.getDatatable_en_name());
+//						}
+//					}
+//				}
+//				differenceMap.put("add", addList);
+//			}
+			//sql表
+			List<Dm_operation_info> dm_operation_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_operation_infos").toJSONString(), Dm_operation_info.class);
+			//关系表
+			List<Dtab_relation_store> dm_relation_datatables = JSONObject.parseArray(jsonObject.getJSONArray("dm_relation_datatables").toJSONString(), Dtab_relation_store.class);
+			//字段表
+			List<Datatable_field_info> datatable_field_infos = JSONObject.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
+			//字段关系表
+			List<Dcol_relation_store> dm_column_storages = JSONObject.parseArray(jsonObject.getJSONArray("dm_column_storages").toJSONString(), Dcol_relation_store.class);
+			//数据表已选数据源信息-血缘表1
+			List<Dm_datatable_source> dm_datatable_sources = JSONObject.parseArray(jsonObject.getJSONArray("dm_datatable_sources").toJSONString(), Dm_datatable_source.class);
+			//结果映射信息表-血缘表2
+			List<Dm_etlmap_info> dm_etlmap_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_etlmap_infos").toJSONString(), Dm_etlmap_info.class);
+			//数据源表字段-血缘表3
+			List<Own_source_field> own_source_fields = JSONObject.parseArray(jsonObject.getJSONArray("own_source_fields").toJSONString(), Own_source_field.class);
+			//前后置作业表
+			List<Dm_relevant_info> dm_relevant_infos = JSONObject.parseArray(jsonObject.getJSONArray("dm_relevant_infos").toJSONString(), Dm_relevant_info.class);
+		} catch (Exception e) {
+			logger.error(e);
+			throw new BusinessException("导入文件失败" + e.getMessage());
+		}
+	}
 
 	@Method(desc = "删除集市工程",
 			logicStep = "1.判断工程下是否还有表信息" +
@@ -2603,14 +2826,6 @@ public class MarketInfoAction extends BaseAction {
 					} else {
 						process_para = String.valueOf(columns.indexOf(process_para));
 					}
-				} else if (ProcessType.DingZhi == ProcessType.ofEnumByCode(field_processvcode)) {
-
-				} else if (ProcessType.ZiZeng == ProcessType.ofEnumByCode(field_processvcode)) {
-
-				} else if (ProcessType.HanShuYingShe == ProcessType.ofEnumByCode(field_processvcode)) {
-
-				} else {
-
 				}
 				// TODO 修改实体发生了变化
 //				datatable_field_info.setProcess_para(process_para);
