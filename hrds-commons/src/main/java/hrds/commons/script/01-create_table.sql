@@ -1693,3 +1693,19 @@ START_DATE                                        CHAR(8) NOT NULL, --开始日�
 END_DATE                                          CHAR(8) NOT NULL, --结束日期
 CONSTRAINT DM_OPERATION_INFO_PK PRIMARY KEY(ID)   );
 
+--数据加工spark语法提示
+DROP TABLE IF EXISTS EDW_SPARKSQL_GRAM ;
+CREATE TABLE EDW_SPARKSQL_GRAM(
+ESG_ID                                            BIGINT default 0 NOT NULL, --序号
+FUNCTION_NAME                                     VARCHAR(512) NOT NULL, --函数名称
+FUNCTION_EXAMPLE                                  VARCHAR(512) NOT NULL, --函数例子
+FUNCTION_DESC                                     VARCHAR(512) NOT NULL, --函数描述
+IS_AVAILABLE                                      CHAR(1) NOT NULL, --是否可用
+IS_UDF                                            CHAR(1) NOT NULL, --是否udf
+CLASS_URL                                         VARCHAR(512) NULL, --函数类路径
+JAR_URL                                           VARCHAR(512) NULL, --jar路径
+HIVEDB_NAME                                       VARCHAR(100) NULL, --hive库名
+IS_SPARKSQL                                       CHAR(1) NOT NULL, --是否同时使用sparksql
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT EDW_SPARKSQL_GRAM_PK PRIMARY KEY(ESG_ID)   );
+
