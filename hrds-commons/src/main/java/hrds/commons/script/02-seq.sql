@@ -66,31 +66,31 @@ insert into component_info(comp_id,comp_name,comp_state,comp_version,comp_type,c
 
 delete from component_menu;
 -- sys
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (101, '/userManagement', '99', '用户管理', 'A000', 'el-icon-user-solid');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (102, '/departmentalList', '98', '部门管理', 'A000', 'el-icon-s-cooperation');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (103, '/systemParameters', '97', '系统参数管理', 'A000', 'el-icon-s-order');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (104, '/dataStoreLayer', '95', '数据存储层定义', 'A000', 'el-icon-s-unfold');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (105, '/typeLengthContrastInfo', '94', '类型长度对比信息', 'A000', 'el-icon-search');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (106, '/dataTypeContrastInfo', '93', '数据类型对比信息', 'A000', 'el-icon-search');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (107, '/codeMaintenance', '91', '码值维护', 'A000', 'el-icon-folder-checked');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (108, '/logReview', '92', '日志审查', 'A000', 'el-icon-document');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (901, '/userManagement', '99', '用户管理', 'A000', 'el-icon-user-solid');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (902, '/departmentalList', '98', '部门管理', 'A000', 'el-icon-s-cooperation');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (903, '/systemParameters', '97', '系统参数管理', 'A000', 'el-icon-s-order');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (904, '/dataStoreLayer', '95', '数据存储层定义', 'A000', 'el-icon-s-unfold');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (905, '/typeLengthContrastInfo', '94', '类型长度对比信息', 'A000', 'el-icon-search');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (906, '/dataTypeContrastInfo', '93', '数据类型对比信息', 'A000', 'el-icon-search');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (907, '/codeMaintenance', '91', '码值维护', 'A000', 'el-icon-folder-checked');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (908, '/logReview', '92', '日志审查', 'A000', 'el-icon-document');
 -- manager
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (201, '/datasourceManagement', '01', '采集管理', 'B000', 'el-icon-s-data');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (202, '/serviceMage', '11', '服务接口管理', 'B000', 'el-icon-chat-line-round');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (203, '/etlMage', '04', '作业调度', 'B000', 'el-icon-menu');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (204, '/dbm', '37', '标准元管理', 'B000', 'el-icon-s-finance');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (203, '/dbm', '37', '标准元管理', 'B000', 'el-icon-s-finance');
 -- operator
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (301, '/collectmonitor', '02', '数据采集', 'B000', 'el-icon-s-data');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (302, '/dataQuery', '27', '资源管理', 'B000', 'el-icon-files');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (303, '/webSqlConsole', '29', 'SQL控制台', 'B000', 'el-icon-monitor');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (304, '/fullTextSearch', '28', '全文检索', 'B000', 'el-icon-search');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (305, '/serviceUser', '12', '服务接口用户', 'G000', 'el-icon-cpu');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (306, '/dataMart', '14', '数据集市', 'H000', 'el-icon-connection');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (307, '/marketVersionManage', '48', '集市版本管理', 'H000', 'el-icon-connection');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (308, '/dataControl', '24', '数据管控', 'K001', 'el-icon-s-finance');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (309, '/dbck', '55', '标准元查看', 'K001', 'el-icon-s-finance');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (310, '/tsb', '38', '表结构对标', 'K001', 'el-icon-receiving');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (311, '/tdb', '39', '表数据对标', 'K001', 'el-icon-film');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (101, '/collectmonitor', '02', '数据采集', 'B000', 'el-icon-s-data');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (102, '/dataQuery', '27', '资源管理', 'B000', 'el-icon-files');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (103, '/webSqlConsole', '29', 'SQL控制台', 'B000', 'el-icon-monitor');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (104, '/fullTextSearch', '28', '全文检索', 'B000', 'el-icon-search');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (105, '/etlMage', '04', '作业调度', 'B000', 'el-icon-menu');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (106, '/dataMart', '14', '数据集市', 'H000', 'el-icon-connection');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (107, '/serviceUser', '12', '服务接口用户', 'G000', 'el-icon-cpu');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (108, '/marketVersionManage', '48', '集市版本管理', 'H000', 'el-icon-connection');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (109, '/dataControl', '24', '数据管控', 'K001', 'el-icon-s-finance');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (110, '/dbck', '55', '标准元查看', 'K001', 'el-icon-s-finance');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (111, '/tsb', '38', '表结构对标', 'K001', 'el-icon-receiving');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (112, '/tdb', '39', '表数据对标', 'K001', 'el-icon-film');
 
 
 delete from department_info;
