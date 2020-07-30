@@ -204,14 +204,13 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 						selectExpr.append(autoIncreasingExpr());
 					} else if (ProcessType.YingShe.getCode().equals(processCode)
 							|| ProcessType.FenZhuYingShe.getCode().equals(processCode)
-							|| ProcessType.HanShuYingShe.getCode().equals(processCode)) {
+							|| ProcessType.HanShuYingShe.getCode().equals(processCode)
+							|| ProcessType.DingZhi.getCode().equals(processCode)) {
 //                        int mappingIndex = Integer.parseInt(field.getProcess_mapping());
 //                        selectExpr.append(colSeq.get(mappingIndex));
 //                        md5Cols.append(field.getField_en_name()).append(',');
 						selectExpr.append(field.getField_en_name());
 						md5Cols.append(field.getField_en_name()).append(',');
-					} else if (ProcessType.DingZhi.getCode().equals(processCode)) {
-						selectExpr.append("'").append(field.getProcess_mapping()).append("'");
 					} else {
 						throw new AppSystemException("不支持处理方式码：" + processCode);
 					}
