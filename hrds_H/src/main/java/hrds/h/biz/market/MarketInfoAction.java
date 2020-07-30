@@ -1,5 +1,7 @@
 package hrds.h.biz.market;
 
+import com.alibaba.druid.sql.SQLUtils;
+import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -8,10 +10,8 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.exception.BusinessSystemException;
-import fd.ng.core.utils.CodecUtil;
+import fd.ng.core.utils.*;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
@@ -1381,6 +1381,8 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatatable_id(datatable_id);
 		//新增时判断SQL是否存在
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class, "select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
+		//根据querysql和datatable_field_info获取最终执行的sql
+		String execute_sql = getExecute_sql(datatable_field_info, querysql);
 		//设置标签 判断是新增 还是 更新
 		//没有数据 表示新增 增加sql创建时间
 		if (!dm_operation_infoOptional.isPresent()) {
@@ -1390,33 +1392,33 @@ public class MarketInfoAction extends BaseAction {
 			Dm_operation_info dm_operation_info = new Dm_operation_info();
 			dm_operation_info.setId(PrimayKeyGener.getNextId());
 			dm_operation_info.setDatatable_id(datatable_id);
-			dm_operation_info.setExecute_sql(querysql);
+			dm_operation_info.setView_sql(querysql);
+			dm_operation_info.setExecute_sql(execute_sql);
 			dm_operation_info.add(Dbo.db());
 			//保存血缘关系的表，进入数据库
-			saveBloodRelationToPGTable(querysql, datatable_id);
+			saveBloodRelationToPGTable(execute_sql, datatable_id);
 		}
 		//更新时判断SQL是否一致
 		else {
 			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
-			String execute_sql = dm_operation_info.getExecute_sql();
 			//如果不一致 修改 更新SQL 时间
-			if (!execute_sql.equals(querysql)) {
+			if (!dm_operation_info.getExecute_sql().equals(execute_sql)) {
 				dm_datatable.setDdlc_date(DateUtil.getSysDate());
 				dm_datatable.setDdlc_time(DateUtil.getSysTime());
 				//更新集市表的SQL修改时间字段
 				dm_datatable.update(Dbo.db());
 				//更新SQL
-				dm_operation_info.setExecute_sql(querysql);
+				dm_operation_info.setView_sql(querysql);
+				dm_operation_info.setExecute_sql(execute_sql);
 				dm_operation_info.add(Dbo.db());
 				//保存血缘关系的表，进入数据库
-				saveBloodRelationToPGTable(querysql, datatable_id);
+				saveBloodRelationToPGTable(execute_sql, datatable_id);
 			}
 		}
 		//删除原有数据 因为页面可能会存在修改sql 导致的字段大幅度变动 所以针对更新的逻辑会特别复杂 故采用全删全增的方式
 		Dbo.execute("delete from " + Dcol_relation_store.TableName + " where col_id in (select datatable_field_id from " +
 				Datatable_field_info.TableName + " where datatable_id = ?) and data_source = ?", dm_datatable.getDatatable_id(), StoreLayerDataSource.DM.getCode());
 		Dbo.execute("delete from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		List<String> columnnames = new ArrayList<>();
 		//新增字段表
 		for (int i = 0; i < datatable_field_info.length; i++) {
 			Datatable_field_info df_info = datatable_field_info[i];
@@ -1427,8 +1429,7 @@ public class MarketInfoAction extends BaseAction {
 			df_info.add(Dbo.db());
 		}
 		//新增 字段存储关系表 即字段勾选了什么附加属性
-		for (int i = 0; i < dm_column_storage.length; i++) {
-			Dcol_relation_store dc_storage = dm_column_storage[i];
+		for (Dcol_relation_store dc_storage : dm_column_storage) {
 			//通过csi_number 来确定字段的位置
 			Datatable_field_info datatable_field_info1 = datatable_field_info[dc_storage.getCsi_number().intValue()];
 			//设置datatable_field_id 为字段的那个ID
@@ -1482,6 +1483,65 @@ public class MarketInfoAction extends BaseAction {
 		}
 //		saveBloodRelationToPGTable(querysql, datatable_id);
 		return resultmap;
+	}
+
+	@Method(desc = "根据页面选择的列的信息和查询的sql获取最终执行的sql",
+			logicStep = "1.根据datatable_field_info信息拼接所有查询列的信息" +
+					"2.遍历所有为分组映射的字段" +
+					"3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。")
+	@Param(name = "datatable_field_info", desc = "datatable_field_info", range = "与Datatable_field_info表字段规则一致",
+			isBean = true)
+	@Param(name = "querySql", desc = "querySql", range = "String类型集市查询SQL")
+	public String getExecute_sql(Datatable_field_info[] datatable_field_info, String querySql) {
+		boolean flag = true;
+		//1.根据datatable_field_info信息拼接所有查询列的信息
+		StringBuilder sb = new StringBuilder(1024);
+		sb.append("SELECT");
+		for (Datatable_field_info field_info : datatable_field_info) {
+			ProcessType processType = ProcessType.ofEnumByCode(field_info.getField_process());
+			if (ProcessType.DingZhi == processType) {
+				sb.append(field_info.getProcess_mapping()).append(" as ")
+						.append(field_info.getField_en_name()).append(",");
+			} else if (ProcessType.ZiZeng == processType) {
+				//这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
+				logger.info("自增不拼接字段");
+			} else if (ProcessType.YingShe == processType || ProcessType.HanShuYingShe == processType) {
+				sb.append(field_info.getProcess_mapping()).append(" as ")
+						.append(field_info.getField_en_name()).append(",");
+			} else if (ProcessType.FenZhuYingShe == processType && flag) {
+				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
+				sb.append("#{HyrenFenZhuYingShe}").append(",");
+				flag = false;
+			} else {
+				throw new BusinessException("错误的字段映射规则");
+			}
+		}
+		String selectSql = sb.toString();
+		sb.delete(0, sb.length());
+		StringBuilder groupSql = new StringBuilder();
+		//2.遍历所有为分组映射的字段
+		for (Datatable_field_info field_info : datatable_field_info) {
+			//为分组映射
+			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+				String replacement = field_info.getProcess_mapping() + " as " + field_info.getField_en_name();
+				List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
+				sb.append(selectSql.replace("#{HyrenFenZhuYingShe}", replacement));
+				sb.append("'").append(split.get(1)).append("'").append(" as ").append(split.get(0)).append(" FROM ");
+				//先格式化查询的sql,替换掉原始查询SQL的select部分
+				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
+						DruidParseQuerySql.getSelectSql(querySql), sb.toString());
+				groupSql.append(execute_sql).append(" union all ");
+			}
+		}
+		//3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。
+		if (groupSql.length() > 0) {
+			return groupSql.delete(groupSql.length() - " union all ".length(), groupSql.length()).toString();
+		} else {
+			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
+			//先格式化查询的sql,替换掉原始查询SQL的select部分
+			return SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
+					DruidParseQuerySql.getSelectSql(querySql), selectSql);
+		}
 	}
 
 	/**
@@ -2588,5 +2648,13 @@ public class MarketInfoAction extends BaseAction {
 			}
 		}
 
+	}
+
+	@Method(desc = "获取集市函数映射可用的函数", logicStep = "1.查询Edw_sparksql_gram表获取可用的函数")
+	@Return(desc = "返回集市函数映射可用的函数", range = "无限制")
+	public Result getSparkSqlGram() {
+		//1.查询Edw_sparksql_gram表获取可用的函数
+		return Dbo.queryResult(
+				"select * from " + Edw_sparksql_gram.TableName);
 	}
 }

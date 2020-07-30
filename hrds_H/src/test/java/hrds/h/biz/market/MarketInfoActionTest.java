@@ -168,7 +168,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		datatable_field_info.setField_length("100");
 		datatable_field_info.setField_desc("");
 		datatable_field_info.setField_process(ProcessType.YingShe.getCode());
-		datatable_field_info.setProcess_para(count);
+		datatable_field_info.setProcess_mapping(name);
 		datatable_field_info.setField_seq(count);
 		datatable_field_info.setRemark("");
 		return datatable_field_info;
