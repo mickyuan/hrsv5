@@ -2,13 +2,13 @@ package hrds.agent.job.biz.core.dfstage.bulkload;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BKLoadUtil;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PathUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+
 @DocClass(author = "zxz", desc = "定长文件采用bulkLoad方式加载到hbase", createdate = "2020/07/17")
 public class FixedBulkLoadJob extends Configured implements Tool {
 
@@ -48,6 +49,7 @@ public class FixedBulkLoadJob extends Configured implements Tool {
 		private List<Integer> everyColLength = null;
 		private StringBuilder sb = new StringBuilder();
 		private String code;
+		private boolean is_header = false;
 
 		@Override
 		protected void setup(Context context) {
@@ -63,9 +65,14 @@ public class FixedBulkLoadJob extends Configured implements Tool {
 			everyColLength = new ArrayList<>(colLengthInfoList.size());
 			rowKeyIndexList.forEach(index -> everyColLength.add(Integer.valueOf(index)));
 			code = conf.get("code");
+			is_header = IsFlag.Shi.getCode().equals(conf.get("is_header"));
 		}
 
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+			if ("0".equals(key.toString()) && is_header) {
+				log.info("包含表头，第一行不处理");
+				return;
+			}
 			String values = value.toString();
 			List<String> lineList = getDingChangValueList(values, everyColLength, code);
 			String row_key;
@@ -119,20 +126,22 @@ public class FixedBulkLoadJob extends Configured implements Tool {
 		String etlDate = args[5];
 		String isMd5 = args[6];
 		String hadoop_user_name = args[7];
-		String code = args[8];
-		String colLengthInfo = args[9];
+		String platform = args[8];
+		String prncipal_name = args[9];
+		String code = args[10];
+		String colLengthInfo = args[11];
+		String is_header = args[12];
 		log.info("Arguments: " + todayTableName + "  " + hdfsFilePath + "  " + columnMetaInfo + "  " + rowKeyIndex
-				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name + "  "
-				+ code + "  " + colLengthInfo);
-
-		try (HBaseHelper helper = HBaseHelper.getHelper(configPath)) {
-			Configuration conf = helper.getConfiguration();
-
+				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name + "  " + platform
+				+ "  " + prncipal_name + "  " + code + "  " + colLengthInfo + "  " + is_header);
+		Configuration conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+		try (HBaseHelper helper = HBaseHelper.getHelper(conf)) {
 			conf.set("columnMetaInfo", columnMetaInfo);
 			conf.set("colLengthInfo", colLengthInfo);
 			conf.set("etlDate", etlDate);
 			conf.set("isMd5", isMd5);
 			conf.set("rowKeyIndex", rowKeyIndex);
+			conf.set("is_header", is_header);
 			conf.set(MRJobConfig.QUEUE_NAME, "root." + hadoop_user_name);
 			conf.set("code", code);
 			Job job = Job.getInstance(conf, "FixedBulkLoadJob_" + todayTableName);
@@ -141,7 +150,7 @@ public class FixedBulkLoadJob extends Configured implements Tool {
 			Path input = new Path(hdfsFilePath);
 			FileInputFormat.addInputPath(job, input);
 
-			String outputPath = PathUtil.TMPDIR + "/bulkload_fixed_length/output" + System.currentTimeMillis();
+			String outputPath = JobConstant.TMPDIR + "/bulkload_fixed_length/output" + System.currentTimeMillis();
 			Path tmpPath = new Path(outputPath);
 			FileOutputFormat.setOutputPath(job, tmpPath);
 

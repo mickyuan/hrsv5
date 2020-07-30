@@ -140,9 +140,9 @@ public class SecurityUtils {
 	/**
 	 * Add configuration file
 	 */
-	public static Configuration confLoad(Configuration conf) throws IOException {
+	public static Configuration confLoad() throws IOException {
 
-		conf = new Configuration();
+		Configuration conf = new Configuration();
 		// conf file
 		conf.addResource(new Path(System.getProperty("user.dir") + File.separator + "conf" + File.separator + "hdfs-site.xml"));
 		conf.addResource(new Path(System.getProperty("user.dir") + File.separator + "conf" + File.separator + "core-site.xml"));

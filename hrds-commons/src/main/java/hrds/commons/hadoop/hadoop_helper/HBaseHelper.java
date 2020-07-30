@@ -1,7 +1,6 @@
 package hrds.commons.hadoop.hadoop_helper;
 
 import hrds.commons.hadoop.readconfig.ConfigReader;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,9 +34,9 @@ public class HBaseHelper implements Closeable {
 
 	private Table table = null;
 
-	static {
-		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf"));
-	}
+//	static {
+//		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf"));
+//	}
 
 	protected HBaseHelper(Configuration configuration) throws IOException {
 

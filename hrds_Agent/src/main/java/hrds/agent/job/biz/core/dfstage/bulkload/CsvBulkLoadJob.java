@@ -3,12 +3,12 @@ package hrds.agent.job.biz.core.dfstage.bulkload;
 import au.com.bytecode.opencsv.CSVParser;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BKLoadUtil;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PathUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,6 +46,7 @@ public class CsvBulkLoadJob extends Configured implements Tool {
 		private boolean isMd5 = false;
 		final CSVParser parser = new CSVParser();
 		private StringBuilder sb = new StringBuilder();
+		private boolean is_header = false;
 
 		@Override
 		protected void setup(Context context) {
@@ -53,14 +54,18 @@ public class CsvBulkLoadJob extends Configured implements Tool {
 			List<String> columnList = StringUtil.split(conf.get("columnMetaInfo"), Constant.METAINFOSPLIT);
 			headByte = new ArrayList<>(columnList.size());
 			columnList.forEach(column -> headByte.add(column.getBytes()));
-			isMd5 = conf.get("isMd5").equals(IsFlag.Shi.getCode());
+			isMd5 = IsFlag.Shi.getCode().equals(conf.get("isMd5"));
 			List<String> rowKeyIndexList = StringUtil.split(conf.get("rowKeyIndex"), Constant.METAINFOSPLIT);
 			rowKeyIndex = new ArrayList<>(rowKeyIndexList.size());
 			rowKeyIndexList.forEach(index -> rowKeyIndex.add(Integer.valueOf(index)));
+			is_header = IsFlag.Shi.getCode().equals(conf.get("is_header"));
 		}
 
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-
+			if ("0".equals(key.toString()) && is_header) {
+				log.info("包含表头，第一行不处理");
+				return;
+			}
 			String values = value.toString();
 			String[] lines = parser.parseLine(values);
 			String row_key;
@@ -96,15 +101,19 @@ public class CsvBulkLoadJob extends Configured implements Tool {
 		String etlDate = args[5];
 		String isMd5 = args[6];
 		String hadoop_user_name = args[7];
+		String platform = args[8];
+		String prncipal_name = args[9];
+		String is_header = args[10];
 		log.info("Arguments: " + todayTableName + "  " + hdfsFilePath + "  " + columnMetaInfo + "  " + rowKeyIndex
-				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name);
-
-		try (HBaseHelper helper = HBaseHelper.getHelper(ConfigReader.getConfiguration(configPath))) {
-			Configuration conf = helper.getConfiguration();
+				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name + "  " + platform
+				+ "  " + prncipal_name + "  " + is_header);
+		Configuration conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+		try (HBaseHelper helper = HBaseHelper.getHelper(conf)) {
 			conf.set("columnMetaInfo", columnMetaInfo);
 			conf.set("etlDate", etlDate);
 			conf.set("isMd5", isMd5);
 			conf.set("rowKeyIndex", rowKeyIndex);
+			conf.set("is_header", is_header);
 			conf.set(MRJobConfig.QUEUE_NAME, "root." + hadoop_user_name);
 			Job job = Job.getInstance(conf, "CsvBulkLoadJob_" + todayTableName);
 			job.setJarByClass(CsvBulkLoadJob.class);
@@ -113,7 +122,7 @@ public class CsvBulkLoadJob extends Configured implements Tool {
 			Path input = new Path(hdfsFilePath);
 			FileInputFormat.addInputPath(job, input);
 
-			String outputPath = PathUtil.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
+			String outputPath = JobConstant.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
 			Path tmpPath = new Path(outputPath);
 			FileOutputFormat.setOutputPath(job, tmpPath);
 

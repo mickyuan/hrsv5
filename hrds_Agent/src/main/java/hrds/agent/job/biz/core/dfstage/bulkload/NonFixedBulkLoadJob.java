@@ -2,12 +2,12 @@ package hrds.agent.job.biz.core.dfstage.bulkload;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BKLoadUtil;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PathUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,6 +46,7 @@ public class NonFixedBulkLoadJob extends Configured implements Tool {
 		private String separator = "";
 		private boolean isMd5 = false;
 		private StringBuilder sb = new StringBuilder();
+		private boolean is_header = false;
 
 		@Override
 		protected void setup(Context context) {
@@ -59,11 +60,14 @@ public class NonFixedBulkLoadJob extends Configured implements Tool {
 			rowKeyIndex = new ArrayList<>(rowKeyIndexList.size());
 			rowKeyIndexList.forEach(index -> rowKeyIndex.add(Integer.valueOf(index)));
 			separator = conf.get("separator");
-
+			is_header = IsFlag.Shi.getCode().equals(conf.get("is_header"));
 		}
 
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-
+			if ("0".equals(key.toString()) && is_header) {
+				log.info("包含表头，第一行不处理");
+				return;
+			}
 			String values = value.toString();
 			List<String> lineList = StringUtil.split(values, separator);
 			String row_key;
@@ -100,17 +104,21 @@ public class NonFixedBulkLoadJob extends Configured implements Tool {
 		String etlDate = args[5];
 		String isMd5 = args[6];
 		String hadoop_user_name = args[7];
-		String separator = args[8];
+		String platform = args[8];
+		String prncipal_name = args[9];
+		String separator = args[10];
+		String is_header = args[11];
 		log.info("Arguments: " + todayTableName + "  " + hdfsFilePath + "  " + columnMetaInfo + "  " + rowKeyIndex
-				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name + "  " + separator);
-
-		try (HBaseHelper helper = HBaseHelper.getHelper(configPath)) {
-			Configuration conf = helper.getConfiguration();
+				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name + "  " + platform
+				+ "  " + prncipal_name + "  " + separator + "  " + is_header);
+		Configuration conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+		try (HBaseHelper helper = HBaseHelper.getHelper(conf)) {
 			//把后面一列去掉
 			conf.set("columnMetaInfo", columnMetaInfo);
 			conf.set("etlDate", etlDate);
 			conf.set("isMd5", isMd5);
 			conf.set("rowKeyIndex", rowKeyIndex);
+			conf.set("is_header", is_header);
 			conf.set("separator", separator);
 			conf.set(MRJobConfig.QUEUE_NAME, "root." + hadoop_user_name);
 			Job job = Job.getInstance(conf, "NonFixedBulkLoadJob_" + todayTableName);
@@ -119,7 +127,7 @@ public class NonFixedBulkLoadJob extends Configured implements Tool {
 			Path input = new Path(hdfsFilePath);
 			FileInputFormat.addInputPath(job, input);
 
-			String outputPath = PathUtil.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
+			String outputPath = JobConstant.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
 			Path tmpPath = new Path(outputPath);
 			FileOutputFormat.setOutputPath(job, tmpPath);
 

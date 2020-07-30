@@ -1,7 +1,8 @@
 package hrds.commons.hadoop.readconfig;
 
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.exception.BusinessException;
+import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -13,10 +14,6 @@ public class ConfigReader {
 	}
 
 	private static final Log log = LogFactory.getLog(ConfigReader.class);
-
-	private static Configuration conf;
-
-	private static LoginUtil lg;
 
 	private ConfigReader() {
 
@@ -34,27 +31,51 @@ public class ConfigReader {
 	 * load HDFS_properties to HadoopConstant
 	 */
 	public static Configuration getConfiguration(String configPath) {
-		return getConfiguration(configPath, PlatformType.normal.toString());
+		return getConfiguration(configPath, null);
 	}
 
 	/**
 	 * load HDFS_properties to HadoopConstant
 	 */
 	public static Configuration getConfiguration(String configPath, String platform) {
+		return getConfiguration(configPath, platform, null);
+	}
 
+	/**
+	 * load HDFS_properties to HadoopConstant
+	 */
+	public static Configuration getConfiguration(String configPath, String platform, String prncipal_name) {
+		return getConfiguration(configPath, platform, prncipal_name, null);
+	}
+
+	/**
+	 * load HDFS_properties to HadoopConstant
+	 */
+	public static Configuration getConfiguration(String configPath, String platform,
+	                                             String prncipal_name, String hadoop_user_name) {
 		try {
 			log.info("configReader  " + configPath);
+			LoginUtil lg;
 			if (StringUtil.isEmpty(configPath)) {
 				lg = new LoginUtil();
 			} else {
 				lg = new LoginUtil(configPath);
 			}
-			conf = lg.confLoad(conf);
+			Configuration conf = lg.confLoad();
+			if (platform == null) {
+				platform = PropertyParaValue.getString("platform", ConfigReader.PlatformType.normal.toString());
+			}
+			if (prncipal_name == null) {
+				prncipal_name = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
+			}
+			if (hadoop_user_name == null) {
+				hadoop_user_name = PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf");
+			}
 			//平台验证
-			return initAuth(conf, platform);
+			return initAuth(conf, platform, prncipal_name, hadoop_user_name, lg);
 		} catch (Exception e) {
 			log.error("Failed to verify the platform...", e);
-			return null;
+			throw new AppSystemException("认证获取conf失败", e);
 		}
 	}
 
@@ -73,7 +94,7 @@ public class ConfigReader {
 //			} else if (external_cluster.equals(PlatformType.fic60.toString())) {
 //				conf = lg.hbaseLogin(conf);
 //			} else {
-//				throw new BusinessException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
+//				throw new AppSystemException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
 //			}
 //			return conf;
 //		} catch (Exception e) {
@@ -82,16 +103,14 @@ public class ConfigReader {
 //		}
 //	}
 
-	private static Configuration initAuth(Configuration conf, String platform) {
+	private static Configuration initAuth(Configuration conf, String platform,
+	                                      String prncipal_name, String hadoop_user_name, LoginUtil lg) {
 		log.info("initAuth platform: " + platform);
-		if (null == lg) {
-			lg = new LoginUtil();
-		}
 		try {
 			if (PlatformType.normal.toString().equals(platform)) {
 				log.info("Do nothing");
 			} else if (PlatformType.cdh5_13.toString().equals(platform)) {
-				conf = CDHLoginUtil.login(conf);
+				conf = CDHLoginUtil.login(conf, prncipal_name);
 			} else if (PlatformType.fic50.toString().equals(platform)) {
 				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
 				if (!SecurityUtils.Maplogin(conf)) {// Security login
@@ -100,14 +119,16 @@ public class ConfigReader {
 			} else if (PlatformType.fic60.toString().equals(platform)) {
 				conf = lg.hbaseLogin(conf);
 			} else if (PlatformType.fic80.toString().equals(platform)) {
-				conf = C80LoginUtil.login(conf);
+				conf = C80LoginUtil.login(conf, prncipal_name);
 			} else {
-				throw new BusinessException("The platform is a wrong type ,please check <platform>...");
+				throw new AppSystemException("The platform is a wrong type ,please check <platform>...");
 			}
+			//设置hadoop_user_name
+			conf.set("HADOOP_USER_NAME", hadoop_user_name);
 			return conf;
 		} catch (Exception e) {
 			log.error("Failed to initAuth...", e);
-			return null;
+			throw new AppSystemException("认证获取conf失败", e);
 		}
 	}
 

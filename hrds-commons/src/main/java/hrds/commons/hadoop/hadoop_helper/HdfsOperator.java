@@ -1,9 +1,7 @@
 package hrds.commons.hadoop.hadoop_helper;
 
 import hrds.commons.exception.BusinessException;
-import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.readconfig.HDFSFileSystem;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,12 +28,22 @@ public class HdfsOperator implements Closeable {
 		this(null);
 	}
 
-	public HdfsOperator(String configPath) throws IOException {
-		this(configPath, ConfigReader.PlatformType.normal.toString(), null);
+	public HdfsOperator(String configPath) {
+		this(configPath, null);
 	}
 
-	public HdfsOperator(String configPath, String platform, String hadoop_user_name) throws IOException {
-		hdfsFileSystem = new HDFSFileSystem(configPath, platform, hadoop_user_name);
+	public HdfsOperator(String configPath, String platform) {
+		this(configPath, platform, null);
+	}
+
+	public HdfsOperator(String configPath, String platform,
+	                    String prncipal_name) {
+		this(configPath, platform, prncipal_name, null);
+	}
+
+	public HdfsOperator(String configPath, String platform,
+	                    String prncipal_name, String hadoop_user_name) {
+		hdfsFileSystem = new HDFSFileSystem(configPath, platform, prncipal_name, hadoop_user_name);
 		fs = hdfsFileSystem.getFileSystem();
 	}
 
@@ -431,7 +439,7 @@ public class HdfsOperator implements Closeable {
 
 	public static void main(String[] args) {
 
-		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf"));
+//		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf"));
 		String hdfsPath = "/hrds/hrds_G01/WEB-INF/src/log4j.properties";
 		try (HdfsOperator operator = new HdfsOperator()) {
 			System.out.println(operator.getDirectoryCount(hdfsPath));

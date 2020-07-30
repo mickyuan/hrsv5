@@ -1,7 +1,6 @@
 package hrds.commons.hadoop.readconfig;
 
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -28,7 +27,6 @@ public class CDHLoginUtil {
 	private static final String LOGIN_FAILED_CAUSE_AES256_WRONG = "(aes256 not support) aes256 not support by default jdk/jre, need copy local_policy.jar and US_export_policy.jar from remote server in path /opt/huawei/Bigdata/jdk/jre/lib/security";
 	private static final String LOGIN_FAILED_CAUSE_PRINCIPAL_WRONG = "(no rule) principal format not support by default, need add property hadoop.security.auth_to_local(in core-site.xml) value RULE:[1:$1] RULE:[2:$1]";
 	private static final String LOGIN_FAILED_CAUSE_TIME_OUT = "(time out) can not connect to kdc server or there is fire wall in the network";
-	private static final String PRNCIPAL_NAME = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
 
 	private static String PRINCIPAL = "username.client.kerberos.principal";
 	private static String KEYTAB = "username.client.keytab.file";
@@ -40,7 +38,7 @@ public class CDHLoginUtil {
 
 	public static void main(String[] args) {
 		try {
-			CDHLoginUtil.login(ConfigReader.getConfiguration());
+			CDHLoginUtil.login(ConfigReader.getConfiguration(), "admin@HADOOP.COM");
 
 		} catch (IOException e) {
 			log.info("Auth failed");
@@ -55,7 +53,7 @@ public class CDHLoginUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public synchronized static Configuration login(Configuration conf) throws IOException {
+	public synchronized static Configuration login(Configuration conf, String prncipal_name) throws IOException {
 		if (conf == null) {
 			throw new AppSystemException("初始化配置为空！");
 		}
@@ -64,12 +62,11 @@ public class CDHLoginUtil {
 		PATH_TO_KRB5_CONF = confDir + "krb5.conf";
 		PATH_TO_JAAS = confDir + "jaas.conf";
 
-		String userPrincipal = PRNCIPAL_NAME;
 		String userKeytabPath = PATH_TO_KEYTAB;
 		String krb5ConfPath = PATH_TO_KRB5_CONF;
 
 		// 1.check input parameters
-		if ((userPrincipal == null) || (userPrincipal.length() <= 0)) {
+		if ((prncipal_name == null) || (prncipal_name.length() <= 0)) {
 			log.error("input userPrincipal is invalid.");
 			throw new IOException("input userPrincipal is invalid.");
 		}
@@ -104,14 +101,14 @@ public class CDHLoginUtil {
 		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
 
 		conf.set(KEYTAB, PATH_TO_KEYTAB);
-		conf.set(PRINCIPAL, PRNCIPAL_NAME);
+		conf.set(PRINCIPAL, prncipal_name);
 
 		// 3.set and check krb5config
 		setKrb5Config(krb5ConfFile.getAbsolutePath());
 		setConfiguration(conf);
 
 		// 4.login and check for hadoop
-		loginHadoop(userPrincipal, userKeytabFile.getAbsolutePath());
+		loginHadoop(prncipal_name, userKeytabFile.getAbsolutePath());
 		log.info("Login success!!!!!!!!!!!!!!");
 		return conf;
 	}

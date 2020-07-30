@@ -147,17 +147,29 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 		//存储层定义增加一个Phoenix还是Hive算增量的判断标识 TODO hive和phoenix是否要增加代码项
 		if ("hive".equalsIgnoreCase(data_store_connect_attr.get(StorageTypeKey.increment_engine))) {
 			if (StringUtil.isBlank(data_store_connect_attr.get(StorageTypeKey.jdbc_url))) {
-				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name, null);
+				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name,
+						data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name), null);
 			} else {
 				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
-				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name, db);
+				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name,
+						data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name), db);
 			}
 		} else if ("phoenix".equalsIgnoreCase(data_store_connect_attr.get(StorageTypeKey.increment_engine))) {
 			if (StringUtil.isBlank(data_store_connect_attr.get(StorageTypeKey.jdbc_url))) {
-				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name, null);
+				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name,
+						data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name), null);
 			} else {
 				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
-				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name, db);
+				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name,
+						data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name), db);
 			}
 		} else {
 			throw new AppSystemException("HBase算增量不支持其他计算引擎");

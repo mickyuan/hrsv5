@@ -22,9 +22,9 @@ import java.sql.ResultSet;
 public class HBaseIncreasementByHive extends HBaseIncreasement {
 	private static final Log logger = LogFactory.getLog(HBaseIncreasementByHive.class);
 
-	public HBaseIncreasementByHive(TableBean tableBean, String hbase_name,
-	                               String sysDate, String dsl_name, DatabaseWrapper db) {
-		super(tableBean, hbase_name, sysDate, dsl_name, db);
+	public HBaseIncreasementByHive(TableBean tableBean, String hbase_name, String sysDate, String dsl_name,
+	                               String hadoop_user_name, String platform, String prncipal_name, DatabaseWrapper db) {
+		super(tableBean, hbase_name, sysDate, dsl_name, hadoop_user_name, platform, prncipal_name, db);
 	}
 
 	@Override

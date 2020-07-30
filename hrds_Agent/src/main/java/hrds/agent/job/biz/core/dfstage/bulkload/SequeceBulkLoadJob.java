@@ -2,11 +2,12 @@ package hrds.agent.job.biz.core.dfstage.bulkload;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BKLoadUtil;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PathUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -98,12 +99,13 @@ public class SequeceBulkLoadJob extends Configured implements Tool {
 		String etlDate = args[5];
 		String isMd5 = args[6];
 		String hadoop_user_name = args[7];
-		logger.info("Arguments: " + todayTableName + "  " + hdfsFilePath + "  " + columnMetaInfo + "  " + rowKeyIndex
-				+ "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name);
-
-		try (HBaseHelper helper = HBaseHelper.getHelper(configPath)) {
-
-			Configuration conf = helper.getConfiguration();
+		String platform = args[8];
+		String prncipal_name = args[9];
+		logger.info("Arguments: " + todayTableName + "  " + hdfsFilePath + "  " + columnMetaInfo + "  "
+				+ rowKeyIndex + "  " + configPath + "  " + etlDate + "  " + isMd5 + "  " + hadoop_user_name
+				+ "  " + platform + "  " + prncipal_name);
+		Configuration conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+		try (HBaseHelper helper = HBaseHelper.getHelper(conf)) {
 			conf.set("columnMetaInfo", columnMetaInfo);
 			conf.set("etlDate", etlDate);
 			conf.set("isMd5", isMd5);
@@ -115,7 +117,7 @@ public class SequeceBulkLoadJob extends Configured implements Tool {
 			job.setInputFormatClass(SequenceFileInputFormat.class);
 			ParquetInputFormat.setInputPaths(job, hdfsFilePath);
 
-			String outputPath = PathUtil.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
+			String outputPath = JobConstant.TMPDIR + "/bulkload/output" + System.currentTimeMillis();
 			Path tmpPath = new Path(outputPath);
 			FileOutputFormat.setOutputPath(job, tmpPath);
 

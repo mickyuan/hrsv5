@@ -34,6 +34,8 @@ public class StorageTypeKey {
 	public static final String platform = "platform";
 	//操作hdfs的用户名
 	public static final String hadoop_user_name = "hadoop_user_name";
+	//prncipal_name
+	public static final String prncipal_name = "prncipal_name";
 	//kerberos认证文件名称
 	public static final String keytab_file = "keytab_file";
 	//kerberos认证用户
@@ -90,14 +92,19 @@ public class StorageTypeKey {
 		FINALLY_STORAGE_KEYS.put(DatabaseType.Postgresql.getCode() + "_"
 				+ IsFlag.Shi.getCode(), postgresqlExternalTableKeys);
 
+		//hive数据库不支持外部表，通过jdbc，当做普通数据库处理
 		List<String> hiveKeys = new ArrayList<>(Arrays.
-				asList(database_driver, jdbc_url, user_name, database_pwd, core_site,
-						hdfs_site, yarn_site, hbase_site, mapred_site, keytab, krb5));
+				asList(database_driver, jdbc_url, user_name, database_pwd, database_name, database_type));
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode(), hiveKeys);
 
+		List<String> hiveExternalTableKeys = new ArrayList<>(Arrays.
+				asList(database_driver, jdbc_url, user_name, database_pwd, database_name, database_type,
+						platform, hadoop_user_name, prncipal_name, core_site, hdfs_site, keytab, krb5));
+		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode() + "_" + IsFlag.Shi.getCode(), hiveExternalTableKeys);
+
 		List<String> hbaseKeys = new ArrayList<>(Arrays.
-				asList(zkhost, core_site, hdfs_site, hbase_site, keytab, krb5, increment_engine, database_driver,
-						jdbc_url, user_name, database_pwd, database_name));
+				asList(zkhost, increment_engine, database_driver, jdbc_url, user_name, database_pwd, database_name,
+						database_type, platform, hadoop_user_name, prncipal_name, hdfs_site, hbase_site, keytab, krb5));
 		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
 		List<String> solrKeys = new ArrayList<>(Arrays.asList(solr_url, collection));

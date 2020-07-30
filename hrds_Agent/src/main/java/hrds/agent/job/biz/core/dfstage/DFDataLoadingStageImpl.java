@@ -187,25 +187,33 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		rowKeyIndex.delete(rowKeyIndex.length() - Constant.METAINFOSPLIT.length(), rowKeyIndex.length());
 		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH
 				+ dataStoreConfBean.getDsl_name() + File.separator, true);
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		String[] args = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
-				isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name)};
+				isMd5, data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+				data_store_connect_attr.get(StorageTypeKey.platform),
+				data_store_connect_attr.get(StorageTypeKey.prncipal_name), tableBean.getIs_header()};
 		//如果表已经存在，先删除当天的表
 		HBaseHelper helper = null;
 		try {
-			helper = HBaseHelper.getHelper(configPath);
+			Configuration conf = ConfigReader.getConfiguration(configPath,
+					data_store_connect_attr.get(StorageTypeKey.platform),
+					data_store_connect_attr.get(StorageTypeKey.prncipal_name),
+					data_store_connect_attr.get(StorageTypeKey.hadoop_user_name));
+			helper = HBaseHelper.getHelper(conf);
 			//备份表
 			backupToDayTable(todayTableName, helper);
 			//默认是不压缩   TODO 是否压缩需要从页面配置
 			HBaseIncreasement.createDefaultPrePartTable(helper, todayTableName, false);
-			Configuration conf = ConfigReader.getConfiguration(configPath);
 			//根据文件类型使用bulkload解析文件生成HFile，加载数据到HBase表
 			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
 				run = ToolRunner.run(conf, new SequeceBulkLoadJob(), args);
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
 				//非定长需要文件分隔符
 				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
-						isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name),
-						tableBean.getColumn_separator()};
+						isMd5, data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name),
+						tableBean.getColumn_separator(), tableBean.getIs_header()};
 				run = ToolRunner.run(conf, new NonFixedBulkLoadJob(), args2);
 			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
 				run = ToolRunner.run(conf, new ParquetBulkLoadJob(), args);
@@ -214,8 +222,11 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
 				//定长需要根据文件的编码去获取字节长度,需要每一列的长度
 				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
-						isMd5, dataStoreConfBean.getData_store_connect_attr().get(StorageTypeKey.hadoop_user_name),
-						DataBaseCode.ofValueByCode(tableBean.getFile_code()), tableBean.getColLengthInfo()};
+						isMd5, data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name),
+						DataBaseCode.ofValueByCode(tableBean.getFile_code()), tableBean.getColLengthInfo(),
+						tableBean.getIs_header()};
 				run = ToolRunner.run(conf, new FixedBulkLoadJob(), args2);
 			} else if (FileFormat.CSV.getCode().equals(file_format)) {
 				run = ToolRunner.run(conf, new CsvBulkLoadJob(), args);

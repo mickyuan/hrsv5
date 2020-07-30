@@ -269,6 +269,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		try (HdfsOperator operator = new HdfsOperator(FileNameUtils.normalize(Constant.STORECONFIGPATH
 				+ dataStoreConfBean.getDsl_name() + File.separator, true)
 				, data_store_connect_attr.get(StorageTypeKey.platform),
+				data_store_connect_attr.get(StorageTypeKey.prncipal_name),
 				data_store_connect_attr.get(StorageTypeKey.hadoop_user_name))) {
 			//创建hdfs表的文件夹
 			if (!operator.exists(hdfsPath)) {

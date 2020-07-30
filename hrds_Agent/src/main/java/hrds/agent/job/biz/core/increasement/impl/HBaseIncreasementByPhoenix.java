@@ -11,9 +11,9 @@ import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
  */
 public class HBaseIncreasementByPhoenix extends HBaseIncreasement {
 
-	public HBaseIncreasementByPhoenix(TableBean tableBean, String hbase_name,
-	                                  String sysDate, String dsl_name, DatabaseWrapper db) {
-		super(tableBean, hbase_name, sysDate, dsl_name, db);
+	public HBaseIncreasementByPhoenix(TableBean tableBean, String hbase_name, String sysDate, String dsl_name, String
+			hadoop_user_name, String platform, String prncipal_name, DatabaseWrapper db) {
+		super(tableBean, hbase_name, sysDate, dsl_name, hadoop_user_name, platform, prncipal_name, db);
 	}
 
 	@Override

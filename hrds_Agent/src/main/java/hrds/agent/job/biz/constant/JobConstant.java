@@ -4,6 +4,8 @@ package hrds.agent.job.biz.constant;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.utils.PropertyParaUtil;
 
+import java.io.File;
+
 public class JobConstant {
     private static final String HD = "HD";
     //写文件时缓存的行数
@@ -47,5 +49,7 @@ public class JobConstant {
     public static final String SOLRZKHOST = PropertyParaUtil.getString("zkHost", "");
     //XXX 文件采集进solr没做选择存储层临时使用
     public static final String SOLRCOLLECTION = PropertyParaUtil.getString("collection", "");
+    //数据进hbase,bulklode临时文件产生区
+    public static final String TMPDIR = PREFIX + File.separator + "TMP";//临时文件产生区
 }
 

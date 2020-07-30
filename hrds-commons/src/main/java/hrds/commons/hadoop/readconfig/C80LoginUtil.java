@@ -1,21 +1,19 @@
 package hrds.commons.hadoop.readconfig;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
-
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
+
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class C80LoginUtil {
 
@@ -78,8 +76,6 @@ public class C80LoginUtil {
 
 	private static final boolean IS_IBM_JDK = System.getProperty("java.vendor").contains("IBM");
 
-	private static final String PRNCIPAL_NAME = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
-
 	private static final String ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL = "zookeeper/hadoop.hadoop.com";
 
 	private static String PRINCIPAL = "username.client.kerberos.principal";
@@ -90,7 +86,7 @@ public class C80LoginUtil {
 	public static String PATH_TO_KRB5_CONF;
 	public static String PATH_TO_JAAS;
 
-	public synchronized static Configuration login(Configuration conf) throws IOException {
+	public synchronized static Configuration login(Configuration conf, String prncipal_name) throws IOException {
 		if (conf == null) {
 			throw new AppSystemException("初始化配置为空！");
 		}
@@ -99,7 +95,6 @@ public class C80LoginUtil {
 		PATH_TO_KRB5_CONF = confDir + "krb5.conf";
 		PATH_TO_JAAS = confDir + "jaas.conf";
 
-		String userPrincipal = PRNCIPAL_NAME;
 		String userKeytabPath = PATH_TO_KEYTAB;
 		String krb5ConfPath = PATH_TO_KRB5_CONF;
 
@@ -109,7 +104,7 @@ public class C80LoginUtil {
 		//		}
 
 		// 1.check input parameters
-		if ((userPrincipal == null) || (userPrincipal.length() <= 0)) {
+		if ((prncipal_name == null) || (prncipal_name.length() <= 0)) {
 			log.error("input userPrincipal is invalid.");
 			throw new IOException("input userPrincipal is invalid.");
 		}
@@ -148,8 +143,8 @@ public class C80LoginUtil {
 		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
 
 		conf.set(KEYTAB, PATH_TO_KEYTAB);
-		conf.set(PRINCIPAL, PRNCIPAL_NAME);
-		setJaasConf("Client", PRNCIPAL_NAME, PATH_TO_KEYTAB);
+		conf.set(PRINCIPAL, prncipal_name);
+		setJaasConf("Client", prncipal_name, PATH_TO_KEYTAB);
 		setZookeeperServerPrincipal(ZOOKEEPER_SERVER_PRINCIPAL_KEY, ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
 
 		// 3.set and check krb5config
@@ -157,7 +152,7 @@ public class C80LoginUtil {
 		setConfiguration(conf);
 
 		// 4.login and check for hadoop
-		loginHadoop(userPrincipal, userKeytabFile.getAbsolutePath());
+		loginHadoop(prncipal_name, userKeytabFile.getAbsolutePath());
 		log.info("Login success!!!!!!!!!!!!!!");
 		return conf;
 	}
@@ -541,7 +536,7 @@ public class C80LoginUtil {
 
 		//		ConfigReader.getConfiguration();
 		try {
-			C80LoginUtil.login(ConfigReader.getConfiguration());
+			C80LoginUtil.login(ConfigReader.getConfiguration(), "admin@HADOOP.COM");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

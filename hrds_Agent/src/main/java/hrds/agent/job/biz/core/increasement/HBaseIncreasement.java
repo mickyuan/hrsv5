@@ -8,6 +8,7 @@ import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hadoop_helper.HashChoreWoker;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -32,7 +33,8 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 	protected HBaseHelper helper;
 	protected String todayTableName;
 
-	protected HBaseIncreasement(TableBean tableBean, String hbase_name, String sysDate, String dsl_name, DatabaseWrapper db) {
+	protected HBaseIncreasement(TableBean tableBean, String hbase_name, String sysDate
+			, String dsl_name, String hadoop_user_name, String platform, String prncipal_name, DatabaseWrapper db) {
 		this.columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		this.types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dsl_name);
@@ -44,8 +46,9 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 		this.todayTableName = hbase_name + "_" + 1;
 		this.db = db;
 		try {
-			this.helper = HBaseHelper.getHelper(FileNameUtils.normalize(Constant.STORECONFIGPATH
-					+ dsl_name + File.separator, true));
+			this.helper = HBaseHelper.getHelper(ConfigReader.getConfiguration(FileNameUtils.normalize(
+					Constant.STORECONFIGPATH + dsl_name + File.separator, true)
+					, platform, prncipal_name, hadoop_user_name));
 		} catch (IOException e) {
 			throw new AppSystemException("获取helper异常", e);
 		}
