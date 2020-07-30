@@ -334,6 +334,30 @@ public class MarketInfoAction extends BaseAction {
 		return categoryList;
 	}
 
+	@Method(desc = "根据分类ID，分类名称获取分类信息", logicStep = "1.判断集市工程是否存在" +
+			"2.获取所有子分类信息" +
+			"3.封装所有分类子节点信息并返回")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "category_name", desc = "分类ID", range = "新增集市分类ID时生成")
+	@Param(name = "category_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
+	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
+	                                                                  long category_id) {
+		// 1.判断集市工程是否存在
+		isDmInfoExist(data_mart_id);
+		List<Map<String, Object>> categoryList = new ArrayList<>();
+		Map<String, Object> categoryMap = new HashMap<>();
+		categoryMap.put("id", category_id);
+		categoryMap.put("isroot", true);
+		categoryMap.put("topic", category_name);
+		categoryMap.put("direction", "left");
+		categoryList.add(categoryMap);
+		// 2.获取所有子分类信息
+		getChildDmCategoryNodeInfo(data_mart_id, category_id, categoryList);
+		// 3.封装所有分类子节点信息并返回
+		return categoryList;
+	}
+
 	@Method(desc = "获取所有子分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息" +
 			"2.获取所有子分类信息" +
 			"3.根据父分类ID查询集市分类信息不存在，查询当前分类信息并封装数据")
@@ -348,7 +372,7 @@ public class MarketInfoAction extends BaseAction {
 			for (Dm_category dm_category : dmCategoryList) {
 				Map<String, Object> categoryMap = new HashMap<>();
 				categoryMap.put("id", dm_category.getCategory_id());
-				categoryMap.put("parent_id", category_id);
+				categoryMap.put("parentid", category_id);
 				categoryMap.put("isroot", true);
 				categoryMap.put("topic", dm_category.getCategory_name());
 				categoryMap.put("direction", "right");
@@ -371,11 +395,12 @@ public class MarketInfoAction extends BaseAction {
 				category_name, category_id);
 	}
 
-	@Method(desc = "根据集市分类获取所有数据表信息", logicStep = "1.判断集市工程是否存在" +
+	@Method(desc = "根据集市分类获取数据表信息", logicStep = "1.判断集市工程是否存在" +
 			"2.关联查询集市数据表与集市分类表获取数据表信息")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
 	@Return(desc = "返回数据表信息", range = "无限制")
-	public Result getDmDataTableByDmCategory(long data_mart_id) {
+	public Result getDmDataTableByDmCategory(long data_mart_id, long category_id) {
 		// 1.判断集市工程是否存在
 		isDmInfoExist(data_mart_id);
 		// 2.关联查询集市数据表与集市分类表获取数据表信息
@@ -384,8 +409,8 @@ public class MarketInfoAction extends BaseAction {
 						"t2.category_name,t2.parent_category_id from "
 						+ Dm_datatable.TableName + " t1 left join " + Dm_category.TableName
 						+ " t2 on t1.category_id=t2.category_id and t1.data_mart_id=t2.data_mart_id"
-						+ " where t1.data_mart_id=? order by t1.category_id desc",
-				data_mart_id);
+						+ " where t1.data_mart_id=? and t2.category_id=? order by t1.category_id desc",
+				data_mart_id, category_id);
 	}
 
 	@Method(desc = "获取数据表所有分类信息集合", logicStep = "1.判断集市工程是否存在" +
@@ -577,10 +602,12 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setData_mart_id(data_mart_id);
 		return Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " +
-				Datatable_field_info.TableName + ") then true else false end as isadd from " +
-				Dm_datatable.TableName + " t1 left join " + Dtab_relation_store.TableName +
-				" t2 on t1.datatable_id = t2.tab_id where data_mart_id = ? and t2.data_source = ? order by " +
-				"t1.datatable_id asc", dm_datatable.getData_mart_id(), StoreLayerDataSource.DM.getCode());
+						Datatable_field_info.TableName + ") then true else false end as isadd from " +
+						Dm_datatable.TableName + " t1 left join " + Dtab_relation_store.TableName +
+						" t2 on t1.datatable_id = t2.tab_id left join " + Dm_category.TableName +
+						" t3 on t1.category_id=t3.category_id" +
+						" where t1.data_mart_id = ? and t2.data_source = ? order by t1.datatable_id asc",
+				dm_datatable.getData_mart_id(), StoreLayerDataSource.DM.getCode());
 	}
 
 
@@ -1968,14 +1995,15 @@ public class MarketInfoAction extends BaseAction {
 			sheet1.getRow(19 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
 			sheet1.getRow(19 + count + i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
 			addValidationData(sheet1, processtypesubjects, 19 + count + i, 5);
-			if (datatable_field_info.getField_process().equals(ProcessType.YingShe.getCode())) {
-				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
-				List<String> columns = druidParseQuerySql.parseSelectOriginalField();
-				Integer integer = Integer.valueOf(datatable_field_info.getProcess_para());
-				sheet1.getRow(19 + count + i).createCell(6).setCellValue(columns.get(integer));
-			} else {
-				sheet1.getRow(19 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
-			}
+			// TODO 修改实体发生了变化
+//			if (datatable_field_info.getField_process().equals(ProcessType.YingShe.getCode())) {
+//				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
+//				List<String> columns = druidParseQuerySql.parseSelectOriginalField();
+//				Integer integer = Integer.valueOf(datatable_field_info.getProcess_para());
+//				sheet1.getRow(19 + count + i).createCell(6).setCellValue(columns.get(integer));
+//			} else {
+//				sheet1.getRow(19 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
+//			}
 			for (int j = 0; j < StoreLayerAdded.values().length; j++) {
 				addValidationData(sheet1, isflagsubjects, 19 + count + i, 7 + j);
 				if (dsla_storelayers.contains(StoreLayerAdded.values()[j].getCode())) {
@@ -2504,14 +2532,23 @@ public class MarketInfoAction extends BaseAction {
 				String field_processvcode = WebCodesItem.getCode(ProcessType.CodeName, field_processvalue);
 				datatable_field_info.setField_process(field_processvcode);
 				String process_para = sheetAt.getRow(row + count + columncount).getCell(6).getStringCellValue();
-				if (field_processvcode.equalsIgnoreCase(ProcessType.YingShe.getCode())) {
+				if (ProcessType.YingShe == ProcessType.ofEnumByCode(field_processvcode)) {
 					if (columns.indexOf(process_para) < 0) {
 						throw new BusinessSystemException("填写的来源字段，不存在于SQL中，请检查");
 					} else {
 						process_para = String.valueOf(columns.indexOf(process_para));
 					}
+				} else if (ProcessType.DingZhi == ProcessType.ofEnumByCode(field_processvcode)) {
+
+				} else if (ProcessType.ZiZeng == ProcessType.ofEnumByCode(field_processvcode)) {
+
+				} else if (ProcessType.HanShuYingShe == ProcessType.ofEnumByCode(field_processvcode)) {
+
+				} else {
+
 				}
-				datatable_field_info.setProcess_para(process_para);
+				// TODO 修改实体发生了变化
+//				datatable_field_info.setProcess_para(process_para);
 				datatable_field_info.setField_seq(String.valueOf(columncount));
 				datatable_field_info.add(Dbo.db());
 				//存储dm_column_storage表
