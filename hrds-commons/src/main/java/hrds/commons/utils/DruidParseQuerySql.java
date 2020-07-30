@@ -705,18 +705,22 @@ public class DruidParseQuerySql {
 	 */
 	public String GetNewSql(String sql) {
 		String dbType = JdbcConstants.ORACLE;
-		List<String> sqllist = new ArrayList<>();
+//		List<String> sqllist = new ArrayList<>();
+		HashMap<String, String> viewMap = new HashMap<>();
 		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			for (SQLStatement stmt : stmtList) {
 				SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
 				SQLSelect sqlSelect = sqlSelectStatement.getSelect();
 				SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
-				setFrom(sqlSelectQuery, db);
-				sqllist.add(sqlSelectQuery.toString());
+				setFrom(sqlSelectQuery, db, viewMap);
+//				sqllist.add(sqlSelectQuery.toString());
 			}
 		}
-		return sqllist.get(0);
+		for (String key : viewMap.keySet()) {
+			sql = sql.replaceAll(key, viewMap.get(key));
+		}
+		return sql;
 
 	}
 
@@ -725,15 +729,15 @@ public class DruidParseQuerySql {
 	 *
 	 * @param sqlSelectQuery
 	 */
-	private void setFrom(SQLSelectQuery sqlSelectQuery, DatabaseWrapper db) {
+	private void setFrom(SQLSelectQuery sqlSelectQuery, DatabaseWrapper db, HashMap<String, String> viewMap) {
 		if (sqlSelectQuery instanceof SQLUnionQuery) {
 			SQLUnionQuery sqlUnionQuery = (SQLUnionQuery) sqlSelectQuery;
-			setFrom(sqlUnionQuery.getLeft(), db);
-			setFrom(sqlUnionQuery.getRight(), db);
+			setFrom(sqlUnionQuery.getLeft(), db, viewMap);
+			setFrom(sqlUnionQuery.getRight(), db, viewMap);
 			// 因为选择的是oracle的datatype 所以只考虑unionquery和oraclequeryblock这两种
 		} else if (sqlSelectQuery instanceof OracleSelectQueryBlock) {
 			OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlSelectQuery;
-			handleSetFrom(oracleSelectQueryBlock.getFrom(), db);
+			handleSetFrom(oracleSelectQueryBlock.getFrom(), db, viewMap);
 		} else {
 			String message;
 			if (sqlSelectQuery == null) {
@@ -749,19 +753,19 @@ public class DruidParseQuerySql {
 	 *
 	 * @param sqlTableSource
 	 */
-	private void handleSetFrom(SQLTableSource sqlTableSource, DatabaseWrapper db) {
+	private void handleSetFrom(SQLTableSource sqlTableSource, DatabaseWrapper db, HashMap<String, String> viewMap) {
 		// 如果是join的形式 就递归继续拆分
 		if (sqlTableSource instanceof OracleSelectJoin) {
 			OracleSelectJoin oracleSelectJoin = (OracleSelectJoin) sqlTableSource;
-			handleSetFrom(oracleSelectJoin.getLeft(), db);
-			handleSetFrom(oracleSelectJoin.getRight(), db);
+			handleSetFrom(oracleSelectJoin.getLeft(), db, viewMap);
+			handleSetFrom(oracleSelectJoin.getRight(), db, viewMap);
 		}
 		// 如果是子查询，继续拆分from
 		else if (sqlTableSource instanceof OracleSelectSubqueryTableSource) {
 			OracleSelectSubqueryTableSource oracleSelectSubqueryTableSource = (OracleSelectSubqueryTableSource) sqlTableSource;
 			SQLSelect sqlSelect = oracleSelectSubqueryTableSource.getSelect();
 			SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
-			setFrom(sqlSelectQuery, db);
+			setFrom(sqlSelectQuery, db, viewMap);
 		} else if (sqlTableSource instanceof OracleSelectTableReference) {
 			OracleSelectTableReference oracleSelectTableReference = (OracleSelectTableReference) sqlTableSource;
 			String tablename = oracleSelectTableReference.getExpr().toString();
@@ -770,7 +774,8 @@ public class DruidParseQuerySql {
 					tablename.toLowerCase(), TableStorage.ShuJuShiTu.getCode());
 			if (!maps.isEmpty()) {
 				String execute_sql = maps.get(0).get("execute_sql").toString();
-				oracleSelectTableReference.setExpr(" ( " + execute_sql + " ) " + tablename);
+//				oracleSelectTableReference.setExpr(" ( " + execute_sql + " ) " + tablename);
+				viewMap.put(tablename, " ( " + execute_sql + " ) " + tablename);
 			}
 		} else {
 			String message;

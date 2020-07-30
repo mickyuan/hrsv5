@@ -1050,8 +1050,8 @@ public class MarketInfoAction extends BaseAction {
 			//设置默认值
 			map.put("field_en_name", everyColumnName);
 			map.put("field_cn_name", everyColumnName);
-			map.put("process_mapping",everyColumnName);
-			map.put("group_mapping","");
+			map.put("process_mapping", everyColumnName);
+			map.put("group_mapping", "");
 			//根据字段名称，获取改字段的血缘关系
 			Object object = bloodRelationMap.get(everyColumnName);
 			//如果没有获取到血缘关系，则提供默认的字段类型
@@ -1513,6 +1513,8 @@ public class MarketInfoAction extends BaseAction {
 				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
 				sb.append("#{HyrenFenZhuYingShe}").append(",");
 				flag = false;
+			} else if (!flag) {
+				logger.info("第二次进来分组映射不做任何操作，跳过");
 			} else {
 				throw new BusinessException("错误的字段映射规则");
 			}
@@ -1531,6 +1533,7 @@ public class MarketInfoAction extends BaseAction {
 				//先格式化查询的sql,替换掉原始查询SQL的select部分
 				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
 						DruidParseQuerySql.getSelectSql(querySql), sb.toString());
+				sb.delete(0, sb.length());
 				groupSql.append(execute_sql).append(" union all ");
 			}
 		}
@@ -1784,6 +1787,7 @@ public class MarketInfoAction extends BaseAction {
 		try {
 			MainClass.run(datatable_id, date, parameter);
 		} catch (Throwable e) {
+			logger.error(e);
 			throw new BusinessException(e.getMessage());
 		}
 	}

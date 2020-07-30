@@ -182,6 +182,7 @@ public class MarketConf implements Serializable {
 					datatable_field_info = JSONObject.parseObject(
 							JSONObject.toJSONString(field_info), Datatable_field_info.class);
 					datatable_field_info.setField_en_name(split.get(0));
+					datatable_field_info.setField_cn_name(split.get(0));
 					datatable_field_info.setField_process(ProcessType.DingZhi.getCode());
 					datatable_field_info.setField_type("varchar");
 					datatable_field_info.setField_length("512");
@@ -194,7 +195,13 @@ public class MarketConf implements Serializable {
 		}
 		//最后加上分组列
 		if (datatable_field_info != null) {
-			datatable_field_infos.add(datatable_field_info);
+			if (isMultipleInput()) {
+				//分组列添加到倒数第四列
+				datatable_field_infos.add(datatable_field_infos.size() - 4, datatable_field_info);
+			} else {
+				//分组列添加到倒数第三列
+				datatable_field_infos.add(datatable_field_infos.size() - 3, datatable_field_info);
+			}
 		}
 		return datatable_field_infos;
 	}
