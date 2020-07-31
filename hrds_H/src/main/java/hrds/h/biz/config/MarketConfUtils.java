@@ -135,7 +135,7 @@ public class MarketConfUtils {
 			Map<String, List<String>> addAttrColMap = new HashMap<>();
 			String sql = "select dfi.field_en_name,dsla.dsla_storelayer from " + Datatable_field_info.TableName
 					+ " dfi join " + Dcol_relation_store.TableName + " dcs on dfi.datatable_field_id = " +
-					"dcs.datatable_field_id join " + Data_store_layer_added.TableName + " dsla on dcs.dslad_id = " +
+					"dcs.col_id join " + Data_store_layer_added.TableName + " dsla on dcs.dslad_id = " +
 					"dsla.dslad_id where dfi.datatable_id = ?";
 			Result result = SqlOperator.queryResult(db, sql, datatableId);
 			//遍历
