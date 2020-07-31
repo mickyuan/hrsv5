@@ -12,9 +12,10 @@ import hrds.h.biz.config.MarketConfUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static hrds.commons.utils.Constant.*;
@@ -41,10 +42,7 @@ public class Utils {
 	 * @return 字段名，字段类型组合
 	 */
 	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase, boolean isMultipleInput) {
-		List<String> additionalAttrs;
-		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			additionalAttrs = getAdditionalAttrs(db, conf.getDatatableId(), StoreLayerAdded.ZhuJian);
-		}
+
 		final StringBuilder columnTypes = new StringBuilder(300);
 		conf.getDatatableCreateFields().forEach(field -> {
 
@@ -61,7 +59,8 @@ public class Utils {
 						.append("(").append(fieldLength).append(")");
 			}
 			//如果选择了主键，则添加主键
-			if (additionalAttrs.contains(fieldName)) {
+			List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
+			if (additionalAttrs != null && additionalAttrs.contains(fieldName)) {
 				columnTypes.append(" primary key");
 			}
 
@@ -182,31 +181,6 @@ public class Utils {
 		if (!db.isExistTable(tableName)) {
 			createTable(db, tableName, createTableColumnTypes);
 		}
-	}
-
-	/**
-	 * 获取带有存储附加属性的列
-	 *
-	 * @param db          db实体
-	 * @param datatableId datatableId
-	 * @param added       dsla_StoreLayer实体的
-	 * @return 符合附加属性的表名集合
-	 */
-	static List<String> getAdditionalAttrs(DatabaseWrapper db, String datatableId, StoreLayerAdded added) {
-		String sql = "select dfi.field_en_name from datatable_field_info dfi " +
-				"join dm_column_storage dcs on dfi.datatable_field_id = dcs.datatable_field_id " +
-				"join data_store_layer_added dsla on dcs.dslad_id = dsla.dslad_id " +
-				"where dfi.datatable_id = ? and dsla.dsla_storelayer = ?";
-		ResultSet resultSet = db.queryGetResultSet(sql, Long.parseLong(datatableId), added.getCode());
-		List<String> addAttrCols = new ArrayList<>();
-		try {
-			while (resultSet.next()) {
-				addAttrCols.add(resultSet.getString(1).toLowerCase());
-			}
-		} catch (SQLException throwables) {
-			throw new AppSystemException(throwables);
-		}
-		return addAttrCols;
 	}
 
 	static Optional<List<String>> getFinalWorkSqls(String sqls) {

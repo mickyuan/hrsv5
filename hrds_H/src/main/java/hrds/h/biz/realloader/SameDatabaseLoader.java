@@ -1,9 +1,12 @@
 package hrds.h.biz.realloader;
 
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ConnectionTool;
+import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
@@ -186,7 +189,6 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 	 * 包括，字段名称，自增函数，定制，hyren自定义字段等
 	 */
 	private String realSelectExpr() {
-		final List<String> colSeq = getColumnSequence();
 		final StringBuilder selectExpr = new StringBuilder(120);
 		//只有映射字段做MD5
 		final StringBuilder md5Cols = new StringBuilder(120);
@@ -235,7 +237,26 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 	 * 返回自增函数表达式
 	 */
 	private String autoIncreasingExpr() {
-		//TODO 假装一下这里是返回了一个自增函数表达式
-		return "'increasing'";
+		//使用开窗函数 row_number() over ()做自增列
+		//如果选择了主键，使用主键做开窗排序列
+		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
+		String orderByCol = "";
+		if (additionalAttrs != null) {
+			orderByCol = additionalAttrs.get(0);
+		} else {
+			//随机选择一个普通列作为排序列
+			List<Datatable_field_info> datatableCreateFields = conf.getDatatableCreateFields();
+			for (Datatable_field_info field_info : datatableCreateFields) {
+				if (!field_info.getField_en_name().startsWith("hyren_") &&
+						!ProcessType.ZiZeng.getCode().equals(field_info.getField_process())) {
+					orderByCol = field_info.getField_en_name();
+					break;
+				}
+			}
+		}
+		if (StringUtil.isBlank(orderByCol)) {
+			throw new AppSystemException("找不到自增函数的排序列");
+		}
+		return " row_number() over (order by " + orderByCol + ")";
 	}
 }

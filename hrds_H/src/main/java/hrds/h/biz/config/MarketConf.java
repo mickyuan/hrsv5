@@ -9,6 +9,7 @@ import hrds.commons.entity.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 集市作业配置类
@@ -71,6 +72,10 @@ public class MarketConf implements Serializable {
 	 */
 	private List<Data_store_layer_attr> dataStoreLayerAttrs = null;
 
+	/**
+	 * 存储层字段附加信息属性
+	 */
+	private Map<String, List<String>> addAttrColMap;
 
 	private MarketConf(String datatableId, String etldate, String sqlParams) {
 		this.datatableId = datatableId;
@@ -232,5 +237,13 @@ public class MarketConf implements Serializable {
 
 	void setDataStoreLayerAttrs(List<Data_store_layer_attr> dataStoreLayerAttrs) {
 		this.dataStoreLayerAttrs = dataStoreLayerAttrs;
+	}
+
+	public Map<String, List<String>> getAddAttrColMap() {
+		return addAttrColMap;
+	}
+
+	public void setAddAttrColMap(Map<String, List<String>> addAttrColMap) {
+		this.addAttrColMap = addAttrColMap;
 	}
 }
