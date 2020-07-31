@@ -1,11 +1,11 @@
 package hrds.agent.job.biz.utils;
 
-import hrds.commons.hadoop.readconfig.ConfigReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -33,7 +33,7 @@ public class WriterFile implements Closeable {
 	private CsvListWriter csvWriter = null;
 
 	public WriterFile(String filePath) {
-		this.conf = ConfigReader.getConfiguration();
+		this.conf = HBaseConfiguration.create();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
