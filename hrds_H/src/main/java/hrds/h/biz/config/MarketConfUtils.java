@@ -1,5 +1,6 @@
 package hrds.h.biz.config;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
@@ -8,6 +9,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.ProcessType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -77,7 +79,15 @@ public class MarketConfUtils {
 			//添加自定义HYREN字段，字段全部转小写
 			handleFields(datatableFields, marketConf.isMultipleInput());
 			marketConf.setDatatableFields(datatableFields);
-
+			//判断是否有分组映射
+			for (Datatable_field_info field_info : datatableFields) {
+				//如果有分组映射，只保留第一个分组映射的值
+				if (field_info.getField_process() != null &&
+						ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+					marketConf.setGroup(true);
+					break;
+				}
+			}
             /*
               根据主键 datatable_id 查询 需要执行的sql，并进行替换
              */
@@ -165,6 +175,41 @@ public class MarketConfUtils {
 			throw new AppSystemException("从数据库中获取的字段数量为0");
 		}
 
+		boolean flag = true;
+		Datatable_field_info datatable_field_info = null;
+		List<Integer> indexList = new ArrayList<>();
+		for (int i = 0; i < datatableFields.size(); i++) {
+			Datatable_field_info field_info = datatableFields.get(i);
+			//如果有分组映射，只保留第一个分组映射的值
+			if (field_info.getField_process() != null &&
+					ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+				//第一次进来
+				if (flag) {
+					List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
+					//复制一个datatable_field_info,字段的值为分组映射的key
+					datatable_field_info = JSONObject.parseObject(
+							JSONObject.toJSONString(field_info), Datatable_field_info.class);
+					datatable_field_info.setField_en_name(split.get(0));
+					datatable_field_info.setField_cn_name(split.get(0));
+					datatable_field_info.setField_process(ProcessType.YingShe.getCode());
+					//TODO 分组列的类型，长度是否给默认值
+					datatable_field_info.setField_type(MarketConfUtils.DEFAULT_STRING_TYPE);
+					datatable_field_info.setField_length("32");
+					datatable_field_info.setProcess_mapping(split.get(1));
+					flag = false;
+				} else {
+					indexList.add(i);
+				}
+			}
+		}
+		//去掉重复的列
+		for (int i : indexList) {
+			datatableFields.remove(i);
+		}
+		//最后加上分组列
+		if (datatable_field_info != null) {
+			datatableFields.add(datatable_field_info);
+		}
 		if (isMultipleInput) {
 			//添加 HYREN_TABLE_ID
 			Datatable_field_info tableIdField = new Datatable_field_info();

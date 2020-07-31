@@ -41,9 +41,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 		db = ConnectionTool.getDBWrapper(tableLayerAttrs);
 		sql = conf.getCompleteSql();
 
-		columns = Utils.columns(conf.getDatatableCreateFields());
+		columns = Utils.columns(conf.getDatatableFields());
 		createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
-				true, isMultipleInput);
+				true, isMultipleInput, conf.isGroup());
 		databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
 		currentTableName = "curr_" + tableName;
 		validTableName = "valid_" + tableName;
@@ -197,7 +197,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 		 * 1.如果是映射，则返回的是改字段对应sql中的真实查询出来的字段序号
 		 * 2.如果是定值，则返回的是定值的值
 		 */
-		conf.getDatatableCreateFields()
+		conf.getDatatableFields()
 				.stream()
 				.filter(field -> !field.getField_en_name().startsWith("hyren_"))
 				.forEach(field -> {
@@ -245,7 +245,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 			orderByCol = additionalAttrs.get(0);
 		} else {
 			//随机选择一个普通列作为排序列
-			List<Datatable_field_info> datatableCreateFields = conf.getDatatableCreateFields();
+			List<Datatable_field_info> datatableCreateFields = conf.getDatatableFields();
 			for (Datatable_field_info field_info : datatableCreateFields) {
 				if (!field_info.getField_en_name().startsWith("hyren_") &&
 						!ProcessType.ZiZeng.getCode().equals(field_info.getField_process())) {

@@ -48,6 +48,10 @@ public class MarketConf implements Serializable {
 	 */
 	private boolean multipleInput;
 	/**
+	 * 是否有分组映射
+	 */
+	private boolean isGroup;
+	/**
 	 * 后置作业sql 可为null 可以是多个sql用;;分割
 	 */
 	private String finalSql;
@@ -113,6 +117,14 @@ public class MarketConf implements Serializable {
 		this.multipleInput = multipleInput;
 	}
 
+	public boolean isGroup() {
+		return isGroup;
+	}
+
+	public void setGroup(boolean group) {
+		isGroup = group;
+	}
+
 	public boolean isRerun() {
 		return rerun;
 	}
@@ -167,48 +179,6 @@ public class MarketConf implements Serializable {
 
 	public List<Datatable_field_info> getDatatableFields() {
 		return datatableFields;
-	}
-
-	public List<Datatable_field_info> getDatatableCreateFields() {
-		boolean flag = true;
-		List<Datatable_field_info> datatable_field_infos = new ArrayList<>();
-		Datatable_field_info datatable_field_info = null;
-		for (Datatable_field_info field_info : datatableFields) {
-
-			//如果有分组映射，只保留第一个分组映射的值
-			if (field_info.getField_process() != null &&
-					ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
-				//第一次进来
-				//TODO 分组列的类型，长度是否给默认值
-				if (flag) {
-					datatable_field_infos.add(field_info);
-					List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
-					//复制一个datatable_field_info,字段的值为分组映射的key
-					datatable_field_info = JSONObject.parseObject(
-							JSONObject.toJSONString(field_info), Datatable_field_info.class);
-					datatable_field_info.setField_en_name(split.get(0));
-					datatable_field_info.setField_cn_name(split.get(0));
-					datatable_field_info.setField_process(ProcessType.DingZhi.getCode());
-					datatable_field_info.setField_type("varchar");
-					datatable_field_info.setField_length("512");
-					datatable_field_info.setProcess_mapping(split.get(1));
-					flag = false;
-				}
-			} else {
-				datatable_field_infos.add(field_info);
-			}
-		}
-		//最后加上分组列
-		if (datatable_field_info != null) {
-			if (isMultipleInput()) {
-				//分组列添加到倒数第四列
-				datatable_field_infos.add(datatable_field_infos.size() - 4, datatable_field_info);
-			} else {
-				//分组列添加到倒数第三列
-				datatable_field_infos.add(datatable_field_infos.size() - 3, datatable_field_info);
-			}
-		}
-		return datatable_field_infos;
 	}
 
 	void setDatatableFields(List<Datatable_field_info> datatableFields) {

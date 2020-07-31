@@ -41,11 +41,12 @@ public class Utils {
 	 * @param isMultipleInput 是否是多集市输入
 	 * @return 字段名，字段类型组合
 	 */
-	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase, boolean isMultipleInput) {
+	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase,
+	                                          boolean isMultipleInput, boolean isGroup) {
 
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 		final StringBuilder columnTypes = new StringBuilder(300);
-		conf.getDatatableCreateFields().forEach(field -> {
+		conf.getDatatableFields().forEach(field -> {
 
 			String fieldName = field.getField_en_name();
 			columnTypes
@@ -81,6 +82,9 @@ public class Utils {
 			//多集市输入会多个字段
 			if (isMultipleInput) {
 				s = StringUtil.replaceLast(s, str, "char(18)");
+			}
+			if(isGroup){
+				s = StringUtil.replaceLast(s, str, "char(32)");
 			}
 			return s;
 		}

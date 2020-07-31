@@ -30,7 +30,6 @@ import java.util.Map;
  * @since JDK 1.7
  */
 public class DatasetProcessBack implements SparkDataset, Closeable {
-
     private SparkSession sparkSession;
     private Dataset<Row> dataset = null;
     private MarketConf conf;

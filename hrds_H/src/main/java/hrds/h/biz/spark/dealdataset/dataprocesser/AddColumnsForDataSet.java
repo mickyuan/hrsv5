@@ -46,12 +46,13 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 		List<Datatable_field_info> fields = getNeedToHandleFields();
 		//未经过处理的dataset的列名（即存在于sql的select字段）
 		String[] originalSqlcolumnName = dataSet.columns();
+
 		List<String> keepColumnName = new ArrayList<>();
 		//用户定义的真实的Column对象数组（包括HYREN_S_DATE,HYREN_E_DATE,HYREN_MD5_VAL等）
 		Column[] sqlColumn = new Column[fields.size()];
 		//拼接作为计算md5的列
 		List<Column> columnForMD5 = new ArrayList<>();
-		for (int i = 0; i < fields.size(); i++) {
+		for (int i = 0, n = 0; i < fields.size(); i++) {
 
 			Datatable_field_info field = fields.get(i);
 
@@ -66,12 +67,14 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 					|| ProcessType.HanShuYingShe.getCode().equals(processCode)) {
 //				int indexInOrigin = Integer.parseInt(field.getProcess_mapping());
 				//将映射的字段给需要保存的列信息
-				sqlColumn[i] = new Column(originalSqlcolumnName[i]);
+				sqlColumn[i] = new Column(originalSqlcolumnName[n]);
 				//將需要的字段对象提取先放到list中
-				keepColumnName.add(originalSqlcolumnName[i]);
+				keepColumnName.add(originalSqlcolumnName[n]);
 				columnForMD5.add(new Column(columnName));
+				n++;
 			} else if (ProcessType.DingZhi.getCode().equals(processCode)) {
 				sqlColumn[i] = functions.lit(field.getProcess_mapping());
+				n++;
 			} else {
 				throw new AppSystemException("不支持处理方式码：" + processCode);
 			}
@@ -119,7 +122,7 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 	 * @return 需要被处理的列
 	 */
 	private List<Datatable_field_info> getNeedToHandleFields() {
-		List<Datatable_field_info> allFields = marketConf.getDatatableCreateFields();
+		List<Datatable_field_info> allFields = marketConf.getDatatableFields();
 		List<Datatable_field_info> needToHandleFields = new ArrayList<>();
 		/*
 		 * 自己添加的列，不需要做处理（HYREN_S_DATE,HYREN_E_DATE,HYREN_MD5_VAL），也不需放到md5值计算
