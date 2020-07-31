@@ -145,7 +145,8 @@ public class MarketConfUtils {
 				if (list == null) {
 					list = new ArrayList<>();
 				}
-				list.add(result.getString(i, "field_en_name"));
+				//和上面保持一致，字段转为小写
+				list.add(result.getString(i, "field_en_name").toLowerCase());
 				addAttrColMap.put(dsla_storelayer, list);
 			}
 			marketConf.setAddAttrColMap(addAttrColMap);

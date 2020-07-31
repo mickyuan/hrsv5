@@ -43,6 +43,7 @@ public class Utils {
 	 */
 	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase, boolean isMultipleInput) {
 
+		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 		final StringBuilder columnTypes = new StringBuilder(300);
 		conf.getDatatableCreateFields().forEach(field -> {
 
@@ -59,7 +60,6 @@ public class Utils {
 						.append("(").append(fieldLength).append(")");
 			}
 			//如果选择了主键，则添加主键
-			List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 			if (additionalAttrs != null && additionalAttrs.contains(fieldName)) {
 				columnTypes.append(" primary key");
 			}
