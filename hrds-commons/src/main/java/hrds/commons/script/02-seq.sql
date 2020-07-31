@@ -86,7 +86,7 @@ INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, me
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (105, '/etlMage', '04', '作业调度', 'B000', 'el-icon-menu');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (106, '/dataMart', '14', '数据集市', 'H000', 'el-icon-connection');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (107, '/serviceUser', '12', '服务接口用户', 'G000', 'el-icon-cpu');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (108, '/marketVersionManage', '48', '集市版本管理', 'H000', 'el-icon-connection');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (108, '/marketVersionManage', '48', '版本管理', 'H000', 'el-icon-connection');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (109, '/dataControl', '24', '数据管控', 'K001', 'el-icon-s-finance');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (110, '/dbck', '55', '标准元查看', 'K001', 'el-icon-s-finance');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (111, '/tsb', '38', '表结构对标', 'K001', 'el-icon-receiving');
