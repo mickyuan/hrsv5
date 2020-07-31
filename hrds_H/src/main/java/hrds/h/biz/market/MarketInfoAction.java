@@ -214,19 +214,29 @@ public class MarketInfoAction extends BaseAction {
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Long>> idNameList = new ArrayList<>();
 		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
-			if (categoryRelationBean.getCategory_id() == null &&
-					categoryRelationBean.getParent_category_id() == null) {
+			if (categoryRelationBean.getCategory_id() == null) {
 				Map<String, Long> idNameMap = new HashMap<>();
 				categoryRelationBean.setCategory_id(PrimayKeyGener.getNextId());
 				idNameMap.put(categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_id());
 				idNameList.add(idNameMap);
+			} else {
+				// 5.更新集市分类
+				Validator.notNull(categoryRelationBean.getParent_category_id(), "更新分类时上级分类ID不能为空");
+				isEqualsCategoryId(categoryRelationBean.getCategory_id(),
+						categoryRelationBean.getParent_category_id(), data_mart_id);
+				Dbo.execute(
+						"update " + Dm_category.TableName
+								+ " set category_name=?,category_num=?,parent_category_id=?,category_desc=?"
+								+ " where category_id=?",
+						categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_num(),
+						categoryRelationBean.getParent_category_id(), categoryRelationBean.getCategory_desc(),
+						categoryRelationBean.getCategory_id());
 			}
 		}
 		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
 			// 2.实体字段合法性检查
 			checkDmCategoryFields(categoryRelationBean);
 			// 3.判断是新增还是更新集市分类
-			// 因为更新的时候也有可能再新增分类，所以这里新增编辑放在一个方法里
 			long num = Dbo.queryNumber(
 					"select count(*) from " + Dm_category.TableName + " where category_id=?",
 					categoryRelationBean.getCategory_id())
@@ -241,18 +251,6 @@ public class MarketInfoAction extends BaseAction {
 				}
 				// 4.1新增集市分类
 				addDmCategory(data_mart_id, categoryRelationBean, idNameList);
-			} else {
-				// 5.更新集市分类
-				Validator.notNull(categoryRelationBean.getParent_category_id(), "更新分类时上级分类ID不能为空");
-				isEqualsCategoryId(categoryRelationBean.getCategory_id(),
-						categoryRelationBean.getParent_category_id(), data_mart_id);
-				Dbo.execute(
-						"update " + Dm_category.TableName
-								+ " set category_name=?,category_num=?,parent_category_id=?,category_desc=?"
-								+ " where category_id=?",
-						categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_num(),
-						categoryRelationBean.getParent_category_id(), categoryRelationBean.getCategory_desc(),
-						categoryRelationBean.getCategory_id());
 			}
 		}
 	}
@@ -554,7 +552,7 @@ public class MarketInfoAction extends BaseAction {
 				for (Map.Entry<String, Long> entry : map.entrySet()) {
 					if (entry.getKey().equals(categoryRelationBean.getCategory_name())) {
 						Dm_category dm_category = new Dm_category();
-						dm_category.setCategory_id(entry.getValue());
+						categoryRelationBean.setCategory_id(entry.getValue());
 						for (Map<String, Long> parentMap : idNameList) {
 							for (Map.Entry<String, Long> parentEntry : parentMap.entrySet()) {
 								if (parentEntry.getKey().equals(categoryRelationBean.getParent_category_name())) {
@@ -563,7 +561,9 @@ public class MarketInfoAction extends BaseAction {
 									dm_category.setCreate_id(getUserId());
 									dm_category.setCreate_date(DateUtil.getSysDate());
 									dm_category.setCreate_time(DateUtil.getSysTime());
-									dm_category.setParent_category_id(parentEntry.getValue());
+									if (categoryRelationBean.getParent_category_id() == null) {
+										dm_category.setParent_category_id(parentEntry.getValue());
+									}
 									// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
 									isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
 									// 3.新增集市分类
