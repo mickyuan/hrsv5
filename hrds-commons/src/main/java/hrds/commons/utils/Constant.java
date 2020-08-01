@@ -212,12 +212,15 @@ public class Constant {
 	/**
 	 * 表默认清洗顺序
 	 */
-	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER = new JSONObject();
-	;
+	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER = new JSONObject(true);
 	/**
 	 * 列默认清洗顺序
 	 */
-	public static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject();
+	public static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject(true);
+	/**
+	 * 列默认清洗顺序
+	 */
+	public static final JSONObject DATABASE_CLEAN = new JSONObject(true);
 
 	/**
 	 * 数据库抽取卸数下来文件格式对应路径的关系
@@ -241,6 +244,14 @@ public class Constant {
 		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
 		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuChaiFen.getCode(), 5);
 		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 6);
+
+		DATABASE_CLEAN.put(CleanType.ZiFuBuQi.getCode(), 1);
+		DATABASE_CLEAN.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		DATABASE_CLEAN.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
+		DATABASE_CLEAN.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
+		DATABASE_CLEAN.put(CleanType.ZiFuHeBing.getCode(), 5);
+		DATABASE_CLEAN.put(CleanType.ZiFuChaiFen.getCode(), 6);
+		DATABASE_CLEAN.put(CleanType.ZiFuTrim.getCode(), 7);
 	}
 
 	// 项目bin目录路径 E:\hrsv5\bin

@@ -278,7 +278,7 @@ public class ExcelUtil {
     @Method(desc = "解析单元格中的值", logicStep = "解析单元格中的值")
     @Param(name = "cell", desc = "单元格", range = "Cell")
     @Return(desc = "单元格内的值", range = "单元格内的值")
-    private static Object getValue(Cell cell) throws IllegalStateException {
+    public static Object getValue(Cell cell) throws IllegalStateException {
         //如果当前单元格为空，则加入""，保持列号一致
         if (null == cell) {
             return "";
