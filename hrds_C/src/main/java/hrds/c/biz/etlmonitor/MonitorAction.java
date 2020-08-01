@@ -21,6 +21,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.FileDownloadUtil;
 import hrds.commons.utils.ReadLog;
+import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.jsch.SFTPDetails;
 import it.uniroma1.dis.wsngroup.gexf4j.core.*;
 import it.uniroma1.dis.wsngroup.gexf4j.core.data.Attribute;
@@ -376,12 +377,13 @@ public class MonitorAction extends BaseAction {
 		etl_dependency.setPre_etl_job(etl_job);
 		// 4.获取上游作业信息
 		List<Map<String, Object>> topJobInfoList =
-				topEtlJobDependencyInfo(etl_dependency.getEtl_job(), etl_dependency.getEtl_sys_cd())
+				EtlJobUtil.topEtlJobDependencyInfo(etl_dependency.getEtl_job(),
+						etl_dependency.getEtl_sys_cd(), Dbo.db())
 						.toList();
 		// 5.获取下游作业信息
 		List<Map<String, Object>> downJobInfoList =
-				downEtlJobDependencyInfo(etl_dependency.getPre_etl_sys_cd(), etl_dependency.getEtl_job())
-						.toList();
+				EtlJobUtil.downEtlJobDependencyInfo(etl_dependency.getPre_etl_sys_cd(), etl_dependency.getEtl_job(),
+						Dbo.db()).toList();
 		// 6.将上游作业信息封装入下游作业中
 		if (!topJobInfoList.isEmpty()) {
 			downJobInfoList.addAll(topJobInfoList);
@@ -393,64 +395,6 @@ public class MonitorAction extends BaseAction {
 		dataInfo.put("aid", "999");
 		dataInfo.put("children", downJobInfoList);
 		return dataInfo;
-	}
-
-	@Method(desc = "获取下游作业依赖信息",
-			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "2.查询依赖于当前作业的信息(下游)"
-					+ "3.如果下游作业依赖关系不为空，设置字节点"
-					+ "4.返回下游作业依赖关系")
-	@Param(name = "pre_etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-	@Return(desc = "返回下游作业依赖关系", range = "无限制")
-	private Result downEtlJobDependencyInfo(String pre_etl_sys_cd, String etl_job) {
-		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.查询依赖于当前作业的信息(下游)
-		Result downJob = Dbo.queryResult("select ejd.etl_sys_cd,ejd.etl_job,ed.pre_etl_job from "
-						+ Etl_dependency.TableName + " ed left join " + Etl_job_def.TableName
-						+ " ejd on ed.etl_sys_cd=ejd.etl_sys_cd and ed.etl_job=ejd.etl_job "
-						+ " WHERE ed.pre_etl_sys_cd=? and ed.pre_etl_job=? "
-						+ " order by ejd.job_priority DESC,ed.etl_sys_cd,ed.etl_job",
-				pre_etl_sys_cd, etl_job);
-		// 3.如果下游作业依赖关系不为空，设置字节点
-		if (!downJob.isEmpty()) {
-			for (int i = 0; i < downJob.getRowCount(); i++) {
-				downJob.setObject(i, "id", downJob.getString(i, "etl_job"));
-				downJob.setObject(i, "name", downJob.getString(i, "etl_job"));
-				downJob.setObject(i, "direction", "right");
-				// 目前只做一层
-			}
-		}
-		// 4.返回下游作业依赖关系
-		return downJob;
-	}
-
-	@Method(desc = "获取上游作业依赖信息",
-			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "2.获取上游作业依赖关系"
-					+ "3.如果上游作业依赖关系不为空，设置字节点"
-					+ "4.返回上游作业依赖关系")
-	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
-	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
-	@Return(desc = "返回上游作业依赖关系", range = "无限制")
-	private Result topEtlJobDependencyInfo(String etl_job, String etl_sys_cd) {
-		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		// 2.获取上游作业依赖关系
-		Result topJob = Dbo.queryResult("select ejd.etl_sys_cd,ed.pre_etl_job,ejd.etl_job FROM "
-				+ Etl_dependency.TableName + " ed join " + Etl_job_def.TableName
-				+ " ejd on ed.etl_job=ejd.etl_job and ed.etl_sys_cd=ejd.etl_sys_cd "
-				+ " where ed.etl_job=? and ed.etl_sys_cd=?", etl_job, etl_sys_cd);
-		// 3.如果上游作业依赖关系不为空，设置子节点
-		if (!topJob.isEmpty()) {
-			for (int i = 0; i < topJob.getRowCount(); i++) {
-				topJob.setObject(i, "id", topJob.getString(i, "pre_etl_job"));
-				topJob.setObject(i, "name", topJob.getString(i, "pre_etl_job"));
-				topJob.setObject(i, "direction", "left");
-				// 目前只做一层
-			}
-		}
-		// 4.返回上游作业依赖关系
-		return topJob;
 	}
 
 	@Method(desc = "监控依赖作业(全作业搜索)",
@@ -577,9 +521,9 @@ public class MonitorAction extends BaseAction {
 			for (int i = 0; i < dependencyJobResult.getRowCount(); i++) {
 				String etl_job = dependencyJobResult.getString(i, "etl_job");
 				// 10.获取当前作业的上游作业
-				Result topResult = topEtlJobDependencyInfo(etl_job, etl_sys_cd);
+				Result topResult = EtlJobUtil.topEtlJobDependencyInfo(etl_job, etl_sys_cd, Dbo.db());
 				// 11.获取当前作业的下游作业
-				Result downResult = downEtlJobDependencyInfo(etl_sys_cd, etl_job);
+				Result downResult = EtlJobUtil.downEtlJobDependencyInfo(etl_sys_cd, etl_job, Dbo.db());
 				// 12.创建Node
 				Node gephi = graph.createNode(number_key + "");
 				// 13.判断上下游作业是否为空处理不同情况
@@ -646,8 +590,8 @@ public class MonitorAction extends BaseAction {
 			// 15.遍历调度频率不为频率的作业并建立作业之间的依赖关系
 			for (int i = 0; i < dispatchFreqResult.getRowCount(); i++) {
 				String etl_job = dependencyJobResult.getString(i, "etl_job");
-				Result topResult = topEtlJobDependencyInfo(etl_job, etl_sys_cd);
-				Result downResult = downEtlJobDependencyInfo(etl_job, etl_sys_cd);
+				Result topResult = EtlJobUtil.topEtlJobDependencyInfo(etl_job, etl_sys_cd, Dbo.db());
+				Result downResult = EtlJobUtil.downEtlJobDependencyInfo(etl_job, etl_sys_cd, Dbo.db());
 				// 16.建立依赖关系
 				buildDependencies(nodeMap, list_Edge, etl_job, topResult, downResult);
 			}
