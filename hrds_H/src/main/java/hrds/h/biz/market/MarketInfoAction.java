@@ -2230,7 +2230,7 @@ public class MarketInfoAction extends BaseAction {
 		//集市工程表
 		Dm_info dm_info = JSONObject.parseObject(jsonObject.getJSONObject("dm_info").toJSONString(), Dm_info.class);
 		long num = Dbo.queryNumber(
-				"select count(*) from " + Dm_info.TableName + " where data_mart_id=? and mart_number=?",
+				"select count(*) from " + Dm_info.TableName + " where data_mart_id=?",
 				dm_info.getData_mart_id(), dm_info.getMart_number())
 				.orElseThrow(() -> new BusinessException("sql查询错误"));
 		if (num == 0) {
@@ -2246,8 +2246,7 @@ public class MarketInfoAction extends BaseAction {
 					"select count(*) from " + Dm_category.TableName + " where category_id=?",
 					dm_category.getCategory_id())
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
-			if (num == 0 && !isCategoryNumExist(dm_category.getData_mart_id(), dm_category.getCategory_num())
-					&& !isCategoryNameExist(dm_category.getData_mart_id(), dm_category.getCategory_name())) {
+			if (num == 0) {
 				// 不存在，新增
 				dm_category.add(Dbo.db());
 			} else {
