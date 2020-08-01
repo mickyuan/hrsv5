@@ -1375,8 +1375,8 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
-			"select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?",
-			dm_datatable.getDatatable_id());
+			"select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ? AND end_date = ?",
+			dm_datatable.getDatatable_id(), Constant.MAXDATE);
 		//如果有数据就回显
 		if (dm_operation_infoOptional.isPresent()) {
 			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
@@ -1486,8 +1486,9 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatatable_id(datatable_id);
 		//新增时判断SQL是否存在
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
-			"select execute_sql,id from " + Dm_operation_info.TableName + " where datatable_id = ?",
-			dm_datatable.getDatatable_id());
+			"select execute_sql,id,datatable_id from " + Dm_operation_info.TableName
+				+ " where datatable_id = ? AND end_date = ?",
+			dm_datatable.getDatatable_id(), Constant.MAXDATE);
 		//根据querysql和datatable_field_info获取最终执行的sql
 		String execute_sql = getExecute_sql(datatable_field_info, querysql);
 		//设置标签 判断是新增 还是 更新
@@ -1520,8 +1521,8 @@ public class MarketInfoAction extends BaseAction {
 				//更新SQL
 				//如果SQL不一致,将上次的SQL日期记录更改为失效的,也就是当天日期
 				DboExecute.updatesOrThrow("更新的数据超出了预期结果",
-					"UPDATE " + Dm_operation_info.TableName + " SET end_date = ? WHERE id = ?",
-					DateUtil.getSysDate(), dm_operation_info.getId());
+					"UPDATE " + Dm_operation_info.TableName + " SET end_date = ? WHERE id = ? AND end_date = ?",
+					DateUtil.getSysDate(), dm_operation_info.getId(), Constant.MAXDATE);
 
 				//重新设置新的主键将数据插入
 				dm_operation_info.setId(PrimayKeyGener.getNextId());
@@ -1822,7 +1823,7 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatatable_id(datatable_id);
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 			"select execute_sql from " + Dm_operation_info.TableName + " t1 where " +
-				"datatable_id = ?", dm_datatable.getDatatable_id());
+				"datatable_id = ? AND end_date = ?", dm_datatable.getDatatable_id(), Constant.MAXDATE);
 		if (dm_operation_infoOptional.isPresent()) {
 			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
 			return dm_operation_info.getExecute_sql();
