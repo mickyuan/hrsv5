@@ -358,7 +358,9 @@ public class DataTableUtil {
 					if (!set.contains(tableName)) {
 						Map<String, Object> map = new HashMap<>();
 						set.add(tableName);
+						map.put("id", tableName);
 						map.put("name", tableName);
+						map.put("direction", "right");
 						influencesResult.add(map);
 					}
 				});
