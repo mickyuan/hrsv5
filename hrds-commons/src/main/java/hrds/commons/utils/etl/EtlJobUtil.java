@@ -560,6 +560,8 @@ public class EtlJobUtil {
 				downJob.setObject(i, "id", downJob.getString(i, "etl_job"));
 				downJob.setObject(i, "name", downJob.getString(i, "etl_job"));
 				downJob.setObject(i, "direction", "right");
+				downJob.setObject(i, "topic", downJob.getString(i, "etl_job"));
+				downJob.setObject(i, "background-color", "#0000ff");
 				// 目前只做一层
 			}
 		}
@@ -590,6 +592,8 @@ public class EtlJobUtil {
 				topJob.setObject(i, "id", topJob.getString(i, "pre_etl_job"));
 				topJob.setObject(i, "name", topJob.getString(i, "pre_etl_job"));
 				topJob.setObject(i, "direction", "left");
+				topJob.setObject(i, "topic", topJob.getString(i, "etl_job"));
+				topJob.setObject(i, "background-color", "#0000ff");
 				// 目前只做一层
 			}
 		}

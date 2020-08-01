@@ -361,6 +361,7 @@ public class DataTableUtil {
 						map.put("id", tableName);
 						map.put("name", tableName);
 						map.put("direction", "right");
+						map.put("topic", tableName);
 						influencesResult.add(map);
 					}
 				});
