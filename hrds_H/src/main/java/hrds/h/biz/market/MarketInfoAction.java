@@ -2231,7 +2231,7 @@ public class MarketInfoAction extends BaseAction {
 		Dm_info dm_info = JSONObject.parseObject(jsonObject.getJSONObject("dm_info").toJSONString(), Dm_info.class);
 		long num = Dbo.queryNumber(
 				"select count(*) from " + Dm_info.TableName + " where data_mart_id=?",
-				dm_info.getData_mart_id(), dm_info.getMart_number())
+				dm_info.getData_mart_id())
 				.orElseThrow(() -> new BusinessException("sql查询错误"));
 		if (num == 0) {
 			// 不存在，新增
