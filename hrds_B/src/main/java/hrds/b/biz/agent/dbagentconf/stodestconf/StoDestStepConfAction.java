@@ -181,8 +181,8 @@ public class StoDestStepConfAction extends BaseAction {
 				Assembler assembler =
 					Assembler.newInstance()
 						.addSql(
-							"select t1.hyren_name from table_storage_info t1 join data_relation_table t2 "
-								+ " on t1.storage_id = t2.storage_id where t1.table_id = ? ");
+							"select t1.hyren_name from table_storage_info t1 join dtab_relation_store t2 "
+								+ " on t1.storage_id = t2.tab_id where t1.table_id = ? ");
 				assembler.addParam(tableId);
 				assembler.addORParam("t2.dsl_id", list.toArray(new Object[0]), "AND");
 				assembler.addSql(" LIMIT 1");

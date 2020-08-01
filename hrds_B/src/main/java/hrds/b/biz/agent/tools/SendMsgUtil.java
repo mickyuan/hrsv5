@@ -318,16 +318,14 @@ public class SendMsgUtil {
 		if (StringUtil.isBlank(methodName)) {
 			throw new BusinessException("向Agent发送数据库采集任务信息时，methodName不能为空");
 		}
-		if (StringUtil.isBlank(etlDate)) {
-			throw new BusinessException("向Agent发送数据库采集任务信息时，跑批日期不能为空");
-		}
+
 		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
 		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
 		logger.debug("准备建立连接，请求的URL为" + url);
 
 		//3、httpClient发送请求并接收响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("etlDate", etlDate)
+				.addData("etlDate", StringUtil.isBlank(etlDate) ? "" : etlDate)
 				.addData("taskInfo", PackUtil.packMsg(taskInfo))
 				.post(url);
 		//4、根据响应状态码判断响应是否成功
