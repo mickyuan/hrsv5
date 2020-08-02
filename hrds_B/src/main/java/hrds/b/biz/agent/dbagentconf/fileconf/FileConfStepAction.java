@@ -165,8 +165,6 @@ public class FileConfStepAction extends BaseAction {
 				def.setDatabase_separatorr("");
 				def.setRow_separator("");
 				def.setIs_header(IsFlag.Fou.getCode());
-			} else {
-				throw new BusinessException("传递的数据文件格式不存在在代码项中,此次获取的数据文件格式是: " + def.getDbfile_format());
 			}
 
 			if (StringUtil.isBlank(def.getDatabase_code())) {
