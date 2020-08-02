@@ -84,15 +84,15 @@ public class ImportExcelAction extends BaseAction {
 			//---------------------------第一个Sheet页------------------------------
 			Sheet sheet = workbookFromExcel.getSheetAt(0);
 			//1: 处理第一个Sheet页的部门数据信息
-			Department_info department_info = saveDeptInfo(sheet, db);
+			Department_info department_info = saveDeptInfo(sheet, db, isUpload);
 			//2: 处理第一个Sheet页的数据源信息
-			Data_source data_source = saveDataSource(sheet, department_info, db);
+			Data_source data_source = saveDataSource(sheet, department_info, db, isUpload);
 			//3: 处理第一个Sheet页的Agent信息
-			Agent_info agent_info = saveAgentInfo(sheet, data_source, db);
+			Agent_info agent_info = saveAgentInfo(sheet, data_source, db, isUpload);
 			//4: 处理第一个Sheet页的分类信息
-			Collect_job_classify classify = saveClassifyInfo(sheet, agent_info, db);
+			Collect_job_classify classify = saveClassifyInfo(sheet, agent_info, db, isUpload);
 			//5: 处理第一个Sheet页的任务信息
-			Database_set database_set = saveDatabaseSetInfo(sheet, classify, agent_info, db);
+			Database_set database_set = saveDatabaseSetInfo(sheet, classify, agent_info, db, isUpload);
 
 			//---------------------------第二个Sheet页------------------------------
 			sheet = workbookFromExcel.getSheetAt(1);
@@ -137,7 +137,7 @@ public class ImportExcelAction extends BaseAction {
 		+ "2:如果存在则返回部门ID信息,否则创建部门信息并返回ID信息")
 	@Param(name = "sheet", desc = "Excel的页码", range = "不可为空")
 	@Return(desc = "返回部门数据信息", range = "不可为空")
-	Department_info saveDeptInfo(Sheet sheet, DatabaseWrapper db) {
+	Department_info saveDeptInfo(Sheet sheet, DatabaseWrapper db, boolean isUpload) {
 
 		Row row = sheet.getRow(2);
 		Department_info department_info = new Department_info();
@@ -159,16 +159,20 @@ public class ImportExcelAction extends BaseAction {
 			department_info.setDep_id(PrimayKeyGener.getNextId());
 			department_info.setCreate_date(DateUtil.getSysDate());
 			department_info.setCreate_time(DateUtil.getSysTime());
-//			department_info.add(db);
+			if (isUpload) {
+				department_info.add(db);
+			}
 		} else {
-//			try {
-			department_info.setDep_id(queryResult.get().getDep_id());
-//				department_info.update(db);
-//			} catch (Exception e) {
-//				if (!(e instanceof EntityDealZeroException)) {
-//					throw new BusinessException(e.getMessage());
-//				}
-//			}
+			try {
+				department_info.setDep_id(queryResult.get().getDep_id());
+				if (isUpload) {
+					department_info.update(db);
+				}
+			} catch (Exception e) {
+				if (!(e instanceof EntityDealZeroException)) {
+					throw new BusinessException(e.getMessage());
+				}
+			}
 		}
 		return department_info;
 	}
@@ -179,7 +183,7 @@ public class ImportExcelAction extends BaseAction {
 	@Param(name = "sheet", desc = "Excel的页码", range = "不可为空")
 	@Param(name = "dept", desc = "部门信息", range = "不可为空")
 	@Return(desc = "返回数据源信息", range = "不可为空")
-	Data_source saveDataSource(Sheet sheet, Department_info dept, DatabaseWrapper db) {
+	Data_source saveDataSource(Sheet sheet, Department_info dept, DatabaseWrapper db, boolean isUpload) {
 
 		Row row = sheet.getRow(5);
 		//设置获取数据信息
@@ -207,11 +211,15 @@ public class ImportExcelAction extends BaseAction {
 			data_source.setCreate_date(DateUtil.getSysDate());
 			data_source.setCreate_time(DateUtil.getSysTime());
 			data_source.setCreate_user_id(getUserId());
-			data_source.add(db);
+			if (isUpload) {
+				data_source.add(db);
+			}
 		} else {
 			try {
 				data_source.setSource_id(queryResult.get().getSource_id());
-				data_source.update(db);
+				if (isUpload) {
+					data_source.update(db);
+				}
 			} catch (Exception e) {
 				if (!(e instanceof EntityDealZeroException)) {
 					throw new BusinessException(e.getMessage());
@@ -225,7 +233,9 @@ public class ImportExcelAction extends BaseAction {
 			Source_relation_dep source_relation_dep = new Source_relation_dep();
 			source_relation_dep.setDep_id(dept.getDep_id());
 			source_relation_dep.setSource_id(data_source.getSource_id());
-			source_relation_dep.add(Dbo.db());
+			if (isUpload) {
+				source_relation_dep.add(Dbo.db());
+			}
 		}
 
 		return data_source;
@@ -236,7 +246,7 @@ public class ImportExcelAction extends BaseAction {
 	@Param(name = "sheet", desc = "Excel的页码", range = "不可为空")
 	@Param(name = "data_source", desc = "数据源信息", range = "不可为空")
 	@Return(desc = "返回Agent信息", range = "不可为空")
-	Agent_info saveAgentInfo(Sheet sheet, Data_source data_source, DatabaseWrapper db) {
+	Agent_info saveAgentInfo(Sheet sheet, Data_source data_source, DatabaseWrapper db, boolean isUpload) {
 		Row row = sheet.getRow(9);
 		//设置Agent数据信息
 		Agent_info agent_info = new Agent_info();
@@ -285,11 +295,15 @@ public class ImportExcelAction extends BaseAction {
 			agent_info.setAgent_status(IsFlag.Fou.getCode());
 			agent_info.setCreate_date(DateUtil.getSysDate());
 			agent_info.setCreate_time(DateUtil.getSysTime());
-			agent_info.add(db);
+			if (isUpload) {
+				agent_info.add(db);
+			}
 		} else {
 			try {
 				agent_info.setAgent_id(queryResult.get().getAgent_id());
-				agent_info.update(db);
+				if (isUpload) {
+					agent_info.update(db);
+				}
 			} catch (Exception e) {
 				if (!(e instanceof EntityDealZeroException)) {
 					throw new BusinessException(e.getMessage());
@@ -304,7 +318,7 @@ public class ImportExcelAction extends BaseAction {
 	@Param(name = "sheet", desc = "Excel的页码", range = "不可为空")
 	@Param(name = "agent_info", desc = "Agent信息", range = "不可为空")
 	@Return(desc = "返回分类信息", range = "不可为空")
-	Collect_job_classify saveClassifyInfo(Sheet sheet, Agent_info agent_info, DatabaseWrapper db) {
+	Collect_job_classify saveClassifyInfo(Sheet sheet, Agent_info agent_info, DatabaseWrapper db, boolean isUpload) {
 
 		Row row = sheet.getRow(14);
 		//设置分类信息
@@ -330,11 +344,15 @@ public class ImportExcelAction extends BaseAction {
 
 		if (queryClassify.isEmpty()) {
 			classify.setClassify_id(PrimayKeyGener.getNextId());
-			classify.add(db);
+			if (isUpload) {
+				classify.add(db);
+			}
 		} else {
 			try {
 				classify.setClassify_id(queryClassify.get().getClassify_id());
-				classify.update(db);
+				if (isUpload) {
+					classify.update(db);
+				}
 			} catch (Exception e) {
 				if (!(e instanceof EntityDealZeroException)) {
 					throw new BusinessException(e.getMessage());
@@ -351,7 +369,7 @@ public class ImportExcelAction extends BaseAction {
 	@Param(name = "classify", desc = "分类信息信息", range = "不可为空")
 	@Return(desc = "返回任务信息", range = "不可为空")
 	Database_set saveDatabaseSetInfo(Sheet sheet, Collect_job_classify classify, Agent_info agent_info,
-		DatabaseWrapper db) {
+		DatabaseWrapper db, boolean isUpload) {
 
 		//采集任务信息
 		Database_set database_set = new Database_set();
@@ -453,11 +471,15 @@ public class ImportExcelAction extends BaseAction {
 			database_set.setDatabase_id(PrimayKeyGener.getNextId());
 			//设置任务默认清洗顺序
 			database_set.setCp_or(Constant.DATABASE_CLEAN.toJSONString());
-			database_set.add(db);
+			if (isUpload) {
+				database_set.add(db);
+			}
 		} else {
 			try {
 				database_set.setDatabase_id(queryDatabase.get().getDatabase_id());
-				database_set.update(db);
+				if (isUpload) {
+					database_set.update(db);
+				}
 			} catch (Exception e) {
 				if (!(e instanceof EntityDealZeroException)) {
 					throw new BusinessException(e.getMessage());
