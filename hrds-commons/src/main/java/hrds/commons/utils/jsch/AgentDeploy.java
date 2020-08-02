@@ -25,11 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import javax.xml.parsers.DocumentBuilderFactory;
-import oracle.jdbc.driver.Const;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.xml.DOMConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -159,7 +156,7 @@ public class AgentDeploy {
 			if (StringUtil.isNotBlank(oldAgentPath)) {
 				// 1 : 根据旧的部署目录来判断是否为第一次部署,如果部署第一次部署则先将进程kill,然后再将目录删除.
 				SFTPChannel.execCommandByJSch(shellSession,
-					"cd " + agentDir + SEPARATOR + ".bin; sh " + Constant.START_AGENT + " " + file.getName() + " "
+					"cd " + agentDir + SEPARATOR + ".bin; bash " + Constant.START_AGENT + " " + file.getName() + " "
 						+ down_info.getLog_dir() + " " + down_info.getAgent_port() + " stop");
 
 				SFTPChannel.execCommandByJSch(shellSession, "rm -rf " + agentDir);
@@ -172,7 +169,7 @@ public class AgentDeploy {
 
 			// 检查当前的目录下的进程是否启动(这里直接使用kill命令,为防止后续启动出错)
 			SFTPChannel.execCommandByJSch(shellSession,
-				"cd " + agentDir + SEPARATOR + ".bin;sh " + Constant.START_AGENT + " " + file.getName() + " "
+				"cd " + agentDir + SEPARATOR + ".bin;bash " + Constant.START_AGENT + " " + file.getName() + " "
 					+ down_info.getLog_dir() + " " + down_info.getAgent_port() + " " + " stop");
 
 			// 删除目标的机器的部署路径,防止存在
@@ -265,7 +262,7 @@ public class AgentDeploy {
 			if (IsFlag.Shi.getCode().equals(down_info.getDeploy())) {
 				//TODO 这里需要接收脚本执行的状态结果吗,目前是忽略的
 				SFTPChannel.execCommandByJSchNoRs(shellSession,
-					"cd " + targetDir + ";sh " + Constant.START_AGENT + " " + file.getName() + " " + down_info.getLog_dir()
+					"cd " + targetDir + ";bash " + Constant.START_AGENT + " " + file.getName() + " " + down_info.getLog_dir()
 						+ " " + down_info
 						.getAgent_port() + " " + " start");
 			}
