@@ -357,6 +357,9 @@ public class AgentDeploy {
 		try {
 			File file = new File(sftpDir);
 			File[] confFiles = file.listFiles();
+			if (confFiles == null) {
+				throw new BusinessException("JRE目录不存在,请给检查");
+			}
 			for (int i = 0; i < confFiles.length; i++) {
 //				logger.info("创建目录" + targetDir + SEPARATOR + "jre" + SEPARATOR + confFiles[i].getName());
 				if (confFiles[i].isDirectory()) {
@@ -366,10 +369,7 @@ public class AgentDeploy {
 						targetDir + SEPARATOR + confFiles[i].getName());
 				}
 			}
-		} catch (JSchException e) {
-			logger.error(e.getMessage(), e);
-			throw new BusinessException(e.getMessage());
-		} catch (IOException e) {
+		} catch (JSchException | IOException e) {
 			logger.error(e.getMessage(), e);
 			throw new BusinessException(e.getMessage());
 		}
