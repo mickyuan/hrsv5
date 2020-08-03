@@ -1,6 +1,11 @@
 #!/bin/bash
+
 cd `dirname $0`
 export LANG='zh_CN.UTF-8'
+# shell script execution directory
+SH_EXEC_DIR=$(cd $(dirname $0); pwd)
+# Get system bits
+OS_BIT=`getconf LONG_BIT`
 
 ROOT_DIR=./
 YEAR=`date -d now +%Y`
@@ -26,7 +31,7 @@ if [ ! -d $LOG_DIR ]; then
  mkdir -m 755 $LOG_DIR  
 fi
 
-project_path=$(cd `dirname $0`; pwd)
-nohup java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -Dproject.name=hrds_Control -Dproject.dir=$project_path -jar hrds_Control-5.0.jar etl.date=$1 sys.code=$2 -CR=$3 -AS=$4 1>>$LOG_OUT_FILE 2>>$LOG_ERR_FILE
+cd ${SH_EXEC_DIR}
+nohup ${SH_EXEC_DIR}/jre/linux/${OS_BIT}/jre/bin/java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -Dproject.name=hrds_Control -Dproject.dir=${SH_EXEC_DIR} -jar hrds_Control-5.0.jar etl.date=$1 sys.code=$2 -CR=$3 -AS=$4 1>>$LOG_OUT_FILE 2>>$LOG_ERR_FILE
 exit 0
 
