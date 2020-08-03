@@ -23,9 +23,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
 
 @DocClass(desc = "集市信息查询类", author = "TBH", createdate = "2020年5月21日 16点48分")
 public class MarketInfoActionTest extends WebBaseTestCase {
