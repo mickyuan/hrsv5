@@ -144,7 +144,7 @@ public class ETLAgentDeployment {
 							+ "/"
 							+ etl_sys_cd
 							+ "/control/ ;"
-							+ "sh startEngineBatchControl.sh"
+							+ "bash startEngineBatchControl.sh"
 							+ " "
 							+ batch_date
 							+ " "
@@ -209,7 +209,7 @@ public class ETLAgentDeployment {
 							+ "/"
 							+ etl_sys_cd
 							+ "/trigger/ ;"
-							+ "sh startEngineBatchTrigger.sh"
+							+ "bash startEngineBatchTrigger.sh"
 							+ " "
 							+ etl_sys_cd;
 			logger.info("##############" + startAgent);
