@@ -506,9 +506,8 @@ public class MarketInfoAction extends BaseAction {
 				categoryMap.put("category_name", categoryName);
 				categoryList.add(categoryMap);
 				if (!getDm_categories(data_mart_id,dm_category.getCategory_id()).isEmpty()) {
-					category_name = category_name + Constant.MARKETDELIMITER + dm_category.getCategory_name();
 					getChildDmCategoryForDmDataTable(data_mart_id, dm_category.getCategory_id(),
-							category_name, categoryList);
+							categoryName, categoryList);
 				}
 			}
 		}
