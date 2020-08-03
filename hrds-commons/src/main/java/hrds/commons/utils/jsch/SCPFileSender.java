@@ -112,13 +112,16 @@ public class SCPFileSender {
 					ChannelSftp.OVERWRITE);
 			logger.info("传输trigger程序的jar包以及启动脚本结束。。。。。。。");
 
-			// 将需要的jre SFTP 到control,trigger下
+			// 将需要的jre SFTP 到control,trigger脚本所在目录下
 			logger.info("开始创建远程机器JRE目录");
-			AgentDeploy.createDir(
-					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
+			AgentDeploy.createDir(new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
+					shellSession,
+					controlTarget + SEPARATOR + "jre");
+			AgentDeploy.createDir(new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
 					shellSession,
 					triggerTarget + SEPARATOR + "jre");
-			logger.info("开始SCP JRE目录文件");
+			logger.info(
+					"======jre=====" + new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre");
 			AgentDeploy.sftpFiles(
 					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
 					chSftp,
@@ -127,6 +130,7 @@ public class SCPFileSender {
 					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
 					chSftp,
 					triggerTarget);
+			logger.info("SCP JRE目录文件结束");
 
 			// 本地当前工程下的配置文件信息dbinfo.conf,上传到目标机器
 			String localPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR;
