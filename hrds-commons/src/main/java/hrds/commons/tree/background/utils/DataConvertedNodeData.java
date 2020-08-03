@@ -41,24 +41,20 @@ public class DataConvertedNodeData {
             logicStep = "转化DCL层批量数据数据源下分类数据为Node节点数据")
     @Param(name = "dclBatchClassifyInfos", desc = "贴源层批量数据数据源下分类信息", range = "贴源层批量数据数据源下分类信息")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static List<Map<String, Object>> conversionDCLBatchClassifyInfos(
-            List<Map<String, Object>> dclBatchClassifyInfos) {
+    public static Map<String, Object> conversionDCLBatchClassifyInfos(
+            Map<String, Object> dclBatchClassifyInfo) {
         //设置为树节点信息
-        List<Map<String, Object>> dclBatchClassifyNodes = new ArrayList<>();
-        dclBatchClassifyInfos.forEach(o -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", o.get("classify_id"));
-            map.put("label", o.get("classify_name") + "【" + o.get("classify_num").toString() + "】");
-            map.put("parent_id", o.get("source_id"));
-            map.put("description", o.get("remark"));
-            map.put("data_layer", DataSourceType.DCL.getCode());
-            map.put("data_own_type", Constant.DCL_BATCH);
-            map.put("data_source_id", o.get("source_id"));
-            map.put("agent_id", o.get("agent_id"));
-            map.put("classify_id", o.get("classify_id"));
-            dclBatchClassifyNodes.add(map);
-        });
-        return dclBatchClassifyNodes;
+        Map<String, Object> dclBatchClassifyNode = new HashMap<>();
+        dclBatchClassifyNode.put("id", dclBatchClassifyInfo.get("classify_id"));
+        dclBatchClassifyNode.put("label", dclBatchClassifyInfo.get("classify_name") + "【" + dclBatchClassifyInfo.get("classify_num").toString() + "】");
+        dclBatchClassifyNode.put("parent_id", dclBatchClassifyInfo.get("source_id"));
+        dclBatchClassifyNode.put("description", dclBatchClassifyInfo.get("remark"));
+        dclBatchClassifyNode.put("data_layer", DataSourceType.DCL.getCode());
+        dclBatchClassifyNode.put("data_own_type", Constant.DCL_BATCH);
+        dclBatchClassifyNode.put("data_source_id", dclBatchClassifyInfo.get("source_id"));
+        dclBatchClassifyNode.put("agent_id", dclBatchClassifyInfo.get("agent_id"));
+        dclBatchClassifyNode.put("classify_id", dclBatchClassifyInfo.get("classify_id"));
+        return dclBatchClassifyNode;
     }
 
     @Method(desc = "转化DCL层批量数据数据源分类下的表数据为Node节点数据",
@@ -130,22 +126,18 @@ public class DataConvertedNodeData {
 
     @Method(desc = "集市层工程下分类信息转换", logicStep = "1.集市层工程下分类信息转换")
     @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
-    public static List<Map<String, Object>> conversionDMLCategoryInfos(List<Map<String, Object>> dmlCategoryInfos) {
-        List<Map<String, Object>> dmlDataNodes = new ArrayList<>();
-        for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", dmlCategoryInfo.get("category_id"));
-            map.put("label", dmlCategoryInfo.get("category_name"));
-            map.put("parent_id", dmlCategoryInfo.get("parent_category_id"));
-            map.put("classify_id", dmlCategoryInfo.get("category_id"));
-            map.put("data_layer", DataSourceType.DML.getCode());
-            map.put("description", "" +
-                    "分类编号：" + dmlCategoryInfo.get("category_id") + "\n" +
-                    "分类名称：" + dmlCategoryInfo.get("category_name") + "\n" +
-                    "分类描述：" + dmlCategoryInfo.get("category_desc"));
-            dmlDataNodes.add(map);
-        }
-        return dmlDataNodes;
+    public static Map<String, Object> conversionDMLCategoryInfos(Map<String, Object> dmlCategoryInfo) {
+        Map<String, Object> dmlDataNode = new HashMap<>();
+        dmlDataNode.put("id", dmlCategoryInfo.get("category_id"));
+        dmlDataNode.put("label", dmlCategoryInfo.get("category_name"));
+        dmlDataNode.put("parent_id", dmlCategoryInfo.get("parent_category_id"));
+        dmlDataNode.put("classify_id", dmlCategoryInfo.get("category_id"));
+        dmlDataNode.put("data_layer", DataSourceType.DML.getCode());
+        dmlDataNode.put("description", "" +
+                "分类编号：" + dmlCategoryInfo.get("category_id") + "\n" +
+                "分类名称：" + dmlCategoryInfo.get("category_name") + "\n" +
+                "分类描述：" + dmlCategoryInfo.get("category_desc"));
+        return dmlDataNode;
     }
 
     @Method(desc = "集市层工程信息下表信息转换",

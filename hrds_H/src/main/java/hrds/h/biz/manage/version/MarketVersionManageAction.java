@@ -52,13 +52,13 @@ public class MarketVersionManageAction extends BaseAction {
             //获取集市工程下分类信息
             List<Map<String, Object>> dmlCategoryInfos = DMLDataQuery.getDMLCategoryInfos(data_mart_id);
             if (!dmlCategoryInfos.isEmpty()) {
-                //添加分类信息到树数据列表
-                dataList.addAll(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfos));
                 for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
                     long category_id = (long) dmlCategoryInfo.get("category_id");
                     //获取集市工程分类下表信息
                     List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(category_id);
                     if (!dmlTableInfos.isEmpty()) {
+                        //添加存在表的分类信息到树数据列表
+                        dataList.add(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfo));
                         //添加分类下表信息到树数据列表
                         dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
                         for (Map<String, Object> dmlTableInfo : dmlTableInfos) {
@@ -237,6 +237,11 @@ public class MarketVersionManageAction extends BaseAction {
                 " dd.datatable_desc,doi.end_date AS version_data FROM dm_operation_info doi" +
                 " JOIN dm_datatable dd ON doi.datatable_id=dd.datatable_id WHERE dd.datatable_id=?" +
                 " and end_date != ?").addParam(datatable_id).addParam(Constant.MAXDATE);
+        asmSql.addSql(" UNION ALL");
+        asmSql.addSql(" SELECT dd.data_mart_id,dd.category_id,dd.datatable_en_name,dd.datatable_cn_name,dd.datatable_id," +
+                " dd.datatable_desc,doi.start_date AS version_data FROM dm_operation_info doi" +
+                " JOIN dm_datatable dd ON doi.datatable_id=dd.datatable_id WHERE dd.datatable_id=?" +
+                " and end_date = ?").addParam(datatable_id).addParam(Constant.MAXDATE);
         asmSql.addSql(" ) aa ORDER BY version_data DESC");
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }

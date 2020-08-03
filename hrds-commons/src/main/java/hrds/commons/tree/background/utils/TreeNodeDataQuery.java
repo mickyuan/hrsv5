@@ -43,18 +43,19 @@ public class TreeNodeDataQuery {
             List<Map<String, Object>> dclBatchClassifyInfos =
                     DCLDataQuery.getDCLBatchClassifyInfos(source_id, treeConf.getShowFileCollection(), user);
             if (!dclBatchClassifyInfos.isEmpty()) {
-                dataList.addAll(DataConvertedNodeData.conversionDCLBatchClassifyInfos(dclBatchClassifyInfos));
+                //获取批量数据数据源的分类下数据表信息
+                dclBatchClassifyInfos.forEach(dclBatchClassifyInfo -> {
+                    //获取分类id
+                    String classify_id = dclBatchClassifyInfo.get("classify_id").toString();
+                    //根据分类id获取分类下表信息
+                    List<Map<String, Object>> dclBatchTableInfos = DCLDataQuery.getDCLBatchTableInfos(classify_id, user);
+                    if (!dclBatchTableInfos.isEmpty()) {
+                        //这里只添加分类下包含表的分类
+                        dataList.add(DataConvertedNodeData.conversionDCLBatchClassifyInfos(dclBatchClassifyInfo));
+                        dataList.addAll(DataConvertedNodeData.conversionDCLBatchTableInfos(dclBatchTableInfos));
+                    }
+                });
             }
-            //获取批量数据数据源的分类下数据表信息
-            dclBatchClassifyInfos.forEach(dclBatchClassifyInfo -> {
-                //获取分类id
-                String classify_id = dclBatchClassifyInfo.get("classify_id").toString();
-                //根据分类id获取分类下表信息
-                List<Map<String, Object>> dclBatchTableInfos = DCLDataQuery.getDCLBatchTableInfos(classify_id, user);
-                if (!dclBatchTableInfos.isEmpty()) {
-                    dataList.addAll(DataConvertedNodeData.conversionDCLBatchTableInfos(dclBatchTableInfos));
-                }
-            });
         });
     }
 
@@ -82,14 +83,13 @@ public class TreeNodeDataQuery {
                 //获取集市工程下分类信息
                 List<Map<String, Object>> dmlCategoryInfos = DMLDataQuery.getDMLCategoryInfos(data_mart_id);
                 if (!dmlCategoryInfos.isEmpty()) {
-                    dataList.addAll(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfos));
-                }
-                if (!dmlCategoryInfos.isEmpty()) {
                     for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
                         long category_id = (long) dmlCategoryInfo.get("category_id");
                         //获取分类下表信息
                         List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(category_id);
                         if (!dmlTableInfos.isEmpty()) {
+                            //这里只添加分类下有表的分类
+                            dataList.add(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfo));
                             dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
                         }
                     }
