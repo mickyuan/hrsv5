@@ -493,19 +493,23 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
-	                                              String category_name, List<Map<String, Object>> categoryList) {
+	                                                                   String category_name, List<Map<String, Object>> categoryList) {
 		// 1.根据集市ID与父分类ID查询集市分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
 		if (!dmCategoryList.isEmpty()) {
 			for (Dm_category dm_category : dmCategoryList) {
 				Map<String, Object> categoryMap = new HashMap<>();
-				category_name = category_name + Constant.MARKETDELIMITER + dm_category.getCategory_name();
+				String categoryName =
+						category_name + Constant.MARKETDELIMITER + dm_category.getCategory_name();
 				categoryMap.put("category_id", dm_category.getCategory_id());
-				categoryMap.put("category_name", category_name);
+				categoryMap.put("category_name", categoryName);
 				categoryList.add(categoryMap);
-				getChildDmCategoryForDmDataTable(data_mart_id, dm_category.getCategory_id(), category_name,
-						categoryList);
+				if (!getDm_categories(data_mart_id,dm_category.getCategory_id()).isEmpty()) {
+					category_name = category_name + Constant.MARKETDELIMITER + dm_category.getCategory_name();
+					getChildDmCategoryForDmDataTable(data_mart_id, dm_category.getCategory_id(),
+							category_name, categoryList);
+				}
 			}
 		}
 	}
