@@ -111,6 +111,23 @@ public class SCPFileSender {
 					new FileProgressMonitor(new File(triggerShell).length()),
 					ChannelSftp.OVERWRITE);
 			logger.info("传输trigger程序的jar包以及启动脚本结束。。。。。。。");
+
+			// 将需要的jre SFTP 到control,trigger下
+			logger.info("开始创建远程机器JRE目录");
+			AgentDeploy.createDir(
+					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
+					shellSession,
+					triggerTarget + SEPARATOR + "jre");
+			logger.info("开始SCP JRE目录文件");
+			AgentDeploy.sftpFiles(
+					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
+					chSftp,
+					controlTarget);
+			AgentDeploy.sftpFiles(
+					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "jre",
+					chSftp,
+					triggerTarget);
+
 			// 本地当前工程下的配置文件信息dbinfo.conf,上传到目标机器
 			String localPath = System.getProperty("user.dir") + SEPARATOR + "resources" + SEPARATOR;
 			String fdConfPath = localPath + "fdconfig" + SEPARATOR;
@@ -179,6 +196,7 @@ public class SCPFileSender {
 					new File(System.getProperty("user.dir")).getParent() + SEPARATOR + "lib",
 					chSftp, targetDir);
 			logger.info("###########将需要的jar包 SFTP到etl工程部署的目标机器###########");
+
 			// fixme 集群配置文件暂时不知如何弄
 //			String mkdirConf = "mkdir -p " + targetDir + "/control/hadoopconf/";
 //			SFTPChannel.execCommandByJSch(shellSession, mkdirConf);
