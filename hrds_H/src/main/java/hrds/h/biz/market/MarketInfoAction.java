@@ -2263,55 +2263,66 @@ public class MarketInfoAction extends BaseAction {
 		}
 		//第三部分
 		List<Dm_operation_info> dm_operation_infos = Dbo.queryList(Dm_operation_info.class,
-				"select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ?",
+				"select execute_sql,view_sql from " + Dm_operation_info.TableName + " where datatable_id = ?",
 				dm_datatable.getDatatable_id());
 		if (dm_operation_infos.isEmpty()) {
 			throw new BusinessSystemException("查询表Dm_operation_info错误，没有数据，请检查");
 		}
-		String execute_sql = dm_operation_infos.get(0).getExecute_sql();
-		sheet1.createRow(13 + count).createCell(0).setCellValue("sql");
+		// 预览sql语句
+		String view_sql = dm_operation_infos.get(0).getView_sql();
+		sheet1.createRow(13 + count).createCell(0).setCellValue("view_sql");
 		//设置高亮
 		sheet1.getRow(13 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
-		sheet1.getRow(13 + count).createCell(1).setCellValue(execute_sql);
+		sheet1.getRow(13 + count).createCell(1).setCellValue(view_sql);
 		//合并单元格
 		region = new CellRangeAddress(13 + count, 13 + count, 1, 4);
 		sheet1.addMergedRegion(region);
-
-		List<Dm_relevant_info> dm_relevant_infos = Dbo
-				.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?",
-						dm_datatable.getDatatable_id());
-		sheet1.createRow(14 + count).createCell(0).setCellValue("前置处理");
+		// 执行sql语句
+		String execute_sql = dm_operation_infos.get(0).getExecute_sql();
+		sheet1.createRow(14 + count).createCell(0).setCellValue("execute_sql");
+		sheet1.getRow(14 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
+		sheet1.getRow(14 + count).createCell(1).setCellValue(execute_sql);
 		//合并单元格
 		region = new CellRangeAddress(14 + count, 14 + count, 1, 4);
 		sheet1.addMergedRegion(region);
-		if (!dm_relevant_infos.isEmpty()) {
-			if (!StringUtils.isEmpty(dm_relevant_infos.get(0).getPre_work())) {
-				sheet1.getRow(14 + count).createCell(1).setCellValue(dm_relevant_infos.get(0).getPre_work());
-			}
-		}
-		sheet1.createRow(15 + count).createCell(0).setCellValue("后置处理");
+		// 前置处理
+		List<Dm_relevant_info> dm_relevant_infos = Dbo
+				.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?",
+						dm_datatable.getDatatable_id());
+		sheet1.createRow(15 + count).createCell(0).setCellValue("前置处理");
 		//合并单元格
 		region = new CellRangeAddress(15 + count, 15 + count, 1, 4);
 		sheet1.addMergedRegion(region);
 		if (!dm_relevant_infos.isEmpty()) {
+			if (!StringUtils.isEmpty(dm_relevant_infos.get(0).getPre_work())) {
+				sheet1.getRow(15 + count).createCell(1).setCellValue(dm_relevant_infos.get(0).getPre_work());
+			}
+		}
+		// 后置处理
+		sheet1.createRow(16 + count).createCell(0).setCellValue("后置处理");
+		//合并单元格
+		region = new CellRangeAddress(16 + count, 16 + count, 1, 4);
+		sheet1.addMergedRegion(region);
+		if (!dm_relevant_infos.isEmpty()) {
 			if (!StringUtils.isEmpty(dm_relevant_infos.get(0).getPost_work())) {
-				sheet1.getRow(15 + count).createCell(1).setCellValue(dm_relevant_infos.get(0).getPost_work());
+				sheet1.getRow(16 + count).createCell(1).setCellValue(dm_relevant_infos.get(0).getPost_work());
 			}
 		}
 		//第四部分
 		List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class,
 				"select * from " + Datatable_field_info.TableName + " where datatable_id = ?", dm_datatable.getDatatable_id());
-		sheet1.createRow(17 + count).createCell(0).setCellValue("字段信息");
-		sheet1.getRow(17 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
-		sheet1.createRow(18 + count).createCell(0).setCellValue("序号");
-		sheet1.getRow(18 + count).createCell(1).setCellValue("英文名");
-		sheet1.getRow(18 + count).createCell(2).setCellValue("中文名");
-		sheet1.getRow(18 + count).createCell(3).setCellValue("类型");
-		sheet1.getRow(18 + count).createCell(4).setCellValue("长度");
-		sheet1.getRow(18 + count).createCell(5).setCellValue("处理方式");
-		sheet1.getRow(18 + count).createCell(6).setCellValue("来源值");
+		sheet1.createRow(18 + count).createCell(0).setCellValue("字段信息");
+		sheet1.getRow(18 + count).getCell(0).getCellStyle().setFillBackgroundColor(xssfColor);
+		sheet1.createRow(19 + count).createCell(0).setCellValue("序号");
+		sheet1.getRow(19 + count).createCell(1).setCellValue("英文名");
+		sheet1.getRow(19 + count).createCell(2).setCellValue("中文名");
+		sheet1.getRow(19 + count).createCell(3).setCellValue("类型");
+		sheet1.getRow(19 + count).createCell(4).setCellValue("长度");
+		sheet1.getRow(19 + count).createCell(5).setCellValue("处理方式");
+		sheet1.getRow(19 + count).createCell(6).setCellValue("映射规则mapping");
+		sheet1.getRow(19 + count).createCell(7).setCellValue("分组映射对应规则");
 		for (int i = 0; i < StoreLayerAdded.values().length; i++) {
-			sheet1.getRow(18 + count).createCell(7 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
+			sheet1.getRow(19 + count).createCell(8 + i).setCellValue(StoreLayerAdded.values()[i].getValue());
 		}
 		//设置ProcessType的下拉框
 		String[] processtypesubjects = new String[ProcessType.values().length];
@@ -2330,29 +2341,25 @@ public class MarketInfoAction extends BaseAction {
 			for (Data_store_layer_added data_store_layer_added : data_store_layer_addeds) {
 				dsla_storelayers.add(data_store_layer_added.getDsla_storelayer());
 			}
-			sheet1.createRow(19 + count + i).createCell(0).setCellValue((i + 1));
-			sheet1.getRow(19 + count + i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
-			sheet1.getRow(19 + count + i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
-			sheet1.getRow(19 + count + i).createCell(3).setCellValue(datatable_field_info.getField_type());
-			sheet1.getRow(19 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
-			sheet1.getRow(19 + count + i).createCell(5)
-					.setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
+			sheet1.createRow(20 + count + i).createCell(0).setCellValue((i + 1));
+			sheet1.getRow(20 + count + i).createCell(1).setCellValue(datatable_field_info.getField_en_name());
+			sheet1.getRow(20 + count + i).createCell(2).setCellValue(datatable_field_info.getField_cn_name());
+			sheet1.getRow(20 + count + i).createCell(3).setCellValue(datatable_field_info.getField_type());
+			sheet1.getRow(20 + count + i).createCell(4).setCellValue(datatable_field_info.getField_length());
+			sheet1.getRow(20 + count + i).createCell(5).setCellValue(ProcessType.ofValueByCode(datatable_field_info.getField_process()));
 			addValidationData(sheet1, processtypesubjects, 19 + count + i, 5);
-			// TODO 修改实体发生了变化
-//			if (datatable_field_info.getField_process().equals(ProcessType.YingShe.getCode())) {
-//				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
-//				List<String> columns = druidParseQuerySql.parseSelectOriginalField();
-//				Integer integer = Integer.valueOf(datatable_field_info.getProcess_para());
-//				sheet1.getRow(19 + count + i).createCell(6).setCellValue(columns.get(integer));
-//			} else {
-//				sheet1.getRow(19 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_para());
-//			}
+			if (ProcessType.YingShe == ProcessType.ofEnumByCode(datatable_field_info.getField_process())) {
+				sheet1.getRow(20 + count + i).createCell(6).setCellValue(datatable_field_info.getProcess_mapping());
+			}
+			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(datatable_field_info.getField_process())) {
+				sheet1.getRow(20 + count + i).createCell(7).setCellValue(datatable_field_info.getGroup_mapping());
+			}
 			for (int j = 0; j < StoreLayerAdded.values().length; j++) {
-				addValidationData(sheet1, isflagsubjects, 19 + count + i, 7 + j);
+				addValidationData(sheet1, isflagsubjects, 20 + count + i, 8 + j);
 				if (dsla_storelayers.contains(StoreLayerAdded.values()[j].getCode())) {
-					sheet1.getRow(19 + count + i).createCell(7 + j).setCellValue(IsFlag.Shi.getValue());
+					sheet1.getRow(20 + count + i).createCell(8 + j).setCellValue(IsFlag.Shi.getValue());
 				} else {
-					sheet1.getRow(19 + count + i).createCell(7 + j).setCellValue(IsFlag.Fou.getValue());
+					sheet1.getRow(20 + count + i).createCell(8 + j).setCellValue(IsFlag.Fou.getValue());
 				}
 			}
 		}
@@ -3264,12 +3271,11 @@ public class MarketInfoAction extends BaseAction {
 			//获取并记录数据目的地
 			String destinationname = "";
 			row = 12;
-			while (true) {
+			while (
+					sheetAt.getRow(row + count) != null &&
+							sheetAt.getRow(row + count).getCell(0) != null &&
+							!StringUtils.isEmpty(sheetAt.getRow(row + count).getCell(0).getStringCellValue())) {
 				//判断有没有到头
-				if (sheetAt.getRow(row + count) == null || sheetAt.getRow(row + count).getCell(0) == null
-						|| StringUtils.isEmpty(sheetAt.getRow(row + count).getCell(0).getStringCellValue())) {
-					break;
-				}
 				//是否标志
 				String destinationflagvalue = sheetAt.getRow(row + count).getCell(0).getStringCellValue();
 				//数据存储目的地的名称 用名称进行匹配，如果匹配不到 则报错
@@ -3312,24 +3318,30 @@ public class MarketInfoAction extends BaseAction {
 			}
 			//存储dm_operation_info表信息
 			row = 13;
-			String sql = sheetAt.getRow(row + count).getCell(1).getStringCellValue();
+			String view_sql = sheetAt.getRow(row + count).getCell(1).getStringCellValue();
+			row = 14;
+			String execute_sql = sheetAt.getRow(row + count).getCell(1).getStringCellValue();
 			Dm_operation_info dm_operation_info = new Dm_operation_info();
-			dm_operation_info.setExecute_sql(sql);
+			dm_operation_info.setExecute_sql(execute_sql);
+			dm_operation_info.setView_sql(view_sql);
 			dm_operation_info.setDatatable_id(datatable_id);
 			dm_operation_info.setId(PrimayKeyGener.getNextId());
+			dm_operation_info.setStart_date(DateUtil.getSysDate());
+			dm_operation_info.setEnd_date(Constant.MAXDATE);
 			dm_operation_info.add(Dbo.db());
 			//存储dm_relevant_info表
 			Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
 			dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
 			dm_relevant_info.setDatatable_id(datatable_id);
 			//判断前置处理是否为空
-			row = 14;
+			row = 15;
 			if (sheetAt.getRow(row + count) != null && sheetAt.getRow(row + count).getCell(1) != null
 					&& !StringUtils.isEmpty(sheetAt.getRow(row + count).getCell(1).getStringCellValue())) {
 				String pre_work = sheetAt.getRow(row + count).getCell(1).getStringCellValue();
 				dm_relevant_info.setPre_work(pre_work);
 			}
-			row = 15;
+			//判断后置处理是否为空
+			row = 16;
 			if (sheetAt.getRow(row + count) != null && sheetAt.getRow(row + count).getCell(1) != null
 					&& !StringUtils.isEmpty(sheetAt.getRow(row + count).getCell(1).getStringCellValue())) {
 				String post_work = sheetAt.getRow(row + count).getCell(1).getStringCellValue();
@@ -3341,24 +3353,22 @@ public class MarketInfoAction extends BaseAction {
 			//记录总共有多少个额外的附件字段属性
 			int cellcount = 0;
 			List<String> columnadditionpropertykeys = new ArrayList<>();
-			row = 18;
-			while (true) {
+			row = 19;
+			while (sheetAt.getRow(row + count + columncount).getCell(8 + cellcount) != null
+					&& !StringUtils
+					.isEmpty(sheetAt.getRow(row + count + columncount).getCell(8 + cellcount).getStringCellValue())) {
 				//判断如果最右边的那个框没有值了，就跳出循环
-				if (sheetAt.getRow(row + count + columncount).getCell(7 + cellcount) == null
-						|| StringUtils
-						.isEmpty(sheetAt.getRow(row + count + columncount).getCell(7 + cellcount).getStringCellValue())) {
-					break;
-				}
-				String columnadditionpropertykey = sheetAt.getRow(row + count + columncount).getCell(7 + cellcount)
-						.getStringCellValue();
+				String columnadditionpropertykey =
+						sheetAt.getRow(row + count + columncount).getCell(8 + cellcount)
+								.getStringCellValue();
 				columnadditionpropertykeys.add(columnadditionpropertykey);
 				cellcount++;
 			}
 
-			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
+			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(execute_sql);
 			List<String> columns = druidParseQuerySql.parseSelectOriginalField();
 			//开始循环遍历字段的部分
-			row = 19;
+			row = 20;
 			while (true) {
 				//存储datatable_field_info表
 				Datatable_field_info datatable_field_info = new Datatable_field_info();
@@ -3381,22 +3391,29 @@ public class MarketInfoAction extends BaseAction {
 				String field_processvalue = sheetAt.getRow(row + count + columncount).getCell(5).getStringCellValue();
 				String field_processvcode = WebCodesItem.getCode(ProcessType.CodeName, field_processvalue);
 				datatable_field_info.setField_process(field_processvcode);
-				String process_para = sheetAt.getRow(row + count + columncount).getCell(6).getStringCellValue();
+				String process_mapping = sheetAt.getRow(row + count + columncount).getCell(6).getStringCellValue();
 				if (ProcessType.YingShe == ProcessType.ofEnumByCode(field_processvcode)) {
-					if (columns.indexOf(process_para) < 0) {
+					if (columns.indexOf(process_mapping) < 0) {
 						throw new BusinessSystemException("填写的来源字段，不存在于SQL中，请检查");
-					} else {
-						process_para = String.valueOf(columns.indexOf(process_para));
+					}
+					datatable_field_info.setProcess_mapping(process_mapping);
+				}
+				Cell cell = sheetAt.getRow(row + count + columncount).getCell(7);
+				// 如果分组映射设置分组映射对应规则
+				if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_processvcode)) {
+					if (null != cell) {
+						String group_mapping = cell.getStringCellValue();
+						datatable_field_info.setGroup_mapping(group_mapping);
 					}
 				}
-				// TODO 修改实体发生了变化
-//				datatable_field_info.setProcess_para(process_para);
 				datatable_field_info.setField_seq(String.valueOf(columncount));
+				datatable_field_info.setStart_date(DateUtil.getSysDate());
+				datatable_field_info.setEnd_date(Constant.MAXDATE);
 				datatable_field_info.add(Dbo.db());
 				//存储dm_column_storage表
 				for (int i = 0; i < columnadditionpropertykeys.size(); i++) {
 					//获取是否内容
-					String IsFlagValue = sheetAt.getRow(row + count + columncount).getCell(7 + i).getStringCellValue();
+					String IsFlagValue = sheetAt.getRow(row + count + columncount).getCell(8 + i).getStringCellValue();
 					String IsFlagCode = WebCodesItem.getCode(IsFlag.CodeName, IsFlagValue);
 					//判断是否内容
 					if (IsFlagCode.equalsIgnoreCase(IsFlag.Shi.getCode())) {
@@ -3421,7 +3438,7 @@ public class MarketInfoAction extends BaseAction {
 				}
 				columncount++;
 			}
-			saveBloodRelationToPGTable(sql, datatable_id);
+			saveBloodRelationToPGTable(execute_sql, datatable_id);
 		} catch (Exception e) {
 			logger.error(e);
 			e.printStackTrace();
