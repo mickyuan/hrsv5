@@ -101,12 +101,13 @@ public class AgentDeployAction extends BaseAction {
 		/* 1 : 根据选择的数据源及Agent类型查询其对应的Agent信息 */
 		Map<String, Object> queryOneObject =
 			Dbo.queryOneObject(
-				"SELECT * FROM "
+				"SELECT t2.* FROM "
+					+ Agent_info.TableName
+					+ " t1 left join "
 					+ Agent_down_info.TableName
-					+ " WHERE "
-					+ "agent_id = ? AND agent_type = ? AND user_id = ?",
+					+ " t2 on t1.agent_ip = t2.agent_ip AND t1.agent_port = t2.agent_port WHERE "
+					+ "t1.agent_id = ? AND t1.user_id = ?",
 				agent_id,
-				agent_type,
 				getUserId());
 		/* 2 : 将系统默认路径放入 */
 		queryOneObject.put(
