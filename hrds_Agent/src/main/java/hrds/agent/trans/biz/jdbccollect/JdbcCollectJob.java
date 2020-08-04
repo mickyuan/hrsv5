@@ -16,8 +16,6 @@ import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.exception.AppSystemException;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 import org.apache.commons.logging.Log;
@@ -40,13 +38,20 @@ public class JdbcCollectJob extends AgentBaseAction {
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有sourceDataConfBean表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public void execute(String taskInfo) {
-		//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
-		SourceDataConfBean sourceDataConfBean =
-				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
-		//2.将页面传递过来的压缩信息解压写文件
-		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
-				PackUtil.unpackMsg(taskInfo).get("msg"));
+	public String execute(String taskInfo) {
+		String message = "执行成功";
+		try {
+			//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+			SourceDataConfBean sourceDataConfBean =
+					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
+			//2.将页面传递过来的压缩信息解压写文件
+			FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
+					PackUtil.unpackMsg(taskInfo).get("msg"));
+		} catch (Exception e) {
+			log.error(e);
+			message = "数据库抽取生成配置文件失败:" + e.getMessage();
+		}
+		return message;
 	}
 
 	@Method(desc = "数据库抽取和前端交互立即执行的接口",
@@ -60,15 +65,16 @@ public class JdbcCollectJob extends AgentBaseAction {
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有sourceDataConfBean表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public void executeImmediately(String etlDate, String taskInfo) {
-		//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
-		SourceDataConfBean sourceDataConfBean =
-				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
-		//2.将页面传递过来的压缩信息解压写文件
-		FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
-				PackUtil.unpackMsg(taskInfo).get("msg"));
+	public String executeImmediately(String etlDate, String taskInfo) {
+		String message = "执行成功";
 		ExecutorService executor = null;
 		try {
+			//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+			SourceDataConfBean sourceDataConfBean =
+					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
+			//2.将页面传递过来的压缩信息解压写文件
+			FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
+					PackUtil.unpackMsg(taskInfo).get("msg"));
 			//3.初始化当前任务需要保存的文件的根目录
 			String[] paths = {Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
 			FileUtil.initPath(paths);
@@ -98,11 +104,13 @@ public class JdbcCollectJob extends AgentBaseAction {
 			JobStatusInfoUtil.printJobStatusInfo(list);
 		} catch (Exception e) {
 			log.error(e);
-			throw new AppSystemException("执行数据库抽取任务失败:" + e.getMessage());
+			message = "执行数据库抽取生成文件任务失败:" + e.getMessage();
+//            throw new AppSystemException("执行数据库抽取任务失败:" + e.getMessage());
 		} finally {
 			if (executor != null)
 				executor.shutdown();
 		}
+		return message;
 	}
 
 	@Method(desc = "数据库抽取和前端交互生成数据字典的接口",
