@@ -17,6 +17,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.query.DMLDataQuery;
 import hrds.commons.tree.background.query.TreeDataQuery;
 import hrds.commons.tree.background.utils.DataConvertedNodeData;
+import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.tree.Node;
@@ -35,14 +36,8 @@ public class MarketVersionManageAction extends BaseAction {
     @Param(name = "参数名", desc = "参数描述", range = "参数例子")
     @Return(desc = "结果说明", range = "结果描述")
     public List<Node> getMarketVerManageTreeData() {
-        //设置版本管理树菜单信息 目前只显示集市层(DML)
-        DataSourceType[] dataSourceTypes = new DataSourceType[1];
-        dataSourceTypes[0] = DataSourceType.DML;
         //设置源菜单信息节点数据
-        List<Map<String, Object>> dataList = new ArrayList<>(TreeDataQuery.getSourceTreeInfos(dataSourceTypes));
-//        //初始化树配置
-//        TreeConf treeConf = new TreeConf();
-//        TreeNodeDataQuery.getDMLDataList(getUser(), dataList, treeConf);
+        List<Map<String, Object>> dataList = new ArrayList<>(TreeDataQuery.getSourceTreeInfos(TreePageSource.MARKET_VERSION_MANAGE));
         //获取DML层下工程信息列表
         List<Map<String, Object>> dmlDataInfos = DMLDataQuery.getDMLDataInfos(getUser());
         dataList.addAll(DataConvertedNodeData.conversionDMLDataInfos(dmlDataInfos));
@@ -229,20 +224,20 @@ public class MarketVersionManageAction extends BaseAction {
         //设置查询sql
         asmSql.addSql("SELECT DISTINCT * FROM (");
         asmSql.addSql(" SELECT dd.data_mart_id,dd.category_id,dd.datatable_en_name,dd.datatable_cn_name,dd.datatable_id," +
-                " dd.datatable_desc,doi.start_date AS version_data FROM dm_operation_info doi" +
+                " dd.datatable_desc,doi.start_date AS version_date FROM dm_operation_info doi" +
                 " JOIN dm_datatable dd ON doi.datatable_id=dd.datatable_id WHERE dd.datatable_id=?" +
                 " and end_date != ?").addParam(datatable_id).addParam(Constant.MAXDATE);
         asmSql.addSql(" UNION ALL");
         asmSql.addSql(" SELECT dd.data_mart_id,dd.category_id,dd.datatable_en_name,dd.datatable_cn_name,dd.datatable_id," +
-                " dd.datatable_desc,doi.end_date AS version_data FROM dm_operation_info doi" +
+                " dd.datatable_desc,doi.end_date AS version_date FROM dm_operation_info doi" +
                 " JOIN dm_datatable dd ON doi.datatable_id=dd.datatable_id WHERE dd.datatable_id=?" +
                 " and end_date != ?").addParam(datatable_id).addParam(Constant.MAXDATE);
         asmSql.addSql(" UNION ALL");
         asmSql.addSql(" SELECT dd.data_mart_id,dd.category_id,dd.datatable_en_name,dd.datatable_cn_name,dd.datatable_id," +
-                " dd.datatable_desc,doi.start_date AS version_data FROM dm_operation_info doi" +
+                " dd.datatable_desc,doi.start_date AS version_date FROM dm_operation_info doi" +
                 " JOIN dm_datatable dd ON doi.datatable_id=dd.datatable_id WHERE dd.datatable_id=?" +
                 " and end_date = ?").addParam(datatable_id).addParam(Constant.MAXDATE);
-        asmSql.addSql(" ) aa ORDER BY version_data DESC");
+        asmSql.addSql(" ) aa ORDER BY version_date DESC");
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
@@ -251,20 +246,23 @@ public class MarketVersionManageAction extends BaseAction {
     private static List<Map<String, Object>> conversionDMLTableVersionInfos(List<Map<String, Object>> dmlTableVersionInfos) {
         List<Map<String, Object>> dmlTableVersionNodes = new ArrayList<>();
         dmlTableVersionInfos.forEach(dmlTableVersionInfo -> {
+            String file_id = String.valueOf(dmlTableVersionInfo.get("datatable_id"));
+            String version_date = String.valueOf(dmlTableVersionInfo.get("version_date"));
             Map<String, Object> map = new HashMap<>();
-            map.put("id", dmlTableVersionInfo.get("version_data"));
-            map.put("label", dmlTableVersionInfo.get("version_data"));
+            map.put("id", file_id + "_" + version_date);
+            map.put("label", version_date);
             map.put("parent_id", dmlTableVersionInfo.get("datatable_id"));
             map.put("classify_id", dmlTableVersionInfo.get("category_id"));
-            map.put("file_id", dmlTableVersionInfo.get("datatable_id"));
+            map.put("file_id", file_id);
             map.put("table_name", dmlTableVersionInfo.get("datatable_en_name"));
             map.put("hyren_name", dmlTableVersionInfo.get("datatable_en_name"));
             map.put("original_name", dmlTableVersionInfo.get("datatable_cn_name"));
             map.put("data_layer", DataSourceType.DML.getCode());
+            map.put("tree_page_source", TreePageSource.MARKET_VERSION_MANAGE);
             map.put("description", "" +
                     "表英文名：" + dmlTableVersionInfo.get("datatable_en_name") + "\n" +
                     "表中文名：" + dmlTableVersionInfo.get("datatable_cn_name") + "\n" +
-                    "版本日期：" + dmlTableVersionInfo.get("version_data") + "\n" +
+                    "版本日期：" + version_date + "\n" +
                     "表描述：" + dmlTableVersionInfo.get("datatable_desc"));
             dmlTableVersionNodes.add(map);
         });

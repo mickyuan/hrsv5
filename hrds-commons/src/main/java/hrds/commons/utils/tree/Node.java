@@ -69,6 +69,10 @@ public class Node {
      */
     private String hyren_name;
     /**
+     * 树页面来源
+     */
+    private String tree_page_source;
+    /**
      * 孩子节点列表
      */
     private List<Node> children = new ArrayList<>();
@@ -89,7 +93,8 @@ public class Node {
                 + ", file_id : '" + file_id + "'"
                 + ", table_name : '" + table_name + "'"
                 + ", original_name : '" + original_name + "'"
-                + ", hyren_name : '" + hyren_name + "'";
+                + ", hyren_name : '" + hyren_name + "'"
+                + ", tree_page_source : '" + tree_page_source + "'";
         if (children != null && children.size() != 0) {
             str += ", children : " + children.toString();
         } else {
@@ -232,6 +237,14 @@ public class Node {
 
     public void setHyren_name(String hyren_name) {
         this.hyren_name = hyren_name;
+    }
+
+    public String getTree_page_source() {
+        return tree_page_source;
+    }
+
+    public void setTree_page_source(String tree_page_source) {
+        this.tree_page_source = tree_page_source;
     }
 
     public List<Node> getChildren() {
