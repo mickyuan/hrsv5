@@ -401,7 +401,7 @@ public class DictionaryTableAction extends BaseAction {
 			databaseInfo,
 			AgentActionUtil.GETDATABASETABLE);
 
-	return JSON.parseObject(respMsg, new TypeReference<>() {
+	return JSON.parseObject(respMsg, new TypeReference<List<Table_info>>() {
 	});
   }
 

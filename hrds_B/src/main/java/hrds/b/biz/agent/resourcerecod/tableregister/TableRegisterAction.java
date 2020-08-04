@@ -38,7 +38,6 @@ import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.commons.math.exception.ZeroException;
 
 @DocClass(desc = "表的登记信息管理", author = "Mr.Lee", createdate = "2020-07-07 11:04")
 public class TableRegisterAction extends BaseAction {
@@ -79,7 +78,7 @@ public class TableRegisterAction extends BaseAction {
 				}
 				tableColumnList = JSON
 					.parseObject(tableColumnObj.get(tableInfo.getTable_name()).toString(),
-						new TypeReference<>() {
+						new TypeReference<List<Table_column>>() {
 						});
 			} else {
 				tableColumnList = databaseTableColumnInfo(databaseId, tableInfo.getTable_name());
@@ -314,7 +313,7 @@ public class TableRegisterAction extends BaseAction {
 					}
 					tableColumnList = JSON
 						.parseObject(tableColumnObj.get(tableInfo.getTable_name()).toString(),
-							new TypeReference<>() {
+							new TypeReference<List<Table_column>>() {
 							});
 				} else {
 					tableColumnList = databaseTableColumnInfo(databaseId, tableInfo.getTable_name());
@@ -334,7 +333,7 @@ public class TableRegisterAction extends BaseAction {
 						//直接解析列信息,如果有重新定义则能解析出新的,否则不做列的任何更改
 						tableColumnList = JSON
 							.parseObject(tableColumnObj.get(tableInfo.getTable_name()).toString(),
-								new TypeReference<>() {
+								new TypeReference<List<Table_column>>() {
 								});
 						updateTableColumn(tableInfo.getTable_id(), tableColumnList);
 					}

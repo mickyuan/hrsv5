@@ -209,7 +209,7 @@ public class DataTransferAction extends BaseAction {
 				databaseInfo,
 				AgentActionUtil.GETALLTABLESTORAGE);
 
-		return JSON.parseObject(respMsg, new TypeReference<>() {
+		return JSON.parseObject(respMsg, new TypeReference<List<Map<String, Object>>>() {
 		});
 	}
 

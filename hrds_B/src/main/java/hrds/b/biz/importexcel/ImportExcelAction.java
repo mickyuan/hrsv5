@@ -155,7 +155,7 @@ public class ImportExcelAction extends BaseAction {
 				dep_name);
 		;
 		//2:如果存在则返回部门ID信息,否则创建部门信息并返回ID信息
-		if (queryResult.isEmpty()) {
+		if (queryResult.isPresent()) {
 			department_info.setDep_id(PrimayKeyGener.getNextId());
 			department_info.setCreate_date(DateUtil.getSysDate());
 			department_info.setCreate_time(DateUtil.getSysTime());
@@ -206,7 +206,7 @@ public class ImportExcelAction extends BaseAction {
 			.queryOneObject(Data_source.class, "SELECT * FROM " + Data_source.TableName + " WHERE datasource_number = ?",
 				datasource_number);
 		//1: 保存数据源信息..有则更新,没有新增
-		if (queryResult.isEmpty()) {
+		if (queryResult.isPresent()) {
 			data_source.setSource_id(PrimayKeyGener.getNextId());
 			data_source.setCreate_date(DateUtil.getSysDate());
 			data_source.setCreate_time(DateUtil.getSysTime());
@@ -290,7 +290,7 @@ public class ImportExcelAction extends BaseAction {
 			"SELECT * FROM " + Agent_info.TableName + " WHERE agent_name = ? AND source_id =? AND agent_type = ?",
 			agent_name, data_source.getSource_id(), agent_info.getAgent_type());
 
-		if (queryResult.isEmpty()) {
+		if (queryResult.isPresent()) {
 			agent_info.setAgent_id(PrimayKeyGener.getNextId());
 			agent_info.setAgent_status(IsFlag.Fou.getCode());
 			agent_info.setCreate_date(DateUtil.getSysDate());
@@ -342,7 +342,7 @@ public class ImportExcelAction extends BaseAction {
 			"SELECT * FROM " + Collect_job_classify.TableName + " WHERE classify_num = ? AND agent_id =?", classify_num,
 			agent_info.getAgent_id());
 
-		if (queryClassify.isEmpty()) {
+		if (queryClassify.isPresent()) {
 			classify.setClassify_id(PrimayKeyGener.getNextId());
 			if (isUpload) {
 				classify.add(db);
@@ -462,7 +462,7 @@ public class ImportExcelAction extends BaseAction {
 				+ " WHERE agent_id = ? AND classify_id = ? AND task_name = ? AND database_number = ?",
 			agent_info.getAgent_id(), classify.getClassify_id(), task_name, database_number);
 
-		if (queryDatabase.isEmpty()) {
+		if (queryDatabase.isPresent()) {
 			//设置默认的是否为DB采集
 			database_set.setDb_agent(IsFlag.Fou.getCode());
 			//设置默认的是否发送完成
@@ -612,7 +612,7 @@ public class ImportExcelAction extends BaseAction {
 				"SELECT * FROM " + Table_info.TableName + " WHERE database_id = ? AND table_name = ?",
 				database_set.getDatabase_id(), table_name);
 			//表的新增是新增,那么表的字段信息肯定也是新增,表的抽取方式也是新增
-			if (queryTableInfo.isEmpty()) {
+			if (queryTableInfo.isPresent()) {
 				//设置默认的数据日期
 				table_info.setRec_num_date(DateUtil.getSysDate());
 				//新增表的主键
@@ -740,7 +740,7 @@ public class ImportExcelAction extends BaseAction {
 				"SELECT * FROM " + Data_extraction_def.TableName + " WHERE table_id = ? ",
 				table_info.getTable_id());
 //			updateDataObj.put("tableName表名", table_info.getTable_name());
-			if (queryData.isEmpty()) {
+			if (queryData.isPresent()) {
 				extraction_def.setDed_id(PrimayKeyGener.getNextId());
 				extraction_def.setTable_id(table_info.getTable_id());
 				updateDataObj.put("addTableChName新增表中文名", table_info.getTable_ch_name());
@@ -844,7 +844,7 @@ public class ImportExcelAction extends BaseAction {
 			Optional<Table_column> queryColumn = Dbo.queryOneObject(Table_column.class,
 				"SELECT * FROM " + Table_column.TableName + " WHERE table_id = ? AND column_name = ?",
 				table_info.getTable_id(), columnList.get(i));
-			if (queryColumn.isEmpty()) {
+			if (queryColumn.isPresent()) {
 				//设置列的主键信息
 				table_column.setColumn_id(PrimayKeyGener.getNextId());
 				//设置列的默认清洗顺序
@@ -922,7 +922,7 @@ public class ImportExcelAction extends BaseAction {
 				.queryOneObject(Etl_sys.class,
 					"SELECT * FROM " + Etl_sys.TableName + " WHERE etl_sys_cd = ? AND user_id = ?", etl_sys_cd,
 					user_id);
-			if (queryEtlSys.isEmpty()) {
+			if (queryEtlSys.isPresent()) {
 				//工程编号
 				etl_sys.setEtl_sys_cd(etl_sys_cd);
 				//工程运行状态
@@ -958,7 +958,7 @@ public class ImportExcelAction extends BaseAction {
 					"SELECT * FROM " + Etl_sub_sys_list.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
 					etl_sys_cd, sub_sys_cd);
 
-			if (querySubSys.isEmpty()) {
+			if (querySubSys.isPresent()) {
 				//工程编号
 				etl_sub_sys_list.setEtl_sys_cd(etl_sys_cd);
 				//工程任务编号
