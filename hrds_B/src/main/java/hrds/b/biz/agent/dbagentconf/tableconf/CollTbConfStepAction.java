@@ -1697,15 +1697,15 @@ public class CollTbConfStepAction extends BaseAction {
 	private List<Object> checkTableCollectState(long colSetId, Object table_name) {
 
 		//    1: 检查表名是否存在
-		if (Dbo.queryNumber(
-			"SELECT COUNT(1) FROM "
-				+ Table_info.TableName
-				+ " WHERE database_id = ? AND table_name = ?",
-			colSetId,
-			table_name)
-			.orElseThrow(() -> new BusinessException("SQL查询错误")) == 0) {
-			throw new BusinessException("任务(" + colSetId + ")下不存在表 (" + table_name + ")");
-		}
+//		if (Dbo.queryNumber(
+//			"SELECT COUNT(1) FROM "
+//				+ Table_info.TableName
+//				+ " WHERE database_id = ? AND table_name = ?",
+//			colSetId,
+//			table_name)
+//			.orElseThrow(() -> new BusinessException("SQL查询错误")) == 0) {
+//			throw new BusinessException("任务(" + colSetId + ")下不存在表 (" + table_name + ")");
+//		}
 		//    2: 返回表的采集信息集合
 		return Dbo.queryOneColumnList(
 			"SELECT t1.execute_state FROM "
