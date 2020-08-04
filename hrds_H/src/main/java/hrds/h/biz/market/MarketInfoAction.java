@@ -213,9 +213,10 @@ public class MarketInfoAction extends BaseAction {
 					categoryRelationBean.getParent_category_name().equals(dm_info.getMart_name())) {
 				categoryRelationBean.setParent_category_id(data_mart_id);
 			}
+			categoryRelationBean.setData_mart_id(data_mart_id);
 		}
 		// 保存集市分类
-		saveDmCategory(data_mart_id, categoryRelationBeans);
+		saveDmCategory(categoryRelationBeans);
 	}
 
 	@Method(desc = "保存集市分类", logicStep = "1.判断集市工程是否存在" +
@@ -226,30 +227,8 @@ public class MarketInfoAction extends BaseAction {
 			"5.更新集市分类")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
-	private void saveDmCategory(long data_mart_id, CategoryRelationBean[] categoryRelationBeans) {
-		// 1.判断集市工程是否存在
-		isDmInfoExist(data_mart_id);
-		List<Map<String, Long>> idNameList = new ArrayList<>();
-		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
-			if (categoryRelationBean.getCategory_id() == null) {
-				Map<String, Long> idNameMap = new HashMap<>();
-				categoryRelationBean.setCategory_id(PrimayKeyGener.getNextId());
-				idNameMap.put(categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_id());
-				idNameList.add(idNameMap);
-			} else {
-				// 5.更新集市分类
-				Validator.notNull(categoryRelationBean.getParent_category_id(), "更新分类时上级分类ID不能为空");
-				isEqualsCategoryId(categoryRelationBean.getCategory_id(),
-						categoryRelationBean.getParent_category_id(), data_mart_id);
-				Dbo.execute(
-						"update " + Dm_category.TableName
-								+ " set category_name=?,category_num=?,parent_category_id=?,category_desc=?"
-								+ " where category_id=?",
-						categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_num(),
-						categoryRelationBean.getParent_category_id(), categoryRelationBean.getCategory_desc(),
-						categoryRelationBean.getCategory_id());
-			}
-		}
+	private void saveDmCategory(CategoryRelationBean[] categoryRelationBeans) {
+		List<Map<String, Long>> idNameList = getIdNameList(categoryRelationBeans);
 		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
 			// 2.实体字段合法性检查
 			checkDmCategoryFields(categoryRelationBean);
@@ -260,16 +239,69 @@ public class MarketInfoAction extends BaseAction {
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
 			// 4.判断集市分类名称与分类编号是否已存在，已存在不能新增
 			if (num == 0) {
-				if (isCategoryNameExist(data_mart_id, categoryRelationBean.getCategory_name())) {
+				if (isCategoryNameExist(categoryRelationBean.getData_mart_id(),
+						categoryRelationBean.getCategory_name())) {
 					throw new BusinessException("分类名称已存在" + categoryRelationBean.getCategory_name());
 				}
-				if (isCategoryNumExist(data_mart_id, categoryRelationBean.getCategory_num())) {
+				if (isCategoryNumExist(categoryRelationBean.getData_mart_id(),
+						categoryRelationBean.getCategory_num())) {
 					throw new BusinessException("分类编号已存在" + categoryRelationBean.getCategory_num());
 				}
 				// 4.1新增集市分类
-				addDmCategory(data_mart_id, categoryRelationBean, idNameList);
+				addDmCategory(categoryRelationBean.getData_mart_id(), categoryRelationBean, idNameList);
+			} else {
+				// 更新集市分类
+				updateCategory(categoryRelationBean.getData_mart_id(), idNameList, categoryRelationBean);
 			}
 		}
+	}
+
+	@Method(desc = "更新集市分类", logicStep = "1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类" +
+			"2.不能选择同名分类，即不能选择自己作为上级分类" +
+			"3.更新分类")
+	@Param(name = "data_mart_id", desc = "新建集市工程时生成", range = "无限制")
+	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
+	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
+	                            CategoryRelationBean categoryRelationBean) {
+		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
+		if (categoryRelationBean.getParent_category_id() == null) {
+			for (Map<String, Long> map : idNameList) {
+				for (Map.Entry<String, Long> entry : map.entrySet()) {
+					if (entry.getKey().equals(categoryRelationBean.getParent_category_name())) {
+						categoryRelationBean.setParent_category_id(entry.getValue());
+					}
+				}
+			}
+		}
+		// 2.不能选择同名分类，即不能选择自己作为上级分类
+		isEqualsCategoryId(categoryRelationBean.getCategory_id(),
+				categoryRelationBean.getParent_category_id(), data_mart_id);
+		// 3.更新分类
+		Dbo.execute(
+				"update " + Dm_category.TableName
+						+ " set category_name=?,category_num=?,parent_category_id=?,category_desc=?"
+						+ " where category_id=?",
+				categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_num(),
+				categoryRelationBean.getParent_category_id(), categoryRelationBean.getCategory_desc(),
+				categoryRelationBean.getCategory_id());
+	}
+
+	@Method(desc = "获取上级分类对应分类ID集合", logicStep = "1.给新增分类分配主键ID并获取上级分类对应分类ID集合")
+	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+	@Return(desc = "返回上级分类对应分类ID集合", range = "")
+	private List<Map<String, Long>> getIdNameList(CategoryRelationBean[] categoryRelationBeans) {
+		List<Map<String, Long>> idNameList = new ArrayList<>();
+		// 1.给新增分类分配主键ID并获取上级分类对应分类ID集合
+		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
+			if (categoryRelationBean.getCategory_id() == null) {
+				Map<String, Long> idNameMap = new HashMap<>();
+				categoryRelationBean.setCategory_id(PrimayKeyGener.getNextId());
+				idNameMap.put(categoryRelationBean.getCategory_name(), categoryRelationBean.getCategory_id());
+				idNameList.add(idNameMap);
+			}
+		}
+		return idNameList;
 	}
 
 	@Method(desc = "判断上级分类是否与分类ID相同", logicStep = "1.判断上级分类是否与分类ID相同")
@@ -568,8 +600,10 @@ public class MarketInfoAction extends BaseAction {
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
 	                           List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
+			// 1.新增选择新增的分类作为上级分类
 			for (Map<String, Long> map : idNameList) {
 				for (Map.Entry<String, Long> entry : map.entrySet()) {
+					// 1.1根据分类名称分配分类ID
 					if (entry.getKey().equals(categoryRelationBean.getCategory_name())) {
 						Dm_category dm_category = new Dm_category();
 						categoryRelationBean.setCategory_id(entry.getValue());
@@ -577,17 +611,14 @@ public class MarketInfoAction extends BaseAction {
 							for (Map.Entry<String, Long> parentEntry : parentMap.entrySet()) {
 								if (parentEntry.getKey().equals(categoryRelationBean.getParent_category_name())) {
 									BeanUtils.copyProperties(categoryRelationBean, dm_category);
-									dm_category.setData_mart_id(data_mart_id);
 									dm_category.setCreate_id(getUserId());
 									dm_category.setCreate_date(DateUtil.getSysDate());
 									dm_category.setCreate_time(DateUtil.getSysTime());
-									if (categoryRelationBean.getParent_category_id() == null) {
-										dm_category.setParent_category_id(parentEntry.getValue());
-									}
-									// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
+									dm_category.setParent_category_id(parentEntry.getValue());
+									// 1.2判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
 									isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(),
 											data_mart_id);
-									// 3.新增集市分类
+									// 1.3.新增集市分类
 									dm_category.add(Dbo.db());
 								}
 							}
@@ -596,15 +627,16 @@ public class MarketInfoAction extends BaseAction {
 				}
 			}
 		} else {
+			// 2.1新增选择已存在的上级分类
 			Dm_category dm_category = new Dm_category();
 			BeanUtils.copyProperties(categoryRelationBean, dm_category);
 			dm_category.setData_mart_id(data_mart_id);
 			dm_category.setCreate_id(getUserId());
 			dm_category.setCreate_date(DateUtil.getSysDate());
 			dm_category.setCreate_time(DateUtil.getSysTime());
-			// 2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
+			// 2.2判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
 			isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
-			// 3.新增集市分类
+			// 2.3.新增集市分类
 			dm_category.add(Dbo.db());
 		}
 	}
@@ -3186,6 +3218,8 @@ public class MarketInfoAction extends BaseAction {
 			if (dm_datatables.size() != 0) {
 				throw new BusinessSystemException("表名重复");
 			}
+			// 上面判断表名不能重复，所以这里设置集市表是否可以重复使用为否
+			dm_datatable.setRepeat_flag(IsFlag.Fou.getCode());
 			dm_datatable.setData_mart_id(data_mart_id);
 			row = 2;
 			String datatable_cn_name = sheetAt.getRow(row).getCell(1).getStringCellValue();

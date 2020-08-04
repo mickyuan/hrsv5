@@ -32,6 +32,7 @@ if [ ! -d $LOG_DIR ]; then
 fi
 
 cd ${SH_EXEC_DIR}
+chmod -R 755 jre
 nohup ${SH_EXEC_DIR}/jre/linux/${OS_BIT}/jre/bin/java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -Dproject.name=hrds_Trigger -Dproject.dir=${SH_EXEC_DIR} -jar hrds_Trigger-5.0.jar  sys.code=$1 1>>$LOG_OUT_FILE 2>>$LOG_ERR_FILE &
 exit 0
 

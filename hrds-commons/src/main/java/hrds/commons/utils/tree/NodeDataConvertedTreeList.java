@@ -84,6 +84,11 @@ public class NodeDataConvertedTreeList {
             } else {
                 node.setHyren_name(dataRecord.get("hyren_name").toString());
             }
+            if (null == dataRecord.get("tree_page_source")) {
+                node.setTree_page_source("");
+            } else {
+                node.setTree_page_source(dataRecord.get("tree_page_source").toString());
+            }
             nodeMap.put(node.getId(), node);
         });
         //对所有节点进行排序
