@@ -12,15 +12,15 @@ subprojects {
     apply plugin: 'java'
 
     compileJava {
-        sourceCompatibility = 14
-        targetCompatibility = 14
+        sourceCompatibility = 8
+        targetCompatibility = 8
         options.encoding = 'UTF-8'
         options.compilerArgs += "-parameters"
     }
 
     compileTestJava {
-        sourceCompatibility = 14
-        targetCompatibility = 14
+        sourceCompatibility = 8
+        targetCompatibility = 8
         options.encoding = 'UTF-8'
         options.compilerArgs += "-parameters"
     }
