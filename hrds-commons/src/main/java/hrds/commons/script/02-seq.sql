@@ -36,9 +36,9 @@ INSERT INTO sys_role (role_id,role_name) VALUES ('1006','全文检索管理员')
 INSERT INTO sys_role (role_id,role_name) VALUES ('1007','数据可视化管理员');
 INSERT INTO sys_role (role_id,role_name) VALUES ('1008','监控管理员');
 INSERT INTO sys_role (role_id,role_name) VALUES ('1009','REST接口管理员');
-INSERT INTO sys_role (role_id,role_name) VALUES ('1010','集市管理员');
+INSERT INTO sys_role (role_id,role_name) VALUES ('1010','加工管理员');
 INSERT INTO sys_role (role_id,role_name) VALUES ('1011', '机器学习管理员');
-INSERT INTO sys_role (role_id,role_name) VALUES ('3001', '集市数据加工管理员');
+INSERT INTO sys_role (role_id,role_name) VALUES ('3001', '数据加工管理员');
 INSERT INTO sys_role (role_id,role_name) VALUES ('1012', '流数据管理员');
 INSERT INTO sys_role (role_id,role_name) VALUES ('1013', '数据管控管理员');
 
@@ -51,7 +51,7 @@ insert into component_info(comp_id,comp_name,comp_state,comp_version,icon_info,c
 insert into component_info(comp_id,comp_name,comp_state,comp_version,icon_info,color_info,comp_type,comp_remark) values('F000','监控管理','1','0.98.0','fa-search','btn-info','1','');
 insert into component_info(comp_id,comp_name,comp_state,comp_version,icon_info,color_info,comp_type,comp_remark) values('B001','全文检索','1','0.98.0','fa-crosshairs','btn-danger','1','');
 insert into component_info(comp_id,comp_name,comp_state,comp_version,icon_info,color_info,comp_type,comp_remark) values('G000','REST接口','1','0.98.0','fa-bell','btn-purple','1','');
-insert into component_info(comp_id,comp_name,comp_state,comp_version,icon_info,color_info,comp_type,comp_remark) values('H000','集市管理','1','0.98.0','fa-briefcase','btn-pink','1','');
+insert into component_info(comp_id,comp_name,comp_state,comp_version,icon_info,color_info,comp_type,comp_remark) values('H000','加工管理','1','0.98.0','fa-briefcase','btn-pink','1','');
 insert into component_info(comp_id,comp_name,comp_state,comp_version,comp_type,comp_remark) values('1000000001','查询引擎','1','0.13.1','2','Hive');
 insert into component_info(comp_id,comp_name,comp_state,comp_version,comp_type,comp_remark) values('1000000002','流式计算','1','1.4','2','Spark Streaming');
 insert into component_info(comp_id,comp_name,comp_state,comp_version,comp_type,comp_remark) values('1000000003','离线计算','1','2.5.1','2','Hadoop&MapReduce/Berkeley&Spark');
@@ -84,7 +84,7 @@ INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, me
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (103, '/webSqlConsole', '29', 'SQL控制台', 'B000', 'el-icon-monitor');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (104, '/fullTextSearch', '28', '全文检索', 'B000', 'el-icon-search');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (105, '/etlMage', '04', '作业调度', 'B000', 'el-icon-menu');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (106, '/dataMart', '14', '数据集市', 'H000', 'el-icon-connection');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (106, '/dataMart', '14', '数据加工', 'H000', 'el-icon-connection');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (107, '/serviceUser', '12', '服务接口用户', 'G000', 'el-icon-cpu');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (108, '/marketVersionManage', '48', '版本管理', 'H000', 'el-icon-connection');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (109, '/dataControl', '24', '数据管控', 'K001', 'el-icon-s-finance');
