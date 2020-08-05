@@ -993,19 +993,18 @@ public class AgentListAction extends BaseAction {
 			methodName = AgentActionUtil.JDBCCOLLECTEXECUTEIMMEDIATELY;
 		}
 		//检查是否为下载
-		if (Boolean.parseBoolean(is_download)) {
+		if ("true".equals(is_download)) {
 			methodName = AgentActionUtil.GETDICTIONARYJSON;
 		}
-		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
 		String dataDic = (String) SendMsgUtil.sendDBCollectTaskInfo(
 			sourceDBConfObj.getLong("database_id"),
 			sourceDBConfObj.getLong("agent_id"),
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			etl_date);
+			etl_date, is_download);
 
-		if (Boolean.parseBoolean(is_download)) {
+		if ("true".equals(is_download)) {
 			responseFile("dd_json.json", dataDic.getBytes());
 		}
 	}
@@ -1359,7 +1358,7 @@ public class AgentListAction extends BaseAction {
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			etl_date);
+			etl_date,"false");
 	}
 
 	@Method(
