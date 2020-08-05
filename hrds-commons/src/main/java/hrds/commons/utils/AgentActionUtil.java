@@ -136,7 +136,7 @@ public class AgentActionUtil {
 		Agent_down_info agent_down_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM " +
 				"agent_down_info t1 join agent_info t2 on t1.agent_ip = t2.agent_ip and t1.agent_port=" +
 				"t2.agent_port where  t2.agent_id= ? and t2.user_id = ?", agent_id, user_id).orElseThrow(() ->
-				new BusinessException("根据Agent_id:" + agent_id + "查询不到agent_down_info表信息"));
+				new BusinessException("根据Agent_id:" + agent_id + "查询不到部署信息"));
 		//XXX 这里无法判断页面是规定按照配置文件里面一样填/action/*还是/action/还是/action
 		//XXX 因此这里就判断如果是/*或者/结尾的就将结尾的那个字符去掉，保证拼接的url没有多余的字符
 		if (agent_down_info.getAgent_pattern().endsWith("/*")) {

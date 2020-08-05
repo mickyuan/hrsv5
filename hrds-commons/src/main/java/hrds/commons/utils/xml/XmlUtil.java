@@ -12,9 +12,6 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,16 +23,14 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.junit.Assert;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 /**
- * XML工具类<br> 此工具使用w3c dom工具，不需要依赖第三方包。<br> 工具类封装了XML文档的创建、读取、写出和部分XML操作
- *
- * @author xiaoleilu
+ * XML工具类<br> 此工具使用w3c dom工具，
+ * 不需要依赖第三方包。<br> 工具类封装了XML文档的创建、读取、写出和部分XML操作
  */
 public class XmlUtil {
 
@@ -47,12 +42,12 @@ public class XmlUtil {
 	/**
 	 * 默认的DocumentBuilderFactory实现
 	 */
-	private static String defaultDocumentBuilderFactory = "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl";
+	private final static String DEFAULTDOCUMENTBUILDERFACTORY = "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl";
 
 	/**
 	 * 是否打开命名空间支持
 	 */
-	private static boolean namespaceAware = true;
+	private static boolean NAME_SPACE_AWARE = true;
 
 	/**
 	 * 是否打开命名空间支持
@@ -100,11 +95,8 @@ public class XmlUtil {
 	 * @return XML文档对象
 	 */
 	public static Document readXML(File file) {
-		if (false == file.exists()) {
+		if (!file.exists()) {
 			throw new AppSystemException("File [{" + file.getAbsolutePath() + "}] not a exist!");
-		}
-		if (false == file.isFile()) {
-			throw new AppSystemException("[{" + file.getAbsolutePath() + "}] not a file!");
 		}
 
 		try {
@@ -176,13 +168,13 @@ public class XmlUtil {
 	 */
 	public static DocumentBuilderFactory createDocumentBuilderFactory() {
 		final DocumentBuilderFactory factory;
-		if (StringUtil.isNotEmpty(defaultDocumentBuilderFactory)) {
-			factory = DocumentBuilderFactory.newInstance(defaultDocumentBuilderFactory, null);
+		if (StringUtil.isNotEmpty(DEFAULTDOCUMENTBUILDERFACTORY)) {
+			factory = DocumentBuilderFactory.newInstance(DEFAULTDOCUMENTBUILDERFACTORY, null);
 		} else {
 			factory = DocumentBuilderFactory.newInstance();
 		}
 		// 默认打开NamespaceAware，getElementsByTagNameNS可以使用命名空间
-		factory.setNamespaceAware(namespaceAware);
+		factory.setNamespaceAware(NAME_SPACE_AWARE);
 		return disableXXE(factory);
 	}
 
@@ -358,7 +350,7 @@ public class XmlUtil {
 
 		try (BufferedWriter writer = FileUtil.newBufferedWriter(Paths.get(path), Charset.defaultCharset().newEncoder());) {
 			write(doc, writer, charset, INDENT_DEFAULT, true);
-		}catch (IOException e) {
+		} catch (IOException e) {
 			throw new AppSystemException(e);
 		}
 	}
