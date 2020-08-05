@@ -18,10 +18,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.codes.Main_Server_Sync;
 import hrds.commons.codes.Pro_Type;
-import hrds.commons.entity.Etl_job_def;
-import hrds.commons.entity.Etl_resource;
-import hrds.commons.entity.Etl_sub_sys_list;
-import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.*;
 import hrds.commons.utils.jsch.SFTPDetails;
@@ -409,6 +406,16 @@ public class EltSysAction extends BaseAction {
 		}
 		// 4.删除工程信息,这里删除资源定义表信息的原因是新增工程时会默认初始化thrift，yarn这两个资源给工程
 		Dbo.execute("delete from " + Etl_resource.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		// 删除已经配置的系统参数
+		Dbo.execute("delete from " + Etl_para.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		// 删除作业调度历史
+		Dbo.execute("delete from " + Etl_job_disp_his.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		// 删除作业干预信息
+		Dbo.execute("delete from " + Etl_job_hand.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		// 删除作业干预历史
+		Dbo.execute("delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?", etl_sys_cd);
+		// 删除作业调度信息
+		Dbo.execute("delete from " + Etl_job_cur.TableName + " where etl_sys_cd=?", etl_sys_cd);
 		DboExecute.deletesOrThrow("删除工程失败", "delete from " + Etl_sys.TableName +
 				" where etl_sys_cd=?", etl_sys_cd);
 	}
