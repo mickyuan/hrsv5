@@ -76,7 +76,7 @@ public class JdbcCollectJob extends AgentBaseAction {
 			FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
 					PackUtil.unpackMsg(taskInfo).get("msg"));
 			//3.初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
+			String[] paths = {Constant.DICTIONARY};
 			FileUtil.initPath(paths);
 			//4.获取json数组转成CollectTableBean的集合
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();

@@ -94,14 +94,15 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			//根据系统参数配置是否写数据字典，因为页面提供了下载任务的数据字典，每次跑批再去写数据字典会影响效率
 			if (JobConstant.ISWRITEDICTIONARY) {
 				//数据字典的路径
-				String dictionaryPath = FileNameUtils.normalize(Constant.DICTIONARY + File.separator +
-						collectTableBean.getDatabase_id() + File.separator, true);
+				String dictionaryPath = FileNameUtils.normalize(Constant.DICTIONARY + File.separator
+						, true);
 				//写数据字典
 				DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
 						tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
 						collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
 						tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
-						, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
+						, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name(),
+						sourceDataConfBean.getTask_name());
 			}
 			//卸数成功，删除重命名的目录
 			deleteRenameDir(collectTableBean);

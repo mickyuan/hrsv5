@@ -23,20 +23,22 @@ import java.util.concurrent.TimeUnit;
 public class DataExtractUtil {
 
 	private static final Log logger = LogFactory.getLog(DataExtractUtil.class);
-	private static final String DATADICTIONARY = "dd_data.json";
+	private static final String DATADICTIONARY_SUFFIX = ".json";
 
 	/**
 	 * 生成数据字典
 	 */
 	public static void writeDataDictionary(String dictionaryPath, String tableName, String allColumns
 			, String allType, List<Data_extraction_def> ext_defList, String unload_type, String primaryKeyInfo
-			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo, String hbase_name) {
+			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo, String hbase_name,
+										   String task_name) {
 		RandomAccessFile randomAccessFile = null;
 		FileChannel fileChannel = null;
 		FileLock fileLock = null;
 		try {
 			//给该文件加锁
-			randomAccessFile = new RandomAccessFile(new File(dictionaryPath + DATADICTIONARY), "rw");
+			randomAccessFile = new RandomAccessFile(new File(dictionaryPath + task_name +
+					DATADICTIONARY_SUFFIX), "rw");
 			fileChannel = randomAccessFile.getChannel();
 			while (true) {
 				try {
@@ -82,8 +84,8 @@ public class DataExtractUtil {
 	 */
 	public static synchronized void writeSignalFile(String midName, String tableName, String sqlQuery, StringBuilder
 			allColumns, StringBuilder allType, StringBuilder lengths, String is_fixed_extract, String fixed_separator,
-	                                                long lineCounter, long collect_database_size,
-	                                                String eltDate, String charset) {
+													long lineCounter, long collect_database_size,
+													String eltDate, String charset) {
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
 		String create_date = DateUtil.getSysDate();
