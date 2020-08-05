@@ -65,7 +65,7 @@ public class MarketConfUtils {
 					Dm_datatable.TableName, "datatable_id", datatableId)));
 
 			marketConf.setDmDatatable(dmDatatable);
-			marketConf.setTableName(dmDatatable.getDatatable_en_name());
+			marketConf.setTableName(dmDatatable.getDatatable_en_name().toLowerCase());
 			marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.getRepeat_flag()) == IsFlag.Shi);
 
 			// TODO getorelse
