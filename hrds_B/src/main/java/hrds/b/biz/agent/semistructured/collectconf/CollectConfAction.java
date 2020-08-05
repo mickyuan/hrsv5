@@ -15,6 +15,7 @@ import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ObjectCollectType;
+import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Object_collect;
 import hrds.commons.entity.Object_collect_task;
 import hrds.commons.entity.fdentity.ProjectTableEntity;
@@ -35,7 +36,7 @@ public class CollectConfAction extends BaseAction {
 					"3.返回新增半结构化采集配置信息")
 	@Param(name = "agent_id", desc = "采集agent主键ID", range = "不为空")
 	@Return(desc = "返回新增半结构化采集配置信息", range = "不会为空")
-	public Map<String, Object> getAddObjectCollectConf(long agent_id) {
+	public Map<String, Object> getInitObjectCollectConf(long agent_id) {
 		// 1.根据agent_id获取调用Agent服务的接口
 		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.GETSERVERINFO);
 		//2.根据url远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
@@ -50,6 +51,18 @@ public class CollectConfAction extends BaseAction {
 		map.put("localDate", DateUtil.getSysDate());
 		map.put("localTime", DateUtil.getSysTime());
 		return map;
+	}
+
+	@Method(desc = "获取新增时未发送的采集任务", logicStep = "1.获取新增时未发送的采集任务")
+	@Param(name = "agent_id", desc = "采集agent主键ID", range = "新增agent时生成")
+	@Return(desc = "返回新增时未发送的采集任务信息", range = "无限制")
+	public Map<String, Object> getAddObjectCollectConf(long agent_id) {
+		// 1.获取新增时未发送的采集任务
+		return Dbo.queryOneObject(
+				"SELECT t1.*" + " FROM " + Object_collect.TableName + " t1 "
+						+ " LEFT JOIN " + Agent_info.TableName + " t2 ON t1.Agent_id = t2.Agent_id "
+						+ " WHERE t1.Agent_id = ? AND t1.is_sendok = ?",
+				agent_id, IsFlag.Fou.getCode());
 	}
 
 	@Method(desc = "根据对象采集id获取半结构化采集配置信息（编辑任务时数据回显）",
