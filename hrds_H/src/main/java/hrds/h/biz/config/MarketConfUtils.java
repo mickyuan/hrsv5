@@ -178,7 +178,7 @@ public class MarketConfUtils {
 		}
 
 		boolean flag = true;
-		Datatable_field_info datatable_field_info = new Datatable_field_info();
+		Datatable_field_info datatable_field_info = null;
 		List<Integer> indexList = new ArrayList<>();
 		for (int i = 0; i < datatableFields.size(); i++) {
 			Datatable_field_info field_info = datatableFields.get(i);
@@ -187,6 +187,7 @@ public class MarketConfUtils {
 				ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
 				//第一次进来
 				if (flag) {
+					datatable_field_info = new Datatable_field_info();
 					List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
 					datatable_field_info.setField_en_name(split.get(0));
 					datatable_field_info.setField_cn_name(split.get(0));
@@ -206,7 +207,9 @@ public class MarketConfUtils {
 			datatableFields.remove(i);
 		}
 		//最后加上分组列
-		datatableFields.add(datatable_field_info);
+		if (datatable_field_info != null) {
+			datatableFields.add(datatable_field_info);
+		}
 		if (isMultipleInput) {
 			//添加 HYREN_TABLE_ID
 			Datatable_field_info tableIdField = new Datatable_field_info();
@@ -230,7 +233,6 @@ public class MarketConfUtils {
 		md5Field.setField_en_name(Constant.MD5NAME);
 		md5Field.setField_type(DEFAULT_STRING_TYPE);
 		datatableFields.add(md5Field);
-
 		//字段全部转小写
 		datatableFields.forEach(datatableField ->
 			datatableField.setField_en_name(datatableField.getField_en_name().toLowerCase()));
