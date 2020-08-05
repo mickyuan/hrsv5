@@ -27,6 +27,7 @@ import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.entity.fdentity.ProjectTableEntity;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
@@ -2054,8 +2055,7 @@ public class MarketInfoAction extends BaseAction {
 		try {
 			MainClass.run(datatable_id, date, parameter);
 		} catch (Throwable e) {
-			logger.error(e);
-			throw new BusinessException(e.getMessage());
+			throw new AppSystemException(e);
 		}
 	}
 
