@@ -43,3 +43,5 @@ create index index_collect_case04 on collect_case(etl_date);
 -- 数据存储登记
 create unique index u_index_data_store_reg01 on data_store_reg(hyren_name);
 ALTER TABLE data_store_reg ALTER COLUMN "meta_info" TYPE text;
+-- 异常信息登记
+ALTER TABLE collect_case ALTER COLUMN "cc_remark" TYPE text;

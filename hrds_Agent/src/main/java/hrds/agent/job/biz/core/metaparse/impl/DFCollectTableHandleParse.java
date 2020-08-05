@@ -106,6 +106,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 			allColumns.delete(allColumns.length() - 1, allColumns.length());
 			colTypeMetaInfo.delete(colTypeMetaInfo.length() - 1, colTypeMetaInfo.length());
 			columnMetaInfo.delete(columnMetaInfo.length() - 1, columnMetaInfo.length());
+			primaryKeyInfo.delete(primaryKeyInfo.length()-1,primaryKeyInfo.length());
 		}
 		//根据清洗规则，进行表结构重组
 		//清洗配置

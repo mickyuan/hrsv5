@@ -38,8 +38,8 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 	private boolean writeHeaderFlag;
 
 	public JdbcToFixedIncrementFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                                      TableBean tableBean, Data_extraction_def data_extraction_def,
-	                                      boolean writeHeaderFlag) {
+										  TableBean tableBean, Data_extraction_def data_extraction_def,
+										  boolean writeHeaderFlag) {
 		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
 		this.writeHeaderFlag = writeHeaderFlag;
 	}
@@ -87,7 +87,7 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 			String operate = tableBean.getOperate();
 			while (resultSet.next()) {
 				//最前面拼接操作方式
-				line.append(operate);
+				line.append(operate).append(data_extraction_def.getDatabase_separatorr());
 				counter++;
 				for (int i = 0; i < allColumnList.size(); i++) {
 					if (queryColumnList.contains(allColumnList.get(i))) {
@@ -100,8 +100,10 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 						//如果不是查询的列，直接拼空值
 						line.append(columnToFixed(" ", allLengthList.get(i), database_code));
 					}
-					//定长可能有填写列分隔符
-					line.append(data_extraction_def.getDatabase_separatorr());
+					if (i != allColumnList.size() - 1) {
+						//定长可能有填写列分隔符
+						line.append(data_extraction_def.getDatabase_separatorr());
+					}
 				}
 				line.append(data_extraction_def.getRow_separator());
 //				if (JobConstant.WriteMultipleFiles) {

@@ -38,8 +38,8 @@ public class JdbcToNonFixedIncrementFileWriter extends AbstractFileWriter {
 	private boolean writeHeaderFlag;
 
 	public JdbcToNonFixedIncrementFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                                         TableBean tableBean, Data_extraction_def data_extraction_def,
-	                                         boolean writeHeaderFlag) {
+											 TableBean tableBean, Data_extraction_def data_extraction_def,
+											 boolean writeHeaderFlag) {
 		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
 		this.writeHeaderFlag = writeHeaderFlag;
 	}
@@ -85,7 +85,7 @@ public class JdbcToNonFixedIncrementFileWriter extends AbstractFileWriter {
 			String operate = tableBean.getOperate();
 			while (resultSet.next()) {
 				//最前面拼接操作方式
-				line.append(operate);
+				line.append(operate).append(data_extraction_def.getDatabase_separatorr());
 				counter++;
 				for (String column_name : allColumnList) {
 					if (queryColumnList.contains(column_name)) {
@@ -97,6 +97,8 @@ public class JdbcToNonFixedIncrementFileWriter extends AbstractFileWriter {
 					}
 					line.append(data_extraction_def.getDatabase_separatorr());
 				}
+				//删除最后一个分隔符
+				line.delete(line.length() - data_extraction_def.getDatabase_separatorr().length(), line.length());
 				line.append(data_extraction_def.getRow_separator());
 				writer.write(line.toString());
 				if (counter % JobConstant.BUFFER_ROW == 0) {

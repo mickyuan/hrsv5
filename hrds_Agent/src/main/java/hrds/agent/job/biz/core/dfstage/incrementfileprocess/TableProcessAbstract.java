@@ -36,11 +36,11 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 	//采集的db文件定义的表信息
 	protected CollectTableBean collectTableBean;
 	//数据字典定义的所有的列类型
-	private List<String> dictionaryTypeList;
+	protected List<String> dictionaryTypeList;
 	//解析db文件的所有列
-	private List<String> dictionaryColumnList;
+	protected List<String> dictionaryColumnList;
 	//是否为主键的列
-	protected List<Boolean> isPrimaryKeyList = new ArrayList<>();
+	protected Map<String, Boolean> isPrimaryKeyMap = new HashMap<>();
 	//新增的所有数据列信息
 	protected List<String> insertColumnList;
 	//更新的所有数据列信息
@@ -57,8 +57,9 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 		this.insertColumnList = StringUtil.split(tableBean.getInsertColumnInfo().toUpperCase(), Constant.METAINFOSPLIT);
 		this.updateColumnList = StringUtil.split(tableBean.getUpdateColumnInfo().toUpperCase(), Constant.METAINFOSPLIT);
 		this.deleteColumnList = StringUtil.split(tableBean.getDeleteColumnInfo().toUpperCase(), Constant.METAINFOSPLIT);
-		for (String isFlag : StringUtil.split(tableBean.getPrimaryKeyInfo(), Constant.METAINFOSPLIT)) {
-			this.isPrimaryKeyList.add(IsFlag.Shi.getCode().equals(isFlag));
+		List<String> primaryKeyList = StringUtil.split(tableBean.getPrimaryKeyInfo(), Constant.METAINFOSPLIT);
+		for (int i = 0; i < primaryKeyList.size(); i++) {
+			this.isPrimaryKeyMap.put(dictionaryColumnList.get(i), IsFlag.Shi.getCode().equals(primaryKeyList.get(i)));
 		}
 	}
 
@@ -160,8 +161,8 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 		Map<String, Map<String, Object>> valueList;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(readFile),
 				DataBaseCode.ofValueByCode(code)));
-		     CsvListReader csvReader = new CsvListReader(reader,
-				     CsvPreference.EXCEL_PREFERENCE)) {
+			 CsvListReader csvReader = new CsvListReader(reader,
+					 CsvPreference.EXCEL_PREFERENCE)) {
 			if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
 				//判断包含表头，先读取表头
 				lineList = csvReader.read();
@@ -193,7 +194,7 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 	 * @throws Exception 异常
 	 */
 	private Map<String, Map<String, Object>> getDingChangValueList(String line, List<String> dictionaryColumnList,
-	                                                               List<Integer> lengthList, String database_code)
+																   List<Integer> lengthList, String database_code)
 			throws Exception {
 		//先获取表的操作类型，前六个字符，分别是delete、update、insert
 		Map<String, Map<String, Object>> valueList = new HashMap<>();
@@ -241,7 +242,7 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 	 * @return 解析数据的结果集
 	 */
 	private Map<String, Map<String, Object>> getFeiDingChangValueList(String line, List<String> dictionaryColumnList,
-	                                                                  String column_separator) {
+																	  String column_separator) {
 		return getCsvValueList(StringUtil.split(line, column_separator), dictionaryColumnList);
 	}
 
@@ -253,7 +254,7 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 	 * @return 解析数据的结果集
 	 */
 	private Map<String, Map<String, Object>> getCsvValueList(List<String> columnValueList,
-	                                                         List<String> dictionaryColumnList) {
+															 List<String> dictionaryColumnList) {
 		//先获取表的操作类型，前六个字符，分别是delete、update、insert
 		Map<String, Map<String, Object>> valueList = new HashMap<>();
 		String operate = columnValueList.get(0);
