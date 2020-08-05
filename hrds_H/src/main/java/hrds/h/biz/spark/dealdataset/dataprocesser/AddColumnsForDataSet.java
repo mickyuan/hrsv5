@@ -64,16 +64,14 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 				sqlColumn[i] = functions.monotonically_increasing_id();
 			} else if (ProcessType.YingShe.getCode().equals(processCode)
 					|| ProcessType.FenZhuYingShe.getCode().equals(processCode)
-					|| ProcessType.HanShuYingShe.getCode().equals(processCode)) {
+					|| ProcessType.HanShuYingShe.getCode().equals(processCode)
+					||ProcessType.DingZhi.getCode().equals(processCode)) {
 //				int indexInOrigin = Integer.parseInt(field.getProcess_mapping());
 				//将映射的字段给需要保存的列信息
 				sqlColumn[i] = new Column(originalSqlcolumnName[n]);
 				//將需要的字段对象提取先放到list中
 				keepColumnName.add(originalSqlcolumnName[n]);
 				columnForMD5.add(new Column(columnName));
-				n++;
-			} else if (ProcessType.DingZhi.getCode().equals(processCode)) {
-				sqlColumn[i] = functions.lit(field.getProcess_mapping());
 				n++;
 			} else {
 				throw new AppSystemException("不支持处理方式码：" + processCode);

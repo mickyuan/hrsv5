@@ -73,7 +73,7 @@ public class MarketConfUtils {
             根据主键 datatable_id 查询 字段 实体
              */
 			List<Datatable_field_info> datatableFields = SqlOperator.queryList(db, Datatable_field_info.class,
-				"select * from " + Datatable_field_info.TableName + " where datatable_id = ? AND end_date = ?", datatableId,
+				"select * from " + Datatable_field_info.TableName + " where datatable_id = ? AND end_date = ? order by field_seq", datatableId,
 				Constant.MAXDATE);
 			Validator.notEmpty(String.format(nullQueryExceptString,
 				Datatable_field_info.TableName, "datatable_id", datatableId));
@@ -178,7 +178,7 @@ public class MarketConfUtils {
 		}
 
 		boolean flag = true;
-		Datatable_field_info datatable_field_info = null;
+		Datatable_field_info datatable_field_info = new Datatable_field_info();
 		List<Integer> indexList = new ArrayList<>();
 		for (int i = 0; i < datatableFields.size(); i++) {
 			Datatable_field_info field_info = datatableFields.get(i);
@@ -188,15 +188,12 @@ public class MarketConfUtils {
 				//第一次进来
 				if (flag) {
 					List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
-					//复制一个datatable_field_info,字段的值为分组映射的key
-					datatable_field_info = JSONObject.parseObject(
-						JSONObject.toJSONString(field_info), Datatable_field_info.class);
 					datatable_field_info.setField_en_name(split.get(0));
 					datatable_field_info.setField_cn_name(split.get(0));
 					datatable_field_info.setField_process(ProcessType.YingShe.getCode());
 					//TODO 分组列的类型，长度是否给默认值
 					datatable_field_info.setField_type(MarketConfUtils.DEFAULT_STRING_TYPE);
-					datatable_field_info.setField_length("32");
+					datatable_field_info.setField_length(" ");
 					datatable_field_info.setProcess_mapping(split.get(1));
 					flag = false;
 				} else {
@@ -209,9 +206,7 @@ public class MarketConfUtils {
 			datatableFields.remove(i);
 		}
 		//最后加上分组列
-		if (datatable_field_info != null) {
-			datatableFields.add(datatable_field_info);
-		}
+		datatableFields.add(datatable_field_info);
 		if (isMultipleInput) {
 			//添加 HYREN_TABLE_ID
 			Datatable_field_info tableIdField = new Datatable_field_info();
