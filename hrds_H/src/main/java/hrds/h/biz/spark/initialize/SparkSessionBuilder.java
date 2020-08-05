@@ -33,7 +33,7 @@ public class SparkSessionBuilder {
 
     public static SparkSession build(MarketConf conf) {
         System.setProperty("HADOOP_USER_NAME", "hyshf");
-//        Logger.getLogger("org").setLevel(Level.ERROR);
+        Logger.getLogger("org").setLevel(Level.ERROR);
         logger.debug("Initializing SparkSession with configuration: ");
         Builder builder = SparkSession.builder()
                 .appName("Market_Spark_" + conf.getDmDatatable().getDatatable_en_name());
