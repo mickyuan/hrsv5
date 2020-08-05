@@ -73,7 +73,7 @@ public class AgentInfoAction extends BaseAction {
 		asmSql.addParam(source_id);
 		asmSql.addParam(AgentType.FTP.getCode());
 		List<Map<String, Object>> ftpAgentList = Dbo.queryList(asmSql.sql(), asmSql.params());
-		//
+		// 查询数据源信息
 		Data_source data_source = Dbo.queryOneObject(Data_source.class, "select * from "
 				+ Data_source.TableName + " where source_id=?", source_id).orElseThrow(() ->
 				new BusinessException("sql查询错误！"));
@@ -163,9 +163,8 @@ public class AgentInfoAction extends BaseAction {
 					"2.字段合法性验证" +
 					"3.判断端口是否被占用" +
 					"4.创建agent_info实体对象，同时封装值" +
-					"5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
-					"6.更新agent信息" +
-					"7.更新agent_down_info信息")
+					"5.更新agent信息" +
+					"6.更新agent_down_info信息")
 	@Param(name = "agent_id", desc = "agent_info主键ID", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（AgentType）")
@@ -195,11 +194,9 @@ public class AgentInfoAction extends BaseAction {
 		agentInfo.setAgent_port(agent_port);
 		agentInfo.setAgent_type(agent_type);
 		agentInfo.setAgent_name(agent_name);
-		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-		isDatasourceAndAgentExist(source_id, agent_type, agent_ip, agent_port);
-		// 6.更新agent信息
+		// 5.更新agent信息
 		agentInfo.update(Dbo.db());
-		// 7.更新agent_down_info信息
+		// 6.更新agent_down_info信息
 		Dbo.execute("update " + Agent_down_info.TableName + " set agent_ip=?,agent_port=? where user_id=? " +
 						" and agent_type=? and agent_name=? and agent_id=?", agent_ip, agent_port,
 				user_id, agent_type, agent_name, agent_id);
@@ -247,7 +244,6 @@ public class AgentInfoAction extends BaseAction {
 	@Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
 	@Return(desc = "返回端口是否被占用信号", range = "false,true")
 	private boolean isPortOccupied(String agent_ip, String agent_port) {
-		// FIXME （后期移动到hrds-commons下）
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以这里不需要做权限验证
 		// 2.通过http方式去测试端口连通情况，测通则被占用，不通则可以使用
 		Socket socket = new Socket();
