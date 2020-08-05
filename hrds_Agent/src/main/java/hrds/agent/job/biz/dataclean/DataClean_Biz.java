@@ -103,6 +103,8 @@ public class DataClean_Biz implements DataCleanInterface {
 					} catch (Exception e) {
 						//日志太多影响阅读
 						log.error(e.getMessage(), e);
+						throw new AppSystemException(columnName + "==" + columnData +
+								"==" + formatStr + "列清洗日期转换失败");
 					}
 				}
 			}
@@ -121,7 +123,7 @@ public class DataClean_Biz implements DataCleanInterface {
 	 * 字符拆分
 	 */
 	public String split(Map<String, Map<String, Column_split>> spliting, String columnData, String columnName, Group group, String type,
-	                    String fileType, List<Object> list, String database_code, String database_separatorr) {
+						String fileType, List<Object> list, String database_code, String database_separatorr) {
 		if (spliting.get(columnName) != null && spliting.get(columnName).size() > 0) {
 			StringBuilder sb = new StringBuilder(4096);
 			//TODO 保留原字段...这里是卸数的格式，定长的还没加，先待定
@@ -269,7 +271,7 @@ public class DataClean_Biz implements DataCleanInterface {
 	 * group 写Parquet文件时
 	 */
 	public String merge(Map<String, String> mergeing, String[] arrColString, String[] columns, Group group,
-	                    List<Object> list, String fileType, String database_code, String database_separatorr) {
+						List<Object> list, String fileType, String database_code, String database_separatorr) {
 
 		StringBuilder return_sb = new StringBuilder(4096);
 		if (mergeing.size() != 0) {

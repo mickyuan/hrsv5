@@ -59,31 +59,51 @@ public class JobStatusInfoUtil {
 			JobStatusInfo jobStatusInfo = statusInfoFuture.get();
 			if (jobStatusInfo.getUnloadDataStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getUnloadDataStatus().getStatusCode()) {
-				throw new AppSystemException("卸数执行失败");
+				if (jobStatusInfo.getUnloadDataStatus() == null) {
+					throw new AppSystemException("卸数执行失败: 请查看日志获取异常信息");
+				} else {
+					throw new AppSystemException("卸数执行失败:" + jobStatusInfo.getUnloadDataStatus().getMessage());
+				}
 			} else {
 				log.info("卸数执行成功");
 			}
 			if (jobStatusInfo.getUploadStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getUploadStatus().getStatusCode()) {
-				throw new AppSystemException("上传执行失败");
+				if (jobStatusInfo.getUploadStatus() == null) {
+					throw new AppSystemException("上传执行失败: 请查看日志获取异常信息");
+				} else {
+					throw new AppSystemException("上传执行失败:" + jobStatusInfo.getUploadStatus().getMessage());
+				}
 			} else {
 				log.info("上传执行成功");
 			}
 			if (jobStatusInfo.getDataLodingStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getDataLodingStatus().getStatusCode()) {
-				throw new AppSystemException("加载执行失败");
+				if (jobStatusInfo.getDataLodingStatus() == null) {
+					throw new AppSystemException("加载执行失败: 请查看日志获取异常信息");
+				} else {
+					throw new AppSystemException("加载执行失败:" + jobStatusInfo.getDataLodingStatus().getMessage());
+				}
 			} else {
 				log.info("加载执行成功");
 			}
 			if (jobStatusInfo.getCalIncrementStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getCalIncrementStatus().getStatusCode()) {
-				throw new AppSystemException("增量执行失败");
+				if (jobStatusInfo.getCalIncrementStatus() == null) {
+					throw new AppSystemException("增量执行失败: 请查看日志获取异常信息");
+				} else {
+					throw new AppSystemException("增量执行失败:" + jobStatusInfo.getCalIncrementStatus().getMessage());
+				}
 			} else {
 				log.info("增量执行成功");
 			}
 			if (jobStatusInfo.getDataRegistrationStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getDataRegistrationStatus().getStatusCode()) {
-				throw new AppSystemException("登记执行失败");
+				if (jobStatusInfo.getDataRegistrationStatus() == null) {
+					throw new AppSystemException("登记执行失败: 请查看日志获取异常信息");
+				} else {
+					throw new AppSystemException("登记执行失败:" + jobStatusInfo.getDataRegistrationStatus().getMessage());
+				}
 			} else {
 				log.info("登记执行成功");
 			}
@@ -91,7 +111,7 @@ public class JobStatusInfoUtil {
 	}
 
 	public static void startStageStatusInfo(StageStatusInfo stageStatusInfo, String job_id,
-	                                        int stageNameCode) {
+											int stageNameCode) {
 		stageStatusInfo.setStageNameCode(stageNameCode);
 		stageStatusInfo.setJobId(job_id);
 		stageStatusInfo.setStartDate(DateUtil.getSysDate());
@@ -106,7 +126,7 @@ public class JobStatusInfoUtil {
 	}
 
 	public static void endStageParamInfo(StageParamInfo stageParamInfo, StageStatusInfo stageStatusInfo,
-	                                     CollectTableBean collectTableBean, String collectType) {
+										 CollectTableBean collectTableBean, String collectType) {
 		stageParamInfo.setStatusInfo(stageStatusInfo);
 		stageParamInfo.setAgentId(collectTableBean.getAgent_id());
 		stageParamInfo.setSourceId(collectTableBean.getSource_id());
