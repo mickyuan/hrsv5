@@ -264,7 +264,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
 	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
 	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
-								CategoryRelationBean categoryRelationBean) {
+	                            CategoryRelationBean categoryRelationBean) {
 		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
 		if (categoryRelationBean.getParent_category_id() == null) {
 			for (Map<String, Long> map : idNameList) {
@@ -419,7 +419,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
-																	  long category_id) {
+	                                                                  long category_id) {
 		// 1.判断集市工程是否存在
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
@@ -442,7 +442,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
 	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
 	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
-											List<Map<String, Object>> categoryList) {
+	                                        List<Map<String, Object>> categoryList) {
 		// 1.根据集市ID与父分类ID查询集市分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
 		if (!dmCategoryList.isEmpty()) {
@@ -533,7 +533,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
-												  String category_name, List<Map<String, Object>> categoryList) {
+	                                              String category_name, List<Map<String, Object>> categoryList) {
 		// 1.根据集市ID与父分类ID查询集市分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
@@ -599,7 +599,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Param(name = "dm_category", desc = "集市分类实体对象", range = "与数据库表字段规则一致", isBean = true)
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
-							   List<Map<String, Long>> idNameList) {
+	                           List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
 			// 1.新增选择新增的分类作为上级分类
 			for (Map<String, Long> map : idNameList) {
@@ -2122,7 +2122,7 @@ public class MarketInfoAction extends BaseAction {
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
-			 XSSFWorkbook workbook = new XSSFWorkbook();) {
+		     XSSFWorkbook workbook = new XSSFWorkbook();) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -2648,7 +2648,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 		}
 		// 导入成功后删除上传文件
-		FileUtil.deleteDirectoryFiles(file_path);
+		deleteImportFilePath(file_path);
 
 	}
 
@@ -2663,6 +2663,16 @@ public class MarketInfoAction extends BaseAction {
 			throw new BusinessException("上传文件不存在！");
 		}
 		return uploadedFile.getAbsolutePath();
+	}
+
+	@Method(desc = "删除集市导入审核上传文件数据", logicStep = "")
+	@Param(name = "file_path", desc = "集市导入审核文件路径", range = "无限制")
+	public void deleteImportFilePath(String file_path) {
+		try {
+			Files.delete(new File(file_path).toPath());
+		} catch (IOException e) {
+			throw new BusinessException("删除文件失败" + e.getMessage());
+		}
 	}
 
 	@Method(desc = "获取集市导入审核数据", logicStep = "")
@@ -2713,7 +2723,6 @@ public class MarketInfoAction extends BaseAction {
 			Map<String, Object> jobInfluence = new HashMap<>();
 			Map<String, Object> tableInfluence = new HashMap<>();
 			for (String datatable_en_name : enNameList) {
-				List<Etl_job_def> etlJobDefs = getEtlJobByDatatableName(datatable_en_name);
 				List<Map<String, Object>> jobList = jobUpAndDownInfluences(datatable_en_name);
 				List<Map<String, Object>> tableList = tableUpAndDownInfluences(datatable_en_name);
 				jobInfluence.put(datatable_en_name, jobList);
@@ -2780,7 +2789,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private Set<Map<String, Object>> getDatatableDiffList(List<Dm_datatable> dm_datatables,
-														  List<String> enNameList) {
+	                                                      List<String> enNameList) {
 		Set<Map<String, Object>> datatableDiffList = new HashSet<>();
 		for (Dm_datatable dm_datatable : dm_datatables) {
 			Map<String, Object> map = new HashMap<>();
@@ -2897,11 +2906,13 @@ public class MarketInfoAction extends BaseAction {
 				map.put("新增的前置作业", dm_relevant_info.getPre_work());
 				map.put("新增的后置作业", dm_relevant_info.getPost_work());
 			} else {
-				if (!relevantInfoMap.get("pre_work").equals(dm_relevant_info.getPre_work())) {
+				if (null != relevantInfoMap.get("pre_work") &&
+						!relevantInfoMap.get("pre_work").equals(dm_relevant_info.getPre_work())) {
 					map.put("原前置作业", relevantInfoMap.get("pre_work"));
 					map.put("更新后前置作业", dm_relevant_info.getPost_work());
 				}
-				if (!relevantInfoMap.get("post_work").equals(dm_relevant_info.getPost_work())) {
+				if (null != relevantInfoMap.get("post_work") &&
+						!relevantInfoMap.get("post_work").equals(dm_relevant_info.getPost_work())) {
 					map.put("原后置作业", relevantInfoMap.get("post_work"));
 					map.put("更新后后置作业", dm_relevant_info.getPost_work());
 				}
