@@ -39,6 +39,7 @@ public class DruidParseQuerySql {
 	public static String sourcecolumn = "sourcecolumn";
 	public static String sourcetable = "sourcetable";
 	public List<SQLSelectItem> selectList = null;
+	private OracleSelectQueryBlock left = null;
 	private List<HashMap<String, Object>> listmap = new ArrayList<HashMap<String, Object>>();
 	private List<HashMap<String, Object>> columnlist = new ArrayList<HashMap<String, Object>>();
 	private HashMap<String, Object> hashmap = new HashMap<String, Object>();
@@ -58,21 +59,20 @@ public class DruidParseQuerySql {
 		SQLSelect select = parseSelect.getSelect();
 		SQLSelectQuery query = select.getQuery();
 
-		OracleSelectQueryBlock left = null;
-
 		//这里检测SQL是否为UNION
 		if (query instanceof SQLUnionQuery) {
 			SQLUnionQuery unionQuery = (SQLUnionQuery) query;
-			left = (OracleSelectQueryBlock) unionQuery.getLeft();
-			selectList = left.getSelectList();
+			this.left = (OracleSelectQueryBlock) unionQuery.getLeft();
+			this.selectList = this.left.getSelectList();
 
 		} else {
-			left = (OracleSelectQueryBlock) query;
-			selectList = left.getSelectList();
+			this.left = (OracleSelectQueryBlock) query;
+			this.selectList = this.left.getSelectList();
 		}
 	}
 
 	public DruidParseQuerySql() {
+
 	}
 
 	/**
@@ -812,33 +812,33 @@ public class DruidParseQuerySql {
 		return tablename;
 	}
 
-	public static String getSelectSql(String sql) {
-		OracleStatementParser sqlStatementParser = new OracleStatementParser(sql);
-		SQLSelectStatement parseSelect = (SQLSelectStatement) sqlStatementParser.parseSelect();
-		SQLSelectQuery query = parseSelect.getSelect().getQuery();
-		OracleSelectQueryBlock left;
-		//这里检测SQL是否为UNION
-		if (query instanceof SQLUnionQuery) {
-			SQLUnionQuery unionQuery = (SQLUnionQuery) query;
-			left = (OracleSelectQueryBlock) unionQuery.getLeft();
-		} else {
-			left = (OracleSelectQueryBlock) query;
-		}
+	public String getSelectSql() {
 		String selectSql = left.toString();
 		selectSql = selectSql.substring(selectSql.indexOf("SELECT"), selectSql.indexOf("FROM") + 4);
 		return selectSql;
 	}
 
+	public Map<String, String> getSelectColumnMap() {
+		Map<String, String> selectColumnMap = new HashMap<>();
+		for (SQLSelectItem sqlSelectItem : selectList) {
+			if (sqlSelectItem.getAlias() == null) {
+				selectColumnMap.put(sqlSelectItem.getExpr().toString().toUpperCase(),
+						sqlSelectItem.getExpr().toString());
+			} else {
+				selectColumnMap.put(sqlSelectItem.getAlias().toUpperCase(), sqlSelectItem.getExpr().toString());
+			}
+		}
+		return selectColumnMap;
+	}
+
+
 	public static void main(String[] args) {
-		String sql = "select a,b,c from (select * from tablw1) t1";
-//        DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
-//        List<SQLSelectItem> selectList = druidParseQuerySql.getSelectList();
-//        for(SQLSelectItem sqlSelectItem: selectList){
-//            System.out.println(sqlSelectItem.getExpr().toString());
-//            System.out.println(sqlSelectItem.getAlias());
-//            System.out.println("----------------------------------------------");
-//        }
-		System.out.println(StringUtil.replaceFirst(SQLUtils.format(sql, JdbcConstants.ORACLE),
-				getSelectSql(sql), "SELECT a,b,concat(c,'_aaa') as c FROM"));
+		String sql = "select a,b,c,count(*) as ccc from (select * from tablw1) t1";
+		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
+		System.out.println(sql1.getSelectSql());
+		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
+		selectColumnMap.forEach((key, value) ->
+				System.out.println(key + "====" + value)
+		);
 	}
 }

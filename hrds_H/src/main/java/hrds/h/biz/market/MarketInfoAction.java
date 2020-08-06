@@ -264,7 +264,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
 	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
 	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
-	                            CategoryRelationBean categoryRelationBean) {
+								CategoryRelationBean categoryRelationBean) {
 		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
 		if (categoryRelationBean.getParent_category_id() == null) {
 			for (Map<String, Long> map : idNameList) {
@@ -419,7 +419,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
-	                                                                  long category_id) {
+																	  long category_id) {
 		// 1.判断集市工程是否存在
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
@@ -442,7 +442,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
 	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
 	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
-	                                        List<Map<String, Object>> categoryList) {
+											List<Map<String, Object>> categoryList) {
 		// 1.根据集市ID与父分类ID查询集市分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
 		if (!dmCategoryList.isEmpty()) {
@@ -533,7 +533,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
-	                                              String category_name, List<Map<String, Object>> categoryList) {
+												  String category_name, List<Map<String, Object>> categoryList) {
 		// 1.根据集市ID与父分类ID查询集市分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
@@ -599,7 +599,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
 	@Param(name = "dm_category", desc = "集市分类实体对象", range = "与数据库表字段规则一致", isBean = true)
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
-	                           List<Map<String, Long>> idNameList) {
+							   List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
 			// 1.新增选择新增的分类作为上级分类
 			for (Map<String, Long> map : idNameList) {
@@ -1532,9 +1532,9 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatatable_id(datatable_id);
 		//新增时判断SQL是否存在
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
-			"select execute_sql,id,datatable_id,end_date from " + Dm_operation_info.TableName
-				+ " where datatable_id = ? AND end_date = ?",
-			dm_datatable.getDatatable_id(), Constant.MAXDATE);
+				"select execute_sql,id,datatable_id,end_date from " + Dm_operation_info.TableName
+						+ " where datatable_id = ? AND end_date = ?",
+				dm_datatable.getDatatable_id(), Constant.MAXDATE);
 		//根据querysql和datatable_field_info获取最终执行的sql
 		String execute_sql = getExecute_sql(datatable_field_info, querysql);
 		//设置标签 判断是新增 还是 更新
@@ -1572,14 +1572,14 @@ public class MarketInfoAction extends BaseAction {
 					 */
 				//1: 如果当天SQL修改了2次,只保留最后一次的操作记录,这里先将当天的关联sql信息删除掉
 				Dbo.execute("DELETE FROM " + Dm_operation_info.TableName
-						+ " WHERE end_date = ? AND datatable_id = ?", DateUtil.getSysDate(),
-					dm_operation_info.getDatatable_id());
+								+ " WHERE end_date = ? AND datatable_id = ?", DateUtil.getSysDate(),
+						dm_operation_info.getDatatable_id());
 				//2: 如果当天SQL变化了,有没有历史修改记录,则直接把上次的SQL关链
 				DboExecute.updatesOrThrow("更新的数据超出了预期结果",
-					"UPDATE " + Dm_operation_info.TableName
-						+ " SET end_date = ? WHERE id = ? AND end_date = ? AND datatable_id = ?",
-					DateUtil.getSysDate(), dm_operation_info.getId(), Constant.MAXDATE,
-					dm_operation_info.getDatatable_id());
+						"UPDATE " + Dm_operation_info.TableName
+								+ " SET end_date = ? WHERE id = ? AND end_date = ? AND datatable_id = ?",
+						DateUtil.getSysDate(), dm_operation_info.getId(), Constant.MAXDATE,
+						dm_operation_info.getDatatable_id());
 				//3: 新增此次修改的SQL记录信息
 				dm_operation_info.setId(PrimayKeyGener.getNextId());
 				dm_operation_info.setView_sql(querysql);
@@ -1593,17 +1593,17 @@ public class MarketInfoAction extends BaseAction {
 		}
 		//删除原有数据 因为页面可能会存在修改sql 导致的字段大幅度变动 所以针对更新的逻辑会特别复杂 故采用全删全增的方式
 		Dbo.execute(
-			"delete from " + Dcol_relation_store.TableName + " where col_id in (select datatable_field_id from " +
-				Datatable_field_info.TableName + " where datatable_id = ?) and data_source = ?",
-			dm_datatable.getDatatable_id(),
-			StoreLayerDataSource.DM.getCode());
+				"delete from " + Dcol_relation_store.TableName + " where col_id in (select datatable_field_id from " +
+						Datatable_field_info.TableName + " where datatable_id = ?) and data_source = ?",
+				dm_datatable.getDatatable_id(),
+				StoreLayerDataSource.DM.getCode());
 
 		//如果查询不到任务字段信息说明是新增的
 		List<Datatable_field_info> dataBaseFields = Dbo.queryList(Datatable_field_info.class,
-			"SELECT datatable_id,datatable_field_id,field_cn_name,field_en_name,field_length,field_process,field_seq,field_type,"
-				+ "group_mapping,process_mapping,end_date,start_date FROM " + Datatable_field_info.TableName
-				+ " where datatable_id = ? AND end_date = ?",
-			dm_datatable.getDatatable_id(), Constant.MAXDATE);
+				"SELECT datatable_id,datatable_field_id,field_cn_name,field_en_name,field_length,field_process,field_seq,field_type,"
+						+ "group_mapping,process_mapping,end_date,start_date FROM " + Datatable_field_info.TableName
+						+ " where datatable_id = ? AND end_date = ?",
+				dm_datatable.getDatatable_id(), Constant.MAXDATE);
 
 		if (dataBaseFields.size() == 0) {
 			//新增字段表
@@ -1629,37 +1629,37 @@ public class MarketInfoAction extends BaseAction {
 			List<Datatable_field_info> webField_infos = Arrays.asList(datatable_field_info);
 			//查找不存在数据库中的,说明被修改了
 			List<Datatable_field_info> notExists = dataBaseFields.stream()
-				.filter(item -> !webField_infos.contains(item))
-				.collect(Collectors.toList());
+					.filter(item -> !webField_infos.contains(item))
+					.collect(Collectors.toList());
 			if (notExists.size() != 0) {
 
 				//清空当天的失效数据,失效数据直保留一份
 				Assembler assembler = Assembler.newInstance()
-					.addSql("DELETE FROM " + Datatable_field_info.TableName + " WHERE end_date = ? AND datatable_id = ?")
-					.addParam(DateUtil.getSysDate()).addParam(dm_datatable.getDatatable_id());
+						.addSql("DELETE FROM " + Datatable_field_info.TableName + " WHERE end_date = ? AND datatable_id = ?")
+						.addParam(DateUtil.getSysDate()).addParam(dm_datatable.getDatatable_id());
 				Dbo.execute(assembler.sql(), assembler.params());
 				//执行完清空
 				assembler.clean();
 				//更新修改的原字段信息为失效
 				assembler.addSql("UPDATE " + Datatable_field_info.TableName
-					+ " SET end_date = ? WHERE end_date = ? AND datatable_id = ?")
-					.addParam(DateUtil.getSysDate()).addParam(Constant.MAXDATE).addParam(dm_datatable.getDatatable_id());
+						+ " SET end_date = ? WHERE end_date = ? AND datatable_id = ?")
+						.addParam(DateUtil.getSysDate()).addParam(Constant.MAXDATE).addParam(dm_datatable.getDatatable_id());
 				assembler.addORParam("field_en_name",
-					notExists.stream().map(Datatable_field_info::getField_en_name).toArray(String[]::new), "AND");
+						notExists.stream().map(Datatable_field_info::getField_en_name).toArray(String[]::new), "AND");
 				Dbo.execute(assembler.sql(), assembler.params());
 			}
 
 			List<Datatable_field_info> exists = dataBaseFields.stream()
-				.filter(webField_infos::contains)
-				.collect(Collectors.toList());
+					.filter(webField_infos::contains)
+					.collect(Collectors.toList());
 			List<Datatable_field_info> personList = new ArrayList<>();
 			// 去重找到页面新增的数据,然后新增入库
 			webField_infos.stream().forEach(
-				p -> {
-					if (!exists.contains(p)) {
-						personList.add(p);
+					p -> {
+						if (!exists.contains(p)) {
+							personList.add(p);
+						}
 					}
-				}
 			);
 			for (Datatable_field_info add : personList) {
 				add.setDatatable_field_id(PrimayKeyGener.getNextId());
@@ -1684,11 +1684,11 @@ public class MarketInfoAction extends BaseAction {
 		JSONArray jsonarray = JSONArray.parseArray(hbasesort);
 		//
 		List<Map<String, Object>> maps = Dbo
-			.queryList("select distinct t1.dslad_id,t2.dsla_storelayer from " + Dcol_relation_store.TableName
-					+ " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dslad_id = t2.dslad_id where col_id in " +
-					"(select datatable_field_id from " + Datatable_field_info.TableName
-					+ " where datatable_id = ? ) and t1.data_source = ?", dm_datatable.getDatatable_id(),
-				StoreLayerDataSource.DM.getCode());
+				.queryList("select distinct t1.dslad_id,t2.dsla_storelayer from " + Dcol_relation_store.TableName
+								+ " t1 left join " + Data_store_layer_added.TableName + " t2 on t1.dslad_id = t2.dslad_id where col_id in " +
+								"(select datatable_field_id from " + Datatable_field_info.TableName
+								+ " where datatable_id = ? ) and t1.data_source = ?", dm_datatable.getDatatable_id(),
+						StoreLayerDataSource.DM.getCode());
 		for (Map<String, Object> everymap : maps) {
 			String dslad_id = everymap.get("dslad_id").toString();
 			String dsla_storelayer = everymap.get("dsla_storelayer").toString();
@@ -1702,12 +1702,12 @@ public class MarketInfoAction extends BaseAction {
 					Datatable_field_info datatable_field_info1 = new Datatable_field_info();
 					datatable_field_info1.setField_en_name(field_en_name);
 					Optional<Dcol_relation_store> dm_column_storageOptional = Dbo.queryOneObject(Dcol_relation_store.class,
-						"select * from " + Dcol_relation_store.TableName + " where col_id = " +
-							"(select datatable_field_id from " + Datatable_field_info.TableName
-							+ " where datatable_id = ? and field_en_name = ? )" +
-							" and dslad_id = ? and data_source = ?",
-						dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(), dcs.getDslad_id(),
-						StoreLayerDataSource.DM.getCode());
+							"select * from " + Dcol_relation_store.TableName + " where col_id = " +
+									"(select datatable_field_id from " + Datatable_field_info.TableName
+									+ " where datatable_id = ? and field_en_name = ? )" +
+									" and dslad_id = ? and data_source = ?",
+							dm_datatable.getDatatable_id(), datatable_field_info1.getField_en_name(), dcs.getDslad_id(),
+							StoreLayerDataSource.DM.getCode());
 					//如果有数据
 					if (dm_column_storageOptional.isPresent()) {
 						Dcol_relation_store dc_storage = dm_column_storageOptional.get();
@@ -1721,10 +1721,10 @@ public class MarketInfoAction extends BaseAction {
 			//如果不是rowkey 那么排序的时候 只需简单排序即可
 			else {
 				List<Dcol_relation_store> dm_column_storages = Dbo.queryList(Dcol_relation_store.class,
-					"select * from " + Dcol_relation_store.TableName + " where col_id in " +
-						"(select datatable_field_id from " + Datatable_field_info.TableName
-						+ " where datatable_id = ? ) and dslad_id = ? and data_source = ? order by csi_number",
-					dm_datatable.getDatatable_id(), dcs.getDslad_id(), StoreLayerDataSource.DM.getCode());
+						"select * from " + Dcol_relation_store.TableName + " where col_id in " +
+								"(select datatable_field_id from " + Datatable_field_info.TableName
+								+ " where datatable_id = ? ) and dslad_id = ? and data_source = ? order by csi_number",
+						dm_datatable.getDatatable_id(), dcs.getDslad_id(), StoreLayerDataSource.DM.getCode());
 				for (int i = 0; i < dm_column_storages.size(); i++) {
 					Dcol_relation_store dc_storage = dm_column_storages.get(i);
 					dc_storage.setCsi_number(String.valueOf(i));
@@ -1744,6 +1744,9 @@ public class MarketInfoAction extends BaseAction {
 			isBean = true)
 	@Param(name = "querySql", desc = "querySql", range = "String类型集市查询SQL")
 	public String getExecute_sql(Datatable_field_info[] datatable_field_info, String querySql) {
+		//解析querySql,获取查询sql的别名，加查询列的map
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querySql);
+		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
 		boolean flag = true;
 		//1.根据datatable_field_info信息拼接所有查询列的信息
 		StringBuilder sb = new StringBuilder(1024);
@@ -1757,7 +1760,7 @@ public class MarketInfoAction extends BaseAction {
 				//这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
 				logger.info("自增不拼接字段");
 			} else if (ProcessType.YingShe == processType || ProcessType.HanShuYingShe == processType) {
-				sb.append(field_info.getProcess_mapping()).append(" as ")
+				sb.append(selectColumnMap.get(field_info.getProcess_mapping().toUpperCase())).append(" as ")
 						.append(field_info.getField_en_name()).append(",");
 			} else if (ProcessType.FenZhuYingShe == processType && flag) {
 				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
@@ -1782,7 +1785,7 @@ public class MarketInfoAction extends BaseAction {
 				sb.append("'").append(split.get(1)).append("'").append(" as ").append(split.get(0)).append(" FROM ");
 				//先格式化查询的sql,替换掉原始查询SQL的select部分
 				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
-						DruidParseQuerySql.getSelectSql(querySql), sb.toString());
+						druidParseQuerySql.getSelectSql(), sb.toString());
 				sb.delete(0, sb.length());
 				groupSql.append(execute_sql).append(" union all ");
 			}
@@ -1794,7 +1797,7 @@ public class MarketInfoAction extends BaseAction {
 			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
 			//先格式化查询的sql,替换掉原始查询SQL的select部分
 			return SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
-					DruidParseQuerySql.getSelectSql(querySql), selectSql);
+					druidParseQuerySql.getSelectSql(), selectSql);
 		}
 	}
 
@@ -2119,7 +2122,7 @@ public class MarketInfoAction extends BaseAction {
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
-		     XSSFWorkbook workbook = new XSSFWorkbook();) {
+			 XSSFWorkbook workbook = new XSSFWorkbook();) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -2777,7 +2780,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private Set<Map<String, Object>> getDatatableDiffList(List<Dm_datatable> dm_datatables,
-	                                                      List<String> enNameList) {
+														  List<String> enNameList) {
 		Set<Map<String, Object>> datatableDiffList = new HashSet<>();
 		for (Dm_datatable dm_datatable : dm_datatables) {
 			Map<String, Object> map = new HashMap<>();
