@@ -511,7 +511,7 @@ public class MetaDataManageAction extends BaseAction {
                         //如果字段附加信息是rowkey,则设置字段的序号位置,
                         if (storeLayerAdded == StoreLayerAdded.RowKey) {
                             for (int j = 0; j < hbase_sort_columns.length; j++) {
-                                //如果当前字段和排序一样,则去排序字段的顺序做序号位置
+                                //如果当前字段和排序一样,则取排序字段的顺序做序号位置
                                 if (dqTableColumnBean.getColumn_name().equalsIgnoreCase(hbase_sort_columns[j])) {
                                     csi_number = j;
                                 }
@@ -526,7 +526,6 @@ public class MetaDataManageAction extends BaseAction {
                         dcol_relation_store.add(Dbo.db());
                     }
                 }
-                //设置字段序号信息
             }
         }
 

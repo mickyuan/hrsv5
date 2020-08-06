@@ -5,18 +5,20 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.collection.bean.LayerBean;
-import hrds.commons.entity.Data_store_layer;
-import hrds.commons.entity.Dq_table_column;
-import hrds.commons.entity.Dq_table_info;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "创建数据表", author = "BY-HLL", createdate = "2020/7/2 0002 下午 03:41")
 public class CreateDataTable {
@@ -31,7 +33,6 @@ public class CreateDataTable {
         //根据存储层定义创建数据表
         createDataTableByStorageLayer(db, dqTableInfo, dqTableColumns, layerBean);
     }
-
 
     public static void createDataTableByStorageLayer(DatabaseWrapper db, Dq_table_info dqTableInfo,
                                                      List<Dq_table_column> dqTableColumns, LayerBean intoLayerBean) {
@@ -81,22 +82,55 @@ public class CreateDataTable {
                 }
                 sql.append(" ").append(table_name);
                 sql.append(" (");
+                //主键字段信息
+                List<String> pk_column_s = new ArrayList<>();
                 for (Dq_table_column dqTableColumn : dqTableColumns) {
-                    //字段
-                    String column_name = dqTableColumn.getColumn_name();
+                    //获取字段的附加信息
+                    List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
+                            "SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
+                                    " JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
+                                    " WHERE col_id=?", dqTableColumn.getField_id());
+                    //设置主键信息
+                    for (Map<String, Object> dcol_info : dcol_info_s) {
+                        StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
+                        if (storeLayerAdded == StoreLayerAdded.ZhuJian) {
+                            pk_column_s.add(dqTableColumn.getColumn_name());
+                        }
+                    }
+                    //字段名
+                    String table_column = dqTableColumn.getColumn_name();
                     //字段类型
                     String column_type = dqTableColumn.getColumn_type();
                     //字段长度
                     String column_length = dqTableColumn.getColumn_length();
-                    sql.append(column_name).append(Constant.SPACE).append(column_type);
+                    //设置建表语句的字段信息
+                    sql.append(table_column).append(Constant.SPACE).append(column_type);
                     if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
                             && !column_type.equals("boolean")) {
-                        sql.append("(").append(column_length).append(")").append(",");
-                    } else {
-                        sql.append(",");
+                        sql.append("(").append(column_length).append(")");
                     }
+                    //是否可为空标识
+                    IsFlag is_null = IsFlag.ofEnumByCode(dqTableColumn.getIs_null());
+                    if (is_null == IsFlag.Shi) {
+                        sql.append(Constant.SPACE).append("NULL");
+                    } else if (is_null == IsFlag.Fou) {
+                        sql.append(Constant.SPACE).append("NOT NULL");
+                    } else {
+                        throw new BusinessException("字段: column_name=" + table_column + " 的是否标记信息不合法!");
+                    }
+                    //拼接字段分隔 ","
+                    sql.append(",");
                 }
+                //根据字段选择主键标记设置建表语句
+                if (!pk_column_s.isEmpty()) {
+                    sql.append("CONSTRAINT").append(Constant.SPACE);
+                    sql.append(dqTableInfo.getTable_name()).append("_PK").append(Constant.SPACE);
+                    sql.append("PRIMARY KEY(").append(String.join(",", pk_column_s)).append(")");
+                    sql.append(",");
+                }
+                //删除最后一个 ","
                 sql.deleteCharAt(sql.length() - 1);
+                //拼接结束的 ")"
                 sql.append(")");
                 //执行创建语句
                 logger.info("执行创建语句,SQL内容：" + sql);
