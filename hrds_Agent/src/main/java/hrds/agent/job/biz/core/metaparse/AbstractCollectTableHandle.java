@@ -388,8 +388,8 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	}
 
 	public static void main(String[] args) {
-		String aaa = "from sys_user where create_date=#{tx_date}";
-		String aa = aaa.replaceAll("#\\{tx_date\\}", "aa");
+		String aaa = "select aaa,bbb,ccc,#{ccc} from item where aaa='ccc' and   i_rec_start_date   =   #{i_rec_start_date}";
+		String aa = aaa.replaceAll("\\s+?((?!\\s).)+?\\s+?=\\s+?#\\{.*\\}", " 1=2");
 		System.out.println(aa);
 	}
 }

@@ -20,7 +20,6 @@ import hrds.commons.utils.xlstoxml.Xls2xml;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +64,7 @@ public class DatabaseInfo extends AgentBaseAction {
 					Platform.readModelFromDatabase(db, xmlName, search);
 				}
 				//5.读取xml，获取数据库下所有表的信息
-				table_List = ConnUtil.getTable(xmlName,search);
+				table_List = ConnUtil.getTable(xmlName, search);
 			} catch (Exception e) {
 				throw new BusinessException("获取数据库的表信息失败" + e.getMessage());
 			}
@@ -190,6 +189,10 @@ public class DatabaseInfo extends AgentBaseAction {
 	@Param(name = "custSQL", desc = "自定义抽取SQL", range = "不为空")
 	@Return(desc = "自定义SQL抽取的字段信息", range = "不会为空，如果字符串的长度超过300，将会被压缩")
 	public String getCustColumn(Database_set dbSet, String custSQL) {
+		//替换占位符custSQL,为了防止sql有占位符，替换ccc = #{aaa}为1=2
+		custSQL = custSQL.replaceAll("\\s+?((?!\\s).)+?\\s+?=\\s+?#\\{.*\\}", " 1=2");
+		//替换 #{aaa}为 ''
+		custSQL = custSQL.replaceAll("#\\{.*\\}", "' '");
 		//1、使用dbinfo将需要测试并行抽取的数据库连接内容填充
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbSet)) {
 			//2、执行自定义抽取SQL，获取执行结果集
