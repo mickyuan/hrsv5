@@ -7,13 +7,17 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.FileUploadUtil;
+import fd.ng.web.util.RequestUtil;
+import fd.ng.web.util.ResponseUtil;
 import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.dbagentconf.startwayconf.StartWayConfAction;
 import hrds.b.biz.agent.tools.ConnUtil;
@@ -45,19 +49,31 @@ import hrds.commons.entity.Table_column;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.entity.fdentity.ProjectTableEntity.EntityDealZeroException;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.ExcelUtil;
+import hrds.commons.utils.PropertyParaUtil;
+import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -65,6 +81,11 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 @DocClass(desc = "上传Excel的文件导入功能", author = "Mr.Lee", createdate = "2020-07-23 14:16")
 public class ImportExcelAction extends BaseAction {
+
+	/**
+	 * Excel导入模板文件名称
+	 */
+	private final static String EXCEL_FILEPATH = "importExcel.xlsx";
 
 	@Method(desc = "通过上传的Excel导入数据信息", logicStep = "")
 	@Param(name = "file", desc = "上传的文件", range = "不可为空,否则你要导入什么数据呢?")
@@ -1132,4 +1153,66 @@ public class ImportExcelAction extends BaseAction {
 
 		return dependDataMap;
 	}
+
+
+	public void downloadExcel() {
+
+		// 4、得到本次http交互的request和response
+		HttpServletResponse response = ResponseUtil.getResponse();
+		HttpServletRequest request = RequestUtil.getRequest();
+		BufferedInputStream bis = null;
+		BufferedOutputStream bos = null;
+		try (OutputStream out = response.getOutputStream()) {
+			// 5、设置响应头信息
+			response.reset();
+
+			String path = this.getClass().getClassLoader().getResource(EXCEL_FILEPATH).getPath();
+			if (StringUtil.isBlank(path)) {
+				CheckParam.throwErrorMsg("Excel模板不存在");
+			}
+			File downloadFile = new File(path);
+			if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+				// 对firefox浏览器做特殊处理
+				response.setHeader(
+					"content-disposition",
+					"attachment;filename="
+						+ new String(EXCEL_FILEPATH.getBytes(), CodecUtil.GBK_STRING));
+			} else {
+				response.setHeader(
+					"content-disposition",
+					"attachment;filename="
+						+ URLEncoder.encode(EXCEL_FILEPATH, CodecUtil.UTF8_STRING));
+			}
+			response.setContentType("APPLICATION/OCTET-STREAM");
+			// 6、使用response获得输出流，完成文件下载
+			bis = new BufferedInputStream(new FileInputStream(downloadFile));
+			bos = new BufferedOutputStream(out);
+			byte[] buff = new byte[2048];
+			int bytesRead;
+			while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
+				bos.write(buff, 0, bytesRead);
+			}
+			bos.flush();
+			// 数据可访问权限处理方式
+		} catch (IOException e) {
+			throw new AppSystemException(e);
+		} finally {
+			if (bis != null) {
+				try {
+					bis.close();
+				} catch (IOException e) {
+					throw new AppSystemException(e);
+				}
+			}
+			if (bos != null) {
+				try {
+					bos.close();
+				} catch (IOException e) {
+					throw new AppSystemException(e);
+				}
+			}
+		}
+
+	}
+
 }
