@@ -18,6 +18,7 @@ import hrds.commons.entity.Etl_job_resource_rela;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.List;
 import java.util.Map;
@@ -324,5 +325,11 @@ public class FileConfStepAction extends BaseAction {
 				ded_id);
 		}
 
+	}
+
+	//SQL占位的分隔符
+	public String getSqlParamPlaceholder(){
+
+		return Constant.SQLDELIMITER;
 	}
 }

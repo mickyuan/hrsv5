@@ -708,8 +708,9 @@ public class AgentListAction extends BaseAction {
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	@Param(name = "is_download", range = "可以为空,默认为不下载", desc = "是否为数据字典下载", nullable = true, valueIfNull = "false")
-	@Param(name = "etl_date", range = "不可为空", desc = "任务的跑批日期", nullable = true)
-	public void sendJDBCCollectTaskById(long colSetId, String is_download, String etl_date) {
+	@Param(name = "etl_date", range = "可为空", desc = "任务的跑批日期", nullable = true)
+	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true,valueIfNull = "")
+	public void sendJDBCCollectTaskById(long colSetId, String is_download, String etl_date, String sqlParam) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
 			Dbo.queryNumber(
@@ -1002,7 +1003,7 @@ public class AgentListAction extends BaseAction {
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			etl_date, is_download);
+			etl_date, is_download, sqlParam);
 
 		if ("true".equals(is_download)) {
 			responseFile("dd_json.json", dataDic.getBytes());
@@ -1358,7 +1359,7 @@ public class AgentListAction extends BaseAction {
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			etl_date,"false");
+			etl_date, "false", "");
 	}
 
 	@Method(
@@ -1582,4 +1583,9 @@ public class AgentListAction extends BaseAction {
 			agentMap.get("agent_port"));
 	}
 
+	//SQL占位的分隔符
+	public String getSqlParamPlaceholder(){
+
+		return Constant.SQLDELIMITER;
+	}
 }

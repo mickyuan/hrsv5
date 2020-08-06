@@ -306,8 +306,9 @@ public class SendMsgUtil {
 		nullable = true, valueIfNull = "")
 	@Param(name = "is_download", desc = "采集任务数据字典的下载", range = "默认为false,表示不下载", nullable = true, valueIfNull = "false")
 	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
+	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true)
 	public static Object sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo,
-		String methodName, String etlDate, String is_download) {
+		String methodName, String etlDate, String is_download, String sqlParam) {
 		//1、对参数合法性进行校验
 		if (agentId == null) {
 			throw new BusinessException("向Agent发送数据库采集任务信息，agentId不能为空");
@@ -330,6 +331,7 @@ public class SendMsgUtil {
 		HttpClient.ResponseValue resVal = new HttpClient()
 			.addData("etlDate", StringUtil.isBlank(etlDate) ? "" : etlDate)
 			.addData("taskInfo", PackUtil.packMsg(taskInfo))
+			.addData("sqlParam", sqlParam)
 			.post(url);
 		//4、根据响应状态码判断响应是否成功
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
