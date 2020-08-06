@@ -333,6 +333,12 @@ public class SendMsgUtil {
 			.addData("taskInfo", PackUtil.packMsg(taskInfo))
 			.addData("sqlParam", sqlParam)
 			.post(url);
+
+		// 6，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
+		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
+			"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
+			IsFlag.Shi.getCode(), colSetId);
+
 		//4、根据响应状态码判断响应是否成功
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
 			.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
@@ -348,10 +354,7 @@ public class SendMsgUtil {
 				}
 			}
 		}
-		// 6，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
-		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
-			"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
-			IsFlag.Shi.getCode(), colSetId);
+
 		return ar.getData();
 	}
 
