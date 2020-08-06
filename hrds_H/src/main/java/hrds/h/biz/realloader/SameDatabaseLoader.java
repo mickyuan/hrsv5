@@ -176,7 +176,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
 	private String lineMd5Expr(String columnsJoin) {
 		return Utils.registerMd5Function(db, databaseType) +
-				"''||" + columnsJoin.replace(",", "||") + ")";
+				"(''||" + columnsJoin.replace(",", "||") + ")";
 	}
 
 
