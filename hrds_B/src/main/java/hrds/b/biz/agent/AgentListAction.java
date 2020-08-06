@@ -1030,7 +1030,7 @@ public class AgentListAction extends BaseAction {
 				+ "       2-4-8、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息"
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
-	@Param(name = "etl_date", desc = "立即执行的跑批日期", range = "如果是立即执行时,此参数不可为空", nullable = true)
+	@Param(name = "etl_date", desc = "立即执行的跑批日期", range = "如果是立即执行时,此参数不可为空", nullable = true,valueIfNull = "")
 	public void sendDBCollectTaskById(long colSetId, String etl_date) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =

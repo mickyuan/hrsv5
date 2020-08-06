@@ -329,7 +329,7 @@ public class SendMsgUtil {
 
 		//3、httpClient发送请求并接收响应
 		HttpClient.ResponseValue resVal = new HttpClient()
-			.addData("etlDate", StringUtil.isBlank(etlDate) ? "" : etlDate)
+			.addData("etlDate", etlDate)
 			.addData("taskInfo", PackUtil.packMsg(taskInfo))
 			.addData("sqlParam", sqlParam)
 			.post(url);
