@@ -84,12 +84,12 @@ public class TreeNodeDataQuery {
                 List<Map<String, Object>> dmlCategoryInfos = DMLDataQuery.getDMLCategoryInfos(data_mart_id);
                 if (!dmlCategoryInfos.isEmpty()) {
                     for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
+                        //添加分类
+                        dataList.add(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfo));
                         long category_id = (long) dmlCategoryInfo.get("category_id");
                         //获取分类下表信息
                         List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(category_id);
                         if (!dmlTableInfos.isEmpty()) {
-                            //这里只添加分类下有表的分类
-                            dataList.add(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfo));
                             dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
                         }
                     }

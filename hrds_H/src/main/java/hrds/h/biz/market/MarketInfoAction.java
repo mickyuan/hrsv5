@@ -2039,7 +2039,7 @@ public class MarketInfoAction extends BaseAction {
 					"select datatable_en_name as tablename  from " + Dm_datatable.TableName + " where datatable_id = ?",
 					datatable_field_info.getDatatable_id());
 			if (tablenamelist.isEmpty()) {
-				throw new BusinessSystemException("查询表data_store_reg错误，没有数据");
+				throw new BusinessSystemException("查询Dm_datatable表错误，没有数据");
 			}
 			resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
 			return resultmap;

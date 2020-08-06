@@ -48,12 +48,12 @@ public class MarketVersionManageAction extends BaseAction {
             List<Map<String, Object>> dmlCategoryInfos = DMLDataQuery.getDMLCategoryInfos(data_mart_id);
             if (!dmlCategoryInfos.isEmpty()) {
                 for (Map<String, Object> dmlCategoryInfo : dmlCategoryInfos) {
+                    //添加存在表的分类信息到树数据列表
+                    dataList.add(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfo));
                     long category_id = (long) dmlCategoryInfo.get("category_id");
                     //获取集市工程分类下表信息
                     List<Map<String, Object>> dmlTableInfos = DMLDataQuery.getDMLTableInfos(category_id);
                     if (!dmlTableInfos.isEmpty()) {
-                        //添加存在表的分类信息到树数据列表
-                        dataList.add(DataConvertedNodeData.conversionDMLCategoryInfos(dmlCategoryInfo));
                         //添加分类下表信息到树数据列表
                         dataList.addAll(DataConvertedNodeData.conversionDMLTableInfos(dmlTableInfos));
                         for (Map<String, Object> dmlTableInfo : dmlTableInfos) {
