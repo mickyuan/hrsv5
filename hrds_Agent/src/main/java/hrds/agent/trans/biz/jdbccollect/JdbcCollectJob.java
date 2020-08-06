@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
@@ -65,7 +66,8 @@ public class JdbcCollectJob extends AgentBaseAction {
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有sourceDataConfBean表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public String executeImmediately(String etlDate, String taskInfo) {
+	@Param(name = "sqlParam", desc = "参数占位符", range = "可以为空", nullable = true)
+	public String executeImmediately(String etlDate, String taskInfo, String sqlParam) {
 		String message = "执行成功";
 		ExecutorService executor = null;
 		try {
@@ -88,6 +90,10 @@ public class JdbcCollectJob extends AgentBaseAction {
 				List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
 				for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
 					collectTableBean.setEtlDate(etlDate);
+					//设置sql占位符参数
+					if (!StringUtil.isBlank(sqlParam)) {
+						collectTableBean.setSqlParam(sqlParam);
+					}
 					collectTableBean.setSelectFileFormat(data_extraction_def.getDbfile_format());
 					//为了确保多个线程之间的值不互相干涉，复制对象的值。
 					SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
