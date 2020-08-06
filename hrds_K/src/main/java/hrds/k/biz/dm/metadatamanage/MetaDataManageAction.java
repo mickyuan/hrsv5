@@ -480,6 +480,7 @@ public class MetaDataManageAction extends BaseAction {
         if (StringUtil.isBlank(dqTableInfo.getIs_trace())) {
             dqTableInfo.setIs_trace(IsFlag.Fou.getCode());
         }
+        dqTableInfo.setTable_name(dqTableInfoBean.getTable_name().trim());
         dqTableInfo.setCreate_date(DateUtil.getSysDate());
         dqTableInfo.setEnd_date(Constant.MAXDATE);
         dqTableInfo.setCreate_id(getUserId());
