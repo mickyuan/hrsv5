@@ -1,5 +1,6 @@
 package hrds.b.biz.agentdepoly;
 
+import com.jcraft.jsch.JSchException;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -157,8 +158,11 @@ public class AgentDeployAction extends BaseAction {
 		try {
 			deployFinalDir = AgentDeploy.agentConfDeploy(agent_down_info, oldAgentDir, oldLogPath);
 		} catch (Exception e) {
-			throw new AppSystemException(e);
-//			throw new BusinessException(e.getMessage());
+			if (e instanceof JSchException) {
+				throw new BusinessException("建立 Session失败!!!");
+			} else {
+				throw new AppSystemException(e);
+			}
 		}
 
 		agent_down_info.setAi_desc(deployFinalDir);
