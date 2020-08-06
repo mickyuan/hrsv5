@@ -5,6 +5,10 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
+import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
@@ -20,6 +24,7 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 
 @DocClass(desc = "数据文件采集配置管理", author = "Mr.Lee", createdate = "2020-04-10 16:08")
 public class CollectFIleAction extends BaseAction {
@@ -82,15 +87,8 @@ public class CollectFIleAction extends BaseAction {
 		CheckParam.checkData("采集任务名称不能为空", database_set.getTask_name());
 		CheckParam.checkData("采集数据文件路径不能为空", database_set.getPlane_url());
 		CheckParam.checkData("分类编号不能为空", String.valueOf(database_set.getClassify_id()));
-		//    1: 检查数据编号是否存在
-		long countNum =
-			Dbo.queryNumber(
-				"SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE task_name = ? ",
-				database_set.getTask_name())
-				.orElseThrow(() -> new BusinessException("SQL查询异常"));
-		if (countNum == 1) {
-			CheckParam.throwErrorMsg("采集任务名称(%s),已经存在", database_set.getTask_name());
-		}
+		//    1: 检查作业编号,任务名称是否重复
+		checkDatabaseInfo(database_set);
 		//    2: 设置此次任务的ID
 		String database_id = String.valueOf(PrimayKeyGener.getNextId());
 		// 设置是否为DB文件为是
@@ -118,14 +116,7 @@ public class CollectFIleAction extends BaseAction {
 			CheckParam.throwErrorMsg("分类编号不能为空");
 		}
 		//    1: 检查数据文件采集信息是否存在
-		long countNum =
-			Dbo.queryNumber(
-				"SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE  database_id = ?",
-				database_set.getDatabase_id())
-				.orElseThrow(() -> new BusinessException("SQL查询异常"));
-		if (countNum == 0) {
-			CheckParam.throwErrorMsg("当前任务ID( %s ),已经不存在", database_set.getDatabase_number());
-		}
+		checkDatabaseInfo(database_set);
 		//    2: 更新数据文件采集信息
 		database_set.update(Dbo.db());
 		//    3: 返回生成的采集任务ID给前端
@@ -160,5 +151,34 @@ public class CollectFIleAction extends BaseAction {
 		}
 		// 3.返回到前端
 		return ar.getDataForEntityList(Map.class);
+	}
+
+	void checkDatabaseInfo(Database_set database_set) {
+		//    1: 检查数据编号是否存在
+		Assembler assembler = Assembler.newInstance()
+			.addSql("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE task_name = ? ");
+		assembler.addParam(database_set.getTask_name());
+		if (database_set.getDatabase_id() != null) {
+			assembler.addSql(" AND database_id != ?").addParam(database_set.getDatabase_id());
+		}
+		long countNum =
+			Dbo.queryNumber(assembler.sql(), assembler.params()).orElseThrow(() -> new BusinessException("SQL查询异常"));
+		if (countNum == 1) {
+			CheckParam.throwErrorMsg("采集任务名称(%s),已经存在", database_set.getTask_name());
+		}
+
+		//清理SQL
+		assembler.clean();
+
+		assembler.addSql("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_number = ? ")
+			.addParam(database_set.getDatabase_number());
+		if (database_set.getDatabase_id() != null) {
+			assembler.addSql(" AND database_id != ?").addParam(database_set.getDatabase_id());
+		}
+		countNum =
+			Dbo.queryNumber(assembler.sql(), assembler.params()).orElseThrow(() -> new BusinessException("SQL查询异常"));
+		if (countNum == 1) {
+			CheckParam.throwErrorMsg("采集作业编号(%s),已经存在", database_set.getDatabase_number());
+		}
 	}
 }
