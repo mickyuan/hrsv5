@@ -94,11 +94,11 @@ public class StorageTypeKey {
 
 		//hive数据库不支持外部表，通过jdbc，当做普通数据库处理
 		List<String> hiveKeys = new ArrayList<>(Arrays.
-				asList(database_driver, jdbc_url, user_name, database_pwd, database_name, database_type));
+				asList(database_driver, jdbc_url, user_name, database_pwd, database_name));
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode(), hiveKeys);
 
 		List<String> hiveExternalTableKeys = new ArrayList<>(Arrays.
-				asList(database_driver, jdbc_url, user_name, database_pwd, database_name, database_type,
+				asList(database_driver, jdbc_url, user_name, database_pwd, database_name,
 						platform, hadoop_user_name, prncipal_name, core_site, hdfs_site, keytab, krb5));
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode() + "_" + IsFlag.Shi.getCode(), hiveExternalTableKeys);
 
