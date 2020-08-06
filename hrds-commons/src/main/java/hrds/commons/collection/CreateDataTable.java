@@ -124,7 +124,7 @@ public class CreateDataTable {
                 //根据字段选择主键标记设置建表语句
                 if (!pk_column_s.isEmpty()) {
                     sql.append("CONSTRAINT").append(Constant.SPACE);
-                    sql.append(dqTableInfo.getTable_name()).append("_PK").append(Constant.SPACE);
+                    sql.append(table_name).append("_PK").append(Constant.SPACE);
                     sql.append("PRIMARY KEY(").append(String.join(",", pk_column_s)).append(")");
                     sql.append(",");
                 }
