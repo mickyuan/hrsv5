@@ -106,9 +106,12 @@ public class NodeDataConvertedTreeList {
                     treeNodeData = node;
                     treeList.add(treeNodeData);
                 }
-                //设置当前节点到父id一样节点的children子节点下
+                //否则设置当前节点到父id一样节点的children子节点下
                 else {
-                    nodeMap.get(node.getParent_id()).addChild(node);
+                    //如果当前节点的父节点不为null,则添加当前节点到父节点下
+                    if (null != nodeMap.get(node.getParent_id())) {
+                        nodeMap.get(node.getParent_id()).addChild(node);
+                    }
                 }
             } catch (RuntimeException e) {
                 e.printStackTrace();
