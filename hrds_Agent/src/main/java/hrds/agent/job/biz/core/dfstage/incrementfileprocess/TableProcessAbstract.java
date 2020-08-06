@@ -159,8 +159,7 @@ public abstract class TableProcessAbstract implements TableProcessInterface {
 		String code = DataBaseCode.ofValueByCode(tableBean.getFile_code());
 		// 存储全量插入信息的list
 		Map<String, Map<String, Object>> valueList;
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(readFile),
-				DataBaseCode.ofValueByCode(code)));
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(readFile), code));
 			 CsvListReader csvReader = new CsvListReader(reader,
 					 CsvPreference.EXCEL_PREFERENCE)) {
 			if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {

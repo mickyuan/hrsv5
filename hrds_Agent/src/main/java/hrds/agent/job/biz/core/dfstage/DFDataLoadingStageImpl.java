@@ -87,6 +87,9 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 									+ "错误的是否标识");
 						}
 					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+						//设置hive的默认类型
+						dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
+								DatabaseType.Hive.getCode());
 						//hive库有两种情况，有客户端和没有客户端
 						if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//有客户端
