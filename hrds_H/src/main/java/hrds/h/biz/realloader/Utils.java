@@ -134,7 +134,7 @@ public class Utils {
 	 * @param type 数据库类型
 	 * @return MD5函数名
 	 */
-	static String registerMd5Function(DatabaseWrapper db, DatabaseType type) {
+/*	static String registerMd5Function(DatabaseWrapper db, DatabaseType type) {
 		if (DatabaseType.Oracle10g.equals(type)) {
 			db.execute("CREATE OR REPLACE FUNCTION HYREN_MD5(passwd IN VARCHAR2) \n" +
 					"RETURN VARCHAR2\n" +
@@ -147,7 +147,7 @@ public class Utils {
 			return "HYREN_MD5";
 		}
 		return "MD5";
-	}
+	}*/
 
 	static String registerAutoIncreasingFunction(DatabaseWrapper db, DatabaseType type) {
 		if (DatabaseType.Oracle10g.equals(type)) {

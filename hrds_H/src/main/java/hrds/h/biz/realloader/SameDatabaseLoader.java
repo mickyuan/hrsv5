@@ -13,6 +13,7 @@ import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.h.biz.config.MarketConf;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static hrds.commons.utils.Constant.*;
@@ -175,8 +176,18 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 	}
 
 	private String lineMd5Expr(String columnsJoin) {
-		return Utils.registerMd5Function(db, databaseType) +
-				"(''||" + columnsJoin.replace(",", "||") + ")";
+		List<String> columnList = StringUtil.split(columnsJoin, ",");
+		if (columnList == null || columnList.isEmpty()) {
+			throw new AppSystemException("采集作业信息不能为空");
+		}
+		//2、遍历list集合，获取每一个ColumnCleanResult对象的columnName
+		List<String> columnNames = new ArrayList<>();
+		for (String column : columnList) {
+			columnNames.add(column);
+		}
+		return ConnectionTool.getDbType(databaseType.getCode()).ofColMd5(db, columnNames);
+		/*return Utils.registerMd5Function(db, databaseType) +
+				"(''||" + columnsJoin.replace(",", "||") + ")";*/
 	}
 
 

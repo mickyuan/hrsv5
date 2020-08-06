@@ -167,7 +167,7 @@ public class ConnectionTool {
         return dbConfigMap;
     }
 
-    private static Dbtype getDbType(String database_type) {
+    public static Dbtype getDbType(String database_type) {
         //获取数据库类型
         DatabaseType typeConstant = DatabaseType.ofEnumByCode(database_type);
         if (typeConstant == DatabaseType.MYSQL) {
