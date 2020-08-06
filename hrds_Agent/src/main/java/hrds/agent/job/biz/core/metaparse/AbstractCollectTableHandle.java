@@ -6,7 +6,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.ColumnCleanBean;
-import hrds.agent.job.biz.core.metaparse.impl.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.CharSplitType;
@@ -45,7 +44,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	}
 
 	protected String getCollectSQL(CollectTableBean collectTableBean,
-	                               DatabaseWrapper db, String database_name) {
+								   DatabaseWrapper db, String database_name) {
 		//获取自定义sql，如果自定义sql的sql语句
 		String collectSQL;
 		//如果是自定义sql,则使用自定义sql
@@ -154,7 +153,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 			for (String splitParam : splitParamList) {
 				//遍历，分割出需要替换的key和值
 				List<String> key_value = StringUtil.split(splitParam, "=");
-				String key = "#{" + key_value.get(0) + "}";
+				String key = "#\\{" + key_value.get(0) + "\\}";
 				String value = key_value.get(1);
 				collectSql = collectSql.replaceAll(key, value);
 			}
@@ -327,7 +326,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @return 更新后的信息
 	 */
 	protected String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
-	                              StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
+								  StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
 		if (!mergeIng.isEmpty()) {
 			for (String key : mergeIng.keySet()) {
 				//获取表名和类型
@@ -386,5 +385,11 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 			}
 		}
 		return columnMate;
+	}
+
+	public static void main(String[] args) {
+		String aaa = "from sys_user where create_date=#{tx_date}";
+		String aa = aaa.replaceAll("#\\{tx_date\\}", "aa");
+		System.out.println(aa);
 	}
 }
