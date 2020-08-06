@@ -129,7 +129,8 @@ public class JdbcCollectJob extends AgentBaseAction {
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有sourceDataConfBean表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public String getDictionaryJson(String taskInfo) {
+	@Param(name = "sqlParam", desc = "参数占位符", range = "可以为空", nullable = true)
+	public String getDictionaryJson(String taskInfo, String sqlParam) {
 		//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
 		SourceDataConfBean sourceDataConfBean =
 				JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
@@ -141,6 +142,10 @@ public class JdbcCollectJob extends AgentBaseAction {
 		List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
 		//4.遍历CollectTableBean的集合
 		for (CollectTableBean collectTableBean : collectTableBeanList) {
+			//设置sql占位符参数
+			if (!StringUtil.isBlank(sqlParam)) {
+				collectTableBean.setSqlParam(sqlParam);
+			}
 			//5.获取需要采集的表的meta信息
 			TableBean tableBean = CollectTableHandleFactory.getCollectTableHandleInstance(sourceDataConfBean)
 					.generateTableInfo(sourceDataConfBean, collectTableBean);
