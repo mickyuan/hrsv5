@@ -153,6 +153,9 @@ public class DFUploadStageImpl extends AbstractJobStage {
 						throw new AppSystemException("错误的是否标识");
 					}
 				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//设置hive的默认类型
+					dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
+							DatabaseType.Hive.getCode());
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
 						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
@@ -206,7 +209,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		solrParam.setSolrUrl(data_store_connect_attr.get(StorageTypeKey.solr_url));
 		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
 		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam, configPath);
-		     SolrClient server = os.getServer()) {
+			 SolrClient server = os.getServer()) {
 			//判断是追加或者增量先清理表的数据
 			if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
 				String query = Constant.SDATENAME + ":" + collectTableBean.getEtlDate() +
@@ -232,7 +235,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * @param tableBean         文件的结构化信息
 	 */
 	private void exeBatchSolr(DataStoreConfBean dataStoreConfBean, ExecutorService executor,
-	                          String[] fileArr, TableBean tableBean) {
+							  String[] fileArr, TableBean tableBean) {
 		long count = 0;
 		List<Future<Long>> list = new ArrayList<>();
 		try {
@@ -394,7 +397,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	}
 
 	private void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
-	                                    String targetDir, String unload_hbase_name) throws Exception {
+										String targetDir, String unload_hbase_name) throws Exception {
 		File file = new File(absolutePath);
 		String LOBs = file.getParent() + File.separator + "LOBS" + File.separator;
 		String[] fileNames = new File(LOBs).list();
@@ -439,7 +442,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * 使用batch方式进数
 	 */
 	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor,
-	                      String[] localFiles, TableBean tableBean) {
+						  String[] localFiles, TableBean tableBean) {
 		long count = 0;
 		List<Future<Long>> list = new ArrayList<>();
 		String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
@@ -491,7 +494,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * @param db                数据库连接方式
 	 */
 	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
-	                              DatabaseWrapper db) {
+								  DatabaseWrapper db) {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());

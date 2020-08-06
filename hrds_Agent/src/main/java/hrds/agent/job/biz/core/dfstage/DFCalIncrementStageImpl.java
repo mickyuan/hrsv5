@@ -67,6 +67,11 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 							|| Store_type.HIVE.getCode().equals(dataStoreConf.getStore_type())) {
 						JDBCIncreasement increase = null;
 						try {
+							if (Store_type.HIVE.getCode().equals(dataStoreConf.getStore_type())) {
+								//设置hive的默认类型
+								dataStoreConf.getData_store_connect_attr().put(StorageTypeKey.database_type,
+										DatabaseType.Hive.getCode());
+							}
 							DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
 							increase = getJdbcIncreasement(tableBean, collectTableBean.getHbase_name(),
 									collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name());
@@ -140,7 +145,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	 * @param dataStoreConf 存储层配置信息
 	 */
 	private HBaseIncreasement getHBaseIncreasement(TableBean tableBean, String hbase_name, String etlDate,
-	                                               DataStoreConfBean dataStoreConf) {
+												   DataStoreConfBean dataStoreConf) {
 		HBaseIncreasement hbaseIncreasement;
 		Map<String, String> data_store_connect_attr = dataStoreConf.getData_store_connect_attr();
 		String dsl_name = dataStoreConf.getDsl_name();
@@ -152,6 +157,9 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 						data_store_connect_attr.get(StorageTypeKey.platform),
 						data_store_connect_attr.get(StorageTypeKey.prncipal_name), null);
 			} else {
+				//设置hive的默认类型
+				dataStoreConf.getData_store_connect_attr().put(StorageTypeKey.database_type,
+						DatabaseType.Hive.getCode());
 				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
 				hbaseIncreasement = new HBaseIncreasementByHive(tableBean, hbase_name, etlDate, dsl_name,
 						data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
@@ -165,6 +173,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 						data_store_connect_attr.get(StorageTypeKey.platform),
 						data_store_connect_attr.get(StorageTypeKey.prncipal_name), null);
 			} else {
+				//TODO 设置Phoenix数据库的默认类型
 				DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConf.getData_store_connect_attr());
 				hbaseIncreasement = new HBaseIncreasementByPhoenix(tableBean, hbase_name, etlDate, dsl_name,
 						data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
@@ -186,7 +195,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	 * @param db                数据库的连接
 	 */
 	private void configureAdditInfo(String hbase_name, Map<String, Map<String, Integer>> additInfoFieldMap,
-	                                String database_type, DatabaseWrapper db) {
+									String database_type, DatabaseWrapper db) {
 		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
 			DatabaseAdditInfoOperateInterface additInfoOperateInterface;
 			if (DatabaseType.Postgresql.getCode().equals(database_type)) {
@@ -226,7 +235,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	 * @return 增量算法接口
 	 */
 	private JDBCIncreasement getJdbcIncreasement(TableBean tableBean, String hbase_name, String etlDate,
-	                                             DatabaseWrapper db, String dsl_name) {
+												 DatabaseWrapper db, String dsl_name) {
 		JDBCIncreasement increasement;
 		//数据库类型的做增量目前分为两种，一种是传统数据库，另一种是hive库（hive库不支持update）
 		if (Dbtype.HIVE.equals(db.getDbtype())) {
