@@ -11,8 +11,8 @@ public class TdbTableBean extends ProjectTableEntity {
     private static final long serialVersionUID = -380754015950555099L;
 
     //登记表id
-    @DocBean(name = "file_id", value = "登记表id", dataType = Long.class)
-    private Long file_id;
+    @DocBean(name = "file_id", value = "登记表id", dataType = String.class)
+    private String file_id;
     //来源数据层
     @DocBean(name = "data_layer", value = "来源数据层", dataType = String.class)
     private String data_layer;
@@ -23,11 +23,11 @@ public class TdbTableBean extends ProjectTableEntity {
     @DocBean(name = "table_cn_name", value = "登记表中文名", dataType = String.class)
     private String table_cn_name;
 
-    public Long getFile_id() {
+    public String getFile_id() {
         return file_id;
     }
 
-    public void setFile_id(Long file_id) {
+    public void setFile_id(String file_id) {
         this.file_id = file_id;
     }
 
