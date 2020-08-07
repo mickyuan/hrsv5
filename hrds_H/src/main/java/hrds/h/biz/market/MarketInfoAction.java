@@ -2675,60 +2675,74 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "获取集市导入审核数据", logicStep = "")
+	@Method(desc = "获取集市导入审核数据", logicStep = "1.判断上传文件是否存在" +
+			"2.解密获取上传文件信息" +
+			"3.获取加工工程表差异信息" +
+			"4.获取加工分类表差异信息" +
+			"5.加工数据表差异信息" +
+			"6.获取数据表发生改变表名称集合" +
+			"7.获取数据表差异信息" +
+			"8.获取sql表差异信息" +
+			"9.获取数据字段表差异信息" +
+			"10.获取前后置作业表差异信息" +
+			"11.表作业影响" +
+			"12.表影响")
 	@Param(name = "file_path", desc = "集市导入审核文件路径", range = "无限制")
 	@Return(desc = "返回集市导入审核数据", range = "无限制")
 	public Map<String, Object> getImportReviewData(String file_path) {
 		try {
+			// 1.判断上传文件是否存在
 			if (!new File(file_path).exists()) {
 				throw new BusinessException("上传文件不存在！");
 			}
 			String strTemp = new String(Files.readAllBytes(new File(file_path).toPath()));
-			// 解密
+			// 2.解密获取上传文件信息
 			strTemp = new String(Base64.getDecoder().decode(strTemp));
 			JSONObject jsonObject = JSONObject.parseObject(strTemp);
 			Map<String, Object> differenceMap = new HashMap<>();
-			//集市工程表
+			//3.获取加工工程表差异信息
 			Dm_info dm_info = JSON.parseObject(jsonObject.getJSONObject("dm_info").toJSONString(), Dm_info.class);
-			Map<String, Object> dmMap = getDmInfoMap(dm_info);
-			differenceMap.put(Dm_info.TableName, dmMap);
-			//集市分类表
+			String dmInfoDiff = getDmInfoDiff(dm_info);
+			differenceMap.put(Dm_info.TableName, dmInfoDiff);
+			//4.获取加工分类表差异信息
 			List<Dm_category> dm_categories = JSONObject
 					.parseArray(jsonObject.getJSONArray("dm_categories").toJSONString(), Dm_category.class);
-			Set<Map<String, Object>> categoryDiffList = getCategoryDiffList(dm_categories);
-			differenceMap.put(Dm_category.TableName, categoryDiffList);
-			//集市数据表
+			Set<String> categoryDiff = getCategoryDiff(dm_categories);
+			differenceMap.put(Dm_category.TableName, categoryDiff);
+			//5.加工数据表差异信息
 			List<Dm_datatable> dm_datatables = JSONObject
 					.parseArray(jsonObject.getJSONArray("dm_datatables").toJSONString(), Dm_datatable.class);
-			// 获取数据库表id集合
+			// 6.获取数据表发生改变表名称集合
 			List<String> enNameList = new ArrayList<>();
-			Set<Map<String, Object>> datatableDiffList = getDatatableDiffList(dm_datatables, enNameList);
-			differenceMap.put(Dm_datatable.TableName, datatableDiffList);
-			//sql表
+			// 7.获取数据表差异信息
+			Set<String> datatableDiff = getDatatableDiff(dm_datatables, enNameList);
+			differenceMap.put(Dm_datatable.TableName, datatableDiff);
+			//8.获取sql表差异信息
 			List<Dm_operation_info> dm_operation_infos = JSONObject
 					.parseArray(jsonObject.getJSONArray("dm_operation_infos").toJSONString(), Dm_operation_info.class);
-			Set<Map<String, Object>> operationInfoDiffList = getOperationInfoDiffList(dm_operation_infos);
-			differenceMap.put(Dm_operation_info.TableName, operationInfoDiffList);
-			//字段表
+			Set<String> operationInfoDiff = getOperationInfoDiff(dm_operation_infos);
+			differenceMap.put(Dm_operation_info.TableName, operationInfoDiff);
+			//9.获取数据字段表差异信息
 			List<Datatable_field_info> datatable_field_infos = JSONObject
 					.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
-			Set<Map<String, Object>> datatableFieldDiffList =
-					getDatatableFieldDiffList(datatable_field_infos);
-			differenceMap.put(Datatable_field_info.TableName, datatableFieldDiffList);
-			//前后置作业表
+			Set<String> datatableFieldDiff =
+					getDatatableFieldDiff(datatable_field_infos);
+			differenceMap.put(Datatable_field_info.TableName, datatableFieldDiff);
+			//10.获取前后置作业表差异信息
 			List<Dm_relevant_info> dm_relevant_infos = JSONObject
 					.parseArray(jsonObject.getJSONArray("dm_relevant_infos").toJSONString(), Dm_relevant_info.class);
-			Set<Map<String, Object>> relevantInfoDiffList = getRelevantInfoDiffList(dm_relevant_infos);
-			differenceMap.put(Dm_relevant_info.TableName, relevantInfoDiffList);
+			Set<String> relevantInfoDiff = getRelevantInfoDiff(dm_relevant_infos);
+			differenceMap.put(Dm_relevant_info.TableName, relevantInfoDiff);
 			Map<String, Object> jobInfluence = new HashMap<>();
 			Map<String, Object> tableInfluence = new HashMap<>();
 			for (String datatable_en_name : enNameList) {
+				// 11.表作业影响
 				List<Map<String, Object>> jobList = jobUpAndDownInfluences(datatable_en_name);
+				// 12.表影响
 				List<Map<String, Object>> tableList = tableUpAndDownInfluences(datatable_en_name);
 				jobInfluence.put(datatable_en_name, jobList);
 				tableInfluence.put(datatable_en_name, tableList);
 			}
-			differenceMap.put("tableNameData", enNameList);
 			differenceMap.put("jobInfluence", jobInfluence);
 			differenceMap.put("tableInfluence", tableInfluence);
 			return differenceMap;
@@ -2738,155 +2752,159 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	private Map<String, Object> getDmInfoMap(Dm_info dm_info) {
+	private String getDmInfoDiff(Dm_info dm_info) {
 		Map<String, Object> dmInfoMap = Dbo.queryOneObject(
 				"select * from " + Dm_info.TableName + " where data_mart_id=?",
 				dm_info.getData_mart_id());
-		Map<String, Object> dmMap = new HashMap<>();
+		List<String> diffList = new ArrayList<>();
 		if (dmInfoMap.isEmpty()) {
 			// 不存在，新增
-			dmMap.put("新增的工程编号", dm_info.getMart_number());
-			dmMap.put("新增的工程名称", dm_info.getMart_name());
+			diffList.add("新增的工程编号:" + dm_info.getMart_number());
+			diffList.add("新增的工程名称:" + dm_info.getMart_name());
 		} else {
 			if (!dmInfoMap.get("mart_number").equals(dm_info.getMart_number())) {
-				dmMap.put("原工程编号", dmInfoMap.get("mart_number"));
-				dmMap.put("更新后工程编号", dm_info.getMart_number());
+				diffList.add("原工程编号:" + dmInfoMap.get("mart_number"));
+				diffList.add("更新后工程编号:" + dm_info.getMart_number());
 			}
 			if (!dmInfoMap.get("mart_name").equals(dm_info.getMart_name())) {
-				dmMap.put("原工程名称", dmInfoMap.get("mart_name"));
-				dmMap.put("更新后工程名称", dm_info.getMart_name());
+				diffList.add("原工程名称:" + dmInfoMap.get("mart_name"));
+				diffList.add("更新后工程名称:" + dm_info.getMart_name());
 			}
 		}
-		return dmMap;
+		return String.join(",", diffList);
 	}
 
-	private Set<Map<String, Object>> getCategoryDiffList(List<Dm_category> dm_categories) {
-		Set<Map<String, Object>> categoryDiffList = new HashSet<>();
-		// 数据库集市分类表
+	private Set<String> getCategoryDiff(List<Dm_category> dm_categories) {
+		Set<String> diffList = new HashSet<>();
 		for (Dm_category dm_category : dm_categories) {
 			Map<String, Object> categoryMap = Dbo.queryOneObject(
 					"select * from " + Dm_category.TableName + " where category_id=?",
 					dm_category.getCategory_id());
-			Map<String, Object> map = new HashMap<>();
+			Set<String> addList = new HashSet<>();
 			if (categoryMap.isEmpty()) {
-				map.put("新增的的分类编号", dm_category.getCategory_num());
-				map.put("新增的的分类名称", dm_category.getCategory_name());
+				addList.add("新增的的分类编号:" + dm_category.getCategory_num());
+				addList.add("新增的的分类名称:" + dm_category.getCategory_name());
+				diffList.add(String.join(",", addList));
 			} else {
 				if (!categoryMap.get("category_num").equals(dm_category.getCategory_num())) {
-					map.put("原分类编号", categoryMap.get("category_num"));
-					map.put("更新后分类编号", dm_category.getCategory_num());
+					addList.add("原分类编号:" + categoryMap.get("category_num"));
+					addList.add("更新后分类编号:" + dm_category.getCategory_num());
 				}
 				if (!categoryMap.get("category_name").equals(dm_category.getCategory_num())) {
-					map.put("原分类名称", categoryMap.get("category_name"));
-					map.put("更新后分类名称", dm_category.getCategory_name());
+					addList.add("原分类名称:" + categoryMap.get("category_name"));
+					addList.add("更新后分类名称:" + dm_category.getCategory_name());
+				}
+				if (!addList.isEmpty()) {
+					diffList.add(String.join(",", addList));
 				}
 			}
-			if (!map.isEmpty()) {
-				categoryDiffList.add(map);
-			}
 		}
-		return categoryDiffList;
+		return diffList;
 	}
 
-	private Set<Map<String, Object>> getDatatableDiffList(List<Dm_datatable> dm_datatables,
-	                                                      List<String> enNameList) {
-		Set<Map<String, Object>> datatableDiffList = new HashSet<>();
+	private Set<String> getDatatableDiff(List<Dm_datatable> dm_datatables,
+	                                     List<String> enNameList) {
+		Set<String> diffSet = new HashSet<>();
 		for (Dm_datatable dm_datatable : dm_datatables) {
-			Map<String, Object> map = new HashMap<>();
 			Map<String, Object> datatableMap = Dbo.queryOneObject(
 					"select * from " + Dm_datatable.TableName + " where datatable_id=?",
 					dm_datatable.getDatatable_id());
+			Set<String> addList = new HashSet<>();
 			if (datatableMap.isEmpty()) {
-				map.put("新增的数据表英文名称", dm_datatable.getDatatable_en_name());
-				map.put("新增的数据表中文名称", dm_datatable.getDatatable_cn_name());
-				map.put("新增的进数方式", StorageType.ofValueByCode(dm_datatable.getStorage_type()));
-				map.put("新增的数据表存储方式", TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
+				addList.add("新增数据表英文名称:" + dm_datatable.getDatatable_en_name());
+				addList.add("新增数据表中文名称:" + dm_datatable.getDatatable_cn_name());
+				addList.add("新增进数方式:" + StorageType.ofValueByCode(dm_datatable.getStorage_type()));
+				addList.add("新增数据表存储方式:" + TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
+				diffSet.add(String.join(",", addList));
 			} else {
 				if (!datatableMap.get("datatable_en_name").equals(dm_datatable.getDatatable_en_name())) {
-					map.put("原数据表英文名称", datatableMap.get("datatable_en_name"));
-					map.put("更新后数据表英文名称", dm_datatable.getDatatable_en_name());
+					addList.add("修改表英文名称:" + datatableMap.get("datatable_en_name")
+							+ "-->" + dm_datatable.getDatatable_en_name());
 					enNameList.add(datatableMap.get("datatable_en_name").toString());
 				}
 				if (!datatableMap.get("datatable_cn_name").equals(dm_datatable.getDatatable_cn_name())) {
-					map.put("原数据表中文名称", datatableMap.get("datatable_cn_name"));
-					map.put("更新后数据表中文名称", dm_datatable.getDatatable_cn_name());
+					addList.add("修改表中文名称:" + datatableMap.get("datatable_cn_name")
+							+ "-->" + dm_datatable.getDatatable_cn_name());
 				}
 				if (!datatableMap.get("storage_type").equals(dm_datatable.getStorage_type())) {
-					map.put("原进数方式", StorageType.ofValueByCode(datatableMap.get("storage_type").toString()));
-					map.put("更新后进数方式", StorageType.ofValueByCode(dm_datatable.getStorage_type()));
+					addList.add("修改进数方式:" + StorageType.ofValueByCode(datatableMap.get("storage_type").toString()) + "-->" +
+							StorageType.ofValueByCode(dm_datatable.getStorage_type()));
 				}
 				if (!datatableMap.get("table_storage").equals(dm_datatable.getTable_storage())) {
-					map.put("原数据表存储方式", TableStorage.ofValueByCode(datatableMap.get("table_storage").toString()));
-					map.put("更新后数据表存储方式", TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
+					addList.add("修改数据表存储方式:" + TableStorage.ofValueByCode(datatableMap.get("table_storage").toString())
+							+ "-->" + TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
+				}
+				if (!addList.isEmpty()) {
+					diffSet.add(String.join(",", addList));
 				}
 			}
-			if (!map.isEmpty()) {
-				datatableDiffList.add(map);
-			}
 		}
-		return datatableDiffList;
+		return diffSet;
 	}
 
-	private Set<Map<String, Object>> getOperationInfoDiffList(List<Dm_operation_info> dm_operation_infos) {
-		Set<Map<String, Object>> operationInfoDiffList = new HashSet<>();
+	private Set<String> getOperationInfoDiff(List<Dm_operation_info> dm_operation_infos) {
+		Set<String> diffSet = new HashSet<>();
 		for (Dm_operation_info dm_operation_info : dm_operation_infos) {
 			Map<String, Object> operationInfoMap = Dbo.queryOneObject(
 					"select * from " + Dm_operation_info.TableName + " where id=?",
 					dm_operation_info.getId());
-			Map<String, Object> map = new HashMap<>();
+			Set<String> addSet = new HashSet<>();
 			if (operationInfoMap.isEmpty()) {
-				map.put("新增的预览sql语句", dm_operation_info.getView_sql());
-				map.put("新增的执行sql语句", dm_operation_info.getExecute_sql());
+				addSet.add("新增的预览sql语句:" + dm_operation_info.getView_sql());
+				addSet.add("新增的执行sql语句:" + dm_operation_info.getExecute_sql());
+				diffSet.add(String.join(",", addSet));
 			} else {
 				if (!operationInfoMap.get("view_sql").equals(dm_operation_info.getView_sql())) {
-					map.put("原预览sql语句", operationInfoMap.get("view_sql"));
-					map.put("更新后预览sql语句", dm_operation_info.getView_sql());
+					addSet.add("原预览sql语句:" + operationInfoMap.get("view_sql").toString());
+					addSet.add("更新后预览sql语句:" + dm_operation_info.getView_sql());
 				}
 				if (!operationInfoMap.get("execute_sql").equals(dm_operation_info.getExecute_sql())) {
-					map.put("原执行sql语句", operationInfoMap.get("execute_sql"));
-					map.put("更新后执行sql语句", dm_operation_info.getExecute_sql());
+					addSet.add("原执行sql语句:" + operationInfoMap.get("execute_sql"));
+					addSet.add("更新后执行sql语句:" + dm_operation_info.getExecute_sql());
+				}
+				if (!addSet.isEmpty()) {
+					diffSet.add(String.join(",", addSet));
 				}
 			}
-			if (!map.isEmpty()) {
-				operationInfoDiffList.add(map);
-			}
+
 		}
-		return operationInfoDiffList;
+		return diffSet;
 	}
 
-	private Set<Map<String, Object>> getDatatableFieldDiffList(List<Datatable_field_info> datatable_field_infos) {
-		Set<Map<String, Object>> datatableFieldDiffList = new HashSet<>();
+	private Set<String> getDatatableFieldDiff(List<Datatable_field_info> datatable_field_infos) {
+		Set<String> diffSet = new HashSet<>();
 		for (Datatable_field_info datatable_field_info : datatable_field_infos) {
 			Map<String, Object> datatableFieldMap = getDatatable_field_info(datatable_field_info.getDatatable_field_id());
-			Map<String, Object> map = new HashMap<>();
+			List<String> diffList = new ArrayList<>();
 			if (datatableFieldMap.isEmpty()) {
-				map.put("新增的字段中文名称", datatable_field_info.getField_en_name());
-				map.put("新增的字段英文名称", datatable_field_info.getField_cn_name());
-				map.put("新增的字段类型", datatable_field_info.getField_type());
-				map.put("新增的映射规则mapping", datatable_field_info.getProcess_mapping());
+				diffList.add("新增的字段中文名称:" + datatable_field_info.getField_en_name());
+				diffList.add("新增的字段英文名称:" + datatable_field_info.getField_cn_name());
+				diffList.add("新增的字段类型:" + datatable_field_info.getField_type());
+				diffList.add("新增的映射规则mapping:" + datatable_field_info.getProcess_mapping());
+				diffSet.add(String.join(",", diffList));
 			} else {
 				if (!datatableFieldMap.get("field_en_name").equals(datatable_field_info.getField_en_name())) {
-					map.put("原字段英文名称", datatableFieldMap.get("field_en_name"));
-					map.put("更新后字段英文名称", datatable_field_info.getField_en_name());
+					diffList.add("原字段英文名称:" + datatableFieldMap.get("field_en_name"));
+					diffList.add("更新后字段英文名称:" + datatable_field_info.getField_en_name());
 				}
 				if (!datatableFieldMap.get("field_cn_name").equals(datatable_field_info.getField_cn_name())) {
-					map.put("原字段中文名称", datatableFieldMap.get("field_cn_name"));
-					map.put("更新后字段中文名称", datatable_field_info.getField_cn_name());
+					diffList.add("原字段中文名称:" + datatableFieldMap.get("field_cn_name"));
+					diffList.add("更新后字段中文名称:" + datatable_field_info.getField_cn_name());
 				}
 				if (!datatableFieldMap.get("field_type").equals(datatable_field_info.getField_type())) {
-					map.put("原字段类型", datatableFieldMap.get("field_type"));
-					map.put("更新后字段类型", datatable_field_info.getField_type());
+					diffList.add("原字段类型:" + datatableFieldMap.get("field_type"));
+					diffList.add("更新后字段类型:" + datatable_field_info.getField_type());
 				}
 				if (!datatableFieldMap.get("process_mapping").equals(datatable_field_info.getProcess_mapping())) {
-					map.put("原映射规则mapping", datatableFieldMap.get("process_mapping"));
-					map.put("更新后映射规则mapping", datatable_field_info.getProcess_mapping());
+					diffList.add("原映射规则mapping:" + datatableFieldMap.get("process_mapping"));
+					diffList.add("更新后映射规则mapping:" + datatable_field_info.getProcess_mapping());
+				}
+				if (!diffList.isEmpty()) {
+					diffSet.add(String.join(",", diffList));
 				}
 			}
-			if (!map.isEmpty()) {
-				datatableFieldDiffList.add(map);
-			}
 		}
-		return datatableFieldDiffList;
+		return diffSet;
 	}
 
 	private Map<String, Object> getDatatable_field_info(long datatable_field_id) {
@@ -2895,36 +2913,40 @@ public class MarketInfoAction extends BaseAction {
 				datatable_field_id);
 	}
 
-	private Set<Map<String, Object>> getRelevantInfoDiffList(List<Dm_relevant_info> dm_relevant_infos) {
-		Set<Map<String, Object>> relevantInfoDiffList = new HashSet<>();
+	private Set<String> getRelevantInfoDiff(List<Dm_relevant_info> dm_relevant_infos) {
+		Set<String> diffSet = new HashSet<>();
 		for (Dm_relevant_info dm_relevant_info : dm_relevant_infos) {
 			Map<String, Object> relevantInfoMap = Dbo.queryOneObject(
 					"select * from " + Dm_relevant_info.TableName + " where rel_id=?",
 					dm_relevant_info.getRel_id());
-			Map<String, Object> map = new HashMap<>();
+			List<String> diffList = new ArrayList<>();
 			if (relevantInfoMap.isEmpty()) {
-				map.put("新增的前置作业", dm_relevant_info.getPre_work());
-				map.put("新增的后置作业", dm_relevant_info.getPost_work());
+				diffList.add("新增的前置作业:" + dm_relevant_info.getPre_work());
+				diffList.add("新增的后置作业:" + dm_relevant_info.getPost_work());
 			} else {
 				if (null != relevantInfoMap.get("pre_work") &&
 						!relevantInfoMap.get("pre_work").equals(dm_relevant_info.getPre_work())) {
-					map.put("原前置作业", relevantInfoMap.get("pre_work"));
-					map.put("更新后前置作业", dm_relevant_info.getPost_work());
+					diffList.add("原前置作业:" + relevantInfoMap.get("pre_work"));
+					diffList.add("更新后前置作业:" + dm_relevant_info.getPost_work());
 				}
 				if (null != relevantInfoMap.get("post_work") &&
 						!relevantInfoMap.get("post_work").equals(dm_relevant_info.getPost_work())) {
-					map.put("原后置作业", relevantInfoMap.get("post_work"));
-					map.put("更新后后置作业", dm_relevant_info.getPost_work());
+					diffList.add("原后置作业:" + relevantInfoMap.get("post_work"));
+					diffList.add("更新后后置作业:" + dm_relevant_info.getPost_work());
+				}
+				if (!diffList.isEmpty()) {
+					diffSet.add(String.join(",", diffList));
 				}
 			}
-			if (!map.isEmpty()) {
-				relevantInfoDiffList.add(map);
-			}
 		}
-		return relevantInfoDiffList;
+		return diffSet;
 	}
 
-	@Method(desc = "作业上下游影响", logicStep = "")
+	@Method(desc = "作业上下游影响", logicStep = "1.根据作业名称查询作业工程" +
+			"2.获取上游作业信息" +
+			"3.获取下游作业信息" +
+			"4.将上游作业信息封装入下游作业中" +
+			"5.按需要展示的格式封装数据并返回")
 	@Param(name = "datatable_en_name", desc = "数据表英文名称", range = "新增数据表时生成")
 	@Return(desc = "返回作业上下级影响数据", range = "无限制")
 	private List<Map<String, Object>> jobUpAndDownInfluences(String datatable_en_name) {
@@ -2933,15 +2955,15 @@ public class MarketInfoAction extends BaseAction {
 		List<Map<String, Object>> influences = new ArrayList<>();
 		if (!etlJobDefs.isEmpty()) {
 			for (Etl_job_def etl_job_def : etlJobDefs) {
-				// 4.获取上游作业信息
+				// 2.获取上游作业信息
 				List<Map<String, Object>> topJobInfoList =
 						EtlJobUtil.topEtlJobDependencyInfo(etl_job_def.getEtl_job(),
 								etl_job_def.getEtl_sys_cd(), Dbo.db()).toList();
-				// 5.获取下游作业信息
+				// 3.获取下游作业信息
 				List<Map<String, Object>> downJobInfoList =
 						EtlJobUtil.downEtlJobDependencyInfo(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
 								Dbo.db()).toList();
-				// 6.将上游作业信息封装入下游作业中
+				// 4.将上游作业信息封装入下游作业中
 				if (!topJobInfoList.isEmpty()) {
 					downJobInfoList.addAll(topJobInfoList);
 				}
@@ -2949,7 +2971,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 		}
 		influences.forEach(map -> map.put("parentid", datatable_en_name));
-		// 7.按需要展示的格式封装数据并返回
+		// 5.按需要展示的格式封装数据并返回
 		Map<String, Object> dataInfo = new HashMap<>();
 		dataInfo.put("id", datatable_en_name);
 		dataInfo.put("isroot", true);
