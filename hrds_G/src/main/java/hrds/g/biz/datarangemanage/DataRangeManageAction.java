@@ -41,7 +41,7 @@ public class DataRangeManageAction extends BaseAction {
 			"4.转换节点数据列表为分叉树列表" +
 			"5.定义返回的分叉树结果Map")
 	@Return(desc = "返回的分叉树结果Map", range = "无限制")
-	public Object searchDataUsageRangeInfoToTreeData() {
+	public List<Node> searchDataUsageRangeInfoToTreeData() {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		TreeConf treeConf = new TreeConf();
 		// 2.配置树不显示文件采集的数据
@@ -49,10 +49,7 @@ public class DataRangeManageAction extends BaseAction {
 		// 3.根据源菜单信息获取节点数据列表
 		List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(TreePageSource.INTERFACE, getUser(),
 				treeConf);
-		// 4.转换节点数据列表为分叉树列表
-		List<Node> interfaceTreeList = NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
-		return JsonUtil.toObjectSafety(interfaceTreeList.toString(), Object.class).orElseThrow(() ->
-				new BusinessException("树数据转换格式失败！"));
+		return NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
 	}
 
 	@Method(desc = "保存数据表数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制")
