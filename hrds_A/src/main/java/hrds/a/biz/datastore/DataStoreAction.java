@@ -875,8 +875,8 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "is_hadoopclient", desc = "是否支持外部表", range = "使用（IsFlag）代码项")
 	@Param(name = "database_type", desc = "数据库类型", range = "使用（DatabaseType）代码项")
 	@Return(desc = "返回根据存储层类型获取数据存储层配置属性key", range = "无限制")
-	public List<String> getAttrKeyByDatabaseType(String store_type, String is_hadoopclient,
-	                                             String database_type) {
+	public Map<String, Object> getAttrKeyByDatabaseType(String store_type, String is_hadoopclient,
+	                                                    String database_type) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		Store_type.ofEnumByCode(store_type);
 		DatabaseType.ofEnumByCode(database_type);
@@ -885,7 +885,9 @@ public class DataStoreAction extends BaseAction {
 		// 3.判断是否支持外部表，如果支持返回外部表对应的属性key
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(is_hadoopclient)) {
 			// 关系型数据库支持外部表获取属性key
-			return storageKeys.get(database_type + "_" + IsFlag.Shi.getCode());
+			List<String> updateStorageKeys = StorageTypeKey.getUpdateFinallyStorageKeys();
+			List<String> keyList = storageKeys.get(database_type + "_" + IsFlag.Shi.getCode());
+			return getAttrKeyByIsFile(updateStorageKeys, keyList);
 		}
 		return null;
 	}
