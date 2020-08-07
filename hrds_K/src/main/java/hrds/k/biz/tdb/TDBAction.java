@@ -54,7 +54,7 @@ public class TDBAction extends BaseAction {
         dbm_normbm_detect.add(Dbo.db());
         //设置并保存对标检测表信息
         for (TdbTableBean tdb_table_bean : tdb_table_bean_s) {
-            String file_id = String.valueOf(tdb_table_bean.getFile_id());
+            String file_id = tdb_table_bean.getFile_id();
             String data_layer = tdb_table_bean.getData_layer();
             //设置对标检测表信息
             Dbm_dtable_info dbm_dtable_info = setDbmDtableInfo(dbm_normbm_detect.getDetect_id(), file_id, data_layer);
