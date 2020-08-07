@@ -36,7 +36,7 @@ public class Dm_datatable_source extends ProjectTableEntity
 	private String own_source_table_name;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
-	@DocBean(name ="source_type",value="数据来源类型(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
+	@DocBean(name ="source_type",value="数据来源类型(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层-废弃<DPL> DML-加工层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
 	private String source_type;
 	@DocBean(name ="datatable_id",value="数据表id:",dataType = Long.class,required = true)
 	private Long datatable_id;

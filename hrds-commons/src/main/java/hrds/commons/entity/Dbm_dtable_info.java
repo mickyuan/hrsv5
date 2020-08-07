@@ -44,7 +44,7 @@ public class Dbm_dtable_info extends ProjectTableEntity
 	private Long detect_id;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;
-	@DocBean(name ="source_type",value="数据来源类型(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
+	@DocBean(name ="source_type",value="数据来源类型(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层-废弃<DPL> DML-加工层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
 	private String source_type;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;

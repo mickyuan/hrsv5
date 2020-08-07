@@ -384,8 +384,8 @@ INSERT INTO CODE_INFO  VALUES ('06', '62', '存储层附件属性', '分区列',
 delete from code_info where ci_sp_class='63';
 INSERT INTO CODE_INFO  VALUES ('ISL', '63', '数据源类型', '贴源层_01', 'DataSourceType');
 INSERT INTO CODE_INFO  VALUES ('DCL', '63', '数据源类型', '贴源层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('DPL', '63', '数据源类型', '加工层', 'DataSourceType');
-INSERT INTO CODE_INFO  VALUES ('DML', '63', '数据源类型', '集市层', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DPL', '63', '数据源类型', '加工层-废弃', 'DataSourceType');
+INSERT INTO CODE_INFO  VALUES ('DML', '63', '数据源类型', '加工层', 'DataSourceType');
 INSERT INTO CODE_INFO  VALUES ('SFL', '63', '数据源类型', '系统层', 'DataSourceType');
 INSERT INTO CODE_INFO  VALUES ('AML', '63', '数据源类型', 'AI模型层', 'DataSourceType');
 INSERT INTO CODE_INFO  VALUES ('DQC', '63', '数据源类型', '管控层', 'DataSourceType');

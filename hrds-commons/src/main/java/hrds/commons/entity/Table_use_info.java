@@ -36,7 +36,7 @@ public class Table_use_info extends ProjectTableEntity
 	private String table_note;
 	@DocBean(name ="use_id",value="表使用ID:",dataType = Long.class,required = true)
 	private Long use_id;
-	@DocBean(name ="table_blsystem",value="数据表所属系统(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
+	@DocBean(name ="table_blsystem",value="数据表所属系统(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层-废弃<DPL> DML-加工层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
 	private String table_blsystem;
 	@DocBean(name ="original_name",value="原始文件名称:",dataType = String.class,required = true)
 	private String original_name;

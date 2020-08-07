@@ -30,6 +30,10 @@ public class Dm_operation_info extends ProjectTableEntity
 		__tmpPKS.add("id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="id",value="信息表id:",dataType = Long.class,required = true)
+	private Long id;
+	@DocBean(name ="view_sql",value="预览sql语句:",dataType = String.class,required = true)
+	private String view_sql;
 	@DocBean(name ="search_name",value="join类型:",dataType = String.class,required = false)
 	private String search_name;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
@@ -42,11 +46,29 @@ public class Dm_operation_info extends ProjectTableEntity
 	private String start_date;
 	@DocBean(name ="end_date",value="结束日期:",dataType = String.class,required = true)
 	private String end_date;
-	@DocBean(name ="id",value="信息表id:",dataType = Long.class,required = true)
-	private Long id;
-	@DocBean(name ="view_sql",value="预览sql语句:",dataType = String.class,required = true)
-	private String view_sql;
 
+	/** 取得：信息表id */
+	public Long getId(){
+		return id;
+	}
+	/** 设置：信息表id */
+	public void setId(Long id){
+		this.id=id;
+	}
+	/** 设置：信息表id */
+	public void setId(String id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(id)){
+			this.id=new Long(id);
+		}
+	}
+	/** 取得：预览sql语句 */
+	public String getView_sql(){
+		return view_sql;
+	}
+	/** 设置：预览sql语句 */
+	public void setView_sql(String view_sql){
+		this.view_sql=view_sql;
+	}
 	/** 取得：join类型 */
 	public String getSearch_name(){
 		return search_name;
@@ -100,27 +122,5 @@ public class Dm_operation_info extends ProjectTableEntity
 	/** 设置：结束日期 */
 	public void setEnd_date(String end_date){
 		this.end_date=end_date;
-	}
-	/** 取得：信息表id */
-	public Long getId(){
-		return id;
-	}
-	/** 设置：信息表id */
-	public void setId(Long id){
-		this.id=id;
-	}
-	/** 设置：信息表id */
-	public void setId(String id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(id)){
-			this.id=new Long(id);
-		}
-	}
-	/** 取得：预览sql语句 */
-	public String getView_sql(){
-		return view_sql;
-	}
-	/** 设置：预览sql语句 */
-	public void setView_sql(String view_sql){
-		this.view_sql=view_sql;
 	}
 }

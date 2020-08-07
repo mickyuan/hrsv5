@@ -36,7 +36,7 @@ public class Dq_failure_table extends ProjectTableEntity
 	private String table_cn_name;
 	@DocBean(name ="table_en_name",value="表英文名:",dataType = String.class,required = true)
 	private String table_en_name;
-	@DocBean(name ="table_source",value="表来源(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
+	@DocBean(name ="table_source",value="表来源(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层-废弃<DPL> DML-加工层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
 	private String table_source;
 	@DocBean(name ="table_meta_info",value="表元信息:",dataType = String.class,required = true)
 	private String table_meta_info;
