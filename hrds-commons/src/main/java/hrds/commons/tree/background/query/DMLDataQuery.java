@@ -14,12 +14,12 @@ import hrds.commons.utils.User;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "集市层(DML)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:17")
+@DocClass(desc = "加工层(DML)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:17")
 public class DMLDataQuery {
 
-    @Method(desc = "获取集市信息", logicStep = "1.如果集市名称不为空,模糊查询获取集市信息")
+    @Method(desc = "获取加工信息", logicStep = "1.如果加工名称不为空,模糊查询获取加工信息")
     @Param(name = "user", desc = "User", range = "登录用户信息")
-    @Return(desc = "集市信息列表", range = "无限制")
+    @Return(desc = "加工信息列表", range = "无限制")
     public static List<Map<String, Object>> getDMLDataInfos(User user) {
         //初始化查询sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -33,37 +33,37 @@ public class DMLDataQuery {
         return Dbo.queryList(asmSql.sql(), asmSql.params());
     }
 
-    @Method(desc = "获取集市信息", logicStep = "1.如果集市名称不为空,模糊查询获取集市信息")
+    @Method(desc = "获取加工信息", logicStep = "1.如果加工名称不为空,模糊查询获取加工信息")
     @Param(name = "user", desc = "User", range = "登录用户信息")
-    @Return(desc = "集市信息列表", range = "无限制")
+    @Return(desc = "加工信息列表", range = "无限制")
     public static List<Map<String, Object>> getDMLCategoryInfos(long data_mart_id) {
         return Dbo.queryList("select * from " + Dm_category.TableName + " where data_mart_id=?", data_mart_id);
     }
 
-    @Method(desc = "获取集市下表信息列表", logicStep = "获取集市下表信息列表")
-    @Param(name = "category_id", desc = "集市分类id,该值唯一", range = "long类型")
+    @Method(desc = "获取加工下表信息列表", logicStep = "获取加工下表信息列表")
+    @Param(name = "category_id", desc = "加工分类id,该值唯一", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getDMLTableInfos(long category_id) {
         return Dbo.queryList("select * from " + Dm_datatable.TableName + " where category_id=?", category_id);
     }
 
-    @Method(desc = "获取集市下表信息", logicStep = "获取集市下表信息")
-    @Param(name = "datatable_id", desc = "集市表id,唯一", range = "String类型")
+    @Method(desc = "获取加工下表信息", logicStep = "获取加工下表信息")
+    @Param(name = "datatable_id", desc = "加工表id,唯一", range = "String类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static Dm_datatable getDMLTableInfo(String datatable_id) {
-        //设置集市表对象
+        //设置加工表对象
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
-        //查询集市表信息
+        //查询加工表信息
         return Dbo.queryOneObject(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where datatable_id" +
-                "=?", dm_datatable.getDatatable_id()).orElseThrow(() -> new BusinessException("获取集市数据表信息的sql失败!"));
+                "=?", dm_datatable.getDatatable_id()).orElseThrow(() -> new BusinessException("获取加工数据表信息的sql失败!"));
     }
 
-    @Method(desc = "获取集市下表的字段信息", logicStep = "获取集市下表的字段信息")
-    @Param(name = "datatable_id", desc = "集市表id,唯一", range = "String类型")
+    @Method(desc = "获取加工下表的字段信息", logicStep = "获取加工下表的字段信息")
+    @Param(name = "datatable_id", desc = "加工表id,唯一", range = "String类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getDMLTableColumns(String datatable_id) {
-        //设置集市表对象
+        //设置加工表对象
         Dm_datatable dm_datatable = new Dm_datatable();
         dm_datatable.setDatatable_id(datatable_id);
         //查询表字段信息

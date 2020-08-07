@@ -28,7 +28,8 @@ public class DataConvertedNodeData {
             map.put("id", o.get("source_id"));
             map.put("label", o.get("datasource_name"));
             map.put("parent_id", Constant.DCL_BATCH);
-            map.put("description", o.get("datasource_name"));
+            map.put("description", "" +
+                    "数据源名称：" + o.get("datasource_name"));
             map.put("data_layer", DataSourceType.DCL.getCode());
             map.put("data_own_type", Constant.DCL_BATCH);
             map.put("data_source_id", o.get("source_id"));
@@ -48,7 +49,9 @@ public class DataConvertedNodeData {
         dclBatchClassifyNode.put("id", dclBatchClassifyInfo.get("classify_id"));
         dclBatchClassifyNode.put("label", dclBatchClassifyInfo.get("classify_name") + "【" + dclBatchClassifyInfo.get("classify_num").toString() + "】");
         dclBatchClassifyNode.put("parent_id", dclBatchClassifyInfo.get("source_id"));
-        dclBatchClassifyNode.put("description", dclBatchClassifyInfo.get("remark"));
+        dclBatchClassifyNode.put("description", "" +
+                "分类名称：" + dclBatchClassifyInfo.get("classify_name") + "\n" +
+                "分类描述：" + (dclBatchClassifyInfo.get("remark")));
         dclBatchClassifyNode.put("data_layer", DataSourceType.DCL.getCode());
         dclBatchClassifyNode.put("data_own_type", Constant.DCL_BATCH);
         dclBatchClassifyNode.put("data_source_id", dclBatchClassifyInfo.get("source_id"));
@@ -105,8 +108,8 @@ public class DataConvertedNodeData {
         return dclBatchTableNodes;
     }
 
-    @Method(desc = "集市层工程信息转换", logicStep = "1.集市层工程信息转换")
-    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    @Method(desc = "加工层工程信息转换", logicStep = "1.加工层工程信息转换")
+    @Param(name = "dmlDataInfos", desc = "加工层工程信息转换", range = "取值范围说明")
     public static List<Map<String, Object>> conversionDMLDataInfos(List<Map<String, Object>> dmlDataInfos) {
         List<Map<String, Object>> dmlDataNodes = new ArrayList<>();
         for (Map<String, Object> dmlDataInfo : dmlDataInfos) {
@@ -116,16 +119,16 @@ public class DataConvertedNodeData {
             map.put("parent_id", DataSourceType.DML.getCode());
             map.put("data_layer", DataSourceType.DML.getCode());
             map.put("description", "" +
-                    "集市编号：" + dmlDataInfo.get("mart_number") + "\n" +
-                    "集市名称：" + dmlDataInfo.get("mart_name") + "\n" +
-                    "集市描述：" + dmlDataInfo.get("mart_desc"));
+                    "加工编号：" + dmlDataInfo.get("mart_number") + "\n" +
+                    "加工名称：" + dmlDataInfo.get("mart_name") + "\n" +
+                    "加工描述：" + dmlDataInfo.get("mart_desc"));
             dmlDataNodes.add(map);
         }
         return dmlDataNodes;
     }
 
-    @Method(desc = "集市层工程下分类信息转换", logicStep = "1.集市层工程下分类信息转换")
-    @Param(name = "dmlDataInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    @Method(desc = "加工层工程下分类信息转换", logicStep = "1.加工层工程下分类信息转换")
+    @Param(name = "dmlDataInfos", desc = "加工层工程信息转换", range = "取值范围说明")
     public static Map<String, Object> conversionDMLCategoryInfos(Map<String, Object> dmlCategoryInfo) {
         Map<String, Object> dmlDataNode = new HashMap<>();
         dmlDataNode.put("id", dmlCategoryInfo.get("category_id"));
@@ -140,9 +143,9 @@ public class DataConvertedNodeData {
         return dmlDataNode;
     }
 
-    @Method(desc = "集市层工程信息下表信息转换",
-            logicStep = "1.集市层工程信息下表信息转换")
-    @Param(name = "dmlTableInfos", desc = "集市层工程信息转换", range = "取值范围说明")
+    @Method(desc = "加工层工程信息下表信息转换",
+            logicStep = "1.加工层工程信息下表信息转换")
+    @Param(name = "dmlTableInfos", desc = "加工层工程信息转换", range = "取值范围说明")
     public static List<Map<String, Object>> conversionDMLTableInfos(List<Map<String, Object>> dmlTableInfos) {
         List<Map<String, Object>> dmlTableNodes = new ArrayList<>();
         for (Map<String, Object> dmlTableInfo : dmlTableInfos) {
