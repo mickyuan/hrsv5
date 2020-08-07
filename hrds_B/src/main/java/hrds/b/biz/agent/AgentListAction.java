@@ -136,11 +136,11 @@ public class AgentListAction extends BaseAction {
 		// 1、判断在当前用户，当前数据源下，agent是否存在
 		Map<String, Object> agentInfo =
 			Dbo.queryOneObject(
-				"select ai.agent_type,ai.agent_id from "
+				"SELECT ai.agent_type,ai.agent_id FROM "
 					+ Data_source.TableName
-					+ " ds  left join "
+					+ " ds JOIN "
 					+ Agent_info.TableName
-					+ " ai on ds.SOURCE_ID = ai.SOURCE_ID  where ds.source_id = ? AND ai.user_id = ? "
+					+ " ai ON ds.source_id = ai.source_id WHERE ds.source_id = ? AND ai.user_id = ? "
 					+ " AND ai.agent_id = ?",
 				sourceId,
 				getUserId(),
@@ -161,7 +161,7 @@ public class AgentListAction extends BaseAction {
 		if (AgentType.ShuJuKu == agentType) {
 			sqlStr =
 				" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID,"
-					+ " gi.source_id source_id"
+					+ " gi.source_id source_id,ds.is_reg,gi.agent_type"
 					+ " FROM "
 					+ Database_set.TableName
 					+ " ds "
@@ -174,7 +174,7 @@ public class AgentListAction extends BaseAction {
 		else if (AgentType.DBWenJian == agentType) {
 			sqlStr =
 				" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID,"
-					+ " gi.source_id source_id"
+					+ " gi.source_id source_id,gi.agent_type"
 					+ " FROM "
 					+ Database_set.TableName
 					+ " ds "
@@ -186,7 +186,7 @@ public class AgentListAction extends BaseAction {
 		// 半结构化采集Agent
 		else if (AgentType.DuiXiang == agentType) {
 			sqlStr =
-				" SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id"
+				" SELECT fs.odc_id id,fs.obj_collect_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id,gi.agent_type"
 					+ " FROM "
 					+ Object_collect.TableName
 					+ " fs "
@@ -198,7 +198,7 @@ public class AgentListAction extends BaseAction {
 		// FtpAgent
 		else if (AgentType.FTP == agentType) {
 			sqlStr =
-				" SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id"
+				" SELECT fs.ftp_id id,fs.ftp_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id,gi.agent_type"
 					+ " FROM "
 					+ Ftp_collect.TableName
 					+ " fs "
@@ -210,7 +210,7 @@ public class AgentListAction extends BaseAction {
 		// 非结构化Agent
 		else if (AgentType.WenJianXiTong == agentType) {
 			sqlStr =
-				" SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id"
+				" SELECT fs.fcs_id id,fs.fcs_name task_name,fs.AGENT_ID AGENT_ID,gi.source_id,gi.agent_type"
 					+ " FROM "
 					+ File_collect_set.TableName
 					+ " fs "
@@ -706,8 +706,8 @@ public class AgentListAction extends BaseAction {
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
 	@Param(name = "is_download", range = "可以为空,默认为不下载", desc = "是否为数据字典下载", nullable = true, valueIfNull = "false")
-	@Param(name = "etl_date", range = "可为空", desc = "任务的跑批日期", nullable = true)
-	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true,valueIfNull = "")
+	@Param(name = "etl_date", range = "可为空", desc = "任务的跑批日期", nullable = true, valueIfNull = "")
+	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true, valueIfNull = "")
 	public void sendJDBCCollectTaskById(long colSetId, String is_download, String etl_date, String sqlParam) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
@@ -1028,7 +1028,7 @@ public class AgentListAction extends BaseAction {
 				+ "       2-4-8、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息"
 				+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
-	@Param(name = "etl_date", desc = "立即执行的跑批日期", range = "如果是立即执行时,此参数不可为空", nullable = true,valueIfNull = "")
+	@Param(name = "etl_date", desc = "立即执行的跑批日期", range = "如果是立即执行时,此参数不可为空", nullable = true, valueIfNull = "")
 	public void sendDBCollectTaskById(long colSetId, String etl_date) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
@@ -1582,7 +1582,7 @@ public class AgentListAction extends BaseAction {
 	}
 
 	//SQL占位的分隔符
-	public String getSqlParamPlaceholder(){
+	public String getSqlParamPlaceholder() {
 
 		return Constant.SQLDELIMITER;
 	}
