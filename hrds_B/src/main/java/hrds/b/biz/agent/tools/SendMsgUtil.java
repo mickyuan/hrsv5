@@ -19,6 +19,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PackUtil;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -306,7 +307,7 @@ public class SendMsgUtil {
 		nullable = true, valueIfNull = "")
 	@Param(name = "is_download", desc = "采集任务数据字典的下载", range = "默认为false,表示不下载", nullable = true, valueIfNull = "false")
 	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
-	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true)
+	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true, valueIfNull = "")
 	public static Object sendDBCollectTaskInfo(Long colSetId, Long agentId, Long userId, String taskInfo,
 		String methodName, String etlDate, String is_download, String sqlParam) {
 		//1、对参数合法性进行校验
@@ -323,21 +324,21 @@ public class SendMsgUtil {
 			throw new BusinessException("向Agent发送数据库采集任务信息时，methodName不能为空");
 		}
 
-		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
-		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
-		logger.debug("准备建立连接，请求的URL为" + url);
-
-		//3、httpClient发送请求并接收响应
-		HttpClient.ResponseValue resVal = new HttpClient()
-			.addData("etlDate", etlDate)
-			.addData("taskInfo", PackUtil.packMsg(taskInfo))
-			.addData("sqlParam", sqlParam)
-			.post(url);
-
 		// 6，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
 		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
 			"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
 			IsFlag.Shi.getCode(), colSetId);
+
+		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
+		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
+		logger.debug("准备建立连接，请求的URL为" + url);
+		logger.info("跑批日期==========================" + etlDate);
+		//3、httpClient发送请求并接收响应
+		HttpClient.ResponseValue resVal = new HttpClient()
+			.addData("etlDate", StringUtils.isBlank(etlDate) ? "" : etlDate)
+			.addData("taskInfo", PackUtil.packMsg(taskInfo))
+			.addData("sqlParam", sqlParam)
+			.post(url);
 
 		//4、根据响应状态码判断响应是否成功
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
