@@ -24,69 +24,43 @@ public class NodeDataConvertedTreeList {
             node.setId(dataRecord.get("id").toString());
             node.setLabel(dataRecord.get("label").toString());
             node.setParent_id(dataRecord.get("parent_id").toString());
-            if (null == dataRecord.get("description")) {
-                node.setDescription("");
-            } else {
+            if (null != dataRecord.get("description")) {
                 node.setDescription(dataRecord.get("description").toString());
             }
-            if (null == dataRecord.get("data_layer")) {
-                node.setData_layer("");
-            } else {
+            if (null != dataRecord.get("data_layer")) {
                 node.setData_layer(dataRecord.get("data_layer").toString());
             }
-            if (null == dataRecord.get("dsl_id")) {
-                node.setDsl_id("");
-            } else {
+            if (null != dataRecord.get("dsl_id")) {
                 node.setDsl_id(dataRecord.get("dsl_id").toString());
             }
-            if (null == dataRecord.get("dsl_store_type")) {
-                node.setDsl_store_type("");
-            } else {
+            if (null != dataRecord.get("dsl_store_type")) {
                 node.setDsl_store_type(dataRecord.get("dsl_store_type").toString());
             }
-            if (null == dataRecord.get("data_own_type")) {
-                node.setData_own_type("");
-            } else {
+            if (null != dataRecord.get("data_own_type")) {
                 node.setData_own_type(dataRecord.get("data_own_type").toString());
             }
-            if (null == dataRecord.get("data_source_id")) {
-                node.setData_source_id("");
-            } else {
+            if (null != dataRecord.get("data_source_id")) {
                 node.setData_source_id(dataRecord.get("data_source_id").toString());
             }
-            if (null == dataRecord.get("agent_id")) {
-                node.setAgent_id("");
-            } else {
+            if (null != dataRecord.get("agent_id")) {
                 node.setAgent_id(dataRecord.get("agent_id").toString());
             }
-            if (null == dataRecord.get("classify_id")) {
-                node.setClassify_id("");
-            } else {
+            if (null != dataRecord.get("classify_id")) {
                 node.setClassify_id(dataRecord.get("classify_id").toString());
             }
-            if (null == dataRecord.get("file_id")) {
-                node.setFile_id("");
-            } else {
+            if (null != dataRecord.get("file_id")) {
                 node.setFile_id(dataRecord.get("file_id").toString());
             }
-            if (null == dataRecord.get("table_name")) {
-                node.setTable_name("");
-            } else {
+            if (null != dataRecord.get("table_name")) {
                 node.setTable_name(dataRecord.get("table_name").toString());
             }
-            if (null == dataRecord.get("original_name")) {
-                node.setOriginal_name("");
-            } else {
+            if (null != dataRecord.get("original_name")) {
                 node.setOriginal_name(dataRecord.get("original_name").toString());
             }
-            if (null == dataRecord.get("hyren_name")) {
-                node.setHyren_name("");
-            } else {
+            if (null != dataRecord.get("hyren_name")) {
                 node.setHyren_name(dataRecord.get("hyren_name").toString());
             }
-            if (null == dataRecord.get("tree_page_source")) {
-                node.setTree_page_source("");
-            } else {
+            if (null != dataRecord.get("tree_page_source")) {
                 node.setTree_page_source(dataRecord.get("tree_page_source").toString());
             }
             nodeMap.put(node.getId(), node);
