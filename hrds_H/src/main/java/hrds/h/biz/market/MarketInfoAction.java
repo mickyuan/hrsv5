@@ -1759,10 +1759,14 @@ public class MarketInfoAction extends BaseAction {
             } else if (ProcessType.ZiZeng == processType) {
                 //这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
                 logger.info("自增不拼接字段");
-            } else if (ProcessType.YingShe == processType || ProcessType.HanShuYingShe == processType) {
+            } else if (ProcessType.YingShe == processType) {
                 sb.append(selectColumnMap.get(field_info.getProcess_mapping().toUpperCase())).append(" as ")
                         .append(field_info.getField_en_name()).append(",");
-            } else if (ProcessType.FenZhuYingShe == processType && flag) {
+            }else if (ProcessType.HanShuYingShe == processType) {
+				//TODO 这里如果函数映射包含函数映射会有问题，待讨论
+				sb.append(field_info.getProcess_mapping()).append(" as ")
+						.append(field_info.getField_en_name()).append(",");
+			} else if (ProcessType.FenZhuYingShe == processType && flag) {
                 //分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
                 sb.append("#{HyrenFenZhuYingShe}").append(",");
                 flag = false;

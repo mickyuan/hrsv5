@@ -43,12 +43,18 @@ public class AgentServerInfo extends AgentBaseAction {
 		linux_nolist.add("/media");
 		linux_nolist.add("/run");
 		linux_nolist.add("/lost+found");
-		linux_nolist.add("/usr/bin");
-		linux_nolist.add("/usr/sbin");
-		linux_nolist.add("/var/cache");
-		linux_nolist.add("/var/crash");
-		linux_nolist.add("/var/lock");
-		linux_nolist.add("/var/run");
+		linux_nolist.add("/usr");
+		linux_nolist.add("/var");
+		linux_nolist.add("/opt");
+		linux_nolist.add("/mnt");
+		linux_nolist.add("/root");
+		linux_nolist.add("/cdrom");
+//		linux_nolist.add("/usr/bin");
+//		linux_nolist.add("/usr/sbin");
+//		linux_nolist.add("/var/cache");
+//		linux_nolist.add("/var/crash");
+//		linux_nolist.add("/var/lock");
+//		linux_nolist.add("/var/run");
 	}
 
 	@Method(desc = "获取当前服务器的时间、日期、操作系统名称、操作系统用户名"
