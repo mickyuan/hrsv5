@@ -139,8 +139,8 @@ public class StartModeConfAction extends BaseAction {
 						+ " where oct.odc_id = ? ORDER BY oct.en_name", odc_id);
 	    /*
 		     5.将表的信息和任务的信息进行组装成作业信息,组合的形式为
-		     作业名的组合形式为 数据源编号_agentID_对象采集设置编号_表名
-		     作业描述的组合形式为 : 数据源名称_agent名称_对象采集任务名称_表中文名
+		     作业名的组合形式为 数据源编号_对象采集设置编号_表名_agentID
+		     作业描述的组合形式为 : 数据源名称_对象采集任务名称_表中文名_agent名称
 	     */
 		tableList.forEach(
 				itemMap -> setObjCollectJobParam(odc_id, itemMap));
@@ -159,20 +159,20 @@ public class StartModeConfAction extends BaseAction {
 		// 1.设置作业名称
 		String pro_name = tableItemMap.get("datasource_number")
 				+ Constant.SPLITTER
-				+ tableItemMap.get("agent_id")
-				+ Constant.SPLITTER
 				+ tableItemMap.get("obj_number")
 				+ Constant.SPLITTER
-				+ tableItemMap.get("en_name");
+				+ tableItemMap.get("en_name")
+				+ Constant.SPLITTER
+				+ tableItemMap.get("agent_id");
 		tableItemMap.put("etl_job", pro_name);
 		// 2.设置作业描述
 		String etl_job_desc = tableItemMap.get("datasource_name")
 				+ Constant.SPLITTER
-				+ tableItemMap.get("agent_name")
-				+ Constant.SPLITTER
 				+ tableItemMap.get("obj_collect_name")
 				+ Constant.SPLITTER
-				+ tableItemMap.get("zh_name");
+				+ tableItemMap.get("zh_name")
+				+ Constant.SPLITTER
+				+ tableItemMap.get("agent_name");
 		tableItemMap.put("etl_job_desc", etl_job_desc);
 		// 3.设置作业参数
 		String pro_para = odc_id
