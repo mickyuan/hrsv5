@@ -30,6 +30,7 @@ INSERT INTO sys_para VALUES ('209', 'agentpath', '/home/hyshf/HRSDATA/agent_down
 INSERT INTO sys_para VALUES ('210', 'controlPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Control-5.0.jar','hrds_b.properties','CONTROL程序jar包地址');
 INSERT INTO sys_para VALUES ('211', 'triggerPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Trigger-5.0.jar', 'hrds_b.properties','TRIGGER程序jar包地址');
 INSERT INTO sys_para VALUES ('212', 'agentDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/hrsagent', 'server.properties', '海云用户默认的安装路径');
+INSERT INTO sys_para VALUES ('213', 'etlDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/etlagent','server.properties', '作业调度默认部署路径');
 -- 接口配置
 INSERT INTO sys_para VALUES ('301', 'restAuthority', '', 'hrds_g.properties', '对于SQL的字段是否使用字段验证');
 INSERT INTO sys_para VALUES ('302', 'restFilePath', '/hyren/HRSDATA/bigdata/restFilePath', 'hrds_g.properties', '接口数据文件的存放路径');
