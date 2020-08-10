@@ -47,8 +47,9 @@ public class ETLAgentDeployment {
 	@Param(name = "userName", desc = "ETL部署agent机器的用户名", range = "服务器用户名")
 	@Param(name = "password", desc = "ETL部署agent机器的密码", range = "服务器密码")
 	@Param(name = "targetDir", desc = "ETL部署服务器目录地址", range = "无限制")
+	@Param(name = "old_deploy_path", desc = "上次ETL部署服务器目录地址", range = "无限制")
 	public static void scpETLAgent(String etl_sys_cd, String etl_serv_ip, String etl_serv_port, String userName,
-	                               String password, String targetDir) {
+	                               String password, String targetDir, String old_deploy_path) {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
 			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
@@ -79,7 +80,7 @@ public class ETLAgentDeployment {
 			SFTPDetails sftpDetails = new SFTPDetails();
 			// 9.设置部署所需参数
 			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir,
-					hadoopConf, tmp_conf_path, sftpDetails);
+					hadoopConf, tmp_conf_path, old_deploy_path, sftpDetails);
 			// 10.开始部署ETL工程
 			SCPFileSender.etlScpToFrom(sftpDetails);
 			// 11.部署完成后删除本地临时配置文件
@@ -92,7 +93,7 @@ public class ETLAgentDeployment {
 
 	private static void setSFTPDetails(String etl_sys_cd, String etl_serv_ip, String etl_serv_port,
 	                                   String userName, String password, String targetDir, String hadoopConf,
-	                                   String tmp_conf_path, SFTPDetails sftpDetails) {
+	                                   String tmp_conf_path, String old_deploy_path, SFTPDetails sftpDetails) {
 		sftpDetails.setHost(etl_serv_ip);
 		// 部署agent服务器用户名
 		sftpDetails.setUser_name(userName);
@@ -106,6 +107,8 @@ public class ETLAgentDeployment {
 		sftpDetails.setTarget＿dir(targetDir + SEPARATOR + etl_sys_cd + SEPARATOR);
 		// 临时存放配置文件路径
 		sftpDetails.setTmp_conf_path(tmp_conf_path);
+		// 旧的部署目录
+		sftpDetails.setOld_deploy_dir(old_deploy_path);
 	}
 
 	@Method(desc = "启动Control",
