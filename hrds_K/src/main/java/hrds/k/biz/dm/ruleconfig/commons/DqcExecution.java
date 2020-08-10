@@ -19,12 +19,16 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.k.biz.dm.ruleconfig.bean.SysVarCheckBean;
 import hrds.k.biz.utils.CheckBeanUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @DocClass(desc = "数据管控-数据质量执行用到的类", author = "BY-HLL", createdate = "2020/4/10 0010 上午 10:41")
 public class DqcExecution {
+
+    private static final Logger logger = LogManager.getLogger();
 
     @Method(desc = "执行规则调用方法", logicStep = "执行规则调用方法")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体", isBean = true)
@@ -122,6 +126,7 @@ public class DqcExecution {
             } catch (Exception e) {
                 has_exception = Boolean.TRUE;
                 //规则级别为严重,且发生了异常
+                logger.info("规则级别为严重，且发生了异常：" + e.getMessage());
                 dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
                 dq_result.setDl_stat(DqcDlStat.DengDaiChuLi.getCode());
                 dq_result.setErrno(e.getMessage());
@@ -130,13 +135,17 @@ public class DqcExecution {
                     dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
                 }
             }
+            //保存本次的检查结果
+            dq_result.add(db);
+            db.commit();
             //如果规则级别是严重且发生了异常，则在记录异常信息后异常退出
             if (EdRuleLevel.YanZhong.getCode().equals(dq_rule_level) && has_exception) {
                 //如果是手工执行抛异常
                 if (DqcExecMode.ShouGong.getCode().equals(exec_method)) {
-                    throw new BusinessException("规则级别为严重，且发生了异常");
+                    throw new BusinessException("手动执行,规则级别为严重，且发生了异常");
                 } else {
                     //作业调度执行,规则级别为严重，且发生了异常，退出
+                    logger.info("作业调度执行,规则级别为严重，且发生了异常，退出,状态码为: -1");
                     System.exit(-1);
                 }
             }
@@ -144,9 +153,6 @@ public class DqcExecution {
             if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
                 recordIndicator3Data(dq_result, beans);
             }
-            //保存检查结果
-            dq_result.add(db);
-            db.commit();
         }
         return dq_result.getTask_id();
     }
