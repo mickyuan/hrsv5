@@ -6,6 +6,7 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,11 +53,14 @@ public class SCPFileSender {
 //			String hadoopConf = sftpDetails.getHADOOP_CONF(); // 集群conf配置文件
 			String targetDir = sftpDetails.getTarget＿dir(); // 目标路径
 			String tmp_conf_path = sftpDetails.getTmp_conf_path(); // 存放临时文件路径
+			String old_deploy_dir = sftpDetails.getOld_deploy_dir(); // 存放临时文件路径
 
 			// 部署前先删除原来的目录
 			shellSession = SFTPChannel.getJSchSession(sftpDetails, 0);
-			SFTPChannel.execCommandByJSch(shellSession, "rm -rf " + targetDir);
-			logger.info("###########是否之前部署过，如果目录存在先删除###########");
+			if (StringUtils.isNotBlank(old_deploy_dir)) {
+				SFTPChannel.execCommandByJSch(shellSession, "rm -rf " + old_deploy_dir);
+				logger.info("###########是否之前部署过，如果目录存在先删除###########");
+			}
 			SFTPChannel.execCommandByJSch(shellSession, "mkdir -p " + targetDir);
 			logger.info("###########建立etl工程部署存放目录###########");
 			// 创建etl工程远程目录

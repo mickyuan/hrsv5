@@ -37,6 +37,19 @@ public class SFTPDetails {
 	 */
 	private String target＿dir;
 	/**
+	 * 旧的目标路径
+	 */
+	private String old_deploy_dir;
+
+	public String getOld_deploy_dir() {
+		return old_deploy_dir;
+	}
+
+	public void setOld_deploy_dir(String old_deploy_dir) {
+		this.old_deploy_dir = old_deploy_dir;
+	}
+
+	/**
 	 * redis配置文件
 	 */
 	private String redis_info;
