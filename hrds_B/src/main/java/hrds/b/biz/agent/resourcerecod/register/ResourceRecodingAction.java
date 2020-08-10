@@ -214,7 +214,9 @@ public class ResourceRecodingAction extends BaseAction {
 		// 11、校验agent_id不能为空
 		Validator.notNull(databaseSet.getAgent_id(), "保存贴源登记信息时必须关联Agent信息不能为空");
 		// 12、校验存储层ID不能为空
-		Validator.notNull(databaseSet.getDsl_id(), "保存贴源登记信息时存储层信息不能为空");
+		if (databaseSet.getDsl_id() == 0) {
+			CheckParam.throwErrorMsg("保存贴源登记信息时存储层信息不能为空");
+		}
 	}
 
 }
