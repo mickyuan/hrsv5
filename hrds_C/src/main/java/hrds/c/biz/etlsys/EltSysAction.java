@@ -23,6 +23,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.*;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -58,7 +59,15 @@ public class EltSysAction extends BaseAction {
 	public Etl_sys searchEtlSysById(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// 2.根据工程编号查询工程信息
-		return ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
+		Etl_sys etl_sys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
+		// 系统默认作业部署路径
+		String etlDeployPath = PropertyParaValue.getString("etlDeployPath", "/home/hyshf/");
+		if (StringUtils.isBlank(etl_sys.getServ_file_path()) ||
+				etl_sys.getServ_file_path().equals(etlDeployPath)) {
+			// 部署路径等于默认路径或者部署路径不为空即新增设置路径为空
+			etl_sys.setServ_file_path("");
+		}
+		return etl_sys;
 	}
 
 	@Method(
@@ -146,20 +155,30 @@ public class EltSysAction extends BaseAction {
 					+ "4.部署成功，更新用户信息")
 	@Param(name = "etl_sys_cd", desc = "作业调度工程登记表主键ID", range = "新增工程时生成")
 	@Param(name = "etl_serv_ip", desc = "ETL部署Agent服务器IP", range = "新增工程时生成")
-	@Param(name = "serv_file_path", desc = "ETL部署Agent服务器部署路径", range = "无限制")
+	@Param(name = "serv_file_path", desc = "ETL服务器部署路径", range = "目录为自定义时传值", nullable = true)
 	@Param(name = "user_name", desc = "ETL部署Agent服务器用户名", range = "无限制")
 	@Param(name = "user_pwd", desc = "ETL部署Agent服务器密码", range = "无限制")
+	@Param(name = "isCustomize", desc = "部署目录是否自定义", range = "使用IsFlag代码项，0-代表默认，1-代表自定义")
 	public void deployEtlJobScheduleProject(String etl_sys_cd, String etl_serv_ip, String serv_file_path,
-	                                        String user_name, String user_pwd) {
+	                                        String user_name, String user_pwd, String isCustomize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.判断系统是否正在运行中，如果正在运行中不允许部署
 		Etl_sys etlSys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能部署");
 		}
+		if (IsFlag.Fou == IsFlag.ofEnumByCode(isCustomize)) {
+			// 默认
+			serv_file_path = PropertyParaValue.getString("etlDeployPath", "/home/hyshf/");
+		} else {
+			// 部署目录选择自定义时不能为空
+			Validator.notBlank(serv_file_path, "部署目录选择自定义时不能为空，请检查");
+		}
+		// 格式化路径
+		serv_file_path = FilenameUtils.normalize(serv_file_path);
 		// 3.部署作业工程
 		ETLAgentDeployment.scpETLAgent(etl_sys_cd, etl_serv_ip, Constant.SFTP_PORT, user_name, user_pwd,
-				serv_file_path);
+				serv_file_path, etlSys.getServ_file_path());
 		String redisIP = PropertyParaValue.getString("redis_ip", "172.168.0.61");
 		String redisPort = PropertyParaValue.getString("redis_port", "56379");
 		Etl_sys etl_sys = new Etl_sys();
