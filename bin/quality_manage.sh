@@ -4,8 +4,6 @@
 JRE_DIRECTORY=$(dirname $(pwd))
 # Shell script execution directory
 SH_EXEC_DIR=$(cd $(dirname $0); pwd)
-# Shell name
-SH_NAME="rule_cmd_execute.sh"
 # MainClass
 MainClass="hrds.k.biz.RuleCMDExecute"
 # Depend on jar package
@@ -19,7 +17,7 @@ verify_date="${2}"
 # 脚本运行入口
 ## 参数1  规则编号 10000001
 ## 参数2  验证日期 20200202
-## 使用方式 sh rule_cmd_execute.sh 10000001 20200202
+## 使用方式 sh quality_manage.sh 10000001 20200202
 ## 返回状态码说明 {0: 执行成功; 1: 参数不合法; -1: 执行失败; 2: 根据规则编号没有找到对应的规则}
 main(){
     # if no parameter is passed to script then show how to use.
