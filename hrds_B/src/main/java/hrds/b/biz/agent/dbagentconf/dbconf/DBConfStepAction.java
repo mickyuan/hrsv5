@@ -396,6 +396,19 @@ public class DBConfStepAction extends BaseAction {
 	public long saveDbConf(Database_set databaseSet) {
 		// 1、调用方法对传入数据的合法性进行校验
 		verifyDatabaseSetEntity(databaseSet);
+
+		// 校验作业编号是否唯一
+		if (StringUtil.isNotBlank(databaseSet.getDatabase_number())) {
+			long val =
+				Dbo.queryNumber(
+					"select count(1) from " + Database_set.TableName + " where database_number = ?",
+					databaseSet.getDatabase_number())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
+			if (val != 0) {
+				throw new BusinessException("任务编号重复，请重新定义作业编号");
+			}
+		}
+
 		// 2、获取实体中的database_id
 		if (databaseSet.getDatabase_id() != null) {
 			// 3、如果存在，则更新信息
@@ -414,16 +427,6 @@ public class DBConfStepAction extends BaseAction {
 			databaseSet.update(Dbo.db());
 		} else {
 			// 4、如果不存在，则新增信息
-			// 校验作业编号是否唯一
-			long val =
-				Dbo.queryNumber(
-					"select count(1) from " + Database_set.TableName + " where database_number = ?",
-					databaseSet.getDatabase_number())
-					.orElseThrow(() -> new BusinessException("SQL查询错误"));
-			if (val != 0) {
-				throw new BusinessException("任务编号重复，请重新定义作业编号");
-			}
-
 			long id = PrimayKeyGener.getNextId();
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
@@ -593,10 +596,10 @@ public class DBConfStepAction extends BaseAction {
 			throw new BusinessException("保存数据库配置信息时分类信息不能为空");
 		}
 		// 3、校验作业编号不为能空，并且长度不能超过10
-		if (StringUtil.isBlank(databaseSet.getDatabase_number())
-			|| databaseSet.getDatabase_number().length() > 10) {
-			throw new BusinessException("保存数据库配置信息时作业编号不为能空，并且长度不能超过10");
-		}
+//		if (StringUtil.isBlank(databaseSet.getDatabase_number())
+//			|| databaseSet.getDatabase_number().length() > 10) {
+//			throw new BusinessException("保存数据库配置信息时作业编号不为能空，并且长度不能超过10");
+//		}
 		// 4、校验数据库驱动不能为空
 		if (StringUtil.isBlank(databaseSet.getDatabase_drive())) {
 			throw new BusinessException("保存数据库配置信息时数据库驱动不能为空");

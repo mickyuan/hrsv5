@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
@@ -123,13 +124,15 @@ public class ResourceRecodingAction extends BaseAction {
 			CheckParam.throwErrorMsg("任务名称(%s)重复，请重新定义任务名称", databaseSet.getTask_name());
 		}
 		//3: 检查作业编号不能重复
-		val =
-			Dbo.queryNumber(
-				"SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_number = ?",
-				databaseSet.getDatabase_number())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
-		if (val != 0) {
-			CheckParam.throwErrorMsg("作业编号(%s)重复，请重新定义作业编号", databaseSet.getDatabase_number());
+		if (StringUtil.isNotBlank(databaseSet.getDatabase_number())) {
+			val =
+				Dbo.queryNumber(
+					"SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_number = ?",
+					databaseSet.getDatabase_number())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
+			if (val != 0) {
+				CheckParam.throwErrorMsg("作业编号(%s)重复，请重新定义作业编号", databaseSet.getDatabase_number());
+			}
 		}
 		databaseSet.setDatabase_id(PrimayKeyGener.getNextId());
 		databaseSet.setIs_reg(IsFlag.Shi.getCode());
@@ -164,13 +167,15 @@ public class ResourceRecodingAction extends BaseAction {
 			CheckParam.throwErrorMsg("任务名称(%s)重复，请重新定义任务名称", databaseSet.getTask_name());
 		}
 		// 3: 检查作业编号不能重复
-		val =
-			Dbo.queryNumber(
-				"SELECT COUNT(1) from " + Database_set.TableName + " WHERE database_number = ? AND database_id != ?",
-				databaseSet.getDatabase_number(), databaseSet.getDatabase_id())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
-		if (val != 0) {
-			CheckParam.throwErrorMsg("作业编号(%s)重复，请重新定义作业编号", databaseSet.getDatabase_number());
+		if (StringUtil.isNotBlank(databaseSet.getDatabase_number())) {
+			val =
+				Dbo.queryNumber(
+					"SELECT COUNT(1) from " + Database_set.TableName + " WHERE database_number = ? AND database_id != ?",
+					databaseSet.getDatabase_number(), databaseSet.getDatabase_id())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
+			if (val != 0) {
+				CheckParam.throwErrorMsg("作业编号(%s)重复，请重新定义作业编号", databaseSet.getDatabase_number());
+			}
 		}
 		//4: 更新此次任务
 		try {
@@ -190,8 +195,8 @@ public class ResourceRecodingAction extends BaseAction {
 		DatabaseType.ofEnumByCode(databaseSet.getDatabase_type());
 		// 2、校验classify_id不能为空
 		Validator.notNull(databaseSet.getClassify_id(), "保存贴源登记信息时分类信息不能为空");
-		// 3、校验作业编号不为能空，并且长度不能超过10
-		Validator.notBlank(databaseSet.getDatabase_number(), "保存贴源登记信息时作业编号不为能空，并且长度不能超过10");
+//		// 3、校验作业编号不为能空，并且长度不能超过10
+//		Validator.notBlank(databaseSet.getDatabase_number(), "保存贴源登记信息时作业编号不为能空，并且长度不能超过10");
 		// 4、校验数据库驱动不能为空
 		Validator.notBlank(databaseSet.getDatabase_drive(), "保存贴源登记信息时数据库驱动不能为空");
 //		// 5、校验数据库名称不能为空

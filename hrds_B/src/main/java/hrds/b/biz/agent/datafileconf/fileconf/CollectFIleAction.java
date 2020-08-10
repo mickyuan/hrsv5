@@ -83,7 +83,7 @@ public class CollectFIleAction extends BaseAction {
 	@Param(name = "database_set", desc = "数据文件的配置实体", range = "不可为空", isBean = true)
 	@Return(desc = "返回此次任务的ID", range = "不会为空")
 	public String saveDataFile(Database_set database_set) {
-		CheckParam.checkData("采集任务作业编号不能为空", database_set.getDatabase_number());
+//		CheckParam.checkData("采集任务作业编号不能为空", database_set.getDatabase_number());
 		CheckParam.checkData("采集任务名称不能为空", database_set.getTask_name());
 		CheckParam.checkData("采集数据文件路径不能为空", database_set.getPlane_url());
 		CheckParam.checkData("分类编号不能为空", String.valueOf(database_set.getClassify_id()));
@@ -154,6 +154,7 @@ public class CollectFIleAction extends BaseAction {
 	}
 
 	void checkDatabaseInfo(Database_set database_set) {
+
 		//    1: 检查数据编号是否存在
 		Assembler assembler = Assembler.newInstance()
 			.addSql("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE task_name = ? ");
@@ -169,16 +170,17 @@ public class CollectFIleAction extends BaseAction {
 
 		//清理SQL
 		assembler.clean();
-
-		assembler.addSql("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_number = ? ")
-			.addParam(database_set.getDatabase_number());
-		if (database_set.getDatabase_id() != null) {
-			assembler.addSql(" AND database_id != ?").addParam(database_set.getDatabase_id());
-		}
-		countNum =
-			Dbo.queryNumber(assembler.sql(), assembler.params()).orElseThrow(() -> new BusinessException("SQL查询异常"));
-		if (countNum == 1) {
-			CheckParam.throwErrorMsg("采集作业编号(%s),已经存在", database_set.getDatabase_number());
+		if (StringUtil.isNotBlank(database_set.getDatabase_number())) {
+			assembler.addSql("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_number = ? ")
+				.addParam(database_set.getDatabase_number());
+			if (database_set.getDatabase_id() != null) {
+				assembler.addSql(" AND database_id != ?").addParam(database_set.getDatabase_id());
+			}
+			countNum =
+				Dbo.queryNumber(assembler.sql(), assembler.params()).orElseThrow(() -> new BusinessException("SQL查询异常"));
+			if (countNum == 1) {
+				CheckParam.throwErrorMsg("采集作业编号(%s),已经存在", database_set.getDatabase_number());
+			}
 		}
 	}
 }
