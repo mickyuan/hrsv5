@@ -135,13 +135,13 @@ public class StartWayConfAction extends BaseAction {
 		String pro_name =
 			databaseMap.get("datasource_number")
 				+ Constant.SPLITTER
-				+ databaseMap.get("agent_id")
-				+ Constant.SPLITTER
 				+ databaseMap.get("classify_num")
 				+ Constant.SPLITTER
 				+ tableItemMap.get("table_name")
 				+ Constant.SPLITTER
 				+ dbfile_format;
+//				+ Constant.SPLITTER
+//				+ databaseMap.get("agent_id");
 		tableItemMap.put("etl_job", pro_name);
 		// 作业描述
 		String etl_job_desc =
@@ -194,7 +194,7 @@ public class StartWayConfAction extends BaseAction {
 		// 2: 查询任务的配置信息
 		return Dbo.queryOneObject(
 			"select t1.database_id,t4.datasource_number,t4.datasource_name,t3.agent_id,"
-				+ "t3.agent_name,t2.classify_num,t3.agent_type,t2.classify_name from "
+				+ "t3.agent_name,t2.classify_num,t3.agent_type,t2.classify_name,t1.task_name from "
 				+ Database_set.TableName
 				+ " t1 JOIN "
 				+ Collect_job_classify.TableName
