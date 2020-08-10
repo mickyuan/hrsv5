@@ -5,10 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.CodecUtil;
-import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
-import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.*;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
@@ -20,48 +17,20 @@ import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AuthType;
 import hrds.commons.codes.UserType;
-import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Column_clean;
-import hrds.commons.entity.Column_merge;
-import hrds.commons.entity.Column_split;
-import hrds.commons.entity.Data_auth;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
-import hrds.commons.entity.Department_info;
-import hrds.commons.entity.File_collect_set;
-import hrds.commons.entity.File_source;
-import hrds.commons.entity.Ftp_collect;
-import hrds.commons.entity.Ftp_transfered;
-import hrds.commons.entity.Object_collect;
-import hrds.commons.entity.Object_collect_struct;
-import hrds.commons.entity.Object_collect_task;
-import hrds.commons.entity.Signal_file;
-import hrds.commons.entity.Source_file_attribute;
-import hrds.commons.entity.Source_relation_dep;
-import hrds.commons.entity.Sys_user;
-import hrds.commons.entity.Table_clean;
-import hrds.commons.entity.Table_column;
-import hrds.commons.entity.Table_info;
-import hrds.commons.entity.Table_storage_info;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.servlet.http.HttpServletResponse;
 
 @DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-9-20 09:23:06")
 public class DataSourceAction extends BaseAction {
@@ -235,9 +204,10 @@ public class DataSourceAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，新增时会设置创建用户ID，会获取当前用户ID，所以不需要权限验证" +
 					"2.字段合法性检查" +
 					"3.新增前查询数据源编号是否已存在" +
-					"4.对data_source初始化一些非页面传值" +
-					"5.保存data_source信息" +
-					"6.保存source_relation_dep信息")
+					"4.判断数据源名称是否已存在" +
+					"5.对data_source初始化一些非页面传值" +
+					"6.保存data_source信息" +
+					"7.保存source_relation_dep信息")
 	@Param(name = "dataSource", desc = "data_source表实体对象", range = "与data_source表字段规则一致",
 			isBean = true)
 	@Param(name = "dep_id", desc = "存储source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
@@ -247,7 +217,9 @@ public class DataSourceAction extends BaseAction {
 		fieldLegalityValidation(dataSource.getDatasource_name(), dataSource.getDatasource_number(), dep_id);
 		// 3.新增前查询数据源编号是否已存在
 		isExistDataSourceNumber(dataSource.getDatasource_number());
-		// 4.对data_source初始化一些非页面传值
+		// 4.判断数据源名称是否已存在
+		isExistDataSourceName(dataSource.getDatasource_name());
+		// 5.对data_source初始化一些非页面传值
 		// 数据源主键ID
 		dataSource.setSource_id(PrimayKeyGener.getNextId());
 		// 数据源创建用户
@@ -256,9 +228,9 @@ public class DataSourceAction extends BaseAction {
 		dataSource.setCreate_date(DateUtil.getSysDate());
 		// 数据源创建时间
 		dataSource.setCreate_time(DateUtil.getSysTime());
-		// 5.保存data_source信息
+		// 6.保存data_source信息
 		dataSource.add(Dbo.db());
-		// 6.保存source_relation_dep信息
+		// 7.保存source_relation_dep信息
 		saveSourceRelationDep(dataSource.getSource_id(), dep_id);
 	}
 
@@ -273,7 +245,7 @@ public class DataSourceAction extends BaseAction {
 			range = "10位数字,新增时生成")
 	@Param(name = "source_remark", desc = "备注，source_relation_dep表外键", range = "无限制", nullable = true)
 	@Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
-	@Param(name = "datasource_number", desc = "数据源编号", range = "以字母开头的不超过四位数的字母数字组合")
+	@Param(name = "datasource_number", desc = "数据源编号", range = "以字母开头的数字、26个英文字母或者下划线组成的字符串")
 	@Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
 	public void updateDataSource(Long source_id, String source_remark, String datasource_name,
 	                             String datasource_number, long[] dep_id) {
@@ -281,26 +253,38 @@ public class DataSourceAction extends BaseAction {
 		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName +
 				" where source_id=? and create_user_id=?", source_id, getUserId())
 				.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
-			throw new BusinessException("数据权限校验失败，数据不可访问！");
+			throw new BusinessException("数据权限校验失败，该用户对应数据源不存在！");
 		}
 		// 2.字段合法性检查
-		fieldLegalityValidation(datasource_name, datasource_number, dep_id);
-		// 3.将data_source实体数据封装
-		Data_source dataSource = new Data_source();
-		dataSource.setSource_id(source_id);
-		dataSource.setDatasource_name(datasource_name);
-		dataSource.setDatasource_number(datasource_number);
-		dataSource.setSource_remark(source_remark);
-		// 4.更新数据源信息
-		dataSource.update(Dbo.db());
-		// 5.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
-		int num = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?",
-				dataSource.getSource_id());
-		if (num < 1) {
-			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误，" +
-					"sourceId=" + dataSource.getSource_id());
+		Data_source data_source = Dbo.queryOneObject(Data_source.class,
+				"select * from " + Data_source.TableName + " where source_id=?",
+				source_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误或者数据映射实体错误"));
+		if (!datasource_number.equals(data_source.getDatasource_number())) {
+			throw new BusinessException("编辑时数据源编号不能被修改");
 		}
-		// 6.保存source_relation_dep表信息
+		fieldLegalityValidation(datasource_name, datasource_number, dep_id);
+		// 3.判断数据源名称是否存在更新数据源信息
+		if (data_source.getDatasource_name().equals(datasource_name)) {
+			// 数据源名称未发生改变，只更新数据源描述
+			Dbo.execute("update " + Data_source.TableName + " set source_remark=? where source_id=?",
+					source_remark, source_id);
+		} else {
+			// 数据源名称发生改变,判断数据源名称是否已存在
+			isExistDataSourceName(datasource_name);
+			// 更新数据源描述与数据源名称
+			Dbo.execute(
+					"update " + Data_source.TableName + " set source_remark=?,datasource_name=? " +
+							" where source_id=?",
+					source_remark, datasource_name, source_id);
+		}
+		// 4.先删除数据源与部门关系信息,删除几条数据不确定，一个数据源对应多个部门，所以不能用DboExecute
+		int num = Dbo.execute("delete from " + Source_relation_dep.TableName + " where source_id=?",
+				source_id);
+		if (num < 1) {
+			throw new BusinessException("编辑时会先删除原数据源与部门关系信息，删除错旧关系时错误");
+		}
+		// 5.保存source_relation_dep表信息
 		saveSourceRelationDep(source_id, dep_id);
 	}
 
@@ -312,7 +296,7 @@ public class DataSourceAction extends BaseAction {
 					"3.验证datasource_name是否合法" +
 					"4.验证datasource_number为以字母开头的数字、26个英文字母或者下划线组成的字符串")
 	@Param(name = "datasource_name", desc = "数据源名称", range = "不为空且不为空格")
-	@Param(name = "datasource_umber", desc = "数据源编号", range = "不为空且不为空格，长度不超过四位")
+	@Param(name = "datasource_umber", desc = "数据源编号", range = "以字母开头的数字、26个英文字母或者下划线组成的字符串")
 	@Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
 	private void fieldLegalityValidation(String datasource_name, String datasource_umber, long[] dep_id) {
 		// 1.数据可访问权限处理方式，通过create_user_id检查
@@ -326,14 +310,11 @@ public class DataSourceAction extends BaseAction {
 			isExistDepartment(depId);
 		}
 		// 3.验证datasource_name是否合法
-		if (StringUtil.isBlank(datasource_name)) {
-			throw new BusinessException("数据源名称不能为空以及不能为空格，datasource_name=" + datasource_name);
-		}
+		Validator.notBlank(datasource_name, "数据源名称不能为空以及不能为空格");
 		// 4.验证datasource_number为以字母开头的数字、26个英文字母或者下划线组成的字符串
-		Matcher matcher = Pattern.compile("^[a-zA-Z]\\w+$").matcher(datasource_umber);
+		Matcher matcher = Pattern.compile("^[a-zA-Z]\\w*$").matcher(datasource_umber);
 		if (StringUtil.isBlank(datasource_umber) || !matcher.matches()) {
-			throw new BusinessException("数据源编号只能是以字母开头的不超过四位数的字母数字组合，"
-					+ "datasource_number=" + datasource_umber);
+			throw new BusinessException("数据源编号只能是以字母开头的数字、26个英文字母或者下划线组成的字符串:" + datasource_umber);
 		}
 	}
 
@@ -344,10 +325,28 @@ public class DataSourceAction extends BaseAction {
 	private void isExistDataSourceNumber(String datasource_umber) {
 		// 1.数据可访问权限处理方式，通过create_user_id检查
 		// 2.判断数据源编号是否重复
-		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName + " where datasource_number=?"
-				+ " and create_user_id=?", datasource_umber, getUserId()).orElseThrow(() ->
-				new BusinessException("sql查询错误！")) > 0) {
-			throw new BusinessException("数据源编号重复,datasource_number=" + datasource_umber);
+		if (Dbo.queryNumber(
+				"select count(1) from " + Data_source.TableName
+						+ " where datasource_number=? and create_user_id=?",
+				datasource_umber, getUserId())
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+			throw new BusinessException("数据源编号已存在:" + datasource_umber);
+		}
+	}
+
+	@Method(desc = "判断数据源名称是否已存在",
+			logicStep = "1.数据可访问权限处理方式，通过create_user_id检查" +
+					"2.判断数据源名称是否重复")
+	@Param(name = "datasource_name", desc = "数据源名称", range = "不能重复")
+	private void isExistDataSourceName(String datasource_name) {
+		// 1.数据可访问权限处理方式，通过create_user_id检查
+		// 2.判断数据源名称是否重复
+		if (Dbo.queryNumber(
+				"select count(1) from " + Data_source.TableName
+						+ " where datasource_name=? and create_user_id=?",
+				datasource_name, getUserId())
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+			throw new BusinessException("数据源名称已存在:" + datasource_name);
 		}
 	}
 
@@ -451,10 +450,10 @@ public class DataSourceAction extends BaseAction {
 
 		// 1.数据可访问权限处理方式，以下SQL关联sourceId与user_id检查
 		// 2.先查询该datasource下是否还有agent
-		// FIXME: orElse用法有误，逻辑有问题，用orElseThrow  已解决
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? " +
-				" and user_id=?", source_id, getUserId()).orElseThrow(() ->
-				new BusinessException("sql查询错误！")) > 0) {
+		if (Dbo.queryNumber(
+				"SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=? and user_id=?",
+				source_id, getUserId())
+				.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
 			throw new BusinessException("此数据源下还有agent，不能删除,sourceId=" + source_id);
 		}
 		// 3.删除data_source表信息
@@ -466,8 +465,7 @@ public class DataSourceAction extends BaseAction {
 				source_id);
 		if (srdNum < 1) {
 			// 如果数据源存在，那么部门一定存在，所以这里不需要判断等于0的情况
-			throw new BusinessException("删除该数据源下数据源与部门关系表数据错误，sourceId="
-					+ source_id);
+			throw new BusinessException("删除该数据源下数据源与部门关系表数据错误:" + source_id);
 		}
 	}
 
@@ -478,11 +476,11 @@ public class DataSourceAction extends BaseAction {
 	public List<Sys_user> searchDataCollectUser() {
 		// 1.数据可访问权限处理方式，此方法不需要权限验证，没有用户访问限制
 		// 2.查询数据采集用户信息并返回查询结果
-		// FIXME: 为什么用union all以及为什么用like,注释说明      已解决
 		// 一个用户会有多种用户功能类型，默认用户功能只会有一种，我们需要的是用用户功能类型中包含采集用户的所有用户，所以用like
-		return Dbo.queryList(Sys_user.class, "select user_id,user_name from " + Sys_user.TableName + " where dep_id=?"
-						+ " and usertype_group like ? ", getUser().getDepId(),
-				"%" + UserType.CaiJiYongHu.getCode() + "%");
+		return Dbo.queryList(Sys_user.class,
+				"select user_id,user_name from " + Sys_user.TableName
+						+ " where dep_id=? and usertype_group like ? ",
+				getUser().getDepId(), "%" + UserType.CaiJiYongHu.getCode() + "%");
 	}
 
 	@Method(desc = "导入数据源，数据源下载文件提供的文件中涉及到的所有表的数据导入数据库中对应的表中",
