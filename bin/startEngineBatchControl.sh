@@ -35,6 +35,6 @@ nohup ${JRE_DIRECTORY}/jre/linux/${OS_BIT}/jre/bin/java \
     -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 \
     -Dproject.name=hrds_Control \
     -Dproject.dir=${SH_EXEC_DIR} \
-    -jar hrds_Control-5.0.jar \
+    -jar ${SH_EXEC_DIR}/hrds_Control-5.0.jar \
     etl.date=$1 sys.code=$2 -CR=$3 -AS=$4 1>>${LOG_OUT_FILE} 2>>${LOG_ERR_FILE} &
 exit 0
