@@ -34,7 +34,7 @@ public class EtlJobUtil {
 	//调度跑批日期
 	private static final String BATCH_DATE = "#{txdate}";
 	//数据管控-质量管理常量
-	public static final String QUALITY_MANAGE = "quality_manage";
+	public static final String QUALITY_MANAGE = "quality_manage.sh";
 	public static final String MARTPRONAME = "datamart.sh";
 
 	@Method(desc = "保存作业", logicStep = "保存作业")
