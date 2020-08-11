@@ -2,6 +2,8 @@
 
 cd `dirname $0`
 export LANG='zh_CN.UTF-8'
+# Jre directory
+JRE_DIRECTORY=$(dirname $(pwd))
 # shell script execution directory
 SH_EXEC_DIR=$(cd $(dirname $0); pwd)
 # Get system bits
@@ -31,8 +33,8 @@ if [ ! -d $LOG_DIR ]; then
  mkdir -m 755 $LOG_DIR  
 fi
 
-cd ${SH_EXEC_DIR}
+cd ${JRE_DIRECTORY}
 chmod -R 755 jre
-nohup ${SH_EXEC_DIR}/jre/linux/${OS_BIT}/jre/bin/java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -Dproject.name=hrds_Trigger -Dproject.dir=${SH_EXEC_DIR} -jar hrds_Trigger-5.0.jar  sys.code=$1 1>>$LOG_OUT_FILE 2>>$LOG_ERR_FILE &
+nohup ${JRE_DIRECTORY}/jre/linux/${OS_BIT}/jre/bin/java -Dorg.eclipse.jetty.server.Request.maxFormContentSize=99900000 -Dproject.name=hrds_Trigger -Dproject.dir=${SH_EXEC_DIR} -jar hrds_Trigger-5.0.jar  sys.code=$1 1>>$LOG_OUT_FILE 2>>$LOG_ERR_FILE &
 exit 0
 
