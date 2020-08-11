@@ -108,7 +108,7 @@ public class ETLAgentDeployment {
 		// 临时存放配置文件路径
 		sftpDetails.setTmp_conf_path(tmp_conf_path);
 		// 旧的部署目录
-		sftpDetails.setOld_deploy_dir(old_deploy_path);
+		sftpDetails.setOld_deploy_dir(old_deploy_path + SEPARATOR + etl_sys_cd);
 	}
 
 	@Method(desc = "启动Control",
