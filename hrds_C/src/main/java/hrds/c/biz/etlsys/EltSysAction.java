@@ -283,11 +283,11 @@ public class EltSysAction extends BaseAction {
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(isControl)) {
 			// CONTROL日志目录
 			logDir = logDir + "control" + separator + sysDate.substring(0, 4) + separator
-					+ sysDate.substring(0, 6) + separator + sysDate + "ControlOut.log";
+					+ sysDate.substring(0, 6) + separator + sysDate + "_ControlOut.log";
 		} else {
 			// TRIGGER日志目录
 			logDir = logDir + "trigger" + separator + sysDate.substring(0, 4) + separator
-					+ sysDate.substring(0, 6) + separator + sysDate + "TriggerOut.log";
+					+ sysDate.substring(0, 6) + separator + sysDate + "_TriggerOut.log";
 		}
 		// 6.日志读取行数最大为1000行
 		if (readNum > 1000) {
