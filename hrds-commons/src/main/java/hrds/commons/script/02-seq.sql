@@ -1,4 +1,4 @@
-﻿﻿-- 初始值
+﻿-- keytable
 delete from keytable;
 INSERT INTO keytable (key_name,key_value) VALUES ('roleid',20);
 INSERT INTO keytable (key_name,key_value) VALUES ('tellers',50);

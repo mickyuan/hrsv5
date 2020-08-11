@@ -27,10 +27,7 @@ INSERT INTO sys_para VALUES ('206', 'thresholdFileSize', '26214400', 'hrds_b.pro
 INSERT INTO sys_para VALUES ('207', 'isAddOperateInfo', 'true', 'hrds_b.properties','采集是否添加操作时间、操作日期、操作人：true或false');
 INSERT INTO sys_para VALUES ('208', 'isWriteDictionary', 'false', 'hrds_b.properties','每次数据库抽取结束是否写数据字典：true或false');
 INSERT INTO sys_para VALUES ('209', 'agentpath', '/home/hyshf/HRSDATA/agent_download_package/collect/hrds_Agent-5.0.jar', 'hrds_b.properties', '下载agent的文件');
-INSERT INTO sys_para VALUES ('210', 'controlPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Control-5.0.jar','hrds_b.properties','CONTROL程序jar包地址');
-INSERT INTO sys_para VALUES ('211', 'triggerPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Trigger-5.0.jar', 'hrds_b.properties','TRIGGER程序jar包地址');
-INSERT INTO sys_para VALUES ('212', 'agentDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/hrsagent', 'server.properties', '海云用户默认的安装路径');
-INSERT INTO sys_para VALUES ('213', 'etlDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/etlagent','server.properties', '作业调度默认部署路径');
+INSERT INTO sys_para VALUES ('210', 'agentDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/hrsagent', 'hrds_b.properties', '海云用户默认的安装路径');
 -- 接口配置
 INSERT INTO sys_para VALUES ('301', 'restAuthority', '', 'hrds_g.properties', '对于SQL的字段是否使用字段验证');
 INSERT INTO sys_para VALUES ('302', 'restFilePath', '/hyren/HRSDATA/bigdata/restFilePath', 'hrds_g.properties', '接口数据文件的存放路径');
@@ -38,9 +35,13 @@ INSERT INTO sys_para VALUES ('302', 'restFilePath', '/hyren/HRSDATA/bigdata/rest
 INSERT INTO sys_para VALUES ('401', 'load.executor.count', '2', 'hrds_h.properties', '集市并发线程数量，当isconcurrent配置为0时，此配置生效，区间在1~4');
 INSERT INTO sys_para VALUES ('402', 'mpp.batch.size', '5000', 'hrds_h.properties', 'spark通过jdbc写入到数据库，单批次提交的数量');
 INSERT INTO sys_para VALUES ('403', 'isconcurrent', '0', 'hrds_h.properties', '集市是否采用多线程作业，0：是，1：否');
-INSERT INTO sys_para VALUES ('404', 'sysnumber', 2000000, 'hrds_h.properties', '数据表记录阈值,超过时使用spark程序生成文件');
+INSERT INTO sys_para VALUES ('404', 'sysnumber', '2000000', 'hrds_h.properties', '数据表记录阈值,超过时使用spark程序生成文件');
 -- 数据管控配置
 INSERT INTO sys_para VALUES ('501', 'predict_address', 'http://192.168.1.101:38081/predict', 'hrds_k.properties','数据对标-表结构对标预测地址');
+-- 作业配置
+INSERT INTO sys_para VALUES ('601', 'etlDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/etlagent','hrds_c.properties', '作业调度默认部署路径');
+INSERT INTO sys_para VALUES ('602', 'controlPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Control-5.0.jar','hrds_c.properties','CONTROL程序jar包地址');
+INSERT INTO sys_para VALUES ('603', 'triggerPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Trigger-5.0.jar', 'hrds_c.properties','TRIGGER程序jar包地址');
 
 -- 预留配置
 -- INSERT INTO sys_para VALUES ('901', 'availableProcessors', '8', 'server.properties', '多线程采集每个任务可用线程数,这一行默认不用存库，系统默认取最大值');
