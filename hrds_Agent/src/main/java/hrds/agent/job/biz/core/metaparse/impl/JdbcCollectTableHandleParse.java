@@ -38,7 +38,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
-	                                   CollectTableBean collectTableBean) {
+									   CollectTableBean collectTableBean) {
 		if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 			//全量卸数，根据采集的sql获取meta信息。
 			return getFullAmountExtractTableBean(sourceDataConfBean, collectTableBean);
@@ -56,7 +56,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	private TableBean getIncrementExtractTableBean(SourceDataConfBean sourceDataConfBean,
-	                                               CollectTableBean collectTableBean) {
+												   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		//-----------------------------------获取所有列的数据字典信息----------------------------------
 		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
@@ -100,7 +100,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	}
 
 	private void getSqlSearchColumn(SourceDataConfBean sourceDataConfBean,
-	                                CollectTableBean collectTableBean, TableBean tableBean) {
+									CollectTableBean collectTableBean, TableBean tableBean) {
 		//根据实际sql获取新增、删除、更新查询的列
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
@@ -159,7 +159,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	@SuppressWarnings("unchecked")
 	private TableBean getFullAmountExtractTableBean(SourceDataConfBean sourceDataConfBean,
-	                                                CollectTableBean collectTableBean) {
+													CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
@@ -187,6 +187,8 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			// Write header
 			for (int i = 1; i <= numberOfColumns; i++) {
 				String columnTmp = rsMetaData.getColumnName(i);
+				String[] names = columnTmp.split("\\.");
+				columnTmp = names[names.length - 1];
 				int columnType = rsMetaData.getColumnType(i);
 				//TODO 下一行未知
 				if (!columnTmp.equalsIgnoreCase("hyren_rn")) {

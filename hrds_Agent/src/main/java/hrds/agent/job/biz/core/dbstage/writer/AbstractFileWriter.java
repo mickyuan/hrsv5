@@ -7,10 +7,16 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.meta.ColumnMeta;
+import fd.ng.db.meta.TableMeta;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DatabaseType;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -24,10 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.sql.Blob;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,7 +58,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	protected String user_id;
 
 	public AbstractFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                          TableBean tableBean, Data_extraction_def data_extraction_def) {
+							  TableBean tableBean, Data_extraction_def data_extraction_def) {
 		this.resultSet = resultSet;
 		this.collectTableBean = collectTableBean;
 		this.pageNum = pageNum;
@@ -105,7 +108,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * 解析result一行的值
 	 */
 	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
-	                                   int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
+									   int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
 			throws SQLException, IOException {
 		String lobs_file_name = "";
 		String reader2String = "";
@@ -114,7 +117,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			Blob blob = resultSet.getBlob(column_name);
 			if (null != blob) {
 				readerToByte = blobToBytes(blob);
-				if (readerToByte != null && readerToByte.length > 0) {
+				if (readerToByte.length > 0) {
 					lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
 							+ lineCounter + "_BLOB_" + avroWriter.sync();
 					sb_.append(lobs_file_name);
@@ -254,7 +257,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @throws IOException 获取avro文件输出流异常
 	 */
 	protected DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
-	                                               String midName, long pageNum) throws IOException {
+												   String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
 			//TODO 哪些是大字段这里要支持配置
@@ -303,7 +306,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @throws IOException 获取avro文件输出流异常
 	 */
 	protected DataFileWriter<Object> getAvroWriter(Map<String, Integer> typeMap, String hbase_name,
-	                                               String midName, long pageNum) throws IOException {
+												   String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (String key : typeMap.keySet()) {
 			Integer type = typeMap.get(key);
