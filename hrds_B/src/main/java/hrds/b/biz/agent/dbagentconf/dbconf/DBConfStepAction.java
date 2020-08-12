@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -399,11 +400,13 @@ public class DBConfStepAction extends BaseAction {
 
 		// 校验作业编号是否唯一
 		if (StringUtil.isNotBlank(databaseSet.getDatabase_number())) {
+			String sql = "select count(1) from " + Database_set.TableName + " where database_number = ?";
+			Assembler assembler = Assembler.newInstance().addSql(sql).addParam(databaseSet.getDatabase_number());
+			if (databaseSet.getDatabase_id() != null) {
+				assembler.addSql(" AND database_id != ?").addParam(databaseSet.getDatabase_id());
+			}
 			long val =
-				Dbo.queryNumber(
-					"select count(1) from " + Database_set.TableName + " where database_number = ?",
-					databaseSet.getDatabase_number())
-					.orElseThrow(() -> new BusinessException("SQL查询错误"));
+				Dbo.queryNumber(assembler.sql(), assembler.params()).orElseThrow(() -> new BusinessException("SQL查询错误"));
 			if (val != 0) {
 				throw new BusinessException("作业编号重复，请重新定义作业编号");
 			}

@@ -110,7 +110,7 @@ public class CollectFIleAction extends BaseAction {
 		if (database_set.getDatabase_id() == null) {
 			CheckParam.throwErrorMsg("任务ID不能为空");
 		}
-		CheckParam.checkData("作业编号不能为空", database_set.getDatabase_number());
+//		CheckParam.checkData("作业编号不能为空", database_set.getDatabase_number());
 		CheckParam.checkData("采集数据文件路径不能为空", database_set.getPlane_url());
 		if (database_set.getClassify_id() == null) {
 			CheckParam.throwErrorMsg("分类编号不能为空");
