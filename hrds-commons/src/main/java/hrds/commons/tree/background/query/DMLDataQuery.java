@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
+import hrds.commons.codes.JobExecuteState;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -44,7 +45,9 @@ public class DMLDataQuery {
     @Param(name = "category_id", desc = "加工分类id,该值唯一", range = "long类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
     public static List<Map<String, Object>> getDMLTableInfos(long category_id) {
-        return Dbo.queryList("select * from " + Dm_datatable.TableName + " where category_id=?", category_id);
+        return Dbo.queryList("select * from " + Dm_datatable.TableName + " dm" +
+                " join " + Dtab_relation_store.TableName + " dtab_rs on dm.datatable_id=dtab_rs.tab_id" +
+                " where dm.category_id=? and dtab_rs.is_successful=?", category_id, JobExecuteState.WanCheng.getCode());
     }
 
     @Method(desc = "获取加工下表信息", logicStep = "获取加工下表信息")
