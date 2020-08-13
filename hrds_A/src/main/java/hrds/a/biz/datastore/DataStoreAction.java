@@ -63,6 +63,8 @@ public class DataStoreAction extends BaseAction {
 	                         long dtcs_id, long dlcs_id, String[] files) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		Data_store_layer dataStoreLayer = new Data_store_layer();
+		// 判断存储层名称是否已存在
+		isDslNameExist(dsl_name);
 		dataStoreLayer.setDsl_name(dsl_name);
 		dataStoreLayer.setIs_hadoopclient(is_hadoopclient);
 		dataStoreLayer.setDsl_remark(dsl_remark);
@@ -83,6 +85,18 @@ public class DataStoreAction extends BaseAction {
 		// 6.判断文件是否存在，存在则上传配置文件
 		if (files != null && files.length != 0) {
 			uploadConfFile(files, dataStoreLayer.getDsl_id());
+		}
+	}
+
+	@Method(desc = "判断配置属性名称是否已存在", logicStep = "1.判断配置属性名称是否已存在")
+	@Param(name = "dsl_name", desc = "配置属性名称", range = "无限制")
+	private void isDslNameExist(String dsl_name) {
+		// 1.判断配置属性名称是否已存在
+		if (Dbo.queryNumber(
+				"select count(1) from " + Data_store_layer.TableName + " where dsl_name=?",
+				dsl_name)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("存储层配置属性名称不能重复");
 		}
 	}
 
@@ -504,6 +518,8 @@ public class DataStoreAction extends BaseAction {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.检查数据存储配置字段合法性
 		Data_store_layer dataStoreLayer = new Data_store_layer();
+		// 判断配置属性名称是否已存在
+		isDslNameExist(dsl_name);
 		dataStoreLayer.setDsl_name(dsl_name);
 		dataStoreLayer.setIs_hadoopclient(is_hadoopclient);
 		dataStoreLayer.setDsl_remark(dsl_remark);
