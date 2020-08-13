@@ -11,10 +11,7 @@ import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.DqcExecMode;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.Job_Effective_Flag;
+import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -311,32 +308,43 @@ public class RuleConfigAction extends BaseAction {
     @Param(name = "task_id", desc = "任务标号", range = "long类型")
     @Return(desc = "指标3保存的结果数据,只取10条", range = "指标3保存的结果数据,只取10条")
     public List<Map<String, Object>> getCheckIndex3(long task_id) {
-        //设置 Dq_index3record 对象
-        Dq_index3record dq_index3record = new Dq_index3record();
-        dq_index3record.setTask_id(task_id);
-        //数据校验
-        if (StringUtil.isBlank(dq_index3record.getTask_id().toString())) {
-            throw new BusinessException("获取指标3结果时,任务标号为空!");
-        }
-        //获取指标3存储记录信息
-        dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
-                " where task_id=?", dq_index3record.getTask_id()).orElseThrow(() ->
-                (new BusinessException("获取任务指标3存储记录的SQL异常!")));
-        //设置查询sql
-        String sql = "select * from " + dq_index3record.getTable_name();
-        //设置查询sql:问题数据明细sql,只取10条
+        //初始化需要返回的检查指标3的结果集
         List<Map<String, Object>> check_index3_list = new ArrayList<>();
-        //根据指标3存储记录信息获取数据
-        try {
-            new ProcessingData() {
-                @Override
-                public void dealLine(Map<String, Object> map) {
+        //设置 Dq_index3record 对象
+        Dq_result dq_result = new Dq_result();
+        dq_result.setTask_id(task_id);
+        //数据校验
+        Validator.notBlank(dq_result.getTask_id().toString(), "获取指标3结果时,传入的任务标号为空!");
+        dq_result = Dbo.queryOneObject(Dq_result.class, "select * from " + Dq_result.TableName +
+                " where task_id=?", dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("获取规则执行任务结果的SQL异常!")));
+        //获取当前任务执行状态信息
+        DqcVerifyResult dqcVerifyResult = DqcVerifyResult.ofEnumByCode(dq_result.getVerify_result());
+        //如果当前任务的执行状态是异常或者执行失败,代表未保存指标3结果集
+        if (dqcVerifyResult == DqcVerifyResult.YiChang || dqcVerifyResult == DqcVerifyResult.ZhiXingShiBai) {
+            throw new BusinessException("执行任务id: " + dq_result.getTask_id() + " 执行结果: " + dqcVerifyResult.getValue() + ",未保存指标3结果!");
+        }
+        //如果当前任务的执行状态是正常,则获取指标3的表数据,取10条做显示
+        else if (dqcVerifyResult == DqcVerifyResult.ZhengChang) {
+            //获取指标3存储记录信息
+            Dq_index3record dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
+                    " where task_id=?", dq_result.getTask_id()).orElseThrow(() ->
+                    (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+            //设置查询sql
+            String sql = "select * from " + dq_index3record.getTable_name();
+            //设置查询sql:问题数据明细sql,只取10条,根据指标3存储记录信息获取数据
+            try {
+                new ProcessingData() {
+                    @Override
+                    public void dealLine(Map<String, Object> map) {
 
-                    check_index3_list.add(map);
-                }
-            }.getPageDataLayer(sql, Dbo.db(), 1, 10, dq_index3record.getDsl_id());
-        } catch (Exception e) {
-            throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+                        check_index3_list.add(map);
+                    }
+                }.getPageDataLayer(sql, Dbo.db(), 1, 10, dq_index3record.getDsl_id());
+            } catch (Exception e) {
+                throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+            }
+        } else {
+            throw new BusinessException("代码类型名：数据质量校验结果类型不合法!");
         }
         return check_index3_list;
     }

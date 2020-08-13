@@ -123,6 +123,10 @@ public class DqcExecution {
                 //处理sql运行结果
                 dq_result.setCheck_index1(map_result_1.get("index1").toString());
                 dq_result.setCheck_index2(map_result_2.get("index2").toString());
+                //执行到此处则代表程序指标1和指标2执行结束，开始记录指标3的数据
+                if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
+                    recordIndicator3Data(db, dq_result, beans);
+                }
             } catch (Exception e) {
                 has_exception = Boolean.TRUE;
                 //规则级别为严重,且发生了异常
@@ -134,10 +138,11 @@ public class DqcExecution {
                 if (EdRuleLevel.YanZhong.getCode().equals(dq_rule_level)) {
                     dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
                 }
+            } finally {
+                //保存本次的检查结果
+                dq_result.add(db);
+                db.commit();
             }
-            //保存本次的检查结果
-            dq_result.add(db);
-            db.commit();
             //如果规则级别是严重且发生了异常，则在记录异常信息后异常退出
             if (EdRuleLevel.YanZhong.getCode().equals(dq_rule_level) && has_exception) {
                 //如果是手工执行抛异常
@@ -148,10 +153,6 @@ public class DqcExecution {
                     logger.info("作业调度执行,规则级别为严重，且发生了异常，退出,状态码为: -1");
                     System.exit(-1);
                 }
-            }
-            //执行到此处则代表程序正常运行结束，开始记录指标3的数据
-            if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
-                recordIndicator3Data(dq_result, beans);
             }
         }
         return dq_result.getTask_id();
@@ -216,55 +217,29 @@ public class DqcExecution {
         return SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
     }
 
-
-    @Method(desc = "获取校验的任务编号",
-            logicStep = "获取校验的任务编号" +
-                    "生成规则-[A/M][yyyyMMddHHMMSS][XYZ][NUM]" +
-                    "[A/M]:A为自动跑批，M为前台触发" +
-                    "[yyyyMMddHHMMSS] 为日期时间" +
-                    "[XYZ]毫秒数" +
-                    "[NUM]3位随机数")
-    @Param(name = "job_method", desc = "枚举，执行标识（JobMethod枚举）", range = "A:自动跑批,M:前台触发")
-    @Return(desc = "返回值说明", range = "返回值取值范围")
-    public static String getRuleTaskId(String job_method) {
-        Calendar cal = Calendar.getInstance();
-        Date date = cal.getTime();
-        String time = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(date);
-        //随机一个三位数
-        int random = (int) (Math.random() * 900) + 100;
-        //返回任务id
-        return job_method + time + random;
-    }
-
     @Method(desc = "记录指标3的数据", logicStep = "记录指标3的数据")
     @Param(name = "dq_definition", desc = "Dq_definition实体", range = "Dq_definition实体")
     @Param(name = "beans", desc = "List<SysVarCheckBean>", range = "自定义bean类型")
     @Return(desc = "返回值说明", range = "返回值取值范围")
-    private static void recordIndicator3Data(Dq_result dq_result, Set<SysVarCheckBean> beans) {
+    private static void recordIndicator3Data(DatabaseWrapper db, Dq_result dq_result, Set<SysVarCheckBean> beans) {
         //数据校验
         if (StringUtil.isBlank(dq_result.getTask_id().toString())) {
             throw new BusinessException("在记录指标3的数据时，传入的任务编号为空!");
         }
-        //保存指标3的数据到对应数据表的存储层下
-        try (DatabaseWrapper db = new DatabaseWrapper()) {
-            //指标3的sql
-            String sql = dq_result.getErr_dtl_sql();
-            //替换系统变量
-            for (SysVarCheckBean bean : beans) {
-                sql = sql.replace(bean.getName(), bean.getValue());
-            }
-            //设置检查结果表名,检查表名+当前时间+当前日期
-            String dqc_table_name = Constant.DQC_TABLE + dq_result.getTask_id();
-            //设置数据加载实体Bean
-            LoadingDataBean ldbbean = new LoadingDataBean();
-            ldbbean.setTableName(dqc_table_name);
-            //插入指标3检查数据到存储层下,和查询的表存储层一致
-            long dsl_id;
-            try {
-                dsl_id = new LoadingData(ldbbean).intoDataLayer(sql, db);
-            } catch (Exception e) {
-                throw new BusinessException("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
-            }
+        //指标3的sql
+        String sql = dq_result.getErr_dtl_sql();
+        //替换系统变量
+        for (SysVarCheckBean bean : beans) {
+            sql = sql.replace(bean.getName(), bean.getValue());
+        }
+        //设置检查结果表名,检查表名+当前时间+当前日期
+        String dqc_table_name = Constant.DQC_TABLE + dq_result.getTask_id();
+        //设置数据加载实体Bean
+        LoadingDataBean ldbbean = new LoadingDataBean();
+        ldbbean.setTableName(dqc_table_name);
+        //插入指标3检查数据到存储层下,和查询的表存储层一致
+        try {
+            long dsl_id = new LoadingData(ldbbean).intoDataLayer(sql, db);
             //记录指标3检测结果表元信息
             Dq_index3record dq_index3record = new Dq_index3record();
             dq_index3record.setRecord_id(PrimayKeyGener.getNextId());
@@ -279,8 +254,10 @@ public class DqcExecution {
             dq_index3record.setTask_id(dq_result.getTask_id());
             dq_index3record.setDsl_id(dsl_id);
             dq_index3record.add(db);
-            //提交数据库操作
-            db.commit();
+            dq_result.setVerify_result(DqcVerifyResult.ZhengChang.getCode());
+        } catch (Exception e) {
+            dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
+            logger.info("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
         }
     }
 
@@ -318,5 +295,25 @@ public class DqcExecution {
             }
         }
         return "success";
+    }
+
+    @Method(desc = "获取校验的任务编号",
+            logicStep = "获取校验的任务编号" +
+                    "生成规则-[A/M][yyyyMMddHHMMSS][XYZ][NUM]" +
+                    "[A/M]:A为自动跑批，M为前台触发" +
+                    "[yyyyMMddHHMMSS] 为日期时间" +
+                    "[XYZ]毫秒数" +
+                    "[NUM]3位随机数")
+    @Param(name = "job_method", desc = "枚举，执行标识（JobMethod枚举）", range = "A:自动跑批,M:前台触发")
+    @Return(desc = "返回值说明", range = "返回值取值范围")
+    @Deprecated
+    public static String getRuleTaskId(String job_method) {
+        Calendar cal = Calendar.getInstance();
+        Date date = cal.getTime();
+        String time = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(date);
+        //随机一个三位数
+        int random = (int) (Math.random() * 900) + 100;
+        //返回任务id
+        return job_method + time + random;
     }
 }
