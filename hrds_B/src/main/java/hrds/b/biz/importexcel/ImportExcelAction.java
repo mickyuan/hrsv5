@@ -812,23 +812,23 @@ public class ImportExcelAction extends BaseAction {
 		//获取表的列字段信息
 		String columns = ExcelUtil.getValue(row.getCell(15)).toString();
 		Validator.notBlank(columns, "第" + rowNum + "行,字段信息未填写");
-		if (!columns.contains("|")) {
-			CheckParam.throwErrorMsg("第" + rowNum + "行,字段分隔符填写不正确");
-		}
+//		if (!columns.contains("|")) {
+//			CheckParam.throwErrorMsg("第" + rowNum + "行,字段分隔符填写不正确");
+//		}
 		List<String> columnList = StringUtil.split(columns, "|");
 		//获取表的列字段类型
 		String columnTypes = ExcelUtil.getValue(row.getCell(16)).toString();
 		Validator.notBlank(columnTypes, "第" + rowNum + "行,列字段类型未填写");
-		if (!columnTypes.contains("|")) {
-			CheckParam.throwErrorMsg("第" + rowNum + "行,字段分隔符填写不正确");
-		}
+//		if (!columnTypes.contains("|")) {
+//			CheckParam.throwErrorMsg("第" + rowNum + "行,字段分隔符填写不正确");
+//		}
 		List<String> columnTypeList = StringUtil.split(columnTypes, "|");
 		//获取表的主键信息
 		String primaryData = ExcelUtil.getValue(row.getCell(17)).toString();
 		Validator.notBlank(primaryData, "第" + rowNum + "行,主键信息未填写");
-		if (!primaryData.contains("|")) {
-			CheckParam.throwErrorMsg("第" + rowNum + "行,主键分割符填写不正确");
-		}
+//		if (!primaryData.contains("|")) {
+//			CheckParam.throwErrorMsg("第" + rowNum + "行,主键分割符填写不正确");
+//		}
 		List<String> primaryList = StringUtil.split(primaryData, "|");
 
 		if (columnTypeList.size() != columnList.size()) {
