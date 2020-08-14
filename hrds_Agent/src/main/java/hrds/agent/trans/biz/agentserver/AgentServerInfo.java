@@ -49,12 +49,7 @@ public class AgentServerInfo extends AgentBaseAction {
 		linux_nolist.add("/mnt");
 		linux_nolist.add("/root");
 		linux_nolist.add("/cdrom");
-//		linux_nolist.add("/usr/bin");
-//		linux_nolist.add("/usr/sbin");
-//		linux_nolist.add("/var/cache");
-//		linux_nolist.add("/var/crash");
-//		linux_nolist.add("/var/lock");
-//		linux_nolist.add("/var/run");
+		linux_nolist.add("/snap");
 	}
 
 	@Method(desc = "获取当前服务器的时间、日期、操作系统名称、操作系统用户名"
@@ -99,33 +94,29 @@ public class AgentServerInfo extends AgentBaseAction {
 					String path_hy = file.getPath();
 					//3.根据操作系统的类型取消系统的一些目录
 					if (osName.toLowerCase().contains("windows")) {
-						if (!windows_nolist.contains(path_hy) && !name.startsWith(".") && file.canWrite()
-								&& file.canRead()) {
+						if (!windows_nolist.contains(path_hy)
+								&& (!name.startsWith(".") || ".bin".equalsIgnoreCase(name))) {
 							Map<String, String> map = new HashMap<>();
 							map.put("isFolder", "true");
 							map.put("name", name);
 							map.put("path", path_hy);
 							map.put("osName", osName);
-//							map.put("canExecute", String.valueOf(file.canExecute()));
-//							map.put("canWrite", String.valueOf(file.canWrite()));
-//							map.put("canRead", String.valueOf(file.canRead()));
+							map.put("canExecute", String.valueOf(file.canExecute()));
+							map.put("canWrite", String.valueOf(file.canWrite()));
+							map.put("canRead", String.valueOf(file.canRead()));
 							list.add(map);
 						}
 					} else if (osName.toLowerCase().contains("linux")) {
-						//被允许的目录和自己用户下的所有目录和/tmp/下的所有目录
-//						if ((linux_list.contains(path_hy) || path_hy.startsWith("/home/" + SystemUtil.USER_NAME) ||
-//								path_hy.startsWith("/tmp/"))
-						if ((!linux_nolist.contains(path_hy)
-								&& (!name.startsWith(".") || ".bin".equalsIgnoreCase(name))
-								&& file.canWrite() && file.canRead()) || name.equals("/")) {
+						if (!linux_nolist.contains(path_hy)
+								&& (!name.startsWith(".") || ".bin".equalsIgnoreCase(name))) {
 							Map<String, String> map = new HashMap<>();
 							map.put("name", name);
 							map.put("path", path_hy);
 							map.put("isFolder", "true");
 							map.put("osName", osName);
-//							map.put("canExecute", String.valueOf(file.canExecute()));
-//							map.put("canWrite", String.valueOf(file.canWrite()));
-//							map.put("canRead", String.valueOf(file.canRead()));
+							map.put("canExecute", String.valueOf(file.canExecute()));
+							map.put("canWrite", String.valueOf(file.canWrite()));
+							map.put("canRead", String.valueOf(file.canRead()));
 							list.add(map);
 						}
 					} else {
@@ -144,9 +135,6 @@ public class AgentServerInfo extends AgentBaseAction {
 						map.put("path", path);
 						map.put("isFolder", "false");
 						map.put("osName", osName);
-//						map.put("canExecute", String.valueOf(file.canExecute()));
-//						map.put("canWrite", String.valueOf(file.canWrite()));
-//						map.put("canRead", String.valueOf(file.canRead()));
 						list.add(map);
 					}
 				}
@@ -158,9 +146,9 @@ public class AgentServerInfo extends AgentBaseAction {
 	public static void main(String[] args) {
 		List<Map<String, String>> aFalse = new AgentServerInfo().getSystemFileInfo("C://", "true");
 		aFalse.forEach(map -> {
-			map.forEach((k, v) -> {
-				System.out.println(k + "===========" + v);
-			});
+			map.forEach((k, v) ->
+					System.out.println(k + "===========" + v)
+			);
 			System.out.println("========================================================");
 		});
 	}
