@@ -244,4 +244,12 @@ subprojects {
             include "*.jar"
         }
     }
+    task copyDeployJar(type: Copy) {
+        def appname = "${project.name}"
+        //清理版本jar,重新复制新版本jar
+        delete "$rootDir/../app/libs/"
+        from "$rootDir/" + appname + "/build/libs/"
+        into "$rootDir/../app/libs"
+        include("*.jar")
+    }
 }
