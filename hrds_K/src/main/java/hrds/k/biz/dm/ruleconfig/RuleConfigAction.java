@@ -28,11 +28,15 @@ import hrds.k.biz.dm.ruleconfig.bean.RuleConfSearchBean;
 import hrds.k.biz.dm.ruleconfig.bean.SysVarCheckBean;
 import hrds.k.biz.dm.ruleconfig.commons.DqcExecution;
 import hrds.k.biz.utils.CheckBeanUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 @DocClass(desc = "数据管控-规则配置", author = "BY-HLL", createdate = "2020/4/8 0008 上午 09:29")
 public class RuleConfigAction extends BaseAction {
+
+    private static final Logger logger = LogManager.getLogger();
 
     @Method(desc = "获取数据源树信息", logicStep = "获取数据源树信息")
     @Return(desc = "数据源树信息", range = "数据源树信息")
@@ -317,34 +321,40 @@ public class RuleConfigAction extends BaseAction {
         Validator.notBlank(dq_result.getTask_id().toString(), "获取指标3结果时,传入的任务标号为空!");
         dq_result = Dbo.queryOneObject(Dq_result.class, "select * from " + Dq_result.TableName +
                 " where task_id=?", dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("获取规则执行任务结果的SQL异常!")));
-        //获取当前任务执行状态信息
-        DqcVerifyResult dqcVerifyResult = DqcVerifyResult.ofEnumByCode(dq_result.getVerify_result());
-        //如果当前任务的执行状态是异常或者执行失败,代表未保存指标3结果集
-        if (dqcVerifyResult == DqcVerifyResult.YiChang || dqcVerifyResult == DqcVerifyResult.ZhiXingShiBai) {
-            throw new BusinessException("执行任务id: " + dq_result.getTask_id() + " 执行结果: " + dqcVerifyResult.getValue() + ",未保存指标3结果!");
-        }
-        //如果当前任务的执行状态是正常,则获取指标3的表数据,取10条做显示
-        else if (dqcVerifyResult == DqcVerifyResult.ZhengChang) {
-            //获取指标3存储记录信息
-            Dq_index3record dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
-                    " where task_id=?", dq_result.getTask_id()).orElseThrow(() ->
-                    (new BusinessException("获取任务指标3存储记录的SQL异常!")));
-            //设置查询sql
-            String sql = "select * from " + dq_index3record.getTable_name();
-            //设置查询sql:问题数据明细sql,只取10条,根据指标3存储记录信息获取数据
-            try {
-                new ProcessingData() {
-                    @Override
-                    public void dealLine(Map<String, Object> map) {
-
-                        check_index3_list.add(map);
-                    }
-                }.getPageDataLayer(sql, Dbo.db(), 1, 10, dq_index3record.getDsl_id());
-            } catch (Exception e) {
-                throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+        //如果本次任务保存了指标3的结果,则获取指标3的结果信息
+        IsFlag is_save_index3 = IsFlag.ofEnumByCode(dq_result.getIs_saveindex3());
+        if (is_save_index3 == IsFlag.Fou) {
+            throw new BusinessException("本次执行任务设置没有保存指标3的结果信息!");
+        } else if (is_save_index3 == IsFlag.Shi) {
+            //获取当前任务执行状态信息
+            DqcVerifyResult dqcVerifyResult = DqcVerifyResult.ofEnumByCode(dq_result.getVerify_result());
+            //如果当前任务的执行状态是异常或者执行失败,代表未保存指标3结果集
+            if (dqcVerifyResult == DqcVerifyResult.ZhiXingShiBai) {
+                logger.warn("执行任务id: " + dq_result.getTask_id() + " 执行结果: " + dqcVerifyResult.getValue() + ",未保存指标3结果!");
             }
-        } else {
-            throw new BusinessException("代码类型名：数据质量校验结果类型不合法!");
+            //如果当前任务的执行状态是正常,则获取指标3的表数据,取10条做显示
+            else if (dqcVerifyResult == DqcVerifyResult.YiChang || dqcVerifyResult == DqcVerifyResult.ZhengChang) {
+                //获取指标3存储记录信息
+                Dq_index3record dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
+                        " where task_id=?", dq_result.getTask_id()).orElseThrow(() ->
+                        (new BusinessException("获取任务指标3存储记录的SQL异常!")));
+                //设置查询sql
+                String sql = "select * from " + dq_index3record.getTable_name();
+                //设置查询sql:问题数据明细sql,只取10条,根据指标3存储记录信息获取数据
+                try {
+                    new ProcessingData() {
+                        @Override
+                        public void dealLine(Map<String, Object> map) {
+
+                            check_index3_list.add(map);
+                        }
+                    }.getPageDataLayer(sql, Dbo.db(), 1, 10, dq_index3record.getDsl_id());
+                } catch (Exception e) {
+                    throw new BusinessException("获取指标3存储记录数据失败!" + e.getMessage());
+                }
+            } else {
+                throw new BusinessException("代码类型名：数据质量校验结果类型不合法!");
+            }
         }
         return check_index3_list;
     }

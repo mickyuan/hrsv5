@@ -95,24 +95,36 @@ public class DqcExecution {
                 //运行sql:不在范围内的记录数
                 Map<String, Object> map_result_1 = new HashMap<>();
                 if (StringUtil.isNotBlank(index1_sql) && IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex1())) {
-                    new ProcessingData() {
+                    try {
+                        new ProcessingData() {
 
-                        @Override
-                        public void dealLine(Map<String, Object> map) {
-                            map_result_1.putAll(map);
-                        }
-                    }.getDataLayer(index1_sql, db);
+                            @Override
+                            public void dealLine(Map<String, Object> map) {
+                                map_result_1.putAll(map);
+                            }
+                        }.getDataLayer(index1_sql, db);
+                    } catch (Exception e) {
+                        logger.warn("执行获取指标1结果的sql时出错!" + e.getMessage());
+                        e.printStackTrace();
+                        dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
+                    }
                 }
                 //运行sql:检查总记录数
                 Map<String, Object> map_result_2 = new HashMap<>();
                 if (StringUtil.isNotBlank(index2_sql) && IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex2())) {
-                    new ProcessingData() {
+                    try {
+                        new ProcessingData() {
 
-                        @Override
-                        public void dealLine(Map<String, Object> map) {
-                            map_result_2.putAll(map);
-                        }
-                    }.getDataLayer(index2_sql, db);
+                            @Override
+                            public void dealLine(Map<String, Object> map) {
+                                map_result_2.putAll(map);
+                            }
+                        }.getDataLayer(index2_sql, db);
+                    } catch (Exception e) {
+                        logger.warn("执行获取指标1结果的sql时出错!" + e.getMessage());
+                        e.printStackTrace();
+                        dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
+                    }
                 }
                 //设置运行结束日期,时间
                 dq_result.setEnd_date(DateUtil.getSysDate());
@@ -122,6 +134,9 @@ public class DqcExecution {
                 dq_result.setElapsed_ms((int) (execution_end_time - execution_start_time));
                 //处理sql运行结果
                 dq_result.setCheck_index1(map_result_1.get("index1").toString());
+                if (dq_result.getCheck_index1().longValue() > 0) {
+                    dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
+                }
                 dq_result.setCheck_index2(map_result_2.get("index2").toString());
                 //执行到此处则代表程序指标1和指标2执行结束，开始记录指标3的数据
                 if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
@@ -131,7 +146,6 @@ public class DqcExecution {
                 has_exception = Boolean.TRUE;
                 //规则级别为严重,且发生了异常
                 logger.info("规则级别为严重，且发生了异常：" + e.getMessage());
-                dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
                 dq_result.setDl_stat(DqcDlStat.DengDaiChuLi.getCode());
                 dq_result.setErrno(e.getMessage());
                 //如果规则级别为'严重'，则规则结果为'执行失败'
@@ -232,13 +246,13 @@ public class DqcExecution {
         for (SysVarCheckBean bean : beans) {
             sql = sql.replace(bean.getName(), bean.getValue());
         }
-        //设置检查结果表名,检查表名+当前时间+当前日期
-        String dqc_table_name = Constant.DQC_TABLE + dq_result.getTask_id();
-        //设置数据加载实体Bean
-        LoadingDataBean ldbbean = new LoadingDataBean();
-        ldbbean.setTableName(dqc_table_name);
-        //插入指标3检查数据到存储层下,和查询的表存储层一致
         try {
+            //设置检查结果表名,检查表名+当前时间+当前日期
+            String dqc_table_name = Constant.DQC_TABLE + dq_result.getTask_id();
+            //设置数据加载实体Bean
+            LoadingDataBean ldbbean = new LoadingDataBean();
+            ldbbean.setTableName(dqc_table_name);
+            //插入指标3检查数据到存储层下,和查询的表存储层一致
             long dsl_id = new LoadingData(ldbbean).intoDataLayer(sql, db);
             //记录指标3检测结果表元信息
             Dq_index3record dq_index3record = new Dq_index3record();
@@ -254,7 +268,6 @@ public class DqcExecution {
             dq_index3record.setTask_id(dq_result.getTask_id());
             dq_index3record.setDsl_id(dsl_id);
             dq_index3record.add(db);
-            dq_result.setVerify_result(DqcVerifyResult.ZhengChang.getCode());
         } catch (Exception e) {
             dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
             logger.info("在插入指标3的全量数据记录信息时失败，任务编号为：" + dq_result.getTask_id());
