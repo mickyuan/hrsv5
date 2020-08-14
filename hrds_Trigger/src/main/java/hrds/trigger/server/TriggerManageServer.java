@@ -2,10 +2,13 @@ package hrds.trigger.server;
 
 import hrds.trigger.beans.EtlJobParaAnaly;
 import hrds.trigger.task.TaskManager;
+import hrds.trigger.task.helper.HazelcastHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import hrds.trigger.task.helper.TaskSqlHelper;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * ClassName: TriggerManageServer<br>
@@ -101,12 +104,13 @@ public class TriggerManageServer {
 								etlJobParaAnaly.isHasHandle());
 					}
 					//3、间隔一定时间后，再次循环执行。
-					Thread.sleep(SLEEP_TIME);
+					TimeUnit.MILLISECONDS.sleep(SLEEP_TIME);
 				}
 			}catch(Exception ex) {
 				logger.error("Exception happened!", ex);
 			}finally {
 				TaskSqlHelper.closeDbConnector();//关闭数据库连接
+				HazelcastHelper.getInstance().close();
 			}
 		}
 	}

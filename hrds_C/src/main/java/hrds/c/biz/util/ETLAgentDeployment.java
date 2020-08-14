@@ -63,10 +63,10 @@ public class ETLAgentDeployment {
 			}
 			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
 			// 3.生成control.conf配置文件
-			Yaml.dump(ETLConfParam.getControlConfParam(), new File(tmp_conf_path
+			Yaml.dump(ETLConfParam.getControlConfParam(etl_serv_ip), new File(tmp_conf_path
 					+ ETLConfParam.CONTROL_CONF_NAME));
 			// 4.生成trigger.conf配置文件
-			Yaml.dump(ETLConfParam.getTriggerConfParam(), new File(tmp_conf_path
+			Yaml.dump(ETLConfParam.getTriggerConfParam(etl_serv_ip), new File(tmp_conf_path
 					+ ETLConfParam.Trigger_CONF_NAME));
 			// 5.生成control appinfo.conf配置文件
 			Yaml.dump(ETLConfParam.getControlAppInfoConfParam(), new File(tmp_conf_path

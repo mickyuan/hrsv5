@@ -1,5 +1,6 @@
 package hrds.control.server;
 
+import hrds.control.task.helper.HazelcastHelper;
 import hrds.control.task.helper.TaskSqlHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -137,6 +138,8 @@ public class ControlManageServer {
 				logger.error("Exception happened!", ex);
 			}finally {
 				TaskSqlHelper.closeDbConnector();   //关闭数据库连接
+				//关闭分布式缓存
+				HazelcastHelper.getInstance().close();
 			}
 		}
 	}

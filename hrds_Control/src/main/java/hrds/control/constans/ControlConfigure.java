@@ -63,28 +63,28 @@ public class ControlConfigure {
 	}
 
 	/**
-	 * ClassName: RedisConfig<br>
-	 * Description: 用于读取control配置文件中redis节点配置信息的类。<br>
+	 * ClassName: HazelcastConfig<br>
+	 * Description: 用于读取control配置文件中hazelcast配置信息的类。<br>
 	 * Author: Tiger.Wang<br>
 	 * Date: 2019/9/16 16:52<br>
 	 * Since: JDK 1.8
 	 **/
-	public static class RedisConfig {
+	public static class HazelcastConfig {
 
-		private static final String CONFNAME = "redis";
+		private static final String CONFNAME = "hazelcast";
 
-		public static final String redisIp;
-		public static final Integer redisPort;
-		public static final Integer timeout;
+		public static final String localAddress;
+		public static final Integer autoIncrementPort;
+		public static final Integer portCount;
 
 		static {
 			if(!control.exist(CONFNAME)) {
 				throw new AppSystemException("无法从control配置文件中加载属性" + CONFNAME);
 			}
-			YamlMap redis = control.getMap(CONFNAME);
-			redisIp = redis.getString("redisIp");
-			redisPort = redis.getInt("redisPort");
-			timeout = redis.getInt("timeout");
+			YamlMap hazelcast = control.getMap(CONFNAME);
+			localAddress = hazelcast.getString("localAddress");
+			autoIncrementPort = hazelcast.getInt("autoIncrementPort");
+			portCount = hazelcast.getInt("portCount");
 		}
 	}
 }

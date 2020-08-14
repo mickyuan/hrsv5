@@ -19,7 +19,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.trigger.beans.EtlJobParaAnaly;
 import hrds.trigger.task.executor.TaskExecutor;
-import hrds.trigger.task.helper.RedisHelper;
+import hrds.trigger.task.helper.HazelcastHelper;
 import hrds.trigger.task.helper.TaskSqlHelper;
 
 /**
@@ -45,7 +45,7 @@ public class TaskManager {
 	/**干预类型，作业直接触发JT（JOB_TRIGGER）标识*/
 	private final static String JT = "JT";
 
-	private static final RedisHelper REDIS = RedisHelper.getInstance();
+	private static final HazelcastHelper REDIS = HazelcastHelper.getInstance();
 	private static final ExecutorService executeThread = Executors.newCachedThreadPool();
 
 	public TaskManager(String etlSysCode) {

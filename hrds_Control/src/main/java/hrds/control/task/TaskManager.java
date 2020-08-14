@@ -61,7 +61,7 @@ public class TaskManager {
 	//系统资源表，key为资源类型，value为对应的资源。
 	// 例如：定义了资源A数量为20，意味着本工程下所有归属为A的作业，一共能同时启动20个进程
 	private static final Map<String, Etl_resource> sysResourceMap = new HashMap<>();
-	private static final RedisHelper REDIS = RedisHelper.getInstance();
+	private static final HazelcastHelper REDIS = HazelcastHelper.getInstance();
 	private static final NotifyMessageHelper NOTIFY = NotifyMessageHelper.getInstance();
 	private final TaskJobHandleHelper handleHelper;
 

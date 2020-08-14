@@ -48,14 +48,14 @@ public class ControlConfigureTest {
 	@Test
 	public void testRedisConfig() {
 
-		assertFalse("测试是否读取到control配置文件redis节点的redisIp属性",
-				StringUtil.isEmpty(ControlConfigure.RedisConfig.redisIp));
+		assertFalse("测试是否读取到control配置文件HazelcastConfig的localAddress属性",
+				StringUtil.isEmpty(ControlConfigure.HazelcastConfig.localAddress));
 
-		assertNotNull("测试是否读取到control配置文件redis节点的redisPort属性",
-				ControlConfigure.RedisConfig.redisPort);
+		assertNotNull("测试是否读取到control配置文件HazelcastConfig的autoIncrementPort属性",
+				ControlConfigure.HazelcastConfig.autoIncrementPort);
 
-		assertNotNull("测试是否读取到control配置文件redis节点的timeout属性",
-				ControlConfigure.RedisConfig.timeout);
+		assertNotNull("测试是否读取到control配置文件HazelcastConfig的portCount属性",
+				ControlConfigure.HazelcastConfig.portCount);
 	}
 
 }
