@@ -4,7 +4,9 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.tree.background.TreeNodeInfo;
@@ -12,6 +14,7 @@ import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.tree.foreground.ForegroundTreeUtil;
 import hrds.commons.tree.foreground.bean.TreeDataInfo;
+import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
@@ -75,6 +78,43 @@ public class WebSqlQueryAction extends BaseAction {
         //根据源菜单信息获取节点数据列表
         List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(TreePageSource.WEB_SQL, getUser(), treeConf);
         return NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
+    }
+
+    @Method(desc = "获取平台登记的所有表信息", logicStep = "获取平台登记的所有表信息")
+    @Return(desc = "平台登记的所有表信息", range = "平台登记的所有表信息")
+    public List<String> getAllTableNameByPlatform() {
+        return DataTableUtil.getAllTableNameByPlatform(Dbo.db());
+    }
+
+    @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
+    @Param(name = "table_name", desc = "表名", range = "String")
+    @Return(desc = "字段信息列表", range = "字段信息列表")
+    public List<Map<String, Object>> getColumnsByTableName(String table_name) {
+        //数据层获取不同表结构
+        Validator.notBlank(table_name, "查询表名不能为空!");
+        return DataTableUtil.getColumnByTableName(table_name);
+    }
+
+
+    @Method(desc = "获取SQL中相关表和字段信息", logicStep = "获取SQL中相关表和字段信息")
+    @Param(name = "sql", desc = "解析sql", range = "String")
+    @Return(desc = "SQL中相关表和字段信息", range = "SQL中相关表和字段信息")
+    public List<Map<String, Object>> getTableColumnInfoBySql(String sql) {
+        //数据校验
+        Validator.notBlank(sql, "解析sql不能为空");
+        //初始化返回结果
+        List<Map<String, Object>> tableColumnInfos = new ArrayList<>();
+        //执行sql的解析结果
+        List<String> table_name_s = DruidParseQuerySql.parseSqlTableToList(sql);
+        if (!table_name_s.isEmpty()) {
+            table_name_s.forEach(table_name -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("table_name", table_name);
+                map.put("column_info", DataTableUtil.getColumnByTableName(table_name));
+                tableColumnInfos.add(map);
+            });
+        }
+        return tableColumnInfos;
     }
 
     @Method(desc = "获取树的数据信息",
