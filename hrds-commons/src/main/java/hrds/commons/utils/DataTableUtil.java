@@ -8,7 +8,6 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.web.util.Dbo;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -24,6 +23,7 @@ public class DataTableUtil {
 
 
     @Method(desc = "获取平台登记的所有表信息", logicStep = "获取平台登记的所有表信息")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     public static List<String> getAllTableNameByPlatform(DatabaseWrapper db) {
         //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -262,8 +262,9 @@ public class DataTableUtil {
 
     @Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
     @Param(name = "table_name", desc = "登记表名", range = "String")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Return(desc = "字段信息列表", range = "字段信息列表")
-    public static List<Map<String, Object>> getColumnByTableName(String table_name) {
+    public static List<Map<String, Object>> getColumnByTableName(DatabaseWrapper db, String table_name) {
         //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
@@ -294,13 +295,13 @@ public class DataTableUtil {
                 " JOIN " + Dq_table_column.TableName + " dtc ON dti.table_id=dtc.table_id WHERE LOWER(dti.table_name) = LOWER(?)");
         asmSql.addParam(table_name);
         asmSql.addSql(") tmp group by table_id,table_name,column_name,column_ch_name,column_type order by table_name");
-        List<Map<String, Object>> column_list = Dbo.queryList(asmSql.sql(), asmSql.params());
+        List<Map<String, Object>> column_list = SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
         if (!column_list.isEmpty()) {
             return column_list;
         } else {
             //DQC
             asmSql.clean();
-            Dq_index3record di3 = Dbo.queryOneObject(Dq_index3record.class, "SELECT * FROM " + Dq_index3record.TableName + " WHERE" +
+            Dq_index3record di3 = SqlOperator.queryOneObject(db, Dq_index3record.class, "SELECT * FROM " + Dq_index3record.TableName + " WHERE" +
                     " table_name = LOWER(?)", table_name).orElseThrow(()
                     -> (new BusinessException("表: " + table_name + " 的字段信息不存在,请检查表是否登记成功!")));
             String table_col_s = di3.getTable_col();
@@ -318,65 +319,46 @@ public class DataTableUtil {
         return column_list;
     }
 
-    @Method(desc = "获取在所有存储层中是否存在该表",
-            logicStep = "1.根据表名获取在所有存储层中是否存在该表")
+    @Method(desc = "获取在所有存储层中是否存在该表", logicStep = "1.根据表名获取在所有存储层中是否存在该表")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "报错(提示在哪个存储层重复) 或者 false: 不存在")
-    public static boolean tableIsRepeat(String tableName) {
+    public static boolean tableIsRepeat(DatabaseWrapper db, String tableName) {
         boolean isRepeat = Boolean.FALSE;
-        if (tableIsExistInDCL(tableName)) {
+        if (tableIsExistInDCL(db, tableName)) {
             isRepeat = Boolean.TRUE;
         }
-        if (tableIsExistInDML(tableName)) {
+        if (tableIsExistInDML(db, tableName)) {
             isRepeat = Boolean.TRUE;
         }
-//		if (tableIsExistInEdwTable(tableName)) {
-//			throw new BusinessException("表在数据仓库表中已经存在!" + tableName);
-//		}
-//		if (tableIsExistInSdmInnerTable(tableName)) {
-//			throw new BusinessException("表在流数据内部消费信息登记表中已经存在!" + tableName);
-//		}
-//		if (tableIsExistInMlDatatableInfo(tableName)) {
-//			throw new BusinessException("表在机器学习数据信息表中已经存在!" + tableName);
-//		}
-        if (tableIsExistInUDL(tableName)) {
+        if (tableIsExistInUDL(db, tableName)) {
             isRepeat = Boolean.TRUE;
         }
         return isRepeat;
     }
 
-    @Method(desc = "获取影响关系数据",
-            logicStep = "获取影响关系数据")
+    @Method(desc = "获取影响关系数据", logicStep = "获取影响关系数据")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Param(name = "table_name", desc = "表名", range = "String类型")
     @Param(name = "search_type", desc = "搜索类型", range = "String类型, 0:表查看,1:字段查看,IsFlag代码项设置")
     @Return(desc = "影响关系数据", range = "影响关系数据")
-    public static Map<String, Object> influencesDataInfo(String table_name, String search_type) {
+    public static Map<String, Object> influencesDataInfo(DatabaseWrapper db, String table_name, String search_type) {
         //数据校验
         Validator.notBlank(search_type, "搜索关系为空!");
         //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from (");
-        //加工 TODO hrsv5.1
-//        asmSql.addSql("select T1.tabname,colname,souretabname,sourecolvalue,mapping from edw_mapping" +
-//                " T1 join edw_table T2 on  T1.tabname = T2.tabname where souretabname = ?").addParam(table_name);
-//        asmSql.addSql(" and T1.end_dt = ? and T2.end_dt = ? ").addParam(Constant.MAXDATE).addParam(Constant.MAXDATE);
-//        asmSql.addSql(" union all");
-        //集市
+        //加工
         asmSql.addSql(" select own_source_table_name AS source_table_name,sourcefields_name AS source_fields_name," +
                 "datatable_en_name AS table_name,targetfield_name AS target_column_name,'' as mapping" +
                 " from " + Dm_datatable.TableName + " dd join " + Dm_datatable_source.TableName + " dds" +
                 " on dd.datatable_id = dds.datatable_id join " + Dm_etlmap_info.TableName + " dei on" +
                 " dds.own_dource_table_id = dei.own_dource_table_id and dd.datatable_id = dei.datatable_id where" +
                 " lower(own_source_table_name) = lower(?)").addParam(table_name);
-        //数据管控创建表  TODO hrsv5.1
-//        asmSql.addSql(" union all");
-//        asmSql.addSql(" SELECT  t2.colsourcetab as souretabname,t2.colsourcecol as sourecolvalue,t1.table_name as" +
-//                " table_name,t2.column_name as colname,'' as mapping FROM sys_table_info t1 LEFT JOIN sys_table_column t2" +
-//                " on t1.info_id = t2.info_id WHERE t1.is_trace = ?").addParam(IsFlag.Shi.getCode());
         asmSql.addSql(") aa order by source_fields_name");
         //执行sql获取结果
-        List<Map<String, Object>> influences_data_s = Dbo.queryList(asmSql.sql(), asmSql.params());
+        List<Map<String, Object>> influences_data_s = SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
         //初始化影响结果信息
         List<Map<String, Object>> influencesResult = new ArrayList<>();
         if (!influences_data_s.isEmpty()) {
@@ -472,37 +454,26 @@ public class DataTableUtil {
         return influencesDataInfoMap;
     }
 
-    @Method(desc = "获取血缘关系数据",
-            logicStep = "获取血缘关系数据")
+    @Method(desc = "获取血缘关系数据", logicStep = "获取血缘关系数据")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Param(name = "table_name", desc = "表名", range = "String类型")
     @Param(name = "search_type", desc = "搜索类型", range = "String类型, 0:表查看,1:字段查看,IsFlag代码项设置")
     @Return(desc = "血缘关系数据", range = "血缘关系数据")
-    public static Map<String, Object> bloodlineDateInfo(String table_name, String search_type) {
+    public static Map<String, Object> bloodlineDateInfo(DatabaseWrapper db, String table_name, String search_type) {
         //初始化查询Sql
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from (");
-        //加工 TODO hrsv5.1
-//        asmSql.addSql("select T1.tabname,colname,souretabname,sourecolvalue,mapping from edw_table T1 join" +
-//                " edw_mapping T2 on T1.tabname = T2.tabname where lower(T1.tabname) = lower(?)").addParam(table_name);
-//        asmSql.addSql("and T1.end_dt = ? and T2.end_dt = ?").addParam(Constant.MAXDATE).addParam(Constant.MAXDATE);
-//        asmSql.addSql("union all");
-        //集市
+        //加工
         asmSql.addSql("SELECT datatable_en_name AS table_name, targetfield_name AS target_column_name," +
                 " own_source_table_name AS source_table_name,sourcefields_name AS source_fields_name, '' AS mapping" +
                 " FROM " + Dm_datatable.TableName + " dd JOIN " + Dm_datatable_source.TableName + " dds ON" +
                 " dd.datatable_id = dds.datatable_id JOIN " + Dm_etlmap_info.TableName + " dei ON" +
                 " dds.own_dource_table_id = dei.own_dource_table_id AND dd.datatable_id = dei.datatable_id" +
                 " WHERE LOWER(datatable_en_name) = LOWER(?)").addParam(table_name);
-        //数据管控创建表 TODO hrsv5.1
-//        asmSql.addSql(" union all");
-//        asmSql.addSql(" select t1.table_name tabname,t2.column_name colname,t2.colsourcetab souretabname,t2.colsourcecol" +
-//                " sourecolvalue,'' AS MAPPING from sys_table_info t1 join sys_table_column t2 ON t1.info_id = t2.info_id" +
-//                " WHERE t1.is_trace = ? AND lower(table_name) = lower(?)")
-//                .addParam(IsFlag.Shi.getCode()).addParam(table_name);
         asmSql.addSql(" ) aa order by source_table_name,target_column_name");
         //获取源表名影响的模型表信息
-        List<Map<String, Object>> bloodline_data_s = Dbo.queryList(asmSql.sql(), asmSql.params());
+        List<Map<String, Object>> bloodline_data_s = SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
         //表对应列信息
         List<Map<String, Object>> children_s = new ArrayList<>();
         if (!bloodline_data_s.isEmpty()) {
@@ -585,69 +556,36 @@ public class DataTableUtil {
         return bloodlineDateInfoMap;
     }
 
-    @Method(desc = "判断表是否在源文件信息表存在",
-            logicStep = "1.判断表是否在源文件信息表存在")
+    @Method(desc = "判断表是否在源文件信息表存在", logicStep = "1.判断表是否在源文件信息表存在")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-    private static boolean tableIsExistInDCL(String tableName) {
+    private static boolean tableIsExistInDCL(DatabaseWrapper db, String tableName) {
         //1.判断表是否在源文件信息表存在
-        return Dbo.queryNumber("SELECT count(1) count FROM " + Data_store_reg.TableName +
+        return SqlOperator.queryNumber(db, "SELECT count(1) count FROM " + Data_store_reg.TableName +
                         " WHERE lower(hyren_name) = ? AND collect_type IN (?,?)", tableName.toLowerCase(),
                 AgentType.ShuJuKu.getCode(), AgentType.DBWenJian.getCode()).orElseThrow(()
                 -> new BusinessException("检查表名称否重复在源文件信息表的SQL编写错误")) != 0;
     }
 
-    @Method(desc = "判断表是否在集市数据表存在",
-            logicStep = "1.判断表是否在集市数据表存在")
+    @Method(desc = "判断表是否在集市数据表存在", logicStep = "1.判断表是否在集市数据表存在")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-    private static boolean tableIsExistInDML(String tableName) {
+    private static boolean tableIsExistInDML(DatabaseWrapper db, String tableName) {
         //1.判断表是否在集市数据表存在
-        return Dbo.queryNumber("SELECT count(1) count FROM " + Dm_datatable.TableName +
+        return SqlOperator.queryNumber(db, "SELECT count(1) count FROM " + Dm_datatable.TableName +
                 " WHERE lower(datatable_en_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
                 -> new BusinessException("检查表名称否重复在集市数据表的SQL编写错误")) != 0;
     }
 
-    //	@Method(desc = "判断表是否在数据仓库表存在",
-//			logicStep = "1.判断表是否在数据仓库表存在")
-//	@Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
-//	@Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-//	private static boolean tableIsExistInEdwTable(String tableName) {
-//		//1.判断表是否在集市数据表存在
-//		return Dbo.queryNumber("SELECT count(1) count FROM " + Edw_table.TableName +
-//				" WHERE lower(tabname) = lower(?)", tableName.toLowerCase()).orElseThrow(()
-//				-> new BusinessException("检查表名称否重复在数据仓库表的SQL编写错误")) != 0;
-//	}
-//
-//	@Method(desc = "判断表是否在流数据内部消费信息登记表存在",
-//			logicStep = "1.判断表是否在流数据内部消费信息登记表存在")
-//	@Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
-//	@Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-//	private static boolean tableIsExistInSdmInnerTable(String tableName) {
-//		//1.判断表是否在集市数据表存在
-//		return Dbo.queryNumber("SELECT count(1) count FROM " + Sdm_inner_table.TableName +
-//				" WHERE lower(table_en_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
-//				-> new BusinessException("检查表名称否重复在流数据内部消费信息登记表的SQL编写错误")) != 0;
-//	}
-//
-//	@Method(desc = "判断表是否在机器学习数据信息表存在",
-//			logicStep = "1.判断表是否在机器学习数据信息表存在")
-//	@Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
-//	@Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-//	private static boolean tableIsExistInMlDatatableInfo(String tableName) {
-//		//1.判断表是否在集市数据表存在
-//		return Dbo.queryNumber("SELECT count(1) count FROM " + Ml_datatable_info.TableName +
-//				" WHERE lower(stable_en_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
-//				-> new BusinessException("检查表名称否重复在机器学习数据信息表的SQL编写错误")) != 0;
-//	}
-//
-    @Method(desc = "判断表是否在系统表创建信息表存在",
-            logicStep = "1.判断表是否在系统表创建信息表存在")
+    @Method(desc = "判断表是否在系统表创建信息表存在", logicStep = "1.判断表是否在系统表创建信息表存在")
+    @Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
     @Param(name = "tableName", desc = "表名", range = "String类型,不大于512字符")
     @Return(desc = "boolean", range = "true: 存在 或者 false: 不存在")
-    private static boolean tableIsExistInUDL(String tableName) {
+    private static boolean tableIsExistInUDL(DatabaseWrapper db, String tableName) {
         //1.判断表是否在集市数据表存在
-        return Dbo.queryNumber("SELECT count(1) count FROM " + Dq_table_info.TableName +
+        return SqlOperator.queryNumber(db, "SELECT count(1) count FROM " + Dq_table_info.TableName +
                 " WHERE lower(table_name) = lower(?)", tableName.toLowerCase()).orElseThrow(()
                 -> new BusinessException("检查表名称否重复在系统表创建信息表的SQL编写错误")) != 0;
     }
