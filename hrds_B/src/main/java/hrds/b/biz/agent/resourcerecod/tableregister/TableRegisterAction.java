@@ -63,7 +63,7 @@ public class TableRegisterAction extends BaseAction {
 		long dsl_id) {
 
 		//1: 检查认为的信息是否存在
-		Map<String, Object> map = checkDatabaseSetExist(databaseId);
+		Object collect_type = checkDatabaseSetExist(databaseId);
 		//2: 如果自定义的列信息不为空,将表对应的列信息解析出来,反之通过Agent获取数据库连接下的全部表字段列信息
 		JSONObject tableColumnObj = null;
 		if (StringUtil.isNotBlank(tableColumns)) {
@@ -73,7 +73,7 @@ public class TableRegisterAction extends BaseAction {
 		//3: 循环集合校验不可为空字段信息
 		for (Table_info tableInfo : tableInfos) {
 			//检查表名及中文名
-			saveTableInfo(databaseId, tableInfo, map.get("collect_type"));
+			saveTableInfo(databaseId, tableInfo, collect_type);
 			//4: 如果存在自定义列信息则保存自定义列信息,反之保存表的默认字段信息
 			List<Table_column> tableColumnList;
 			if (tableColumnObj != null && tableColumnObj.containsKey(tableInfo.getTable_name())) {
@@ -90,10 +90,12 @@ public class TableRegisterAction extends BaseAction {
 			//保存表的列信息
 			setTableColumnInfo(tableInfo.getTable_id(), tableInfo.getTable_name(), tableColumnList);
 			//保存表关联的储存层数据信息
-			saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo, true);
+			if (!collect_type.equals(CollectType.ShuJuKuCaiJi.getCode())) {
+				saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo);
+			}
 		}
 		//修改此次任务的状态信息
-		if (!map.get("collect_type").equals(CollectType.ShuJuKuCaiJi)) {
+		if (!collect_type.equals(CollectType.ShuJuKuCaiJi.getCode())) {
 			DboExecute
 				.updatesOrThrow("更新的数据超出了范围",
 					"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
@@ -119,7 +121,7 @@ public class TableRegisterAction extends BaseAction {
 
 	}
 
-	private Map<String, Object> checkDatabaseSetExist(long databaseId) {
+	private Object checkDatabaseSetExist(long databaseId) {
 		//1: 检查当前任务是否存在
 		long countNum = Dbo
 			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?",
@@ -129,16 +131,15 @@ public class TableRegisterAction extends BaseAction {
 			CheckParam.throwErrorMsg("任务ID(%s)不存在", databaseId);
 		}
 
-		return Dbo.queryOneObject("SELECT * FROM " + Database_set.TableName + " WHERE database_id = ?",
-			databaseId);
+		return Dbo.queryOneObject("SELECT collect_type FROM " + Database_set.TableName + " WHERE database_id = ?",
+			databaseId).get("collect_type");
 	}
 
 	@Method(desc = "", logicStep = ""
 		+ "1: 保存表存储信息"
 		+ "2: 保存表的储存关系信息"
 		+ "3: 记录数据表的存储登记")
-	private void saveStorageData(long source_id, long agent_id, long databaseId, long dsl_id, Table_info tableInfo,
-		boolean isAdd) {
+	private void saveStorageData(long source_id, long agent_id, long databaseId, long dsl_id, Table_info tableInfo) {
 
 		//获取任务的分类和数据源编号信息
 		Map<String, Object> classifyAndSourceNum = getClassifyAndSourceNum(databaseId);
@@ -147,13 +148,9 @@ public class TableRegisterAction extends BaseAction {
 				.format("%s_%s_%s",
 					classifyAndSourceNum.get("datasource_number"), classifyAndSourceNum.get("classify_num"),
 					tableInfo.getTable_name());
-		String sql;
-		if (isAdd) {
-			sql = "SELECT COUNT(1) FROM " + Data_store_reg.TableName + " WHERE hyren_name = ? ";
-		} else {
-			sql = "SELECT COUNT(1) FROM " + Data_store_reg.TableName + " WHERE hyren_name != ? ";
-		}
-		long countNum = Dbo.queryNumber(sql, hyren_name).orElseThrow(() -> new BusinessException("SQL查询异常"));
+		long countNum = Dbo
+			.queryNumber("SELECT COUNT(1) FROM " + Data_store_reg.TableName + " WHERE hyren_name = ? AND database_id = ?",
+				hyren_name, databaseId).orElseThrow(() -> new BusinessException("SQL查询异常"));
 		if (countNum != 0) {
 			CheckParam.throwErrorMsg("数据源(%s),分类(%s)下已存在当前表(%s)", classifyAndSourceNum.get("datasource_number"),
 				classifyAndSourceNum.get("classify_num"),
@@ -290,24 +287,23 @@ public class TableRegisterAction extends BaseAction {
 		String tableColumns) {
 
 		//1: 检查认为的信息是否存在
-		Map<String, Object> map = checkDatabaseSetExist(databaseId);
+		Object collect_type = checkDatabaseSetExist(databaseId);
 
-		//删除数据表存储关系表
-		Dbo.execute("DELETE FROM " + Dtab_relation_store.TableName + " WHERE tab_id in (SELECT storage_id FROM "
-			+ Table_storage_info.TableName
-			+ " WHERE table_id in (SELECT table_id FROM "
-			+ Table_info.TableName
-			+ " WHERE database_id = ?))", databaseId);
-		//删除表存储信息
-		Dbo.execute("DELETE FROM " + Table_storage_info.TableName + " WHERE table_id in (SELECT table_id FROM "
-			+ Table_info.TableName + " WHERE database_id = ?)", databaseId);
+		if (!collect_type.equals(CollectType.ShuJuKuCaiJi.getCode())) {
+			//删除数据表存储关系表
+			Dbo.execute("DELETE FROM " + Dtab_relation_store.TableName + " WHERE tab_id in (SELECT storage_id FROM "
+				+ Table_storage_info.TableName
+				+ " WHERE table_id in (SELECT table_id FROM "
+				+ Table_info.TableName
+				+ " WHERE database_id = ?))", databaseId);
+			//删除表存储信息
+			Dbo.execute("DELETE FROM " + Table_storage_info.TableName + " WHERE table_id in (SELECT table_id FROM "
+				+ Table_info.TableName + " WHERE database_id = ?)", databaseId);
+		}
 		//删除表信息
 		Dbo.execute("DELETE FROM " + Table_info.TableName + " WHERE database_id = ?", databaseId);
 		//数据存储登记信息
 		Dbo.execute("DELETE FROM " + Data_store_reg.TableName + " WHERE database_id = ?", databaseId);
-		//删除表存储信息
-		Dbo.execute("DELETE FROM " + Data_extraction_def.TableName + " WHERE table_id in (SELECT table_id FROM "
-			+ Table_info.TableName + " WHERE database_id = ?)", databaseId);
 		//2: 如果自定义的列信息不为空,将表对应的列信息解析出来,反之通过Agent获取数据库连接下的全部表字段列信息
 		JSONObject tableColumnObj = null;
 		if (StringUtil.isNotBlank(tableColumns)) {
@@ -335,11 +331,13 @@ public class TableRegisterAction extends BaseAction {
 					tableColumnList = databaseTableColumnInfo(databaseId, tableInfo.getTable_name());
 				}
 				//保存表信息
-				saveTableInfo(databaseId, tableInfo, map.get("collect_type"));
+				saveTableInfo(databaseId, tableInfo, collect_type);
 				//保存列信息
 				setTableColumnInfo(tableInfo.getTable_id(), tableInfo.getTable_name(), tableColumnList);
-				//保存表关联的储存层数据信息
-				saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo, true);
+				//保存表关联的储存层数据信息,如果不是数据采集在保存此信息(也就意味着是贴源登记)
+				if (!collect_type.equals(CollectType.ShuJuKuCaiJi.getCode())) {
+					saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo);
+				}
 
 			} else {
 				try {
@@ -354,11 +352,11 @@ public class TableRegisterAction extends BaseAction {
 								});
 						updateTableColumn(tableInfo.getTable_id(), tableColumnList);
 					}
-					//保存表关联的储存层数据信息
-					saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo, false);
-
+					long countNum = Dbo
+						.queryNumber("SELECT COUNT(1) FROM " + Data_extraction_def.TableName + " WHERE table_id = ?",
+							tableInfo.getTable_id()).orElseThrow(() -> new BusinessException("SQL错误"));
 					//如果是数据采集的表保存,则需要默认增加一个抽取定义(因为这里和贴源登记是公用的)
-					if (map.get("collect_type").equals(CollectType.ShuJuKuCaiJi)) {
+					if (countNum == 0) {
 						Data_extraction_def extraction_def = new Data_extraction_def();
 						extraction_def.setDed_id(PrimayKeyGener.getNextId());
 						extraction_def.setTable_id(tableInfo.getTable_id());
@@ -369,6 +367,10 @@ public class TableRegisterAction extends BaseAction {
 						extraction_def.setIs_archived(IsFlag.Fou.getCode());
 
 						extraction_def.add(Dbo.db());
+					}
+					if (!collect_type.equals(CollectType.ShuJuKuCaiJi.getCode())) {
+						//保存表关联的储存层数据信息
+						saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo);
 					}
 				} catch (Exception e) {
 					if (!(e instanceof EntityDealZeroException)) {
@@ -399,7 +401,7 @@ public class TableRegisterAction extends BaseAction {
 		//4: 保存表的信息
 		tableInfo.add(Dbo.db());
 
-		if (collect_type.equals(CollectType.ShuJuKuCaiJi)) {
+		if (collect_type.equals(CollectType.ShuJuKuCaiJi.getCode())) {
 			Data_extraction_def extraction_def = new Data_extraction_def();
 			extraction_def.setDed_id(PrimayKeyGener.getNextId());
 			extraction_def.setTable_id(tableInfo.getTable_id());
