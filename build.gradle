@@ -247,9 +247,14 @@ subprojects {
     task copyDeployJar(type: Copy) {
         def appname = "${project.name}"
         //清理版本jar,重新复制新版本jar
-        delete "$rootDir/../app/libs/"
+        delete "$rootDir/../app/hrds_lib/"
         from "$rootDir/" + appname + "/build/libs/"
-        into "$rootDir/../app/libs"
+        into "$rootDir/../app/hrds_lib"
         include("*.jar")
+        if (appname == 'hrds-commons'){
+            delete "$rootDir/../app/libs/"
+            from configurations.runtime
+            into "$rootDir/../app/libs"
+        }
     }
 }
