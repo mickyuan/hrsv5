@@ -3,12 +3,8 @@ package hrds.commons;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.*;
-import fd.ng.core.exception.internal.FrameworkRuntimeException;
-import fd.ng.core.exception.internal.RawlayerRuntimeException;
 import fd.ng.core.utils.ClassUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.core.utils.SystemUtil;
-import fd.ng.core.utils.Validator;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.web.annotation.Action;
 import fd.ng.web.annotation.UrlName;
@@ -16,28 +12,28 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.net.JarURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 public class ParsingAnnotaion {
     private static final Logger logger = LogManager.getLogger();
 
     public static void main(String[] args) {
-        start();
+        if (args.length != 1) {
+            logger.error("参数不合法! \r" +
+                    "\tsee: {ParsingAnnotaion.main(new String[]{AppinfoConf.ProjectId}}" +
+                    "\tsee: {ParsingAnnotaion.main(new String[]{'a'}");
+        } else {
+            logger.info("生成接口文档: " + args[0]);
+            start(args);
+        }
     }
 
-    public static void start() {
+    public static void start(String[] args) {
         try {
             // ClassLoader.getSystemClassLoader().getResource(resourceName);
             List<Class<?>> actionClassList = ClassUtil.getClassListByAnnotation("hrds", Action.class);
@@ -100,7 +96,7 @@ public class ParsingAnnotaion {
                         Param[] params = new Param[0];
 
                         Params apiParams = actionMethod.getAnnotation(Params.class);
-                        Map<String, Param> apiParamMap = new HashMap<String, Param>();
+                        Map<String, Param> apiParamMap = new HashMap<>();
                         if (apiParams == null) {// 该方法没有多个注解
                             Param paramAnno = actionMethod.getAnnotation(Param.class);
                             if (paramAnno != null) {
@@ -118,16 +114,14 @@ public class ParsingAnnotaion {
                         //获取方法的参数
                         Parameter[] parameters = actionMethod.getParameters();
                         int paramSize = parameters.length;
-                        /**
-                         * 处理参数和注解不一致的情况
-                         */
+                        //处理参数和注解不一致的情况
                         if (apiParamMap.size() != paramSize) {
                             errorMethod.put("paramError", actionLookupKey + "/" + curMethodName);
                         }
 
-                        List<ParamsBean> pbList = new ArrayList<ParamsBean>();
-                        for (int i = 0; i < paramSize; i++) {
-                            Parameter param = parameters[i]; // 方法的参数对象
+                        List<ParamsBean> pbList = new ArrayList<>();
+                        // 方法的参数对象
+                        for (Parameter param : parameters) {
                             Class<?> paramType = param.getType(); // 方法的参数类型
                             String reqParamName = param.getName(); // 该参数在 request 中的名字。默认就是参数名
                             Param par = apiParamMap.get(reqParamName);
@@ -162,7 +156,7 @@ public class ParsingAnnotaion {
                         if (parReurn != null) {
                             desc = parReurn.desc();//类的描述
                             range = parReurn.range();//逻辑步骤
-                            isbean = parReurn.isBean();//样例代码
+//                            isbean = parReurn.isBean();//样例代码
                         }
                         JSONObject jsonMethod = new JSONObject();
                         //方法描述
@@ -208,7 +202,7 @@ public class ParsingAnnotaion {
                     }
                 }
             }
-            SaveWriteFile("d://data.json", jsonArray.toString());
+            SaveWriteFile("d://data_" + args[0] + ".json", jsonArray.toString());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -223,7 +217,7 @@ public class ParsingAnnotaion {
             String desc = pb.getDesc();
             boolean isnullable = pb.isNullable();
             String[] valueIfNull = pb.getValueIfNull();
-            String vnull = "";
+            String vnull;
             if (valueIfNull.length == 0) {
                 vnull = "";
             } else {
@@ -233,10 +227,10 @@ public class ParsingAnnotaion {
             String range1 = pb.getRange();
             String example1 = pb.getExample1();
             if (isbean) {
-                String paramRange = "实体:"+name;
+                String paramRange = "实体:" + name;
                 if (paramType.isArray()) {
                     paramType = paramType.getComponentType();
-                    paramRange = "实体数组:"+name;
+                    paramRange = "实体数组:" + name;
                 }
                 Field[] declaredFields = paramType.getDeclaredFields();
                 for (Field field : declaredFields) {
@@ -283,7 +277,6 @@ public class ParsingAnnotaion {
 
     private static String getHostPort() {
         String ActionPattern = HttpServerConf.confBean.getActionPattern();
-        if (ActionPattern.endsWith("/*")) ActionPattern = ActionPattern.substring(0, ActionPattern.length() - 2);
         return "http://" + getHost() + ":" + getPort();
     }
 
@@ -381,7 +374,7 @@ public class ParsingAnnotaion {
             File file1 = new File(fileName);
             writer = new BufferedWriter(
                     new OutputStreamWriter(
-                            new FileOutputStream(file1), "UTF-8"));
+                            new FileOutputStream(file1), StandardCharsets.UTF_8));
             writer.write(content);
             writer.flush();
            /* fw = new FileWriter(fileName, true);
@@ -395,6 +388,7 @@ public class ParsingAnnotaion {
                     writer.close();
                     //out.close();
                 } catch (Exception ioe) {
+                    logger.error("写文件流关闭失败!" + ioe.getMessage());
                 }
             }
         }
