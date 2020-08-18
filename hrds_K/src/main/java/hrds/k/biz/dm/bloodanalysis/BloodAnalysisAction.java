@@ -20,8 +20,7 @@ import java.util.Map;
 @DocClass(desc = "数据管控-血缘分析", author = "BY-HLL", createdate = "2020/4/13 0013 上午 11:04")
 public class BloodAnalysisAction extends BaseAction {
 
-	@Method(desc = "根据表名称获取表与表之间的血缘关系",
-			logicStep = "获取表与表之间的关系")
+	@Method(desc = "根据表名称获取表与表之间的血缘关系", logicStep = "获取表与表之间的关系")
 	@Param(name = "table_name", desc = "表名", range = "String类型")
 	@Param(name = "search_type", desc = "搜索类型", range = "String类型, 0:表查看,1:字段查看,IsFlag代码项设置")
 	@Param(name = "search_relationship", desc = "搜索关系", range = "String类型, 0:影响,1:血缘,IsFlag代码项设置")
@@ -38,11 +37,11 @@ public class BloodAnalysisAction extends BaseAction {
 		Map<String, Object> tableBloodRelationshipMap;
 		//IsFlag.Fou 代表0:影响
 		if (is_sr == IsFlag.Fou) {
-			tableBloodRelationshipMap = DataTableUtil.influencesDataInfo(table_name, search_type);
+			tableBloodRelationshipMap = DataTableUtil.influencesDataInfo(Dbo.db(), table_name, search_type);
 		}
 		//IsFlag.Shi 代表1:血缘
 		else if (is_sr == IsFlag.Shi) {
-			tableBloodRelationshipMap = DataTableUtil.bloodlineDateInfo(table_name, search_type);
+			tableBloodRelationshipMap = DataTableUtil.bloodlineDateInfo(Dbo.db(), table_name, search_type);
 		} else {
 			//搜索类型不匹配
 			throw new BusinessException("搜索类型不匹配! search_type=" + search_relationship);
@@ -50,8 +49,7 @@ public class BloodAnalysisAction extends BaseAction {
 		return tableBloodRelationshipMap;
 	}
 
-	@Method(desc = "模糊搜索表名",
-			logicStep = "模糊搜索表名")
+	@Method(desc = "模糊搜索表名", logicStep = "模糊搜索表名")
 	@Param(name = "table_name", desc = "表名", range = "String类型", valueIfNull = "")
 	@Param(name = "search_relationship", desc = "搜索关系", range = "String类型, 0:影响,1:血缘,IsFlag代码项设置")
 	@Return(desc = "搜索结果List", range = "搜索结果List")
@@ -66,17 +64,9 @@ public class BloodAnalysisAction extends BaseAction {
 		if (is_sr == IsFlag.Fou) {
 			asmSql.clean();
 			asmSql.addSql("select table_name from (");
-			//加工 TODO hrsv5.1
-//            asmSql.addSql("select souretabname as table_name from edw_mapping where" +
-//                    " end_dt = ?").addParam(Constant.MAXDATE).addSql(" GROUP BY souretabname");
-//            asmSql.addSql("union all");
-			//集市
+			//加工
 			asmSql.addSql("select own_source_table_name as table_name from " + Dm_datatable_source.TableName +
 					" group by own_source_table_name ");
-			//数据管控创建表 TODO hrsv5.1
-//            asmSql.addSql("union all ");
-//            asmSql.addSql("select t1.colsourcetab as table_name  from sys_table_column t1 join " +
-//                    "sys_table_info t2 ON t1.info_id = t2.info_id WHERE t2.is_trace = ?").addParam(IsFlag.Shi.getCode());
 			asmSql.addSql(") T where ");
 			asmSql.addLikeParam("table_name", "%" + table_name.toLowerCase() + "%", "");
 			asmSql.addSql(" group by table_name");
@@ -85,18 +75,10 @@ public class BloodAnalysisAction extends BaseAction {
 		else if (is_sr == IsFlag.Shi) {
 			//模型表
 			asmSql.clean();
-			//加工血缘 TODO hrsv5.1
-			asmSql.addSql("select table_name from ( ");
-//            asmSql.addSql("select table_name from edw_mapping where end_dt = ?")
-//                    .addParam(Constant.MAXDATE);
-//            asmSql.addLikeParam("table_name", table_name).addSql(" GROUP BY table_name");
-//            asmSql.addSql(" union all");
+			//加工血缘
+			asmSql.addSql("select table_name from (");
 			asmSql.addSql(" select datatable_en_name as table_name from " + Dm_datatable.TableName + " group by " +
-					"datatable_en_name ");
-			//数据管控创建表未实现 TODO hrsv5.1
-//            asmSql.addSql(" union all");
-//            asmSql.addSql(" select table_name as table_name from sys_table_info WHERE is_trace = ? GROUP BY table_name")
-//                    .addParam(IsFlag.Shi.getCode());
+					"datatable_en_name");
 			asmSql.addSql(" ) aa where ");
 			asmSql.addLikeParam("lower(table_name)", "%" + table_name + "%", "");
 			asmSql.addSql(" group by table_name");
