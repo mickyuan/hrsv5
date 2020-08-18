@@ -72,8 +72,8 @@ public class Database_set extends ProjectTableEntity
 	private String cp_or;
 	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
 	private String jdbc_url;
-	@DocBean(name ="is_reg",value="是否贴源登记(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_reg;
+	@DocBean(name ="collect_type",value="数据库采集方式(CollectType):1-贴元登记<TieYuanDengJi> 2-数据库抽数<ShuJuKuChouShu> 3-数据库采集<ShuJuKuCaiJi> ",dataType = String.class,required = true)
+	private String collect_type;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = false)
 	private Long dsl_id;
 
@@ -263,13 +263,13 @@ public class Database_set extends ProjectTableEntity
 	public void setJdbc_url(String jdbc_url){
 		this.jdbc_url=jdbc_url;
 	}
-	/** 取得：是否贴源登记 */
-	public String getIs_reg(){
-		return is_reg;
+	/** 取得：数据库采集方式 */
+	public String getCollect_type(){
+		return collect_type;
 	}
-	/** 设置：是否贴源登记 */
-	public void setIs_reg(String is_reg){
-		this.is_reg=is_reg;
+	/** 设置：数据库采集方式 */
+	public void setCollect_type(String collect_type){
+		this.collect_type=collect_type;
 	}
 	/** 取得：存储层配置ID */
 	public Long getDsl_id(){

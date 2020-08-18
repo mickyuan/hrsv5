@@ -131,6 +131,8 @@ public class CodesItem{
 	protected static final String interfaceState=new String("InterfaceState");
 	/**数据质量规则级别   */
 	protected static final String edRuleLevel=new String("EdRuleLevel");
+	/**数据库采集方式   */
+	protected static final String collectType=new String("CollectType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -197,6 +199,7 @@ public class CodesItem{
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
 		mapCat.put(edRuleLevel,EdRuleLevel.class);
+		mapCat.put(collectType,CollectType.class);
 	}
 
 

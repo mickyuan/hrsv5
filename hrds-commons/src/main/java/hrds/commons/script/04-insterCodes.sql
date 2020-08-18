@@ -1,4 +1,4 @@
---　系统的引用值个数:62
+--　系统的引用值个数:63
 --　本引用值的代码个数:3 -------i==1
 delete from code_info where ci_sp_class='78';
 INSERT INTO CODE_INFO  VALUES ('0', '78', '数据质量校验结果', '检查通过', 'DqcVerifyResult');
@@ -428,3 +428,8 @@ INSERT INTO CODE_INFO  VALUES ('2', '73', '接口状态', '禁用', 'InterfaceSt
 delete from code_info where ci_sp_class='76';
 INSERT INTO CODE_INFO  VALUES ('0', '76', '数据质量规则级别', '警告', 'EdRuleLevel');
 INSERT INTO CODE_INFO  VALUES ('1', '76', '数据质量规则级别', '严重', 'EdRuleLevel');
+--　本引用值的代码个数:3 -------i==63
+delete from code_info where ci_sp_class='96';
+INSERT INTO CODE_INFO  VALUES ('1', '96', '数据库采集方式', '贴元登记', 'CollectType');
+INSERT INTO CODE_INFO  VALUES ('2', '96', '数据库采集方式', '数据库抽数', 'CollectType');
+INSERT INTO CODE_INFO  VALUES ('3', '96', '数据库采集方式', '数据库采集', 'CollectType');

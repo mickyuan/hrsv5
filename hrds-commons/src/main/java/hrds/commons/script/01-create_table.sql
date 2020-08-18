@@ -387,7 +387,7 @@ PLANE_URL                                         VARCHAR(512) NULL, --DB文件�
 IS_SENDOK                                         CHAR(1) NOT NULL, --是否设置完成并发送成功
 CP_OR                                             VARCHAR(512) NULL, --清洗顺序
 JDBC_URL                                          VARCHAR(512) NULL, --数据库连接地址
-IS_REG                                            CHAR(1) NOT NULL, --是否贴源登记
+COLLECT_TYPE                                      CHAR(1) NOT NULL, --数据库采集方式
 DSL_ID                                            BIGINT default 0 NULL, --存储层配置ID
 CLASSIFY_ID                                       BIGINT default 0 NOT NULL, --分类id
 CONSTRAINT DATABASE_SET_PK PRIMARY KEY(DATABASE_ID)   );
