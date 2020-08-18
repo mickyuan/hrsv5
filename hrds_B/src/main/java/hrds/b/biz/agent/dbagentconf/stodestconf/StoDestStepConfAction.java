@@ -781,10 +781,7 @@ public class StoDestStepConfAction extends BaseAction {
 				Dbo.queryOneColumnList(
 					"select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
 					storageInfo.getTable_id());
-			if (list.isEmpty()) {
-				throw new BusinessException("获取采集表卸数文件格式失败");
-			}
-			if (list.size() > 1) {
+			if (list.size() != 1) {
 				throw new BusinessException("获取采集表卸数文件格式失败");
 			}
 			storageInfo.setFile_format((String) list.get(0));

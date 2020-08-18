@@ -15,6 +15,9 @@ import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.CollectType;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.JobExecuteState;
@@ -22,6 +25,7 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Data_store_reg;
 import hrds.commons.entity.Database_set;
@@ -59,7 +63,7 @@ public class TableRegisterAction extends BaseAction {
 		long dsl_id) {
 
 		//1: 检查认为的信息是否存在
-		checkDatabaseSetExist(databaseId);
+		Map<String, Object> map = checkDatabaseSetExist(databaseId);
 		//2: 如果自定义的列信息不为空,将表对应的列信息解析出来,反之通过Agent获取数据库连接下的全部表字段列信息
 		JSONObject tableColumnObj = null;
 		if (StringUtil.isNotBlank(tableColumns)) {
@@ -69,7 +73,7 @@ public class TableRegisterAction extends BaseAction {
 		//3: 循环集合校验不可为空字段信息
 		for (Table_info tableInfo : tableInfos) {
 			//检查表名及中文名
-			saveTableInfo(databaseId, tableInfo);
+			saveTableInfo(databaseId, tableInfo, map.get("collect_type"));
 			//4: 如果存在自定义列信息则保存自定义列信息,反之保存表的默认字段信息
 			List<Table_column> tableColumnList;
 			if (tableColumnObj != null && tableColumnObj.containsKey(tableInfo.getTable_name())) {
@@ -86,16 +90,17 @@ public class TableRegisterAction extends BaseAction {
 			//保存表的列信息
 			setTableColumnInfo(tableInfo.getTable_id(), tableInfo.getTable_name(), tableColumnList);
 			//保存表关联的储存层数据信息
-			saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo);
-
+			saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo, true);
 		}
 		//修改此次任务的状态信息
-		DboExecute
-			.updatesOrThrow("更新的数据超出了范围", "UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
-				IsFlag.Shi.getCode(),
-				databaseId);
+		if (!map.get("collect_type").equals(CollectType.ShuJuKuCaiJi)) {
+			DboExecute
+				.updatesOrThrow("更新的数据超出了范围",
+					"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
+					IsFlag.Shi.getCode(),
+					databaseId);
+		}
 	}
-
 
 	@Method(desc = "获取全表的信息", logicStep = ""
 		+ "1: 检查当前任务是否存在 "
@@ -114,22 +119,26 @@ public class TableRegisterAction extends BaseAction {
 
 	}
 
-	private void checkDatabaseSetExist(long databaseId) {
+	private Map<String, Object> checkDatabaseSetExist(long databaseId) {
 		//1: 检查当前任务是否存在
 		long countNum = Dbo
-			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ? AND is_reg = ?",
-				databaseId, IsFlag.Shi.getCode())
+			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?",
+				databaseId)
 			.orElseThrow(() -> new BusinessException("SQL查询异常"));
 		if (countNum == 0) {
 			CheckParam.throwErrorMsg("任务ID(%s)不存在", databaseId);
 		}
+
+		return Dbo.queryOneObject("SELECT * FROM " + Database_set.TableName + " WHERE database_id = ?",
+			databaseId);
 	}
 
 	@Method(desc = "", logicStep = ""
 		+ "1: 保存表存储信息"
 		+ "2: 保存表的储存关系信息"
 		+ "3: 记录数据表的存储登记")
-	private void saveStorageData(long source_id, long agent_id, long databaseId, long dsl_id, Table_info tableInfo) {
+	private void saveStorageData(long source_id, long agent_id, long databaseId, long dsl_id, Table_info tableInfo,
+		boolean isAdd) {
 
 		//获取任务的分类和数据源编号信息
 		Map<String, Object> classifyAndSourceNum = getClassifyAndSourceNum(databaseId);
@@ -138,10 +147,13 @@ public class TableRegisterAction extends BaseAction {
 				.format("%s_%s_%s",
 					classifyAndSourceNum.get("datasource_number"), classifyAndSourceNum.get("classify_num"),
 					tableInfo.getTable_name());
-		long countNum = Dbo.queryNumber("SELECT COUNT(1) FROM " + Data_store_reg.TableName
-				+ " WHERE hyren_name = ? ",
-			hyren_name)
-			.orElseThrow(() -> new BusinessException("SQL查询异常"));
+		String sql;
+		if (isAdd) {
+			sql = "SELECT COUNT(1) FROM " + Data_store_reg.TableName + " WHERE hyren_name = ? ";
+		} else {
+			sql = "SELECT COUNT(1) FROM " + Data_store_reg.TableName + " WHERE hyren_name != ? ";
+		}
+		long countNum = Dbo.queryNumber(sql, hyren_name).orElseThrow(() -> new BusinessException("SQL查询异常"));
 		if (countNum != 0) {
 			CheckParam.throwErrorMsg("数据源(%s),分类(%s)下已存在当前表(%s)", classifyAndSourceNum.get("datasource_number"),
 				classifyAndSourceNum.get("classify_num"),
@@ -196,8 +208,10 @@ public class TableRegisterAction extends BaseAction {
 	@Param(name = "table_info", desc = "表数据信息", range = "不可为空", isBean = true)
 	void checkColumnInformation(Table_column table_column) {
 		Validator.notBlank(table_column.getColumn_name(), "列名称不能为空");
-		Validator.notBlank(table_column.getColumn_ch_name(), String.format("列(%s)中文名称不能为空", table_column.getColumn_name()));
-		Validator.notBlank(table_column.getIs_primary_key(), String.format("列(%s)主键信息不能为空", table_column.getColumn_name()));
+		Validator
+			.notBlank(table_column.getColumn_ch_name(), String.format("列(%s)中文名称不能为空", table_column.getColumn_name()));
+		Validator
+			.notBlank(table_column.getIs_primary_key(), String.format("列(%s)主键信息不能为空", table_column.getColumn_name()));
 
 	}
 
@@ -276,7 +290,7 @@ public class TableRegisterAction extends BaseAction {
 		String tableColumns) {
 
 		//1: 检查认为的信息是否存在
-		checkDatabaseSetExist(databaseId);
+		Map<String, Object> map = checkDatabaseSetExist(databaseId);
 
 		//删除数据表存储关系表
 		Dbo.execute("DELETE FROM " + Dtab_relation_store.TableName + " WHERE tab_id in (SELECT storage_id FROM "
@@ -291,7 +305,9 @@ public class TableRegisterAction extends BaseAction {
 		Dbo.execute("DELETE FROM " + Table_info.TableName + " WHERE database_id = ?", databaseId);
 		//数据存储登记信息
 		Dbo.execute("DELETE FROM " + Data_store_reg.TableName + " WHERE database_id = ?", databaseId);
-
+		//删除表存储信息
+		Dbo.execute("DELETE FROM " + Data_extraction_def.TableName + " WHERE table_id in (SELECT table_id FROM "
+			+ Table_info.TableName + " WHERE database_id = ?)", databaseId);
 		//2: 如果自定义的列信息不为空,将表对应的列信息解析出来,反之通过Agent获取数据库连接下的全部表字段列信息
 		JSONObject tableColumnObj = null;
 		if (StringUtil.isNotBlank(tableColumns)) {
@@ -319,11 +335,12 @@ public class TableRegisterAction extends BaseAction {
 					tableColumnList = databaseTableColumnInfo(databaseId, tableInfo.getTable_name());
 				}
 				//保存表信息
-				saveTableInfo(databaseId, tableInfo);
+				saveTableInfo(databaseId, tableInfo, map.get("collect_type"));
 				//保存列信息
 				setTableColumnInfo(tableInfo.getTable_id(), tableInfo.getTable_name(), tableColumnList);
 				//保存表关联的储存层数据信息
-				saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo);
+				saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo, true);
+
 			} else {
 				try {
 					//保存表信息
@@ -338,7 +355,21 @@ public class TableRegisterAction extends BaseAction {
 						updateTableColumn(tableInfo.getTable_id(), tableColumnList);
 					}
 					//保存表关联的储存层数据信息
-					saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo);
+					saveStorageData(source_id, agent_id, databaseId, dsl_id, tableInfo, false);
+
+					//如果是数据采集的表保存,则需要默认增加一个抽取定义(因为这里和贴源登记是公用的)
+					if (map.get("collect_type").equals(CollectType.ShuJuKuCaiJi)) {
+						Data_extraction_def extraction_def = new Data_extraction_def();
+						extraction_def.setDed_id(PrimayKeyGener.getNextId());
+						extraction_def.setTable_id(tableInfo.getTable_id());
+						extraction_def.setData_extract_type(DataExtractType.YuanShuJuGeShi.getCode());
+						extraction_def.setIs_header(IsFlag.Fou.getCode());
+						extraction_def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+						extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
+						extraction_def.setIs_archived(IsFlag.Fou.getCode());
+
+						extraction_def.add(Dbo.db());
+					}
 				} catch (Exception e) {
 					if (!(e instanceof EntityDealZeroException)) {
 						throw new BusinessException(e.getMessage());
@@ -349,7 +380,7 @@ public class TableRegisterAction extends BaseAction {
 
 	}
 
-	private void saveTableInfo(long databaseId, Table_info tableInfo) {
+	private void saveTableInfo(long databaseId, Table_info tableInfo, Object collect_type) {
 		//检查表名及中文名
 		checklistInformation(tableInfo);
 		//设置表的主键信息
@@ -367,6 +398,19 @@ public class TableRegisterAction extends BaseAction {
 		tableInfo.setRec_num_date(DateUtil.getSysDate());
 		//4: 保存表的信息
 		tableInfo.add(Dbo.db());
+
+		if (collect_type.equals(CollectType.ShuJuKuCaiJi)) {
+			Data_extraction_def extraction_def = new Data_extraction_def();
+			extraction_def.setDed_id(PrimayKeyGener.getNextId());
+			extraction_def.setTable_id(tableInfo.getTable_id());
+			extraction_def.setData_extract_type(DataExtractType.YuanShuJuGeShi.getCode());
+			extraction_def.setIs_header(IsFlag.Fou.getCode());
+			extraction_def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+			extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
+			extraction_def.setIs_archived(IsFlag.Fou.getCode());
+
+			extraction_def.add(Dbo.db());
+		}
 	}
 
 	@Method(desc = "根据表的ID更新表的列信息", logicStep = ""
