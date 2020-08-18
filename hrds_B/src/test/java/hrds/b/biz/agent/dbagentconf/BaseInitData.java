@@ -10,6 +10,7 @@ import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.CollectType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Database_set;
@@ -277,7 +278,7 @@ public class BaseInitData {
 			databaseSet.setRow_separator(rowSeparator);
 			databaseSet.setDatabase_pad(databasePwd);
 			databaseSet.setUser_name(userName);
-
+			databaseSet.setCollect_type(CollectType.ShuJuKuChouShu.getCode());
 			databases.add(databaseSet);
 		}
 

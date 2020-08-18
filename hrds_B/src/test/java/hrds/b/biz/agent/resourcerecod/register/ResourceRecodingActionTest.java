@@ -15,6 +15,7 @@ import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.CollectType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.BusinessException;
@@ -130,7 +131,7 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			database_set.setDatabase_port(PORT);
 			database_set.setDb_agent(IsFlag.Fou.getCode());
 			database_set.setIs_sendok(IsFlag.Fou.getCode());
-			database_set.setIs_reg(IsFlag.Shi.getCode());
+			database_set.setCollect_type(CollectType.TieYuanDengJi.getCode());
 			database_set.setDsl_id(DSL_ID);
 			database_set.setClassify_id(CLASSIFY_ID);
 			database_set.setJdbc_url(JDBC_URL);
@@ -150,7 +151,7 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			database_set.setDatabase_port(PORT);
 			database_set.setDb_agent(IsFlag.Fou.getCode());
 			database_set.setIs_sendok(IsFlag.Shi.getCode());
-			database_set.setIs_reg(IsFlag.Shi.getCode());
+			database_set.setCollect_type(CollectType.TieYuanDengJi.getCode());
 			database_set.setDsl_id(DSL_ID);
 			database_set.setClassify_id(CLASSIFY_ID);
 			database_set.setJdbc_url(JDBC_URL);
@@ -160,8 +161,6 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			//登陆是否成功
 			ActionResult login = login();
 			assertThat(login.isSuccess(), is(true));
-		} catch (Exception e) {
-			throw e;
 		}
 	}
 
@@ -190,8 +189,6 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			assertThat(execute, is(2));
 
 			db.commit();
-		} catch (Exception e) {
-			throw e;
 		}
 	}
 
@@ -220,7 +217,7 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			assertThat("数据库连接IP不一致", database_set.getDatabase_ip(), is(IP));
 			assertThat("数据库连接端口不一致", database_set.getDatabase_port(), is(PORT));
 			assertThat("DBAgent不一致", database_set.getDb_agent(), is(IsFlag.Fou.getCode()));
-			assertThat("贴源登记不一致", database_set.getIs_reg(), is(IsFlag.Shi.getCode()));
+			assertThat("贴源登记不一致", database_set.getCollect_type(), is(CollectType.TieYuanDengJi.getCode()));
 			assertThat("存储层不一致", database_set.getDsl_id(), is(DSL_ID));
 			assertThat("数据库连接URL不一致", database_set.getJdbc_url(), is(JDBC_URL));
 		});
@@ -249,7 +246,7 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			assertThat("数据库连接IP不一致", database_set.getDatabase_ip(), is(IP));
 			assertThat("数据库连接端口不一致", database_set.getDatabase_port(), is(PORT));
 			assertThat("DBAgent不一致", database_set.getDb_agent(), is(IsFlag.Fou.getCode()));
-			assertThat("贴源登记不一致", database_set.getIs_reg(), is(IsFlag.Shi.getCode()));
+			assertThat("贴源登记不一致", database_set.getCollect_type(), is(CollectType.TieYuanDengJi.getCode()));
 			assertThat("存储层不一致", database_set.getDsl_id(), is(DSL_ID));
 			assertThat("数据库连接URL不一致", database_set.getJdbc_url(), is(JDBC_URL));
 		});
@@ -409,7 +406,7 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 			assertThat("数据库连接IP不一致", databaseQuery.getDatabase_ip(), is(IP));
 			assertThat("数据库连接端口不一致", databaseQuery.getDatabase_port(), is(PORT));
 			assertThat("DBAgent不一致", databaseQuery.getDb_agent(), is(IsFlag.Fou.getCode()));
-			assertThat("贴源登记不一致", databaseQuery.getIs_reg(), is(IsFlag.Shi.getCode()));
+			assertThat("贴源登记不一致", databaseQuery.getCollect_type(), is(CollectType.TieYuanDengJi.getCode()));
 			assertThat("存储层不一致", databaseQuery.getDsl_id(), is(DSL_ID));
 			assertThat("数据库连接URL不一致", databaseQuery.getJdbc_url(), is(JDBC_URL));
 
@@ -492,7 +489,7 @@ public class ResourceRecodingActionTest extends WebBaseTestCase {
 		database_set.setDatabase_port(PORT);
 		database_set.setDb_agent(IsFlag.Fou.getCode());
 		database_set.setIs_sendok(IsFlag.Fou.getCode());
-		database_set.setIs_reg(IsFlag.Shi.getCode());
+		database_set.setCollect_type(CollectType.TieYuanDengJi.getCode());
 		database_set.setJdbc_url(JDBC_URL);
 
 		return database_set;

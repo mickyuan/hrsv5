@@ -1,6 +1,5 @@
 package hrds.b.biz.agent.resourcerecod.register;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -12,31 +11,19 @@ import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.CleanType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.CollectType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Database_set;
 import hrds.commons.entity.fdentity.ProjectTableEntity.EntityDealZeroException;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 
 @DocClass(desc = "贴源登记管理", author = "Mr.Lee", createdate = "2020-07-06 10:02")
 public class ResourceRecodingAction extends BaseAction {
-
-	private static final JSONObject CLEAN_OBJ;
-
-	static {
-		CLEAN_OBJ = new JSONObject(true);
-		CLEAN_OBJ.put(CleanType.ZiFuBuQi.getCode(), 1);
-		CLEAN_OBJ.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		CLEAN_OBJ.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		CLEAN_OBJ.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		CLEAN_OBJ.put(CleanType.ZiFuHeBing.getCode(), 5);
-		CLEAN_OBJ.put(CleanType.ZiFuChaiFen.getCode(), 6);
-		CLEAN_OBJ.put(CleanType.ZiFuTrim.getCode(), 7);
-	}
 
 	@Method(desc = "新增贴源登记信息", logicStep = "1: 根据用户和Agent信息进行关联查询上次为配置完成的任务信息,如果没有则说明是新增")
 	@Param(name = "source_id", range = "不可为空", desc = "数据源ID编号")
@@ -57,12 +44,12 @@ public class ResourceRecodingAction extends BaseAction {
 				+ Agent_info.TableName
 				+ " ai ON t1.agent_id = ai.agent_id "
 				+ "WHERE  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? "
-				+ "AND ai.source_id = ? AND ai.agent_id = ? AND t1.is_reg = ?",
+				+ "AND ai.source_id = ? AND ai.agent_id = ? AND t1.collect_type = ?",
 			IsFlag.Fou.getCode(),
 			AgentType.ShuJuKu.getCode(),
 			getUserId(),
 			source_id,
-			agent_id, IsFlag.Shi.getCode());
+			agent_id, CollectType.TieYuanDengJi.getCode());
 	}
 
 	@Method(
@@ -100,8 +87,8 @@ public class ResourceRecodingAction extends BaseAction {
 				+ " JOIN "
 				+ Collect_job_classify.TableName
 				+ " t2 ON "
-				+ " t1.classify_id = t2.classify_id  WHERE database_id = ? AND t1.is_sendok = ? AND t1.is_reg = ?",
-			databaseId, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
+				+ " t1.classify_id = t2.classify_id  WHERE database_id = ? AND t1.is_sendok = ? AND t1.collect_type = ?",
+			databaseId, IsFlag.Shi.getCode(), CollectType.TieYuanDengJi.getCode());
 	}
 
 	@Method(desc = "保存贴源登记的数据信息", logicStep = ""
@@ -135,10 +122,10 @@ public class ResourceRecodingAction extends BaseAction {
 			}
 		}
 		databaseSet.setDatabase_id(PrimayKeyGener.getNextId());
-		databaseSet.setIs_reg(IsFlag.Shi.getCode());
+		databaseSet.setCollect_type(CollectType.TieYuanDengJi.getCode());
 		databaseSet.setDb_agent(IsFlag.Fou.getCode());
 		databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-		databaseSet.setCp_or(CLEAN_OBJ.toJSONString());
+		databaseSet.setCp_or(Constant.DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 		databaseSet.add(Dbo.db());
 		// 4: 返回此次任务的采集ID
 		return databaseSet.getDatabase_id();

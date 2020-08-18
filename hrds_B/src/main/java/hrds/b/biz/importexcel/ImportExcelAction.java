@@ -32,6 +32,7 @@ import hrds.commons.codes.Job_Status;
 import hrds.commons.codes.Pro_Type;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.CollectType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Data_source;
@@ -448,7 +449,7 @@ public class ImportExcelAction extends BaseAction {
 		database_set.setDatabase_drive(ConnUtil.getJDBCDriver(database_type));
 
 		//设置任务是否贴源登记为否
-		database_set.setIs_reg(IsFlag.Fou.getCode());
+		database_set.setCollect_type(CollectType.ShuJuKuChouShu.getCode());
 
 		//数据库名称
 		String database_name = ExcelUtil.getValue(row.getCell(4)).toString();

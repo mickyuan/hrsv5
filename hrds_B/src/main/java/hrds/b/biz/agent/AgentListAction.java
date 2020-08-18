@@ -161,7 +161,7 @@ public class AgentListAction extends BaseAction {
 		if (AgentType.ShuJuKu == agentType) {
 			sqlStr =
 				" SELECT ds.DATABASE_ID ID,ds.task_name task_name,ds.AGENT_ID AGENT_ID,"
-					+ " gi.source_id source_id,ds.is_reg,gi.agent_type"
+					+ " gi.source_id source_id,ds.collect_type,gi.agent_type"
 					+ " FROM "
 					+ Database_set.TableName
 					+ " ds "

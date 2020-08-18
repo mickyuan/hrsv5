@@ -6,8 +6,6 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.core.utils.Validator;
-import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -24,7 +22,6 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 
 @DocClass(desc = "数据文件采集配置管理", author = "Mr.Lee", createdate = "2020-04-10 16:08")
 public class CollectFIleAction extends BaseAction {
@@ -95,7 +92,8 @@ public class CollectFIleAction extends BaseAction {
 		database_set.setDb_agent(IsFlag.Shi.getCode());
 		database_set.setDatabase_id(database_id);
 		database_set.setIs_sendok(IsFlag.Fou.getCode());
-		database_set.setIs_reg(IsFlag.Fou.getCode());
+		//这里此字段会被忽略,所以随便给个 char(1)的值
+		database_set.setCollect_type(IsFlag.Fou.getCode());
 		database_set.add(Dbo.db());
 		//    3: 返回生成的采集任务ID给前端
 		return database_id;

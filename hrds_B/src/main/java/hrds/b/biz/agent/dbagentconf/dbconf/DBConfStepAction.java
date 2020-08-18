@@ -1,6 +1,5 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -16,11 +15,11 @@ import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.CleanType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
 import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.CollectType;
 import hrds.commons.entity.Collect_job_classify;
 import hrds.commons.entity.Data_source;
 import hrds.commons.entity.Database_set;
@@ -35,19 +34,6 @@ import java.util.List;
 
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
 public class DBConfStepAction extends BaseAction {
-
-	private static final JSONObject CLEANOBJ;
-
-	static {
-		CLEANOBJ = new JSONObject(true);
-		CLEANOBJ.put(CleanType.ZiFuBuQi.getCode(), 1);
-		CLEANOBJ.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		CLEANOBJ.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		CLEANOBJ.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		CLEANOBJ.put(CleanType.ZiFuHeBing.getCode(), 5);
-		CLEANOBJ.put(CleanType.ZiFuChaiFen.getCode(), 6);
-		CLEANOBJ.put(CleanType.ZiFuTrim.getCode(), 7);
-	}
 
 	@Method(
 		desc = "根据数据库采集任务ID进行查询并在页面上回显数据源配置信息",
@@ -83,7 +69,7 @@ public class DBConfStepAction extends BaseAction {
 		//		}
 		// 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
 		return Dbo.queryResult(
-			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.is_reg, "
+			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.collect_type, "
 				+ " t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, "
 				+ " t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, "
 				+ " t2.classify_name, t2.remark "
@@ -93,8 +79,8 @@ public class DBConfStepAction extends BaseAction {
 				+ " left join "
 				+ Collect_job_classify.TableName
 				+ " t2 on "
-				+ " t1.classify_id = t2.classify_id  where database_id = ? AND t1.is_reg = ? ",
-			databaseId, IsFlag.Fou.getCode());
+				+ " t1.classify_id = t2.classify_id  where database_id = ? AND t1.collect_type = ? ",
+			databaseId, CollectType.ShuJuKuChouShu.getCode());
 	}
 
 	@Method(desc = "新增时获取数据库采集的数据", logicStep = "使用是否发生完成的标识来获取上次为配置文采的任务")
@@ -105,7 +91,7 @@ public class DBConfStepAction extends BaseAction {
 
 		// 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
 		return Dbo.queryResult(
-			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.is_reg, "
+			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.collect_type, "
 				+ " t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, "
 				+ " t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, "
 				+ " t2.classify_name, t2.remark "
@@ -119,12 +105,12 @@ public class DBConfStepAction extends BaseAction {
 				+ Agent_info.TableName
 				+ " ai on t1.agent_id = ai.agent_id "
 				+ "where  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? "
-				+ "AND ai.source_id = ? AND ai.agent_id = ? AND t1.is_reg = ?",
+				+ "AND ai.source_id = ? AND ai.agent_id = ? AND t1.collect_type = ?",
 			IsFlag.Fou.getCode(),
 			AgentType.ShuJuKu.getCode(),
 			getUserId(),
 			databaseId,
-			agent_id, IsFlag.Fou.getCode());
+			agent_id, CollectType.ShuJuKuChouShu.getCode());
 	}
 
 	@Method(desc = "根据数据库类型获得数据库连接url等信息", logicStep = "" + "1、调用工具类方法直接获取数据并返回")
@@ -426,7 +412,7 @@ public class DBConfStepAction extends BaseAction {
 
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			//			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-			databaseSet.setCp_or(CLEANOBJ.toJSONString());
+			databaseSet.setCp_or(Constant.DATABASE_CLEAN.toJSONString());
 			databaseSet.update(Dbo.db());
 		} else {
 			// 4、如果不存在，则新增信息
@@ -434,9 +420,9 @@ public class DBConfStepAction extends BaseAction {
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-			databaseSet.setIs_reg(IsFlag.Fou.getCode());
+			databaseSet.setCollect_type(CollectType.ShuJuKuChouShu.getCode());
 			// 任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
-			databaseSet.setCp_or(CLEANOBJ.toJSONString());
+			databaseSet.setCp_or(Constant.DATABASE_CLEAN.toJSONString());
 
 			databaseSet.add(Dbo.db());
 		}
