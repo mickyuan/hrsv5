@@ -33,8 +33,7 @@ public class MarketVersionManageAction extends BaseAction {
     private static final Logger logger = LogManager.getLogger();
 
     @Method(desc = "获取版本管理树数据", logicStep = "获取版本管理树数据")
-    @Param(name = "参数名", desc = "参数描述", range = "参数例子")
-    @Return(desc = "结果说明", range = "结果描述")
+    @Return(desc = "版本管理树数据", range = "版本管理树数据")
     public List<Node> getMarketVerManageTreeData() {
         //设置源菜单信息节点数据
         List<Map<String, Object>> dataList = new ArrayList<>(TreeDataQuery.getSourceTreeInfos(TreePageSource.MARKET_VERSION_MANAGE));
