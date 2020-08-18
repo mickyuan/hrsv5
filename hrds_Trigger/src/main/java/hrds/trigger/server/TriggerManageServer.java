@@ -1,6 +1,5 @@
 package hrds.trigger.server;
 
-import hrds.commons.exception.AppSystemException;
 import hrds.trigger.beans.EtlJobParaAnaly;
 import hrds.trigger.task.TaskManager;
 import hrds.trigger.task.helper.HazelcastHelper;
@@ -36,7 +35,6 @@ public class TriggerManageServer {
 	 * 线程方式启动服务。<br>
 	 * 1.以线程的方式启动CM服务；
 	 * 2.以线程的方式启动监测信息文件的服务。
-	 *
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
 	 */
@@ -50,7 +48,6 @@ public class TriggerManageServer {
 	 * 停止服务，最终会停止线程。<br>
 	 * 1.停止监测信息文件的服务；
 	 * 2.停止CM服务.
-	 *
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
 	 */
@@ -61,6 +58,7 @@ public class TriggerManageServer {
 	}
 
 	/**
+	 *
 	 * ClassName: CMServerThread <br/>
 	 * Function: 用于以线程方式启动CM服务。<br/>
 	 * Date: 2019/7/30 16:58 <br/>
@@ -75,7 +73,6 @@ public class TriggerManageServer {
 		/**
 		 * 停止CM服务。<br>
 		 * 1.线程持续运行标识置为[停止]。
-		 *
 		 * @author Tiger.Wang
 		 * @date 2019/10/8
 		 */
@@ -89,7 +86,6 @@ public class TriggerManageServer {
 		 * 1、检查调度系统是否应该继续执行；<br>
 		 * 2、检查是否有需要立即执行的作业，有此作业则执行；<br>
 		 * 3、间隔一定时间后，再次循环执行。<br>
-		 *
 		 * @author Tiger.Wang
 		 * @date 2019/10/8
 		 */
@@ -97,23 +93,21 @@ public class TriggerManageServer {
 		public void run() {
 
 			try {
-				while (run) {
+				while(run) {
 					//1、检查调度系统是否应该继续执行；
-					if (!taskManager.checkSysGoRun()) {
-						return;
-					}
+					if(!taskManager.checkSysGoRun()){ return; }
 					//2、检查是否有需要立即执行的作业，有此作业则执行；
 					EtlJobParaAnaly etlJobParaAnaly = taskManager.getEtlJob();
-					if (etlJobParaAnaly.isHasEtlJob()) {
+					if(etlJobParaAnaly.isHasEtlJob()) {
 						taskManager.runEtlJob(etlJobParaAnaly.getEtlJobCur(),
 								etlJobParaAnaly.isHasHandle());
 					}
 					//3、间隔一定时间后，再次循环执行。
 					TimeUnit.MILLISECONDS.sleep(SLEEP_TIME);
 				}
-			} catch (Exception ex) {
-				throw new AppSystemException("Exception happened!", ex);
-			} finally {
+			}catch(Exception ex) {
+				logger.error("Exception happened!", ex);
+			}finally {
 				TaskSqlHelper.closeDbConnector();//关闭数据库连接
 				HazelcastHelper.getInstance().close();
 			}
