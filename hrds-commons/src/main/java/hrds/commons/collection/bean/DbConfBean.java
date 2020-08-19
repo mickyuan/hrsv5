@@ -23,7 +23,8 @@ public class DbConfBean {
 	private String database_type;
 	@DocBean(name = "jdbc_url", value = "数据库连接地址:", dataType = String.class, required = false)
 	private String jdbc_url;
-
+	@DocBean(name = "database_name", value = "数据库名称:", dataType = String.class, required = false)
+	private String database_name;
 
 	public String getUser_name() {
 		return user_name;
@@ -63,5 +64,13 @@ public class DbConfBean {
 
 	public void setJdbc_url(String jdbc_url) {
 		this.jdbc_url = jdbc_url;
+	}
+
+	public String getDatabase_name() {
+		return database_name;
+	}
+
+	public void setDatabase_name(String database_name) {
+		this.database_name = database_name;
 	}
 }

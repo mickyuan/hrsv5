@@ -117,7 +117,7 @@ public class ConfigReader {
 					log.error("Login system failed");
 				}
 			} else if (PlatformType.fic60.toString().equals(platform)) {
-				conf = lg.hbaseLogin(conf);
+				conf = lg.hbaseLogin(conf,prncipal_name);
 			} else if (PlatformType.fic80.toString().equals(platform)) {
 				conf = C80LoginUtil.login(conf, prncipal_name);
 			} else {

@@ -1,6 +1,5 @@
 package hrds.commons.hadoop.readconfig;
 
-import hrds.commons.utils.CommonVariables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -146,13 +145,13 @@ public class LoginUtil {
 	 * make the keytab and principal in example to current user's keytab and
 	 * username
 	 */
-	public Configuration authentication(Configuration conf) throws IOException {
+	public Configuration authentication(Configuration conf,String principle_name) throws IOException {
 		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
-		login(CommonVariables.PRINCIPLE_NAME, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
+		login(principle_name, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
 		return conf;
 	}
 
-	public Configuration hbaseLogin(Configuration conf) throws IOException {
+	public Configuration hbaseLogin(Configuration conf,String principle_name) throws IOException {
 
 		System.setProperty("java.security.auth.login.config", confDir + "jaas.conf");
 
@@ -165,9 +164,9 @@ public class LoginUtil {
 		 * will connect more than one zk cluster, the demo may be not proper. you
 		 * can contact us for more help
 		 */
-		LoginUtil.setJaasConf(ZOOKEEPER_DEFAULT_LOGIN_CONTEXT_NAME, CommonVariables.PRINCIPLE_NAME, PATH_TO_KEYTAB);
+		LoginUtil.setJaasConf(ZOOKEEPER_DEFAULT_LOGIN_CONTEXT_NAME, principle_name, PATH_TO_KEYTAB);
 		LoginUtil.setZookeeperServerPrincipal(ZOOKEEPER_SERVER_PRINCIPAL_KEY, ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
-		login(CommonVariables.PRINCIPLE_NAME, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
+		login(principle_name, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
 		return conf;
 	}
 

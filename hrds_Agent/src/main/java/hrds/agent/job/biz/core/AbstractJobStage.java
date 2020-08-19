@@ -45,7 +45,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 				db.execute("DROP TABLE " + todayTableName + "b");
 			}
 			//如果表存在
-			db.execute("ALTER TABLE " + todayTableName + " RENAME TO " + todayTableName + "b");
+			db.execute(db.getDbtype().ofRenameSql(todayTableName, todayTableName + "b"));
 		}
 	}
 
@@ -93,14 +93,14 @@ public abstract class AbstractJobStage implements JobStageInterface {
 					if (i == storage_time) {
 						db.execute("DROP TABLE " + hbase_name + "_" + i);
 					} else {
-						db.execute("ALTER TABLE " + hbase_name + "_" + i + " RENAME TO " + hbase_name
-								+ "_" + (i + 1));
+						db.execute(db.getDbtype().ofRenameSql(hbase_name + "_" + i, hbase_name
+								+ "_" + (i + 1)));
 					}
 				}
 			}
 			if (db.isExistTable(hbase_name + "_1b")) {
 				//修改备份的表
-				db.execute("ALTER TABLE " + hbase_name + "_1b" + " RENAME TO " + hbase_name + "_" + 2);
+				db.execute(db.getDbtype().ofRenameSql(hbase_name + "_1b", hbase_name + "_" + 2));
 			}
 		}
 	}
@@ -158,7 +158,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 				db.execute("DROP TABLE " + todayTableName);
 			}
 			//如果表存在
-			db.execute("ALTER TABLE " + todayTableName + "b" + " RENAME TO " + todayTableName);
+			db.execute(db.getDbtype().ofRenameSql(todayTableName + "b", todayTableName));
 		}
 	}
 

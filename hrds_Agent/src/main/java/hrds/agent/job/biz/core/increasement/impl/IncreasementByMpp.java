@@ -21,7 +21,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
 
 	public IncreasementByMpp(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
-	                         String dsl_name) {
+							 String dsl_name) {
 		super(tableBean, hbase_name, sysDate, db, dsl_name);
 	}
 
@@ -64,7 +64,8 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			//删除原始表
 			dropTableIfExists(tableNameInHBase, db, list);
 			//重命名
-			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
+			list.add(db.getDbtype().ofRenameSql(tmpDelTa, tableNameInHBase));
+//			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
 			HSqlExecute.executeSql(list, db);
 		} catch (Exception e) {
 			logger.error("根据临时表对mpp表做增量操作时发生错误！！", e);
@@ -97,11 +98,15 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		//临时表存在删除临时表
 		dropTableIfExists(deltaTableName, db, sqlList);
 		//将本次采集的数据复制到临时表
-		sqlList.add("CREATE TABLE " + deltaTableName + " AS SELECT * FROM " + todayTableName);
+		//复制表和数据
+		sqlList.add(db.getDbtype().ofCopyTableSchemasSql(todayTableName, deltaTableName));
+		sqlList.add(db.getDbtype().ofCopyTableDataSql(todayTableName, deltaTableName));
+//		sqlList.add("CREATE TABLE " + deltaTableName + " AS SELECT * FROM " + todayTableName);
 		//删除上次采集的数据表
 		dropTableIfExists(yesterdayTableName, db, sqlList);
 		//将临时表改名为进数之后的表
-		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
+		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
+//		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
 		//执行sql
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -147,7 +152,11 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	private void getCreateDeltaSql(ArrayList<String> sqlList) {
 		//1  创建增量表
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-		sql.append("CREATE TABLE ");
+		if (db.getDbtype() == Dbtype.TERADATA) {
+			sql.append("CREATE MULTISET TABLE ");
+		} else {
+			sql.append("CREATE TABLE ");
+		}
 		sql.append(deltaTableName);
 		sql.append("(");
 		for (int i = 0; i < columns.size(); i++) {
@@ -303,7 +312,11 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	private String createInvalidDataSql(String tmpDelTa) {
 		//1  创建临时表
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-		sql.append("CREATE TABLE ");
+		if (db.getDbtype() == Dbtype.TERADATA) {
+			sql.append("CREATE MULTISET TABLE ");
+		} else {
+			sql.append("CREATE TABLE ");
+		}
 		sql.append(tmpDelTa);
 		sql.append("(");
 		for (int i = 0; i < columns.size(); i++) {
@@ -318,13 +331,9 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
 	 */
 	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
-		if (Dbtype.ORACLE.equals(db.getDbtype())) {
-			//如果有数据则表明该表存在，创建表
-			if (db.isExistTable(tableName)) {
-				sqlList.add("DROP TABLE " + tableName);
-			}
-		} else {
-			sqlList.add("DROP TABLE IF EXISTS " + tableName);
+		//如果有数据则表明该表存在，创建表
+		if (db.isExistTable(tableName)) {
+			sqlList.add("DROP TABLE " + tableName);
 		}
 	}
 
@@ -333,16 +342,13 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 */
 	private String createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types) {
 		StringBuilder create = new StringBuilder(1024);
-		if (Dbtype.ORACLE.equals(db.getDbtype())) {
-			//如果有数据则表明该表存在，创建表
-			if (!db.isExistTable(tableName)) {
+		//如果有数据则表明该表存在，创建表
+		if (!db.isExistTable(tableName)) {
+			if (db.getDbtype() == Dbtype.TERADATA) {
+				create.append("CREATE MULTISET TABLE ");
+			} else {
 				create.append("CREATE TABLE ");
 			}
-		} else {
-			create.append("CREATE TABLE IF NOT EXISTS ");
-		}
-		//当StringBuilder中有值
-		if (create.length() > 10) {
 			create.append(tableName);
 			create.append("(");
 			for (int i = 0; i < columns.size(); i++) {

@@ -23,25 +23,25 @@ public class HDFSFileSystem {
 
 	private Configuration conf;
 
-	public HDFSFileSystem() {
+	public HDFSFileSystem() throws IOException {
 		this(null);
 	}
 
-	public HDFSFileSystem(String configPath) {
+	public HDFSFileSystem(String configPath) throws IOException {
 		this(configPath, null);
 	}
 
-	public HDFSFileSystem(String configPath, String platform) {
+	public HDFSFileSystem(String configPath, String platform) throws IOException {
 		this(configPath, platform, null);
 	}
 
 	public HDFSFileSystem(String configPath, String platform,
-	                      String prncipal_name) {
+						  String prncipal_name) throws IOException {
 		this(configPath, platform, prncipal_name, null);
 	}
 
 	public HDFSFileSystem(String configPath, String platform,
-	                      String prncipal_name, String hadoop_user_name) {
+						  String prncipal_name, String hadoop_user_name) throws IOException {
 		if (configPath == null || StringUtil.isBlank(configPath)) {
 			configPath = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 		}
@@ -54,39 +54,35 @@ public class HDFSFileSystem {
 		if (hadoop_user_name == null || StringUtil.isBlank(hadoop_user_name)) {
 			hadoop_user_name = PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf");
 		}
-		try {
-			if (ConfigReader.PlatformType.normal.toString().equals(platform)) {
-				conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
-				fileSystem = FileSystem.get(conf);
-				log.info("normal FileSystem inited ");
-			} else if (ConfigReader.PlatformType.cdh5_13.toString().equals(platform)) {
-				LoginUtil lg = new LoginUtil(configPath);
-				conf = lg.confLoad();
-				conf = lg.authentication(conf);
-				fileSystem = FileSystem.get(conf);
-				log.info("cdh5_13 FileSystem inited ");
-			} else if (ConfigReader.PlatformType.fic50.toString().equals(platform)) {
-				conf = SecurityUtils.confLoad();
-				conf = SecurityUtils.authentication(conf);
-				fileSystem = FileSystem.get(conf);
-				log.info("fi FileSystem inited ");
-			} else if (ConfigReader.PlatformType.fic80.toString().equals(platform)) {
-				LoginUtil lg = new LoginUtil(configPath);
-				conf = lg.confLoad();
-				conf = lg.authentication(conf);
-				fileSystem = FileSystem.get(conf);
-				log.info("fic60 FileSystem inited ");
-			} else if (ConfigReader.PlatformType.fic60.toString().equals(platform)) {
-				LoginUtil lg = new LoginUtil(configPath);
-				conf = lg.confLoad();
-				conf = C80LoginUtil.login(conf, prncipal_name);
-				fileSystem = FileSystem.get(conf);
-				log.info("fic80 FileSystem inited ");
-			} else {
-				throw new AppSystemException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
-			}
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
+		if (ConfigReader.PlatformType.normal.toString().equals(platform)) {
+			conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+			fileSystem = FileSystem.get(conf);
+			log.info("normal FileSystem inited ");
+		} else if (ConfigReader.PlatformType.cdh5_13.toString().equals(platform)) {
+			LoginUtil lg = new LoginUtil(configPath);
+			conf = lg.confLoad();
+			conf = lg.authentication(conf,prncipal_name);
+			fileSystem = FileSystem.get(conf);
+			log.info("cdh5_13 FileSystem inited ");
+		} else if (ConfigReader.PlatformType.fic50.toString().equals(platform)) {
+			conf = SecurityUtils.confLoad();
+			conf = SecurityUtils.authentication(conf);
+			fileSystem = FileSystem.get(conf);
+			log.info("fi FileSystem inited ");
+		} else if (ConfigReader.PlatformType.fic80.toString().equals(platform)) {
+			LoginUtil lg = new LoginUtil(configPath);
+			conf = lg.confLoad();
+			conf = lg.authentication(conf,prncipal_name);
+			fileSystem = FileSystem.get(conf);
+			log.info("fic60 FileSystem inited ");
+		} else if (ConfigReader.PlatformType.fic60.toString().equals(platform)) {
+			LoginUtil lg = new LoginUtil(configPath);
+			conf = lg.confLoad();
+			conf = C80LoginUtil.login(conf, prncipal_name);
+			fileSystem = FileSystem.get(conf);
+			log.info("fic80 FileSystem inited ");
+		} else {
+			throw new AppSystemException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
 		}
 	}
 

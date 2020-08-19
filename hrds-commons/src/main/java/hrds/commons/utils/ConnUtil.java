@@ -53,114 +53,6 @@ public class ConnUtil {
 
 	private static final Log logger = LogFactory.getLog(ConnUtil.class);
 
-	@SuppressWarnings("unused")
-	public static JSONObject getConn_url(String type, String... database_port) {
-
-		JSONObject jdbcObj = new JSONObject(true);
-		String conn_url = "";
-		if (DatabaseType.MYSQL.getCode().equals(type)) {
-			//			conn_url = "jdbc:mysql://" + database_ip + ":" + database_port + "/" + database_name
-			//							+ "?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull";
-			jdbcObj.put("jdbcPrefix", "jdbc:mysql://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", "?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull");
-		} else if (DatabaseType.Oracle9i.getCode().equals(type)
-				|| DatabaseType.Oracle10g.getCode().equals(type)) {
-			//			conn_url = "jdbc:oracle:thin:@" + database_ip + ":" + database_port + ":" +
-			// database_name;
-			jdbcObj.put("jdbcPrefix", "jdbc:oracle:thin:@");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", ':');
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.DB2.getCode().equals(type)) {
-			//			conn_url = "jdbc:db2://" + database_ip + ":" + database_port + "/" + database_name;
-			jdbcObj.put("jdbcPrefix", "jdbc:db2://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.SqlServer2005.getCode().equals(type)) {
-			//			conn_url = "jdbc:sqlserver://" + database_ip + ":" + database_port + ";DatabaseName=" +
-			// database_name;
-			jdbcObj.put("jdbcPrefix", "jdbc:sqlserver://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", ";DatabaseName=");
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.SqlServer2000.getCode().equals(type)) {
-			//			conn_url = "jdbc:sqlserver://" + database_ip + ":" + database_port + ";DatabaseName=" +
-			// database_name;
-			jdbcObj.put("jdbcPrefix", "jdbc:sqlserver://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", ";DatabaseName=");
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.Postgresql.getCode().equals(type)) {
-			//			conn_url = "jdbc:postgresql://" + database_ip + ":" + database_port + "/" +
-			// database_name;
-			jdbcObj.put("jdbcPrefix", "jdbc:postgresql://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.SybaseASE125.getCode().equals(type)) {
-			//			conn_url = "jdbc:sybase:Tds:" + database_ip + ":" + database_port + "/" + database_name;
-			jdbcObj.put("jdbcPrefix", "jdbc:sybase:Tds:");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.ApacheDerby.getCode().equals(type)) {
-			//			conn_url = "jdbc:derby://" + database_ip + ":" + database_port + "/" + database_name +
-			// ";create=true";
-			jdbcObj.put("jdbcPrefix", "jdbc:derby://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", ";create=true");
-		} else if (DatabaseType.GBase.getCode().equals(type)) {
-			//			conn_url = "jdbc:gbase://" + database_ip + ":" + database_port + "/" + database_name +
-			// "";
-			jdbcObj.put("jdbcPrefix", "jdbc:gbase://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", "");
-		} else if (DatabaseType.TeraData.getCode().equals(type)) {
-			for (int i = 0; i < database_port.length; i++) {
-				if (database_port.length > -1 || !"".equals(database_port[i].trim())) {
-					//					conn_url = "jdbc:teradata://" + database_ip +
-					// "/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=" + database_name
-					//									+ ",lob_support=off,DBS_PORT=" + database_port;
-					jdbcObj.put("jdbcPrefix", "jdbc:teradata://");
-					jdbcObj.put("jdbcIp", "/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
-					jdbcObj.put("jdbcBase", ",lob_support=off,DBS_PORT=");
-					jdbcObj.put("jdbcPort", "");
-				} else {
-					//					conn_url = "jdbc:teradata://" + database_ip +
-					// "/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=" + database_name
-					//									+ ",lob_support=off";
-					jdbcObj.put("jdbcPrefix", "jdbc:teradata://");
-					jdbcObj.put("jdbcIp", "/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
-					jdbcObj.put("jdbcBase", ",lob_support=off");
-					jdbcObj.put("jdbcPort", "");
-				}
-			}
-
-		} else if (DatabaseType.Informatic.getCode().equals(type)) {
-			//
-			//	jdbc:informix-sqli://127.0.0.1:1533/testDB:INFORMIXSERVER=myserver;user=testuser;password=testpassword"
-			jdbcObj.put("jdbcPrefix", "jdbc:informix-sqli://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", ":INFORMIXSERVER=myserver");
-		} else if (DatabaseType.H2.getCode().equals(type)) {
-			//			jdbc:h2:tcp://localhost:port/databaseName
-			jdbcObj.put("jdbcPrefix", "jdbc:h2:tcp://");
-			jdbcObj.put("jdbcIp", ':');
-			jdbcObj.put("jdbcPort", '/');
-			jdbcObj.put("jdbcBase", "");
-		} else {
-			logger.info("目前不支持该数据，请联系管理员");
-		}
-		jdbcObj.put("jdbcDriver", getJDBCDriver(type));
-		return jdbcObj;
-	}
-
 	/**
 	 * 获取jdbc连接
 	 *
@@ -186,9 +78,6 @@ public class ConnUtil {
 
 	/**
 	 * 获取connection
-	 *
-	 * @return
-	 * @throws Exception
 	 */
 	public static void close(Connection conn) {
 
@@ -203,98 +92,52 @@ public class ConnUtil {
 
 	/**
 	 * 返回JDBCURL中的IP,端口,dataBase
-	 *
-	 * @param jdbcUrl
-	 * @return
 	 */
-	public static List<String> getJDBCUrlInfo(String jdbcUrl, String jdbcType) {
-
-		String[] regx = {
-				"(\\d+\\.\\d+\\.\\d+\\.\\d+|\\w+):\\d+",
-				".*:(\\d+)",
-				"DBS_PORT=(\\d+)",
+	public static Map<String, String> getJDBCUrlInfo(String jdbcUrl, String jdbcType) {
+		String[] ipRegxs = {"(\\d+\\.\\d+\\.\\d+\\.\\d+|\\w+):\\d+"};
+		String[] portRegxs = {
+				".*?:(\\d+)",
+				"DBS_PORT=(\\d+)"};
+		String[] databaseRegxs = {
 				"\\d+:\\d+:(.*)",
-				";DatabaseName=(.*)",
 				":\\d+/(\\w+)",
-				"DATABASE=(\\w+)"
-		};
-		List<String> list = new ArrayList<>();
-		if (DatabaseType.TeraData.getCode().equals(jdbcType)) {
-			String teraDaraFromUrl = getTeraDaraFromUrl(jdbcUrl);
-			list.add(teraDaraFromUrl);
-		}
-		Pattern pattern = null;
-		Matcher m = null;
-		for (int i = 0; i < regx.length; i++) {
-			pattern = Pattern.compile(regx[i]); // 匹配的模式
+				";DatabaseName=(.*)",
+				"DATABASE=(\\w+)"};
+		Map<String, String> map = new HashMap<>();
+		Pattern pattern;
+		Matcher m;
+		//获取ip
+		for (String regx : ipRegxs) {
+			pattern = Pattern.compile(regx); // 匹配的模式
 			m = pattern.matcher(jdbcUrl);
-			while (m.find()) {
-				list.add(m.group(1));
-				break;
+			if (m.find()) {
+				map.put("ip", m.group(1));
 			}
 		}
-
-		if (DatabaseType.TeraData.getCode().equals(jdbcType) && list.size() == 2) {
-			list.add(1, "");
+		//获取端口
+		for (String regx : portRegxs) {
+			pattern = Pattern.compile(regx); // 匹配的模式
+			m = pattern.matcher(jdbcUrl);
+			if (m.find()) {
+				map.put("port", m.group(1));
+			}
 		}
-		return list;
+		//获取数据库名称
+		for (String regx : databaseRegxs) {
+			pattern = Pattern.compile(regx); // 匹配的模式
+			m = pattern.matcher(jdbcUrl);
+			if (m.find()) {
+				map.put("database", m.group(1));
+			}
+		}
+		if (DatabaseType.TeraData.getCode().equals(jdbcType)) {
+			String teraDaraFromUrl = getTeraDaraFromUrl(jdbcUrl);
+			map.put("ip", teraDaraFromUrl);
+		}
+		return map;
 	}
 
-	public static String getJDBCDriver(String type) {
 
-		String jdbcDriver = "";
-		if (DatabaseType.MYSQL.getCode().equals(type)) {
-			jdbcDriver = "com.mysql.jdbc.Driver";
-		} else if (DatabaseType.Oracle9i.getCode().equals(type)) {
-			jdbcDriver = "oracle.jdbc.driver.OracleDriver";
-		} else if (DatabaseType.Oracle10g.getCode().equals(type)) {
-			jdbcDriver = "oracle.jdbc.OracleDriver";
-		} else if (DatabaseType.SqlServer2000.getCode().equals(type)) {
-			jdbcDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-		} else if (DatabaseType.SqlServer2005.getCode().equals(type)) {
-			jdbcDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-		} else if (DatabaseType.DB2.getCode().equals(type)) {
-			jdbcDriver = "com.ibm.db2.jcc.DB2Driver";
-		} else if (DatabaseType.SybaseASE125.getCode().equals(type)) {
-			jdbcDriver = "com.sybase.jdbc2.jdbc.SybDriver";
-		} else if (DatabaseType.Informatic.getCode().equals(type)) {
-			jdbcDriver = "com.informix.jdbc.IfxDriver";
-		} else if (DatabaseType.H2.getCode().equals(type)) {
-			jdbcDriver = "org.h2.Driver";
-		} else if (DatabaseType.ApacheDerby.getCode().equals(type)) {
-			jdbcDriver = "org.apache.derby.jdbc.EmbeddedDriver";
-		} else if (DatabaseType.GBase.getCode().equals(type)) {
-			jdbcDriver = "com.gbase.jdbc.Driver";
-		} else if (DatabaseType.TeraData.getCode().equals(type)) {
-			jdbcDriver = "com.teradata.jdbc.TeraDriver";
-		} else {
-			jdbcDriver = "org.postgresql.Driver";
-		}
-		return jdbcDriver;
-	}
-
-	/**
-	 * 获取database
-	 *
-	 * @param database_ip
-	 * @param database_port
-	 * @param database_name
-	 * @param user_name
-	 * @return
-	 * @throws ClassNotFoundException
-	 * @throws SQLException
-	 */
-  /*public static Database getDataBase(String database_drive, String database_ip, String database_port, String database_name, String user_name,
-  				String database_pad, String type) throws ClassNotFoundException, SQLException {
-
-  	String conn_url = getConn_url(type, database_ip, database_port, database_name);
-  	Connection conn = getConnection(database_drive, database_ip, database_port, database_name, user_name, database_pad, type);
-  	conn.setAutoCommit(false);
-  	Platform platform = PlatformFactory.createNewPlatformInstance(database_drive, conn_url);
-  	String[] _defaultTableTypes = { "TABLE" };
-  	Database db = platform.readModelFromDatabase(conn, user_name, database_name, user_name, _defaultTableTypes);
-  	return db;
-  }*/
 	public static String getDataBaseFile(
 			String database_ip, String database_port, String database_name, String user_name) {
 
@@ -426,7 +269,7 @@ public class ConnUtil {
 
 	private static Map<String, Object> loadStoreInfo(String filename) {
 		List<?> tableList = getXmlToList(filename);
-		Map<String, Element> mapCol = new HashMap<String, Element>();
+		Map<String, Element> mapCol = new HashMap<>();
 		List<String> tableNameList = new ArrayList<>();
 		Map<String, String> tableNameMap = new HashMap<>();
 		for (Object element : tableList) {
@@ -437,7 +280,7 @@ public class ConnUtil {
 			tableNameList.add(tableName);
 			tableNameMap.put(tableName, table_cn_name);
 		}
-		HashMap<String, Object> retMap = new HashMap<String, Object>();
+		HashMap<String, Object> retMap = new HashMap<>();
 		retMap.put("tableNameMap", tableNameMap);
 		retMap.put("tableNameList", tableNameList);
 		retMap.put("mapCol", mapCol);
@@ -493,7 +336,6 @@ public class ConnUtil {
 	 * 半结构化采集获取数据字典表信息
 	 *
 	 * @param filename 文件路径
-	 * @return
 	 */
 	public static List<Map<String, String>> getDicTable(String filename) {
 		List<?> xmlToList = getXmlToList(filename);
@@ -626,4 +468,11 @@ public class ConnUtil {
 		return tableList;
 	}
 
+	public static void main(String[] args) {
+//		Map<String, String> jdbcUrlInfo = getJDBCUrlInfo("jdbc:oracle:thin:@47.103.83.1:1521:hyshf",
+//				DatabaseType.Oracle10g.getCode());
+		Map<String, String> jdbcUrlInfo = getJDBCUrlInfo("jdbc:teradata://hdp001:1521/hyshf",
+				DatabaseType.TeraData.getCode());
+		jdbcUrlInfo.forEach((k, v) -> System.out.println(k + "=========" + v));
+	}
 }

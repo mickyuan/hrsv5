@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -501,7 +502,11 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		List<String> sqlList = new ArrayList<>();
 		//拼接建表语句
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-		sql.append("CREATE TABLE ");
+		if (db.getDbtype() == Dbtype.TERADATA) {
+			sql.append("CREATE MULTISET TABLE ");
+		} else {
+			sql.append("CREATE TABLE ");
+		}
 		sql.append(todayTableName);
 		sql.append("(");
 		for (int i = 0; i < columns.size(); i++) {

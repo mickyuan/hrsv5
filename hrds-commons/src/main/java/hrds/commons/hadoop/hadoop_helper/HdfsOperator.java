@@ -28,21 +28,21 @@ public class HdfsOperator implements Closeable {
 		this(null);
 	}
 
-	public HdfsOperator(String configPath) {
+	public HdfsOperator(String configPath) throws IOException {
 		this(configPath, null);
 	}
 
-	public HdfsOperator(String configPath, String platform) {
+	public HdfsOperator(String configPath, String platform) throws IOException {
 		this(configPath, platform, null);
 	}
 
 	public HdfsOperator(String configPath, String platform,
-	                    String prncipal_name) {
+	                    String prncipal_name) throws IOException {
 		this(configPath, platform, prncipal_name, null);
 	}
 
 	public HdfsOperator(String configPath, String platform,
-	                    String prncipal_name, String hadoop_user_name) {
+	                    String prncipal_name, String hadoop_user_name) throws IOException {
 		hdfsFileSystem = new HDFSFileSystem(configPath, platform, prncipal_name, hadoop_user_name);
 		fs = hdfsFileSystem.getFileSystem();
 	}
