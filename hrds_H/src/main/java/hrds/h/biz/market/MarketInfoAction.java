@@ -66,16 +66,16 @@ import java.util.stream.Collectors;
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
 
-@DocClass(desc = "集市信息查询类", author = "TBH", createdate = "2020年5月20日 16点55分")
+@DocClass(desc = "加工信息查询类", author = "TBH", createdate = "2020年5月20日 16点55分")
 /**
  * author:TBH
  * Time:2020.4.10
  */
 public class MarketInfoAction extends BaseAction {
 
-	//新增完集市表source_size（集市表的大小）存储大小为0
+	//新增完加工表source_size（加工表的大小）存储大小为0
 	private static final String Zero = "0";
-	//新增完集市表的日期
+	//新增完加工表的日期
 	private static final String ZeroDate = "00000000";
 	//统一命名：目标字段 作为may当中的key值
 	private static final String TargetColumn = "targecolumn";
@@ -115,9 +115,9 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "获取集市所有用到的存储层",
-			logicStep = "获取集市所有用到的存储层")
-	@Return(desc = "集市所有用到的存储层以及每个存储层的个数", range = "返回值取值范围")
+	@Method(desc = "获取加工所有用到的存储层",
+			logicStep = "获取加工所有用到的存储层")
+	@Return(desc = "加工所有用到的存储层以及每个存储层的个数", range = "返回值取值范围")
 	public List<Map<String, Object>> getAllDslInMart() {
 		return Dbo.queryList("select  dsl_name,count(dsl_name) from " + Data_store_layer.TableName + " t1  join " +
 						Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id and t2.data_source = ? group by dsl_name",
@@ -130,12 +130,12 @@ public class MarketInfoAction extends BaseAction {
 	@Return(desc = "获取各个存储层中表大小的前五名", range = "返回值取值范围")
 	public List<Map<String, Object>> getTableTop5InDsl() {
 		List<Map<String, Object>> resultlist = new ArrayList<>();
-		//获取集市用到的所有存储层
+		//获取加工用到的所有存储层
 		List<Map<String, Object>> maps = Dbo
 				.queryList("select  distinct t1.dsl_id,dsl_name from " + Data_store_layer.TableName + " t1  join " +
 								Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id and t2.data_source = ? ",
 						StoreLayerDataSource.DM.getCode());
-		//遍历存储层，获取每一层的集市表前5
+		//遍历存储层，获取每一层的加工表前5
 		for (Map<String, Object> map : maps) {
 			String dsl_id = map.get("dsl_id").toString();
 			String dsl_name = map.get("dsl_name").toString();
@@ -154,30 +154,30 @@ public class MarketInfoAction extends BaseAction {
 		return resultlist;
 	}
 
-	@Method(desc = "获取登录用户数据集市首页信息",
+	@Method(desc = "获取登录用户数据加工首页信息",
 			logicStep = "根据用户ID进行搜索")
-	@Return(desc = "获取登录用户数据集市首页信息", range = "返回值取值范围")
+	@Return(desc = "获取登录用户数据加工首页信息", range = "返回值取值范围")
 	public List<Dm_info> getMarketInfo() {
 		return Dbo.queryList(Dm_info.class,
 				"SELECT mart_name,data_mart_id FROM " + Dm_info.TableName + " where create_id = ? order by " +
 						"data_mart_id asc", getUserId());
 	}
 
-	@Method(desc = "新增集市工程",
+	@Method(desc = "新增加工工程",
 			logicStep = "1.检查数据合法性" +
-					"2.新增前查询集市编号是否已存在" +
+					"2.新增前查询加工编号是否已存在" +
 					"3.对dm_info初始化一些非页面传值" +
 					"4.保存data_source信息")
 	@Param(name = "dm_info", desc = "Dm_info整表bean信息", range = "与Dm_info表字段规则一致",
 			isBean = true)
-	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	public void addMarket(Dm_info dm_info, CategoryRelationBean[] categoryRelationBeans) {
 		//1.检查数据合法性
 		String mart_name = dm_info.getMart_name();
 		String mart_number = dm_info.getMart_number();
-		CheckColummn(mart_name, "集市名称");
-		CheckColummn(mart_number, "集市编号");
-		//2.新增前查询集市编号是否已存在
+		CheckColummn(mart_name, "加工名称");
+		CheckColummn(mart_number, "加工编号");
+		//2.新增前查询加工编号是否已存在
 		Long data_mart_id = dm_info.getData_mart_id();
 		//如果是更新
 		if (data_mart_id != null) {
@@ -185,22 +185,22 @@ public class MarketInfoAction extends BaseAction {
 					.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ? and data_mart_id != ?",
 							mart_number, data_mart_id)
 					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-				throw new BusinessException("集市编号重复，请重新填写");
+				throw new BusinessException("加工编号重复，请重新填写");
 			}
 			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? and data_mart_id != ?",
 					mart_name, data_mart_id)
 					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-				throw new BusinessException("集市名称重复，请重新填写");
+				throw new BusinessException("加工名称重复，请重新填写");
 			}
 			updatebean(dm_info);
 		} else {
 			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where  mart_number = ? ", mart_number)
 					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-				throw new BusinessException("集市编号重复，请重新填写");
+				throw new BusinessException("加工编号重复，请重新填写");
 			}
 			if (Dbo.queryNumber("select count(*) from " + Dm_info.TableName + " where mart_name = ? ", mart_name)
 					.orElseThrow(() -> new BusinessException("sql查询错误！")) != 0) {
-				throw new BusinessException("集市名称重复，请重新填写");
+				throw new BusinessException("加工名称重复，请重新填写");
 			}
 			//3.对dm_info初始化一些非页面传值
 			data_mart_id = PrimayKeyGener.getNextId();
@@ -219,29 +219,29 @@ public class MarketInfoAction extends BaseAction {
 			}
 			categoryRelationBean.setData_mart_id(data_mart_id);
 		}
-		// 保存集市分类
+		// 保存加工分类
 		saveDmCategory(categoryRelationBeans);
 	}
 
-	@Method(desc = "保存集市分类", logicStep = "1.判断集市工程是否存在" +
+	@Method(desc = "保存加工分类", logicStep = "1.判断加工工程是否存在" +
 			"2.实体字段合法性检查" +
-			"3.判断是新增还是更新集市分类" +
+			"3.判断是新增还是更新加工分类" +
 			"4.判断分类名称时候已存在，已存在不能新增" +
-			"4.1新增集市分类" +
-			"5.更新集市分类")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+			"4.1新增加工分类" +
+			"5.更新加工分类")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	private void saveDmCategory(CategoryRelationBean[] categoryRelationBeans) {
 		List<Map<String, Long>> idNameList = getIdNameList(categoryRelationBeans);
 		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
 			// 2.实体字段合法性检查
 			checkDmCategoryFields(categoryRelationBean);
-			// 3.判断是新增还是更新集市分类
+			// 3.判断是新增还是更新加工分类
 			long num = Dbo.queryNumber(
 					"select count(*) from " + Dm_category.TableName + " where category_id=?",
 					categoryRelationBean.getCategory_id())
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
-			// 4.判断集市分类名称与分类编号是否已存在，已存在不能新增
+			// 4.判断加工分类名称与分类编号是否已存在，已存在不能新增
 			if (num == 0) {
 				if (isCategoryNameExist(categoryRelationBean.getData_mart_id(),
 						categoryRelationBean.getCategory_name())) {
@@ -251,21 +251,21 @@ public class MarketInfoAction extends BaseAction {
 						categoryRelationBean.getCategory_num())) {
 					throw new BusinessException("分类编号已存在" + categoryRelationBean.getCategory_num());
 				}
-				// 4.1新增集市分类
+				// 4.1新增加工分类
 				addDmCategory(categoryRelationBean.getData_mart_id(), categoryRelationBean, idNameList);
 			} else {
-				// 更新集市分类
+				// 更新加工分类
 				updateCategory(categoryRelationBean.getData_mart_id(), idNameList, categoryRelationBean);
 			}
 		}
 	}
 
-	@Method(desc = "更新集市分类", logicStep = "1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类" +
+	@Method(desc = "更新加工分类", logicStep = "1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类" +
 			"2.不能选择同名分类，即不能选择自己作为上级分类" +
 			"3.更新分类")
-	@Param(name = "data_mart_id", desc = "新建集市工程时生成", range = "无限制")
+	@Param(name = "data_mart_id", desc = "新建加工工程时生成", range = "无限制")
 	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
-	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
 	                            CategoryRelationBean categoryRelationBean) {
 		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
@@ -292,7 +292,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	@Method(desc = "获取上级分类对应分类ID集合", logicStep = "1.给新增分类分配主键ID并获取上级分类对应分类ID集合")
-	@Param(name = "categoryRelationBeans", desc = "自定义集市分类实体对象数组", range = "无限制", isBean = true)
+	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	@Return(desc = "返回上级分类对应分类ID集合", range = "")
 	private List<Map<String, Long>> getIdNameList(CategoryRelationBean[] categoryRelationBeans) {
 		List<Map<String, Long>> idNameList = new ArrayList<>();
@@ -309,8 +309,8 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	@Method(desc = "判断上级分类是否与分类ID相同", logicStep = "1.判断上级分类是否与分类ID相同")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
-	@Param(name = "parent_category_id", desc = "集市分类ID", range = "不能与分类ID相同")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
+	@Param(name = "parent_category_id", desc = "加工分类ID", range = "不能与分类ID相同")
 	private void isEqualsCategoryId(long category_id, long parent_category_id, long data_mart_id) {
 		// 1.判断上级分类是否与分类ID相同
 		if (data_mart_id != parent_category_id && category_id == parent_category_id) {
@@ -318,50 +318,50 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "根据集市分类id删除集市分类", logicStep = "1.判断集市分类是否被使用" +
-			"2.删除集市分类")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Method(desc = "根据加工分类id删除加工分类", logicStep = "1.判断加工分类是否被使用" +
+			"2.删除加工分类")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
 	public void deleteDmCategory(long category_id) {
-		// 1.判断集市分类是否被使用
+		// 1.判断加工分类是否被使用
 		isDmDatatableExist(category_id);
 		// 2.判断该分类下是否还有分类
 		if (Dbo.queryNumber("select count(*) from " + Dm_category.TableName + " where parent_category_id=?",
 				category_id)
 				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException(category_id + "对应集市分类下还有分类");
+			throw new BusinessException(category_id + "对应加工分类下还有分类");
 		}
-		// 2.删除集市分类
-		DboExecute.deletesOrThrow("删除集市分类失败，可能分类不存在",
+		// 2.删除加工分类
+		DboExecute.deletesOrThrow("删除加工分类失败，可能分类不存在",
 				"delete from " + Dm_category.TableName + " where category_id=?",
 				category_id);
 	}
 
-	@Method(desc = "根据数据集市id查询集市分类信息", logicStep = "1.根据数据集市id查询集市分类信息")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Return(desc = "返回集市分类信息", range = "无限制")
+	@Method(desc = "根据数据加工id查询加工分类信息", logicStep = "1.根据数据加工id查询加工分类信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Return(desc = "返回加工分类信息", range = "无限制")
 	public Result getDmCategoryInfo(long data_mart_id) {
-		// 1.根据数据集市id查询集市分类信息
+		// 1.根据数据加工id查询加工分类信息
 		return Dbo.queryResult(
 				"select * from " + Dm_category.TableName + " where data_mart_id = ?",
 				data_mart_id);
 	}
 
-	@Method(desc = "获取集市分类树数据", logicStep = "1.判断集市工程是否存在" +
-			"2.查询当前集市工程下的所有分类" +
+	@Method(desc = "获取加工分类树数据", logicStep = "1.判断加工工程是否存在" +
+			"2.查询当前加工工程下的所有分类" +
 			"3.获取当前分类的上级分类" +
 			"4.获取当前分类的子分类" +
-			"5.返回转换后的集市分类树数据")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Return(desc = "返回转换后的集市分类树数据", range = "无限制")
+			"5.返回转换后的加工分类树数据")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Return(desc = "返回转换后的加工分类树数据", range = "无限制")
 	public List<Node> getDmCategoryTreeData(long data_mart_id) {
-		// 1.判断集市工程是否存在
+		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
-		// 2.查询当前集市工程下的所有分类
+		// 2.查询当前加工工程下的所有分类
 		List<Long> categoryIdList = Dbo.queryOneColumnList(
 				"select category_id from " + Dm_category.TableName + " where data_mart_id = ?",
 				data_mart_id);
 		if (categoryIdList.isEmpty()) {
-			throw new BusinessException("当前集市工程下没有集市分类，请检查");
+			throw new BusinessException("当前加工工程下没有加工分类，请检查");
 		}
 		List<Map<String, Object>> treeList = new ArrayList<>();
 		for (long category_id : categoryIdList) {
@@ -371,7 +371,7 @@ public class MarketInfoAction extends BaseAction {
 					category_id)
 					.orElseThrow(() -> new BusinessException("sql查询错误或映射实体失败"));
 			if (dm_category.getParent_category_id() == data_mart_id) {
-				// 集市ID等于上级分类ID,获取集市名称
+				// 加工ID等于上级分类ID,获取加工名称
 				Dm_info dm_info = Dbo.queryOneObject(Dm_info.class,
 						"select mart_name from " + Dm_info.TableName + " where data_mart_id = ?",
 						data_mart_id)
@@ -386,20 +386,20 @@ public class MarketInfoAction extends BaseAction {
 			// 4.获取当前分类的子分类
 			getChildDmCategoryTreeNodeData(data_mart_id, data_mart_id, treeList);
 		}
-		// 5.返回转换后的集市分类树数据
+		// 5.返回转换后的加工分类树数据
 		return NodeDataConvertedTreeList.dataConversionTreeInfo(treeList);
 	}
 
-	@Method(desc = "获取所有分类节点信息", logicStep = "1.判断集市工程是否存在" +
-			"2.根据集市ID获取集市工程信息" +
+	@Method(desc = "获取所有分类节点信息", logicStep = "1.判断加工工程是否存在" +
+			"2.根据加工ID获取加工工程信息" +
 			"3.获取所有子分类信息" +
 			"4.封装所有分类子节点信息并返回")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Return(desc = "返回所有分类子节点信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfo(long data_mart_id) {
-		// 1.判断集市工程是否存在
+		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
-		// 2.根据集市ID获取集市工程信息
+		// 2.根据加工ID获取加工工程信息
 		Dm_info dm_info = getdminfo(String.valueOf(data_mart_id));
 		List<Map<String, Object>> categoryList = new ArrayList<>();
 		Map<String, Object> categoryMap = new HashMap<>();
@@ -414,16 +414,16 @@ public class MarketInfoAction extends BaseAction {
 		return categoryList;
 	}
 
-	@Method(desc = "根据分类ID，分类名称获取分类信息", logicStep = "1.判断集市工程是否存在" +
+	@Method(desc = "根据分类ID，分类名称获取分类信息", logicStep = "1.判断加工工程是否存在" +
 			"2.获取所有子分类信息" +
 			"3.封装所有分类子节点信息并返回")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "category_name", desc = "分类ID", range = "新增集市分类ID时生成")
-	@Param(name = "category_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "category_name", desc = "分类ID", range = "新增加工分类ID时生成")
+	@Param(name = "category_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
 	                                                                  long category_id) {
-		// 1.判断集市工程是否存在
+		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
 		Map<String, Object> categoryMap = new HashMap<>();
@@ -438,15 +438,15 @@ public class MarketInfoAction extends BaseAction {
 		return categoryList;
 	}
 
-	@Method(desc = "获取所有子分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息" +
+	@Method(desc = "获取所有子分类信息", logicStep = "1.根据加工ID与父分类ID查询加工分类信息" +
 			"2.获取所有子分类信息" +
-			"3.根据父分类ID查询集市分类信息不存在，查询当前分类信息并封装数据")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
-	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
+			"3.根据父分类ID查询加工分类信息不存在，查询当前分类信息并封装数据")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
+	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
 	                                        List<Map<String, Object>> categoryList) {
-		// 1.根据集市ID与父分类ID查询集市分类信息
+		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
 		if (!dmCategoryList.isEmpty()) {
 			for (Dm_category dm_category : dmCategoryList) {
@@ -465,25 +465,25 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "更新集市分类名称", logicStep = "1.更新集市分类名称")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
-	@Param(name = "category_name", desc = "集市分类名称", range = "无限制")
+	@Method(desc = "更新加工分类名称", logicStep = "1.更新加工分类名称")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
+	@Param(name = "category_name", desc = "加工分类名称", range = "无限制")
 	public void updateDmCategoryName(long category_id, String category_name) {
-		// 1.更新集市分类名称
-		DboExecute.updatesOrThrow("更新集市分类名称失败",
+		// 1.更新加工分类名称
+		DboExecute.updatesOrThrow("更新加工分类名称失败",
 				"update " + Dm_category.TableName + " set category_name=? where category_id=?",
 				category_name, category_id);
 	}
 
-	@Method(desc = "根据集市分类获取数据表信息", logicStep = "1.判断集市工程是否存在" +
-			"2.关联查询集市数据表与集市分类表获取数据表信息")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Method(desc = "根据加工分类获取数据表信息", logicStep = "1.判断加工工程是否存在" +
+			"2.关联查询加工数据表与加工分类表获取数据表信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
 	@Return(desc = "返回数据表信息", range = "无限制")
 	public Result getDmDataTableByDmCategory(long data_mart_id, long category_id) {
-		// 1.判断集市工程是否存在
+		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
-		// 2.关联查询集市数据表与集市分类表获取数据表信息
+		// 2.关联查询加工数据表与加工分类表获取数据表信息
 		return Dbo.queryResult(
 				"select t1.datatable_id,t1.datatable_en_name,t1.datatable_cn_name,t1.category_id," +
 						"t2.category_name,t2.parent_category_id from "
@@ -493,15 +493,15 @@ public class MarketInfoAction extends BaseAction {
 				data_mart_id, category_id);
 	}
 
-	@Method(desc = "获取数据表所有分类信息集合", logicStep = "1.判断集市工程是否存在" +
-			"2.根据集市ID与父分类ID查询集市分类信息" +
+	@Method(desc = "获取数据表所有分类信息集合", logicStep = "1.判断加工工程是否存在" +
+			"2.根据加工ID与父分类ID查询加工分类信息" +
 			"3.获取所有分类信息并返回")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Return(desc = "返回数据表所有分类信息集合", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryForDmDataTable(long data_mart_id) {
-		// 1.判断集市工程是否存在
+		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
-		// 2.根据集市ID与父分类ID查询集市分类信息
+		// 2.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
 		// 3.获取所有分类信息并返回
@@ -516,28 +516,28 @@ public class MarketInfoAction extends BaseAction {
 		return categoryList;
 	}
 
-	@Method(desc = "根据集市ID与父分类ID查询集市分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Method(desc = "根据加工ID与父分类ID查询加工分类信息", logicStep = "1.根据加工ID与父分类ID查询加工分类信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "parent_category_id", desc = "父分类ID", range = "无限制")
-	@Return(desc = "返回集市分类信息", range = "无限制")
+	@Return(desc = "返回加工分类信息", range = "无限制")
 	private List<Dm_category> getDm_categories(long data_mart_id, long parent_category_id) {
-		// 1.根据集市ID与父分类ID查询集市分类信息
+		// 1.根据加工ID与父分类ID查询加工分类信息
 		return Dbo.queryList(Dm_category.class,
 				"select category_id,category_name from " + Dm_category.TableName
 						+ " where parent_category_id=? and data_mart_id=?",
 				parent_category_id, data_mart_id);
 	}
 
-	@Method(desc = "获取所有子分类信息", logicStep = "1.根据集市ID与父分类ID查询集市分类信息" +
+	@Method(desc = "获取所有子分类信息", logicStep = "1.根据加工ID与父分类ID查询加工分类信息" +
 			"2.获取所有子分类信息")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "parent_category_id", desc = "父分类ID", range = "无限制")
-	@Param(name = "category_name", desc = "分类名称", range = "新增集市分类时生成")
-	@Param(name = "categoryList", desc = "集市分类集合", range = "无限制")
+	@Param(name = "category_name", desc = "分类名称", range = "新增加工分类时生成")
+	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
 	                                              String category_name, List<Map<String, Object>> categoryList) {
-		// 1.根据集市ID与父分类ID查询集市分类信息
+		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
 		if (!dmCategoryList.isEmpty()) {
@@ -556,18 +556,18 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "据父分类ID查询子节点集市分类信息", logicStep = "1.根据父分类ID查询集市分类信息" +
-			"2.判断根据父分类ID查询集市分类信息是否存在做不同处理" +
-			"3.循环判断根据父分类ID查询集市分类信息是否存在" +
-			"4.据父分类ID查询集市分类信息不存在，查询当前分类信息")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
-	@Param(name = "treeList", desc = "集市分类数据集合", range = "无限制")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Method(desc = "据父分类ID查询子节点加工分类信息", logicStep = "1.根据父分类ID查询加工分类信息" +
+			"2.判断根据父分类ID查询加工分类信息是否存在做不同处理" +
+			"3.循环判断根据父分类ID查询加工分类信息是否存在" +
+			"4.据父分类ID查询加工分类信息不存在，查询当前分类信息")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
+	@Param(name = "treeList", desc = "加工分类数据集合", range = "无限制")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	private void getChildDmCategoryTreeNodeData(long data_mart_id, long category_id, List<Map<String,
 			Object>> treeList) {
-		// 1.根据父分类ID查询集市分类信息
+		// 1.根据父分类ID查询加工分类信息
 		List<Dm_category> dmCategories = getDm_categories(data_mart_id, category_id);
-		// 2.判断根据父分类ID查询集市分类信息是否存在做不同处理
+		// 2.判断根据父分类ID查询加工分类信息是否存在做不同处理
 		if (!dmCategories.isEmpty()) {
 			for (Dm_category dmCategory : dmCategories) {
 				Map<String, Object> treeMap = new HashMap<>();
@@ -578,29 +578,29 @@ public class MarketInfoAction extends BaseAction {
 				if (!treeList.contains(treeMap)) {
 					treeList.add(treeMap);
 				}
-				// 3.循环判断根据父分类ID查询集市分类信息是否存在
+				// 3.循环判断根据父分类ID查询加工分类信息是否存在
 				getChildDmCategoryTreeNodeData(data_mart_id, dmCategory.getCategory_id(), treeList);
 			}
 		}
 	}
 
-	@Method(desc = "判断集市分类是否被使用", logicStep = "1.判断集市分类是否被使用")
-	@Param(name = "category_id", desc = "集市分类ID", range = "新增集市分类时生成")
+	@Method(desc = "判断加工分类是否被使用", logicStep = "1.判断加工分类是否被使用")
+	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
 	private void isDmDatatableExist(long category_id) {
-		// 1.判断集市分类是否被使用
+		// 1.判断加工分类是否被使用
 		if (Dbo.queryNumber(
 				"select count(1) from " + Dm_datatable.TableName + " WHERE category_id = ?",
 				category_id)
 				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
-			throw new BusinessException(category_id + "对应集市分类正在被使用不能删除");
+			throw new BusinessException(category_id + "对应加工分类正在被使用不能删除");
 		}
 	}
 
-	@Method(desc = "新增集市分类", logicStep = "1.如果上级分类ID为空，设置上级分类ID为集市ID" +
+	@Method(desc = "新增加工分类", logicStep = "1.如果上级分类ID为空，设置上级分类ID为加工ID" +
 			"2.判断分类ID与上级分类ID是否相同，相同不能选择同名的分类" +
-			"3.新增集市分类")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "dm_category", desc = "集市分类实体对象", range = "与数据库表字段规则一致", isBean = true)
+			"3.新增加工分类")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "dm_category", desc = "加工分类实体对象", range = "与数据库表字段规则一致", isBean = true)
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
 	                           List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
@@ -622,7 +622,7 @@ public class MarketInfoAction extends BaseAction {
 									// 1.2判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
 									isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(),
 											data_mart_id);
-									// 1.3.新增集市分类
+									// 1.3.新增加工分类
 									dm_category.add(Dbo.db());
 								}
 							}
@@ -640,16 +640,16 @@ public class MarketInfoAction extends BaseAction {
 			dm_category.setCreate_time(DateUtil.getSysTime());
 			// 2.2判断分类ID与上级分类ID是否相同，相同不能选择同名的分类
 			isEqualsCategoryId(dm_category.getCategory_id(), dm_category.getParent_category_id(), data_mart_id);
-			// 2.3.新增集市分类
+			// 2.3.新增加工分类
 			dm_category.add(Dbo.db());
 		}
 	}
 
-	@Method(desc = "判断集市分类名称是否已存在", logicStep = "1.判断分类名称是否已存在")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "category_name", desc = "集市分类名称", range = "无限制")
+	@Method(desc = "判断加工分类名称是否已存在", logicStep = "1.判断分类名称是否已存在")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "category_name", desc = "加工分类名称", range = "无限制")
 	private boolean isCategoryNameExist(long data_mart_id, String category_name) {
-		// 1.判断集市分类名称是否已存在
+		// 1.判断加工分类名称是否已存在
 		return Dbo.queryNumber(
 				"select count(*) from " + Dm_category.TableName
 						+ " where category_name=? and data_mart_id=?",
@@ -657,11 +657,11 @@ public class MarketInfoAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
 	}
 
-	@Method(desc = "判断集市分类编号是否已存在", logicStep = "1.判断集市分类编号是否已存在")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
-	@Param(name = "category_num", desc = "集市分类编号", range = "无限制")
+	@Method(desc = "判断加工分类编号是否已存在", logicStep = "1.判断加工分类编号是否已存在")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
+	@Param(name = "category_num", desc = "加工分类编号", range = "无限制")
 	private boolean isCategoryNumExist(long data_mart_id, String category_num) {
-		// 1.判断集市分类编号是否已存在
+		// 1.判断加工分类编号是否已存在
 		return Dbo.queryNumber(
 				"select count(*) from " + Dm_category.TableName
 						+ " where category_num=? and data_mart_id=?",
@@ -669,31 +669,31 @@ public class MarketInfoAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0;
 	}
 
-	@Method(desc = "集市分类表字段合法性检查", logicStep = "1.集市分类表字段合法性检查")
+	@Method(desc = "加工分类表字段合法性检查", logicStep = "1.加工分类表字段合法性检查")
 	@Param(name = "dm_category", desc = "Dm_category表实体对象", range = "与Dm_category表字段规则一致",
 			isBean = true)
 	private void checkDmCategoryFields(CategoryRelationBean dm_category) {
-		// 1.集市分类表字段合法性检查
-		Validator.notBlank(dm_category.getCategory_name(), "集市分类名称不能为空");
-		Validator.notBlank(dm_category.getCategory_num(), "集市分类编号不能为空");
+		// 1.加工分类表字段合法性检查
+		Validator.notBlank(dm_category.getCategory_name(), "加工分类名称不能为空");
+		Validator.notBlank(dm_category.getCategory_num(), "加工分类编号不能为空");
 	}
 
-	@Method(desc = "判断集市工程是否存在", logicStep = "1.判断集市工程是否存在")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "新增集市工程时生成")
+	@Method(desc = "判断加工工程是否存在", logicStep = "1.判断加工工程是否存在")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	private void isDmInfoExist(long data_mart_id) {
-		// 1.判断集市工程是否存在
+		// 1.判断加工工程是否存在
 		if (Dbo.queryNumber(
 				"select count(*) from " + Dm_info.TableName + " where data_mart_id=?",
 				data_mart_id)
 				.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
-			throw new BusinessException(data_mart_id + "对应集市工程已不存在");
+			throw new BusinessException(data_mart_id + "对应加工工程已不存在");
 		}
 	}
 
-	@Method(desc = "获取集市工程的具体信息",
-			logicStep = "获取集市工程的具体信息")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "data_mart_id")
-	@Return(desc = "集市工程信息", range = "返回值取值范围")
+	@Method(desc = "获取加工工程的具体信息",
+			logicStep = "获取加工工程的具体信息")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "data_mart_id")
+	@Return(desc = "加工工程信息", range = "返回值取值范围")
 	public Dm_info getdminfo(String data_mart_id) {
 		Dm_info dm_info = new Dm_info();
 		dm_info.setData_mart_id(data_mart_id);
@@ -708,10 +708,10 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 
-	@Method(desc = "获取登录用户查询数据集市工程下的所有集市表",
-			logicStep = "根据数据集市工程ID进行查询")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "data_mart_id")
-	@Return(desc = "当前集市工程下创建的所有集市表", range = "返回值取值范围")
+	@Method(desc = "获取登录用户查询数据加工工程下的所有加工表",
+			logicStep = "根据数据加工工程ID进行查询")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "data_mart_id")
+	@Return(desc = "当前加工工程下创建的所有加工表", range = "返回值取值范围")
 	public List<Map<String, Object>> queryDMDataTableByDataMartID(String data_mart_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setData_mart_id(data_mart_id);
@@ -744,17 +744,17 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "删除集市表及其相关的所有信息",
+	@Method(desc = "删除加工表及其相关的所有信息",
 			logicStep = "1、删除数据表信息" +
 					"2、删除数据操作信息表" +
 					"3、删除数据表已选数据源信息" +
 					"4、删除结果映射信息表" +
 					"5、删除数据源表字段" +
 					"6、删除数据表字段信息" +
-					"7、删除集市表存储关系表" +
-					"8、删除集市字段存储信息")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
-	//提供给管控的接口 用于删除集市表
+					"7、删除加工表存储关系表" +
+					"8、删除加工字段存储信息")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "datatable_id")
+	//提供给管控的接口 用于删除加工表
 	public void deleteDMDataTable(String datatable_id) {
 
 //		Boolean runStatus = checkRunStatus(datatable_id);
@@ -767,7 +767,7 @@ public class MarketInfoAction extends BaseAction {
 		String sql = " from " + Own_source_field.TableName + " where own_dource_table_id in " +
 				"(select own_dource_table_id from " + Dm_datatable_source.TableName + " where datatable_id = ? )";
 		deletesql(sql, dm_datatable.getDatatable_id(), Own_source_field.TableName);
-		//8、删除集市字段存储信息
+		//8、删除加工字段存储信息
 
 		sql = " from " + Dcol_relation_store.TableName + " where col_id in " +
 				"(select datatable_field_id from " + Datatable_field_info.TableName + " where datatable_id = ?)";
@@ -787,7 +787,7 @@ public class MarketInfoAction extends BaseAction {
 		//6、删除数据表字段信息
 		sql = " from " + Datatable_field_info.TableName + " where datatable_id = ?";
 		deletesql(sql, dm_datatable.getDatatable_id(), Datatable_field_info.TableName);
-		//7、删除集市表存储关系表
+		//7、删除加工表存储关系表
 		sql = " from " + Dtab_relation_store.TableName + " where tab_id = ?";
 		deletesql(sql, dm_datatable.getDatatable_id(), Dtab_relation_store.TableName);
 		//删除前后置处理关系表
@@ -795,17 +795,17 @@ public class MarketInfoAction extends BaseAction {
 		deletesql(sql, dm_datatable.getDatatable_id(), Dm_relevant_info.TableName);
 	}
 
-	@Method(desc = "集市查询存储配置表",
-			logicStep = "集市查询存储配置表")
-	@Return(desc = "集市查询存储配置表", range = "返回值取值范围")
+	@Method(desc = "加工查询存储配置表",
+			logicStep = "加工查询存储配置表")
+	@Return(desc = "加工查询存储配置表", range = "返回值取值范围")
 	public List<Data_store_layer> searchDataStore() {
 		return Dbo.queryList(Data_store_layer.class, "SELECT * from " + Data_store_layer.TableName);
 	}
 
-	@Method(desc = "集市查询存储配置表（模糊查询）",
-			logicStep = "集市查询存储配置表（模糊查询）")
+	@Method(desc = "加工查询存储配置表（模糊查询）",
+			logicStep = "加工查询存储配置表（模糊查询）")
 	@Param(name = "fuzzyqueryitem", desc = "fuzzyqueryitem", range = "模糊查询字段", nullable = true)
-	@Return(desc = "集市查询存储配置表", range = "返回值取值范围")
+	@Return(desc = "加工查询存储配置表", range = "返回值取值范围")
 	public List<Data_store_layer> searchDataStoreByFuzzyQuery(String fuzzyqueryitem) {
 		return Dbo
 				.queryList(Data_store_layer.class, "select * from " + Data_store_layer.TableName + " where dsl_name like ?",
@@ -813,9 +813,9 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 
-	@Method(desc = "保存集市添加表页面1的信息，新增集市表",
+	@Method(desc = "保存加工添加表页面1的信息，新增加工表",
 			logicStep = "1.检查数据合法性" +
-					"2.新增时前查询集市表英文名是否已存在" +
+					"2.新增时前查询加工表英文名是否已存在" +
 					"3.新增时对Dm_datatable初始化一些非页面传值" +
 					"4.保存Dm_datatable信息" +
 					"5.新增数据至dm_relation_datatable" +
@@ -834,7 +834,7 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(dm_datatable.getStorage_type(), "进数方式");
 		CheckColummn(dm_datatable.getDatatable_lifecycle(), "数据生命周期");
 		CheckColummn(dm_datatable.getRepeat_flag(), "表名可能重复");
-		Validator.notNull(dm_datatable.getCategory_id(), "集市分类ID不能为空");
+		Validator.notNull(dm_datatable.getCategory_id(), "加工分类ID不能为空");
 		if (TableLifeCycle.YongJiu.getCode().equalsIgnoreCase(dm_datatable.getDatatable_lifecycle())) {
 			dm_datatable.setDatatable_due_date(Constant.MAXDATE);
 		} else {
@@ -878,8 +878,8 @@ public class MarketInfoAction extends BaseAction {
 		return map;
 	}
 
-	@Method(desc = "根据用户所属的部门查询所有集市表",
-			logicStep = "根据用户所属的部门查询所有集市表")
+	@Method(desc = "根据用户所属的部门查询所有加工表",
+			logicStep = "根据用户所属的部门查询所有加工表")
 	@Return(desc = "查询结果", range = "返回值取值范围")
 	public List<Dm_datatable> getAllDatatable_En_Name() {
 		return Dbo.queryList(Dm_datatable.class,
@@ -889,10 +889,10 @@ public class MarketInfoAction extends BaseAction {
 						" where t3.dep_id = ?", getUser().getDepId());
 	}
 
-	@Method(desc = "检查集市表状态",
-			logicStep = "检查集市表状态")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
-	@Return(desc = "集市表状态", range = "集市表状态")
+	@Method(desc = "检查加工表状态",
+			logicStep = "检查加工表状态")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "datatable_id")
+	@Return(desc = "加工表状态", range = "加工表状态")
 	public Boolean checkRunStatus(String datatable_id) {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -920,7 +920,7 @@ public class MarketInfoAction extends BaseAction {
 
 	@Method(desc = "查询与当前datatable_id拥有相同datatable_en_name的另外一组datatable_id",
 			logicStep = "查询与当前datatable_id拥有相同datatable_en_name的另外一组datatable_id")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "datatable_id")
 	@Return(desc = "查询结果", range = "返回值取值范围")
 	public List<Dm_datatable> getTableIdFromSameNameTableId(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -932,7 +932,7 @@ public class MarketInfoAction extends BaseAction {
 				dm_datatable.getDatatable_id(), dm_datatable.getDatatable_id());
 	}
 
-	@Method(desc = "编辑更新集市添加表页面1的信息，更新集市表",
+	@Method(desc = "编辑更新加工添加表页面1的信息，更新加工表",
 			logicStep = "1.检查数据合法性" +
 					"3.新增时对Dm_datatable初始化一些非页面传值" +
 					"4.保存或者更新Dm_datatable信息" +
@@ -989,10 +989,10 @@ public class MarketInfoAction extends BaseAction {
 
 	}
 
-	@Method(desc = "集市页面1回显",
-			logicStep = "根据数据集市表ID进行查询")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
-	@Return(desc = "当前集市表的信息", range = "返回值取值范围")
+	@Method(desc = "加工页面1回显",
+			logicStep = "根据数据加工表ID进行查询")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "datatable_id")
+	@Return(desc = "当前加工表的信息", range = "返回值取值范围")
 	public List<Map<String, Object>> queryDMDataTableByDataTableId(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
@@ -1004,17 +1004,17 @@ public class MarketInfoAction extends BaseAction {
 				dm_datatable.getDatatable_id(), StoreLayerDataSource.DM.getCode());
 	}
 
-	@Method(desc = "根据数据集市表英文名 检查表名是否重复",
-			logicStep = "根据数据集市表英文名进行查询")
+	@Method(desc = "根据数据加工表英文名 检查表名是否重复",
+			logicStep = "根据数据加工表英文名进行查询")
 	@Param(name = "datatable_en_name", desc = "datatable_en_name", range = "datatable_en_name")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id", nullable = true)
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "datatable_id", nullable = true)
 	@Return(desc = "是否重复,如果重复,返回重复了的主键ID", range = "返回值取值范围")
 	public Map<String, Object> queryTableNameIfRepeat(String datatable_en_name, String datatable_id) {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_en_name(datatable_en_name);
 		List<Dm_datatable> dm_datatables = null;
-		//如果是新增集市表
+		//如果是新增加工表
 		if (StringUtils.isEmpty(datatable_id)) {
 			//查询相同表名的表
 			dm_datatables = Dbo
@@ -1040,9 +1040,9 @@ public class MarketInfoAction extends BaseAction {
 		return resultmap;
 	}
 
-//	@Method(desc = "根据集市表主键ID:datatable_id 判断当前集市是否重复 ",
-//			logicStep = "根据数据集市表ID进行查询")
-//	@Param(name = "datatable_id", desc = "集市数据表主键", range = "datatable_id")
+//	@Method(desc = "根据加工表主键ID:datatable_id 判断当前加工是否重复 ",
+//			logicStep = "根据数据加工表ID进行查询")
+//	@Param(name = "datatable_id", desc = "加工数据表主键", range = "datatable_id")
 //	@Return(desc = "是否重复", range = "返回值取值范围")
 //	public Boolean queryDataTableIdIfRepeat(String datatable_id) {
 //		Map<String, Object> resultmap = new HashMap<>();
@@ -1058,7 +1058,7 @@ public class MarketInfoAction extends BaseAction {
 //				return false;
 //			}
 //		} else {
-//			throw new BusinessSystemException("查询是否集市重复错误");
+//			throw new BusinessSystemException("查询是否加工重复错误");
 //		}
 //	}
 
@@ -1114,7 +1114,7 @@ public class MarketInfoAction extends BaseAction {
 
 	@Method(desc = "根据数据表ID,获取数据库类型，获取选中数据库的附加属性字段",
 			logicStep = "查询数据库，返回结果")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public List<Map<String, Object>> getColumnMore(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -1132,7 +1132,7 @@ public class MarketInfoAction extends BaseAction {
 					"4.设置默认附加字段属性不勾选" +
 					"5.返回结果")
 	@Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "列结构", range = "无限制")
 	public Map<String, Object> getColumnBySql(String querysql, String datatable_id, String sqlparameter) {
@@ -1142,7 +1142,7 @@ public class MarketInfoAction extends BaseAction {
 		CheckColummn(querysql, "查询sql");
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		//获取当前集市选择的存储目的地
+		//获取当前加工选择的存储目的地
 		List<Map<String, Object>> storeTypeList = Dbo
 				.queryList("select store_type,t1.dsl_id from " + Data_store_layer.TableName + " t1 left join "
 								+ Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
@@ -1150,7 +1150,7 @@ public class MarketInfoAction extends BaseAction {
 						StoreLayerDataSource.DM.getCode());
 		if (storeTypeList.isEmpty() || storeTypeList.get(0).get("store_type") == null
 				|| storeTypeList.get(0).get("dsl_id") == null) {
-			throw new BusinessSystemException("查询当前集市存储目的地错误，请检查");
+			throw new BusinessSystemException("查询当前加工存储目的地错误，请检查");
 		}
 		String storeType = storeTypeList.get(0).get("store_type").toString();
 		String dsl_id = storeTypeList.get(0).get("dsl_id").toString();
@@ -1298,7 +1298,7 @@ public class MarketInfoAction extends BaseAction {
 					return resultmap;
 				}
 			}
-			//如果是集市层
+			//如果是加工层
 			else if (dataSourceType.equals(DataSourceType.DML.getCode())) {
 				//根据表名和字段名查找字段信息
 				List<Map<String, Object>> maps = Dbo.queryList(
@@ -1311,9 +1311,9 @@ public class MarketInfoAction extends BaseAction {
 					resultmap.put("targettype", field_type);
 					return resultmap;
 				} else {
-					//集市层原始字段类型
+					//加工层原始字段类型
 					String DMLfield_type = maps.get(0).get("field_type").toString();
-					//集市层原始字段长度
+					//加工层原始字段长度
 					String DMLfield_length = maps.get(0).get("field_length").toString();
 					if (!StringUtils.isEmpty(DMLfield_length)) {
 						resultmap.put("field_length", DMLfield_length);
@@ -1377,11 +1377,11 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "回显新增集市页面2中记录在数据库中的字段信息",
+	@Method(desc = "回显新增加工页面2中记录在数据库中的字段信息",
 			logicStep = "1.查询所有字段" +
 					"2.判断附加属性是否勾选" +
 					"3.返回结果")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Return(desc = "列结构", range = "无限制")
 	public List<Map<String, Object>> getColumnFromDatabase(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -1416,9 +1416,9 @@ public class MarketInfoAction extends BaseAction {
 		return list;
 	}
 
-	@Method(desc = "回显新增集市页面2中记录所有来源字段",
-			logicStep = "回显新增集市页面2中记录所有来源字段")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Method(desc = "回显新增加工页面2中记录所有来源字段",
+			logicStep = "回显新增加工页面2中记录所有来源字段")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Return(desc = "列结构", range = "无限制")
 	public List<Map<String, Object>> getFromColumnList(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -1448,11 +1448,11 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 
-	@Method(desc = "根据集市表ID,获取字段类型的所有类型",
+	@Method(desc = "根据加工表ID,获取字段类型的所有类型",
 			logicStep = "1.获取所有字段类型" +
 					"2.判断默认类型是否包含在所有字段类型中" +
 					"3.返回结果")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public List<Map<String, Object>> getAllField_Type(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -1509,7 +1509,7 @@ public class MarketInfoAction extends BaseAction {
 		return field_type;
 	}
 
-	@Method(desc = "保存新增集市2的数据",
+	@Method(desc = "保存新增加工2的数据",
 			logicStep = "1.检查页面数据合法性" +
 					"2.删除相关6张表中的数据" +
 					"3.保存数据进入数据库")
@@ -1517,8 +1517,8 @@ public class MarketInfoAction extends BaseAction {
 			isBean = true)
 	@Param(name = "dm_column_storage", desc = "dm_column_storage", range = "与Dm_column_storage表字段规则一致",
 			isBean = true)
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
-	@Param(name = "querysql", desc = "querysql", range = "String类型集市查询SQL")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
+	@Param(name = "querysql", desc = "querysql", range = "String类型加工查询SQL")
 	@Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
 	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String
 			datatable_id, Dcol_relation_store[] dm_column_storage, String querysql, String hbasesort) {
@@ -1565,7 +1565,7 @@ public class MarketInfoAction extends BaseAction {
 
 				dm_datatable.setDdlc_date(DateUtil.getSysDate());
 				dm_datatable.setDdlc_time(DateUtil.getSysTime());
-				//更新集市表的SQL修改时间字段
+				//更新加工表的SQL修改时间字段
 				dm_datatable.update(Dbo.db());
 				//如果当天的失效SQL存在,则删除掉.因为SQL关链的数据只保留一份
 				/*
@@ -1745,7 +1745,7 @@ public class MarketInfoAction extends BaseAction {
 					"3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。")
 	@Param(name = "datatable_field_info", desc = "datatable_field_info", range = "与Datatable_field_info表字段规则一致",
 			isBean = true)
-	@Param(name = "querySql", desc = "querySql", range = "String类型集市查询SQL")
+	@Param(name = "querySql", desc = "querySql", range = "String类型加工查询SQL")
 	public String getExecute_sql(Datatable_field_info[] datatable_field_info, String querySql) {
 		//解析querySql,获取查询sql的别名，加查询列的map
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querySql);
@@ -1894,9 +1894,9 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "根据集市表ID,获取SQL回显",
+	@Method(desc = "根据加工表ID,获取SQL回显",
 			logicStep = "返回查询结果")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public String getQuerySql(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -1912,9 +1912,9 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "根据集市表ID，判断是否是进入Hbase的目的地",
+	@Method(desc = "根据加工表ID，判断是否是进入Hbase的目的地",
 			logicStep = "判断目的地是否为hbase")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Return(desc = "返回true或者false", range = "无限制")
 	public Boolean getIfHbase(String datatable_id) {
 		Map<String, Object> map = new HashMap<>();
@@ -1936,7 +1936,7 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "1.查询结果" +
 					"2.与页面选中的字段名称进行匹配，如果匹配到，就顺序放在前面，如果匹配不到，就顺序放到后面" +
 					"3.返回结果")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
 	@Return(desc = "排序完成后的hbasesort", range = "无限制")
 	public List<Map<String, Object>> sortHbae(String datatable_id, String hbasesort) {
@@ -2050,9 +2050,9 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 
-	@Method(desc = "执行集市作业",
+	@Method(desc = "执行加工作业",
 			logicStep = "立即执行")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表ID")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Param(name = "date", desc = "date", range = "String类型跑批日期")
 	@Param(name = "parameter", desc = "parameter", range = "动态参数", nullable = true)
 	public void excutMartJob(String datatable_id, String date, String parameter) {
@@ -2083,8 +2083,8 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	@Method(desc = "控制响应头下载工程的hrds信息",
-			logicStep = "下载集市工程")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "String类型集市工程主键")
+			logicStep = "下载加工工程")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "String类型加工工程主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public void downloadMart(String data_mart_id) {
 		String fileName = data_mart_id + ".hrds";
@@ -2105,20 +2105,20 @@ public class MarketInfoAction extends BaseAction {
 			//2.通过文件id获取文件的 byte
 			byte[] bye = getdownloadFile(data_mart_id);
 			if (bye == null) {
-				throw new BusinessException("集市工程下载错误");
+				throw new BusinessException("加工工程下载错误");
 			}
 			//3.写入输出流，返回结果
 			out.write(bye);
 			out.flush();
 		} catch (Exception e) {
-			throw new BusinessException("集市工程下载错误");
+			throw new BusinessException("加工工程下载错误");
 		}
 	}
 
 
-	@Method(desc = "控制响应头下载集市表的excel信息",
+	@Method(desc = "控制响应头下载加工表的excel信息",
 			logicStep = "")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
@@ -2140,7 +2140,7 @@ public class MarketInfoAction extends BaseAction {
 			workbook.write(out);
 			out.flush();
 		} catch (Exception e) {
-			throw new BusinessException("集市数据表下载错误");
+			throw new BusinessException("加工数据表下载错误");
 		}
 	}
 
@@ -2403,11 +2403,11 @@ public class MarketInfoAction extends BaseAction {
 		Map<String, Object> resultmap = new HashMap<>();
 		Dm_info dmInfo = new Dm_info();
 		dmInfo.setData_mart_id(data_mart_id);
-		//集市工程表
+		//加工工程表
 		Dm_info dm_info = Dbo.queryOneObject(Dm_info.class, "select * from " + Dm_info.TableName + " where " +
 				"data_mart_id = ?", dmInfo.getData_mart_id())
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
-		//集市表表
+		//加工表表
 		List<Dm_datatable> dm_datatables = Dbo
 				.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where data_mart_id = ?",
 						dm_info.getData_mart_id());
@@ -2451,7 +2451,7 @@ public class MarketInfoAction extends BaseAction {
 				.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id in " +
 								"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )",
 						dm_info.getData_mart_id());
-		//集市分类表
+		//加工分类表
 		List<Dm_category> dm_categories = Dbo.queryList(Dm_category.class,
 				"select * from " + Dm_category.TableName + " where data_mart_id =? ",
 				dm_info.getData_mart_id());
@@ -2472,9 +2472,9 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 
-	@Method(desc = "上传集市工程",
-			logicStep = "上传接受集市工程的hrds文件")
-	@Param(name = "file_path", desc = "上传文件名称（全路径），上传要导入的集市工程", range = "不能为空以及空格")
+	@Method(desc = "上传加工工程",
+			logicStep = "上传接受加工工程的hrds文件")
+	@Param(name = "file_path", desc = "上传文件名称（全路径），上传要导入的加工工程", range = "不能为空以及空格")
 	public void uploadFile(String file_path) throws Exception {
 		if (!new File(file_path).exists()) {
 			throw new BusinessException("上传文件不存在！");
@@ -2483,7 +2483,7 @@ public class MarketInfoAction extends BaseAction {
 		// 解密
 		strTemp = new String(Base64.getDecoder().decode(strTemp));
 		JSONObject jsonObject = JSONObject.parseObject(strTemp);
-		//集市工程表
+		//加工工程表
 		Dm_info dm_info = JSONObject.parseObject(jsonObject.getJSONObject("dm_info").toJSONString(), Dm_info.class);
 		long num = Dbo.queryNumber(
 				"select count(*) from " + Dm_info.TableName + " where data_mart_id=? and mart_number=?",
@@ -2495,7 +2495,7 @@ public class MarketInfoAction extends BaseAction {
 		} else {
 			dm_info.update(Dbo.db());
 		}
-		//集市分类表
+		//加工分类表
 		List<Dm_category> dm_categories = JSONObject
 				.parseArray(jsonObject.getJSONArray("dm_categories").toJSONString(), Dm_category.class);
 		for (Dm_category dm_category : dm_categories) {
@@ -2511,7 +2511,7 @@ public class MarketInfoAction extends BaseAction {
 				dm_category.update(Dbo.db());
 			}
 		}
-		//集市数据表
+		//加工数据表
 		List<Dm_datatable> dm_datatables = JSONObject
 				.parseArray(jsonObject.getJSONArray("dm_datatables").toJSONString(), Dm_datatable.class);
 		for (Dm_datatable dm_datatable : dm_datatables) {
@@ -2654,8 +2654,8 @@ public class MarketInfoAction extends BaseAction {
 
 	}
 
-	@Method(desc = "获取集市导入审核文件路径", logicStep = "")
-	@Param(name = "file", desc = "上传文件名称（全路径），上传要导入的集市工程", range = "不能为空以及空格")
+	@Method(desc = "获取加工导入审核文件路径", logicStep = "")
+	@Param(name = "file", desc = "上传文件名称（全路径），上传要导入的加工工程", range = "不能为空以及空格")
 	@Return(desc = "返回导入审核文件路径", range = "无限制")
 	@UploadFile
 	public String getImportFilePath(String file) {
@@ -2667,8 +2667,8 @@ public class MarketInfoAction extends BaseAction {
 		return uploadedFile.getAbsolutePath();
 	}
 
-	@Method(desc = "删除集市导入审核上传文件数据", logicStep = "")
-	@Param(name = "file_path", desc = "集市导入审核文件路径", range = "无限制")
+	@Method(desc = "删除加工导入审核上传文件数据", logicStep = "")
+	@Param(name = "file_path", desc = "加工导入审核文件路径", range = "无限制")
 	public void deleteImportFilePath(String file_path) {
 		try {
 			Files.delete(new File(file_path).toPath());
@@ -2677,7 +2677,7 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "获取集市导入审核数据", logicStep = "1.判断上传文件是否存在" +
+	@Method(desc = "获取加工导入审核数据", logicStep = "1.判断上传文件是否存在" +
 			"2.解密获取上传文件信息" +
 			"3.获取加工工程表差异信息" +
 			"4.获取加工分类表差异信息" +
@@ -2689,8 +2689,8 @@ public class MarketInfoAction extends BaseAction {
 			"10.获取前后置作业表差异信息" +
 			"11.表作业影响" +
 			"12.表影响")
-	@Param(name = "file_path", desc = "集市导入审核文件路径", range = "无限制")
-	@Return(desc = "返回集市导入审核数据", range = "无限制")
+	@Param(name = "file_path", desc = "加工导入审核文件路径", range = "无限制")
+	@Return(desc = "返回加工导入审核数据", range = "无限制")
 	public Map<String, Object> getImportReviewData(String file_path) {
 		try {
 			// 1.判断上传文件是否存在
@@ -3032,10 +3032,10 @@ public class MarketInfoAction extends BaseAction {
 		return influencesResult;
 	}
 
-	@Method(desc = "删除集市工程",
+	@Method(desc = "删除加工工程",
 			logicStep = "1.判断工程下是否还有表信息" +
-					"2.删除集市工程")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "String类型集市工程主键")
+					"2.删除加工工程")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "String类型加工工程主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public void deleteMart(String data_mart_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -3049,7 +3049,7 @@ public class MarketInfoAction extends BaseAction {
 			if (asLong > 0) {
 				throw new BusinessSystemException("工程下还存在表，请先删除表");
 			} else {
-				// 删除集市工程时先删除集市分类
+				// 删除加工工程时先删除加工分类
 				Dbo.execute("delete from " + Dm_category.TableName + " where data_mart_id = ?",
 						dm_datatable.getData_mart_id());
 				deletesql(" from " + Dm_info.TableName + " where data_mart_id = ?", dm_datatable.getData_mart_id(),
@@ -3058,9 +3058,9 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "生成集市表到作业调度",
-			logicStep = "生成集市表到作业调度")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
+	@Method(desc = "生成加工表到作业调度",
+			logicStep = "生成加工表到作业调度")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
 	@Param(name = "etl_sys_cd", desc = "etl_sys_cd", range = "String类型作业调度ID")
 	@Param(name = "sub_sys_cd", desc = "sub_sys_cd", range = "String类型作业调度任务ID")
 	@Return(desc = "查询返回结果集", range = "无限制")
@@ -3070,7 +3070,7 @@ public class MarketInfoAction extends BaseAction {
 
 	@Method(desc = "根据表主键查询表名",
 			logicStep = "根据表主键查询表名")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public String getTableName(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
@@ -3088,7 +3088,7 @@ public class MarketInfoAction extends BaseAction {
 					"判断SQL是否为空" +
 					"分隔SQL" +
 					"判断SQL的表名是否正确")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
 	@Param(name = "pre_work", desc = "pre_work", range = "String类型前置作业sql", nullable = true)
 	@Param(name = "post_work", desc = "post_work", range = "String类型后置作业sql", nullable = true)
 	@Return(desc = "查询返回结果集", range = "无限制")
@@ -3111,14 +3111,14 @@ public class MarketInfoAction extends BaseAction {
 					//SQL解析判断表名是否正确
 					String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_sql);
 					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-						throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+						throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
 					}
 				}
 			} else {
 				//SQL解析判断表名是否正确
 				String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
 				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-					throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+					throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
 				}
 			}
 		}
@@ -3130,13 +3130,13 @@ public class MarketInfoAction extends BaseAction {
 				for (String post_sql : post_works) {
 					String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_sql);
 					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-						throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+						throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
 					}
 				}
 			} else {
 				String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
 				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-					throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本集市表,保存失败");
+					throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
 				}
 			}
 		}
@@ -3164,7 +3164,7 @@ public class MarketInfoAction extends BaseAction {
 
 	@Method(desc = "前后置处理SQL回显",
 			logicStep = "前后置处理SQL回显")
-	@Param(name = "datatable_id", desc = "集市数据表主键", range = "String类型集市表主键")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public Map<String, Object> getPreAndAfterJob(String datatable_id) {
 		Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
@@ -3177,7 +3177,7 @@ public class MarketInfoAction extends BaseAction {
 	@Method(desc = "新增页面判断选择的当前存储类型是否为oracle,且判断表名是否过长",
 			logicStep = "获取存储层判断是否为oracle")
 	@Param(name = "dsl_id", desc = "数据存储层主键", range = "String类型数据存储层主键")
-	@Param(name = "datatable_en_name", desc = "集市数据表名", range = "String类型集市数据表名")
+	@Param(name = "datatable_en_name", desc = "加工数据表名", range = "String类型加工数据表名")
 	@Return(desc = "查询返回结果集", range = "无限制")
 	public Boolean checkOracle(String dsl_id, String datatable_en_name) {
 		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
@@ -3268,7 +3268,7 @@ public class MarketInfoAction extends BaseAction {
 	@Method(desc = "上传Excel文件",
 			logicStep = "接收excel文件并解析文件入库")
 	@Param(name = "file", desc = "上传文件,文件名为作业配置对应那几张表名", range = "以每个模块对应表名为文件名")
-	@Param(name = "data_mart_id", desc = "Dm_info主键，集市工程ID", range = "集市工程主键data_mart_id")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "加工工程主键data_mart_id")
 	@UploadFile
 	public void uploadExcelFile(String file, String data_mart_id) {
 		FileInputStream fis;
@@ -3562,7 +3562,7 @@ public class MarketInfoAction extends BaseAction {
 						+ " where category_name=? and data_mart_id=?",
 				category_name, dm_datatable.getData_mart_id());
 		if (idList.isEmpty()) {
-			throw new BusinessException("当前集市工程对应的集市分类不存在:" + category_name);
+			throw new BusinessException("当前加工工程对应的加工分类不存在:" + category_name);
 		}
 		dm_datatable.setCategory_id(idList.get(0));
 		// 设置默认参数
@@ -3578,8 +3578,8 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.add(Dbo.db());
 	}
 
-	@Method(desc = "获取集市函数映射可用的函数", logicStep = "1.查询Edw_sparksql_gram表获取可用的函数")
-	@Return(desc = "返回集市函数映射可用的函数", range = "无限制")
+	@Method(desc = "获取加工函数映射可用的函数", logicStep = "1.查询Edw_sparksql_gram表获取可用的函数")
+	@Return(desc = "返回加工函数映射可用的函数", range = "无限制")
 	public Result getSparkSqlGram() {
 		//1.查询Edw_sparksql_gram表获取可用的函数
 		return Dbo.queryResult(
