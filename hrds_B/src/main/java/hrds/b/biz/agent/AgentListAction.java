@@ -727,7 +727,7 @@ public class AgentListAction extends BaseAction {
 					+ " dbs.database_drive, dbs.database_type, dbs.user_name, dbs.database_ip, dbs.database_port,"
 					+ " dbs.host_name, dbs.system_type, dbs.is_sendok, dbs.database_number, dbs.db_agent, dbs.plane_url,"
 					+ " dbs.database_separatorr, dbs.row_separator, dbs.classify_id,  dbs.jdbc_url, ds.datasource_number,"
-					+ " cjc.classify_num FROM "
+					+ " cjc.classify_num,dbs.collect_type FROM "
 					+ Data_source.TableName
 					+ " ds"
 					+ " JOIN "
@@ -1048,7 +1048,7 @@ public class AgentListAction extends BaseAction {
 					+ " dbs.database_drive, dbs.database_type, dbs.user_name, dbs.database_ip, dbs.database_port,"
 					+ " dbs.host_name, dbs.system_type, dbs.is_sendok, dbs.database_number, dbs.db_agent, dbs.plane_url,"
 					+ " dbs.database_separatorr, dbs.row_separator, dbs.classify_id,  dbs.jdbc_url, ds.datasource_number,"
-					+ " cjc.classify_num FROM "
+					+ " cjc.classify_num,dbs.collect_type FROM "
 					+ Data_source.TableName
 					+ " ds"
 					+ " JOIN "
