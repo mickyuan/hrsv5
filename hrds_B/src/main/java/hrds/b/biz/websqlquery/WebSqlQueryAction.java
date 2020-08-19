@@ -8,6 +8,9 @@ import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.cache.CacheConfBean;
+import hrds.commons.cache.CacheObj;
+import hrds.commons.cache.ConcurrentHashMapCacheUtil;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
@@ -32,35 +35,60 @@ public class WebSqlQueryAction extends BaseAction {
 	private static final Logger logger = LogManager.getLogger();
 
 	//平台所有表及表信息Map集合
-//	private static final ConcurrentHashMapCacheUtil platformAllTableInfoCache = new ConcurrentHashMapCacheUtil();
-
-	static {
-		//初始化平台所有表信息(sql补全时使用)
-		initPlatformAllTableInfo();
-	}
+	private static final ConcurrentHashMapCacheUtil platformAllTableInfoCache = initPlatformAllTableInfo();
 
 	@Method(desc = "根据SQL获取采集数据", logicStep = "初始化查询sql根据sql语句获取数据")
-	private static void initPlatformAllTableInfo() {
-//		logger.info("Start to initialize all table information of the platform.");
-//		//设置缓存时间,缓存数据保存时间 {分钟 * 秒 * 毫秒}  默认值: 时间十分钟
-//		platformAllTableInfoCache.setCache_time(2 * 5 * 1000L);
-//		//设置缓存大小 默认值: 1000
-//		platformAllTableInfoCache.setCache_max_number(1000);
-//		try (DatabaseWrapper db = new DatabaseWrapper()) {
-//			//获取平台登记的所有表的表名
-//			List<String> allTableNameByPlatform = DataTableUtil.getAllTableNameByPlatform(db);
-//			if (allTableNameByPlatform.isEmpty()) {
-//				logger.info("平台登记的表信息为空!");
-//			} else {
-//				//根据表名获取表字段信息
-//				allTableNameByPlatform.forEach(table_name -> {
-//					Map<String, Object> map = new HashMap<>();
-//					List<Map<String, Object>> columnByTableName = DataTableUtil.getColumnByTableName(db, table_name);
-//					platformAllTableInfoCache.setCache(table_name, columnByTableName);
-//				});
-//			}
-//		}
-//		logger.info("Successfully initialized all table information of the platform");
+	private static ConcurrentHashMapCacheUtil initPlatformAllTableInfo() {
+		logger.info("Start to initialize all table information of the platform.");
+		//初始化缓存配置信息
+		CacheConfBean cacheConfBean = new CacheConfBean();
+		//设置缓存时间,缓存数据保存时间 {分钟 * 秒 * 毫秒}  默认值: 时间十分钟
+		cacheConfBean.setCache_time(10 * 60 * 1000L);
+		//设置缓存清理线程的清理频率 {分钟 * 秒 * 毫秒}
+		cacheConfBean.setCache_cleaning_frequency(10 * 60 * 1000L);
+		//设置缓存大小 默认值: 1000
+		cacheConfBean.setCache_max_number(10000);
+		ConcurrentHashMapCacheUtil platformAllTableInfoCache = new ConcurrentHashMapCacheUtil(cacheConfBean);
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			//获取平台登记的所有表的表名
+			List<String> allTableNameByPlatform = DataTableUtil.getAllTableNameByPlatform(db);
+			if (allTableNameByPlatform.isEmpty()) {
+				logger.info("平台登记的表信息为空!");
+			} else {
+				//根据表名获取表字段信息
+				allTableNameByPlatform.forEach(table_name -> {
+					Map<String, Object> map = new HashMap<>();
+					List<Map<String, Object>> columnByTableName = DataTableUtil.getColumnByTableName(db, table_name);
+					platformAllTableInfoCache.setCache(table_name, columnByTableName);
+				});
+			}
+		}
+		logger.info("Successfully initialized all table information of the platform");
+		return platformAllTableInfoCache;
+	}
+
+	@Method(desc = "获取表字段信息列表_缓存", logicStep = "获取表字段信息列表_缓存")
+	@Param(name = "table_name", desc = "表名", range = "String")
+	@Return(desc = "字段信息列表", range = "字段信息列表")
+	public CacheObj getAllTableInfoByPlatform_cache(String table_name) {
+		CacheObj cacheObj;
+		//数据校验
+		Validator.notBlank(table_name, "查询表名不能为空!");
+		//根据表名在缓存中查询
+		cacheObj = platformAllTableInfoCache.getCache(table_name);
+		//如果在缓存中找到的结果为null代表没找到,则根据表名在配置库中查找表信息
+		if (null == cacheObj) {
+			//根据表名在配置库中查找表信息
+			List<Map<String, Object>> columnsByTableName = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
+			//如果字段信息不为空,则表示找到表信息
+			if (!columnsByTableName.isEmpty()) {
+				//找到表信息,将该表信息添加到缓存中
+				platformAllTableInfoCache.setCache(table_name, columnsByTableName);
+				cacheObj = platformAllTableInfoCache.getCache(table_name);
+			}
+		}
+		//如果查询结果为null,则根据表名在配置库中查询
+		return cacheObj;
 	}
 
 	@Method(desc = "根据表名获取采集数据，默认显示10条",
@@ -150,27 +178,6 @@ public class WebSqlQueryAction extends BaseAction {
 		}
 		return tableColumnInfos;
 	}
-
-//	@Method(desc = "获取表字段信息列表_缓存", logicStep = "获取表字段信息列表_缓存")
-//	@Param(name = "table_name", desc = "表名", range = "String")
-//	@Return(desc = "字段信息列表", range = "字段信息列表")
-//	public List<Map<String, Object>> getAllTableInfoByPlatform_cache(String table_name) {
-//		//数据校验
-//		Validator.notBlank(table_name, "查询表名不能为空!");
-//		//根据表名在缓存中查询
-//		System.out.println(platformAllTableInfoCache.getCache_object_map().size());
-//		platformAllTableInfoCache.getCache_object_map().forEach((cacheKey, cacheValue) -> {
-//			System.out.println(cacheKey + "\t" + cacheValue);
-//		});
-////        if (platformAllTableInfoCache.isExist(table_name)) {
-////
-////        }
-//		//如果查询结果为null,则根据表名在配置库中查询
-//
-//		//如果查询不到,则表示库中不存在该表
-//
-//		return null;
-//	}
 
 	@Method(desc = "获取树的数据信息",
 			logicStep = "1.声明获取到 zTreeUtil 的对象" +
