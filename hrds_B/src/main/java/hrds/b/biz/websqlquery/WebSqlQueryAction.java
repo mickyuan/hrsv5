@@ -75,8 +75,8 @@ public class WebSqlQueryAction extends BaseAction {
 
 	@Method(desc = "获取表字段信息列表_缓存", logicStep = "获取表字段信息列表_缓存")
 	@Param(name = "table_name", desc = "表名", range = "String")
-	@Return(desc = "字段信息列表", range = "字段信息列表")
-	public CacheObj getAllTableInfoByPlatform_cache(String table_name) {
+	@Return(desc = "缓存中表及表对应字段的信息", range = "缓存中表及表对应字段的信息")
+	public CacheObj getTableInfoByTableName_cache(String table_name) {
 		CacheObj cacheObj;
 		//数据校验
 		Validator.notBlank(table_name, "查询表名不能为空!");
