@@ -12,33 +12,28 @@ import java.util.concurrent.Executors;
 @DocClass(desc = "ConcurrentHashMap缓存工具类", author = "博彦科技", createdate = "2020/8/17 0017 下午 02:29")
 public class ConcurrentHashMapCacheUtil {
 
-	/**
-	 * 缓存数据保存时间 {分钟 * 秒 * 毫秒}  默认值: 时间十分钟
-	 */
-	private Long cache_time = 10 * 60 * 1000L;
-	/**
-	 * 缓存最大个数 默认值: 1000条
-	 */
-	private Integer cache_max_number = 1000;
+	private CacheConfBean confBean;
+
 	/**
 	 * 当前缓存个数
 	 */
-	private Integer current_size = 0;
+	public Integer current_size = 0;
 	/**
 	 * 缓存对象
 	 */
-	private Map<String, CacheObj> cache_object_map = new ConcurrentHashMap<>();
+	public Map<String, CacheObj> cache_object_map = new ConcurrentHashMap<>();
 	/**
 	 * 这个记录了缓存使用的最后一次的记录，最近使用的在最前面
 	 */
-	private List<String> cache_use_log_list = new LinkedList<>();
+	public List<String> cache_use_log_list = new LinkedList<>();
 	/**
 	 * 清理过期缓存的线程是否在运行
 	 */
-	private Boolean clean_thread_is_run = false;
+	public Boolean clean_thread_is_run = false;
 
 	//类初始化,使用默认值
-	public ConcurrentHashMapCacheUtil() {
+	public ConcurrentHashMapCacheUtil(CacheConfBean cacheConfBean) {
+		confBean = cacheConfBean;
 		//清理线程的执行服务(单线程服务)
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		//如果清理过期缓存的线程没有运行则启动清理缓存的线程
@@ -67,7 +62,7 @@ public class ConcurrentHashMapCacheUtil {
 		if (ttlTime == null) {
 			ttlTime = System.currentTimeMillis() + cacheTime;
 		}
-		CacheObj cacheObj = new CacheObj(cacheValue, ttlTime);
+		CacheObj cacheObj = new CacheObj(cacheKey, cacheValue, ttlTime);
 		cache_object_map.put(cacheKey, cacheObj);
 	}
 
@@ -75,7 +70,7 @@ public class ConcurrentHashMapCacheUtil {
 	 * 设置缓存,设置默认缓存时间为-1
 	 */
 	public void setCache(String cacheKey, Object cacheValue) {
-		setCache(cacheKey, cacheValue, cache_time);
+		setCache(cacheKey, cacheValue, confBean.getCache_time());
 	}
 
 	/**
@@ -164,10 +159,10 @@ public class ConcurrentHashMapCacheUtil {
 	 * 删除最久未使用缓存
 	 */
 	private void checkSize() {
-		if (current_size >= cache_max_number) {
+		if (current_size >= confBean.getCache_max_number()) {
 			deleteTimeOut();
 		}
-		if (current_size >= cache_max_number) {
+		if (current_size >= confBean.getCache_max_number()) {
 			deleteLRU();
 		}
 	}
@@ -206,9 +201,10 @@ public class ConcurrentHashMapCacheUtil {
 			setCleanThreadRun(Boolean.TRUE);
 			while (true) {
 				try {
+					//线程启动时清理一次
 					deleteTimeOut();
-					//每十分钟清理一次过期缓存 10 * 60 * 1000L
-					Thread.sleep(2 * 5 * 1000L);
+					//根据配置的频率进行清理
+					Thread.sleep(confBean.getCache_cleaning_frequency());
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 					setCleanThreadRun(Boolean.FALSE);
@@ -219,38 +215,32 @@ public class ConcurrentHashMapCacheUtil {
 	}
 
 	public void showUtilsInfo() {
-		System.out.println("cache max count is :" + cache_max_number);
+		System.out.println("cache clean thread is run :" + clean_thread_is_run);
+		System.out.println("cache max count is :" + confBean.getCache_max_number());
 		System.out.println("cache current count is :" + current_size);
 		System.out.println("cache object map is :" + cache_object_map.toString());
 		System.out.println("cache use log list is :" + cache_use_log_list.toString());
 	}
 
 	public static void main(String[] args) {
-		ConcurrentHashMapCacheUtil concurrentHashMapCacheUtil = new ConcurrentHashMapCacheUtil();
-        /*
-        初始化10条缓存数据测试,过期时间 10 * 1000L = 10秒
-         */
-		for (int i = 0; i < 10; i++) {
-			try {
-				//执行频率1秒
-				Thread.sleep(1000L);
-				//设置缓存信息
-				concurrentHashMapCacheUtil.setCache("my_cache_key_" + i, i + "_test");
-				concurrentHashMapCacheUtil.showUtilsInfo();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-        /*
-        测试输出,如果当前缓存的大小为0,则插入一条缓存数据
-         */
+		//初始化缓存配置信息
+		CacheConfBean cacheConfBean = new CacheConfBean();
+		//设置缓存时间,缓存数据保存时间 {分钟 * 秒 * 毫秒}  默认值: 时间十分钟
+		cacheConfBean.setCache_time(2 * 5 * 1000L);
+		//设置缓存大小 默认值: 1000
+		cacheConfBean.setCache_max_number(1000);
+		//设置缓存清理线程的清理频率
+		cacheConfBean.setCache_cleaning_frequency(2 * 5 * 1000L);
+		ConcurrentHashMapCacheUtil concurrentHashMapCacheUtil = new ConcurrentHashMapCacheUtil(cacheConfBean);
+		//初始化1条缓存数据测试,过期时间 10 * 1000L = 10 秒
+		concurrentHashMapCacheUtil.setCache("my_cache_key", "my_cache_key_value");
+		concurrentHashMapCacheUtil.showUtilsInfo();
+		//测试输出,如果当前缓存的大小为0,则插入一条缓存数据
 		while (true) {
 			try {
 				//执行频率1秒
 				Thread.sleep(1000L);
 				concurrentHashMapCacheUtil.showUtilsInfo();
-				CacheObj my_cache_key = concurrentHashMapCacheUtil.getCache("my_cache_key_2");
-				System.out.println("999" + my_cache_key.getCacheValue());
 				if (concurrentHashMapCacheUtil.current_size == 0) {
 					System.out.println("aaa" + concurrentHashMapCacheUtil.current_size);
 					concurrentHashMapCacheUtil.setCache("my_cache_key_aaa", "aaa_test", 10 * 1000);
@@ -264,52 +254,5 @@ public class ConcurrentHashMapCacheUtil {
 		}
 	}
 
-	public Long getCache_time() {
-		return cache_time;
-	}
-
-	public void setCache_time(Long cache_time) {
-		this.cache_time = cache_time;
-	}
-
-	public Integer getCache_max_number() {
-		return cache_max_number;
-	}
-
-	public void setCache_max_number(Integer cache_max_number) {
-		this.cache_max_number = cache_max_number;
-	}
-
-	public Integer getCurrent_size() {
-		return current_size;
-	}
-
-	public void setCurrent_size(Integer current_size) {
-		this.current_size = current_size;
-	}
-
-	public Map<String, CacheObj> getCache_object_map() {
-		return cache_object_map;
-	}
-
-	public void setCache_object_map(Map<String, CacheObj> cache_object_map) {
-		this.cache_object_map = cache_object_map;
-	}
-
-	public List<String> getCache_use_log_list() {
-		return cache_use_log_list;
-	}
-
-	public void setCache_use_log_list(List<String> cache_use_log_list) {
-		this.cache_use_log_list = cache_use_log_list;
-	}
-
-	public Boolean getClean_thread_is_run() {
-		return clean_thread_is_run;
-	}
-
-	public void setClean_thread_is_run(Boolean clean_thread_is_run) {
-		this.clean_thread_is_run = clean_thread_is_run;
-	}
 }
 
