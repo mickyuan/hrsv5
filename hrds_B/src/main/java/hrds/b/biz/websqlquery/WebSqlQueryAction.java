@@ -56,11 +56,17 @@ public class WebSqlQueryAction extends BaseAction {
 				logger.info("平台登记的表信息为空!");
 			} else {
 				//根据表名获取表字段信息
-				allTableNameByPlatform.forEach(table_name -> {
-					Map<String, Object> map = new HashMap<>();
-					List<Map<String, Object>> columnByTableName = DataTableUtil.getColumnByTableName(db, table_name);
-					platformAllTableInfoCache.setCache(table_name, columnByTableName);
-				});
+				for (String table_name : allTableNameByPlatform) {
+					List<Map<String, Object>> columnByTableName;
+					try {
+						columnByTableName = DataTableUtil.getColumnByTableName(db, table_name);
+						if (!columnByTableName.isEmpty()) {
+							platformAllTableInfoCache.setCache(table_name, columnByTableName);
+						}
+					} catch (Exception e) {
+						logger.warn("初始化sql补全的缓存数据时,登记表: " + table_name + " 的对应字段信息已经不存在!");
+					}
+				}
 			}
 		}
 		logger.info("Successfully initialized all table information of the platform");
