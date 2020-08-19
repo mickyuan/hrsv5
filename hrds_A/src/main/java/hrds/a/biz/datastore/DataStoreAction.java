@@ -519,7 +519,16 @@ public class DataStoreAction extends BaseAction {
 		// 2.检查数据存储配置字段合法性
 		Data_store_layer dataStoreLayer = new Data_store_layer();
 		// 判断配置属性名称是否已存在
-		isDslNameExist(dsl_name);
+		List<String> dslNameList = Dbo.queryOneColumnList(
+				"select dsl_name from " + Data_store_layer.TableName + " where dsl_id=?",
+				dsl_id);
+		if (dslNameList.isEmpty()) {
+			throw new BusinessException("当前存储层已不存在：" + dsl_id);
+		}
+		if (!dslNameList.get(0).equals(dsl_name)) {
+			// 如果编辑的时候修改的是存储层配置名称则判断是否已存在
+			isDslNameExist(dsl_name);
+		}
 		dataStoreLayer.setDsl_name(dsl_name);
 		dataStoreLayer.setIs_hadoopclient(is_hadoopclient);
 		dataStoreLayer.setDsl_remark(dsl_remark);
