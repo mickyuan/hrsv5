@@ -333,8 +333,14 @@ public class DruidParseQuerySql {
 	private void putResult(ArrayList<HashMap<String, Object>> templist, String alias, String columnname, String table) {
 		if (columnname != null) {
 			HashMap<String, Object> temphashmap = new HashMap<String, Object>();
-			temphashmap.put(sourcecolumn, columnname.toLowerCase());
-			temphashmap.put(sourcetable, table.toLowerCase());
+			if (columnname.contains(" ")) {
+				columnname = StringUtil.split(columnname.toLowerCase(), " ").get(0);
+			}
+			if (table.contains(" ")) {
+				table = StringUtil.split(table.toLowerCase(), " ").get(0);
+			}
+			temphashmap.put(sourcecolumn, columnname);
+			temphashmap.put(sourcetable, table);
 			templist.add(temphashmap);
 			System.out.println(alias + " " + "sourcecolumn:" + columnname.toLowerCase() + " sourcetable:" + table.toLowerCase());
 		}
@@ -822,8 +828,11 @@ public class DruidParseQuerySql {
 		Map<String, String> selectColumnMap = new HashMap<>();
 		for (SQLSelectItem sqlSelectItem : selectList) {
 			if (sqlSelectItem.getAlias() == null) {
-				selectColumnMap.put(sqlSelectItem.getExpr().toString().toUpperCase(),
-						sqlSelectItem.getExpr().toString());
+				String selectColumn = sqlSelectItem.getExpr().toString().toUpperCase();
+				if (selectColumn.contains(".")) {
+					selectColumn = StringUtil.split(selectColumn, ".").get(1);
+				}
+				selectColumnMap.put(selectColumn, sqlSelectItem.getExpr().toString());
 			} else {
 				selectColumnMap.put(sqlSelectItem.getAlias().toUpperCase(), sqlSelectItem.getExpr().toString());
 			}
