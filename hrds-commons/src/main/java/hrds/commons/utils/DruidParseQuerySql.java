@@ -842,12 +842,14 @@ public class DruidParseQuerySql {
 
 
 	public static void main(String[] args) {
-		String sql = "select a,b,c,count(*) as ccc from (select * from tablw1) t1";
-		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
-		System.out.println(sql1.getSelectSql());
-		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
-		selectColumnMap.forEach((key, value) ->
-				System.out.println(key + "====" + value)
-		);
+		String sql = "select a,b,c,count(*) as ccc from (select * from ccc.tablw1) t1";
+//		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
+//		System.out.println(sql1.getSelectSql());
+//		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
+//		selectColumnMap.forEach((key, value) ->
+//				System.out.println(key + "====" + value)
+//		);
+		List<String> strings = DruidParseQuerySql.parseSqlTableToList(sql);
+		strings.forEach(System.out::println);
 	}
 }

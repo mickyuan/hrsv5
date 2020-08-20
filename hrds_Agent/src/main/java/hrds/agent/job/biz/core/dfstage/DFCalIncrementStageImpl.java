@@ -36,7 +36,7 @@ import java.util.Map;
 public class DFCalIncrementStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DFCalIncrementStageImpl.class);
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DFCalIncrementStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;

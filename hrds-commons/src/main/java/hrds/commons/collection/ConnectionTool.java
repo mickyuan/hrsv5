@@ -118,7 +118,7 @@ public class ConnectionTool {
 		dbInfo.setShow_sql(true);
 		//3、根据数据库类型获取对应数据库的数据库连接
 		DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbInfo).create();
-		if (db.getDbtype() == Dbtype.TERADATA) {
+		if (db.getDbtype() == Dbtype.TERADATA && db.getDatabaseName() != null) {
 			db.execute("DATABASE " + db.getDatabaseName().toUpperCase());
 		}
 		return db;

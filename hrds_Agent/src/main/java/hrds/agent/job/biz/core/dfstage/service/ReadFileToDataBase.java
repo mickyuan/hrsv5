@@ -51,13 +51,13 @@ import java.util.concurrent.Callable;
 public class ReadFileToDataBase implements Callable<Long> {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ReadFileToDataBase.class);
 	//卸数到本地的文件绝对路径
-	private String fileAbsolutePath;
+	private final String fileAbsolutePath;
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 	//数据库采集表对应的meta信息
-	private TableBean tableBean;
+	private final TableBean tableBean;
 	//文件对应存储的目的地信息
-	private DataStoreConfBean dataStoreConfBean;
+	private final DataStoreConfBean dataStoreConfBean;
 
 	/**
 	 * 读取文件到数据库构造方法
@@ -72,7 +72,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	 *                          含义：文件需要上传到表对应的存储信息
 	 */
 	public ReadFileToDataBase(String fileAbsolutePath, TableBean tableBean, CollectTableBean collectTableBean,
-	                          DataStoreConfBean dataStoreConfBean) {
+							  DataStoreConfBean dataStoreConfBean) {
 		this.fileAbsolutePath = fileAbsolutePath;
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
@@ -146,8 +146,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readFeiDingChangToDataBase(DatabaseWrapper db, List<String> columnList,
-	                                        List<String> typeList, String batchSql, String dataDelimiter,
-	                                        String database_code, String is_header) {
+											List<String> typeList, String batchSql, String dataDelimiter,
+											String database_code, String is_header) {
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)))) {
@@ -197,7 +197,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readDingChangToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                     String batchSql, String database_code, String is_header) {
+										 String batchSql, String database_code, String is_header) {
 		database_code = DataBaseCode.ofValueByCode(database_code);
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
@@ -240,7 +240,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readSequenceToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                    String batchSql) throws Exception {
+										String batchSql) throws Exception {
 		//TODO 这里是不是修改？？
 		Configuration conf = ConfigReader.getConfiguration();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
@@ -282,7 +282,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readOrcToDataBase(DatabaseWrapper db, List<String> typeList,
-	                               String batchSql) throws Exception {
+								   String batchSql) throws Exception {
 		RecordReader rows = null;
 		long num = 0L;
 		try {
@@ -326,7 +326,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readParquetToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                   String batchSql) {
+									   String batchSql) {
 		ParquetReader<Group> build = null;
 		try {
 			long num = 0;
@@ -392,13 +392,13 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readCsvToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                               String batchSql, String database_code, String is_header) {
+								   String batchSql, String database_code, String is_header) {
 		//TODO 分隔符应该使用传进来的，懒得找了，测试的时候一起改吧
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)));
-		     CsvListReader csvReader = new CsvListReader(reader,
-				     CsvPreference.EXCEL_PREFERENCE)) {
+			 CsvListReader csvReader = new CsvListReader(reader,
+					 CsvPreference.EXCEL_PREFERENCE)) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			List<String> lineList;
 			Object[] objs;
@@ -487,7 +487,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		pool.clear();// 插入成功，清空集合
 	}
 
-	private String getBatchSql(List<String> columns, String todayTableName) {
+	public static String getBatchSql(List<String> columns, String todayTableName) {
 		//拼接插入的sql
 		StringBuilder sbAdd = new StringBuilder();
 		sbAdd.append("insert into ").append(todayTableName).append("(");

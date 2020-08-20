@@ -94,28 +94,6 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		//根据列名和表名获得采集SQL
 		String collectSql = db.getDbtype().ofKeyLableSql(tableName, collectColumnNames, database_name);
 		return getCollectSqlAddWhere(collectSql, collectTableBean.getSql());
-		//获取系统的所有日期参数格式定义
-//		if (!StringUtil.isEmpty(selfSql)) {
-//			SimpleDateFormat sysDateFormat = new SimpleDateFormat(JobConstant.SYS_DATEFORMAT);
-//			String eltDate = collectTableBean.getEtlDate();
-//			//输入的日期肯定是yyyyMMdd格式
-//			if (selfSql.contains("#{txdate}")) {
-//				Date dateByString = getDateByString(eltDate);
-//				selfSql = selfSql.replace("#{txdate}",
-//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
-//			}
-//			if (selfSql.contains("#{txdate_pre}")) {
-//				Date dateByString = getDateByString(getNextDateByNum(eltDate, -1));
-//				selfSql = selfSql.replace("#{txdate_pre}",
-//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
-//			}
-//			if (selfSql.contains("#{txdate_next}")) {
-//				Date dateByString = getDateByString(getNextDateByNum(eltDate, 1));
-//				selfSql = selfSql.replace("#{txdate_next}",
-//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
-//			}
-//			collectSQL = collectSQL + " where " + selfSql;
-//		}
 	}
 
 	/**

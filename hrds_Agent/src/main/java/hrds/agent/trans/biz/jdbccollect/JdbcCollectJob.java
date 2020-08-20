@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-@DocClass(desc = "数据库采集接收消息接口", author = "zxz", createdate = "2019/12/2 10:35")
+@DocClass(desc = "数据库抽取接收消息接口", author = "zxz", createdate = "2019/12/2 10:35")
 public class JdbcCollectJob extends AgentBaseAction {
 	//打印日志
 	private static final Log log = LogFactory.getLog(JdbcCollectJob.class);

@@ -22,7 +22,7 @@ import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
+@DocClass(desc = "DB文件采集根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 
 	@SuppressWarnings("unchecked")

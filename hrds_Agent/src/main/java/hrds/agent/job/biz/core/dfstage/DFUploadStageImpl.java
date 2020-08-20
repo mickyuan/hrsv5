@@ -494,7 +494,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * @param dataStoreConfBean 存储目的地配置信息
 	 * @param db                数据库连接方式
 	 */
-	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
+	public static void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
 								  DatabaseWrapper db) {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),

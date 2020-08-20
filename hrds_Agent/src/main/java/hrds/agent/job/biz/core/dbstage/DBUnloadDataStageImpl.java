@@ -46,8 +46,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUnloadDataStageImpl.class);
 
-	private SourceDataConfBean sourceDataConfBean;
-	private CollectTableBean collectTableBean;
+	private final SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
 
 	public DBUnloadDataStageImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		this.sourceDataConfBean = sourceDataConfBean;
@@ -414,7 +414,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				//获取每日新增数据量，重新计算表的数据总量
 				int days = DateUtil.dateMargin(collectTableBean.getRec_num_date(), collectTableBean.getEtlDate());
 				//跑批日期小于获取数据总量日期，数据总量不变
-				days = days > 0 ? days : 0;
+				days = Math.max(days, 0);
 				totalCount += collectTableBean.getDataincrement() * days;
 				//3、读取并行抽取线程数
 				int threadCount = collectTableBean.getPageparallels();

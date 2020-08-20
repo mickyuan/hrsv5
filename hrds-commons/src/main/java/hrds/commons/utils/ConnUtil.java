@@ -471,7 +471,7 @@ public class ConnUtil {
 	public static void main(String[] args) {
 //		Map<String, String> jdbcUrlInfo = getJDBCUrlInfo("jdbc:oracle:thin:@47.103.83.1:1521:hyshf",
 //				DatabaseType.Oracle10g.getCode());
-		Map<String, String> jdbcUrlInfo = getJDBCUrlInfo("jdbc:teradata://hdp001:1521/hyshf",
+		Map<String, String> jdbcUrlInfo = getJDBCUrlInfo("jdbc:teradata://hdp001/hyshf",
 				DatabaseType.TeraData.getCode());
 		jdbcUrlInfo.forEach((k, v) -> System.out.println(k + "=========" + v));
 	}

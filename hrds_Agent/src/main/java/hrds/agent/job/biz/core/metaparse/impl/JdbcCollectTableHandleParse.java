@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
+@DocClass(desc = "数据库采集根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 
 
