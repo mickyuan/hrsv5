@@ -28,16 +28,23 @@ subprojects {
     repositories {
         mavenLocal()
         maven { url 'http://139.9.126.19:38877/repository/hyren-maven-group/' }
-//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        //maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
     }
 
     configurations {
         provided
-        // 所有需要忽略的包定义在此
+        //所有需要忽略的包定义在此
         //all*.exclude group: 'commons-httpclient'
         //all*.exclude group: 'commons-beanutils', module: 'commons-beanutils'
     }
 
+    //依赖配置
+    configurations.all {
+        //Transitive用于自动处理子依赖项。默认为true，gradle自动添加子依赖项，形成一个多层树形结构；设置为false，则需要手动添加每个依赖项。
+//        transitive = false
+    }
+
+    //配置项目依赖信息
     dependencies {
         if (project.name == "hrds-commons") {
             compile fileTree(dir: "$rootDir/libs/runtime", include: ['*.jar'])
@@ -45,7 +52,6 @@ subprojects {
         if (project.name != "hrds-commons") {
             compile project(':hrds-commons')
         }
-
 
         compile group: 'org.apache.hive', name: 'hive-storage-api', version: '2.6.0'
         compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
@@ -95,69 +101,79 @@ subprojects {
         compile group: 'org.apache.hive', name: 'hive-jdbc', version: '1.1.0'
         /** solr */
         compile group: 'org.apache.solr', name: 'solr-solrj', version: '5.3.1'
-        // solr分词
+        /** solr分词 */
         compile group: 'com.hankcs', name: 'hanlp', version: 'portable-1.2.8'
         /** spark */
         compile group: 'org.apache.spark', name: 'spark-sql_2.11', version: '2.3.2'
         provided group: 'org.apache.spark', name: 'spark-yarn_2.11', version: '2.3.2'
 
         /** database driver */
-//        compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
         compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.31'
         compile group: 'org.postgresql', name: 'postgresql', version: '42.2.6'
         compile group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '12.2.0.1'
-        // jdbc连接池
+        /** jdbc pool */
         compile group: 'com.zaxxer', name: 'HikariCP', version: '3.3.1'
-        /** tools */
-        // zip 解压缩
+        /** zip 解压缩 */
         compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
-        // sql解析
+        /** sql解析 */
         compile group: 'com.alibaba', name: 'druid', version: '1.1.16'
-        // json解析
+        /** json解析 */
         compile group: 'com.alibaba', name: 'fastjson', version: '1.2.72'
-        // office解析
+        /** office解析 */
         compile group: 'org.apache.poi', name: 'poi', version: '3.12'
         compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.12'
         compile group: 'org.apache.poi', name: 'poi-ooxml-schemas', version: '3.12'
         compile group: 'org.apache.poi', name: 'poi-scratchpad', version: '3.12'
-        // csv文件解析
+        /** csv文件解析 */
         compile group: 'net.sf.supercsv', name: 'super-csv', version: '2.4.0'
-        // pdf文本提取
+        /** pdf文本提取 */
         compile group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.9'
-        // tess4j 图片文本提取
+        /** tess4j 图片文本提取 */
         compile(group: 'net.sourceforge.tess4j', name: 'tess4j', version: '3.4.7') {
             exclude group: 'ch.qos.logback'
             exclude group: 'org.slf4j'
         }
-        // 字符编码检测
+        /** 字符编码检测 */
         compile(group: 'net.sourceforge.jchardet', name: 'jchardet', version: '1.0') { transitive = false }
-        // 汉字转拼音
+        /** 汉字转拼音 */
         compile group: 'com.belerweb', name: 'pinyin4j', version: '2.5.0'
-        // ssh2传输
+        /** ssh2传输 */
         compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
-        /** 解析request请求头信息 */
-        // UserAgentUtils获取请求信息
+        /** 解析request请求头信息 UserAgentUtils获取请求信息*/
         compile group: 'eu.bitwalker', name: 'UserAgentUtils', version: '1.21'
-        //JVM内存级分布式缓存
+        /** JVM内存级分布式缓存 */
         compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12.8'
-        testCompile fileTree(dir: "$rootDir/libs/testcase", include: ['*.jar'])
+        /** 测试用例依赖相关包 */
         testCompile group: 'junit', name: 'junit', version: '4.12'
         testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
     }
 
-    // -------------  模块打包  -------------
+    //-------------  模块打包  -------------
+    //设置jar运行的MainClass
     def appMainClass = "${project.group}.main.AppMain"
-    // 正式发布时，打开注释，目的：不将resources打包到jar文件内
-    processResources {
-        exclude { "**/*.*" }
-    }
-
+    //设置打包目录 dist
+    def distDir = "$rootDir/hyrenv5/hrsapp/dist"
+    //设置数据库所需目录 database
+    def databaseDir = "$distDir/database"
+    //设置web服务所需目录 java
+    def javaDir = "$distDir/java"
+    //设置python服务所需目录 java
+    def pythonDir = "$distDir/python"
+    //设置shell脚本所需目录 java
+    def shellDir = "$distDir/shell"
+    //设置vue打包文件所需目录 java
+    def vueDir = "$distDir/vue"
+    //processResources 发布时不需要将资源文件(resources)目录下的文件打包到jar包内 目的：不将resources打包到jar文件内
+    processResources { exclude { "**/*.*" } }
+    //创建项目jar包文件,编译项目为为.jar文件
     jar {
-        archivesBaseName = "${project.name}"
-
-        String classpaths = 'resources/' // 存放资源文件的目录
-        configurations.runtime.each { classpaths = classpaths + " ../lib/" + it.name } //遍历项目的所有依赖的jar包赋值给变量someString
-
+        //当前项目名
+        String archivesBaseName = "${project.name}"
+        //存放资源文件的目录
+        String classpaths = 'resources/'
+        //遍历项目的所有依赖的jar包赋值给变量someString
+        configurations.runtime.each { classpaths = classpaths + " ../lib/" + it.name }
+        //设置manifest
         manifest {
             attributes(
                     'Main-Class': appMainClass,
@@ -172,26 +188,7 @@ subprojects {
             )
         }
     }
-
-    task clearJar(type: Delete) {
-        delete "$buildDir/libs/lib"
-//        followSymlinks = true
-    }
-    task copyJar(type: Sync) {
-        from configurations.runtime
-        into "$buildDir/libs/lib"
-    }
-    task copyResource(type: Sync) {
-        // 因为resources没有打包到jar里面，所以这里自动复制到发布目录下
-        sourceSets.main.resources.srcDirs.each {
-            from it
-            into "$buildDir/libs/resources"
-        }
-    }
-    task release(dependsOn: [build, copyJar, copyResource]) {
-        //println("release Done.")
-    }
-
+    //create a directory, create it if it does not exist
     def createDir = {
         path ->
             File dir = new File(path)
@@ -199,62 +196,81 @@ subprojects {
                 dir.mkdirs()
             }
     }
-    task moveSQL(type: Copy) {
+    //clean up the packaging directory
+    task clearDistDir(type: Delete) {
+        delete "$distDir"
+    }
+
+    //clean up the package jar files
+    task clearJar(type: Delete) {
+        delete 'build/libs'
+    }
+
+    //initialize the packaging directory
+    task initPackageDir() {
+        //初始化项目打包的目录
+        def initDirPaths = []
+        //添加dist目录
+        initDirPaths.add("$distDir")
+        //数据库数据目录
+        initDirPaths.add("$databaseDir")
+        //添加java目录
+        initDirPaths.add("$javaDir")
+        //添加python目录
+        initDirPaths.add("$pythonDir")
+        //添加shell目录
+        initDirPaths.add("$shellDir")
+        //添加vue目录
+        initDirPaths.add("$vueDir")
+        //创建目录
+        doFirst {
+            initDirPaths.forEach(createDir)
+        }
+    }
+
+    //copy the sql script to initialize the database
+    task copySQLScript(type: Copy, dependsOn: [initPackageDir]) {
         if (project.name == "hrds-commons") {
             from "$rootDir/hrds-commons/src/main/java/hrds/commons/script"
-            into "$rootDir/../app/dbscript"
+            into "$databaseDir/postgresql/dbscript"
             include "*.sql"
         }
     }
-    task moveBranch(type: Copy, dependsOn: [moveSQL]) {
-        def appname = "${project.name}"
-        if (project.name != "hrds-commons"
-                && project.name != "hrds_Trigger"
-                && project.name != "hrds_Control"
-                && project.name != "hrds_Agent") {
-            delete "$buildDir/libs/lib"
-            appname = appname.replace("hrds_", "")
-            from "build/libs"
-            into "$rootDir/../app/" + appname + "/dist"
 
-            def paths = ["$rootDir/../app/" + appname + "/logs",
-                         "$rootDir/../app/" + appname + "/progout",
-                         "$rootDir/../app/" + appname + "/bin",
-                         "$rootDir/../app/frontend"]
+    //copy global dependency jar
+    task copyGlobalSharedJar(type: Copy, dependsOn: [copySQLScript]) {
+        if (project.name == "hrds-commons") {
+//            from configurations.runtime
+//            into "$javaDir/GlobalShared"
+        }
+    }
+
+    //Copy related files of subproject
+    task copySubproject(type: Copy, dependsOn: [copyGlobalSharedJar]) {
+        //设置当前项目名
+        def appname = "${project.name}"
+        //如果当前项目不是(hrds-commons,hrds_Trigger,hrds_Control,hrds_Agent),创建web项目目录
+        if (project.name != "hrds-commons" && project.name != "hrds_Trigger"
+                && project.name != "hrds_Control" && project.name != "hrds_Agent") {
+            //获取项目名简称, hrds_A => A
+            def appDirName = appname.replace("hrds_", "")
+            //拷贝子项目jar文件到项目目录下
+            from("$buildDir/libs") {
+                include("*.jar")
+                into(appDirName)
+            }
+            //拷贝资源文件到资源文件夹下
+//            from("$projectDir/src/main/resources") {
+//                include("**/*")
+//                into appDirName + "/resources"
+//            }
+            into("$javaDir")
+            //初始化项目下的目录
+            def paths = ["$javaDir/" + appDirName + "/upfiles",
+                         "$javaDir/" + appDirName + "/resources"]
             doFirst {
                 paths.forEach(createDir)
             }
-        }
-        if (project.name == "hrds_Trigger"
-                || project.name == "hrds_Control"
-                || project.name == "hrds_Agent") {
-            println("release Done.")
-            delete "$buildDir/libs/lib"
-            from "build/libs/"
-            into "$rootDir/../app/Agent"
-            include "*.jar"
-        }
-        if (project.name == "hrds-commons") {
-            from "$buildDir/libs/lib"
-            into "$rootDir/../app/lib"
-            include "*.jar"
-
-            from "build/libs/"
-            into "$rootDir/../app/lib"
-            include "*.jar"
-        }
-    }
-    task copyDeployJar(type: Copy) {
-        def appname = "${project.name}"
-        //清理版本jar,重新复制新版本jar
-        delete "$rootDir/../app/hrds_lib/"
-        from "$rootDir/" + appname + "/build/libs/"
-        into "$rootDir/../app/hrds_lib"
-        include("*.jar")
-        if (appname == 'hrds-commons'){
-            delete "$rootDir/../app/libs/"
-            from configurations.runtime
-            into "$rootDir/../app/libs"
         }
     }
 }
