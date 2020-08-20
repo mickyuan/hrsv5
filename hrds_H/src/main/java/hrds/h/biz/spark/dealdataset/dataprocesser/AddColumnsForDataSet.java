@@ -106,9 +106,12 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 					.withColumn(Constant.TABLE_ID_NAME, functions.lit(marketConf.getDatatableId()));
 		}
 		dataSet = dataSet
-				.withColumn(Constant.SDATENAME, functions.lit(marketConf.getEtlDate()))
-				.withColumn(Constant.EDATENAME, functions.lit(Constant.MAXDATE))
-				.withColumn(Constant.MD5NAME, functions.md5(functions.array(md5Array).cast("string")));
+				.withColumn(Constant.SDATENAME, functions.lit(marketConf.getEtlDate()));
+
+		if(marketConf.isIncrement()){
+			dataSet = dataSet.withColumn(Constant.EDATENAME, functions.lit(Constant.MAXDATE))
+					.withColumn(Constant.MD5NAME, functions.md5(functions.array(md5Array).cast("string")));
+		}
 
 		dataSet.printSchema();
 		return dataSet;

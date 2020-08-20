@@ -28,8 +28,7 @@ public class DatabaseLoader extends AbstractRealLoader {
 	DatabaseLoader(MarketConf conf) {
 		super(conf);
 		initArgs();
-		createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
-				true, databaseArgs.isMultipleInput(), conf.isGroup());
+		createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,true);
 	}
 
 	private void initArgs() {
@@ -43,6 +42,7 @@ public class DatabaseLoader extends AbstractRealLoader {
 		databaseArgs.setDatabaseType(tableLayerAttrs.get(database_type));
 		databaseArgs.setMultipleInput(isMultipleInput);
 		databaseArgs.setDatatableId(datatableId);
+		databaseArgs.setDatabase(tableLayerAttrs.get(database_name));
 	}
 
 	@Override
@@ -55,7 +55,7 @@ public class DatabaseLoader extends AbstractRealLoader {
 	@Override
 	public void append() {
 		databaseArgs.setOverWrite(false);
-		SparkJobRunner.runJob(datatableId, databaseArgs);
+		SparkJobRunner.runJob(databaseArgs);
 
 	}
 
@@ -70,9 +70,9 @@ public class DatabaseLoader extends AbstractRealLoader {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
 			String replaceTempTable = tableName + "_hyren_r";
 			Utils.forceCreateTable(db, replaceTempTable, createTableColumnTypes);
-			databaseArgs.setOverWrite(true);
+			databaseArgs.setOverWrite(false);
 			databaseArgs.setTableName(replaceTempTable);
-			SparkJobRunner.runJob(datatableId, databaseArgs);
+			SparkJobRunner.runJob(databaseArgs);
 			Utils.dropTable(db, tableName);
 			Utils.renameTable(db, replaceTempTable, tableName);
 		}
@@ -81,14 +81,14 @@ public class DatabaseLoader extends AbstractRealLoader {
 	@Override
 	public void increment() {
 		databaseArgs.setIncrement(true);
-		SparkJobRunner.runJob(datatableId, databaseArgs);
+		SparkJobRunner.runJob(databaseArgs);
 	}
 
 	@Override
 	public void restore() {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
 			Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(),
-					conf.getDatatableId(), conf.isMultipleInput());
+					conf.getDatatableId(), conf.isMultipleInput(), conf.isIncrement());
 		}
 	}
 

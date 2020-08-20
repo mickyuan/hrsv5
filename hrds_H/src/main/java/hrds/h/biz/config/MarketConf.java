@@ -52,6 +52,10 @@ public class MarketConf implements Serializable {
 	 */
 	private boolean isGroup;
 	/**
+	 * 是否是增量
+	 */
+	private boolean isIncrement;
+	/**
 	 * 后置作业sql 可为null 可以是多个sql用;;分割
 	 */
 	private String finalSql;
@@ -107,6 +111,14 @@ public class MarketConf implements Serializable {
 		MarketConfUtils.checkReRun(conf, etldate);
 
 		return conf;
+	}
+
+	public boolean isIncrement() {
+		return isIncrement;
+	}
+
+	public void setIncrement(boolean increment) {
+		isIncrement = increment;
 	}
 
 	public boolean isMultipleInput() {

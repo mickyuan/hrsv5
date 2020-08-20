@@ -90,6 +90,7 @@ public class DatabaseHandle extends Handle {
         dbConfBean.setUser_name(databaseArgs.getUser());
         dbConfBean.setDatabase_pad(databaseArgs.getPassword());
         dbConfBean.setDatabase_type(databaseArgs.getDatabaseType());
+        dbConfBean.setDatabase_name(databaseArgs.getDatabase());
         try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dbConfBean)) {
             String sql = String.format("UPDATE %s SET %s = '%s' WHERE %s in (SELECT %s FROM %s)",
                     tableName, EDATENAME, databaseArgs.getEtlDate(), MD5NAME, MD5NAME, deltaTable);

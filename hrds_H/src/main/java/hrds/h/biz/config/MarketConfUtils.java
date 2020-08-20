@@ -10,6 +10,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.StorageType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -67,6 +68,7 @@ public class MarketConfUtils {
 			marketConf.setDmDatatable(dmDatatable);
 			marketConf.setTableName(dmDatatable.getDatatable_en_name().toLowerCase());
 			marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.getRepeat_flag()) == IsFlag.Shi);
+			marketConf.setIncrement(StorageType.ZengLiang.getCode().equals(dmDatatable.getStorage_type()));
 
 			// TODO getorelse
             /*
@@ -79,7 +81,7 @@ public class MarketConfUtils {
 				Datatable_field_info.TableName, "datatable_id", datatableId));
 
 			//添加自定义HYREN字段，字段全部转小写
-			handleFields(datatableFields, marketConf.isMultipleInput());
+			handleFields(datatableFields, marketConf.isMultipleInput(),marketConf.isIncrement());
 			marketConf.setDatatableFields(datatableFields);
 			//判断是否有分组映射
 			for (Datatable_field_info field_info : datatableFields) {
@@ -172,7 +174,8 @@ public class MarketConfUtils {
 	 *
 	 * @param datatableFields 所有字段实体
 	 */
-	private static void handleFields(List<Datatable_field_info> datatableFields, boolean isMultipleInput) {
+	private static void handleFields(List<Datatable_field_info> datatableFields,
+                                     boolean isMultipleInput, boolean isIncrement) {
 		if (datatableFields.size() == 0) {
 			throw new AppSystemException("从数据库中获取的字段数量为0");
 		}
@@ -223,16 +226,20 @@ public class MarketConfUtils {
 		sDateField.setField_en_name(Constant.SDATENAME);
 		sDateField.setField_type(DEFAULT_STRING_TYPE);
 		datatableFields.add(sDateField);
-		//添加 HYREN_E_DATE
-		Datatable_field_info eDateField = new Datatable_field_info();
-		eDateField.setField_en_name(Constant.EDATENAME);
-		eDateField.setField_type(DEFAULT_STRING_TYPE);
-		datatableFields.add(eDateField);
-		//添加 HYREN_MD5_VAL
-		Datatable_field_info md5Field = new Datatable_field_info();
-		md5Field.setField_en_name(Constant.MD5NAME);
-		md5Field.setField_type(DEFAULT_STRING_TYPE);
-		datatableFields.add(md5Field);
+		//只有增量时才需要这两列
+        
+		if(isIncrement){
+            //添加 HYREN_E_DATE
+            Datatable_field_info eDateField = new Datatable_field_info();
+            eDateField.setField_en_name(Constant.EDATENAME);
+            eDateField.setField_type(DEFAULT_STRING_TYPE);
+            datatableFields.add(eDateField);
+            //添加 HYREN_MD5_VAL
+            Datatable_field_info md5Field = new Datatable_field_info();
+            md5Field.setField_en_name(Constant.MD5NAME);
+            md5Field.setField_type(DEFAULT_STRING_TYPE);
+            datatableFields.add(md5Field);
+        }
 		//字段全部转小写
 		datatableFields.forEach(datatableField ->
 			datatableField.setField_en_name(datatableField.getField_en_name().toLowerCase()));

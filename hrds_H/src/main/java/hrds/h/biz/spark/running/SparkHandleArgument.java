@@ -102,6 +102,7 @@ public class SparkHandleArgument {
         String user;
         String password;
         String databaseType;
+        String database;
 
         public String getDriver() {
             return driver;
@@ -142,5 +143,20 @@ public class SparkHandleArgument {
         public void setDatabaseType(String databaseType) {
             this.databaseType = databaseType;
         }
+
+        public String getDatabase() {
+            return database;
+        }
+
+        public void setDatabase(String database) {
+            this.database = database;
+        }
+    }
+
+    /**
+     * hive 相关参数实体
+     */
+    public static class HiveArgs extends SparkHandleArgument {
+
     }
 }

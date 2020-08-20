@@ -26,7 +26,7 @@ import static hrds.commons.utils.Constant.*;
 public class SameDatabaseLoader extends AbstractRealLoader {
 
 	// TODO 注释
-	private boolean MARKET_INCREMENT_TMPTABLE_DELETE =
+	private final boolean MARKET_INCREMENT_TMPTABLE_DELETE =
 			PropertyParaValue.getBoolean("market.increment.tmptable.delete", true);
 	private final DatabaseWrapper db;
 	private final String sql;
@@ -43,8 +43,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 		sql = conf.getCompleteSql();
 
 		columns = Utils.columns(conf.getDatatableFields());
-		createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
-				true, isMultipleInput, conf.isGroup());
+		createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,true);
 		databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
 		currentTableName = "curr_" + tableName;
 		validTableName = "valid_" + tableName;
@@ -136,7 +135,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
 	@Override
 	public void restore() {
-		Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(), conf.getDatatableId(), isMultipleInput);
+		Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(), conf.getDatatableId(),
+				isMultipleInput, conf.isIncrement());
 	}
 
 	@Override
@@ -235,12 +235,12 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 					.append(conf.getDatatableId())
 					.append(',');
 		}
-		selectExpr
-				.append(conf.getEtlDate())
-				.append(',')
-				.append(MAXDATE)
-				.append(',')
-				.append(lineMd5Expr(md5Cols.deleteCharAt(md5Cols.length() - 1).toString()));
+		selectExpr.append(conf.getEtlDate());
+
+		if (conf.isIncrement()) {
+			selectExpr.append(',').append(MAXDATE).append(',')
+					.append(lineMd5Expr(md5Cols.deleteCharAt(md5Cols.length() - 1).toString()));
+		}
 		return selectExpr.toString();
 	}
 

@@ -1,8 +1,8 @@
 package hrds.h.biz.realloader;
 
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Datatable_field_info;
@@ -41,8 +41,7 @@ public class Utils {
 	 * @param isMultipleInput 是否是多集市输入
 	 * @return 字段名，字段类型组合
 	 */
-	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase,
-	                                          boolean isMultipleInput, boolean isGroup) {
+	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
 
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 		final StringBuilder columnTypes = new StringBuilder(300);
@@ -75,15 +74,17 @@ public class Utils {
 		if (isDatabase) {
 			String str = MarketConfUtils.DEFAULT_STRING_TYPE;
 			String s = columnTypes.toString();
-			s = StringUtil.replaceLast(s, str, "char(32)");
-			s = StringUtil.replaceLast(s, str, "char(8)");
+			if (conf.isIncrement()) {
+				s = StringUtil.replaceLast(s, str, "char(32)");
+				s = StringUtil.replaceLast(s, str, "char(8)");
+			}
 			s = StringUtil.replaceLast(s, str, "char(8)");
 
 			//多集市输入会多个字段
-			if (isMultipleInput) {
+			if (conf.isMultipleInput()) {
 				s = StringUtil.replaceLast(s, str, "char(18)");
 			}
-			if(isGroup){
+			if(conf.isGroup()){
 				s = StringUtil.replaceLast(s, str, "char(32)");
 			}
 			return s;
@@ -109,51 +110,22 @@ public class Utils {
 	 * @param db DatabaseWrapper
 	 */
 	static void restoreDatabaseData(DatabaseWrapper db, String tableName,
-	                                String etlDate, String datatableId, boolean isMultipleInput) {
+	                                String etlDate, String datatableId, boolean isMultipleInput,boolean isIncrement) {
 		if (isMultipleInput) {
 			db.execute(String.format("DELETE FROM %s WHERE %s = '%s' AND %s = '%s'",
 					tableName, SDATENAME, etlDate, TABLE_ID_NAME, datatableId));
-			db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s' AND %s = '%s'",
-					tableName, EDATENAME, MAXDATE, EDATENAME, etlDate, TABLE_ID_NAME, datatableId));
+			if (isIncrement) {
+				db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s' AND %s = '%s'",
+						tableName, EDATENAME, MAXDATE, EDATENAME, etlDate, TABLE_ID_NAME, datatableId));
+			}
 		} else {
 			db.execute(String.format("DELETE FROM %s WHERE %s = '%s'",
 					tableName, SDATENAME, etlDate));
-			db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s'",
-					tableName, EDATENAME, MAXDATE, EDATENAME, etlDate));
+			if (isIncrement) {
+				db.execute(String.format("UPDATE %s SET %s = '%s' WHERE %s = '%s'",
+						tableName, EDATENAME, MAXDATE, EDATENAME, etlDate));
+			}
 		}
-	}
-
-	/**
-	 * 注册并返回MD5函数的方法名
-	 * 如果数据库自带MD5函数，则直接返回数据库自带函数名
-	 * pgsql自带 md5
-	 * oracle 写存储过程实现MD5函数，函数名为 HYREN_MD5
-	 * // TODO 未实现从某个数字开始自增
-	 *
-	 * @param db   DatabaseWrapper
-	 * @param type 数据库类型
-	 * @return MD5函数名
-	 */
-/*	static String registerMd5Function(DatabaseWrapper db, DatabaseType type) {
-		if (DatabaseType.Oracle10g.equals(type)) {
-			db.execute("CREATE OR REPLACE FUNCTION HYREN_MD5(passwd IN VARCHAR2) \n" +
-					"RETURN VARCHAR2\n" +
-					"IS\n" +
-					" retval varchar2(32);\n" +
-					"BEGIN\n" +
-					" retval := utl_raw.cast_to_raw(DBMS_OBFUSCATION_TOOLKIT.MD5(INPUT_STRING => passwd));\n" +
-					" RETURN retval;\n" +
-					"END;");
-			return "HYREN_MD5";
-		}
-		return "MD5";
-	}*/
-
-	static String registerAutoIncreasingFunction(DatabaseWrapper db, DatabaseType type) {
-		if (DatabaseType.Oracle10g.equals(type)) {
-			// TODO 实现自增序列函数并返回函数名
-		}
-		return "auto_id";
 	}
 
 	/**
@@ -161,7 +133,13 @@ public class Utils {
 	 * 如果表存在就报错
 	 */
 	static void createTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
-		String createSql = "CREATE TABLE " + tableName + " (" + createTableColumnTypes + ")";
+		String createSql;
+		if(db.getDbtype()== Dbtype.TERADATA){
+			createSql = "CREATE MULTISET TABLE ";
+		}else {
+			createSql = "CREATE TABLE ";
+		}
+		createSql += tableName + " (" + createTableColumnTypes + ")";
 		db.execute(createSql);
 	}
 
@@ -262,6 +240,14 @@ public class Utils {
 		if (db.isExistTable(destTableName)) {
 			throw new AppSystemException("表" + destTableName + "已存在，无法重命名成" + destTableName);
 		}
-		db.execute("ALTER TABLE " + srcTableName + " RENAME TO " + destTableName);
+		String renameSql;
+		if (db.getDbtype() == Dbtype.DB2V1 || db.getDbtype() == Dbtype.DB2V2) {
+			renameSql = "RENAME " + srcTableName + " TO " + destTableName;
+		} else if (db.getDbtype() == Dbtype.TERADATA) {
+			renameSql = "RENAME TABLE " + srcTableName + " TO " + destTableName;
+		} else {
+			renameSql = "ALTER TABLE " + srcTableName + " REANME TO " + destTableName;
+		}
+		db.execute(renameSql);
 	}
 }
