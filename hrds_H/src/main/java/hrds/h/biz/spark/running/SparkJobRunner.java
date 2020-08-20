@@ -33,7 +33,7 @@ public class SparkJobRunner {
 		}
 	}
 
-	public static void runJob(String dataTableId, SparkHandleArgument handleArgument) {
+	public static void runJob(SparkHandleArgument handleArgument) {
 
 		long start = System.currentTimeMillis();
 
@@ -41,7 +41,7 @@ public class SparkJobRunner {
 				SPARK_DRIVER_EXTRAJAVAOPTIONS,
 				SPARK_CLASSPATH,
 				SPARK_MAIN_CLASS,
-				dataTableId,
+				handleArgument.getDatatableId(),
 				convertStringSatisfyShell(handleArgument.toString()));
 
 		logger.info(String.format("开始执行spark作业调度:[%s]", command));
