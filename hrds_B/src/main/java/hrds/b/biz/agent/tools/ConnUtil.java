@@ -129,7 +129,7 @@ public class ConnUtil {
 		} else if (DatabaseType.GBase == databaseType) {
 			return "com.gbase.jdbc.Driver";
 		} else if (DatabaseType.TeraData == databaseType) {
-			return "com.teradata.jdbc.TeraDriver";
+			return "com.ncr.teradata.TeraDriver";
 		} else if (DatabaseType.Informatic == databaseType) {
 			return "com.informix.jdbc.IfxDriver";
 		} else if (DatabaseType.H2 == databaseType) {
