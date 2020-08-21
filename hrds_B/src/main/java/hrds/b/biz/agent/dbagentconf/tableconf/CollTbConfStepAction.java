@@ -20,7 +20,11 @@ import hrds.b.biz.agent.bean.CollTbConfParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CollectType;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.ExecuteState;
+import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.codes.UnloadType;
@@ -59,27 +63,6 @@ import java.util.stream.Collectors;
 public class CollTbConfStepAction extends BaseAction {
 
 	private static final long DEFAULT_TABLE_ID = 999999L;
-	private static final JSONObject DEFAULT_TABLE_CLEAN_ORDER;
-	private static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER;
-	private static final String VALID_S_DATE = Constant.MAXDATE;
-
-	static {
-		DEFAULT_TABLE_CLEAN_ORDER = new JSONObject();
-		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
-		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuHeBing.getCode(), 3);
-		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 4);
-
-		// TODO 按照目前agent程序的逻辑是，列合并永远是排在清洗顺序的最后一个去做，因此这边定义默认的清洗顺序的时候，只定义了6种，而没有定义列合并
-		// TODO 所以是否前端需要把列合并去掉
-		DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject();
-		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
-		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuChaiFen.getCode(), 5);
-		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 6);
-	}
 
 	@Method(
 		desc = "根据数据库采集设置表ID加载页面初始化数据",
@@ -247,6 +230,10 @@ public class CollTbConfStepAction extends BaseAction {
 		if (dbSetCount != 1) {
 			throw new BusinessException("数据库采集任务未找到");
 		}
+		//获取此次任务是属于数据库采集还是别的(数据库采集需要默认保存个表的抽取定义)
+		Map<String, Object> map = Dbo.queryOneObject(
+			"select collect_type from " + Database_set.TableName + " where database_id = ?",
+			colSetId);
 
 		List<Object> tableIds =
 			Dbo.queryOneColumnList(
@@ -360,7 +347,7 @@ public class CollTbConfStepAction extends BaseAction {
 				// 如果是新增采集表
 				if (tableInfo.getTable_id() == null) {
 					tableInfo.setTable_id(PrimayKeyGener.getNextId());
-					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					tableInfo.setTi_or(Constant.DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					// 5、保存数据进库
 					tableInfo.add(Dbo.db());
 					// 6、保存数据自定义采集列相关信息进入table_column表,如果未选择,
@@ -378,13 +365,26 @@ public class CollTbConfStepAction extends BaseAction {
 					} else {
 						saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
 					}
+					//如果是数据库采集默认保存个抽取定义信息
+					if (map.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
+						Data_extraction_def extraction_def = new Data_extraction_def();
+						extraction_def.setDed_id(PrimayKeyGener.getNextId());
+						extraction_def.setTable_id(tableInfo.getTable_id());
+						extraction_def.setData_extract_type(DataExtractType.YuanShuJuGeShi.getCode());
+						extraction_def.setIs_header(IsFlag.Fou.getCode());
+						extraction_def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+						extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
+						extraction_def.setIs_archived(IsFlag.Fou.getCode());
+
+						extraction_def.add(Dbo.db());
+					}
 				}
 				// 如果是修改采集表
 				else {
 					long oldID = tableInfo.getTable_id();
 					long newID = PrimayKeyGener.getNextId();
 					tableInfo.setTable_id(newID);
-					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					tableInfo.setTi_or(Constant.DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					// 5、保存数据进库
 					tableInfo.add(Dbo.db());
 //		  // 调用方法删除脏数据
@@ -398,9 +398,10 @@ public class CollTbConfStepAction extends BaseAction {
 						if (tableColumnMap.containsKey(tableInfo.getTable_name())) {
 							saveCustomizeColumn(tableColumnMap.get(tableInfo.getTable_name()).toString(), tableInfo);
 						}
-					} else {
-						saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
 					}
+//					else {
+//						saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
+//					}
 				}
 			}
 		}
@@ -1133,13 +1134,27 @@ public class CollTbConfStepAction extends BaseAction {
 					|| StringUtil.isBlank(tableInfo.getTable_id().toString())) {
 					// 5-1、生成table_id，并存入Table_info对象中
 					tableInfo.setTable_id(PrimayKeyGener.getNextId());
-					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					tableInfo.setTi_or(Constant.DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					// 5-2、保存Table_info对象
 					tableInfo.add(Dbo.db());
 					// 5-3、新增采集表，将该表要采集的列信息保存到相应的表里面
 					saveTableColumnInfoForAdd(
 						tableInfo, tbConfParams.get(i).getCollColumnString(), colSetId,
-						DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+						Constant.DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+
+					//如果是数据库采集默认保存个抽取定义信息
+					if (resultMap.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
+						Data_extraction_def extraction_def = new Data_extraction_def();
+						extraction_def.setDed_id(PrimayKeyGener.getNextId());
+						extraction_def.setTable_id(tableInfo.getTable_id());
+						extraction_def.setData_extract_type(DataExtractType.YuanShuJuGeShi.getCode());
+						extraction_def.setIs_header(IsFlag.Fou.getCode());
+						extraction_def.setDatabase_code(DataBaseCode.UTF_8.getCode());
+						extraction_def.setDbfile_format(FileFormat.PARQUET.getCode());
+						extraction_def.setIs_archived(IsFlag.Fou.getCode());
+
+						extraction_def.add(Dbo.db());
+					}
 				}
 				// 6、如果是修改采集表
 				else {
@@ -1147,7 +1162,7 @@ public class CollTbConfStepAction extends BaseAction {
 					long oldID = tableInfo.getTable_id();
 					long newID = PrimayKeyGener.getNextId();
 					tableInfo.setTable_id(newID);
-					tableInfo.setTi_or(DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
+					tableInfo.setTi_or(Constant.DEFAULT_TABLE_CLEAN_ORDER.toJSONString());
 					// 6-2、保存Table_info对象
 					tableInfo.add(Dbo.db());
 					// 6-3、所有关联了原table_id的表，找到对应的字段，为这些字段设置新的table_id
@@ -1420,16 +1435,6 @@ public class CollTbConfStepAction extends BaseAction {
 		for (Table_column tableColumn : tableColumns) {
 			tableColumn.setColumn_id(PrimayKeyGener.getNextId());
 			tableColumn.setTable_id(tableInfo.getTable_id());
-			//      // 是否采集设置为是
-			//      tableColumn.setIs_get(IsFlag.Shi.getCode());
-			//      // 是否是主键，默认设置为否
-			//      tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
-			//      tableColumn.setValid_s_date(DateUtil.getSysDate());
-			//      tableColumn.setValid_e_date(Constant.MAXDATE);
-			//      tableColumn.setIs_alive(IsFlag.Shi.getCode());
-			//      tableColumn.setIs_new(IsFlag.Fou.getCode());
-			//      tableColumn.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
-
 			// 5、保存
 			tableColumn.add(Dbo.db());
 		}
@@ -1680,11 +1685,11 @@ public class CollTbConfStepAction extends BaseAction {
 				table_column.setIs_get(IsFlag.Shi.getCode());
 				table_column.setIs_primary_key(IsFlag.Fou.getCode());
 				table_column.setIs_new(IsFlag.Fou.getCode());
-				table_column.setTc_or(DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
+				table_column.setTc_or(Constant.DEFAULT_COLUMN_CLEAN_ORDER.toJSONString());
 				table_column.setIs_alive(IsFlag.Shi.getCode());
 				table_column.setIs_new(IsFlag.Fou.getCode());
 				table_column.setValid_s_date(DateUtil.getSysDate());
-				table_column.setValid_e_date(VALID_S_DATE);
+				table_column.setValid_e_date(Constant.MAXDATE);
 			});
 		tableColumnSet.addAll(tableColumnList);
 	}
@@ -1716,4 +1721,5 @@ public class CollTbConfStepAction extends BaseAction {
 			colSetId,
 			table_name);
 	}
+
 }
