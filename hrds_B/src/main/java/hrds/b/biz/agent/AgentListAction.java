@@ -2,6 +2,8 @@ package hrds.b.biz.agent;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.Session;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -9,7 +11,9 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.b.biz.agent.tools.SendMsgUtil;
@@ -52,6 +56,7 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.ReadLog;
+import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import java.io.File;
 import java.io.IOException;
@@ -1586,4 +1591,64 @@ public class AgentListAction extends BaseAction {
 
 		return Constant.SQLDELIMITER;
 	}
+
+	@Method(desc = "上传的数据字典信息", logicStep = "")
+	@Param(name = "file", desc = "上传的文件", range = "不可为空")
+	@Param(name = "targetPath", desc = "目标机器路径", range = "不可为空")
+	@Param(name = "database_id", desc = "任务ID", range = "不可为空")
+	@UploadFile
+	public void uploadDataDictionary(String file, String targetPath, long database_id) {
+
+		//获取上传后的文件
+		File uploadedFile = FileUploadUtil.getUploadedFile(file);
+
+		//获取当前任务的Agent机器地址信息
+		Map<String, Object> agentMap = Dbo.queryOneObject(
+			"SELECT t1.agent_ip,t1.agent_port,t1.user_name,t1.passwd FROM "
+				+ Agent_down_info.TableName
+				+ " t1 JOIN " + Agent_info.TableName
+				+ " t2 ON t1.agent_ip = t2.agent_ip AND t1.agent_port = t2.agent_port where t2.agent_id = "
+				+ "(select agent_id from " + Database_set.TableName + " where database_id = ?)", database_id);
+
+		SFTPDetails sftpDetails = new SFTPDetails();
+		sftpDetails.setHost(agentMap.get("agent_ip").toString());
+		sftpDetails.setPort(java.lang.Integer.parseInt(agentMap.get("agent_port").toString()));
+		sftpDetails.setUser_name(agentMap.get("user_name").toString());
+		sftpDetails.setPwd(agentMap.get("passwd").toString());
+
+		Session session = null;
+		ChannelSftp chSftp = null;
+		SFTPChannel channel = null;
+		try {
+			session = SFTPChannel.getJSchSession(sftpDetails, 60000);
+			//建立远程机器的目录
+			SFTPChannel.execCommandByJSchNoRs(session, "mkdir -p " + targetPath);
+			// 开始传输上传的文件
+			channel = new SFTPChannel();
+			chSftp = channel.getChannel(session, 60000);
+			//将本地的文件传输到目标机器
+			chSftp.put(uploadedFile.getAbsolutePath(), targetPath);
+			//修改传输后的文件名称,因为上传到本地的文件名称会被修改掉...传输到目标机器后,将文件名称还原
+			SFTPChannel.execCommandByJSchNoRs(session,
+				"mv " + targetPath + File.separator + uploadedFile.getName() + " " + targetPath + File.separator
+					+ FileUploadUtil
+					.getOriginalFileName(file));
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (session != null) {
+				session.disconnect();
+			}
+			if (chSftp != null) {
+				chSftp.quit();
+			}
+			if (channel != null) {
+				try {
+					channel.closeChannel();
+				} catch (Exception ignored) {
+				}
+			}
+		}
+	}
+
 }
