@@ -285,10 +285,9 @@ public class AgentListAction extends BaseAction {
 		// 4、得到本次http交互的request和response
 		HttpServletResponse response = ResponseUtil.getResponse();
 		HttpServletRequest request = RequestUtil.getRequest();
-
+		// 5、设置响应头信息
+		response.reset();
 		try (OutputStream out = response.getOutputStream()) {
-			// 5、设置响应头信息
-			response.reset();
 			if (request.getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
 				// 对firefox浏览器做特殊处理
 				response.setHeader(
@@ -305,8 +304,6 @@ public class AgentListAction extends BaseAction {
 			// 6、使用response获得输出流，完成文件下载
 			out.write(bytes);
 			out.flush();
-			// 数据可访问权限处理方式
-			// 在getTaskLog()方法中做了处理
 		} catch (IOException e) {
 			throw new AppSystemException(e);
 		}
@@ -1595,24 +1592,29 @@ public class AgentListAction extends BaseAction {
 	@Method(desc = "上传的数据字典信息", logicStep = "")
 	@Param(name = "file", desc = "上传的文件", range = "不可为空")
 	@Param(name = "targetPath", desc = "目标机器路径", range = "不可为空")
-	@Param(name = "database_id", desc = "任务ID", range = "不可为空")
+	@Param(name = "agent_id", desc = "Agent ID", range = "不可为空")
 	@UploadFile
-	public void uploadDataDictionary(String file, String targetPath, long database_id) {
+	public String uploadDataDictionary(String file, String targetPath, long agent_id) {
 
-		//获取上传后的文件
-		File uploadedFile = FileUploadUtil.getUploadedFile(file);
+		//检查Agent是否存在
+		long countNum = Dbo.queryNumber("SELECT COUNT(1) FROM " + Agent_info.TableName + " WHERE agent_id = ?", agent_id)
+			.orElseThrow(() -> new BusinessException("SQL异常"));
+
+		if (countNum == 0) {
+			CheckParam.throwErrorMsg("此Agent ID(%s)不存在", agent_id);
+		}
 
 		//获取当前任务的Agent机器地址信息
 		Map<String, Object> agentMap = Dbo.queryOneObject(
 			"SELECT t1.agent_ip,t1.agent_port,t1.user_name,t1.passwd FROM "
 				+ Agent_down_info.TableName
 				+ " t1 JOIN " + Agent_info.TableName
-				+ " t2 ON t1.agent_ip = t2.agent_ip AND t1.agent_port = t2.agent_port where t2.agent_id = "
-				+ "(select agent_id from " + Database_set.TableName + " where database_id = ?)", database_id);
+				+ " t2 ON t1.agent_ip = t2.agent_ip AND t1.agent_port = t2.agent_port where t2.agent_id = ?",
+			agent_id);
 
 		SFTPDetails sftpDetails = new SFTPDetails();
 		sftpDetails.setHost(agentMap.get("agent_ip").toString());
-		sftpDetails.setPort(java.lang.Integer.parseInt(agentMap.get("agent_port").toString()));
+		sftpDetails.setPort(Integer.parseInt(Constant.SFTP_PORT));
 		sftpDetails.setUser_name(agentMap.get("user_name").toString());
 		sftpDetails.setPwd(agentMap.get("passwd").toString());
 
@@ -1620,6 +1622,9 @@ public class AgentListAction extends BaseAction {
 		ChannelSftp chSftp = null;
 		SFTPChannel channel = null;
 		try {
+			//获取上传后的文件
+			File uploadedFile = FileUploadUtil.getUploadedFile(file);
+
 			session = SFTPChannel.getJSchSession(sftpDetails, 60000);
 			//建立远程机器的目录
 			SFTPChannel.execCommandByJSchNoRs(session, "mkdir -p " + targetPath);
@@ -1631,8 +1636,8 @@ public class AgentListAction extends BaseAction {
 			//修改传输后的文件名称,因为上传到本地的文件名称会被修改掉...传输到目标机器后,将文件名称还原
 			SFTPChannel.execCommandByJSchNoRs(session,
 				"mv " + targetPath + File.separator + uploadedFile.getName() + " " + targetPath + File.separator
-					+ FileUploadUtil
-					.getOriginalFileName(file));
+					+ FileUploadUtil.getOriginalFileName(file));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -1649,6 +1654,7 @@ public class AgentListAction extends BaseAction {
 				}
 			}
 		}
+		return targetPath + File.separator + FileUploadUtil.getOriginalFileName(file);
 	}
 
 }
