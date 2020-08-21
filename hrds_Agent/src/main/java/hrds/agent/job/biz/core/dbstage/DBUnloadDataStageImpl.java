@@ -94,7 +94,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 			//根据系统参数配置是否写数据字典，因为页面提供了下载任务的数据字典，每次跑批再去写数据字典会影响效率
 			if (JobConstant.ISWRITEDICTIONARY) {
 				//数据字典的路径
-				String dictionaryPath = FileNameUtils.normalize(Constant.DICTIONARY + File.separator
+				String dictionaryPath = FileNameUtils.normalize(JobConstant.DICTIONARY + File.separator
 						, true);
 				//写数据字典
 				DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),

@@ -1751,7 +1751,7 @@ public class CommandJdbcTest extends WebBaseTestCase {
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
+			String[] paths = {JobConstant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
 			FileUtil.initPath(paths);
 			//1.获取json数组转成File_source的集合
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();

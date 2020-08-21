@@ -13,7 +13,6 @@ import hrds.agent.job.biz.core.JdbcDirectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +42,7 @@ public class JdbcDirectCollectJob extends AgentBaseAction {
 			SourceDataConfBean sourceDataConfBean =
 					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
 			//2.将页面传递过来的压缩信息解压写文件
-			FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
+			FileUtil.createFile(JobConstant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
 					PackUtil.unpackMsg(taskInfo).get("msg"));
 		} catch (Exception e) {
 			log.error(e);
@@ -71,7 +70,7 @@ public class JdbcDirectCollectJob extends AgentBaseAction {
 			SourceDataConfBean sourceDataConfBean =
 					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), SourceDataConfBean.class);
 			//2.将页面传递过来的压缩信息解压写文件
-			FileUtil.createFile(Constant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
+			FileUtil.createFile(JobConstant.MESSAGEFILE + sourceDataConfBean.getDatabase_id(),
 					PackUtil.unpackMsg(taskInfo).get("msg"));
 			//3.获取json数组转成CollectTableBean的集合
 			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();

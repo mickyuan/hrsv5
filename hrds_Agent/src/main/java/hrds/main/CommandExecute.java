@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
@@ -57,7 +58,7 @@ public class CommandExecute {
 			sqlParam.delete(sqlParam.length() - Constant.SQLDELIMITER.length(), sqlParam.length());
 		}
 		try {
-			String taskInfo = FileUtil.readFile2String(new File(Constant.MESSAGEFILE
+			String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE
 					+ taskId));
 			//对配置信息解压缩并反序列化为SourceDataConfBean对象
 			SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
@@ -110,7 +111,7 @@ public class CommandExecute {
 		ExecutorService executor = null;
 		try {
 			//初始化当前任务需要保存的文件的根目录
-			String[] paths = {Constant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
+			String[] paths = {JobConstant.DICTIONARY + sourceDataConfBean.getDatabase_id()};
 			FileUtil.initPath(paths);
 			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
 			//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时又多个数据库采集同时进行

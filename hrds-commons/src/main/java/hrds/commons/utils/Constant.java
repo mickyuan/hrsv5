@@ -48,11 +48,6 @@ public class Constant {
 	 * job运行程序信息存储文件名称
 	 */
 	public static final String JOBFILENAME = "jobInfo.json";
-	//TODO 数据库采集数据字典存放的顶层目录
-	/**
-	 * 数据库采集数据字典存放的顶层目录
-	 */
-	public static final String DICTIONARY = USER_DIR + File.separator + "dictionary" + File.separator;
 	/**
 	 * mapDB文件存放的顶层目录
 	 */
@@ -77,11 +72,6 @@ public class Constant {
 	 * 存储文件上传脚本的顶层目录
 	 */
 	public static final String HDFSSHELLFILE = USER_DIR + File.separator + "hdfsShellFile" + File.separator;
-	//TODO 存放采集页面配置的数据文件
-	/**
-	 * 存放采集页面配置的数据文件
-	 */
-	public static final String MESSAGEFILE = USER_DIR + File.separator + "messageFile" + File.separator;
 	//通信异常存储目录
 	public static final String COMMUNICATIONERRORFOLDER = USER_DIR + File.separator
 			+ "CommunicationError" + File.separator;
@@ -222,7 +212,7 @@ public class Constant {
 	 */
 	public static final JSONObject DATABASE_CLEAN = new JSONObject(true);
 
-	/**
+	/*
 	 * 数据库抽取卸数下来文件格式对应路径的关系
 	 */
 	static {

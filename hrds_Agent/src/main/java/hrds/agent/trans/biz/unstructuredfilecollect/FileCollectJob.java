@@ -5,9 +5,9 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -31,7 +31,7 @@ public class FileCollectJob extends AgentBaseAction {
 		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(
 				PackUtil.unpackMsg(fileCollectTaskInfo).get("msg"), FileCollectParamBean.class);
 		//将页面传递过来的压缩信息解压写文件
-		FileUtil.createFile(Constant.MESSAGEFILE + fileCollectParamBean.getFcs_id(),
+		FileUtil.createFile(JobConstant.MESSAGEFILE + fileCollectParamBean.getFcs_id(),
 				PackUtil.unpackMsg(fileCollectTaskInfo).get("msg"));
 //		ThreadPoolExecutor executor = null;
 //		try {
