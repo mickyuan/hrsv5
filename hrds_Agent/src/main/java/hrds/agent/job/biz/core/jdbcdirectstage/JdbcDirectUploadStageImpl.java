@@ -24,6 +24,7 @@ import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.StorageTypeKey;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,6 +120,11 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 			//先创建表，再多线程batch数据入库，根据数据保留天数做相应调整，成功则删除最早一次进数保留的数据
 			DFUploadStageImpl.createTodayTable(tableBean, todayTableName, dataStoreConfBean, db);
 			if (flag) {
+				//获取查询数据的字段的列
+				String insert_join = StringUtils.join(StringUtil.split(tableBean.getColumnMetaInfo(),
+						Constant.METAINFOSPLIT), ",");
+				String select_join = StringUtils.join(StringUtil.split(tableBean.getAllColumns(),
+						Constant.METAINFOSPLIT), ",");
 				//执行复制表
 				if (tableBean.getCollectSQL().contains(Constant.SQLDELIMITER) ||
 						IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
@@ -133,8 +139,9 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 										sourceDataConfBean.getDatabase_name() + "." + table);
 							}
 						}
-						db.execute("INSERT INTO " + todayTableName +
-								" ( SELECT * FROM ( " + sql + ") AS hyren_dcl_temp )");
+						db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
+								" ( SELECT " + select_join + "," + collectTableBean.getEtlDate() +
+								" FROM ( " + sql + ") AS hyren_dcl_temp )");
 					}
 				} else {
 					String sql = tableBean.getCollectSQL();
@@ -146,8 +153,9 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 									sourceDataConfBean.getDatabase_name() + "." + table);
 						}
 					}
-					db.execute("INSERT INTO " + todayTableName +
-							" ( SELECT * FROM ( " + sql + ") AS hyren_dcl_temp )");
+					db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
+							" ( SELECT " + select_join + "," + collectTableBean.getEtlDate() +
+							" FROM ( " + sql + ") AS hyren_dcl_temp )");
 				}
 			} else {
 				List<Future<Long>> futures;
