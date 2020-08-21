@@ -56,7 +56,7 @@ public class Database_set extends ProjectTableEntity
 	private String system_type;
 	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
-	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
+	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = false)
 	private String database_number;
 	@DocBean(name ="db_agent",value="是否DB文件数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String db_agent;

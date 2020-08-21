@@ -370,7 +370,7 @@ CREATE TABLE DATABASE_SET(
 DATABASE_ID                                       BIGINT default 0 NOT NULL, --数据库设置id
 AGENT_ID                                          BIGINT default 0 NULL, --Agent_id
 HOST_NAME                                         VARCHAR(512) NULL, --主机名
-DATABASE_NUMBER                                   VARCHAR(10) NOT NULL, --数据库设置编号
+DATABASE_NUMBER                                   VARCHAR(10) NULL, --数据库设置编号
 SYSTEM_TYPE                                       VARCHAR(512) NULL, --操作系统类型
 TASK_NAME                                         VARCHAR(512) NULL, --数据库采集任务名称
 DATABASE_NAME                                     VARCHAR(512) NULL, --数据库名称
@@ -1454,7 +1454,7 @@ REQUEST_TIME                                      CHAR(6) NOT NULL, --请求时�
 REQUEST_TYPE                                      VARCHAR(512) NULL, --请求类型
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 USER_NAME                                         VARCHAR(512) NULL, --用户名称
-OPERATION_TYPE                                    VARCHAR(512) NULL, --操作类型
+OPERATION_TYPE                                    VARCHAR(2048) NULL, --操作类型
 CONSTRAINT LOGIN_OPERATION_INFO_PK PRIMARY KEY(LOG_ID)   );
 
 --集市表前置后置作业

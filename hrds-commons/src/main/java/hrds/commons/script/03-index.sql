@@ -20,7 +20,6 @@ alter table etl_job_disp_his alter column pro_para TYPE text;
 ALTER TABLE etl_job_disp_his DROP constraint etl_job_disp_his_pk;
 
 create unique index u_index_data_source01 on data_source(datasource_number);-- 数据源编号不能重复
-create unique index u_index_database_set01 on database_set(database_number);-- 数据库设置ID不能重复
 
 -- 源文件属性
 create index index_source_file_attribute01 on source_file_attribute(collect_set_id,source_path);
