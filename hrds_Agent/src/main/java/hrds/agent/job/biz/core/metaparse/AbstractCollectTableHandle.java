@@ -186,7 +186,8 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 			// Write header
 			for (int i = 1; i <= numberOfColumns; i++) {
 				String colType = Platform.getColType(rsMetaData.getColumnType(i),
-						rsMetaData.getColumnTypeName(i), rsMetaData.getPrecision(i), rsMetaData.getScale(i));
+						rsMetaData.getColumnTypeName(i), rsMetaData.getPrecision(i),
+						rsMetaData.getScale(i), rsMetaData.getColumnDisplaySize(i));
 				map.put(rsMetaData.getColumnName(i).toLowerCase(),
 						colType + "::" + TypeTransLength.getLength(colType));
 			}

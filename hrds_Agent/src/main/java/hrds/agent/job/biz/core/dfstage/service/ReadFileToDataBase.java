@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core.dfstage.service;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
@@ -166,7 +167,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				List<String> valueList = StringUtil.split(line, dataDelimiter);
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), valueList.get(j));
+					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
 				pool.add(objs);
 				if (num % JobConstant.BUFFER_ROW == 0) {
@@ -223,7 +224,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				List<String> valueList = getDingChangValueList(line, lengthList, database_code);
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), valueList.get(j));
+					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
 				pool.add(objs);
 				if (num % JobConstant.BUFFER_ROW == 0) {
@@ -263,7 +264,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				List<String> valueList = StringUtil.split(str, Constant.SEQUENCEDELIMITER);
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), valueList.get(j));
+					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
 				num++;
 				pool.add(objs);
@@ -307,7 +308,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 					num++;
 					objs = new Object[result.getNumFields()];// 存储全量插入信息的list
 					for (int i = 0; i < result.getNumFields(); i++) {
-						objs[i] = getValue(typeList.get(i), result.getFieldValue(i));
+						objs[i] = getValue(typeList.get(i), result.getFieldValue(i), db.getDbtype());
 					}
 					pool.add(objs);
 //					LOGGER.info(objs.toString());
@@ -412,7 +413,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			while ((lineList = csvReader.read()) != null) {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), lineList.get(j));
+					objs[j] = getValue(typeList.get(j), lineList.get(j), db.getDbtype());
 				}
 				num++;
 				pool.add(objs);
@@ -429,7 +430,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	public static Object getValue(String type, WritableComparable tmpValue) {
+	public static Object getValue(String type, WritableComparable tmpValue, Dbtype dbtype) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -448,10 +449,15 @@ public class ReadFileToDataBase implements Callable<Long> {
 			str = tmpValue == null ? "" : tmpValue.toString();
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
+		if (Dbtype.TERADATA == dbtype) {
+			if (str != null) {
+				str = String.valueOf(str);
+			}
+		}
 		return str;
 	}
 
-	static Object getValue(String type, String tmpValue) {
+	static Object getValue(String type, String tmpValue, Dbtype dbtype) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -469,6 +475,11 @@ public class ReadFileToDataBase implements Callable<Long> {
 			// 如果取出的值为null则给空字符串
 			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue;
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		if (Dbtype.TERADATA == dbtype) {
+			if (str != null) {
+				str = String.valueOf(str);
+			}
 		}
 		return str;
 	}

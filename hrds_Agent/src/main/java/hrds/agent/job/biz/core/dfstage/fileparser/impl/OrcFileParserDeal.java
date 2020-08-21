@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class OrcFileParserDeal extends FileParserAbstract {
 	private final static Logger LOGGER = LoggerFactory.getLogger(OrcFileParserDeal.class);
+
 	public OrcFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
@@ -58,7 +59,7 @@ public class OrcFileParserDeal extends FileParserAbstract {
 					fileRowCount++;
 					for (int i = 0; i < result.getNumFields(); i++) {
 						valueList.add(ReadFileToDataBase.getValue(dictionaryTypeList.get(i),
-								result.getFieldValue(i)).toString());
+								result.getFieldValue(i), null).toString());
 					}
 					//校验数据是否正确
 					checkData(valueList, fileRowCount);

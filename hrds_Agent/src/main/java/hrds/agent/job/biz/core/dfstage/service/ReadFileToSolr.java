@@ -52,17 +52,17 @@ import java.util.concurrent.Callable;
 public class ReadFileToSolr implements Callable<Long> {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ReadFileToSolr.class);
 	//卸数到本地的文件绝对路径
-	private String fileAbsolutePath;
+	private final String fileAbsolutePath;
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 	//数据库采集表对应的meta信息
-	private TableBean tableBean;
+	private final TableBean tableBean;
 	//文件对应存储的目的地信息
-	private DataStoreConfBean dataStoreConfBean;
+	private final DataStoreConfBean dataStoreConfBean;
 	//是否是追加
-	private boolean is_append;
+	private final boolean is_append;
 	//跑批日期
-	private String etl_date;
+	private final String etl_date;
 
 	/**
 	 * 读取文件到数据库构造方法
@@ -77,7 +77,7 @@ public class ReadFileToSolr implements Callable<Long> {
 	 *                          含义：文件需要上传到表对应的存储信息
 	 */
 	public ReadFileToSolr(String fileAbsolutePath, TableBean tableBean, CollectTableBean collectTableBean,
-	                      DataStoreConfBean dataStoreConfBean) {
+						  DataStoreConfBean dataStoreConfBean) {
 		this.fileAbsolutePath = fileAbsolutePath;
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
@@ -98,7 +98,7 @@ public class ReadFileToSolr implements Callable<Long> {
 		solrParam.setSolrUrl(data_store_connect_attr.get(StorageTypeKey.solr_url));
 		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
 		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam, configPath);
-		     SolrClient server = os.getServer()) {
+			 SolrClient server = os.getServer()) {
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 			//取值的应该根据原来的类型来
 			List<String> sourceTypeList = StringUtil.split(tableBean.getColTypeMetaInfo(), Constant.METAINFOSPLIT);
@@ -144,8 +144,8 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private long readFeiDingChangToSolr(SolrClient server, List<String> columnList,
-	                                    List<String> typeList, String dataDelimiter,
-	                                    String database_code, String is_header, boolean isMd5) {
+										List<String> typeList, String dataDelimiter,
+										String database_code, String is_header, boolean isMd5) {
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)))) {
@@ -173,7 +173,7 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private long readDingChangToSolr(SolrClient server, List<String> columnList, List<String> typeList,
-	                                 String database_code, String is_header, boolean isMd5) {
+									 String database_code, String is_header, boolean isMd5) {
 		database_code = DataBaseCode.ofValueByCode(database_code);
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
@@ -208,28 +208,28 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private void batchToSolr(SolrClient server, List<SolrInputDocument> docs, List<String> columnList,
-	                         List<String> typeList, List<String> valueList, boolean isMd5, long num) {
+							 List<String> typeList, List<String> valueList, boolean isMd5, long num) {
 		SolrInputDocument doc = new SolrInputDocument();
 		StringBuilder sb = new StringBuilder();
 		doc.addField("table-name", collectTableBean.getHbase_name());
 		for (int j = 0; j < columnList.size(); j++) {
 			if (isMd5) {
-				Object value = ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j));
+				Object value = ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j), null);
 				sb.append(value);
 				doc.addField("tf-" + columnList.get(j), value);
 			} else {
 				if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(j))) {
 					if (is_append) {
 						doc.addField("id", collectTableBean.getHbase_name() + "_"
-								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j)) + "_" + etl_date);
+								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j), null) + "_" + etl_date);
 					} else {
 						doc.addField("id", collectTableBean.getHbase_name() + "_"
-								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j)));
+								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j), null));
 					}
 
 				} else {
 					doc.addField("tf-" + columnList.get(j), ReadFileToDataBase.
-							getValue(typeList.get(j), valueList.get(j)));
+							getValue(typeList.get(j), valueList.get(j), null));
 				}
 			}
 		}
@@ -249,7 +249,7 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private long readSequenceToSolr(SolrClient server, List<String> columnList,
-	                                List<String> typeList, boolean isMd5) throws Exception {
+									List<String> typeList, boolean isMd5) throws Exception {
 		Configuration conf = ConfigReader.getConfiguration();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
@@ -282,7 +282,7 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private long readOrcToSolr(SolrClient server, List<String> columnList,
-	                           List<String> typeList, boolean isMd5) throws Exception {
+							   List<String> typeList, boolean isMd5) throws Exception {
 		RecordReader rows = null;
 		long num = 0L;
 		try {
@@ -309,22 +309,22 @@ public class ReadFileToSolr implements Callable<Long> {
 					doc.addField("table-name", collectTableBean.getHbase_name());
 					for (int i = 0; i < result.getNumFields(); i++) {
 						if (isMd5) {
-							Object value = ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i));
+							Object value = ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null);
 							sb.append(value);
 							doc.addField("tf-" + columnList.get(i), value);
 						} else {
 							if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(i))) {
 								if (is_append) {
 									doc.addField("id", collectTableBean.getHbase_name() + "_"
-											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i))
+											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null)
 											+ "_" + etl_date);
 								} else {
 									doc.addField("id", collectTableBean.getHbase_name() + "_"
-											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i)));
+											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null));
 								}
 							} else {
 								doc.addField("tf-" + columnList.get(i),
-										ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i)));
+										ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null));
 							}
 						}
 					}
@@ -352,7 +352,7 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private long readParquetToSolr(SolrClient server, List<String> columnList,
-	                               List<String> typeList, boolean isMd5) {
+								   List<String> typeList, boolean isMd5) {
 		ParquetReader<Group> build = null;
 		try {
 			long num = 0;
@@ -418,13 +418,13 @@ public class ReadFileToSolr implements Callable<Long> {
 	}
 
 	private long readCsvToSolr(SolrClient server, List<String> columnList, List<String> typeList,
-	                           String database_code, String is_header, boolean isMd5) {
+							   String database_code, String is_header, boolean isMd5) {
 		//TODO 分隔符应该使用传进来的，懒得找了，测试的时候一起改吧
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)));
-		     CsvListReader csvReader = new CsvListReader(reader,
-				     CsvPreference.EXCEL_PREFERENCE)) {
+			 CsvListReader csvReader = new CsvListReader(reader,
+					 CsvPreference.EXCEL_PREFERENCE)) {
 			List<String> lineList;
 			if (IsFlag.Shi.getCode().equals(is_header)) {
 				//判断包含表头，先读取表头
