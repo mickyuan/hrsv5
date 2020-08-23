@@ -2479,4 +2479,10 @@ public class AgentListActionTest extends WebBaseTestCase {
 			SqlOperator.commitTransaction(db);
 		}
 	}
+
+
+	@Test
+	public void sendCollectDatabase() {
+		new HttpClient().addData("colSetId",742407975087378432L).addData("etl_date","20200923").post(getActionUrl("sendCollectDatabase"));
+	}
 }

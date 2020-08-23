@@ -210,8 +210,8 @@ public class StartModeConfActionTest extends WebBaseTestCase {
 		for (Obj_relation_etl obj_relation_etl : obj_relation_etls) {
 			JobStartConf jobStartConf = new JobStartConf();
 			BeanUtils.copyProperties(obj_relation_etl, jobStartConf);
-			jobStartConf.setLog_dic(initStartModeData.AGENT_LOG);
-			jobStartConf.setPro_dic(initStartModeData.AGENT_PATH);
+//			jobStartConf.setLog_dic(initStartModeData.AGENT_LOG);
+//			jobStartConf.setPro_dic(initStartModeData.AGENT_PATH);
 			jobStartConf.setPre_etl_job(new String[]{etl_job2});
 			jobStartConfs.add(jobStartConf);
 		}
