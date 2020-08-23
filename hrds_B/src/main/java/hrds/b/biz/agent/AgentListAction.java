@@ -1657,4 +1657,264 @@ public class AgentListAction extends BaseAction {
 		return targetPath + File.separator + FileUploadUtil.getOriginalFileName(file);
 	}
 
+
+	@Method(desc = "发送数据库采集任务信息", logicStep = ""
+		+ "1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在"
+		+ "2、任务存在，则查询数据，开始拼接要发送到agent端的信息"
+		+ " 2-1、首先根据数据库设置ID查询源系统数据库信息"
+		+ " 2-2、将结果集转换为JSONObject，方便往里面塞数据"
+		+ " 2-3、TODO 信号文件信息暂时没有，所以先设置一个空的集合，后期要去singal_file表里面查"
+		+ " 2-4、查询并组装采集表配置信息数组，除数据库中查询出的内容，还需要组装表采集字段集合、列合并参数信息、表存储配置信息"
+		+ "   2-4-1、查询当前数据库采集任务下每张表的列合并信息，放入对应的表的JSONObject中"
+		+ "   2-4-2、查询表采集字段集合，放入对应表的JSONObject中，并且只查询采集的列"
+		+ "   2-4-3、放入采集的每个列"
+		+ "   2-4-4、查询每张表的存储配置信息，一张表可以选择进入多个存储目的地"
+		+ "   2-4-5、遍历存储目的地，得到存储层配置ID，根据存储层配置ID在数据存储层配置属性表中，查询配置属性或配置文件属性"
+		+ "   2-4-6、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息"
+		+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
+	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+	@Param(name = "etl_date", desc = "跑批日期", range = "开业为空", nullable = true, valueIfNull = "")
+	public void sendCollectDatabase(long colSetId, String etl_date) {
+		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
+		long count =
+			Dbo.queryNumber(
+				"select count(1) from " + Database_set.TableName + " where database_id = ?",
+				colSetId)
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+		if (count != 1) {
+			throw new BusinessException("未找到数据库采集任务");
+		}
+		// 2、任务存在，则查询数据，开始拼接要发送到agent端的信息
+		// 2-1、首先根据数据库设置ID查询源系统数据库信息
+		Result sourceDBConfResult =
+			Dbo.queryResult(
+				"SELECT dbs.agent_id, dbs.database_id, dbs.task_name,"
+					+ " dbs.database_name, dbs.database_pad,"
+					+ " dbs.database_drive, dbs.database_type, dbs.user_name, dbs.database_ip, dbs.database_port,"
+					+ " dbs.host_name, dbs.system_type, dbs.is_sendok, dbs.database_number, dbs.db_agent, dbs.plane_url,"
+					+ " dbs.database_separatorr, dbs.row_separator, dbs.classify_id,  dbs.jdbc_url, ds.datasource_number,"
+					+ " cjc.classify_num,dbs.collect_type FROM "
+					+ Data_source.TableName
+					+ " ds"
+					+ " JOIN "
+					+ Agent_info.TableName
+					+ " ai ON ds.source_id = ai.source_id"
+					+ " JOIN "
+					+ Database_set.TableName
+					+ " dbs ON ai.agent_id = dbs.agent_id"
+					+ " left join "
+					+ Collect_job_classify.TableName
+					+ " cjc on dbs.classify_id = cjc.classify_id"
+					+ " where dbs.database_id = ?",
+				colSetId);
+
+		// 2-2、将结果集转换为JSONObject，方便往里面塞数据
+		if (sourceDBConfResult.getRowCount() != 1) {
+			throw new BusinessException("根据数据库采集任务ID查询到的任务配置信息不唯一");
+		}
+		JSONArray array = JSONArray.parseArray(sourceDBConfResult.toJSON());
+		JSONObject sourceDBConfObj = array.getJSONObject(0);
+
+		// 2-3、TODO 信号文件信息暂时没有，所以先设置一个空的集合，后期要去singal_file表里面查
+		sourceDBConfObj.put("signal_file_list", new ArrayList<>());
+
+		// 2-4、查询并组装采集表配置信息数组，除数据库中查询出的内容，还需要组装表采集字段集合、列合并参数信息、表存储配置信息
+		Result collectTableResult =
+			Dbo.queryResult(
+				"SELECT dbs.database_id, ti.table_id, ti.table_name, "
+					+ "ti.table_ch_name, ti.table_count, ti.source_tableid, ti.valid_s_date, ti.valid_e_date, ti.sql, "
+					+ "ti.remark, ti.is_user_defined, ti.is_md5,ti.is_register,ti.is_parallel,ti.page_sql,ti.rec_num_date,"
+					+ "ti.unload_type,ti.is_customize_sql,ti.pageparallels, ti.dataincrement,tsi.storage_type, "
+					+ "tsi.storage_time, tsi.is_zipper, tsi.hyren_name as hbase_name, ds.datasource_name, " +
+					"ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
+					+ "dsr.storage_date FROM "
+					+ Data_source.TableName
+					+ " ds "
+					+ " JOIN "
+					+ Agent_info.TableName
+					+ " ai ON ds.source_id = ai.source_id"
+					+ " JOIN "
+					+ Database_set.TableName
+					+ " dbs ON ai.agent_id = dbs.agent_id"
+					+ " LEFT JOIN "
+					+ Table_info.TableName
+					+ " ti on ti.database_id = dbs.database_id"
+					+ " LEFT JOIN "
+					+ Collect_job_classify.TableName
+					+ " cjc on dbs.classify_id = cjc.classify_id"
+					+
+					//				" LEFT JOIN " + Data_extraction_def.TableName + " ded on ti.table_id =
+					// ded.table_id" +
+					" LEFT JOIN "
+					+ Table_storage_info.TableName
+					+ " tsi on tsi.table_id = ti.table_id"
+					+ " LEFT JOIN "
+					+ Data_store_reg.TableName
+					+ " dsr on dsr.table_id = ti.table_id "
+					+ " WHERE dbs.database_id = ?",
+				colSetId);
+
+		// collectTables是从数据库中查询出的当前数据库采集任务要采集的表部分配置信息
+		JSONArray collectTables = JSONArray.parseArray(collectTableResult.toJSON());
+
+		for (int i = 0; i < collectTables.size(); i++) {
+			JSONObject collectTable = collectTables.getJSONObject(i);
+			//			collectTable.put("etlDate", DateUtil.getSysDate());
+			Long tableId = collectTable.getLong("table_id");
+			// 2-4-1、查询当前数据库采集任务下每张表的列合并信息，放入对应的表的JSONObject中
+			List<Column_merge> columnMerges =
+				Dbo.queryList(
+					Column_merge.class,
+					"select * from " + Column_merge.TableName + " where table_id = ?",
+					tableId);
+			if (!columnMerges.isEmpty()) {
+				collectTable.put("column_merge_list", columnMerges);
+			} else {
+				collectTable.put("column_merge_list", new ArrayList<>());
+			}
+			// 2-4-2、查询表采集字段集合，放入对应表的JSONObject中，并且只查询采集的列
+			Result tableColResult =
+				Dbo.queryResult(
+					"select tc.column_id, tc.is_primary_key, tc.column_name, tc.column_ch_name, "
+						+ " tc.valid_s_date, tc.valid_e_date, tc.is_get, tc.column_type, tc.tc_remark, tc.is_alive, "
+						+ " tc.is_new, tc.tc_or from "
+						+ Table_column.TableName
+						+ " tc where tc.table_id = ? and tc.is_get = ?",
+					tableId,
+					IsFlag.Shi.getCode());
+			// tableColArray是从数据库找那中查询出的当前采集表字段信息
+			JSONArray tableColArray = JSONArray.parseArray(tableColResult.toJSON());
+			// 2-4-3、放入采集的每个列
+			collectTable.put("collectTableColumnBeanList", tableColArray);
+
+			// 2-4-4、查询每张表的存储配置信息，一张表可以选择进入多个存储目的地
+			Result dataStoreResult =
+				Dbo.queryResult(
+					"select dsl.dsl_id, dsl.dsl_name, dsl.store_type, "
+						+ " dsl.is_hadoopclient, tcs.dtcs_name, lcs.dlcs_name "
+						+ " from "
+						+ Data_store_layer.TableName
+						+ " dsl"
+						+ " left join "
+						+ Type_contrast_sum.TableName
+						+ " tcs on dsl.dtcs_id = tcs.dtcs_id"
+						+ " left join "
+						+ Length_contrast_sum.TableName
+						+ " lcs on dsl.dlcs_id = lcs.dlcs_id"
+						+ " where dsl.dsl_id in (select drt.dsl_id from "
+						+ Dtab_relation_store.TableName
+						+ " drt where drt.tab_id = "
+						+ " (select storage_id from "
+						+ Table_storage_info.TableName
+						+ " tsi where tsi.table_id = ?) AND drt.data_source = ?)",
+					tableId, StoreLayerDataSource.DB.getCode());
+
+			JSONArray dataStoreArray = JSONArray.parseArray(dataStoreResult.toJSON());
+			// 2-4-5、遍历存储目的地，得到存储层配置ID，根据存储层配置ID在数据存储层配置属性表中，查询配置属性或配置文件属性
+			for (int m = 0; m < dataStoreArray.size(); m++) {
+				JSONObject dataStore = dataStoreArray.getJSONObject(m);
+				Long dslId = dataStore.getLong("dsl_id");
+				Result result =
+					Dbo.queryResult(
+						"select storage_property_key, storage_property_val, is_file from "
+							+ Data_store_layer_attr.TableName
+							+ " where dsl_id = ?",
+						dslId);
+				if (result.isEmpty()) {
+					throw new BusinessException("根据存储层配置ID" + dslId + "未获取到存储层配置属性信息");
+				}
+				Map<String, String> dataStoreConnectAttr = new HashMap<>();
+				Map<String, String> dataStoreLayerFile = new HashMap<>();
+				for (int n = 0; n < result.getRowCount(); n++) {
+					IsFlag fileFlag = IsFlag.ofEnumByCode(result.getString(n, "is_file"));
+					if (fileFlag == IsFlag.Shi) {
+						dataStoreLayerFile.put(
+							result.getString(n, "storage_property_key"),
+							result.getString(n, "storage_property_val"));
+					} else {
+						dataStoreConnectAttr.put(
+							result.getString(n, "storage_property_key"),
+							result.getString(n, "storage_property_val"));
+					}
+				}
+				dataStore.put("data_store_connect_attr", dataStoreConnectAttr);
+				dataStore.put("data_store_layer_file", dataStoreLayerFile);
+
+				// 2-4-6、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息
+				List<Object> storeLayers =
+					Dbo.queryOneColumnList(
+						"select dsla.dsla_storelayer from "
+							+ Dcol_relation_store.TableName
+							+ " csi"
+							+ " left join "
+							+ Data_store_layer_added.TableName
+							+ " dsla"
+							+ " on dsla.dslad_id = csi.dslad_id"
+							+ " where csi.col_id in"
+							+ " (select column_id from "
+							+ Table_column.TableName
+							+ " where table_id = ?) "
+							+ " and dsla.dsl_id = ? AND csi.data_source = ?",
+						tableId,
+						dslId, StoreLayerDataSource.DB.getCode());
+
+				Result columnResult =
+					Dbo.queryResult(
+						"select dsla.dsla_storelayer, csi.csi_number, tc.column_name "
+							+ " from "
+							+ Dcol_relation_store.TableName
+							+ " csi"
+							+ " left join "
+							+ Data_store_layer_added.TableName
+							+ " dsla"
+							+ " on dsla.dslad_id = csi.dslad_id"
+							+ " join "
+							+ Table_column.TableName
+							+ " tc "
+							+ " on csi.col_id = tc.column_id"
+							+ " where csi.col_id in (select column_id from "
+							+ Table_column.TableName
+							+ " where table_id = ?) and dsla.dsl_id = ? AND csi.data_source = ?",
+						tableId,
+						dslId, StoreLayerDataSource.DB.getCode());
+
+				Map<String, Map<String, Integer>> additInfoFieldMap = new HashMap<>();
+				if (!columnResult.isEmpty() && !storeLayers.isEmpty()) {
+					for (Object obj : storeLayers) {
+						Map<String, Integer> fieldMap = new HashMap<>();
+						String storeLayer = (String) obj;
+						for (int h = 0; h < columnResult.getRowCount(); h++) {
+							String dslaStoreLayer = columnResult.getString(h, "dsla_storelayer");
+							if (storeLayer.equals(dslaStoreLayer)) {
+								fieldMap.put(
+									columnResult.getString(h, "column_name"),
+									columnResult.getInteger(h, "csi_number"));
+							}
+						}
+						additInfoFieldMap.put(storeLayer, fieldMap);
+					}
+				}
+				dataStore.put("additInfoFieldMap", additInfoFieldMap);
+			}
+			collectTable.put("dataStoreConfBean", dataStoreArray);
+		}
+		// 到此为止，向agent发送的数据全部组装完毕
+		sourceDBConfObj.put("collectTableBeanArray", collectTables);
+		// return sourceDBConfObj.toJSONString();
+		// 3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
+		String methodName = AgentActionUtil.JDBCDIRECTEXECUTEIMMEDIATELY;
+		// TODO 前端调用这个方法应该传入跑批日期，作业调度同样, 只有在立即执行时此判断才会生效
+//		if (StringUtil.isNotBlank(etl_date)) {
+//			methodName = AgentActionUtil.DBCOLLECTEXECUTEIMMEDIATELY;
+//		}
+		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
+		SendMsgUtil.sendDBCollectTaskInfo(
+			sourceDBConfObj.getLong("database_id"),
+			sourceDBConfObj.getLong("agent_id"),
+			getUserId(),
+			sourceDBConfObj.toJSONString(),
+			methodName,
+			etl_date, "false", "");
+	}
+
 }
