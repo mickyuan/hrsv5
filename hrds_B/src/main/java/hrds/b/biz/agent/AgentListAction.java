@@ -1673,8 +1673,10 @@ public class AgentListAction extends BaseAction {
 		+ "   2-4-6、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息"
 		+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
-	@Param(name = "etl_date", desc = "跑批日期", range = "开业为空", nullable = true, valueIfNull = "")
-	public void sendCollectDatabase(long colSetId, String etl_date) {
+	@Param(name = "etl_date", desc = "跑批日期", range = "如果是立即启动则需要此参数,生成作业不需要此参数", nullable = true, valueIfNull = "")
+	@Param(name = "params", desc = "采集作业中的SQL参数占位符.多个参数请使用" + Constant.SQLDELIMITER
+		+ "分割", range = "可以为空", nullable = true, valueIfNull = "")
+	public void sendCollectDatabase(long colSetId, String etl_date, String sqlParam) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
 			Dbo.queryNumber(
@@ -1902,11 +1904,11 @@ public class AgentListAction extends BaseAction {
 		sourceDBConfObj.put("collectTableBeanArray", collectTables);
 		// return sourceDBConfObj.toJSONString();
 		// 3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端
-		String methodName = AgentActionUtil.JDBCDIRECTEXECUTEIMMEDIATELY;
+		String methodName = AgentActionUtil.SENDDBCOLLECTTASKINFO;
 		// TODO 前端调用这个方法应该传入跑批日期，作业调度同样, 只有在立即执行时此判断才会生效
-//		if (StringUtil.isNotBlank(etl_date)) {
-//			methodName = AgentActionUtil.DBCOLLECTEXECUTEIMMEDIATELY;
-//		}
+		if (StringUtil.isNotBlank(etl_date)) {
+			methodName = AgentActionUtil.JDBCDIRECTEXECUTEIMMEDIATELY;
+		}
 		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
 		SendMsgUtil.sendDBCollectTaskInfo(
 			sourceDBConfObj.getLong("database_id"),
@@ -1914,7 +1916,7 @@ public class AgentListAction extends BaseAction {
 			getUserId(),
 			sourceDBConfObj.toJSONString(),
 			methodName,
-			etl_date, "false", "");
+			etl_date, "false", sqlParam);
 	}
 
 }
