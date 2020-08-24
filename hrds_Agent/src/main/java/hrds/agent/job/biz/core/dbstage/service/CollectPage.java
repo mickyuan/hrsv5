@@ -24,13 +24,13 @@ import java.util.concurrent.Callable;
 		"当前线程采集到的数据量", author = "WangZhengcheng")
 public class CollectPage implements Callable<Map<String, Object>> {
 	//	private final static Logger LOGGER = LoggerFactory.getLogger(CollectPage.class);
-	private SourceDataConfBean sourceDataConfBean;
-	private CollectTableBean collectTableBean;
-	private TableBean tableBean;
-	private String sql;
-	private int start;
-	private int end;
-	private int pageNum;
+	private final SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
+	private final TableBean tableBean;
+	private final String sql;
+	private final int start;
+	private final int end;
+	private final int pageNum;
 
 	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
 	                   TableBean tableBean, int start, int end, int pageNum) {

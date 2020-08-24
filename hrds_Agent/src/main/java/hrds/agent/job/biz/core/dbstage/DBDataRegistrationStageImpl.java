@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 @DocClass(desc = "数据库抽数数据登记阶段", author = "WangZhengcheng")
 public class DBDataRegistrationStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUnloadDataStageImpl.class);
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DBDataRegistrationStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;

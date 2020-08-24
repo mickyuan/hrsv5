@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
@@ -61,8 +62,9 @@ public class JdbcDirectCollectJob extends AgentBaseAction {
 	@Param(name = "taskInfo", desc = "数据库采集需要的参数实体bean的json对象字符串",
 			range = "所有这张表不能为空的字段的值必须有，为空则会抛异常，" +
 					"collectTableBeanArray对应的表CollectTableBean这个实体不能为空的字段的值必须有，为空则会抛异常")
+	@Param(name = "sqlParam", desc = "参数占位符", range = "可以为空", nullable = true)
 	@Return(desc = "执行返回信息", range = "不会为空")
-	public String executeImmediately(String etlDate, String taskInfo) {
+	public String executeImmediately(String etlDate, String taskInfo, String sqlParam) {
 		String message = "执行成功";
 		ExecutorService executor = null;
 		try {
@@ -80,6 +82,10 @@ public class JdbcDirectCollectJob extends AgentBaseAction {
 			for (CollectTableBean collectTableBean : collectTableBeanList) {
 				//设置跑批日期
 				collectTableBean.setEtlDate(etlDate);
+				//设置sql占位符参数
+				if (!StringUtil.isBlank(sqlParam)) {
+					collectTableBean.setSqlParam(sqlParam);
+				}
 				//为了确保多个线程之间的值不互相干涉，复制对象的值。
 				SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
 						JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
@@ -91,7 +97,7 @@ public class JdbcDirectCollectJob extends AgentBaseAction {
 			JobStatusInfoUtil.printJobStatusInfo(list);
 		} catch (Exception e) {
 			log.error(e);
-			message = "执行db文件采集入库任务失败:" + e.getMessage();
+			message = "执行数据库直连采集入库任务失败:" + e.getMessage();
 		} finally {
 			if (executor != null)
 				executor.shutdown();

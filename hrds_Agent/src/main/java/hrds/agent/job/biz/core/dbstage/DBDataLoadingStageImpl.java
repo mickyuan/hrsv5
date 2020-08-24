@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 public class DBDataLoadingStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DBDataLoadingStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;

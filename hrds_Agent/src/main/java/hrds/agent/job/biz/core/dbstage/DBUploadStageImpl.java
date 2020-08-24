@@ -19,7 +19,7 @@ public class DBUploadStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
 	//卸数到本地的文件绝对路径
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DBUploadStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;

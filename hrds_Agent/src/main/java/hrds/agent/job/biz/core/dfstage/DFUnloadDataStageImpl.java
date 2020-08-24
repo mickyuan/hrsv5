@@ -36,8 +36,8 @@ import java.util.regex.Pattern;
 public class DFUnloadDataStageImpl extends AbstractJobStage {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(DFUnloadDataStageImpl.class);
-	private SourceDataConfBean sourceDataConfBean;
-	private CollectTableBean collectTableBean;
+	private final SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
 
 	/**
 	 * 数据文件采集，数据卸数阶段实现.

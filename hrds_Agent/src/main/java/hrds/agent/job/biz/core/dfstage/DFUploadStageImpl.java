@@ -54,7 +54,7 @@ import java.util.concurrent.Future;
 @DocClass(desc = "数据文件采集，数据上传阶段实现", author = "WangZhengcheng")
 public class DFUploadStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DFUploadStageImpl.class);
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	/**
 	 * 数据文件采集，数据上传阶段实现

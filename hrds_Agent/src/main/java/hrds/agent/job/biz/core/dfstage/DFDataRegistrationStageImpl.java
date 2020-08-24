@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 @DocClass(desc = "数据文件采集，数据登记阶段实现", author = "WangZhengcheng")
 public class DFDataRegistrationStageImpl extends AbstractJobStage {
 	private final static Logger LOGGER = LoggerFactory.getLogger(DFDataRegistrationStageImpl.class);
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DFDataRegistrationStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;
