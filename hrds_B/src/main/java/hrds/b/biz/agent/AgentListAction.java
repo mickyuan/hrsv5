@@ -49,6 +49,7 @@ import hrds.commons.entity.Table_clean;
 import hrds.commons.entity.Table_column;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Table_storage_info;
+import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.entity.Type_contrast_sum;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
@@ -1919,4 +1920,30 @@ public class AgentListAction extends BaseAction {
 			etl_date, "false", sqlParam);
 	}
 
+	@Method(desc = "检查当前任务的发送是立即启动还是仅发送任务", logicStep = ""
+		+ "1: 检查当前任务是否存在"
+		+ "2: 查询任务的采集情况,是立即执行还是仅发送任务信息到Agent下"
+		+ "3: 返回标识")
+	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+	@Return(desc = "返回 true/false", range = "true -> 表示立即启动,反之表示仅发送任务信息到Agent下")
+	public boolean startJobType(long colSetId) {
+		//1: 检查当前任务是否存在
+		long countNum = Dbo.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
+			.orElseThrow(() -> new BusinessException("SQL查询错误"));
+		if (countNum == 0) {
+			CheckParam.throwErrorMsg("当前任务ID(%s)不存在", colSetId);
+		}
+		//2: 查询任务的采集情况,是立即执行还是仅发送任务信息到Agent下
+		countNum = Dbo
+			.queryNumber("SELECT COUNT(1) FROM " + Take_relation_etl.TableName + " WHERE database_id = ?", colSetId)
+			.orElseThrow(() -> new BusinessException("SQL查询错误"));
+		//返回标识
+		if (countNum == 0) {
+			//表示立即启动
+			return true;
+		} else {
+			//表示仅发送任务信息到Agent下
+			return false;
+		}
+	}
 }
