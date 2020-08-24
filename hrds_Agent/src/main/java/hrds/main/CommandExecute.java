@@ -74,12 +74,12 @@ public class CommandExecute {
 			collectTableBean.setSqlParam(sqlParam.toString());
 			//判断采集类型，根据采集类型调用对应的方法
 			if (AgentType.ShuJuKu.getCode().equals(collectType)) {
-				//根据作业调度指定的文件格式，本次作业只跑指定卸数的文件格式
-				collectTableBean.setSelectFileFormat(args[4]);
 				if (CollectType.ShuJuKuCaiJi.getCode().equals(sourceDataConfBean.getCollect_type())) {
 					//数据库直连采集
 					startJdbcToDatabase(sourceDataConfBean, collectTableBean);
 				} else if (CollectType.ShuJuKuChouShu.getCode().equals(sourceDataConfBean.getCollect_type())) {
+					//根据作业调度指定的文件格式，本次作业只跑指定卸数的文件格式
+					collectTableBean.setSelectFileFormat(args[4]);
 					startJdbcToFile(sourceDataConfBean, collectTableBean);
 				} else {
 					throw new AppSystemException("不支持的数据库采集类型");

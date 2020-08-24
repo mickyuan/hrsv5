@@ -5,6 +5,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -28,7 +29,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -41,10 +44,19 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 	//数据采集表对应的存储的所有信息
 	private final CollectTableBean collectTableBean;
 	private final SourceDataConfBean sourceDataConfBean;
+	//操作日期
+	private final String operateDate;
+	//操作时间
+	private final String operateTime;
+	//操作人
+	private final String user_id;
 
 	public JdbcDirectUploadStageImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
+		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
+		this.user_id = String.valueOf(collectTableBean.getUser_id());
 	}
 
 	@Method(desc = "数据库直连采集数据上传阶段处理逻辑，处理完成后，无论成功还是失败，" +
@@ -88,14 +100,14 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 				}
 			}
 			stageParamInfo.setRowCount(rowCount);
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			LOGGER.info("------------------表" + collectTableBean.getTable_name()
+					+ "数据库直连采集上传阶段成功------------------执行时间为："
+					+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		} catch (Exception e) {
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), e.getMessage());
 			LOGGER.error(collectTableBean.getTable_name() + "数据库直连采集上传阶段失败：", e);
 		}
-		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-		LOGGER.info("------------------表" + collectTableBean.getTable_name()
-				+ "数据库直连采集上传阶段成功------------------执行时间为："
-				+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, collectTableBean
 				, AgentType.ShuJuKu.getCode());
@@ -108,8 +120,9 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		//判断是否是同一jdbc连接
 		boolean flag = isSameJdbc(sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getDatabase_type(),
-				data_store_connect_attr.get(StorageTypeKey.jdbc_url),
-				data_store_connect_attr.get(StorageTypeKey.database_type));
+				sourceDataConfBean.getDatabase_name(), data_store_connect_attr.get(StorageTypeKey.jdbc_url),
+				data_store_connect_attr.get(StorageTypeKey.database_type),
+				data_store_connect_attr.get(StorageTypeKey.database_name));
 		String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
 		DatabaseWrapper db = null;
 		try {
@@ -124,7 +137,10 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 				String insert_join = StringUtils.join(StringUtil.split(tableBean.getColumnMetaInfo(),
 						Constant.METAINFOSPLIT), ",");
 				String select_join = StringUtils.join(StringUtil.split(tableBean.getAllColumns(),
-						Constant.METAINFOSPLIT), ",");
+						Constant.METAINFOSPLIT), ",") + "," + collectTableBean.getEtlDate();
+				if (JobConstant.ISADDOPERATEINFO) {
+					select_join = select_join + ",'" + operateDate + "','" + operateTime + "'," + user_id;
+				}
 				//执行复制表
 				if (tableBean.getCollectSQL().contains(Constant.SQLDELIMITER) ||
 						IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
@@ -132,30 +148,10 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 					//1、读取并行抽取sql数
 					List<String> parallelSqlList = StringUtil.split(tableBean.getCollectSQL(), Constant.SQLDELIMITER);
 					for (String sql : parallelSqlList) {
-						List<String> tableNames = DruidParseQuerySql.parseSqlTableToList(sql);
-						for (String table : tableNames) {
-							if (!table.contains(".")) {
-								sql = StringUtil.replace(sql, " " + table,
-										sourceDataConfBean.getDatabase_name() + "." + table);
-							}
-						}
-						db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
-								" ( SELECT " + select_join + "," + collectTableBean.getEtlDate() +
-								" FROM ( " + sql + ") AS hyren_dcl_temp )");
+						executeSameSql(db, sql, todayTableName, insert_join, select_join);
 					}
 				} else {
-					String sql = tableBean.getCollectSQL();
-					//执行一次insert into select
-					List<String> tableNames = DruidParseQuerySql.parseSqlTableToList(sql);
-					for (String table : tableNames) {
-						if (!table.contains(".")) {
-							sql = StringUtil.replace(sql, " " + table,
-									sourceDataConfBean.getDatabase_name() + "." + table);
-						}
-					}
-					db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
-							" ( SELECT " + select_join + "," + collectTableBean.getEtlDate() +
-							" FROM ( " + sql + ") AS hyren_dcl_temp )");
+					executeSameSql(db, tableBean.getCollectSQL(), todayTableName, insert_join, select_join);
 				}
 			} else {
 				List<Future<Long>> futures;
@@ -196,8 +192,28 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private boolean isSameJdbc(String source_jdbc_url, String source_database_type, String target_jdbc_url,
-							   String target_database_type) {
+	private void executeSameSql(DatabaseWrapper db, String sql, String todayTableName, String insert_join,
+								String select_join) {
+		if (db.getDbtype() != Dbtype.POSTGRESQL) {
+			List<String> tableNames = DruidParseQuerySql.parseSqlTableToList(sql);
+			for (String table : tableNames) {
+				if (!table.contains(".")) {
+					sql = StringUtil.replace(sql, " " + table,
+							" " + sourceDataConfBean.getDatabase_name() + "." + table);
+				}
+			}
+		}
+//		if (Dbtype.DB2V1 == db.getDbtype() || Dbtype.DB2V2 == db.getDbtype()) {
+		db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
+				" ( SELECT " + select_join + " FROM ( " + sql + ") AS hyren_dcl_temp )");
+//		} else {
+//			db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
+//					" SELECT " + select_join + " FROM ( " + sql + ") AS hyren_dcl_temp ");
+//		}
+	}
+
+	private boolean isSameJdbc(String source_jdbc_url, String source_database_type, String source_database_name,
+							   String target_jdbc_url, String target_database_type, String target_database_name) {
 		Map<String, String> sourceJdbcUrlInfo = ConnUtil.getJDBCUrlInfo(source_jdbc_url, source_database_type);
 		Map<String, String> targetJdbcUrlInfo = ConnUtil.getJDBCUrlInfo(target_jdbc_url, target_database_type);
 		if (!source_database_type.equals(target_database_type)) {
@@ -208,6 +224,16 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 					return false;
 				} else {
 					return sourceJdbcUrlInfo.get("ip").equals(targetJdbcUrlInfo.get("ip"));
+				}
+			} else if (DatabaseType.Postgresql.getCode().equals(source_database_type)) {
+				if (sourceJdbcUrlInfo.get("ip") == null || sourceJdbcUrlInfo.get("port") == null
+						|| targetJdbcUrlInfo.get("ip") == null || targetJdbcUrlInfo.get("port") == null
+						|| source_database_name == null || target_database_name == null) {
+					return false;
+				} else {
+					return sourceJdbcUrlInfo.get("ip").equals(targetJdbcUrlInfo.get("ip")) &&
+							sourceJdbcUrlInfo.get("port").equals(targetJdbcUrlInfo.get("port")) &&
+							source_database_name.equals(target_database_name);
 				}
 			} else {
 				if (sourceJdbcUrlInfo.get("ip") == null || sourceJdbcUrlInfo.get("port") == null
