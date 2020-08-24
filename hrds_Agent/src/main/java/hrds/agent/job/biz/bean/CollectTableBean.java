@@ -227,60 +227,6 @@ public class CollectTableBean implements Serializable {
 		return data_extraction_def_list;
 	}
 
-	public List<Data_extraction_def> getTransSeparatorExtractionList() {
-		List<Data_extraction_def> data_extraction_defs = new ArrayList<>();
-		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-			//复制data_extraction_def的值
-			Data_extraction_def def = JSONObject.parseObject(
-					JSONObject.toJSONString(data_extraction_def), Data_extraction_def.class);
-			if (!StringUtil.isEmpty(data_extraction_def.getRow_separator())) {
-				String row_sp = StringUtil.unicode2String(data_extraction_def.getRow_separator());
-				//对于转义的换行符做处理
-				switch (row_sp) {
-					case "\\r\\n":
-						def.setRow_separator("\r\n");
-						break;
-					case "\\r":
-						def.setRow_separator("\r");
-						break;
-					case "\\n":
-						def.setRow_separator("\n");
-						break;
-				}
-			}
-			if (!StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
-				def.setDatabase_separatorr(StringUtil.
-						unicode2String(data_extraction_def.getDatabase_separatorr()));
-			}
-			data_extraction_defs.add(def);
-		}
-		return data_extraction_defs;
-	}
-
-	public Data_extraction_def getSourceData_extraction_def() {
-		List<Data_extraction_def> data_extraction_def_list = getTransSeparatorExtractionList();
-		//遍历，获取需要读取的db文件的文件格式
-		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-			if (DataExtractType.YuanShuJuGeShi.getCode().equals(data_extraction_def.getData_extract_type())) {
-				//此对象需要读取的db文件的文件格式
-				return data_extraction_def;
-			}
-		}
-		return null;
-	}
-
-	public Data_extraction_def getTargetData_extraction_def() {
-		List<Data_extraction_def> data_extraction_def_list = getTransSeparatorExtractionList();
-		//遍历，获取转存文件格式
-		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-			if (DataExtractType.ShuJuJiaZaiGeShi.getCode().equals(data_extraction_def.getData_extract_type())) {
-				//此对象为转存之后的文件格式对象。
-				return data_extraction_def;
-			}
-		}
-		return null;
-	}
-
 	public void setData_extraction_def_list(List<Data_extraction_def> data_extraction_def_list) {
 		this.data_extraction_def_list = data_extraction_def_list;
 	}

@@ -167,11 +167,11 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 				}
 				//5、获得本次采集总数据量
 				for (Future<Long> future : futures) {
+					if (future.get() < 0) {
+						throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
+					}
 					rowCount += future.get();
 				}
-			}
-			if (rowCount < 0) {
-				throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
 			}
 			//根据表存储期限备份每张表存储期限内进数的数据
 			backupPastTable(collectTableBean, db);

@@ -84,14 +84,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 	@Override
 	public Long call() {
 		long count;
-		DatabaseWrapper db = null;
-		try {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			//1.获取数据库的连接
-			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
-			//2.开启事务
-			db.beginTrans();
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
-			//取值的应该根据原来的类型来
+			//2.取值的应该根据原来的类型来
 			List<String> sourceTypeList = StringUtil.split(tableBean.getColTypeMetaInfo(), Constant.METAINFOSPLIT);
 			//转换之后的类型用于建表语句
 //			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
@@ -131,16 +127,9 @@ public class ReadFileToDataBase implements Callable<Long> {
 			} else {
 				throw new AppSystemException("不支持的卸数文件格式");
 			}
-			//5.提交事务
-			db.commit();
 		} catch (Exception e) {
 			count = -1L;
-			if (db != null)
-				db.rollback();
 			LOGGER.error("数据库采集读文件上传到数据库异常", e);
-		} finally {
-			if (db != null)
-				db.close();
 		}
 		//6.返回batch插入数据库的数据量
 		return count;

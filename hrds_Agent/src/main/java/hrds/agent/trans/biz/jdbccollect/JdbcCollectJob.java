@@ -12,6 +12,7 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
+import hrds.agent.job.biz.utils.CollectTableBeanUtil;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -153,8 +154,9 @@ public class JdbcCollectJob extends AgentBaseAction {
 			//6.将数据字典信息解析，并返回
 			dd_data = DataExtractUtil.parseJsonDictionary(dd_data, collectTableBean.getTable_name(),
 					tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
-					collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
-					tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
+					CollectTableBeanUtil.getTransSeparatorExtractionList(collectTableBean.getData_extraction_def_list())
+					, collectTableBean.getUnload_type(), tableBean.getPrimaryKeyInfo(),
+					tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
 					, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name());
 		}
 		return dd_data;

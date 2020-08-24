@@ -10,6 +10,7 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
+import hrds.agent.job.biz.utils.CollectTableBeanUtil;
 import hrds.agent.job.biz.utils.TypeTransLength;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StorageType;
@@ -36,7 +37,8 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 	                                   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		//获取页面选择的需要采集的文件格式
-		Data_extraction_def sourceData_extraction_def = collectTableBean.getSourceData_extraction_def();
+		Data_extraction_def sourceData_extraction_def = CollectTableBeanUtil.getSourceData_extraction_def(
+				collectTableBean.getData_extraction_def_list());
 		tableBean.setFile_format(sourceData_extraction_def.getDbfile_format());
 		tableBean.setIs_header(sourceData_extraction_def.getIs_header());
 		tableBean.setRow_separator(sourceData_extraction_def.getRow_separator());

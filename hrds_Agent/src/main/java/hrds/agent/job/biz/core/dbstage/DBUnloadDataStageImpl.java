@@ -17,6 +17,7 @@ import hrds.agent.job.biz.core.dbstage.service.CollectPage;
 import hrds.agent.job.biz.core.dbstage.service.ResultSetParser;
 import hrds.agent.job.biz.core.metaparse.AbstractCollectTableHandle;
 import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
+import hrds.agent.job.biz.utils.CollectTableBeanUtil;
 import hrds.agent.job.biz.utils.DataExtractUtil;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -99,7 +100,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 				//写数据字典
 				DataExtractUtil.writeDataDictionary(dictionaryPath, collectTableBean.getTable_name(),
 						tableBean.getColumnMetaInfo(), tableBean.getColTypeMetaInfo(),
-						collectTableBean.getTransSeparatorExtractionList(), collectTableBean.getUnload_type(),
+						CollectTableBeanUtil.getTransSeparatorExtractionList(
+								collectTableBean.getData_extraction_def_list()), collectTableBean.getUnload_type(),
 						tableBean.getPrimaryKeyInfo(), tableBean.getInsertColumnInfo(), tableBean.getUpdateColumnInfo()
 						, tableBean.getDeleteColumnInfo(), collectTableBean.getHbase_name(),
 						sourceDataConfBean.getTask_name());
@@ -134,7 +136,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * @param collectTableBean 采集抽取表的基本信息
 	 */
 	private void createOKFile(CollectTableBean collectTableBean) {
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
+		List<Data_extraction_def> data_extraction_def_list = CollectTableBeanUtil.getTransSeparatorExtractionList(
+				collectTableBean.getData_extraction_def_list());
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -154,7 +157,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * @param collectTableBean 表存储信息
 	 */
 	private void restoreRenameDir(CollectTableBean collectTableBean) throws Exception {
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
+		List<Data_extraction_def> data_extraction_def_list = CollectTableBeanUtil.getTransSeparatorExtractionList(
+				collectTableBean.getData_extraction_def_list());
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -184,7 +188,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * @param collectTableBean 表存储信息
 	 */
 	private void deleteRenameDir(CollectTableBean collectTableBean) throws Exception {
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
+		List<Data_extraction_def> data_extraction_def_list = CollectTableBeanUtil.getTransSeparatorExtractionList(
+				collectTableBean.getData_extraction_def_list());
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -209,7 +214,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		//防止上一次异常退出导致bak文件存在，先删除bak文件
 		deleteRenameDir(collectTableBean);
 		//TODO 这边为啥不是直接在日期这一层重命名 抽数根据文件格式分为多个作业，所以到文件格式这一层
-		List<Data_extraction_def> data_extraction_def_list = collectTableBean.getTransSeparatorExtractionList();
+		List<Data_extraction_def> data_extraction_def_list = CollectTableBeanUtil.getTransSeparatorExtractionList(
+				collectTableBean.getData_extraction_def_list());
 		for (Data_extraction_def extraction_def : data_extraction_def_list) {
 			//只操作作业调度指定的文件格式
 			if (!collectTableBean.getSelectFileFormat().equals(extraction_def.getDbfile_format())) {
@@ -269,7 +275,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					ResultSetParser parser = new ResultSetParser();
 					//文件路径
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, 0,
-							tableBean, collectTableBean.getTransSeparatorExtractionList().get(0), writeHeaderFlag);
+							tableBean, CollectTableBeanUtil.getTransSeparatorExtractionList(
+									collectTableBean.getData_extraction_def_list()).get(0), writeHeaderFlag);
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
 						//返回值为卸数文件全路径拼接卸数文件的条数
 						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);

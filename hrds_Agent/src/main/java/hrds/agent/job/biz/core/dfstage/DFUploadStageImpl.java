@@ -463,10 +463,10 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				list.add(submit);
 			}
 			for (Future<Long> future : list) {
+				if (future.get() < 0) {
+					throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
+				}
 				count += future.get();
-			}
-			if (count < 0) {
-				throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
 			}
 			//根据表存储期限备份每张表存储期限内进数的数据
 			backupPastTable(collectTableBean, db);
