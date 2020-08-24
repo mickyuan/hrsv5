@@ -8,9 +8,11 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
+import hrds.agent.job.biz.core.JdbcDirectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.CollectType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
@@ -74,7 +76,14 @@ public class CommandExecute {
 			if (AgentType.ShuJuKu.getCode().equals(collectType)) {
 				//根据作业调度指定的文件格式，本次作业只跑指定卸数的文件格式
 				collectTableBean.setSelectFileFormat(args[4]);
-				startJdbcToFile(sourceDataConfBean, collectTableBean);
+				if (CollectType.ShuJuKuCaiJi.getCode().equals(sourceDataConfBean.getCollect_type())) {
+					//数据库直连采集
+					startJdbcToDatabase(sourceDataConfBean, collectTableBean);
+				} else if (CollectType.ShuJuKuChouShu.getCode().equals(sourceDataConfBean.getCollect_type())) {
+					startJdbcToFile(sourceDataConfBean, collectTableBean);
+				} else {
+					throw new AppSystemException("不支持的数据库采集类型");
+				}
 			} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
 				//TODO 根据作业指定存储目的地名称，本次作业只进数指定存储目的地
 				startDbFileCollect(sourceDataConfBean, collectTableBean);
@@ -84,6 +93,25 @@ public class CommandExecute {
 		} catch (Exception e) {
 			log.error("执行采集失败!", e);
 			System.exit(-1);
+		}
+	}
+
+	private static void startJdbcToDatabase(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+		ExecutorService executor = null;
+		try {
+			executor = Executors.newFixedThreadPool(1);
+			List<Future<JobStatusInfo>> list = new ArrayList<>();
+			//2.校验对象的值是否正确，调用数据库直连采集的主程序
+			JdbcDirectJobImpl jdbcDirectJob = new JdbcDirectJobImpl(sourceDataConfBean, collectTableBean);
+			Future<JobStatusInfo> submit = executor.submit(jdbcDirectJob);
+			list.add(submit);
+			//3.打印每个线程执行情况
+			JobStatusInfoUtil.printJobStatusInfo(list);
+		} catch (Exception e) {
+			throw new AppSystemException("数据库直连采集" + collectTableBean.getTable_name() + "失败", e);
+		} finally {
+			if (executor != null)
+				executor.shutdown();
 		}
 	}
 
