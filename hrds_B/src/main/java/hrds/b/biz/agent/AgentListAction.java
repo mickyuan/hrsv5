@@ -1928,7 +1928,8 @@ public class AgentListAction extends BaseAction {
 	@Return(desc = "返回 true/false", range = "true -> 表示立即启动,反之表示仅发送任务信息到Agent下")
 	public boolean startJobType(long colSetId) {
 		//1: 检查当前任务是否存在
-		long countNum = Dbo.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
+		long countNum = Dbo
+			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
 			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if (countNum == 0) {
 			CheckParam.throwErrorMsg("当前任务ID(%s)不存在", colSetId);
@@ -1938,12 +1939,6 @@ public class AgentListAction extends BaseAction {
 			.queryNumber("SELECT COUNT(1) FROM " + Take_relation_etl.TableName + " WHERE database_id = ?", colSetId)
 			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//返回标识
-		if (countNum == 0) {
-			//表示立即启动
-			return true;
-		} else {
-			//表示仅发送任务信息到Agent下
-			return false;
-		}
+		return countNum == 0;
 	}
 }
