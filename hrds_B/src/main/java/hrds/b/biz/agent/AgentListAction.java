@@ -1674,7 +1674,7 @@ public class AgentListAction extends BaseAction {
 		+ "3、调用工具类，发送信息，接收agent端响应状态码，如果发送失败，则抛出异常给前端")
 	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
 	@Param(name = "etl_date", desc = "跑批日期", range = "如果是立即启动则需要此参数,生成作业不需要此参数", nullable = true, valueIfNull = "")
-	@Param(name = "params", desc = "采集作业中的SQL参数占位符.多个参数请使用" + Constant.SQLDELIMITER
+	@Param(name = "sqlParam", desc = "采集作业中的SQL参数占位符.多个参数请使用" + Constant.SQLDELIMITER
 		+ "分割", range = "可以为空", nullable = true, valueIfNull = "")
 	public void sendCollectDatabase(long colSetId, String etl_date, String sqlParam) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
