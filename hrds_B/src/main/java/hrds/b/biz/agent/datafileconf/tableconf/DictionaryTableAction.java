@@ -31,11 +31,13 @@ import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -63,7 +65,10 @@ public class DictionaryTableAction extends BaseAction {
 				+ "8: 返回表的信息")
 	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
 	@Return(desc = "返回数据字典和数据库的表信息", range = "可以为空,为空表示数据字典及数据库无表记录信息")
-	public List<Table_info> getTableData(long colSetId) {
+	public Map<String, Object> getTableData(long colSetId) {
+
+		//定义返回的数据集合
+		Map<String, Object> resultMap = new HashMap<>();
 
 		//    1: 检查任务信息是否存在
 		long countNum =
@@ -93,6 +98,23 @@ public class DictionaryTableAction extends BaseAction {
 			//      6-1: 在数据库表的集合中剔除被删除的表
 			if (!differenceInfo.get("delete").isEmpty()) {
 				removeTableBean(differenceInfo.get("delete"), databaseTableList, true);
+				//被删除的表集合
+				List<String> deleteTableList = new ArrayList<>();
+				//检查删除的表在上次任务中是否采集完成(如果删除的表在上次采集任务中采集完成过,则不能删除)
+				differenceInfo.get("delete").forEach(tableName -> {
+					long tableCountNum = Dbo.queryNumber("SELECT count(1) FROM  " + Data_store_reg.TableName
+						+ "  WHERE database_id = ? AND table_name  = ?", colSetId, tableName)
+						.orElseThrow(() -> new BusinessException("SQL填写错误"));
+					if (tableCountNum != 0) {
+						deleteTableList.add(tableName);
+					}
+
+					if (deleteTableList.size() != 0) {
+						resultMap.put("existsTable", String.format("删除的表(%s)在上次任务采集中已经完成,此次配置却被删除了...请检查数据字典在进行操作",
+							StringUtils.join(deleteTableList, ',')));
+					}
+				});
+
 			}
 
 			//      6-2: 在数据字典中找到还存的表,然后删除掉...因为数据库中有此表信息
@@ -132,7 +154,8 @@ public class DictionaryTableAction extends BaseAction {
 		//        });
 
 		// 8: 返回表的信息
-		return dirTableList;
+		resultMap.put("dirTableList", dirTableList);
+		return resultMap;
 	}
 
 	@Method(desc = "根据表ID获取列信息", logicStep = "获取列信息")
@@ -584,7 +607,7 @@ public class DictionaryTableAction extends BaseAction {
 						+ "not EXISTS (SELECT * FROM  " + Data_store_reg.TableName
 						+ " t2  WHERE t1.table_name = t2.table_name) AND t1.database_id = ? ")
 				.addParam(colSetId)
-				.addORParam("table_name", deleteTableName.toArray(new String[deleteTableName.size()]),"AND");
+				.addORParam("table_name", deleteTableName.toArray(new String[deleteTableName.size()]), "AND");
 
 		Object[] deleteTableId = Dbo.queryOneColumnList(assembler.sql(), assembler.params()).toArray(new Object[0]);
 
