@@ -17,6 +17,7 @@ import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.PackUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -95,10 +96,11 @@ public class JdbcCollectJob extends AgentBaseAction {
 					}
 					collectTableBean.setSelectFileFormat(data_extraction_def.getDbfile_format());
 					//为了确保多个线程之间的值不互相干涉，复制对象的值。
-					SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
-							JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
-					CollectTableBean collectTableBean1 = JSONObject.parseObject(
-							JSONObject.toJSONString(collectTableBean), CollectTableBean.class);
+					SourceDataConfBean sourceDataConfBean1 = new SourceDataConfBean();
+					BeanUtils.copyProperties(sourceDataConfBean, sourceDataConfBean1);
+					//为了确保多个线程之间的值不互相干涉，复制对象的值。
+					CollectTableBean collectTableBean1 = new CollectTableBean();
+					BeanUtils.copyProperties(collectTableBean, collectTableBean1);
 					//多线程执行
 					DataBaseJobImpl fileCollectJob = new DataBaseJobImpl(sourceDataConfBean1, collectTableBean1);
 					Future<JobStatusInfo> submit = executor.submit(fileCollectJob);

@@ -14,6 +14,7 @@ import hrds.agent.job.biz.core.JdbcDirectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
+import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.PackUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -87,8 +88,8 @@ public class JdbcDirectCollectJob extends AgentBaseAction {
 					collectTableBean.setSqlParam(sqlParam);
 				}
 				//为了确保多个线程之间的值不互相干涉，复制对象的值。
-				SourceDataConfBean sourceDataConfBean1 = JSONObject.parseObject(
-						JSONObject.toJSONString(sourceDataConfBean), SourceDataConfBean.class);
+				SourceDataConfBean sourceDataConfBean1 = new SourceDataConfBean();
+				BeanUtils.copyProperties(sourceDataConfBean, sourceDataConfBean1);
 				JdbcDirectJobImpl fileCollectJob = new JdbcDirectJobImpl(sourceDataConfBean1, collectTableBean);
 				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
 				list.add(submit);

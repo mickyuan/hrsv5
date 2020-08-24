@@ -66,7 +66,8 @@ public class ParseResultSetToDataBase {
 		//获取所有字段的名称，包括列分割和列合并出来的字段名称
 		List<String> columnMetaInfoList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		String etlDate = collectTableBean.getEtlDate();
-		String batchSql = ReadFileToDataBase.getBatchSql(columnMetaInfoList, collectTableBean.getHbase_name());
+		String batchSql = ReadFileToDataBase.getBatchSql(columnMetaInfoList,
+				collectTableBean.getHbase_name() + "_" + 1);
 		long counter = 0;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
