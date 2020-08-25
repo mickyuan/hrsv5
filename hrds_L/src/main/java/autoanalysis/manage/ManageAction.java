@@ -1,4 +1,4 @@
-package autoanalysismanage;
+package autoanalysis.manage;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "自主分析管理类", author = "dhw", createdate = "2020/8/21 14:17")
-public class AutoAnalysisManageAction extends BaseAction {
+public class ManageAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 

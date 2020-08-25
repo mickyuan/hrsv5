@@ -1,4 +1,4 @@
-package autoanalysisoperate;
+package autoanalysis.operate;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "自主分析操作类", author = "dhw", createdate = "2020/8/24 11:29")
-public class AutoAnalysisOperateAction extends BaseAction {
+public class OperateAction extends BaseAction {
 
 	@Method(desc = "查询自主取数模板信息", logicStep = "1.查询并返回自主取数模板信息")
 	@Return(desc = "返回自主取数模板信息", range = "无限制")
