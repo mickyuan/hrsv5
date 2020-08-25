@@ -13,6 +13,7 @@ import hrds.commons.cache.CacheConfBean;
 import hrds.commons.cache.CacheObj;
 import hrds.commons.cache.ConcurrentHashMapCacheUtil;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.entity.*;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
@@ -51,24 +52,71 @@ public class WebSqlQueryAction extends BaseAction {
 		cacheConfBean.setCache_max_number(10000);
 		ConcurrentHashMapCacheUtil platformAllTableInfoCache = new ConcurrentHashMapCacheUtil(cacheConfBean);
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			//获取平台登记的所有表的表名
-			List<String> allTableNameByPlatform = DataTableUtil.getAllTableNameByPlatform(db);
-			if (allTableNameByPlatform.isEmpty()) {
-				logger.info("平台登记的表信息为空!");
-			} else {
-				//根据表名获取表字段信息
-				for (String table_name : allTableNameByPlatform) {
-					List<Map<String, Object>> columnByTableName;
-					try {
-						columnByTableName = DataTableUtil.getColumnByTableName(db, table_name);
-						if (!columnByTableName.isEmpty()) {
-							platformAllTableInfoCache.setCache(table_name, columnByTableName);
-						}
-					} catch (Exception e) {
-						logger.warn("初始化sql补全的缓存数据时,登记表: " + table_name + " 的对应字段信息已经不存在!");
-					}
+			//获取平台登记的表信息(不获取DQC层的表信息)
+			//初始化查询Sql
+			SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+			asmSql.clean();
+			asmSql.addSql("SELECT * FROM (");
+			//DCL DB文件采集
+			asmSql.addSql("SELECT ti.table_id AS table_id,dsr.hyren_name AS table_name,tc.column_name AS column_name," +
+					" tc.column_ch_name AS column_ch_name, tc.column_type AS column_type FROM " + Data_store_reg.TableName +
+					" dsr JOIN " + Table_info.TableName + " ti ON dsr.database_id = ti.database_id" +
+					" AND dsr.table_name = ti.table_name JOIN " + Table_column.TableName + " tc" +
+					" ON ti.table_id = tc.table_id ");
+			//DCL OBJ文件采集
+			asmSql.addSql("UNION");
+			asmSql.addSql(" SELECT oct.ocs_id AS table_id,oct.en_name AS table_name,ocs.column_name AS column_name," +
+					" ocs.data_desc AS column_ch_name,ocs.column_type AS column_type FROM " + Object_collect_task.TableName + " oct" +
+					" JOIN " + Object_collect_struct.TableName + " ocs ON oct.ocs_id=ocs.ocs_id" +
+					" JOIN " + Dtab_relation_store.TableName + " dtab_rs ON dtab_rs.tab_id=oct.ocs_id");
+			//DML
+			asmSql.addSql("UNION");
+			asmSql.addSql("SELECT dd.datatable_id AS table_id, dd.datatable_en_name AS table_name, dfi.field_en_name AS" +
+					" column_name,dfi.field_cn_name AS column_ch_name,concat(field_type,'(',field_length,')') AS" +
+					" column_type FROM " + Datatable_field_info.TableName + " dfi JOIN " + Dm_datatable.TableName + " dd ON" +
+					" dd.datatable_id = dfi.datatable_id");
+			//UDL
+			asmSql.addSql("UNION");
+			asmSql.addSql("SELECT dti.table_id AS table_id, dti.table_name AS table_name, dtc.column_name AS column_name," +
+					" dtc.field_ch_name AS column_ch_name, dtc.column_type AS column_type FROM " + Dq_table_info.TableName + " dti" +
+					" JOIN " + Dq_table_column.TableName + " dtc ON dti.table_id=dtc.table_id");
+			asmSql.addSql(") tmp group by table_id,table_name,column_name,column_ch_name,column_type order by table_name");
+			List<Map<String, Object>> tableInfoByPlatform = SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
+			//获取DQC层获取到表信息
+			List<Dq_index3record> di_3_s = SqlOperator.queryList(db, Dq_index3record.class, "SELECT * FROM " + Dq_index3record.TableName);
+			di_3_s.forEach(di_3 -> {
+				String table_col_s = di_3.getTable_col();
+				String[] column_s = table_col_s.split(",");
+				for (String column : column_s) {
+					Map<String, Object> map = new HashMap<>();
+					map.put("table_id", di_3.getRecord_id());
+					map.put("table_name", di_3.getTable_name());
+					map.put("column_name", column);
+					map.put("column_ch_name", column);
+					map.put("column_type", "VARCHAR(--)");
+					tableInfoByPlatform.add(map);
 				}
+			});
+			//未查到任何成功登记的表信息
+			if (tableInfoByPlatform.isEmpty()) {
+				logger.warn("初始化sql补全的缓存数据时,平台没有成功登记的表!");
 			}
+			//处理查询的结果集
+			Map<String, List<Object>> cache_map = new HashMap<>();
+			tableInfoByPlatform.forEach(table_info -> {
+				String table_name = table_info.get("table_name").toString();
+				List<Object> column_s;
+				if (cache_map.containsKey(table_name)) {
+					column_s = cache_map.get(table_name);
+					column_s.add(table_info.get("column_name"));
+				} else {
+					column_s = new ArrayList<>();
+					column_s.add(table_info.get("column_name"));
+					cache_map.put(table_name, column_s);
+				}
+			});
+			//设置缓存信息
+			cache_map.forEach(platformAllTableInfoCache::setCache);
 		}
 		logger.info("Successfully initialized all table information of the platform");
 		return platformAllTableInfoCache;
