@@ -27,16 +27,12 @@ public class Etl_dependency extends ProjectTableEntity
 	/** 作业依赖关系表 */
 	static {
 		Set<String> __tmpPKS = new HashSet<>();
-		__tmpPKS.add("pre_etl_sys_cd");
-		__tmpPKS.add("etl_sys_cd");
 		__tmpPKS.add("pre_etl_job");
 		__tmpPKS.add("etl_job");
+		__tmpPKS.add("pre_etl_sys_cd");
+		__tmpPKS.add("etl_sys_cd");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="pre_etl_sys_cd",value="上游系统代码:",dataType = String.class,required = true)
-	private String pre_etl_sys_cd;
-	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
-	private String etl_sys_cd;
 	@DocBean(name ="pre_etl_job",value="上游作业名:",dataType = String.class,required = true)
 	private String pre_etl_job;
 	@DocBean(name ="status",value="状态(Status):T-有效(T)<TRUE> F-失效(F)<FALSE> ",dataType = String.class,required = false)
@@ -45,23 +41,11 @@ public class Etl_dependency extends ProjectTableEntity
 	private String main_serv_sync;
 	@DocBean(name ="etl_job",value="作业名:",dataType = String.class,required = true)
 	private String etl_job;
+	@DocBean(name ="pre_etl_sys_cd",value="上游系统代码:",dataType = String.class,required = true)
+	private String pre_etl_sys_cd;
+	@DocBean(name ="etl_sys_cd",value="工程代码:",dataType = String.class,required = true)
+	private String etl_sys_cd;
 
-	/** 取得：上游系统代码 */
-	public String getPre_etl_sys_cd(){
-		return pre_etl_sys_cd;
-	}
-	/** 设置：上游系统代码 */
-	public void setPre_etl_sys_cd(String pre_etl_sys_cd){
-		this.pre_etl_sys_cd=pre_etl_sys_cd;
-	}
-	/** 取得：工程代码 */
-	public String getEtl_sys_cd(){
-		return etl_sys_cd;
-	}
-	/** 设置：工程代码 */
-	public void setEtl_sys_cd(String etl_sys_cd){
-		this.etl_sys_cd=etl_sys_cd;
-	}
 	/** 取得：上游作业名 */
 	public String getPre_etl_job(){
 		return pre_etl_job;
@@ -93,5 +77,21 @@ public class Etl_dependency extends ProjectTableEntity
 	/** 设置：作业名 */
 	public void setEtl_job(String etl_job){
 		this.etl_job=etl_job;
+	}
+	/** 取得：上游系统代码 */
+	public String getPre_etl_sys_cd(){
+		return pre_etl_sys_cd;
+	}
+	/** 设置：上游系统代码 */
+	public void setPre_etl_sys_cd(String pre_etl_sys_cd){
+		this.pre_etl_sys_cd=pre_etl_sys_cd;
+	}
+	/** 取得：工程代码 */
+	public String getEtl_sys_cd(){
+		return etl_sys_cd;
+	}
+	/** 设置：工程代码 */
+	public void setEtl_sys_cd(String etl_sys_cd){
+		this.etl_sys_cd=etl_sys_cd;
 	}
 }

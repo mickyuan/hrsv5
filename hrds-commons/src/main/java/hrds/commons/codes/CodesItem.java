@@ -7,20 +7,6 @@ import java.util.*;
                                                                                        
 public class CodesItem{                        
 	private static final Log logger = LogFactory.getLog(CodesItem.class);                                                      
-	/**数据质量校验结果   */
-	protected static final String dqcVerifyResult=new String("DqcVerifyResult");
-	/**数据质量处理状态   */
-	protected static final String dqcDlStat=new String("DqcDlStat");
-	/**数据质量执行方式   */
-	protected static final String dqcExecMode=new String("DqcExecMode");
-	/**hdfs文件类型   */
-	protected static final String hdfsFileType=new String("HdfsFileType");
-	/**数据表生命周期   */
-	protected static final String tableLifeCycle=new String("TableLifeCycle");
-	/**数据表存储方式   */
-	protected static final String tableStorage=new String("TableStorage");
-	/**作业运行状态   */
-	protected static final String jobExecuteState=new String("JobExecuteState");
 	/**sql执行引擎   */
 	protected static final String sqlEngine=new String("SqlEngine");
 	/**落地文件-卸数方式   */
@@ -31,12 +17,20 @@ public class CodesItem{
 	protected static final String storeLayerDataSource=new String("StoreLayerDataSource");
 	/**对标-状态   */
 	protected static final String dbmState=new String("DbmState");
+	/**数据库采集方式   */
+	protected static final String collectType=new String("CollectType");
+	/**自主取数模板状态   */
+	protected static final String autoTemplateStatus=new String("AutoTemplateStatus");
 	/**用户类型   */
 	protected static final String userType=new String("UserType");
+	/**自主取数数据展现形式   */
+	protected static final String autoDataRetrievalForm=new String("AutoDataRetrievalForm");
 	/**是否标识   */
 	protected static final String isFlag=new String("IsFlag");
 	/**用户状态   */
 	protected static final String userState=new String("UserState");
+	/**自主取数取数状态   */
+	protected static final String autoFetchStatus=new String("AutoFetchStatus");
 	/**ETL作业类型   */
 	protected static final String pro_Type=new String("Pro_Type");
 	/**用户优先级   */
@@ -51,12 +45,20 @@ public class CodesItem{
 	protected static final String job_Status=new String("Job_Status");
 	/**ETL当天调度标志   */
 	protected static final String today_Dispatch_Flag=new String("Today_Dispatch_Flag");
+	/**可视化数据操作符   */
+	protected static final String autoDataOperator=new String("AutoDataOperator");
 	/**ETL主服务器同步   */
 	protected static final String main_Server_Sync=new String("Main_Server_Sync");
+	/**可视化数据汇总类型   */
+	protected static final String autoDataSumType=new String("AutoDataSumType");
 	/**ETL状态   */
 	protected static final String status=new String("Status");
+	/**可视化源对象   */
+	protected static final String autoSourceObject=new String("AutoSourceObject");
 	/**ETL干预类型   */
 	protected static final String meddle_type=new String("Meddle_type");
+	/**可视化轴类型   */
+	protected static final String axisType=new String("AxisType");
 	/**ETL干预状态   */
 	protected static final String meddle_status=new String("Meddle_status");
 	/**ETL变类型   */
@@ -131,27 +133,36 @@ public class CodesItem{
 	protected static final String interfaceState=new String("InterfaceState");
 	/**数据质量规则级别   */
 	protected static final String edRuleLevel=new String("EdRuleLevel");
-	/**数据库采集方式   */
-	protected static final String collectType=new String("CollectType");
+	/**数据质量校验结果   */
+	protected static final String dqcVerifyResult=new String("DqcVerifyResult");
+	/**数据质量处理状态   */
+	protected static final String dqcDlStat=new String("DqcDlStat");
+	/**数据质量执行方式   */
+	protected static final String dqcExecMode=new String("DqcExecMode");
+	/**hdfs文件类型   */
+	protected static final String hdfsFileType=new String("HdfsFileType");
+	/**数据表生命周期   */
+	protected static final String tableLifeCycle=new String("TableLifeCycle");
+	/**数据表存储方式   */
+	protected static final String tableStorage=new String("TableStorage");
+	/**作业运行状态   */
+	protected static final String jobExecuteState=new String("JobExecuteState");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
 	static{
-		mapCat.put(dqcVerifyResult,DqcVerifyResult.class);
-		mapCat.put(dqcDlStat,DqcDlStat.class);
-		mapCat.put(dqcExecMode,DqcExecMode.class);
-		mapCat.put(hdfsFileType,HdfsFileType.class);
-		mapCat.put(tableLifeCycle,TableLifeCycle.class);
-		mapCat.put(tableStorage,TableStorage.class);
-		mapCat.put(jobExecuteState,JobExecuteState.class);
 		mapCat.put(sqlEngine,SqlEngine.class);
 		mapCat.put(unloadType,UnloadType.class);
 		mapCat.put(processType,ProcessType.class);
 		mapCat.put(storeLayerDataSource,StoreLayerDataSource.class);
 		mapCat.put(dbmState,DbmState.class);
+		mapCat.put(collectType,CollectType.class);
+		mapCat.put(autoTemplateStatus,AutoTemplateStatus.class);
 		mapCat.put(userType,UserType.class);
+		mapCat.put(autoDataRetrievalForm,AutoDataRetrievalForm.class);
 		mapCat.put(isFlag,IsFlag.class);
 		mapCat.put(userState,UserState.class);
+		mapCat.put(autoFetchStatus,AutoFetchStatus.class);
 		mapCat.put(pro_Type,Pro_Type.class);
 		mapCat.put(userPriority,UserPriority.class);
 		mapCat.put(dispatch_Frequency,Dispatch_Frequency.class);
@@ -159,9 +170,13 @@ public class CodesItem{
 		mapCat.put(job_Effective_Flag,Job_Effective_Flag.class);
 		mapCat.put(job_Status,Job_Status.class);
 		mapCat.put(today_Dispatch_Flag,Today_Dispatch_Flag.class);
+		mapCat.put(autoDataOperator,AutoDataOperator.class);
 		mapCat.put(main_Server_Sync,Main_Server_Sync.class);
+		mapCat.put(autoDataSumType,AutoDataSumType.class);
 		mapCat.put(status,Status.class);
+		mapCat.put(autoSourceObject,AutoSourceObject.class);
 		mapCat.put(meddle_type,Meddle_type.class);
+		mapCat.put(axisType,AxisType.class);
 		mapCat.put(meddle_status,Meddle_status.class);
 		mapCat.put(paramType,ParamType.class);
 		mapCat.put(compState,CompState.class);
@@ -199,7 +214,13 @@ public class CodesItem{
 		mapCat.put(interfaceType,InterfaceType.class);
 		mapCat.put(interfaceState,InterfaceState.class);
 		mapCat.put(edRuleLevel,EdRuleLevel.class);
-		mapCat.put(collectType,CollectType.class);
+		mapCat.put(dqcVerifyResult,DqcVerifyResult.class);
+		mapCat.put(dqcDlStat,DqcDlStat.class);
+		mapCat.put(dqcExecMode,DqcExecMode.class);
+		mapCat.put(hdfsFileType,HdfsFileType.class);
+		mapCat.put(tableLifeCycle,TableLifeCycle.class);
+		mapCat.put(tableStorage,TableStorage.class);
+		mapCat.put(jobExecuteState,JobExecuteState.class);
 	}
 
 
