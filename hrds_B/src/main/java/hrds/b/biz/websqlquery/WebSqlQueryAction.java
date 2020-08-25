@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.cache.CacheConfBean;
@@ -76,7 +77,7 @@ public class WebSqlQueryAction extends BaseAction {
 	@Method(desc = "获取表字段信息列表_缓存", logicStep = "获取表字段信息列表_缓存")
 	@Param(name = "table_name", desc = "表名", range = "String")
 	@Return(desc = "缓存中表及表对应字段的信息", range = "缓存中表及表对应字段的信息")
-	public CacheObj getTableInfoByTableName_cache(String table_name) {
+	public Object getTableInfoByTableName_cache(String table_name) {
 		CacheObj cacheObj;
 		//数据校验
 		Validator.notBlank(table_name, "查询表名不能为空!");
@@ -93,8 +94,7 @@ public class WebSqlQueryAction extends BaseAction {
 				cacheObj = platformAllTableInfoCache.getCache(table_name);
 			}
 		}
-		//如果查询结果为null,则根据表名在配置库中查询
-		return cacheObj;
+		return cacheObj == null ? new Object() : cacheObj.getCacheValue();
 	}
 
 	@Method(desc = "根据表名获取采集数据，默认显示10条",
@@ -157,6 +157,7 @@ public class WebSqlQueryAction extends BaseAction {
 	@Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
 	@Param(name = "table_name", desc = "表名", range = "String")
 	@Return(desc = "字段信息列表", range = "字段信息列表")
+	@Deprecated
 	public List<Map<String, Object>> getColumnsByTableName(String table_name) {
 		//数据层获取不同表结构
 		Validator.notBlank(table_name, "查询表名不能为空!");
