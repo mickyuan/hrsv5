@@ -39,11 +39,12 @@ public class DruidParseQuerySql {
 	public static String sourcecolumn = "sourcecolumn";
 	public static String sourcetable = "sourcetable";
 	public List<SQLSelectItem> selectList = null;
+	public SQLExpr whereInfo = null;
 	private OracleSelectQueryBlock left = null;
-	private List<HashMap<String, Object>> listmap = new ArrayList<HashMap<String, Object>>();
-	private List<HashMap<String, Object>> columnlist = new ArrayList<HashMap<String, Object>>();
-	private HashMap<String, Object> hashmap = new HashMap<String, Object>();
-	private String mainSql = new String();
+	private List<HashMap<String, Object>> listmap = new ArrayList<>();
+	private List<HashMap<String, Object>> columnlist = new ArrayList<>();
+	private HashMap<String, Object> hashmap = new HashMap<>();
+	private String mainSql = "";
 
 	/**
 	 * <p>方法描述: 将传入的SQL使用Oracle的方式进行解析</p>
@@ -63,12 +64,12 @@ public class DruidParseQuerySql {
 		if (query instanceof SQLUnionQuery) {
 			SQLUnionQuery unionQuery = (SQLUnionQuery) query;
 			this.left = (OracleSelectQueryBlock) unionQuery.getLeft();
-			this.selectList = this.left.getSelectList();
 
 		} else {
 			this.left = (OracleSelectQueryBlock) query;
-			this.selectList = this.left.getSelectList();
 		}
+		this.selectList = this.left.getSelectList();
+		this.whereInfo = this.left.getWhere();
 	}
 
 	public DruidParseQuerySql() {
@@ -84,7 +85,7 @@ public class DruidParseQuerySql {
 	 */
 	public List<String> parseSelectOriginalField() {
 
-		List<String> originalColumnSet = new ArrayList<String>();
+		List<String> originalColumnSet = new ArrayList<>();
 		//处理解析后的字段信息
 		selectList.forEach(val -> {
 			SQLExpr expr = val.getExpr();
@@ -110,7 +111,7 @@ public class DruidParseQuerySql {
 	 */
 	public List<String> parseSelectAliasField() {
 
-		List<String> aliasColumnSet = new ArrayList<String>();
+		List<String> aliasColumnSet = new ArrayList<>();
 		//处理解析后的字段信息
 		selectList.forEach(val -> {
 			if (StringUtil.isNotBlank(val.getAlias())) {
@@ -152,22 +153,17 @@ public class DruidParseQuerySql {
 		OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
 		parseStatement.accept(visitor);
 		Map<TableStat.Name, TableStat> tables = visitor.getTables();
-		Set<Name> keySet = tables.keySet();
-		return keySet;
+		return tables.keySet();
 	}
 
 	/**
 	 * 通过查询sql 获取其表明
-	 *
-	 * @param sql
-	 * @return
 	 */
 	public static List<String> parseSqlTableToList(String sql) {
 		List<String> tableList = new ArrayList<>();
 		Set<Name> parseSqlTable = parseSqlTable(sql);
-		Iterator<Name> iterator = parseSqlTable.iterator();
-		while (iterator.hasNext()) {
-			tableList.add(iterator.next().toString());
+		for (Name name : parseSqlTable) {
+			tableList.add(name.toString());
 		}
 		return tableList;
 	}
@@ -248,11 +244,11 @@ public class DruidParseQuerySql {
 			OracleSelectTableReference oracleSelectTableReference = (OracleSelectTableReference) sqlTableSource;
 			SQLObject sqlObject = oracleSelectTableReference.getParent();
 			//寻找当前from部分所在的整个查询
-			while (sqlObject instanceof OracleSelectQueryBlock == false) {
+			while (!(sqlObject instanceof OracleSelectQueryBlock)) {
 				sqlObject = sqlObject.getParent();
 			}
 			listmap.clear();
-			String upperealias = new String();
+			String upperealias = "";
 			//循环直到找到全部的完整sql
 			while (!trim(sqlObject.toString()).equalsIgnoreCase(trim(mainSql))) {
 				OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlObject;
@@ -263,18 +259,18 @@ public class DruidParseQuerySql {
 					OracleSelectSubqueryTableSource oracleSelectSubqueryTableSource = (OracleSelectSubqueryTableSource) sqlObject.getParent();
 					upperealias = oracleSelectSubqueryTableSource.getAlias();
 				}
-				while (sqlObject instanceof OracleSelectQueryBlock == false) {
+				while (!(sqlObject instanceof OracleSelectQueryBlock)) {
 					sqlObject = sqlObject.getParent();
 				}
 			}
 			OracleSelectQueryBlock oracleSelectQueryBlock = (OracleSelectQueryBlock) sqlObject;
-			Boolean isOracleSelectTableReference = oracleSelectQueryBlock.getFrom() instanceof OracleSelectTableReference;
+			boolean isOracleSelectTableReference = oracleSelectQueryBlock.getFrom() instanceof OracleSelectTableReference;
 			handleGetColumn(oracleSelectQueryBlock);
 			//如果listmap为空，说明这个table是最外层的，直接去寻找最外层selectexpr和该表关链的部分
 			if (listmap.isEmpty()) {
-				for (int j = 0; j < columnlist.size(); j++) {
-					SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
-					String alias = columnlist.get(j).get("alias").toString();
+				for (HashMap<String, Object> stringObjectHashMap : columnlist) {
+					SQLExpr sqlexpr = (SQLExpr) stringObjectHashMap.get("column");
+					String alias = stringObjectHashMap.get("alias").toString();
 					ArrayList<HashMap<String, Object>> templist = getTempList(alias);
 					if (sqlexpr instanceof SQLIdentifierExpr) {
 						if (isOracleSelectTableReference) {
@@ -288,13 +284,18 @@ public class DruidParseQuerySql {
 					}
 				}
 			} else {
-				for (int i = 0; i < listmap.size(); i++) {
-					HashMap<String, Object> stringObjectHashMap = listmap.get(i);
-					List<String> uppercolumnlist = (ArrayList<String>) stringObjectHashMap.get("uppercolumn");
+				for (HashMap<String, Object> stringObjectHashMap : listmap) {
+					Object uppercolumnObj = stringObjectHashMap.get("uppercolumn");
+					List<String> uppercolumnlist = new ArrayList<>();
+					if (uppercolumnObj instanceof ArrayList<?>) {
+						for (Object uppercolumn : (List<?>) uppercolumnObj) {
+							uppercolumnlist.add((String) uppercolumn);
+						}
+					}
 					for (String uppercolumn : uppercolumnlist) {
-						for (int j = 0; j < columnlist.size(); j++) {
-							SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
-							String alias = columnlist.get(j).get("alias").toString();
+						for (HashMap<String, Object> objectHashMap : columnlist) {
+							SQLExpr sqlexpr = (SQLExpr) objectHashMap.get("column");
+							String alias = objectHashMap.get("alias").toString();
 							ArrayList<HashMap<String, Object>> templist = getTempList(alias);
 							if (sqlexpr instanceof SQLIdentifierExpr) {
 								if (uppercolumn.equalsIgnoreCase(sqlexpr.toString())) {
@@ -332,7 +333,7 @@ public class DruidParseQuerySql {
 	 */
 	private void putResult(ArrayList<HashMap<String, Object>> templist, String alias, String columnname, String table) {
 		if (columnname != null) {
-			HashMap<String, Object> temphashmap = new HashMap<String, Object>();
+			HashMap<String, Object> temphashmap = new HashMap<>();
 			if (columnname.contains(" ")) {
 				columnname = StringUtil.split(columnname.toLowerCase(), " ").get(0);
 			}
@@ -342,7 +343,6 @@ public class DruidParseQuerySql {
 			temphashmap.put(sourcecolumn, columnname);
 			temphashmap.put(sourcetable, table);
 			templist.add(temphashmap);
-			System.out.println(alias + " " + "sourcecolumn:" + columnname.toLowerCase() + " sourcetable:" + table.toLowerCase());
 		}
 	}
 
@@ -353,7 +353,7 @@ public class DruidParseQuerySql {
 	 * <p>参   数:  </p>
 	 */
 	private ArrayList<HashMap<String, Object>> getTempList(String alias) {
-		ArrayList<HashMap<String, Object>> templist = new ArrayList<HashMap<String, Object>>();
+		ArrayList<HashMap<String, Object>> templist = new ArrayList<>();
 		if (hashmap.get(alias) != null) {
 			templist = (ArrayList<HashMap<String, Object>>) hashmap.get(alias);
 		} else {
@@ -412,15 +412,20 @@ public class DruidParseQuerySql {
 		else {
 			for (int i = 0; i < listmap.size(); i++) {
 				HashMap<String, Object> stringObjectHashMap = listmap.get(i);
-				List<String> uppercolumnlist = (ArrayList<String>) stringObjectHashMap.get("uppercolumn");
-				List<String> newuppercolumnlist = new ArrayList<String>();
-				for (int k = 0; k < uppercolumnlist.size(); k++) {
-					String uppercolumn = uppercolumnlist.get(k);
+				List<String> uppercolumnlist = new ArrayList<>();
+				Object uppercolumnObj = stringObjectHashMap.get("uppercolumn");
+				if (uppercolumnObj instanceof ArrayList<?>) {
+					for (Object uppercolumn : (List<?>) uppercolumnObj) {
+						uppercolumnlist.add((String) uppercolumn);
+					}
+				}
+				List<String> newuppercolumnlist = new ArrayList<>();
+				for (String uppercolumn : uppercolumnlist) {
 					handleGetColumn(oracleSelectQueryBlock);
-					Boolean flag = true;
-					for (int j = 0; j < columnlist.size(); j++) {
-						SQLExpr sqlexpr = (SQLExpr) columnlist.get(j).get("column");
-						String alias = columnlist.get(j).get("alias").toString();
+					boolean flag = true;
+					for (HashMap<String, Object> objectHashMap : columnlist) {
+						SQLExpr sqlexpr = (SQLExpr) objectHashMap.get("column");
+						String alias = objectHashMap.get("alias").toString();
 						if (sqlexpr instanceof SQLIdentifierExpr) {
 							if (uppercolumn.equalsIgnoreCase(sqlexpr.toString())) {
 								newuppercolumnlist.add(alias);
@@ -478,11 +483,11 @@ public class DruidParseQuerySql {
 	 */
 	private void handleColumn(SQLSelectItem sqlSelectItem, OracleSelectTableReference oracleSelectTableReference, Boolean isOracleSelectTableReference) {
 		String alias = getAlias(sqlSelectItem);
-		HashMap<String, Object> map = new HashMap<String, Object>();
+		HashMap<String, Object> map = new HashMap<>();
 		columnlist.clear();
 		getcolumn(sqlSelectItem.getExpr(), sqlSelectItem.getAlias());
-		for (int i = 0; i < columnlist.size(); i++) {
-			SQLExpr column = (SQLExpr) columnlist.get(i).get("column");
+		for (HashMap<String, Object> stringObjectHashMap : columnlist) {
+			SQLExpr column = (SQLExpr) stringObjectHashMap.get("column");
 			if (column instanceof SQLIdentifierExpr) {
 				//如果是简单select 需要判断from的部分是否来自单表 如果不是，则需要明确字段来源
 				if (isOracleSelectTableReference) {
@@ -503,7 +508,7 @@ public class DruidParseQuerySql {
 				throw new BusinessSystemException("未知的column类型 column:" + column + " 类型：" + column.getClass());
 			}
 			map.put("table", oracleSelectTableReference.toString());
-			List<String> list = new ArrayList<String>();
+			List<String> list = new ArrayList<>();
 			list.add(alias);
 			map.put("uppercolumn", list);
 			listmap.add(map);
@@ -542,7 +547,7 @@ public class DruidParseQuerySql {
 				getcolumn(sqlExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLAllColumnExpr) {
-			return;
+			throw new BusinessSystemException("SQLAllColumnExpr 未开发 有待开发");
 		} else if (sqlexpr instanceof SQLAllExpr) {
 			throw new BusinessSystemException("SQLAllExpr未开发 有待开发");
 		} else if (sqlexpr instanceof SQLAnyExpr) {
@@ -555,7 +560,7 @@ public class DruidParseQuerySql {
 			getcolumn(sqlBetweenExpr.getTestExpr(), alias);
 			getcolumn(sqlBetweenExpr.getEndExpr(), alias);
 		} else if (sqlexpr instanceof SQLBinaryExpr) {
-			return;
+			throw new BusinessSystemException("SQLBinaryExpr 有待开发");
 		} else if (sqlexpr instanceof SQLBinaryOpExpr) {
 			SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) sqlexpr;
 			getcolumn(sqlBinaryOpExpr.getLeft(), alias);
@@ -563,12 +568,11 @@ public class DruidParseQuerySql {
 		} else if (sqlexpr instanceof SQLBinaryOpExprGroup) {
 			throw new BusinessSystemException("SQLBinaryOpExprGroup 有待开发");
 		} else if (sqlexpr instanceof SQLBooleanExpr) {
-			return;
+			throw new BusinessSystemException("SQLBooleanExpr 有待开发");
 		} else if (sqlexpr instanceof SQLCaseExpr) {
 			SQLCaseExpr sqlCaseExpr = (SQLCaseExpr) sqlexpr;
 			List<SQLCaseExpr.Item> items = sqlCaseExpr.getItems();
-			for (int i = 0; i < items.size(); i++) {
-				SQLCaseExpr.Item item = items.get(i);
+			for (SQLCaseExpr.Item item : items) {
 				getcolumn(item.getConditionExpr(), alias);
 				getcolumn(item.getValueExpr(), alias);
 			}
@@ -583,7 +587,7 @@ public class DruidParseQuerySql {
 			SQLCastExpr sqlCastExpr = (SQLCastExpr) sqlexpr;
 			getcolumn(sqlCastExpr.getExpr(), alias);
 		} else if (sqlexpr instanceof SQLCharExpr) {
-			return;
+			throw new BusinessSystemException("SQLCharExpr 有待开发");
 		} else if (sqlexpr instanceof SQLContainsExpr) {
 			SQLContainsExpr sqlContainsExpr = (SQLContainsExpr) sqlexpr;
 			getcolumn(sqlContainsExpr.getExpr(), alias);
@@ -592,7 +596,7 @@ public class DruidParseQuerySql {
 				getcolumn(sqlExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLCurrentOfCursorExpr) {
-			return;
+			throw new BusinessSystemException("SQLCurrentOfCursorExpr 有待开发");
 		} else if (sqlexpr instanceof SQLDateExpr) {
 			throw new BusinessSystemException("SQLDateExpr 有待开发");
 		} else if (sqlexpr instanceof SQLExistsExpr) {
@@ -608,7 +612,7 @@ public class DruidParseQuerySql {
 				getcolumn(sqlexpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLHexExpr) {
-			return;
+			throw new BusinessSystemException("SQLHexExpr 有待开发");
 		} else if (sqlexpr instanceof SQLInListExpr) {
 			SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlexpr;
 			getcolumn(sqlInListExpr.getExpr(), alias);
@@ -620,9 +624,9 @@ public class DruidParseQuerySql {
 			SQLInSubQueryExpr sqlInSubQueryExpr = (SQLInSubQueryExpr) sqlexpr;
 			getcolumn(sqlInSubQueryExpr.getExpr(), alias);
 		} else if (sqlexpr instanceof SQLIntegerExpr) {
-			return;
+			throw new BusinessSystemException("SQLIntegerExpr 有待开发");
 		} else if (sqlexpr instanceof SQLIntervalExpr) {
-			return;
+			throw new BusinessSystemException("SQLIntegerExpr 有待开发");
 		} else if (sqlexpr instanceof SQLListExpr) {
 			SQLListExpr sqlListExpr = (SQLListExpr) sqlexpr;
 			List<SQLExpr> items = sqlListExpr.getItems();
@@ -636,26 +640,26 @@ public class DruidParseQuerySql {
 				getcolumn(sqlExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLNCharExpr) {
-			return;
+			throw new BusinessSystemException("SQLNCharExpr 有待开发");
 		} else if (sqlexpr instanceof SQLNotExpr) {
 			SQLNotExpr sqlNotExpr = (SQLNotExpr) sqlexpr;
 			getcolumn(sqlNotExpr.getExpr(), alias);
 		} else if (sqlexpr instanceof SQLNullExpr) {
-			return;
+			throw new BusinessSystemException("SQLNullExpr 有待开发");
 		} else if (sqlexpr instanceof SQLNumberExpr) {
-			return;
+			throw new BusinessSystemException("SQLNumberExpr 有待开发");
 		} else if (sqlexpr instanceof SQLQueryExpr) {
 			throw new BusinessSystemException("SQLQueryExpr 有待开发");
 		} else if (sqlexpr instanceof SQLRealExpr) {
-			return;
+			throw new BusinessSystemException("SQLRealExpr 有待开发");
 		} else if (sqlexpr instanceof SQLSequenceExpr) {
 			throw new BusinessSystemException("SQLSequenceExpr 有待开发");
 		} else if (sqlexpr instanceof SQLSomeExpr) {
 			throw new BusinessSystemException("SQLSomeExpr 有待开发");
 		} else if (sqlexpr instanceof SQLTextLiteralExpr) {
-			return;
+			throw new BusinessSystemException("SQLTextLiteralExpr 有待开发");
 		} else if (sqlexpr instanceof SQLTimestampExpr) {
-			return;
+			throw new BusinessSystemException("SQLTimestampExpr 有待开发");
 		} else if (sqlexpr instanceof SQLUnaryExpr) {
 			SQLUnaryExpr sqlUnaryExpr = (SQLUnaryExpr) sqlexpr;
 			getcolumn(sqlUnaryExpr.getExpr(), alias);
@@ -666,7 +670,7 @@ public class DruidParseQuerySql {
 				getcolumn(sqlListExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLVariantRefExpr) {
-			return;
+			throw new BusinessSystemException("SQLVariantRefExpr 有待开发");
 		} else {
 			throw new BusinessSystemException("未知的sqlexpr类型 sqlexpr：" + sqlexpr.toString() + "class:" + sqlexpr.getClass());
 		}
@@ -680,7 +684,6 @@ public class DruidParseQuerySql {
 	 */
 	private String trim(String sql) {
 		sql = sql.replace("\r", "");
-		sql = sql.replace("", "");
 		sql = sql.replace("\r", "");
 		sql = sql.replace("\t", "");
 		sql = sql.replace(" ", "");
@@ -705,9 +708,6 @@ public class DruidParseQuerySql {
 
 	/**
 	 * 判断视图
-	 *
-	 * @param sql
-	 * @return
 	 */
 	public String GetNewSql(String sql) {
 		String dbType = JdbcConstants.ORACLE;
@@ -732,8 +732,6 @@ public class DruidParseQuerySql {
 
 	/**
 	 * 遍历每一个query的部分用以获取from
-	 *
-	 * @param sqlSelectQuery
 	 */
 	private void setFrom(SQLSelectQuery sqlSelectQuery, DatabaseWrapper db, HashMap<String, String> viewMap) {
 		if (sqlSelectQuery instanceof SQLUnionQuery) {
@@ -747,17 +745,16 @@ public class DruidParseQuerySql {
 		} else {
 			String message;
 			if (sqlSelectQuery == null) {
-				message = "未知的SelectQuery";
+				message = "SelectQuery 为空";
 			} else {
 				message = "未知的SelectQuery来源：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass();
 			}
+			throw new BusinessException(message);
 		}
 	}
 
 	/**
 	 * 拆分from 直至单表
-	 *
-	 * @param sqlTableSource
 	 */
 	private void handleSetFrom(SQLTableSource sqlTableSource, DatabaseWrapper db, HashMap<String, String> viewMap) {
 		// 如果是join的形式 就递归继续拆分
@@ -790,6 +787,7 @@ public class DruidParseQuerySql {
 			} else {
 				message = "未知的sqlTableSource来源：" + sqlTableSource.toString() + " class:" + sqlTableSource.getClass();
 			}
+			throw new BusinessException(message);
 		}
 	}
 
@@ -842,14 +840,33 @@ public class DruidParseQuerySql {
 
 
 	public static void main(String[] args) {
-		String sql = "select a,b,c,count(*) as ccc from (select * from ccc.tablw1) t1";
+		String sql = "\n" +
+				"select  i_item_id\n" +
+				"       ,i_item_desc\n" +
+				"       ,i_current_price\n" +
+				"from  J001_A001_item,  J001_A001_inventory,  J001_A001_date_dim,  J001_A001_store_sales\n" +
+				"where i_current_price between 76 and 76+30\n" +
+				"  and inv_item_sk = i_item_sk\n" +
+				"  and d_date_sk=inv_date_sk\n" +
+				"  and d_date between cast('1998-06-29' as date) and cast(date_add('1998-06-29',60) as date)\n" +
+				"  and i_manufact_id in (512,409,677,16)\n" +
+				"  and inv_quantity_on_hand between 100 and 500\n" +
+				"  and ss_item_sk = i_item_sk\n" +
+				"  group by i_item_id,i_item_desc,i_current_price\n" +
+				"  order by i_item_id\n" +
+				"limit 100;\n";
 //		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
 //		System.out.println(sql1.getSelectSql());
 //		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
 //		selectColumnMap.forEach((key, value) ->
 //				System.out.println(key + "====" + value)
 //		);
-		List<String> strings = DruidParseQuerySql.parseSqlTableToList(sql);
-		strings.forEach(System.out::println);
+//		List<String> strings = DruidParseQuerySql.parseSqlTableToList(sql);
+//		strings.forEach(System.out::println);
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
+		String[] ands = druidParseQuerySql.whereInfo.toString().split("\n");
+		for (String and : ands) {
+			System.out.println(and.trim());
+		}
 	}
 }
