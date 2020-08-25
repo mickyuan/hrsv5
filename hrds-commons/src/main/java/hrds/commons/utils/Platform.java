@@ -53,24 +53,15 @@ public class Platform {
 			String colName = columnMeta.getName(); // 列名
 			String typeName = columnMeta.getTypeName(); // 类型名称
 			int precision = columnMeta.getLength(); // 长度
-			boolean isNull = columnMeta.isNullable(); // 是否为空
 			int dataType = columnMeta.getTypeOfSQL(); // 类型
 			int scale = columnMeta.getScale(); // 小数的位数
 			String column_type = getColType(dataType, typeName, precision, scale, 0);
 			boolean primaryKey = primaryKeys.contains(colName);
-			addColumn(colName, primaryKey, column_type, typeName, precision, isNull, dataType, scale);
+			addColumn(colName, primaryKey, column_type);
 		}
 	}
 
-	private static void addColumn(
-			String colName,
-			boolean primaryKey,
-			String column_type,
-			String typeName,
-			int precision,
-			boolean isNull,
-			int dataType,
-			int scale) {
+	private static void addColumn(String colName, boolean primaryKey, String column_type) {
 
 		column = xmlCreater.createElement(table, "column");
 		xmlCreater.createAttribute(column, "column_name", colName);
