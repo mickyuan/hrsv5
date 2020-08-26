@@ -1004,9 +1004,6 @@ public class ImportExcelAction extends BaseAction {
 			//获取任务下的作业信息
 			StartWayConfAction startWayConfAction = new StartWayConfAction();
 			List<Map<String, Object>> previewJob = startWayConfAction.getPreviewJob(database_id);
-			System.out.println(previewJob);
-			List<Object> ded_id = previewJob.stream().map(item -> item.get("ded_id")).collect(Collectors.toList());
-			String ded_arr = StringUtils.join(ded_id, "^");
 			List<Etl_job_def> jobDefList = new ArrayList<>();
 			previewJob.forEach(itemMap -> {
 				Etl_job_def etl_job_def = JSONObject
@@ -1018,6 +1015,8 @@ public class ImportExcelAction extends BaseAction {
 				jobDefList.add(etl_job_def);
 			});
 
+			List<Object> ded_id = previewJob.stream().map(item -> item.get("ded_id")).collect(Collectors.toList());
+			String ded_arr = StringUtils.join(ded_id, "^");
 			startWayConfAction.saveJobDataToDatabase(database_id, source_id, etl_sys_cd, sub_sys_cd, pro_dic, log_dic,
 				jobDefList.toArray(new Etl_job_def[jobDefList.size()]), ded_arr, "");
 
