@@ -27,6 +27,7 @@ import hrds.g.biz.serviceuser.ServiceInterfaceUserDefine;
 import hrds.g.biz.serviceuser.common.InterfaceCommon;
 import hrds.g.biz.serviceuser.query.Query;
 import hrds.g.biz.serviceuser.query.QueryByRowkey;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -169,7 +170,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			String sysreg_name = userTableInfo.getSysreg_name();
 			Map<String, Object> res = new HashMap<>();
 			res.put("table_type", type);
-			// fixme 这里应该使用StoreLayerDataSource代码项做判断查询
 			if (DataSourceType.DML == DataSourceType.ofEnumByCode(type)) {
 				// 5.数据源类型为集市，关联查询数据表字段信息表以及数据表查询字段中英文信息
 				List<Map<String, Object>> list = SqlOperator.queryList(Dbo.db(), "SELECT field_en_name," +
@@ -179,15 +179,14 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				res.put("field", list);
 			} else if (DataSourceType.DCL == DataSourceType.ofEnumByCode(type)) {
 				// 7.数据源类型为贴源层，关联查询表对应的字段、数据库对应表、源文件属性表查询字段中英文信息
-				// fixme 这里只是获取批量表结构，实时表结构需要考虑吗？
 				List<Map<String, Object>> list = SqlOperator.queryList(Dbo.db(),
 						"SELECT column_name as field_en_name,column_ch_name as field_cn_name FROM "
-								+ Table_column.TableName + "  tc join " + Table_info.TableName + " ti ON " +
-								"tc.table_id = ti.table_id join " + Data_store_reg.TableName +
-								" dsr ON dsr.table_name = ti.table_name " +
+								+ Table_column.TableName + " tc join " + Table_info.TableName
+								+ " ti ON tc.table_id = ti.table_id join " + Data_store_reg.TableName
+								+ " dsr ON dsr.table_name = ti.table_name " +
 								" WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name)=lower(?) "
-								+ " and ti.valid_e_date=? AND tc.is_get=? and is_alive=?",
-						sysreg_name, Constant.MAXDATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
+								+ " and ti.valid_e_date=? AND tc.is_get=?",
+						sysreg_name, Constant.MAXDATE, IsFlag.Shi.getCode());
 				res.put("field", list);
 			} else {
 				// 8.数据源类型为其他，查询源文件属性表信息获取字段中英文信息
@@ -548,7 +547,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
-	public Map<String, Object> tableDataBatchUpdate(DataBatchUpdate dataBatchUpdate, CheckParam
+	public Map<String, Object> tableDataUpdate(DataBatchUpdate dataBatchUpdate, CheckParam
 			checkParam) {
 		return null;
 	}
