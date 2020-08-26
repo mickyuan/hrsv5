@@ -6,6 +6,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.StageParamInfo;
@@ -75,7 +76,6 @@ public class JobStageController {
 	@Param(name = "statusFilePath", desc = "作业状态文件路径", range = "不为空")
 	@Return(desc = "作业状态信息", range = "不会为null")
 	public JobStatusInfo handleStageByOrder(String statusFilePath, JobStatusInfo jobStatusInfo) throws Exception {
-
 		if (StringUtil.isBlank(statusFilePath)) {
 			throw new AppSystemException("状态文件路径不能为空");
 		}
@@ -83,7 +83,7 @@ public class JobStageController {
 		if (jobStatusInfo == null) {
 			throw new AppSystemException("作业状态对象不能为空");
 		}
-
+		String job_id = jobStatusInfo.getJobId();
 		//1、根据状态文件路径获取状态文件
 		File file = new File(statusFilePath);
 
@@ -119,6 +119,10 @@ public class JobStageController {
 					redoFlag = true;
 					//如果是重跑，则应该重新构建jobStatusInfo对象，否则就会使用到之前的jobStatusInfo对象
 					jobStatusInfo = new JobStatusInfo();
+					jobStatusInfo.setRunStatus(RunStatusConstant.RUNNING.getCode());
+					jobStatusInfo.setStartDate(DateUtil.getSysDate());
+					jobStatusInfo.setStartTime(DateUtil.getSysTime());
+					jobStatusInfo.setJobId(job_id);
 				}
 			}
 		}

@@ -3,6 +3,7 @@ package hrds.agent.job.biz.core;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @DocClass(desc = "数据库直连采集的作业实现", author = "zxz")
 public class JdbcDirectJobImpl implements JobInterface {
@@ -59,7 +61,15 @@ public class JdbcDirectJobImpl implements JobInterface {
 		controller.registerJobStage(unloadData, upload, dataLoading, calIncrement, dataRegistration);
 		//4、按照顺序从第一个阶段开始执行作业
 		try {
-			jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
+			if (collectTableBean.getInterval_time() != null && collectTableBean.getInterval_time() > 0) {
+				int interval_time = collectTableBean.getInterval_time();
+				do {
+					jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
+					TimeUnit.SECONDS.sleep(interval_time);
+				} while (!DateUtil.getSysDate().equals(collectTableBean.getOver_date()));
+			} else {
+				jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
+			}
 		} catch (Exception e) {
 			//TODO 是否记录日志待讨论,因为目前的处理逻辑是数据库直连采集发生的所有checked
 			// 类型异常全部向上抛，抛到这里统一处理

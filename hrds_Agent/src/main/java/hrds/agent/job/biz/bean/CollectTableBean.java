@@ -1,15 +1,11 @@
 package hrds.agent.job.biz.bean;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.utils.StringUtil;
-import hrds.commons.codes.DataExtractType;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Data_extraction_def;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "DB文件采集,数据库采集选择表配置信息", author = "zxz", createdate = "2019/11/29 14:26")
@@ -94,6 +90,10 @@ public class CollectTableBean implements Serializable {
 	private String storage_date;
 	@DocBean(name = "selectFileFormat", value = "作业调度传参的卸数文件格式", dataType = String.class)
 	private String selectFileFormat;
+	@DocBean(name = "interval_time", value = "频率间隔时间（秒）", dataType = Integer.class, required = false)
+	private Integer interval_time;
+	@DocBean(name = "over_date", value = "按照频率采集结束日期", dataType = String.class, required = false)
+	private String over_date;
 
 	public List<Column_merge> getColumn_merge_list() {
 		return column_merge_list;
@@ -389,5 +389,21 @@ public class CollectTableBean implements Serializable {
 
 	public void setSelectFileFormat(String selectFileFormat) {
 		this.selectFileFormat = selectFileFormat;
+	}
+
+	public Integer getInterval_time() {
+		return interval_time;
+	}
+
+	public void setInterval_time(Integer interval_time) {
+		this.interval_time = interval_time;
+	}
+
+	public String getOver_date() {
+		return over_date;
+	}
+
+	public void setOver_date(String over_date) {
+		this.over_date = over_date;
 	}
 }
