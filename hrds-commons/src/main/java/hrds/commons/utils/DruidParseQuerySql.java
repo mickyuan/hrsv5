@@ -587,7 +587,8 @@ public class DruidParseQuerySql {
 			SQLCastExpr sqlCastExpr = (SQLCastExpr) sqlexpr;
 			getcolumn(sqlCastExpr.getExpr(), alias);
 		} else if (sqlexpr instanceof SQLCharExpr) {
-			throw new BusinessSystemException("SQLCharExpr 有待开发");
+//			throw new BusinessSystemException("SQLCharExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLContainsExpr) {
 			SQLContainsExpr sqlContainsExpr = (SQLContainsExpr) sqlexpr;
 			getcolumn(sqlContainsExpr.getExpr(), alias);
@@ -612,7 +613,8 @@ public class DruidParseQuerySql {
 				getcolumn(sqlexpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLHexExpr) {
-			throw new BusinessSystemException("SQLHexExpr 有待开发");
+//			throw new BusinessSystemException("SQLHexExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLInListExpr) {
 			SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlexpr;
 			getcolumn(sqlInListExpr.getExpr(), alias);
@@ -624,9 +626,11 @@ public class DruidParseQuerySql {
 			SQLInSubQueryExpr sqlInSubQueryExpr = (SQLInSubQueryExpr) sqlexpr;
 			getcolumn(sqlInSubQueryExpr.getExpr(), alias);
 		} else if (sqlexpr instanceof SQLIntegerExpr) {
-			throw new BusinessSystemException("SQLIntegerExpr 有待开发");
+//			throw new BusinessSystemException("SQLIntegerExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLIntervalExpr) {
-			throw new BusinessSystemException("SQLIntegerExpr 有待开发");
+//			throw new BusinessSystemException("SQLIntegerExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLListExpr) {
 			SQLListExpr sqlListExpr = (SQLListExpr) sqlexpr;
 			List<SQLExpr> items = sqlListExpr.getItems();
@@ -640,26 +644,26 @@ public class DruidParseQuerySql {
 				getcolumn(sqlExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLNCharExpr) {
-			throw new BusinessSystemException("SQLNCharExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLNotExpr) {
 			SQLNotExpr sqlNotExpr = (SQLNotExpr) sqlexpr;
 			getcolumn(sqlNotExpr.getExpr(), alias);
 		} else if (sqlexpr instanceof SQLNullExpr) {
-			throw new BusinessSystemException("SQLNullExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLNumberExpr) {
-			throw new BusinessSystemException("SQLNumberExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLQueryExpr) {
 			throw new BusinessSystemException("SQLQueryExpr 有待开发");
 		} else if (sqlexpr instanceof SQLRealExpr) {
-			throw new BusinessSystemException("SQLRealExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLSequenceExpr) {
 			throw new BusinessSystemException("SQLSequenceExpr 有待开发");
 		} else if (sqlexpr instanceof SQLSomeExpr) {
 			throw new BusinessSystemException("SQLSomeExpr 有待开发");
 		} else if (sqlexpr instanceof SQLTextLiteralExpr) {
-			throw new BusinessSystemException("SQLTextLiteralExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLTimestampExpr) {
-			throw new BusinessSystemException("SQLTimestampExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLUnaryExpr) {
 			SQLUnaryExpr sqlUnaryExpr = (SQLUnaryExpr) sqlexpr;
 			getcolumn(sqlUnaryExpr.getExpr(), alias);
