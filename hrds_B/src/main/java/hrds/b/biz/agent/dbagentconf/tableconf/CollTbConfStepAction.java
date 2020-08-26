@@ -2,7 +2,6 @@ package hrds.b.biz.agent.dbagentconf.tableconf;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -16,10 +15,10 @@ import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.bean.CollTbConfParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.CleanType;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.DataExtractType;
@@ -40,6 +39,7 @@ import hrds.commons.entity.Dcol_relation_store;
 import hrds.commons.entity.Dtab_relation_store;
 import hrds.commons.entity.Table_clean;
 import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_cycle;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Table_storage_info;
 import hrds.commons.entity.Take_relation_etl;
@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.math.exception.ZeroException;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -97,6 +98,9 @@ public class CollTbConfStepAction extends BaseAction {
 				} else {
 					itemMap.put("collectState", true);
 				}
+				Map<String, Object> tableCycle = getTableCycle(itemMap.get("table_id"));
+				itemMap.put("interval_time", tableCycle.get("interval_time"));
+				itemMap.put("over_date", tableCycle.get("over_date"));
 			});
 
 		// 数据可访问权限处理方式
@@ -218,8 +222,9 @@ public class CollTbConfStepAction extends BaseAction {
 		nullable = true,
 		valueIfNull = "")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
+	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空", isBean = true, nullable = true)
 	// 使用SQL抽取数据页面，保存按钮后台方法
-	public long saveAllSQL(String tableInfoArray, long colSetId, String tableColumn) {
+	public long saveAllSQL(String tableInfoArray, long colSetId, String tableColumn, Table_cycle[] tableCycles) {
 
 		// 1、根据databaseId去数据库中查询该数据库采集任务是否存在
 		long dbSetCount =
@@ -248,7 +253,7 @@ public class CollTbConfStepAction extends BaseAction {
 			"delete from " + Table_info.TableName + " where database_id = ? AND is_user_defined = ? ",
 			colSetId,
 			IsFlag.Shi.getCode());
-
+		//删除表的
 		// 3、将前端传过来的参数转为List<Table_info>集合
 		List<Table_info> tableInfos = JSONArray.parseArray(tableInfoArray, Table_info.class);
 		/*
@@ -402,6 +407,24 @@ public class CollTbConfStepAction extends BaseAction {
 //					else {
 //						saveCustomSQLColumnInfoForAdd(tableInfo, colSetId);
 //					}
+				}
+				if (map.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
+					for (Table_cycle tableCycle : tableCycles) {
+						if (tableCycle.getTc_id() != null) {
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							try {
+								tableCycle.update(Dbo.db());
+							} catch (Exception e) {
+								if (!(e instanceof EntityDealZeroException)) {
+									CheckParam.throwErrorMsg("更新表(%s)的采集周期信息失败", tableInfo.getTable_name());
+								}
+							}
+						} else {
+							tableCycle.setTc_id(PrimayKeyGener.getNextId());
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							tableCycle.add(Dbo.db());
+						}
+					}
 				}
 			}
 		}
@@ -591,6 +614,9 @@ public class CollTbConfStepAction extends BaseAction {
 				} else {
 					itemMap.put("collectState", true);
 				}
+				Map<String, Object> tableCycle = getTableCycle(itemMap.get("table_id"));
+				itemMap.put("interval_time", tableCycle.get("interval_time"));
+				itemMap.put("over_date", tableCycle.get("over_date"));
 			});
 
 		// 数据可访问权限处理方式
@@ -992,9 +1018,10 @@ public class CollTbConfStepAction extends BaseAction {
 		desc = "本次接口访问被删除的表ID组成的json字符串",
 		range = "如果本次访问没有被删除的接口，该参数可以不传",
 		nullable = true)
+	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空", isBean = true, nullable = true)
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveCollTbInfo(
-		String tableInfoString, long colSetId, String collTbConfParamString, String delTbString) {
+		String tableInfoString, long colSetId, String collTbConfParamString, String delTbString, Table_cycle[] tableCycles) {
 
 		Map<String, Object> resultMap =
 			Dbo.queryOneObject(
@@ -1170,6 +1197,25 @@ public class CollTbConfStepAction extends BaseAction {
 					// 6-4、编辑采集表，将该表要采集的列信息保存到相应的表里面
 					saveTableColumnInfoForUpdate(tableInfo, tbConfParams.get(i).getCollColumnString());
 				}
+
+				if (resultMap.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
+					for (Table_cycle tableCycle : tableCycles) {
+						if (tableCycle.getTc_id() != null) {
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							try {
+								tableCycle.update(Dbo.db());
+							} catch (Exception e) {
+								if (!(e instanceof EntityDealZeroException)) {
+									CheckParam.throwErrorMsg("更新表(%s)的采集周期信息失败", tableInfo.getTable_name());
+								}
+							}
+						} else {
+							tableCycle.setTc_id(PrimayKeyGener.getNextId());
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							tableCycle.add(Dbo.db());
+						}
+					}
+				}
 			}
 		}
 		// 7、如果本次接口访问有被删除的表，则调用方法删除该表的脏数据
@@ -1255,13 +1301,13 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> map = new HashMap<>();
 				map.put("table_name", tableName);
 				map.put("table_ch_name", tableName);
-        /*
-         如果当前表的信息未在我们数据库中出现,
-         1: 卸数方式 : 默认全量
-         2: 是否使用MD5 : 默认否
-         3: 是否并行抽取 : 默认否
-         4: 如果表记录不存在则设置当前表为未采集状态
-        */
+		        /*
+		         如果当前表的信息未在我们数据库中出现,
+		         1: 卸数方式 : 默认全量
+		         2: 是否使用MD5 : 默认否
+		         3: 是否并行抽取 : 默认否
+		         4: 如果表记录不存在则设置当前表为未采集状态
+		        */
 				//        //        1: 卸数方式 : 默认全量
 				//        map.put("unload_type", UnloadType.QuanLiangXieShu.getCode());
 				//        2: 是否使用MD5 : 默认否
@@ -1269,6 +1315,8 @@ public class CollTbConfStepAction extends BaseAction {
 				//        3: 是否并行抽取 : 默认否
 				map.put("is_parallel", IsFlag.Fou.getCode());
 				map.put("collectState", true);
+				tableResult.put("interval_time", "");
+				tableResult.put("over_date", "");
 				results.add(map);
 			} else {
 				List<Object> tableStateList = checkTableCollectState(colSetId, tableName);
@@ -1278,7 +1326,8 @@ public class CollTbConfStepAction extends BaseAction {
 				} else {
 					tableResult.put("collectState", true);
 				}
-
+				tableResult.put("interval_time", getTableCycle(tableResult.get("table_id")).get("interval_time"));
+				tableResult.put("over_date", getTableCycle(tableResult.get("table_id")).get("over_date"));
 				results.add(tableResult);
 			}
 		}
@@ -1465,6 +1514,8 @@ public class CollTbConfStepAction extends BaseAction {
 				deleteDirtyDataOfCol((long) columnId);
 			}
 		}
+		//删除表的采集周期数据
+		Dbo.execute(" DELETE FROM " + Table_cycle.TableName + " WHERE table_id = ? ", tableId);
 		// 2、删除旧的tableId在采集字段表中做外键的数据，不关注删除的数目
 		Dbo.execute(" DELETE FROM " + Table_column.TableName + " WHERE table_id = ? ", tableId);
 		// 删除表的抽数作业关系表信息
@@ -1722,4 +1773,9 @@ public class CollTbConfStepAction extends BaseAction {
 			table_name);
 	}
 
+	@Method(desc = "获取表的采集周期信息", logicStep = "")
+	@Param(name = "table_id", desc = "表的ID信息", range = "不可为空")
+	Map<String, Object> getTableCycle(Object table_id) {
+		return Dbo.queryOneObject("SELECT * FROM " + Table_cycle.TableName + " WHERE table_id = ?", table_id);
+	}
 }
