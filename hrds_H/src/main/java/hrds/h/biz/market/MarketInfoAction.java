@@ -1700,8 +1700,10 @@ public class MarketInfoAction extends BaseAction {
 			if (notExists.size() != 0) {
 				//清空当天的失效数据,失效数据直保留一份
 				Assembler assembler = Assembler.newInstance()
-					.addSql("DELETE FROM " + Datatable_field_info.TableName + " WHERE end_date = ? AND datatable_id = ?")
-					.addParam(DateUtil.getSysDate()).addParam(dm_datatable.getDatatable_id());
+					.addSql("DELETE FROM " + Datatable_field_info.TableName
+						+ " WHERE end_date = ? AND start_date = ? AND datatable_id = ?")
+					.addParam(DateUtil.getSysDate()).addParam(DateUtil.getSysDate())
+					.addParam(dm_datatable.getDatatable_id());
 				Dbo.execute(assembler.sql(), assembler.params());
 				//执行完清空
 				assembler.clean();
