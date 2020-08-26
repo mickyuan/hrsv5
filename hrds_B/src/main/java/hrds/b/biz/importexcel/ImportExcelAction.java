@@ -26,6 +26,7 @@ import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.Dispatch_Type;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.Job_Status;
@@ -1012,6 +1013,8 @@ public class ImportExcelAction extends BaseAction {
 				etl_job_def.setSub_sys_cd(sub_sys_cd);
 				etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
 				etl_job_def.setPro_name(Constant.SHELLCOMMAND);
+				etl_job_def.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+				etl_job_def.setDisp_time(DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()).toString());
 				jobDefList.add(etl_job_def);
 			});
 
