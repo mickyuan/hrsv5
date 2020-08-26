@@ -52,8 +52,8 @@ public class actionTemplate extends BaseAction {
 	@Method(desc = "新增用户", logicStep = "")
 	@Return(desc = "返回用户的基本信息以result返回", range = "返回用户result")
 	public Result getUsercc() {
-		List aa = new ArrayList<Map<String, Object>>();
-		Map map = new HashMap();
+		List<Map<String, Object>> aa = new ArrayList<>();
+		Map<String, Object> map = new HashMap<>();
 		map.put("abc", "sdfdsfsd");
 		aa.add(map);
 		Result a = new Result();
