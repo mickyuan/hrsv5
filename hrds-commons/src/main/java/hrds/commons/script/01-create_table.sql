@@ -2173,3 +2173,13 @@ DETECT_ETIME                                      CHAR(6) NOT NULL, --检测结�
 DND_REMARK                                        VARCHAR(512) NULL, --备注
 CONSTRAINT DBM_NORMBM_DETECT_PK PRIMARY KEY(DETECT_ID)   );
 
+--数据库采集周期
+DROP TABLE IF EXISTS TABLE_CYCLE ;
+CREATE TABLE TABLE_CYCLE(
+TC_ID                                             BIGINT default 0 NOT NULL, --周期ID
+TABLE_ID                                          BIGINT default 0 NOT NULL, --表名ID
+INTERVAL_TIME                                     BIGINT default 0 NOT NULL, --频率间隔时间（秒）
+OVER_DATE                                         CHAR(8) NOT NULL, --结束日期
+TC_REMARK                                         VARCHAR(512) NULL, --备注
+CONSTRAINT TABLE_CYCLE_PK PRIMARY KEY(TC_ID)   );
+
