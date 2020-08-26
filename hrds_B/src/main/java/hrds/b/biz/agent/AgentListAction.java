@@ -1504,7 +1504,7 @@ public class AgentListAction extends BaseAction {
 		Dbo.execute(
 			" DELETE FROM "
 				+ Dtab_relation_store.TableName
-				+ " WHERE storage_id = "
+				+ " WHERE tab_id = "
 				+ "(SELECT storage_id FROM "
 				+ Table_storage_info.TableName
 				+ " WHERE table_id = ?) AND data_source = ? ",
@@ -1532,7 +1532,7 @@ public class AgentListAction extends BaseAction {
 	@Param(name = "columnId", desc = "表对应字段表ID，" + "字段存储信息表、列清洗信息表、列拆分信息表外键", range = "不为空")
 	private void deleteDirtyDataOfCol(long columnId) {
 		// 1、删除旧的columnId在字段存储信息表中做外键的数据，不关注删除的数目
-		Dbo.execute("delete from " + Dcol_relation_store.TableName + " where column_id = ? AND data_source = ?", columnId,
+		Dbo.execute("delete from " + Dcol_relation_store.TableName + " where col_id = ? AND data_source = ?", columnId,
 			StoreLayerDataSource.DB.getCode());
 		// 2、删除旧的columnId在列清洗信息表做外键的数据，不关注删除的数目
 		Dbo.execute("delete from " + Column_clean.TableName + " where column_id = ?", columnId);
