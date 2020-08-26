@@ -1110,9 +1110,8 @@ public class ImportExcelAction extends BaseAction {
 
 		Map<Object, List<Map<String, Object>>> dependDataMap = new LinkedHashMap<>();
 		//先设置树的根节点
-		List<Map<String, Object>> treeList = new ArrayList<>();
 		tableNameList.forEach(tableName -> {
-
+			List<Map<String, Object>> treeList = new ArrayList<>();
 			Map<String, Object> rootMap = new LinkedHashMap<>();
 			rootMap.put("id", tableName);
 			rootMap.put("isroot", true);
