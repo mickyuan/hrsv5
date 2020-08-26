@@ -27,7 +27,6 @@ import hrds.g.biz.serviceuser.ServiceInterfaceUserDefine;
 import hrds.g.biz.serviceuser.common.InterfaceCommon;
 import hrds.g.biz.serviceuser.query.Query;
 import hrds.g.biz.serviceuser.query.QueryByRowkey;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
