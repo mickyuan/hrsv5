@@ -10,12 +10,15 @@ import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.jdbcdirectstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @DocClass(desc = "数据库直连采集的作业实现", author = "zxz")
@@ -23,6 +26,7 @@ public class JdbcDirectJobImpl implements JobInterface {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcDirectJobImpl.class);
 	private final CollectTableBean collectTableBean;
 	private final SourceDataConfBean sourceDataConfBean;
+	private final static Map<String, Thread> threadMap = new ConcurrentHashMap<>();
 
 	public JdbcDirectJobImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		this.sourceDataConfBean = sourceDataConfBean;
@@ -62,11 +66,22 @@ public class JdbcDirectJobImpl implements JobInterface {
 		//4、按照顺序从第一个阶段开始执行作业
 		try {
 			if (collectTableBean.getInterval_time() != null && collectTableBean.getInterval_time() > 0) {
-				int interval_time = collectTableBean.getInterval_time();
-				do {
-					jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
-					TimeUnit.SECONDS.sleep(interval_time);
-				} while (!DateUtil.getSysDate().equals(collectTableBean.getOver_date()));
+				try {
+					if (threadMap.get(collectTableBean.getTable_id()) == null) {
+						threadMap.put(collectTableBean.getTable_id(), Thread.currentThread());
+					} else {
+						//如果存在这个表实时采集在执行，先打断之前执行的，再重新执行
+						threadMap.get(collectTableBean.getTable_id()).interrupt();
+					}
+					//TODO 这里如果同一个任务多张表，有一张表选择按照频率采集，页面通过立即执行的方式执行则会导致没有返回，因为实时的一直在执行
+					int interval_time = collectTableBean.getInterval_time();
+					do {
+						jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
+						TimeUnit.SECONDS.sleep(interval_time);
+					} while (!DateUtil.getSysDate().equals(collectTableBean.getOver_date()));
+				} catch (Exception e) {
+					throw new AppSystemException("数据库直连采集实时采集异常", e);
+				}
 			} else {
 				jobStatusInfo = controller.handleStageByOrder(statusFilePath, jobStatusInfo);
 			}
