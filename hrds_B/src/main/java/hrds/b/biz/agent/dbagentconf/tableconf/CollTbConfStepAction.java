@@ -1315,8 +1315,8 @@ public class CollTbConfStepAction extends BaseAction {
 				//        3: 是否并行抽取 : 默认否
 				map.put("is_parallel", IsFlag.Fou.getCode());
 				map.put("collectState", true);
-				tableResult.put("interval_time", "");
-				tableResult.put("over_date", "");
+				map.put("interval_time", "");
+				map.put("over_date", "");
 				results.add(map);
 			} else {
 				List<Object> tableStateList = checkTableCollectState(colSetId, tableName);
@@ -1326,8 +1326,9 @@ public class CollTbConfStepAction extends BaseAction {
 				} else {
 					tableResult.put("collectState", true);
 				}
-				tableResult.put("interval_time", getTableCycle(tableResult.get("table_id")).get("interval_time"));
-				tableResult.put("over_date", getTableCycle(tableResult.get("table_id")).get("over_date"));
+				Map<String, Object> tableCycle = getTableCycle(tableResult.get("table_id"));
+				tableResult.put("interval_time", tableCycle.get("interval_time"));
+				tableResult.put("over_date", tableCycle.get("over_date"));
 				results.add(tableResult);
 			}
 		}
