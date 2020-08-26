@@ -136,9 +136,12 @@ public class WebSqlQueryAction extends BaseAction {
 			//根据表名在配置库中查找表信息
 			List<Map<String, Object>> columnsByTableName = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
 			//如果字段信息不为空,则表示找到表信息
+			List<Object> column_s = new ArrayList<>();
 			if (!columnsByTableName.isEmpty()) {
+				//只获取字段英文名
+				columnsByTableName.forEach(column_info -> column_s.add(column_info.get("column_name")));
 				//找到表信息,将该表信息添加到缓存中
-				platformAllTableInfoCache.setCache(table_name, columnsByTableName);
+				platformAllTableInfoCache.setCache(table_name, column_s);
 				cacheObj = platformAllTableInfoCache.getCache(table_name);
 			}
 		}
