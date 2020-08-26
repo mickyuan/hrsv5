@@ -2,26 +2,18 @@ package hrds.commons.code;
 
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.AgentStatus;
 import hrds.commons.entity.Sys_para;
 import org.hamcrest.Matchers;
-import org.junit.Test;
 
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
 
 /**
- * @program: hrsv5
- * @description: 代码项测试用例
- * @author: xchao
- * @create: 2019-09-10 09:42
+ * 代码项测试用例
  */
 public class codeTest extends BaseAction {
 	@Method(desc = "获取用户",

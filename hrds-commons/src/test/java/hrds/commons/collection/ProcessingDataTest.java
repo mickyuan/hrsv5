@@ -5,10 +5,10 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.StoreLayerDataSource;
-import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
+import hrds.commons.utils.StorageTypeKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -18,7 +18,6 @@ import org.junit.Test;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +35,8 @@ public class ProcessingDataTest {
 
 	public Long idL3 = -2999998879L;
 	private String idS3 = String.valueOf(idL3);
+
+	private int lineCounter = 0;
 
 	private static final Logger logger = LogManager.getLogger();
 	@Before
@@ -56,8 +57,8 @@ public class ProcessingDataTest {
 			dst.setSource_id(idL1);
 			dst.setDatabase_id(idL1);
 			dst.setTable_id(idL1);
-			int add = dst.add(db);
-
+			dst.add(db);
+			dst = new Data_store_reg();
 			dst.setFile_id(idS3);
 			dst.setCollect_type(AgentType.DBWenJian.getCode());
 			dst.setOriginal_update_date(DateUtil.getSysDate());
@@ -72,9 +73,8 @@ public class ProcessingDataTest {
 			dst.setSource_id(idL3);
 			dst.setDatabase_id(idL3);
 			dst.setTable_id(idL3);
-			add = dst.add(db);
-
-
+			dst.add(db);
+			dst = new Data_store_reg();
 			dst.setFile_id(idS2);
 			dst.setCollect_type(AgentType.DBWenJian.getCode());
 			dst.setOriginal_update_date(DateUtil.getSysDate());
@@ -89,19 +89,17 @@ public class ProcessingDataTest {
 			dst.setSource_id(idL2);
 			dst.setDatabase_id(idL2);
 			dst.setTable_id(idL2);
-			add = dst.add(db);
-
+			dst.add(db);
 			Table_storage_info tsi = new Table_storage_info();
 			tsi.setHyren_name("sys_user");
-
 			tsi.setStorage_id(idL1);
 			tsi.setFile_format("0");
 			tsi.setStorage_type("1");
 			tsi.setIs_zipper("1");
 			tsi.setStorage_time("0");
 			tsi.setTable_id(idL1);
-			int add1 = tsi.add(db);
-
+			tsi.add(db);
+			tsi = new Table_storage_info();
 			tsi.setStorage_id(idL2);
 			tsi.setFile_format("0");
 			tsi.setStorage_type("1");
@@ -109,8 +107,8 @@ public class ProcessingDataTest {
 			tsi.setStorage_time("0");
 			tsi.setTable_id(idL2);
 			tsi.setHyren_name("sys_role");
-			add1 = tsi.add(db);
-
+			tsi.add(db);
+			tsi = new Table_storage_info();
 			tsi.setStorage_id(idL3);
 			tsi.setFile_format("0");
 			tsi.setStorage_type("1");
@@ -118,109 +116,106 @@ public class ProcessingDataTest {
 			tsi.setStorage_time("0");
 			tsi.setHyren_name("XC_CODE_INFO");
 			tsi.setTable_id(idL3);
-			add1 = tsi.add(db);
-
+			tsi.add(db);
 			Dtab_relation_store drt = new Dtab_relation_store();
 			drt.setData_source(StoreLayerDataSource.DB.getCode());
-
 			drt.setTab_id(idL1);
 			drt.setDsl_id(idL1);
-			int add2 = drt.add(db);
-
+			drt.add(db);
+			drt = new Dtab_relation_store();
+			drt.setData_source(StoreLayerDataSource.DB.getCode());
 			drt.setTab_id(idL2);
 			drt.setDsl_id(idL1);//关系
-			add2 = drt.add(db);
-
+			drt.add(db);
+			drt = new Dtab_relation_store();
+			drt.setData_source(StoreLayerDataSource.DB.getCode());
 			drt.setTab_id(idL3);
 			drt.setDsl_id(idL1);//关系
-			add2 = drt.add(db);
-
-
+			drt.add(db);
+			drt = new Dtab_relation_store();
+			drt.setData_source(StoreLayerDataSource.DB.getCode());
 			Data_store_layer dsl = new Data_store_layer();
 			dsl.setDsl_id(idL1);
 			dsl.setDsl_name("cccc");
 			dsl.setStore_type("1");
 			dsl.setIs_hadoopclient("1");
-			int add3 = dsl.add(db);
-
+			dsl.add(db);
+			dsl = new Data_store_layer();
 			dsl.setDsl_id(idL2);
 			dsl.setDsl_name("cccc111");
 			dsl.setStore_type("1");
 			dsl.setIs_hadoopclient("1");
-			add3 = dsl.add(db);
-
+			dsl.add(db);
 			Data_store_layer_attr dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-1234567890");
 			dsla.setStorage_property_key(StorageTypeKey.database_driver);
 			dsla.setStorage_property_val("org.postgresql.Driver");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
-			int add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-2234567890");
 			dsla.setStorage_property_key(StorageTypeKey.database_driver);
 			dsla.setStorage_property_val("org.postgresql.Driver");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
-			add4 = dsla.add(db);
-
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-1234567891");
 			dsla.setStorage_property_key(StorageTypeKey.jdbc_url);
 			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-2234567891");
 			dsla.setStorage_property_key(StorageTypeKey.jdbc_url);
 			dsla.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-1234567892");
 			dsla.setStorage_property_key(StorageTypeKey.user_name);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-2234567892");
 			dsla.setStorage_property_key(StorageTypeKey.user_name);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-1234567893");
 			dsla.setStorage_property_key(StorageTypeKey.database_pwd);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
-
-			add4 = dsla.add(db);
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-2234567893");
 			dsla.setStorage_property_key(StorageTypeKey.database_pwd);
 			dsla.setStorage_property_val("hrsdxg");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-1234567894");
 			dsla.setStorage_property_key(StorageTypeKey.database_type);
 			dsla.setStorage_property_val("11");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL1);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
+			dsla = new Data_store_layer_attr();
 			dsla.setDsla_id("-2234567894");
 			dsla.setStorage_property_key(StorageTypeKey.database_type);
 			dsla.setStorage_property_val("11");
 			dsla.setIs_file("0");
 			dsla.setDsl_id(idL2);
-			add4 = dsla.add(db);
-
+			dsla.add(db);
 			db.commit();
 		}
 	}
@@ -259,14 +254,14 @@ public class ProcessingDataTest {
 	}
 
 	@Test
-	public void getDataLayer() throws SQLException, IOException {
+	public void getDataLayer() {
 		List<Map<String, Object>> mm = new ArrayList<>();
 		//BufferedWriter bw = new BufferedWriter(new FileWriter("d://bw.txt"));
 		int lineCounter = 0;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			List<String> dataLayer = new ProcessingData() {
 				@Override
-				public void dealLine(Map<String, Object> map) throws Exception {
+				public void dealLine(Map<String, Object> map) {
 					mm.add(map);//在这里，对数据处理，如写文件，清洗、还是组成什么格式给前端，有你来定
 					//dataPro(map, bw);
 				}
@@ -278,11 +273,8 @@ public class ProcessingDataTest {
 		}
 	}
 
-
-	int lineCounter = 0;
 	@Test
-	public void getDataLayerBatch() throws SQLException, IOException {
-		List<Map<String, Object>> mm = new ArrayList<>();
+	public void getDataLayerBatch() throws IOException {
 		BufferedWriter bw = new BufferedWriter(new FileWriter("d://bw.txt"));
 		int lineCounter = 0;
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -292,52 +284,19 @@ public class ProcessingDataTest {
 					dataPro(map, bw);
 				}
 			}.getDataLayer("select * from XC_CODE_INFO ", db);
-			assertThat("不等于0就ok", mm.size(), not(0L));
 			bw.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	/**
-	 * 只允许参考
-	 * @param map
-	 * @param bw
-	 * @throws Exception
-	 */
-	public void dataPro(Map<String, Object> map, BufferedWriter bw) throws Exception {
-
-		lineCounter++;
-		StringBuilder colsb = new StringBuilder();
-		StringBuilder valsb = new StringBuilder();
-		for (Map.Entry<String, Object> m : map.entrySet()) {
-			String key = m.getKey();
-			colsb.append(key).append(",");
-			Object value = m.getValue();
-			valsb.append(value).append(",");
-		}
-		if(lineCounter == 1){
-			colsb.append(System.lineSeparator());
-			bw.write(colsb.toString());
-			bw.flush();
-		}
-		valsb.append(System.lineSeparator());
-		bw.write(valsb.toString());
-		if( lineCounter % 24608 == 0 ) {
-			logger.info("已经处理了 ：" + lineCounter + " 行数据！");
-			bw.flush();
-		}
-	}
-
-
-
 	@Test
-	public void getAllTableIsLayer() throws SQLException {
+	public void getAllTableIsLayer() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer("select * from sys_user a join sys_role b on a.role_id = b.role_id", db);
-			/**
+			/*
 			 * allTableIsLayer.getConnType()会返回四个值
-			 * oneJdbc  只有一个存储层，且直接支持jdbc
+			 * oneJdbc   只有一个存储层，且直接支持jdbc
 			 * moreJdbc  返回多个存储层，且都支持jdbc，可以使用dblink的方式
 			 * oneOther  返回一个存储层，为其他，是什么可以使用allTableIsLayer.getLayerBean().getStore_type() 判断
 			 * moreOther 返回多个存储层，每个存储层什么什么
@@ -361,7 +320,7 @@ public class ProcessingDataTest {
 					"CI_SP_REMARK                                      VARCHAR(512) NULL --备注\n" +
 					");");
 			List<Object[]> para = new ArrayList<>();
-			for (int i = 0; i < 1000000; i++) {
+			for (int i = 0; i < 100; i++) {
 				Object[] aa = new Object[]{"80", "MAN", "数据质量执行方式", "手工", "DqcExecMode"};
 				para.add(aa);
 			}
@@ -398,6 +357,33 @@ public class ProcessingDataTest {
 				assertThat(layerBean.getDsl_id(), is(-1999998876L));
 				assertThat(layerBean.getLayerAttr().get("user_name"), is("hrsdxg"));
 			}
+		}
+	}
+
+	/**
+	 * 只允许参考
+	 */
+	private void dataPro(Map<String, Object> map, BufferedWriter bw) throws Exception {
+
+		lineCounter++;
+		StringBuilder colsb = new StringBuilder();
+		StringBuilder valsb = new StringBuilder();
+		for (Map.Entry<String, Object> m : map.entrySet()) {
+			String key = m.getKey();
+			colsb.append(key).append(",");
+			Object value = m.getValue();
+			valsb.append(value).append(",");
+		}
+		if(lineCounter == 1){
+			colsb.append(System.lineSeparator());
+			bw.write(colsb.toString());
+			bw.flush();
+		}
+		valsb.append(System.lineSeparator());
+		bw.write(valsb.toString());
+		if( lineCounter % 24608 == 0 ) {
+			logger.info("已经处理了 ：" + lineCounter + " 行数据！");
+			bw.flush();
 		}
 	}
 }
