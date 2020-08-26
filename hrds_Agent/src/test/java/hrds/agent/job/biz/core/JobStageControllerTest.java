@@ -38,10 +38,9 @@ public class JobStageControllerTest {
 	 *
 	 * @Param: 无
 	 * @return: 无
-	 *
-	 * */
+	 */
 	@Test
-	public void runJobTestOne(){
+	public void runJobTestOne() {
 		try {
 			buildChainForCollection();
 
@@ -75,10 +74,9 @@ public class JobStageControllerTest {
 	 *
 	 * @Param: 无
 	 * @return: 无
-	 *
-	 * */
+	 */
 	@Test
-	public void runJobTestTwo(){
+	public void runJobTestTwo() {
 		//构建数据，模拟采集的卸数阶段错误，将信息写入文件
 		File file = new File(STATUS_FILE_PATH);
 		JobStatusInfo jobStatusInfo = new JobStatusInfo();
@@ -146,10 +144,9 @@ public class JobStageControllerTest {
 	 *
 	 * @Param: 无
 	 * @return: 无
-	 *
-	 * */
+	 */
 	@Test
-	public void runJobTestThree(){
+	public void runJobTestThree() {
 		//构建数据，模拟采集的状态文件，将信息写入文件
 		File file = new File(STATUS_FILE_PATH);
 		JobStatusInfo jobStatusInfo = new JobStatusInfo();
@@ -222,10 +219,9 @@ public class JobStageControllerTest {
 	 *
 	 * @Param: 无
 	 * @return: 无
-	 *
-	 * */
+	 */
 	@Test
-	public void runJobTestFour(){
+	public void runJobTestFour() {
 		//构建数据，模拟采集的状态文件，将信息写入文件
 		File file = new File(STATUS_FILE_PATH);
 		JobStatusInfo jobStatusInfo = new JobStatusInfo();
@@ -335,11 +331,11 @@ public class JobStageControllerTest {
 	 *
 	 * @Param: 无
 	 * @return: 无
-	 *
-	 * */
+	 */
 	@Test
-	public void runJobTestFive(){
-		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID);
+	public void runJobTestFive() {
+		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH,
+				TABLE_ID, "test");
 		//卸数失败
 		JobStageInterface unloadDataFailed = new DBUnloadDataStageImplFailed();
 		//上传成功
@@ -403,11 +399,10 @@ public class JobStageControllerTest {
 	 *
 	 * @Param: 无
 	 * @return: 无
-	 *
-	 * */
+	 */
 	@Test
-	public void runJobTestSix(){
-		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID);
+	public void runJobTestSix() {
+		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID,"test");
 		//卸数成功
 		JobStageInterface unloadData = new DBUnloadDataStageImplSucceed();
 		//上传成功
@@ -465,7 +460,7 @@ public class JobStageControllerTest {
 		}
 	}
 
-	private StageStatusInfo buildSucceedUnloadStatus(){
+	private StageStatusInfo buildSucceedUnloadStatus() {
 		StageStatusInfo unloadDataStatus = new StageStatusInfo();
 		unloadDataStatus.setStatusCode(RunStatusConstant.SUCCEED.getCode());
 		unloadDataStatus.setJobId(TABLE_ID);
@@ -479,8 +474,8 @@ public class JobStageControllerTest {
 		return unloadDataStatus;
 	}
 
-	private void buildChainForCollection() throws Exception{
-		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID);
+	private void buildChainForCollection() throws Exception {
+		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(STATUS_FILE_PATH, TABLE_ID,"test");
 		//卸数
 		JobStageInterface unloadData = new DBUnloadDataStageImplSucceed();
 		//上传

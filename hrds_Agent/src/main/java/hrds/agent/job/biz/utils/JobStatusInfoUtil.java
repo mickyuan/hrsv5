@@ -27,7 +27,7 @@ public class JobStatusInfoUtil {
 	@Method(desc = "作业开始，获取前一次作业状态", logicStep = "")
 	@Param(desc = "作业状态保存路径", name = "statusFilePath", range = "不可为空")
 	@Return(desc = "作业状态对象", range = "不会为空")
-	public static JobStatusInfo getStartJobStatusInfo(String statusFilePath, String job_id) {
+	public static JobStatusInfo getStartJobStatusInfo(String statusFilePath, String job_id, String table_name) {
 		File file = new File(statusFilePath);
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatus;
@@ -44,7 +44,7 @@ public class JobStatusInfoUtil {
 			}
 			//2.设置作业ID、开始日期和开始时间
 			jobStatus = new JobStatusInfo();
-			jobStatus.setJobId(job_id);
+			jobStatus.setJobId(table_name + "_" + job_id);
 			jobStatus.setRunStatus(RunStatusConstant.RUNNING.getCode());
 			jobStatus.setStartDate(DateUtil.getSysDate());
 			jobStatus.setStartTime(DateUtil.getSysTime());
@@ -60,52 +60,57 @@ public class JobStatusInfoUtil {
 			if (jobStatusInfo.getUnloadDataStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getUnloadDataStatus().getStatusCode()) {
 				if (jobStatusInfo.getUnloadDataStatus() == null) {
-					throw new AppSystemException("卸数执行失败: 请查看日志获取异常信息");
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：卸数执行失败: 请查看日志获取异常信息");
 				} else {
-					throw new AppSystemException("卸数执行失败:" + jobStatusInfo.getUnloadDataStatus().getMessage());
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：卸数执行失败:" + jobStatusInfo.
+							getUnloadDataStatus().getMessage());
 				}
 			} else {
-				log.info("卸数执行成功");
+				log.info(jobStatusInfo.getJobId() + "：卸数执行成功");
 			}
 			if (jobStatusInfo.getUploadStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getUploadStatus().getStatusCode()) {
 				if (jobStatusInfo.getUploadStatus() == null) {
-					throw new AppSystemException("上传执行失败: 请查看日志获取异常信息");
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：上传执行失败: 请查看日志获取异常信息");
 				} else {
-					throw new AppSystemException("上传执行失败:" + jobStatusInfo.getUploadStatus().getMessage());
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：上传执行失败:" + jobStatusInfo.
+							getUploadStatus().getMessage());
 				}
 			} else {
-				log.info("上传执行成功");
+				log.info(jobStatusInfo.getJobId() + "：上传执行成功");
 			}
 			if (jobStatusInfo.getDataLodingStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getDataLodingStatus().getStatusCode()) {
 				if (jobStatusInfo.getDataLodingStatus() == null) {
-					throw new AppSystemException("加载执行失败: 请查看日志获取异常信息");
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：加载执行失败: 请查看日志获取异常信息");
 				} else {
-					throw new AppSystemException("加载执行失败:" + jobStatusInfo.getDataLodingStatus().getMessage());
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：加载执行失败:" + jobStatusInfo.
+							getDataLodingStatus().getMessage());
 				}
 			} else {
-				log.info("加载执行成功");
+				log.info(jobStatusInfo.getJobId() + "：加载执行成功");
 			}
 			if (jobStatusInfo.getCalIncrementStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getCalIncrementStatus().getStatusCode()) {
 				if (jobStatusInfo.getCalIncrementStatus() == null) {
-					throw new AppSystemException("增量执行失败: 请查看日志获取异常信息");
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：增量执行失败: 请查看日志获取异常信息");
 				} else {
-					throw new AppSystemException("增量执行失败:" + jobStatusInfo.getCalIncrementStatus().getMessage());
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：增量执行失败:" + jobStatusInfo.
+							getCalIncrementStatus().getMessage());
 				}
 			} else {
-				log.info("增量执行成功");
+				log.info(jobStatusInfo.getJobId() + "：增量执行成功");
 			}
 			if (jobStatusInfo.getDataRegistrationStatus() == null || RunStatusConstant.FAILED.getCode()
 					== jobStatusInfo.getDataRegistrationStatus().getStatusCode()) {
 				if (jobStatusInfo.getDataRegistrationStatus() == null) {
-					throw new AppSystemException("登记执行失败: 请查看日志获取异常信息");
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：登记执行失败: 请查看日志获取异常信息");
 				} else {
-					throw new AppSystemException("登记执行失败:" + jobStatusInfo.getDataRegistrationStatus().getMessage());
+					throw new AppSystemException(jobStatusInfo.getJobId() + "：登记执行失败:" + jobStatusInfo.
+							getDataRegistrationStatus().getMessage());
 				}
 			} else {
-				log.info("登记执行成功");
+				log.info(jobStatusInfo.getJobId() + "：登记执行成功");
 			}
 		}
 	}

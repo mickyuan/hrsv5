@@ -20,8 +20,8 @@ import java.util.List;
 public class DataBaseJobImpl implements JobInterface {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
 
-	private CollectTableBean collectTableBean;
-	private SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
+	private final SourceDataConfBean sourceDataConfBean;
 
 	public DataBaseJobImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		this.sourceDataConfBean = sourceDataConfBean;
@@ -42,7 +42,7 @@ public class DataBaseJobImpl implements JobInterface {
 				get(collectTableBean.getSelectFileFormat()) + File.separator + Constant.JOBFILENAME;
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
-				collectTableBean.getTable_id());
+				collectTableBean.getTable_id(), collectTableBean.getTable_name());
 		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，
 		// 后期可改造为按照配置构建采集阶段
 		JobStageInterface unloadData = new DBUnloadDataStageImpl(sourceDataConfBean, collectTableBean);

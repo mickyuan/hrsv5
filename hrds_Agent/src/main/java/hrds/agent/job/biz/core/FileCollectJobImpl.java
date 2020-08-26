@@ -36,9 +36,9 @@ public class FileCollectJobImpl implements JobInterface {
 	//打印日志
 	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
 	//文件采集需要的参数实体bean
-	private FileCollectParamBean fileCollectParamBean;
+	private final FileCollectParamBean fileCollectParamBean;
 	//源文件设置表
-	private File_source file_source;
+	private final File_source file_source;
 
 
 	/**
@@ -81,7 +81,8 @@ public class FileCollectJobImpl implements JobInterface {
 		String statusFilePath = Constant.JOBINFOPATH + fcs_id
 				+ File.separator + file_source_id + File.separator + Constant.JOBFILENAME;
 		//JobStatusInfo对象，表示一个作业的状态
-		JobStatusInfo jobStatus = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath, file_source_id);
+		JobStatusInfo jobStatus = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath, file_source_id,
+				"file_collect");
 		//3.创建mapDB对象，用于检测文件夹下文件是否被采集过
 		try (MapDBHelper mapDBHelper = new MapDBHelper(Constant.MAPDBPATH + fcs_id + File.separator
 				+ file_source_id, file_source_id + ".db")) {
