@@ -2,7 +2,6 @@ package hrds.b.biz.agent.dbagentconf.tableconf;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -59,7 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.math.exception.ZeroException;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
@@ -102,7 +101,6 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> tableCycle = getTableCycle(itemMap.get("table_id"));
 				itemMap.put("interval_time", tableCycle.get("interval_time"));
 				itemMap.put("over_date", tableCycle.get("over_date"));
-				itemMap.put("tc_id", tableCycle.get("tc_id"));
 			});
 
 		// 数据可访问权限处理方式
@@ -224,9 +222,9 @@ public class CollTbConfStepAction extends BaseAction {
 		nullable = true,
 		valueIfNull = "")
 	@Param(name = "colSetId", desc = "数据库设置ID,源系统数据库设置表主键,数据库对应表外键", range = "不为空")
-	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空,结构如{table1:{interval_time:xxx,over_date:xxx,tc_id:xxx}}", nullable = true)
+	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空", isBean = true, nullable = true)
 	// 使用SQL抽取数据页面，保存按钮后台方法
-	public long saveAllSQL(String tableInfoArray, long colSetId, String tableColumn, String tableCycles) {
+	public long saveAllSQL(String tableInfoArray, long colSetId, String tableColumn, Table_cycle[] tableCycles) {
 
 		// 1、根据databaseId去数据库中查询该数据库采集任务是否存在
 		long dbSetCount =
@@ -411,7 +409,22 @@ public class CollTbConfStepAction extends BaseAction {
 //					}
 				}
 				if (map.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
-					saveTableCycle(tableCycles, tableInfo);
+					for (Table_cycle tableCycle : tableCycles) {
+						if (tableCycle.getTc_id() != null) {
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							try {
+								tableCycle.update(Dbo.db());
+							} catch (Exception e) {
+								if (!(e instanceof EntityDealZeroException)) {
+									CheckParam.throwErrorMsg("更新表(%s)的采集周期信息失败", tableInfo.getTable_name());
+								}
+							}
+						} else {
+							tableCycle.setTc_id(PrimayKeyGener.getNextId());
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							tableCycle.add(Dbo.db());
+						}
+					}
 				}
 			}
 		}
@@ -604,7 +617,6 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> tableCycle = getTableCycle(itemMap.get("table_id"));
 				itemMap.put("interval_time", tableCycle.get("interval_time"));
 				itemMap.put("over_date", tableCycle.get("over_date"));
-				itemMap.put("tc_id", tableCycle.get("tc_id"));
 			});
 
 		// 数据可访问权限处理方式
@@ -1006,10 +1018,10 @@ public class CollTbConfStepAction extends BaseAction {
 		desc = "本次接口访问被删除的表ID组成的json字符串",
 		range = "如果本次访问没有被删除的接口，该参数可以不传",
 		nullable = true)
-	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空,结构如{table1:{interval_time:xxx,over_date:xxx,tc_id:xxx}}", nullable = true)
+	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空", isBean = true, nullable = true)
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
 	public long saveCollTbInfo(
-		String tableInfoString, long colSetId, String collTbConfParamString, String delTbString, String tableCycles) {
+		String tableInfoString, long colSetId, String collTbConfParamString, String delTbString, Table_cycle[] tableCycles) {
 
 		Map<String, Object> resultMap =
 			Dbo.queryOneObject(
@@ -1186,8 +1198,23 @@ public class CollTbConfStepAction extends BaseAction {
 					saveTableColumnInfoForUpdate(tableInfo, tbConfParams.get(i).getCollColumnString());
 				}
 
-				if (resultMap.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
-					saveTableCycle(tableCycles, tableInfo);
+				if (resultMap.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode()) && tableCycles != null) {
+					for (Table_cycle tableCycle : tableCycles) {
+						if (tableCycle.getTc_id() != null) {
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							try {
+								tableCycle.update(Dbo.db());
+							} catch (Exception e) {
+								if (!(e instanceof EntityDealZeroException)) {
+									CheckParam.throwErrorMsg("更新表(%s)的采集周期信息失败", tableInfo.getTable_name());
+								}
+							}
+						} else {
+							tableCycle.setTc_id(PrimayKeyGener.getNextId());
+							tableCycle.setTable_id(tableInfo.getTable_id());
+							tableCycle.add(Dbo.db());
+						}
+					}
 				}
 			}
 		}
@@ -1199,37 +1226,6 @@ public class CollTbConfStepAction extends BaseAction {
 			}
 		}
 		return colSetId;
-	}
-
-	private void saveTableCycle(String tableCycles, Table_info tableInfo) {
-		if (StringUtils.isNotBlank(tableCycles)) {
-			JSONObject jsonObject = JSONObject.parseObject(tableCycles);
-			if (jsonObject.getJSONObject(tableInfo.getTable_name()) != null
-				&& StringUtils.isNotBlank(jsonObject.getJSONObject(tableInfo.getTable_name()).getString("over_date"))) {
-
-				Table_cycle tableCycle = JsonUtil
-					.toObjectSafety(jsonObject.get(tableInfo.getTable_name()).toString(), Table_cycle.class)
-					.orElseThrow(() -> new BusinessException("解析表" + tableInfo.getTable_name() + "的采集周期信息失败"));
-
-				Validator
-					.notBlank(tableCycle.getOver_date(), "采集表" + tableInfo.getTable_name() + "的采集周期结束日期不能为空");
-
-				tableCycle.setTable_id(tableInfo.getTable_id());
-				if (tableCycle.getTc_id() != null && tableCycle.getTc_id() != 0) {
-					try {
-						tableCycle.update(Dbo.db());
-					} catch (Exception e) {
-						if (!(e instanceof EntityDealZeroException)) {
-							CheckParam.throwErrorMsg(e.getMessage());
-						}
-					}
-				} else {
-					tableCycle.setTc_id(PrimayKeyGener.getNextId());
-					tableCycle.setTable_id(tableInfo.getTable_id());
-					tableCycle.add(Dbo.db());
-				}
-			}
-		}
 	}
 
 	@Method(desc = "根据colSetId去数据库中查出DB连接信息", logicStep = "1、根据colSetId和userId去数据库中查出DB连接信息")
@@ -1321,7 +1317,6 @@ public class CollTbConfStepAction extends BaseAction {
 				map.put("collectState", true);
 				map.put("interval_time", "");
 				map.put("over_date", "");
-				map.put("tc_id", "");
 				results.add(map);
 			} else {
 				List<Object> tableStateList = checkTableCollectState(colSetId, tableName);
@@ -1334,7 +1329,6 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> tableCycle = getTableCycle(tableResult.get("table_id"));
 				tableResult.put("interval_time", tableCycle.get("interval_time"));
 				tableResult.put("over_date", tableCycle.get("over_date"));
-				tableResult.put("tc_id", tableCycle.get("tc_id"));
 				results.add(tableResult);
 			}
 		}
