@@ -21,6 +21,7 @@ import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.dbagentconf.startwayconf.StartWayConfAction;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.AgentStatus;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DataBaseCode;
@@ -310,7 +311,7 @@ public class ImportExcelAction extends BaseAction {
 
 		if (!queryResult.isPresent()) {
 			agent_info.setAgent_id(PrimayKeyGener.getNextId());
-			agent_info.setAgent_status(IsFlag.Fou.getCode());
+			agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
 			agent_info.setCreate_date(DateUtil.getSysDate());
 			agent_info.setCreate_time(DateUtil.getSysTime());
 			if (isUpload) {
