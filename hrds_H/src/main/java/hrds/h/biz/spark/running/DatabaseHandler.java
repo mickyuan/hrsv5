@@ -14,14 +14,14 @@ import static hrds.commons.utils.Constant.*;
  * @Date:
  * @Since jdk1.8
  */
-public class DatabaseHandle extends Handle {
+public class DatabaseHandler extends Handler {
 
     private final SparkHandleArgument.DatabaseArgs databaseArgs;
     private final Properties connProperties = new Properties();
 
-    DatabaseHandle(SparkSession spark, Dataset<Row> dataset,
-                   SparkHandleArgument.DatabaseArgs databaseArgs) {
-        super(spark, dataset, databaseArgs.getTableName());
+    DatabaseHandler(SparkSession spark, Dataset<Row> dataset,
+                    SparkHandleArgument.DatabaseArgs databaseArgs) {
+        super(spark, dataset, databaseArgs);
         this.databaseArgs = databaseArgs;
         initProperties();
     }

@@ -158,5 +158,24 @@ public class SparkHandleArgument {
      */
     public static class HiveArgs extends SparkHandleArgument {
 
+        String columns;
+        String database;
+
+        public String getDatabase() {
+            return database;
+        }
+
+        public void setDatabase(String database) {
+            this.database = database;
+        }
+
+        public String getColumns() {
+            return columns;
+        }
+
+        public void setColumns(String columns) {
+            this.columns = columns;
+        }
+
     }
 }

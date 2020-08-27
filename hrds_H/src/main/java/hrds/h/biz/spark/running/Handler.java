@@ -11,18 +11,22 @@ import org.apache.spark.sql.SparkSession;
  * @description: TODO
  * @date 20-4-13下午6:00
  */
-public abstract class Handle {
+public abstract class Handler {
     SparkSession spark;
     Dataset<Row> dataset;
+    SparkHandleArgument args;
     String tableName;
 
-    Handle(SparkSession spark, Dataset<Row> dataset, String tableName) {
+    Handler(SparkSession spark, Dataset<Row> dataset, SparkHandleArgument args) {
         this.spark = spark;
         this.dataset = dataset;
-        this.tableName = tableName;
+        this.args = args;
+        this.tableName = args.getTableName();
     }
 
     public abstract void insert();
 
     public abstract void increment();
+
+    public SparkHandleArgument getArgs(){ return args;}
 }

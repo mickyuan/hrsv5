@@ -60,7 +60,7 @@ public class Utils {
 						.append("(").append(fieldLength).append(")");
 			}
 			//如果选择了主键，则添加主键
-			if (additionalAttrs != null && additionalAttrs.contains(fieldName)) {
+			if (isDatabase && additionalAttrs != null && additionalAttrs.contains(fieldName)) {
 				columnTypes.append(" primary key");
 			}
 
@@ -246,7 +246,7 @@ public class Utils {
 		} else if (db.getDbtype() == Dbtype.TERADATA) {
 			renameSql = "RENAME TABLE " + srcTableName + " TO " + destTableName;
 		} else {
-			renameSql = "ALTER TABLE " + srcTableName + " REANME TO " + destTableName;
+			renameSql = "ALTER TABLE " + srcTableName + " RENAME TO " + destTableName;
 		}
 		db.execute(renameSql);
 	}
