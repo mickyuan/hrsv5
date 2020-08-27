@@ -31,7 +31,6 @@ public class HiveLoader extends AbstractRealLoader {
     protected HiveLoader(MarketConf conf) {
         super(conf);
         initArgs();
-        tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
         createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, false);
         //验证啥的
         ConfigReader.getConfiguration();
@@ -43,7 +42,7 @@ public class HiveLoader extends AbstractRealLoader {
         hiveArgs.setTableName(tableName);
         hiveArgs.setMultipleInput(isMultipleInput);
         hiveArgs.setDatatableId(datatableId);
-        hiveArgs.setColumns(columns());
+        hiveArgs.setColumns(Utils.columns(conf.getDatatableFields()));
         hiveArgs.setDatabase(tableLayerAttrs.get(StorageTypeKey.database_name));
     }
 
@@ -65,7 +64,7 @@ public class HiveLoader extends AbstractRealLoader {
         try (DatabaseWrapper db = getHiveDb()) {
             String replaceTempTable = tableName + "_hyren_r";
             Utils.dropTable(db, replaceTempTable);
-            createHiveTable(db,replaceTempTable);
+            createHiveTable(db, replaceTempTable);
             hiveArgs.setOverWrite(false);
             hiveArgs.setTableName(replaceTempTable);
             SparkJobRunner.runJob(hiveArgs);
@@ -80,13 +79,8 @@ public class HiveLoader extends AbstractRealLoader {
         SparkJobRunner.runJob(hiveArgs);
     }
 
-    private String columns() {
-        return conf.getDatatableFields().stream().
-                map(Datatable_field_info::getField_en_name).
-                collect(Collectors.joining(","));
-    }
-
     private DatabaseWrapper getHiveDb() {
+        tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
         return ConnectionTool.getDBWrapper(tableLayerAttrs);
     }
 
