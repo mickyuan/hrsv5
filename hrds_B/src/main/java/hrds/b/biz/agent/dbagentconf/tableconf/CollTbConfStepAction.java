@@ -1198,7 +1198,7 @@ public class CollTbConfStepAction extends BaseAction {
 					saveTableColumnInfoForUpdate(tableInfo, tbConfParams.get(i).getCollColumnString());
 				}
 
-				if (resultMap.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode())) {
+				if (resultMap.get("collect_type").equals(CollectType.ShuJuKuCaiJi.getCode()) && tableCycles != null) {
 					for (Table_cycle tableCycle : tableCycles) {
 						if (tableCycle.getTc_id() != null) {
 							tableCycle.setTable_id(tableInfo.getTable_id());
