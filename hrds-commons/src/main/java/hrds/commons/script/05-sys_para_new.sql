@@ -33,6 +33,7 @@ INSERT INTO sys_para VALUES ('211', 'agentConfigPath', '/home/hyshf/HRSDATA/agen
 -- 接口配置
 INSERT INTO sys_para VALUES ('301', 'restAuthority', '', 'hrds_g.properties', '对于SQL的字段是否使用字段验证');
 INSERT INTO sys_para VALUES ('302', 'restFilePath', '/hyren/HRSDATA/bigdata/restFilePath', 'hrds_g.properties', '接口数据文件的存放路径');
+INSERT INTO sys_para VALUES ('303', 'isRecordInterfaceLog', '1', 'hrds_g.properties','接口使用日志是否记录标志,1：是，0：否');
 -- 集市&加工配置
 INSERT INTO sys_para VALUES ('401', 'load.executor.count', '2', 'hrds_h.properties', '集市并发线程数量，当isconcurrent配置为0时，此配置生效，区间在1~4');
 INSERT INTO sys_para VALUES ('402', 'mpp.batch.size', '5000', 'hrds_h.properties', 'spark通过jdbc写入到数据库，单批次提交的数量');

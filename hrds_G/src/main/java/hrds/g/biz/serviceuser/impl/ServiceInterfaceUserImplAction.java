@@ -22,6 +22,7 @@ import hrds.commons.entity.*;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.g.biz.bean.*;
 import hrds.g.biz.commons.FileDownload;
@@ -49,6 +50,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		implements ServiceInterfaceUserDefine {
 
 	private static final Logger logger = LogManager.getLogger();
+	// 接口使用日志是否记录标志,1：是，0：否
+	private static final String isRecordInterfaceLog = PropertyParaValue.getString("isRecordInterfaceLog", "1");
 
 	@Method(desc = "获取token值",
 			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -85,12 +88,14 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
 		// 4.正常响应信息，返回有使用权限的表
-		Map<String, Object> responseInfo = StateType.getResponseInfo(StateType.NORMAL.getCode(),
+		responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
 				InterfaceManager.getTableList(userByToken.getUser_id()));
 		// 5.记录接口使用日志
-		insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-				responseInfo.get("status").toString());
-		return responseInfo;
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
+		return responseMap;
 	}
 
 	@Method(desc = "单表普通查询", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -130,8 +135,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				singleTable.getAsynType(), singleTable.getBackurl(), singleTable.getFilepath(),
 				singleTable.getFilename(), responseMap);
 		// 6.记录接口使用日志
-		insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-				responseMap.get("status").toString());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
 		return responseMap;
 	}
 
@@ -165,8 +172,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 4.根据表名称删除表数据
 		responseMap = InterfaceCommon.deleteTableDataByTableName(Dbo.db(), tableData, userByToken.getUser_id());
 		// 5.记录接口使用日志
-		insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-				responseMap.get("status").toString());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
 		return responseMap;
 	}
 
@@ -232,8 +241,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			}
 			// 9.返回接口响应信息
 			// 10.记录接口使用日志信息
-			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-					responseMap.get("status").toString());
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+				insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+						responseMap.get("status").toString());
+			}
 			return StateType.getResponseInfo(StateType.NORMAL.getCode(), res);
 		} else {
 			// 11.没有表使用权限
@@ -279,8 +290,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			}
 			// 6.返回表列结构json信息
 			// 7.记录接口使用日志信息
-			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-					responseMap.get("status").toString());
+			if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+				insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+						responseMap.get("status").toString());
+			}
 			return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
 		} catch (SQLException e) {
 			logger.info(e);
@@ -411,8 +424,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				assembler.params());
 		// 14.获取摘要 fixme 待开发
 		// 15.记录接口使用日志信息
-		insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-				responseMap.get("status").toString());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
 		// 16.判断文件属性信息是否为空，为空返回空集合，否则返回文件属性信息集合
 		if (fileAttrList.isEmpty()) {
 			return StateType.getResponseInfo(StateType.NORMAL.getCode(), new ArrayList<>());
@@ -517,8 +532,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				sqlSearch.getAsynType(), sqlSearch.getBackurl(), sqlSearch.getFilepath(),
 				sqlSearch.getFilename(), responseMap);
 		// 18.记录接口使用日志信息
-		insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-				responseMap.get("status").toString());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
 		return responseMap;
 	}
 
@@ -547,8 +564,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				HttpServletResponse response = fileDownload.downLoadFile(uuid, user_id);
 				if (response.getStatus() < 300) {
 					// 记录接口使用日志信息
-					insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-							responseMap.get("status").toString());
+					if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+						insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+								responseMap.get("status").toString());
+					}
 					return StateType.getResponseInfo(StateType.NORMAL.getCode(), "下载成功");
 				} else {
 					return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), "下载失败");
@@ -617,8 +636,10 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			}
 		}
 		// 记录接口使用日志信息
-		insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-				responseMap.get("status").toString());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
 		// 8.封装表英文名并返回接口响应信息
 		responseMap.put("enTable", rowKeySearch.getEnTable());
 		return responseMap;
