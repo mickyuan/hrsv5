@@ -430,7 +430,7 @@ public class StartWayConfAction extends BaseAction {
 			}
 
 			// 作业的程序路径
-			etl_job_def.setPro_dic(pro_dic + File.separator);
+			etl_job_def.setPro_dic(pro_dic.endsWith("/") ? pro_dic : pro_dic + File.separator);
 			// 作业的日志程序路径
 			etl_job_def.setLog_dic(Constant.HYRENLOG);
 			// 默认作业都是有效的
