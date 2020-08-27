@@ -101,6 +101,7 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> tableCycle = getTableCycle(itemMap.get("table_id"));
 				itemMap.put("interval_time", tableCycle.get("interval_time"));
 				itemMap.put("over_date", tableCycle.get("over_date"));
+				itemMap.put("tc_id", tableCycle.get("tc_id"));
 			});
 
 		// 数据可访问权限处理方式
@@ -617,6 +618,7 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> tableCycle = getTableCycle(itemMap.get("table_id"));
 				itemMap.put("interval_time", tableCycle.get("interval_time"));
 				itemMap.put("over_date", tableCycle.get("over_date"));
+				itemMap.put("tc_id", tableCycle.get("tc_id"));
 			});
 
 		// 数据可访问权限处理方式
@@ -1317,6 +1319,7 @@ public class CollTbConfStepAction extends BaseAction {
 				map.put("collectState", true);
 				map.put("interval_time", "");
 				map.put("over_date", "");
+				map.put("tc_id", "");
 				results.add(map);
 			} else {
 				List<Object> tableStateList = checkTableCollectState(colSetId, tableName);
@@ -1329,6 +1332,7 @@ public class CollTbConfStepAction extends BaseAction {
 				Map<String, Object> tableCycle = getTableCycle(tableResult.get("table_id"));
 				tableResult.put("interval_time", tableCycle.get("interval_time"));
 				tableResult.put("over_date", tableCycle.get("over_date"));
+				tableResult.put("tc_id", tableCycle.get("tc_id"));
 				results.add(tableResult);
 			}
 		}
