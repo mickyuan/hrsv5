@@ -71,7 +71,7 @@ public class DataTableUtil {
 				throw new BusinessException("表登记信息已经不存在!");
 			}
 			table_id = table_info.get("table_id").toString();
-			table_name = table_info.get("table_name").toString();
+			table_name = table_info.get("hyren_name").toString();
 			table_ch_name = table_info.get("table_ch_name").toString();
 			create_date = table_info.get("original_update_date").toString();
 		} else if (dataSourceType == DataSourceType.DPL) {
