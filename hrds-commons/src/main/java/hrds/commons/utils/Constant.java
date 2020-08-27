@@ -211,10 +211,10 @@ public class Constant {
 	 * 列默认清洗顺序
 	 */
 	public static final JSONObject DATABASE_CLEAN = new JSONObject(true);
-
 	/*
 	 * 数据库抽取卸数下来文件格式对应路径的关系
 	 */
+
 	static {
 		fileFormatMap.put(FileFormat.FeiDingChang.getCode(), "NONFIXEDFILE");
 		fileFormatMap.put(FileFormat.DingChang.getCode(), "FIXEDFILE");
@@ -270,4 +270,7 @@ public class Constant {
 
 	//hive映射HBase的rowkey的列名
 	public static final String HIVEMAPPINGROWKEY = "rowkey_hyren";
+
+	//自定义静态常量
+	public static final String CUSTOMIZE = "customize";
 }
