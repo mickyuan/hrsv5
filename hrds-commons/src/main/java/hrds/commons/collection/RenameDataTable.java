@@ -67,19 +67,19 @@ public class RenameDataTable {
 
 	@Method(desc = "根据表名重命名存储层下的数表", logicStep = "根据表名重命名存储层下的数表")
 	@Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
-	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
+	@Param(name = "intoLayerBean", desc = "LayerBean对象", range = "LayerBean对象")
 	@Param(name = "operation_type", desc = "操作类型 remove:删除,restore:恢复,customize:自定义重命名表", range = "String了类型")
 	@Param(name = "tableSpace", desc = "表空间", range = "String类型")
 	@Param(name = "tableName", desc = "需要重命名的表名", range = "String类型")
-	public static void renameTableByDataLayer(DatabaseWrapper db, LayerBean layerBean, String operation_type,
+	public static void renameTableByDataLayer(DatabaseWrapper db, LayerBean intoLayerBean, String operation_type,
 	                                          String tableSpace, String srcTableName, String destTableName) {
-		try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, layerBean.getDsl_id())) {
+		try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, intoLayerBean.getDsl_id())) {
 			//设置无效表名
 			String invalid_table_name = Constant.DQC_INVALID_TABLE + srcTableName;
 			//初始化重命名sql
 			String alterTableNameSQL;
 			//获取当前操作数据层的数据层类型
-			Store_type store_type = Store_type.ofEnumByCode(layerBean.getStore_type());
+			Store_type store_type = Store_type.ofEnumByCode(intoLayerBean.getStore_type());
 			//set_invalid:设置无效(重命名为带无效标签的表名)
 			if (operation_type.equals(Constant.DM_SET_INVALID_TABLE)) {
 				alterTableNameSQL = getAlterTableNameSQL(store_type, dbDataConn, tableSpace, srcTableName, invalid_table_name);
