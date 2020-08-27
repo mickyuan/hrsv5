@@ -1007,19 +1007,26 @@ public class ImportExcelAction extends BaseAction {
 			StartWayConfAction startWayConfAction = new StartWayConfAction();
 			List<Map<String, Object>> previewJob = startWayConfAction.getPreviewJob(database_id);
 			List<Etl_job_def> jobDefList = new ArrayList<>();
+			List<Object> ded_id = new ArrayList<>();
+			;
 			previewJob.forEach(itemMap -> {
 				Etl_job_def etl_job_def = JSONObject
 					.toJavaObject(JSON.parseObject(JSON.toJSONString(itemMap)), Etl_job_def.class);
-				etl_job_def.setEtl_sys_cd(etl_sys_cd);
-				etl_job_def.setSub_sys_cd(sub_sys_cd);
-				etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
-				etl_job_def.setPro_name(Constant.SHELLCOMMAND);
-				etl_job_def.setDisp_type(Dispatch_Type.TPLUS0.getCode());
-				etl_job_def.setDisp_time(DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()).toString());
-				jobDefList.add(etl_job_def);
+				long countNum = Dbo.queryNumber("SELECT COUNT(1) FROM " + Etl_job_def.TableName
+					+ " WHERE etl_job = ? AND etl_sys_cd = ?", etl_job_def.getEtl_job(), etl_sys_cd)
+					.orElseThrow(() -> new BusinessException("SQL错误"));
+				if (countNum == 0) {
+					etl_job_def.setEtl_sys_cd(etl_sys_cd);
+					etl_job_def.setSub_sys_cd(sub_sys_cd);
+					etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
+					etl_job_def.setPro_name(Constant.SHELLCOMMAND);
+					etl_job_def.setDisp_type(Dispatch_Type.TPLUS0.getCode());
+					etl_job_def.setDisp_time(DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()).toString());
+					jobDefList.add(etl_job_def);
+					ded_id.add(itemMap.get("ded_id"));
+				}
 			});
 
-			List<Object> ded_id = previewJob.stream().map(item -> item.get("ded_id")).collect(Collectors.toList());
 			String ded_arr = StringUtils.join(ded_id, "^");
 			startWayConfAction.saveJobDataToDatabase(database_id, source_id, etl_sys_cd, sub_sys_cd, pro_dic, log_dic,
 				jobDefList.toArray(new Etl_job_def[jobDefList.size()]), ded_arr, "");

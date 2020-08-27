@@ -380,18 +380,18 @@ public class StartWayConfAction extends BaseAction {
 		}
 
 		// 删除当前任务的全部作业信息
-		Dbo.execute(
-			"DELETE FROM "
-				+ Etl_job_def.TableName
-				+ " WHERE etl_job in (SELECT t2.etl_job from "
-				+ Take_relation_etl.TableName
-				+ " t1 JOIN "
-				+ Etl_job_def.TableName
-				+ " t2 ON t1.etl_job = t2.etl_job WHERE t1.etl_sys_cd = t2.etl_sys_cd AND t1.sub_sys_cd = t2.sub_sys_cd AND t1.database_id =  ?)",
-			colSetId);
-
+//		Dbo.execute(
+//			"DELETE FROM "
+//				+ Etl_job_def.TableName
+//				+ " WHERE etl_job in (SELECT t2.etl_job from "
+//				+ Take_relation_etl.TableName
+//				+ " t1 JOIN "
+//				+ Etl_job_def.TableName
+//				+ " t2 ON t1.etl_job = t2.etl_job WHERE t1.etl_sys_cd = t2.etl_sys_cd AND t1.sub_sys_cd = t2.sub_sys_cd AND t1.database_id =  ?)",
+//			colSetId);
+		pro_dic = pro_dic.endsWith("/") ? pro_dic : pro_dic + File.separator;
 		// 检查作业系统参数的作业程序目录
-		EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), etl_sys_cd, Constant.PARA_HYRENBIN, pro_dic + File.separator);
+		EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), etl_sys_cd, Constant.PARA_HYRENBIN, pro_dic);
 
 		// 检查作业系统参数的作业日志是否存在
 		EtlJobUtil.setDefaultEtlParaConf(Dbo.db(), etl_sys_cd, Constant.PARA_HYRENLOG, log_dic);
@@ -430,7 +430,7 @@ public class StartWayConfAction extends BaseAction {
 			}
 
 			// 作业的程序路径
-			etl_job_def.setPro_dic(pro_dic.endsWith("/") ? pro_dic : pro_dic + File.separator);
+			etl_job_def.setPro_dic(pro_dic);
 			// 作业的日志程序路径
 			etl_job_def.setLog_dic(Constant.HYRENLOG);
 			// 默认作业都是有效的
