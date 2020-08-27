@@ -157,7 +157,6 @@ public class MarketVersionManageAction extends BaseAction {
 			});
 			dataTableStructureInfoMap.put(version_date, dfi_map_s);
 		});
-//        System.out.println(JsonUtil.toJson(dataTableStructureInfoMap));
 		return dataTableStructureInfoMap;
 	}
 
@@ -211,7 +210,6 @@ public class MarketVersionManageAction extends BaseAction {
 			sql_version_info_map.put(version_date, current_version_info_map);
 		}
 		//处理获取的版本数据,取不同版本字段信息的并集
-//        System.out.println(JsonUtil.toJson(sql_version_info_map));
 		//初始化数据表Mapping版本数据信息列表
 //        List<Map<String, Object>> dataTableMappingInfos = new ArrayList<>();
 		return sql_version_info_map;
@@ -351,7 +349,6 @@ public class MarketVersionManageAction extends BaseAction {
 			});
 			dataTableStructureInfoMap.put(version_date, dfi_map_s);
 		});
-		System.out.println(JsonUtil.toJson(dataTableStructureInfoMap));
 		return dataTableStructureInfoMap;
 	}
 }
