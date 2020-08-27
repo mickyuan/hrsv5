@@ -1118,7 +1118,9 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public void getDataBySQL(String querysql, String sqlparameter) {
+	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter) {
+		//初始化查询结果集
+		List<Map<String, Object>> dataBySQL_rs = new ArrayList<>();
 		//1.处理SQL
 		try {
 			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql();
@@ -1149,6 +1151,7 @@ public class MarketInfoAction extends BaseAction {
 				new ProcessingData() {
 					@Override
 					public void dealLine(Map<String, Object> map) {
+						dataBySQL_rs.add(map);
 					}
 				}.getPageDataLayer(querysql, db, 1, 10);
 			}
@@ -1156,6 +1159,7 @@ public class MarketInfoAction extends BaseAction {
 			logger.info(e.getMessage());
 			throw e;
 		}
+		return dataBySQL_rs;
 	}
 
 	@Method(desc = "根据数据表ID,获取数据库类型，获取选中数据库的附加属性字段",
@@ -1218,7 +1222,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 			//如果druid解析错误 并且没有返回信息 说明sql存在问题 用获取sql查询结果的方法返回错误信息
 			else {
-				getDataBySQL(querysql, sqlparameter);
+				List<Map<String, Object>> dataBySQL = getDataBySQL(querysql, sqlparameter);
 			}
 		}
 		String targetfield_type;
