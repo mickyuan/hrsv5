@@ -23,45 +23,104 @@ import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.*;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.JobExecuteState;
+import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.SqlEngine;
+import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.StoreLayerDataSource;
+import hrds.commons.codes.Store_type;
+import hrds.commons.codes.TableLifeCycle;
+import hrds.commons.codes.TableStorage;
 import hrds.commons.codes.fdCode.WebCodesItem;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_added;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Data_store_reg;
+import hrds.commons.entity.Datatable_field_info;
+import hrds.commons.entity.Dcol_relation_store;
+import hrds.commons.entity.Dm_category;
+import hrds.commons.entity.Dm_datatable;
+import hrds.commons.entity.Dm_datatable_source;
+import hrds.commons.entity.Dm_etlmap_info;
+import hrds.commons.entity.Dm_info;
+import hrds.commons.entity.Dm_operation_info;
+import hrds.commons.entity.Dm_relevant_info;
+import hrds.commons.entity.Dtab_relation_store;
+import hrds.commons.entity.Edw_sparksql_gram;
+import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_sub_sys_list;
+import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.Own_source_field;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_storage_info;
+import hrds.commons.entity.Type_contrast;
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
-import hrds.commons.utils.*;
+import hrds.commons.utils.BeanUtils;
+import hrds.commons.utils.Constant;
+import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.ExcelUtil;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
 import hrds.h.biz.bean.CategoryRelationBean;
+
+import java.awt.Color;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.awt.Color;
-import java.io.*;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
@@ -1059,9 +1118,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter) {
-		//初始化查询结果集
-		List<Map<String, Object>> dataBySQL_rs = new ArrayList<>();
+	public void getDataBySQL(String querysql, String sqlparameter) {
 		//1.处理SQL
 		try {
 			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql();
@@ -1092,7 +1149,6 @@ public class MarketInfoAction extends BaseAction {
 				new ProcessingData() {
 					@Override
 					public void dealLine(Map<String, Object> map) {
-						dataBySQL_rs.add(map);
 					}
 				}.getPageDataLayer(querysql, db, 1, 10);
 			}
@@ -1100,7 +1156,6 @@ public class MarketInfoAction extends BaseAction {
 			logger.info(e.getMessage());
 			throw e;
 		}
-		return dataBySQL_rs;
 	}
 
 	@Method(desc = "根据数据表ID,获取数据库类型，获取选中数据库的附加属性字段",
@@ -1163,7 +1218,7 @@ public class MarketInfoAction extends BaseAction {
 			}
 			//如果druid解析错误 并且没有返回信息 说明sql存在问题 用获取sql查询结果的方法返回错误信息
 			else {
-				List<Map<String, Object>> dataBySQL = getDataBySQL(querysql, sqlparameter);
+				getDataBySQL(querysql, sqlparameter);
 			}
 		}
 		String targetfield_type;
@@ -2097,8 +2152,7 @@ public class MarketInfoAction extends BaseAction {
 			out.write(bye);
 			out.flush();
 		} catch (Exception e) {
-			logger.error(e);
-			throw new BusinessException("加工工程下载错误" + e.getMessage());
+			throw new BusinessException("加工工程下载错误");
 		}
 	}
 
@@ -2390,9 +2444,8 @@ public class MarketInfoAction extends BaseAction {
 		//sql表
 		List<Dm_operation_info> dm_operation_infos = Dbo
 				.queryList(Dm_operation_info.class, "select * from " + Dm_operation_info.TableName + " where datatable_id in " +
-								"(select datatable_id from " + Dm_datatable.TableName
-								+ " where data_mart_id =  ? ) and end_date=?",
-						dm_info.getData_mart_id(), Constant.MAXDATE);
+								"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )",
+						dm_info.getData_mart_id());
 		//血缘表1
 		List<Dm_datatable_source> dm_datatable_sources = Dbo.queryList(Dm_datatable_source.class,
 				"select * from " + Dm_datatable_source.TableName + " where datatable_id in " +
@@ -2412,9 +2465,8 @@ public class MarketInfoAction extends BaseAction {
 		//字段表
 		List<Datatable_field_info> datatable_field_infos = Dbo.queryList(Datatable_field_info.class,
 				"select * from " + Datatable_field_info.TableName + " where datatable_id in " +
-						"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )" +
-						" and end_date=?",
-				dm_info.getData_mart_id(), Constant.MAXDATE);
+						"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? )",
+				dm_info.getData_mart_id());
 		List<Dtab_relation_store> dm_relation_datatables = Dbo
 				.queryList(Dtab_relation_store.class, "select * from " + Dtab_relation_store.TableName + " where tab_id in " +
 								"(select datatable_id from " + Dm_datatable.TableName + " where data_mart_id =  ? ) and data_source =?",
@@ -2536,26 +2588,20 @@ public class MarketInfoAction extends BaseAction {
 			}
 		}
 		//字段表
-		// 获取数据库当前字段有效数据全部设置有效日期为当天日期
-		List<Datatable_field_info> datatableFieldInfos = getDatatable_field_infos(dm_info.getData_mart_id());
 		List<Datatable_field_info> datatable_field_infos = JSONObject
 				.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
-		List<Datatable_field_info> reduce1 =
-				datatable_field_infos.stream().filter(item -> !datatableFieldInfos.contains(item))
-						.collect(Collectors.toList());
-		for (Datatable_field_info datatable_field_info : reduce1) {
-			// 下载多于数据库的直接新增
-			datatable_field_info.setDatatable_field_id(PrimayKeyGener.getNextId());
-			datatable_field_info.add(Dbo.db());
-		}
-		// 将下载字段表数据插入
-		List<Datatable_field_info> reduce2 =
-				datatableFieldInfos.stream().filter(item -> !datatable_field_infos.contains(item))
-						.collect(Collectors.toList());
-		for (Datatable_field_info datatable_field_info : reduce2) {
-			// 更新数据库多于下载的结束日期为当天
-			datatable_field_info.setEnd_date(DateUtil.getSysDate());
-			datatable_field_info.update(Dbo.db());
+		for (Datatable_field_info datatable_field_info : datatable_field_infos) {
+			num = Dbo.queryNumber(
+					"select count(*) from " + Datatable_field_info.TableName
+							+ " where datatable_field_id=?",
+					datatable_field_info.getDatatable_field_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			if (num == 0) {
+				// 不存在，新增
+				datatable_field_info.add(Dbo.db());
+			} else {
+				datatable_field_info.update(Dbo.db());
+			}
 		}
 		//字段关系表
 		List<Dcol_relation_store> dm_column_storages = JSONObject
@@ -2684,7 +2730,6 @@ public class MarketInfoAction extends BaseAction {
 			String strTemp = new String(Files.readAllBytes(new File(file_path).toPath()));
 			// 2.解密获取上传文件信息
 			strTemp = new String(Base64.getDecoder().decode(strTemp));
-			Validator.notBlank(strTemp, "上传文件信息不能为空");
 			JSONObject jsonObject = JSONObject.parseObject(strTemp);
 			Map<String, Object> differenceMap = new HashMap<>();
 			//3.获取加工工程表差异信息
@@ -2712,7 +2757,8 @@ public class MarketInfoAction extends BaseAction {
 			//9.获取数据字段表差异信息
 			List<Datatable_field_info> datatable_field_infos = JSONObject
 					.parseArray(jsonObject.getJSONArray("datatable_field_infos").toJSONString(), Datatable_field_info.class);
-			List<String> datatableFieldDiff = getDatatableFieldDiff(datatable_field_infos, dm_info.getData_mart_id());
+			Set<String> datatableFieldDiff =
+					getDatatableFieldDiff(datatable_field_infos);
 			differenceMap.put(Datatable_field_info.TableName, datatableFieldDiff);
 			//10.获取前后置作业表差异信息
 			List<Dm_relevant_info> dm_relevant_infos = JSONObject
@@ -2776,7 +2822,7 @@ public class MarketInfoAction extends BaseAction {
 					addList.add("原分类编号:" + categoryMap.get("category_num"));
 					addList.add("更新后分类编号:" + dm_category.getCategory_num());
 				}
-				if (!categoryMap.get("category_name").equals(dm_category.getCategory_name())) {
+				if (!categoryMap.get("category_name").equals(dm_category.getCategory_num())) {
 					addList.add("原分类名称:" + categoryMap.get("category_name"));
 					addList.add("更新后分类名称:" + dm_category.getCategory_name());
 				}
@@ -2801,32 +2847,27 @@ public class MarketInfoAction extends BaseAction {
 				addList.add("新增数据表中文名称:" + dm_datatable.getDatatable_cn_name());
 				addList.add("新增进数方式:" + StorageType.ofValueByCode(dm_datatable.getStorage_type()));
 				addList.add("新增数据表存储方式:" + TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
-				addList.add("新增执行引擎:" + SqlEngine.ofValueByCode(dm_datatable.getSql_engine()));
 				diffSet.add(String.join(",", addList));
 			} else {
 				if (!datatableMap.get("datatable_en_name").equals(dm_datatable.getDatatable_en_name())) {
-					addList.add("原表英文名称:" + datatableMap.get("datatable_en_name"));
-					addList.add("更新后表英文名称:" + dm_datatable.getDatatable_en_name());
+					addList.add("修改表英文名称:" + datatableMap.get("datatable_en_name")
+							+ "-->" + dm_datatable.getDatatable_en_name());
 					enNameList.add(datatableMap.get("datatable_en_name").toString());
 				}
 				if (!datatableMap.get("datatable_cn_name").equals(dm_datatable.getDatatable_cn_name())) {
-					addList.add("原表中文名称:" + datatableMap.get("datatable_cn_name"));
-					addList.add("原更新后表中文名称:" + dm_datatable.getDatatable_cn_name());
+					addList.add("修改表中文名称:" + datatableMap.get("datatable_cn_name")
+							+ "-->" + dm_datatable.getDatatable_cn_name());
 				}
 				if (!datatableMap.get("storage_type").equals(dm_datatable.getStorage_type())) {
-					addList.add("原进数方式:" + StorageType.ofValueByCode(datatableMap.get("storage_type").toString()));
-					addList.add("原更新后进数方式:" + StorageType.ofValueByCode(dm_datatable.getStorage_type()));
+					addList.add("修改进数方式:" + StorageType.ofValueByCode(datatableMap.get("storage_type").toString()) + "-->" +
+							StorageType.ofValueByCode(dm_datatable.getStorage_type()));
 				}
 				if (!datatableMap.get("table_storage").equals(dm_datatable.getTable_storage())) {
-					addList.add("原数据表存储方式:" + TableStorage.ofValueByCode(datatableMap.get("table_storage").toString()));
-					addList.add("原更新后数据表存储方式:" + TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
-				}
-				if (!datatableMap.get("sql_engine").equals(dm_datatable.getSql_engine())) {
-					addList.add("原执行引擎:" + SqlEngine.ofValueByCode(datatableMap.get("sql_engine").toString()));
-					addList.add("更新后执行引擎:" + SqlEngine.ofValueByCode(dm_datatable.getSql_engine()));
+					addList.add("修改数据表存储方式:" + TableStorage.ofValueByCode(datatableMap.get("table_storage").toString())
+							+ "-->" + TableStorage.ofValueByCode(dm_datatable.getTable_storage()));
 				}
 				if (!addList.isEmpty()) {
-					diffSet.add(String.join(", ", addList));
+					diffSet.add(String.join(",", addList));
 				}
 			}
 		}
@@ -2837,8 +2878,8 @@ public class MarketInfoAction extends BaseAction {
 		Set<String> diffSet = new HashSet<>();
 		for (Dm_operation_info dm_operation_info : dm_operation_infos) {
 			Map<String, Object> operationInfoMap = Dbo.queryOneObject(
-					"select * from " + Dm_operation_info.TableName + " where id=? and end_date=?",
-					dm_operation_info.getId(), Constant.MAXDATE);
+					"select * from " + Dm_operation_info.TableName + " where id=?",
+					dm_operation_info.getId());
 			Set<String> addSet = new HashSet<>();
 			if (operationInfoMap.isEmpty()) {
 				addSet.add("新增的预览sql语句:" + dm_operation_info.getView_sql());
@@ -2857,62 +2898,51 @@ public class MarketInfoAction extends BaseAction {
 					diffSet.add(String.join(",", addSet));
 				}
 			}
+
 		}
 		return diffSet;
 	}
 
-	private List<String> getDatatableFieldDiff(List<Datatable_field_info> datatable_field_infos,
-	                                           long data_mart_id) {
-		List<String> diffList = new ArrayList<>();
-		// 新版本有效数据表字段数据
-		List<Datatable_field_info> datatableFieldInfos = getDatatable_field_infos(data_mart_id);
-		List<Datatable_field_info> reduce1 =
-				datatable_field_infos.stream().filter(item -> !datatableFieldInfos.contains(item))
-						.collect(Collectors.toList());
-		for (Datatable_field_info fieldInfo : reduce1) {
-			List<String> list = new ArrayList<>();
-			list.add("新版本的字段中文名称:" + fieldInfo.getField_en_name());
-			list.add("新版本的字段英文名称:" + fieldInfo.getField_cn_name());
-			list.add("新版本的字段类型:" + fieldInfo.getField_type());
-			list.add("新版本的字段长度:" + fieldInfo.getField_length());
-			list.add("新版本的处理方式:" + ProcessType.ofValueByCode(fieldInfo.getField_process()));
-			list.add("新版本的映射规则mapping:" + fieldInfo.getProcess_mapping());
-			if (StringUtil.isNotBlank(fieldInfo.getGroup_mapping())) {
-				list.add("新版本的分组映射:" + fieldInfo.getGroup_mapping());
-			}
-			if (!list.isEmpty() && !diffList.contains(String.join(",", list))) {
-				diffList.add(String.join(",", list));
-			}
-		}
-		// 旧版本失效数据表字段数据
-		List<Datatable_field_info> reduce2 =
-				datatableFieldInfos.stream().filter(item -> !datatable_field_infos.contains(item))
-						.collect(Collectors.toList());
-		for (Datatable_field_info datatable_field_info : reduce2) {
-			List<String> list = new ArrayList<>();
-			list.add("旧版本的字段中文名称:" + datatable_field_info.getField_en_name());
-			list.add("旧版本的字段英文名称:" + datatable_field_info.getField_cn_name());
-			list.add("旧版本的字段类型:" + datatable_field_info.getField_type());
-			list.add("旧版本的字段长度:" + datatable_field_info.getField_length());
-			list.add("旧版本的处理方式:" + ProcessType.ofValueByCode(datatable_field_info.getField_process()));
-			list.add("旧版本的映射规则mapping:" + datatable_field_info.getProcess_mapping());
-			if (StringUtil.isNotBlank(datatable_field_info.getGroup_mapping())) {
-				list.add("旧版本的分组映射:" + datatable_field_info.getGroup_mapping());
-			}
-			if (!list.isEmpty() && !diffList.contains(String.join(",", list))) {
-				diffList.add(String.join(",", list));
+	private Set<String> getDatatableFieldDiff(List<Datatable_field_info> datatable_field_infos) {
+		Set<String> diffSet = new HashSet<>();
+		for (Datatable_field_info datatable_field_info : datatable_field_infos) {
+			Map<String, Object> datatableFieldMap = getDatatable_field_info(datatable_field_info.getDatatable_field_id());
+			List<String> diffList = new ArrayList<>();
+			if (datatableFieldMap.isEmpty()) {
+				diffList.add("新增的字段中文名称:" + datatable_field_info.getField_en_name());
+				diffList.add("新增的字段英文名称:" + datatable_field_info.getField_cn_name());
+				diffList.add("新增的字段类型:" + datatable_field_info.getField_type());
+				diffList.add("新增的映射规则mapping:" + datatable_field_info.getProcess_mapping());
+				diffSet.add(String.join(",", diffList));
+			} else {
+				if (!datatableFieldMap.get("field_en_name").equals(datatable_field_info.getField_en_name())) {
+					diffList.add("原字段英文名称:" + datatableFieldMap.get("field_en_name"));
+					diffList.add("更新后字段英文名称:" + datatable_field_info.getField_en_name());
+				}
+				if (!datatableFieldMap.get("field_cn_name").equals(datatable_field_info.getField_cn_name())) {
+					diffList.add("原字段中文名称:" + datatableFieldMap.get("field_cn_name"));
+					diffList.add("更新后字段中文名称:" + datatable_field_info.getField_cn_name());
+				}
+				if (!datatableFieldMap.get("field_type").equals(datatable_field_info.getField_type())) {
+					diffList.add("原字段类型:" + datatableFieldMap.get("field_type"));
+					diffList.add("更新后字段类型:" + datatable_field_info.getField_type());
+				}
+				if (!datatableFieldMap.get("process_mapping").equals(datatable_field_info.getProcess_mapping())) {
+					diffList.add("原映射规则mapping:" + datatableFieldMap.get("process_mapping"));
+					diffList.add("更新后映射规则mapping:" + datatable_field_info.getProcess_mapping());
+				}
+				if (!diffList.isEmpty()) {
+					diffSet.add(String.join(",", diffList));
+				}
 			}
 		}
-		return diffList;
+		return diffSet;
 	}
 
-	private List<Datatable_field_info> getDatatable_field_infos(long data_mart_id) {
-		return Dbo.queryList(Datatable_field_info.class,
-				"select t1.* from " + Datatable_field_info.TableName + " t1 "
-						+ " left join " + Dm_datatable.TableName + " t2 on t1.datatable_id=t2.datatable_id"
-						+ " left join " + Dm_info.TableName + " t3 on t3.data_mart_id=t2.data_mart_id"
-						+ " where t1.end_date=? and t3.data_mart_id=?",
-				Constant.MAXDATE, data_mart_id);
+	private Map<String, Object> getDatatable_field_info(long datatable_field_id) {
+		return Dbo.queryOneObject(
+				"select * from " + Datatable_field_info.TableName + " where datatable_field_id=?",
+				datatable_field_id);
 	}
 
 	private Set<String> getRelevantInfoDiff(List<Dm_relevant_info> dm_relevant_infos) {
@@ -2928,13 +2958,13 @@ public class MarketInfoAction extends BaseAction {
 			} else {
 				if (null != relevantInfoMap.get("pre_work") &&
 						!relevantInfoMap.get("pre_work").equals(dm_relevant_info.getPre_work())) {
-					diffList.add("更新后前置作业:" + relevantInfoMap.get("pre_work"));
-					diffList.add("原前置作业:" + dm_relevant_info.getPost_work());
+					diffList.add("原前置作业:" + relevantInfoMap.get("pre_work"));
+					diffList.add("更新后前置作业:" + dm_relevant_info.getPost_work());
 				}
 				if (null != relevantInfoMap.get("post_work") &&
 						!relevantInfoMap.get("post_work").equals(dm_relevant_info.getPost_work())) {
-					diffList.add("更新后后置作业:" + relevantInfoMap.get("post_work"));
-					diffList.add("原后置作业:" + dm_relevant_info.getPost_work());
+					diffList.add("原后置作业:" + relevantInfoMap.get("post_work"));
+					diffList.add("更新后后置作业:" + dm_relevant_info.getPost_work());
 				}
 				if (!diffList.isEmpty()) {
 					diffSet.add(String.join(",", diffList));
