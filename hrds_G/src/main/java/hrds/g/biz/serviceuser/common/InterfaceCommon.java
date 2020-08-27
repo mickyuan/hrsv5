@@ -91,11 +91,11 @@ public class InterfaceCommon {
 			return StateType.getResponseInfo(StateType.UNAUTHORIZED);
 		}
 		// 4.2密码正确，返回正确响应信息
-		Map<String, Object> responseInfo = StateType.getResponseInfo(StateType.NORMAL);
-		responseInfo.put("token", queryInterfaceInfo.getToken());
-		responseInfo.put("expires_in", 7200);
-		responseInfo.put("use_valid_date", queryInterfaceInfo.getUse_valid_date());
-		return responseInfo;
+		Map<String, Object> tokenMap = new HashMap<>();
+		tokenMap.put("token", queryInterfaceInfo.getToken());
+		tokenMap.put("expires_in", 7200);
+		tokenMap.put("use_valid_date", queryInterfaceInfo.getUse_valid_date());
+		return StateType.getResponseInfo(StateType.NORMAL.getCode(), tokenMap);
 	}
 
 	@Method(desc = "检查接口响应信息并返回",

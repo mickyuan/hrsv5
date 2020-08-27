@@ -12,7 +12,7 @@ public enum StateType {
 	/**
 	 * 正常
 	 */
-	NORMAL("200", "正常"),
+	NORMAL("200", "NORMAL"),
 
 	/**
 	 * 账号或密钥错误
@@ -29,7 +29,7 @@ public enum StateType {
 	/**
 	 * 使用有效期错误
 	 */
-	EFFECTIVE_DATE_ERROR("404", "使用有效期错误"),
+	EFFECTIVE_DATE_ERROR("404", "接口使用有效期已过期"),
 	/**
 	 * 表不存在或者为空
 	 */
