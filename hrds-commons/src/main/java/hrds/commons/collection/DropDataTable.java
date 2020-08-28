@@ -64,12 +64,12 @@ public class DropDataTable {
 		}
 	}
 
-	@Method(desc = "获取重命名表名的sql", logicStep = "获取重命名表名的sql")
+	@Method(desc = "获取删除表的sql", logicStep = "获取删除表的sql")
 	@Param(name = "store_type", desc = "存储层类型", range = "存储层类型")
 	@Param(name = "dbDataConn", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
 	@Param(name = "tableSpace", desc = "表空间", range = "String类型")
 	@Param(name = "table_name", desc = "表名", range = "表名")
-	@Return(desc = "重命名表名的sql", range = "重命名表名的sql")
+	@Return(desc = "删除表的sql", range = "删除表的sql")
 	private static String getDropTableSQL(Store_type store_type, DatabaseWrapper dbDataConn, String tableSpace, String table_name) {
 		String dropTableSQL = "";
 		//关系型数据库
@@ -113,7 +113,7 @@ public class DropDataTable {
 		} else if (store_type == Store_type.MONGODB) {
 			//TODO 删除 MONGODB 层表配置暂未实现!
 		} else {
-			throw new BusinessException("删除存储层表时,未找到匹配的存储层类型!");
+			throw new BusinessException("获取删除存储层表SQL时,未找到匹配的存储层类型!");
 		}
 		return dropTableSQL;
 	}
