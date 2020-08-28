@@ -546,7 +546,7 @@ public class MetaDataManageAction extends BaseAction {
 		dqTableColumns.forEach(dq_table_column -> dq_table_column.add(Dbo.db()));
 		dtab_relation_store.add(Dbo.db());
 		//创建表到指定的存储层下
-		CreateDataTable.createDataTableByStorageLayer(Dbo.db(), dqTableInfo, dqTableColumns, dsl_id);
+		CreateDataTable.createDataTableByStorageLayer(Dbo.db(), dsl_id, dqTableInfo, dqTableColumns);
 		logger.info("保存表源信息到配置库成功! table_name: " + dqTableInfo.getTable_name());
 	}
 }
