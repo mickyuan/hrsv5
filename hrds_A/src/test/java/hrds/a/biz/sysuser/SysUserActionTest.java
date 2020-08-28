@@ -11,6 +11,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_user;
+import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -152,8 +153,9 @@ public class SysUserActionTest extends WebBaseTestCase {
 			bodyString = new HttpClient()
 					.addData("user_id", USER_ID)
 					.addData("password", "111111")
-					.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
-			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+					.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("模拟登陆失败!"));
 			assertThat(ar.isSuccess(), is(true));
 		}
 	}
@@ -216,13 +218,15 @@ public class SysUserActionTest extends WebBaseTestCase {
 				//usertype_group 功能菜单
 				.addData("usertype_group", "01,04,07,10,11,13,16,18,20,25")
 				.post(getActionUrl("saveSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 sys_user 管理员是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_user.TableName +
-					" where user_name=?", "测试添加用户init-hll");
-			assertThat("检查 sys_user 表数据，表 sys_user 数据新增成功", number.getAsLong(), is(1L));
+			long number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_user.TableName +
+					" where user_name=?", "测试添加用户init-hll")
+					.orElseThrow(() -> new BusinessException("统计新增数据的SQL执行失败!"));
+			assertThat("检查 sys_user 表数据，表 sys_user 数据新增成功", number, is(1L));
 		}
 		//2.错误数据访问
 		//2-1.部门id不存在
@@ -237,7 +241,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 				//usertype_group 功能菜单
 				.addData("usertype_group", "02,03,04,08,09,12,14,15,19,21,22,23,24,26")
 				.post(getActionUrl("addSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -260,13 +265,15 @@ public class SysUserActionTest extends WebBaseTestCase {
 				//usertype_group 功能菜单
 				.addData("usertype_group", "02")
 				.post(getActionUrl("updateSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 sys_user 数据是否修改成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_user.TableName +
-					" where user_id=?", USER_ID + 3);
-			assertThat("检查 sys_user 表数据是否修改成功", number.getAsLong(), is(1L));
+			long number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_user.TableName +
+					" where user_id=?", USER_ID + 3)
+					.orElseThrow(() -> new BusinessException("统计数据的SQL执行失败!"));
+			assertThat("检查 sys_user 表数据是否修改成功", number, is(1L));
 			//1-1-2.检查数据更新是否正确
 			Result rs = SqlOperator.queryResult(db, "select * from " + Sys_user.TableName + " where user_id=?",
 					USER_ID + 3);
@@ -279,7 +286,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("user_id", 9999L)
 				.post(getActionUrl("updateSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -295,7 +303,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("user_id", USER_ID)
 				.post(getActionUrl("getSysUserByUserId")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		//校验结果信息
 		assertThat(ar.getDataForMap().get("user_id"), is(-1000));
@@ -310,7 +319,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("user_id", 9999L)
 				.post(getActionUrl("getUserByUserId")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -323,7 +333,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 		//请求结果
 		bodyString = new HttpClient()
 				.post(getActionUrl("getSysUserInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 	}
 
@@ -339,20 +350,23 @@ public class SysUserActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("user_id", USER_ID + 1)
 				.post(getActionUrl("deleteSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 sys_user 数据是否删除成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_user.TableName +
-					" where user_id=?", USER_ID + 1);
-			assertThat("检查 sys_user 表数据，表 sys_user 数据删除成功", number.getAsLong(), is(0L));
+			long number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_user.TableName +
+					" where user_id=?", USER_ID + 1)
+					.orElseThrow(() -> new BusinessException("统计数据的SQL执行失败!"));
+			assertThat("检查 sys_user 表数据，表 sys_user 数据删除成功", number, is(0L));
 		}
 		//2.错误数据访问
 		//2-1.删除不存在的数据
 		bodyString = new HttpClient()
 				.addData("user_id", 9999L)
 				.post(getActionUrl("deleteSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -367,7 +381,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 		//1-1.获取管理员功能菜单 0:管理员功能菜单
 		bodyString = new HttpClient()
 				.post(getActionUrl("getDepartmentInfoAndUserFunctionMenuInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		//1-2.校验操作员功能菜单
 		List<Map<String, Object>> managerFunctionMenuList = (List<Map<String, Object>>)
@@ -395,7 +410,8 @@ public class SysUserActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("userId", USER_ID)
 				.post(getActionUrl("editSysUserFunction")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<String, Object> editSysUserInfo = (Map<String, Object>) ar.getDataForMap().get("editSysUserInfo");
 		assertThat(editSysUserInfo.get("user_id"), is(-1000));
