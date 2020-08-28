@@ -4,8 +4,16 @@ ext {
 }
 
 allprojects {
+    //包组名称
     group 'hrds'  // 修改为本工程的真实 GroupId。必须要修改。后续每个子工程都应该使用这个前缀作为包的根
+    //打包版本
     version '5.0'
+    //显示打包时的警告,如果不需要显示 注释掉
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
 }
 
 subprojects {
