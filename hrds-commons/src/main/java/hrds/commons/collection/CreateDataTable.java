@@ -28,19 +28,30 @@ public class CreateDataTable {
 
 	private static final Logger logger = LogManager.getLogger();
 
-	public static void createDataTableByStorageLayer(DatabaseWrapper db, Dq_table_info dqTableInfo,
-	                                                 List<Dq_table_column> dqTableColumns, long dsl_id) {
+
+	@Method(desc = "创建表", logicStep = "创建表")
+	@Param(name = "db", desc = "配置库DatabaseWrapper对象", range = "配置库DatabaseWrapper对象")
+	@Param(name = "dsl_id", desc = "存储层配置id", range = "long类型")
+	@Param(name = "dqTableInfo", desc = "待创建表的表信息", range = "Dq_table_info待创建表的表信息")
+	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
+	public static void createDataTableByStorageLayer(DatabaseWrapper db, long dsl_id, Dq_table_info dqTableInfo,
+	                                                 List<Dq_table_column> dqTableColumns) {
 		//获取存储层信息
 		LayerBean layerBean = SqlOperator.queryOneObject(db, LayerBean.class, "select * from " + Data_store_layer.TableName +
 				" where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
 		//根据存储层定义创建数据表
-		createDataTableByStorageLayer(db, dqTableInfo, dqTableColumns, layerBean);
+		createDataTableByStorageLayer(db, layerBean, dqTableInfo, dqTableColumns);
 	}
 
-	public static void createDataTableByStorageLayer(DatabaseWrapper db, Dq_table_info dqTableInfo,
-	                                                 List<Dq_table_column> dqTableColumns, LayerBean intoLayerBean) {
+	@Method(desc = "创建表", logicStep = "创建表")
+	@Param(name = "db", desc = "配置库DatabaseWrapper对象", range = "配置库DatabaseWrapper对象")
+	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
+	@Param(name = "dqTableInfo", desc = "待创建表的表信息", range = "Dq_table_info待创建表的表信息")
+	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
+	public static void createDataTableByStorageLayer(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
+	                                                 List<Dq_table_column> dqTableColumns) {
 		//获取存储层配置Map信息
-		DbConfBean dbConfBean = ConnectionTool.getDbConfBean(db, intoLayerBean.getDsl_id());
+		DbConfBean dbConfBean = ConnectionTool.getDbConfBean(db, layerBean.getDsl_id());
 		//使用存储层配置自定义Bean创建存储层链接
 		DatabaseWrapper dbDataConn = null;
 		try {
@@ -49,7 +60,7 @@ public class CreateDataTable {
 			String table_space = dqTableInfo.getTable_space();
 			//获取表名
 			String table_name = dqTableInfo.getTable_name();
-			Store_type store_type = Store_type.ofEnumByCode(intoLayerBean.getStore_type());
+			Store_type store_type = Store_type.ofEnumByCode(layerBean.getStore_type());
 			//获取建表语句
 			String createTableSQL = getCreateTableSQL(db, store_type, dbDataConn, table_space, table_name, dqTableColumns);
 			//执行创建语句
