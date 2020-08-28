@@ -42,9 +42,10 @@ public class DropDataTable {
 	}
 
 	@Method(desc = "根据定义的存储层删除表", logicStep = "根据定义的存储层删除表")
-	@Param(name = "tableName", desc = "查询数据的sql", range = "String类型")
 	@Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
 	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
+	@Param(name = "tableSpace", desc = "表空间", range = "String类型")
+	@Param(name = "tableName", desc = "查询数据的sql", range = "String类型")
 	public static void dropTableByDataLayer(DatabaseWrapper db, LayerBean layerBean, String tableSpace, String tableName) {
 		try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, layerBean.getDsl_id())) {
 			//获取当前操作存储层类型
