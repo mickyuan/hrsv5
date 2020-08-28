@@ -404,7 +404,7 @@ public class MetaDataManageAction extends BaseAction {
 			TableMetaInfoTool.deleteTableRegistrationRecordData(dataSource, dft.getFile_id());
 		}
 		//彻底删除存储层中的数表
-		DropDataTable.dropTableByDataLayer(invalid_table_name, Dbo.db(), dft.getDsl_id());
+		DropDataTable.dropTableByDataLayer(Dbo.db(), dft.getDsl_id(), "", invalid_table_name);
 		logger.info("彻底删除存储层中相关的数表完成! table_name=" + invalid_table_name);
 	}
 
