@@ -38,7 +38,7 @@ public class Auto_tp_cond_info extends ProjectTableEntity
 	private String ci_sp_name;
 	@DocBean(name ="ci_sp_class",value="代码项类别:",dataType = String.class,required = false)
 	private String ci_sp_class;
-	@DocBean(name ="value_type",value="值类型:",dataType = String.class,required = false)
+	@DocBean(name ="value_type",value="值类型(AutoValueType):01-字符串<ZiFuChuan> 02-数值<ShuZhi> 03-日期<RiQi> 04-枚举<MeiJu> ",dataType = String.class,required = false)
 	private String value_type;
 	@DocBean(name ="template_cond_id",value="模板条件ID:",dataType = Long.class,required = true)
 	private Long template_cond_id;

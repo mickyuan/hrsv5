@@ -30,6 +30,8 @@ public class Auto_axisline_info extends ProjectTableEntity
 		__tmpPKS.add("axisline_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
+	@DocBean(name ="axis_id",value="轴编号:",dataType = Long.class,required = false)
+	private Long axis_id;
 	@DocBean(name ="axisline_id",value="轴线编号:",dataType = Long.class,required = true)
 	private Long axisline_id;
 	@DocBean(name ="show",value="是否显示(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
@@ -40,9 +42,21 @@ public class Auto_axisline_info extends ProjectTableEntity
 	private String symbol;
 	@DocBean(name ="symboloffset",value="轴线箭头偏移量:",dataType = Long.class,required = true)
 	private Long symboloffset;
-	@DocBean(name ="axis_id",value="轴编号:",dataType = Long.class,required = false)
-	private Long axis_id;
 
+	/** 取得：轴编号 */
+	public Long getAxis_id(){
+		return axis_id;
+	}
+	/** 设置：轴编号 */
+	public void setAxis_id(Long axis_id){
+		this.axis_id=axis_id;
+	}
+	/** 设置：轴编号 */
+	public void setAxis_id(String axis_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(axis_id)){
+			this.axis_id=new Long(axis_id);
+		}
+	}
 	/** 取得：轴线编号 */
 	public Long getAxisline_id(){
 		return axisline_id;
@@ -93,20 +107,6 @@ public class Auto_axisline_info extends ProjectTableEntity
 	public void setSymboloffset(String symboloffset){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(symboloffset)){
 			this.symboloffset=new Long(symboloffset);
-		}
-	}
-	/** 取得：轴编号 */
-	public Long getAxis_id(){
-		return axis_id;
-	}
-	/** 设置：轴编号 */
-	public void setAxis_id(Long axis_id){
-		this.axis_id=axis_id;
-	}
-	/** 设置：轴编号 */
-	public void setAxis_id(String axis_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(axis_id)){
-			this.axis_id=new Long(axis_id);
 		}
 	}
 }

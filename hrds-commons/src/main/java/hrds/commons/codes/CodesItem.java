@@ -147,6 +147,8 @@ public class CodesItem{
 	protected static final String tableStorage=new String("TableStorage");
 	/**作业运行状态   */
 	protected static final String jobExecuteState=new String("JobExecuteState");
+	/**值类型   */
+	protected static final String autoValueType=new String("AutoValueType");
 
 
 	public static final Map<String,Class> mapCat= new HashMap<String,Class>(100);
@@ -221,6 +223,7 @@ public class CodesItem{
 		mapCat.put(tableLifeCycle,TableLifeCycle.class);
 		mapCat.put(tableStorage,TableStorage.class);
 		mapCat.put(jobExecuteState,JobExecuteState.class);
+		mapCat.put(autoValueType,AutoValueType.class);
 	}
 
 

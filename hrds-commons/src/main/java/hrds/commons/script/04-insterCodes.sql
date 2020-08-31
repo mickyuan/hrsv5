@@ -1,4 +1,4 @@
---　系统的引用值个数:70
+--　系统的引用值个数:71
 --　本引用值的代码个数:3 -------i==1
 delete from code_info where ci_sp_class='88';
 INSERT INTO CODE_INFO  VALUES ('1', '88', 'sql执行引擎', 'JDBC', 'SqlEngine');
@@ -483,3 +483,9 @@ INSERT INTO CODE_INFO  VALUES ('102', '87', '作业运行状态', '暂停', 'Job
 INSERT INTO CODE_INFO  VALUES ('103', '87', '作业运行状态', '中止', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('104', '87', '作业运行状态', '完成', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('105', '87', '作业运行状态', '失败', 'JobExecuteState');
+--　本引用值的代码个数:4 -------i==71
+delete from code_info where ci_sp_class='119';
+INSERT INTO CODE_INFO  VALUES ('01', '119', '值类型', '字符串', 'AutoValueType');
+INSERT INTO CODE_INFO  VALUES ('02', '119', '值类型', '数值', 'AutoValueType');
+INSERT INTO CODE_INFO  VALUES ('03', '119', '值类型', '日期', 'AutoValueType');
+INSERT INTO CODE_INFO  VALUES ('04', '119', '值类型', '枚举', 'AutoValueType');
