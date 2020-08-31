@@ -11,12 +11,11 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.entity.Department_info;
 import hrds.commons.entity.Sys_para;
 import hrds.commons.entity.Sys_user;
+import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -107,8 +106,9 @@ public class SysParaActionTest extends WebBaseTestCase {
 			bodyString = new HttpClient()
 					.addData("user_id", USER_ID)
 					.addData("password", "111111")
-					.post("http://127.0.0.1:8099/A/action/hrds/a/biz/login/login").getBodyString();
-			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+					.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
+			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("模拟登陆失败!"));
 			assertThat(ar.isSuccess(), is(true));
 		}
 	}
@@ -173,13 +173,15 @@ public class SysParaActionTest extends WebBaseTestCase {
 		//1-1.查询所有配置参数
 		bodyString = new HttpClient()
 				.post(getActionUrl("getSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		//1-2.模糊查询
 		bodyString = new HttpClient()
 				.addData("paraName", "测试查询配置参数")
 				.post(getActionUrl("getSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 	}
 
@@ -196,13 +198,15 @@ public class SysParaActionTest extends WebBaseTestCase {
 				.addData("para_id", -1000L)
 				.addData("para_name", "测试删除配置参数init-hll")
 				.post(getActionUrl("deleteSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 Sys_para 参数是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_para.TableName +
-					" where para_id=?", -1000L);
-			assertThat("检查 Sys_para 表数据，表 Sys_para 数据删除成功", number.getAsLong(), is(0L));
+			long number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_para.TableName +
+					" where para_id=?", -1000L)
+					.orElseThrow(() -> new BusinessException("获取结果统计信息失败!"));
+			assertThat("检查 Sys_para 表数据，表 Sys_para 数据删除成功", number, is(0L));
 		}
 		//错误数据访问
 		//2-1.删除参数id不存在
@@ -210,7 +214,8 @@ public class SysParaActionTest extends WebBaseTestCase {
 				.addData("para_id", -999L)
 				.addData("para_name", "测试删除配置参数init-hll")
 				.post(getActionUrl("deleteSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -230,13 +235,15 @@ public class SysParaActionTest extends WebBaseTestCase {
 				.addData("para_name", "测试修改配置参数init-hll")
 				.addData("para_value", "修改+测试修改配置参数init-hll")
 				.post(getActionUrl("updateSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 Sys_para 参数是否修改成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_para.TableName +
-					" where para_id=?", -1001L);
-			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number.getAsLong(), is(1L));
+			long number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_para.TableName +
+					" where para_id=?", -1001L)
+					.orElseThrow(() -> new BusinessException("获取结果统计信息失败!"));
+			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number, is(1L));
 			//1-1-2.检查数据更新是否正确
 			Result rs = SqlOperator.queryResult(db, "select * from " + Sys_para.TableName + " where para_id=?",
 					-1001L);
@@ -250,7 +257,8 @@ public class SysParaActionTest extends WebBaseTestCase {
 				.addData("para_name", "测试修改配置参数init-hll")
 				.addData("para_value", "修改+测试修改配置参数init-hll")
 				.post(getActionUrl("updateSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 
@@ -272,13 +280,15 @@ public class SysParaActionTest extends WebBaseTestCase {
 				.addData("para_value", "测试新增配置参数init-hll")
 				.addData("para_type", "server.properties")
 				.post(getActionUrl("addSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1-1-1.检查 Sys_para 参数是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_para.TableName +
-					" where para_name=?", "测试新增配置参数init-hll");
-			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number.getAsLong(), is(1L));
+			long number = SqlOperator.queryNumber(db, "select count(*) from " + Sys_para.TableName +
+					" where para_name=?", "测试新增配置参数init-hll")
+					.orElseThrow(() -> new BusinessException("获取结果统计信息失败!"));
+			assertThat("检查 Sys_para 表数据，表 Sys_para 数据修改成功", number, is(1L));
 			//1-1-2.检查新增的数据是否正确
 			Result rs = SqlOperator.queryResult(db, "select * from " + Sys_para.TableName + " where para_name=?",
 					"测试新增配置参数init-hll");
@@ -291,21 +301,24 @@ public class SysParaActionTest extends WebBaseTestCase {
 				.addData("para_value", "测试新增配置参数init-hll")
 				.addData("para_type", "server.properties")
 				.post(getActionUrl("addSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 		//2-2.参数值为空
 		bodyString = new HttpClient()
 				.addData("para_name", "测试新增配置参数init-hll")
 				.addData("para_type", "server.properties")
 				.post(getActionUrl("addSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 		//2-3.参数类型为空
 		bodyString = new HttpClient()
 				.addData("para_name", "测试新增配置参数init-hll")
 				.addData("para_value", "测试新增配置参数init-hll")
 				.post(getActionUrl("addSysPara")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).get();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(false));
 	}
 }
