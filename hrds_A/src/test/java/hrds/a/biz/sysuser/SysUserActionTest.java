@@ -1,5 +1,6 @@
 package hrds.a.biz.sysuser;
 
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
@@ -19,7 +20,6 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,22 +33,18 @@ public class SysUserActionTest extends WebBaseTestCase {
 	//测试数据用户密码
 	private static final String USER_PASSWORD = "111111";
 
-	private static String bodyString;
-	private static ActionResult ar;
-
-	@Method(desc = "初始化测试用例依赖表数据",
-			logicStep = "1.初始化数据" +
-					"1-1.初始化 Sys_user 表数据" +
-					"1-1-1.初始化一个超级管理员 USER_ID" +
-					"1-1-2.初始化一个供测试删除的用户 USER_ID + 1" +
-					"1-1-3.初始化一个供测试查询的用户 USER_ID + 2" +
-					"1-1-4.初始化一个供测试修改的用户 USER_ID + 3" +
-					"2.提交所有数据库执行操作" +
-					"3.用户模拟登陆" +
-					"测试数据:" +
-					"* 1.sys_user 初始化后表中有4条测试数据 user_id:-1000 user_password:111111, user_id:-999 " +
-					"user_password:111111," +
-					" user_id:-998 user_password:111111, user_id:-997 user_password:111111")
+	@Method(desc = "初始化测试用例依赖表数据", logicStep = "1.初始化数据" +
+			"1-1.初始化 Sys_user 表数据" +
+			"1-1-1.初始化一个超级管理员 USER_ID" +
+			"1-1-2.初始化一个供测试删除的用户 USER_ID + 1" +
+			"1-1-3.初始化一个供测试查询的用户 USER_ID + 2" +
+			"1-1-4.初始化一个供测试修改的用户 USER_ID + 3" +
+			"2.提交所有数据库执行操作" +
+			"3.用户模拟登陆" +
+			"测试数据:" +
+			"* 1.sys_user 初始化后表中有4条测试数据 user_id:-1000 user_password:111111, user_id:-999 " +
+			"user_password:111111," +
+			" user_id:-998 user_password:111111, user_id:-997 user_password:111111")
 	@BeforeClass
 	public static void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -150,20 +146,19 @@ public class SysUserActionTest extends WebBaseTestCase {
 			//2.提交所有数据库执行操作
 			SqlOperator.commitTransaction(db);
 			//3.用户模拟登陆
-			bodyString = new HttpClient()
+			String bodyString = new HttpClient()
 					.addData("user_id", USER_ID)
 					.addData("password", "111111")
 					.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
-			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 					.orElseThrow(() -> new BusinessException("模拟登陆失败!"));
 			assertThat(ar.isSuccess(), is(true));
 		}
 	}
 
-	@Method(desc = "测试案例执行完成后清理测试数据",
-			logicStep = "1.删除测试数据" +
-					"1-1.删除 sys_user 表测试数据" +
-					"1-2.删除 Department_info 表测试数据")
+	@Method(desc = "测试案例执行完成后清理测试数据", logicStep = "1.删除测试数据" +
+			"1-1.删除 sys_user 表测试数据" +
+			"1-2.删除 Department_info 表测试数据")
 	@AfterClass
 	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -197,17 +192,16 @@ public class SysUserActionTest extends WebBaseTestCase {
 		}
 	}
 
-	@Method(desc = "新增系统用户测试方法",
-			logicStep = "1.正确数据访问" +
-					"1-1.新增用户" +
-					"1-1-1.检查 sys_user 管理员是否新增成功" +
-					"2.错误数据访问" +
-					"2-1.部门id不存在")
+	@Method(desc = "新增系统用户测试方法", logicStep = "1.正确数据访问" +
+			"1-1.新增用户" +
+			"1-1-1.检查 sys_user 管理员是否新增成功" +
+			"2.错误数据访问" +
+			"2-1.部门id不存在")
 	@Test
 	public void saveSysUser() {
 		//1.正确数据访问
 		//1-1.新增用户
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("dep_id", DEP_ID)
 				.addData("user_name", "测试添加用户init-hll")
 				.addData("user_password", "111111")
@@ -218,7 +212,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 				//usertype_group 功能菜单
 				.addData("usertype_group", "01,04,07,10,11,13,16,18,20,25")
 				.post(getActionUrl("saveSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -246,16 +240,15 @@ public class SysUserActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "修改系统用户信息测试类",
-			logicStep = "1.正确数据访问" +
-					"1-1.修改已经存在的数据" +
-					"2.错误数据访问" +
-					"2-1.修改不存在的数据")
+	@Method(desc = "修改系统用户信息测试类", logicStep = "1.正确数据访问" +
+			"1-1.修改已经存在的数据" +
+			"2.错误数据访问" +
+			"2-1.修改不存在的数据")
 	@Test
 	public void updateSysUser() {
 		//1.正确数据访问
 		//1-1.修改已经存在的数据
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("user_id", USER_ID + 3)
 				.addData("dep_id", -DEP_ID)
 				//useris_admin 0：管理员，1：操作员
@@ -265,7 +258,7 @@ public class SysUserActionTest extends WebBaseTestCase {
 				//usertype_group 功能菜单
 				.addData("usertype_group", "02")
 				.post(getActionUrl("updateSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -291,19 +284,18 @@ public class SysUserActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "获取单个用户信息的测试方法",
-			logicStep = "1.正确数据访问" +
-					"1-1.用户id存在" +
-					"2.错误数据访问" +
-					"2-1.用户id不存在")
+	@Method(desc = "获取单个用户信息的测试方法", logicStep = "1.正确数据访问" +
+			"1-1.用户id存在" +
+			"2.错误数据访问" +
+			"2-1.用户id不存在")
 	@Test
 	public void getSysUserByUserId() {
 		//1.正确数据访问
 		//1-1.用户id存在
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("user_id", USER_ID)
 				.post(getActionUrl("getSysUserByUserId")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		//校验结果信息
@@ -324,33 +316,31 @@ public class SysUserActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "获取所有系统用户列表（不包含超级管理员）",
-			logicStep = "1.请求结果" +
-					"2.校验结果信息")
+	@Method(desc = "获取所有系统用户列表（不包含超级管理员）", logicStep = "1.请求结果" +
+			"2.校验结果信息")
 	@Test
 	public void getSysUserInfo() {
 		//1.正确数据访问
 		//请求结果
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.post(getActionUrl("getSysUserInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 	}
 
-	@Method(desc = "删除系统用户测试方法",
-			logicStep = "1.正确数据访问" +
-					"1-1.删除已经存在的数据" +
-					"2.错误数据访问" +
-					"2-1.删除不存在的数据")
+	@Method(desc = "删除系统用户测试方法", logicStep = "1.正确数据访问" +
+			"1-1.删除已经存在的数据" +
+			"2.错误数据访问" +
+			"2-1.删除不存在的数据")
 	@Test
 	public void deleteSysUser() {
 		//1.正确数据访问
 		//1-1.删除已经存在的数据
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("user_id", USER_ID + 1)
 				.post(getActionUrl("deleteSysUser")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
@@ -370,50 +360,49 @@ public class SysUserActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(false));
 	}
 
-	@Method(desc = "获取部门信息和用户功能菜单信息",
-			logicStep = "1.正确数据访问" +
-					"1-1.获取功能菜单" +
-					"1-2.校验管理员功能菜单" +
-					"1-3.校验操作员功能菜单")
+	@Method(desc = "获取部门信息和用户功能菜单信息", logicStep = "1.正确数据访问" +
+			"1-1.获取功能菜单" +
+			"1-2.校验管理员功能菜单" +
+			"1-3.校验操作员功能菜单")
 	@Test
 	public void getDepartmentInfoAndUserFunctionMenuInfo() {
 		//1.正确数据访问
 		//1-1.获取管理员功能菜单 0:管理员功能菜单
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.post(getActionUrl("getDepartmentInfoAndUserFunctionMenuInfo")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
 		//1-2.校验操作员功能菜单
-		List<Map<String, Object>> managerFunctionMenuList = (List<Map<String, Object>>)
-				ar.getDataForMap().get("managerFunctionMenuList");
-		for (int i = 0; i < managerFunctionMenuList.size(); i++) {
-			assertThat(managerFunctionMenuList.size(), is(10));
+		Map<Object, Object> dataForMap = ar.getDataForMap();
+		Object managerMenuObj = dataForMap.get("managerFunctionMenuList");
+		if (managerMenuObj instanceof List<?>) {
+			assertThat(((List<?>) managerMenuObj).size(), is(4));
 		}
 		//1-3.校验操作员功能菜单
-		List<Map<String, Object>> operatorFunctionMenuList = (List<Map<String, Object>>)
-				ar.getDataForMap().get("operatorFunctionMenuList");
-		for (int i = 0; i < operatorFunctionMenuList.size(); i++) {
-			assertThat(operatorFunctionMenuList.size(), is(14));
+		Object operatorMenuObj = dataForMap.get("operatorFunctionMenuList");
+		if (operatorMenuObj instanceof List<?>) {
+			assertThat(((List<?>) operatorMenuObj).size(), is(7));
 		}
 	}
 
-	@Method(desc = "获取编辑的用户信息",
-			logicStep = "1.正确数据访问" +
-					"1-1.用户id存在" +
-					"2.错误数据访问" +
-					"2-1.用户id不存在")
+	@Method(desc = "获取编辑的用户信息", logicStep = "1.正确数据访问" +
+			"1-1.用户id存在" +
+			"2.错误数据访问" +
+			"2-1.用户id不存在")
 	@Test
 	public void editSysUserFunction() {
 		//1.正确数据访问
 		//1-1.用户id存在
-		bodyString = new HttpClient()
+		String bodyString = new HttpClient()
 				.addData("userId", USER_ID)
 				.post(getActionUrl("editSysUserFunction")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("获取结果返回结果集失败!"));
 		assertThat(ar.isSuccess(), is(true));
-		Map<String, Object> editSysUserInfo = (Map<String, Object>) ar.getDataForMap().get("editSysUserInfo");
+		Map<String, Object> editSysUserInfo = JsonUtil.toObject(ar.getDataForMap().get("editSysUserInfo").toString(),
+				new TypeReference<Map<String, Object>>() {
+				}.getType());
 		assertThat(editSysUserInfo.get("user_id"), is(-1000));
 		assertThat(editSysUserInfo.get("create_id"), is(-1000));
 		assertThat(editSysUserInfo.get("user_name"), is("测试超级管理员init-hll"));
