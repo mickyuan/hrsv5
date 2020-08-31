@@ -511,7 +511,7 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 			assertThat(codeTypeList.contains(result.getString(i, "code_type_name")), is(true));
 			assertThat(codeValueList.contains(result.getString(i, "code_value")), is(true));
 			assertThat(origValueList.contains(result.getString(i, "orig_value")), is(true));
-			assertThat(result.getString(i, "code_classify"), is("OperationType1"));
+			assertThat(result.getString(i, "code_classify"), is("OperationType" + THREAD_ID));
 			assertThat(result.getString(i, "code_classify_name"), is("operationType类型"));
 		}
 	}
@@ -536,7 +536,7 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 		for (Hyren_code_info hyren_code_info : hyrenCodeInfos) {
 			assertThat(codeTypeList.contains(hyren_code_info.getCode_type_name()), is(true));
 			assertThat(codeValueList.contains(hyren_code_info.getCode_value()), is(true));
-			assertThat(hyren_code_info.getCode_classify(), is("OperationType1"));
+			assertThat(hyren_code_info.getCode_classify(), is("OperationType" + THREAD_ID));
 			assertThat(hyren_code_info.getCode_classify_name(), is("operationType类型"));
 		}
 		// 2.错误的数据访问1，code_classify不存在
@@ -820,7 +820,7 @@ public class CodeMaintenanceActionTest extends WebBaseTestCase {
 			assertThat(codeTypeList.contains(result.getString(i, "code_type_name")), is(true));
 			assertThat(codeValueList.contains(result.getString(i, "code_value")), is(true));
 			assertThat(origValueList.contains(result.getString(i, "orig_value")), is(true));
-			assertThat(result.getString(i, "code_classify"), is("OperationType1"));
+			assertThat(result.getString(i, "code_classify"), is("OperationType" + THREAD_ID));
 			assertThat(result.getString(i, "code_classify_name"), is("operationType类型"));
 		}
 		// 2.错误的数据访问1，code_classify不存在
