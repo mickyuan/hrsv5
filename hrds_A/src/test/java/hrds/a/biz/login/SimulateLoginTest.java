@@ -1,6 +1,5 @@
 package hrds.a.biz.login;
 
-import fd.ng.core.conf.AppinfoConf;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -8,22 +7,15 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.test.junit.TestCaseLog;
 import fd.ng.web.action.ActionResult;
-import fd.ng.web.util.RequestUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Department_info;
-import hrds.commons.entity.Sys_para;
 import hrds.commons.entity.Sys_user;
-import hrds.commons.utils.ActionUtil;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.User;
 import hrds.testbase.WebBaseTestCase;
-import okhttp3.Cookie;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class SimulateLoginTest extends WebBaseTestCase {
 
 	private final long testUser = 10L;
-	private final String testUserPwd = "1";
+
 	@Before
 	public void before() {
 		//	  1 : 插入用户信息数据
@@ -48,6 +40,7 @@ public class SimulateLoginTest extends WebBaseTestCase {
 			user.setCreate_id(testUser);
 			user.setRole_id(testUser);
 			user.setUser_name("测试用户(-1000)");
+			String testUserPwd = "1";
 			user.setUser_password(testUserPwd);
 			user.setUseris_admin(IsFlag.Shi.getCode());
 			user.setUser_state(IsFlag.Shi.getCode());
@@ -73,24 +66,25 @@ public class SimulateLoginTest extends WebBaseTestCase {
 			SqlOperator.commitTransaction(db);
 
 
-			String responseValue = new HttpClient().buildSession()
-					.addData("username", testUser)
+			//用户模拟登陆
+			String bodyString = new HttpClient()
+					.addData("user_id", testUser)
 					.addData("password", testUserPwd)
-					.post(getUrlActionPattern() + "/" + AppinfoConf.AppBasePackage.replace(".", "/")
-							+ "/a/biz/login/login").getBodyString();
-			Optional<ActionResult> actionResult = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
-			ActionResult ar = actionResult.get();
+					.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
+			ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+					.orElseThrow(() -> new BusinessException("模拟登陆失败!"));
 			assertThat(ar.isSuccess(), is(true));
 			TestCaseLog.println(String.format("用户 %s 登录", testUser));
 		}
 	}
 
 	@Test
-	public  void getUser(){
+	public void getUser() {
 		User cookic = getCookic();
 		assertThat(cookic.getUserName(), is("测试用户(-1000)"));
 		assertThat(cookic.getUserId(), is(testUser));
 	}
+
 	@After
 	public void after() {
 
