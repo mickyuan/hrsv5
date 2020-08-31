@@ -392,21 +392,21 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					"select * from " + Data_store_layer_attr.TableName + " where dsl_id=?",
 					dataStoreLayer.getDsl_id());
 			for (Data_store_layer_attr layerAttr : layerAttrs) {
-				if (layerAttr.getStorage_property_key().equals("数据库")) {
-					assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
-					assertThat(DatabaseType.Postgresql.getCode(), is(layerAttr.getStorage_property_val()));
-				} else if (layerAttr.getStorage_property_key().equals("数据库驱动")) {
-					assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
-					assertThat("org.postgresql.Driver", is(layerAttr.getStorage_property_val()));
-				} else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
-					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
-				} else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
-					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
-				} else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
-					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
+				switch (layerAttr.getStorage_property_key()) {
+					case "数据库":
+						assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
+						assertThat(DatabaseType.Postgresql.getCode(), is(layerAttr.getStorage_property_val()));
+						break;
+					case "数据库驱动":
+						assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
+						assertThat("org.postgresql.Driver", is(layerAttr.getStorage_property_val()));
+						break;
+					case "core-site.xml":
+					case "hdfs-site.xml":
+					case "hbase-site.xml":
+						assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+						Files.delete(new File(layerAttr.getStorage_property_val()).toPath());
+						break;
 				}
 			}
 			// 2.错误的数据访问1，dsl_name为空
@@ -596,32 +596,34 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					"select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
 							"order by dsla_storelayer", DSL_ID);
 			for (Data_store_layer_added layerAdded : layerAddeds) {
-				if (StoreLayerAdded.PaiXuLie == StoreLayerAdded.ofEnumByCode(layerAdded.getDsla_storelayer())) {
-					assertThat("更新数据存储附加信息", is(layerAdded.getDslad_remark()));
-				} else {
-					assertThat("更新数据存储附加信息", is(layerAdded.getDslad_remark()));
-				}
+				assertThat("更新数据存储附加信息", is(layerAdded.getDslad_remark()));
 			}
 			List<Data_store_layer_attr> layerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
 					"select * from " + Data_store_layer_attr.TableName + " where dsl_id=? " +
 							" order by storage_property_key", layer.getDsl_id());
 			for (Data_store_layer_attr layerAttr : layerAttrs) {
-				if (layerAttr.getStorage_property_key().equals("数据库")) {
-					assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
-					assertThat("更新数据存储层配置属性信息1", is(layerAttr.getDsla_remark()));
-					assertThat(DatabaseType.MYSQL.getCode(), is(layerAttr.getStorage_property_val()));
-				} else if (layerAttr.getStorage_property_key().equals("数据库驱动")) {
-					assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
-					assertThat("更新数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
-				} else if (layerAttr.getStorage_property_key().equals("core-site.xml")) {
-					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("core-site.xml文件已上传", is(layerAttr.getDsla_remark()));
-				} else if (layerAttr.getStorage_property_key().equals("hdfs-site.xml")) {
-					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("hdfs-site.xml文件已上传", is(layerAttr.getDsla_remark()));
-				} else if (layerAttr.getStorage_property_key().equals("hbase-site.xml")) {
-					assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
-					assertThat("hbase-site.xml文件已上传", is(layerAttr.getDsla_remark()));
+				switch (layerAttr.getStorage_property_key()) {
+					case "数据库":
+						assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
+						assertThat("更新数据存储层配置属性信息1", is(layerAttr.getDsla_remark()));
+						assertThat(DatabaseType.MYSQL.getCode(), is(layerAttr.getStorage_property_val()));
+						break;
+					case "数据库驱动":
+						assertThat(IsFlag.Fou.getCode(), is(layerAttr.getIs_file()));
+						assertThat("更新数据存储层配置属性信息2", is(layerAttr.getDsla_remark()));
+						break;
+					case "core-site.xml":
+						assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+						assertThat("core-site.xml文件已上传", is(layerAttr.getDsla_remark()));
+						break;
+					case "hdfs-site.xml":
+						assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+						assertThat("hdfs-site.xml文件已上传", is(layerAttr.getDsla_remark()));
+						break;
+					case "hbase-site.xml":
+						assertThat(IsFlag.Shi.getCode(), is(layerAttr.getIs_file()));
+						assertThat("hbase-site.xml文件已上传", is(layerAttr.getDsla_remark()));
+						break;
 				}
 			}
 			// 2.错误的数据访问1，dsl_id为空
