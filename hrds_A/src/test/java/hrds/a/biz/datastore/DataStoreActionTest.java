@@ -35,14 +35,13 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DataStoreActionTest extends WebBaseTestCase {
-
+	private static final Type type = new TypeReference<List<Map<String, Object>>>() {
+	}.getType();
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
 	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
-	//当前线程的id
-	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 初始化数据存储层配置ID
 	private final long DSL_ID = PrimayKeyGener.getNextId();
 	// 初始化存储层数据类型对照主表ID
@@ -381,12 +380,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					"select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
 							"order by dsla_storelayer", dataStoreLayer.getDsl_id());
 			for (Data_store_layer_added layerAdded : layerAddeds) {
-				if (StoreLayerAdded.ZhuJian == StoreLayerAdded.ofEnumByCode(layerAdded.getDsla_storelayer())) {
-					assertThat("新增数据存储附加信息", is(layerAdded.getDslad_remark()));
-				} else {
-					assertThat("新增数据存储附加信息", is(layerAdded.getDslad_remark()));
-
-				}
+				assertThat("新增数据存储附加信息", is(layerAdded.getDslad_remark()));
 			}
 			List<Data_store_layer_attr> layerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
 					"select * from " + Data_store_layer_attr.TableName + " where dsl_id=?",
@@ -566,7 +560,6 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				dataStoreLayerAttr.setIs_file(IsFlag.Fou.getCode());
 				storeLayerAttrList.add(dataStoreLayerAttr);
 			}
-			File file = FileUtil.getFile("src//test//java//hrds//a//biz//datastore//upload");
 			String bodyString = new HttpClient()
 					.reset(SubmitMediaType.MULTIPART)
 					.addData("dsl_id", DSL_ID)
@@ -833,8 +826,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> dataForMap = ar.getDataForMap();
-		List<Map<String, Object>> layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
-		List<Map<String, Object>> layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
+		List<Map<String, Object>> layerAndAdded = JsonUtil.toObject(dataForMap.get(
+				"layerAndAdded").toString(), type);
+		List<Map<String, Object>> layerAndAttr =
+				JsonUtil.toObject(dataForMap.get("layerAndAttr").toString(), type);
 		assertThat(dataForMap.get("store_type"), is(Store_type.DATABASE.getCode()));
 		assertThat("数据存储层配置测试名称0", is(dataForMap.get("dsl_name")));
 		for (Map<String, Object> map : layerAndAdded) {
@@ -871,8 +866,8 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
 		dataForMap = ar.getDataForMap();
-		layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
-		layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
+		layerAndAdded = JsonUtil.toObject(dataForMap.get("layerAndAdded").toString(), type);
+		layerAndAttr = JsonUtil.toObject(dataForMap.get("layerAndAttr").toString(), type);
 		assertThat(dataForMap.get("store_type"), is(Store_type.HIVE.getCode()));
 		assertThat("数据存储层配置测试名称1", is(dataForMap.get("dsl_name")));
 		for (Map<String, Object> map : layerAndAdded) {
@@ -912,8 +907,8 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
 		dataForMap = ar.getDataForMap();
-		layerAndAdded = (List<Map<String, Object>>) dataForMap.get("layerAndAdded");
-		layerAndAttr = (List<Map<String, Object>>) dataForMap.get("layerAndAttr");
+		layerAndAdded = JsonUtil.toObject(dataForMap.get("layerAndAdded").toString(), type);
+		layerAndAttr = JsonUtil.toObject(dataForMap.get("layerAndAttr").toString(), type);
 		assertThat(layerAndAdded.isEmpty(), is(true));
 		assertThat(layerAndAttr.isEmpty(), is(true));
 	}
@@ -1687,10 +1682,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 		assertThat(ar.isSuccess(), is(true));
-		List<String> keyList = ar.getDataForEntityList(String.class);
+		Map<Object, Object> dataForMap = ar.getDataForMap();
+		List<String> jdbcKeyList = JsonUtil.toObject(dataForMap.get("jdbcKey").toString(),
+				new TypeReference<List<String>>() {
+				}.getType());
 		List<String> psqlKeyList = StorageTypeKey.getFinallyStorageKeys()
 				.get(DatabaseType.Postgresql.getCode() + "_" + IsFlag.Shi.getCode());
-		assertThat(keyList.containsAll(psqlKeyList), is(true));
+		assertThat(jdbcKeyList.containsAll(psqlKeyList), is(true));
 		// 2.错误的数据访问1，store_type不存在
 		bodyString = new HttpClient()
 				.addData("store_type", "111")
