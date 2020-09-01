@@ -125,14 +125,14 @@ public class AgentInfoAction extends BaseAction {
 			throw new BusinessException("端口被占用，agent_port=" + agentInfo.getAgent_port() + "," +
 					"agent_ip =" + agentInfo.getAgent_ip());
 		}
+		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
+		isDatasourceAndAgentExist(agentInfo.getSource_id(), agentInfo.getAgent_type(),
+				agentInfo.getAgent_ip(), agentInfo.getAgent_port(), agentInfo.getAgent_id());
 		// 4.初始化AgentInfo的一些非页面传值
 		agentInfo.setAgent_id(PrimayKeyGener.getNextId());
 		agentInfo.setAgent_status(AgentStatus.WeiLianJie.getCode());
 		agentInfo.setCreate_time(DateUtil.getSysTime());
 		agentInfo.setCreate_date(DateUtil.getSysDate());
-		// 5.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
-		isDatasourceAndAgentExist(agentInfo.getSource_id(), agentInfo.getAgent_type(),
-				agentInfo.getAgent_ip(), agentInfo.getAgent_port());
 		// 6.保存agent信息
 		agentInfo.add(Dbo.db());
 	}
@@ -145,16 +145,28 @@ public class AgentInfoAction extends BaseAction {
 	@Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（agentType）")
 	@Param(name = "agent_ip", desc = "agent所在服务器ip", range = "合法IP地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent连接端口", range = "1024-65535")
-	private void isDatasourceAndAgentExist(long source_id, String agent_type, String agent_ip, String agent_port) {
+	private void isDatasourceAndAgentExist(long source_id, String agent_type, String agent_ip,
+	                                       String agent_port, Long agent_id) {
 		// 1.数据可访问权限处理方式，这是一个私有方法，不会单独被调用，所以不需要权限验证
 		// 2.验证数据源是否还存在,查到至少一条数据，查不到为0
 		isDatasourceExist(source_id);
 		// 3.判断数据源下相同的IP地址中是否包含相同的端口,查到至少一条数据，查不到为0
-		if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=?" +
-						" AND agent_type=? AND agent_ip=? AND agent_port=?", source_id, agent_type, agent_ip,
-				agent_port).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
-			throw new BusinessException("该agent对应的数据源下相同的IP地址中包含相同的端口，" +
-					"source_id=" + source_id);
+		if (null == agent_id) {
+			if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=?" +
+							" AND agent_type=? AND agent_ip=? AND agent_port=?",
+					source_id, agent_type, agent_ip,
+					agent_port).orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+				throw new BusinessException("该agent对应的数据源下相同的IP地址中包含相同的端口，" +
+						"source_id=" + source_id);
+			}
+		} else {
+			if (Dbo.queryNumber("SELECT count(1) FROM " + Agent_info.TableName + " WHERE source_id=?" +
+							" AND agent_type=? AND agent_ip=? AND agent_port=? and agent_id!=?",
+					source_id, agent_type, agent_ip, agent_port, agent_id)
+					.orElseThrow(() -> new BusinessException("sql查询错误！")) > 0) {
+				throw new BusinessException("该agent对应的数据源下相同的IP地址中包含相同的端口，" +
+						"source_id=" + source_id);
+			}
 		}
 	}
 
@@ -162,9 +174,10 @@ public class AgentInfoAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制" +
 					"2.字段合法性验证" +
 					"3.判断端口是否被占用" +
-					"4.创建agent_info实体对象，同时封装值" +
-					"5.更新agent信息" +
-					"6.更新agent_down_info信息")
+					"4.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口" +
+					"5.更新agent信息,agent名称未发生改变" +
+					"6.更新agent信息,agent名称发生改变" +
+					"7.更新agent_down_info信息")
 	@Param(name = "agent_id", desc = "agent_info主键ID", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_name", desc = "data_source表主键", range = "10位数字，新增时自动生成")
 	@Param(name = "agent_type", desc = "agent类型", range = "使用agent类型代码项（AgentType）")
@@ -178,6 +191,10 @@ public class AgentInfoAction extends BaseAction {
 		// 1.数据可访问权限处理方式,该方法不需要权限控制
 		// 2.字段合法性验证
 		fieldLegalityValidation(agent_name, agent_type, agent_ip, agent_port);
+		Agent_info agent_info = Dbo.queryOneObject(Agent_info.class,
+				"select * from " + Agent_info.TableName + " where agent_id=?",
+				agent_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误或者数据映射实体错误"));
 		// 3.判断端口是否被占用
 		boolean flag = isPortOccupied(agent_ip, agent_port);
 		if (flag) {
@@ -185,18 +202,25 @@ public class AgentInfoAction extends BaseAction {
 			throw new BusinessException("端口被占用，agent_port=" + agent_port + "," +
 					"agent_ip =" + agent_ip);
 		}
-		// 4.创建agent_info实体对象，同时封装值
-		Agent_info agentInfo = new Agent_info();
-		agentInfo.setAgent_id(agent_id);
-		agentInfo.setUser_id(user_id);
-		agentInfo.setSource_id(source_id);
-		agentInfo.setAgent_ip(agent_ip);
-		agentInfo.setAgent_port(agent_port);
-		agentInfo.setAgent_type(agent_type);
-		agentInfo.setAgent_name(agent_name);
-		// 5.更新agent信息
-		agentInfo.update(Dbo.db());
-		// 6.更新agent_down_info信息
+		// 4.检查数据源是否还存在以及判断数据源下相同的IP地址中是否包含相同的端口
+		if (AgentStatus.YiLianJie == AgentStatus.ofEnumByCode(agent_info.getAgent_status())) {
+			throw new BusinessException("当前agent状态为已连接不能被修改");
+		}
+		isDatasourceAndAgentExist(source_id, agent_type, agent_ip, agent_port, agent_id);
+		if (agent_name.equals(agent_info.getAgent_name())) {
+			// 5.更新agent信息,agent名称未发生改变
+			Dbo.execute(
+					"update " + Agent_info.TableName + " set agent_ip=?,agent_port=?,user_id=?"
+							+ " where agent_id=? and agent_type=?",
+					agent_ip, agent_port, user_id, agent_id, agent_type);
+		} else {
+			// 6.更新agent信息,agent名称发生改变
+			Dbo.execute(
+					"update " + Agent_info.TableName + " set agent_ip=?,agent_port=?,user_id=?,agent_name=?"
+							+ " where agent_id=? and agent_type=?",
+					agent_ip, agent_port, user_id, agent_name, agent_id, agent_type);
+		}
+		// 7.更新agent_down_info信息
 		Dbo.execute("update " + Agent_down_info.TableName + " set agent_ip=?,agent_port=? where user_id=? " +
 						" and agent_type=? and agent_name=? and agent_id=?", agent_ip, agent_port,
 				user_id, agent_type, agent_name, agent_id);
