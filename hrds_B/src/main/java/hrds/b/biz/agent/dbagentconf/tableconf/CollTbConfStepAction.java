@@ -1204,7 +1204,8 @@ public class CollTbConfStepAction extends BaseAction {
 	private void saveTableCycle(String tableCycles, Table_info tableInfo) {
 		if (StringUtils.isNotBlank(tableCycles)) {
 			JSONObject jsonObject = JSONObject.parseObject(tableCycles);
-			if (jsonObject.get(tableInfo.getTable_name()) != null) {
+			if (jsonObject.getJSONObject(tableInfo.getTable_name()) != null
+					&& StringUtils.isNotBlank(jsonObject.getJSONObject(tableInfo.getTable_name()).getString("over_date"))) {
 
 				Table_cycle tableCycle = JsonUtil
 					.toObjectSafety(jsonObject.get(tableInfo.getTable_name()).toString(), Table_cycle.class)
