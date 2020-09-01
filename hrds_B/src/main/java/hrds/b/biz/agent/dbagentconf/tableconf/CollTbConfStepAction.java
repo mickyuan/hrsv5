@@ -1205,7 +1205,7 @@ public class CollTbConfStepAction extends BaseAction {
 		if (StringUtils.isNotBlank(tableCycles)) {
 			JSONObject jsonObject = JSONObject.parseObject(tableCycles);
 			if (jsonObject.getJSONObject(tableInfo.getTable_name()) != null
-					&& StringUtils.isNotBlank(jsonObject.getJSONObject(tableInfo.getTable_name()).getString("over_date"))) {
+				&& StringUtils.isNotBlank(jsonObject.getJSONObject(tableInfo.getTable_name()).getString("over_date"))) {
 
 				Table_cycle tableCycle = JsonUtil
 					.toObjectSafety(jsonObject.get(tableInfo.getTable_name()).toString(), Table_cycle.class)
@@ -1215,7 +1215,7 @@ public class CollTbConfStepAction extends BaseAction {
 					.notBlank(tableCycle.getOver_date(), "采集表" + tableInfo.getTable_name() + "的采集周期结束日期不能为空");
 
 				tableCycle.setTable_id(tableInfo.getTable_id());
-				if (tableCycle.getTc_id() != 0 || tableCycle.getTc_id() != null) {
+				if (tableCycle.getTc_id() != null && tableCycle.getTc_id() != 0) {
 					try {
 						tableCycle.update(Dbo.db());
 					} catch (Exception e) {
