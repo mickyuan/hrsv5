@@ -30,21 +30,21 @@ public class Auto_comp_group extends ProjectTableEntity
 		__tmpPKS.add("component_group_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="column_name",value="字段名:",dataType = String.class,required = false)
+	@DocBean(name ="column_name",value="字段名:",dataType = String.class,required = true)
 	private String column_name;
 	@DocBean(name ="create_date",value="创建日期:",dataType = String.class,required = true)
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="component_group_id",value="分组ID:",dataType = Long.class,required = true)
 	private Long component_group_id;
 	@DocBean(name ="component_id",value="组件ID:",dataType = Long.class,required = false)
 	private Long component_id;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 	@DocBean(name ="create_user",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_user;

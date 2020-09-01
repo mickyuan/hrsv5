@@ -34,9 +34,9 @@ public class Auto_fetch_sum extends ProjectTableEntity
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="fetch_sum_id",value="取数汇总ID:",dataType = Long.class,required = true)
 	private Long fetch_sum_id;
@@ -50,11 +50,9 @@ public class Auto_fetch_sum extends ProjectTableEntity
 	private String fetch_name;
 	@DocBean(name ="fetch_desc",value="取数用途:",dataType = String.class,required = false)
 	private String fetch_desc;
-	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
-	private Long user_id;
 	@DocBean(name ="create_user",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_user;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 
 	/** 取得：创建日期 */
@@ -148,20 +146,6 @@ public class Auto_fetch_sum extends ProjectTableEntity
 	/** 设置：取数用途 */
 	public void setFetch_desc(String fetch_desc){
 		this.fetch_desc=fetch_desc;
-	}
-	/** 取得：用户ID */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
-		}
 	}
 	/** 取得：用户ID */
 	public Long getCreate_user(){

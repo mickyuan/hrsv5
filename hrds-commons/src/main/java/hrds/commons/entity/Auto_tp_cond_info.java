@@ -30,15 +30,15 @@ public class Auto_tp_cond_info extends ProjectTableEntity
 		__tmpPKS.add("template_cond_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="cond_para_name",value="条件参数名称:",dataType = String.class,required = false)
+	@DocBean(name ="cond_para_name",value="条件参数名称:",dataType = String.class,required = true)
 	private String cond_para_name;
-	@DocBean(name ="cond_en_column",value="条件对应的英文字段:",dataType = String.class,required = false)
+	@DocBean(name ="cond_en_column",value="条件对应的英文字段:",dataType = String.class,required = true)
 	private String cond_en_column;
 	@DocBean(name ="ci_sp_name",value="代码项表名:",dataType = String.class,required = false)
 	private String ci_sp_name;
 	@DocBean(name ="ci_sp_class",value="代码项类别:",dataType = String.class,required = false)
 	private String ci_sp_class;
-	@DocBean(name ="value_type",value="值类型(AutoValueType):01-字符串<ZiFuChuan> 02-数值<ShuZhi> 03-日期<RiQi> 04-枚举<MeiJu> ",dataType = String.class,required = false)
+	@DocBean(name ="value_type",value="值类型(AutoValueType):01-字符串<ZiFuChuan> 02-数值<ShuZhi> 03-日期<RiQi> 04-枚举<MeiJu> ",dataType = String.class,required = true)
 	private String value_type;
 	@DocBean(name ="template_cond_id",value="模板条件ID:",dataType = Long.class,required = true)
 	private Long template_cond_id;

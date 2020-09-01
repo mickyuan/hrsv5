@@ -36,9 +36,9 @@ public class Auto_comp_data_sum extends ProjectTableEntity
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="comp_data_sum_id",value="组件数据汇总ID:",dataType = Long.class,required = true)
 	private Long comp_data_sum_id;
@@ -46,7 +46,7 @@ public class Auto_comp_data_sum extends ProjectTableEntity
 	private String column_name;
 	@DocBean(name ="component_id",value="组件ID:",dataType = Long.class,required = false)
 	private Long component_id;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 	@DocBean(name ="create_user",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_user;

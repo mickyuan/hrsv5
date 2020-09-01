@@ -36,7 +36,7 @@ public class Auto_legend_info extends ProjectTableEntity
 	private String type;
 	@DocBean(name ="show",value="是否显示(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String show;
-	@DocBean(name ="z",value="z值:",dataType = Long.class,required = true)
+	@DocBean(name ="z",value="z值:",dataType = Long.class,required = false)
 	private Long z;
 	@DocBean(name ="left_distance",value="左侧距离:",dataType = String.class,required = false)
 	private String left_distance;
@@ -56,11 +56,11 @@ public class Auto_legend_info extends ProjectTableEntity
 	private String align;
 	@DocBean(name ="padding",value="内边距:",dataType = String.class,required = false)
 	private String padding;
-	@DocBean(name ="itemgap",value="图例间隔:",dataType = Long.class,required = true)
+	@DocBean(name ="itemgap",value="图例间隔:",dataType = Long.class,required = false)
 	private Long itemgap;
-	@DocBean(name ="itemwidth",value="图形宽度:",dataType = Long.class,required = true)
+	@DocBean(name ="itemwidth",value="图形宽度:",dataType = Long.class,required = false)
 	private Long itemwidth;
-	@DocBean(name ="itemheight",value="图形高度:",dataType = Long.class,required = true)
+	@DocBean(name ="itemheight",value="图形高度:",dataType = Long.class,required = false)
 	private Long itemheight;
 	@DocBean(name ="formatter",value="格式化内容:",dataType = String.class,required = false)
 	private String formatter;
@@ -74,17 +74,17 @@ public class Auto_legend_info extends ProjectTableEntity
 	private String backgroundcolor;
 	@DocBean(name ="bordercolor",value="边框颜色:",dataType = String.class,required = false)
 	private String bordercolor;
-	@DocBean(name ="borderwidth",value="边框线宽:",dataType = Long.class,required = true)
+	@DocBean(name ="borderwidth",value="边框线宽:",dataType = Long.class,required = false)
 	private Long borderwidth;
-	@DocBean(name ="borderradius",value="圆角半径:",dataType = Long.class,required = true)
+	@DocBean(name ="borderradius",value="圆角半径:",dataType = Long.class,required = false)
 	private Long borderradius;
-	@DocBean(name ="animation",value="图例翻页动画(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	@DocBean(name ="animation",value="图例翻页动画(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = false)
 	private String animation;
 	@DocBean(name ="component_id",value="组件ID:",dataType = Long.class,required = false)
 	private Long component_id;
-	@DocBean(name ="intervalnumber",value="图例个数:",dataType = Long.class,required = true)
+	@DocBean(name ="intervalnumber",value="图例个数:",dataType = Long.class,required = false)
 	private Long intervalnumber;
-	@DocBean(name ="interval",value="图例容量:",dataType = Long.class,required = true)
+	@DocBean(name ="interval",value="图例容量:",dataType = Long.class,required = false)
 	private Long interval;
 
 	/** 取得：图例编号 */

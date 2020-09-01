@@ -36,21 +36,21 @@ public class Auto_axis_info extends ProjectTableEntity
 	private String axis_type;
 	@DocBean(name ="show",value="是否显示(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String show;
-	@DocBean(name ="position",value="轴位置:",dataType = String.class,required = true)
+	@DocBean(name ="position",value="轴位置:",dataType = String.class,required = false)
 	private String position;
-	@DocBean(name ="axisoffset",value="轴偏移量:",dataType = Long.class,required = true)
+	@DocBean(name ="axisoffset",value="轴偏移量:",dataType = Long.class,required = false)
 	private Long axisoffset;
-	@DocBean(name ="name",value="轴名称:",dataType = String.class,required = true)
+	@DocBean(name ="name",value="轴名称:",dataType = String.class,required = false)
 	private String name;
-	@DocBean(name ="namelocation",value="轴名称位置:",dataType = String.class,required = true)
+	@DocBean(name ="namelocation",value="轴名称位置:",dataType = String.class,required = false)
 	private String namelocation;
-	@DocBean(name ="namegap",value="名称与轴线距离:",dataType = Long.class,required = true)
+	@DocBean(name ="namegap",value="名称与轴线距离:",dataType = Long.class,required = false)
 	private Long namegap;
-	@DocBean(name ="namerotate",value="轴名字旋转角度:",dataType = Long.class,required = true)
+	@DocBean(name ="namerotate",value="轴名字旋转角度:",dataType = Long.class,required = false)
 	private Long namerotate;
-	@DocBean(name ="min",value="轴刻度最小值:",dataType = Long.class,required = true)
+	@DocBean(name ="min",value="轴刻度最小值:",dataType = Long.class,required = false)
 	private Long min;
-	@DocBean(name ="max",value="轴刻度最大值:",dataType = Long.class,required = true)
+	@DocBean(name ="max",value="轴刻度最大值:",dataType = Long.class,required = false)
 	private Long max;
 	@DocBean(name ="silent",value="坐标轴是否静态(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String silent;

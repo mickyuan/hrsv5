@@ -32,7 +32,7 @@ public class Auto_dashboard_info extends ProjectTableEntity
 	}
 	@DocBean(name ="dashboard_id",value="仪表板id:",dataType = Long.class,required = true)
 	private Long dashboard_id;
-	@DocBean(name ="dashboard_name",value="仪表板名称:",dataType = String.class,required = false)
+	@DocBean(name ="dashboard_name",value="仪表板名称:",dataType = String.class,required = true)
 	private String dashboard_name;
 	@DocBean(name ="dashboard_desc",value="仪表板描述:",dataType = String.class,required = false)
 	private String dashboard_desc;
@@ -40,9 +40,9 @@ public class Auto_dashboard_info extends ProjectTableEntity
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="dashboard_theme",value="仪表板主题:",dataType = String.class,required = false)
 	private String dashboard_theme;
@@ -58,7 +58,7 @@ public class Auto_dashboard_info extends ProjectTableEntity
 	private String background;
 	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
 	private Long user_id;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 
 	/** 取得：仪表板id */

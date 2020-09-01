@@ -32,17 +32,17 @@ public class Auto_db_access_info extends ProjectTableEntity
 	}
 	@DocBean(name ="db_type",value="数据库类型:",dataType = Long.class,required = true)
 	private Long db_type;
-	@DocBean(name ="db_name",value="数据库名称:",dataType = String.class,required = false)
+	@DocBean(name ="db_name",value="数据库名称:",dataType = String.class,required = true)
 	private String db_name;
-	@DocBean(name ="db_ip",value="数据库服务ip:",dataType = String.class,required = false)
+	@DocBean(name ="db_ip",value="数据库服务ip:",dataType = String.class,required = true)
 	private String db_ip;
-	@DocBean(name ="db_user",value="数据库访问用户名:",dataType = String.class,required = false)
+	@DocBean(name ="db_user",value="数据库访问用户名:",dataType = String.class,required = true)
 	private String db_user;
 	@DocBean(name ="db_password",value="数据库访问密码:",dataType = String.class,required = false)
 	private String db_password;
-	@DocBean(name ="db_port",value="数据服访问端口:",dataType = String.class,required = false)
+	@DocBean(name ="db_port",value="数据服访问端口:",dataType = String.class,required = true)
 	private String db_port;
-	@DocBean(name ="jdbcurl",value="jdbcurl:",dataType = String.class,required = false)
+	@DocBean(name ="jdbcurl",value="jdbcurl:",dataType = String.class,required = true)
 	private String jdbcurl;
 	@DocBean(name ="access_info_id",value="数据库访问信息表id:",dataType = Long.class,required = true)
 	private Long access_info_id;

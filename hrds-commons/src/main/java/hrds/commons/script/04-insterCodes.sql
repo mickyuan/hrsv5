@@ -1,21 +1,16 @@
 --　系统的引用值个数:71
---　本引用值的代码个数:3 -------i==1
-delete from code_info where ci_sp_class='88';
-INSERT INTO CODE_INFO  VALUES ('1', '88', 'sql执行引擎', 'JDBC', 'SqlEngine');
-INSERT INTO CODE_INFO  VALUES ('2', '88', 'sql执行引擎', 'SPARK', 'SqlEngine');
-INSERT INTO CODE_INFO  VALUES ('3', '88', 'sql执行引擎', '默认', 'SqlEngine');
---　本引用值的代码个数:2 -------i==2
+--　本引用值的代码个数:2 -------i==1
 delete from code_info where ci_sp_class='90';
 INSERT INTO CODE_INFO  VALUES ('1', '90', '落地文件-卸数方式', '全量卸数', 'UnloadType');
 INSERT INTO CODE_INFO  VALUES ('2', '90', '落地文件-卸数方式', '增量卸数', 'UnloadType');
---　本引用值的代码个数:5 -------i==3
+--　本引用值的代码个数:5 -------i==2
 delete from code_info where ci_sp_class='91';
 INSERT INTO CODE_INFO  VALUES ('1', '91', '数据处理方式', '定值', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('2', '91', '数据处理方式', '自增', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('3', '91', '数据处理方式', '映射赋值', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('4', '91', '数据处理方式', '函数映射', 'ProcessType');
 INSERT INTO CODE_INFO  VALUES ('5', '91', '数据处理方式', '分组映射', 'ProcessType');
---　本引用值的代码个数:6 -------i==4
+--　本引用值的代码个数:6 -------i==3
 delete from code_info where ci_sp_class='93';
 INSERT INTO CODE_INFO  VALUES ('1', '93', '存储层关系-数据来源', 'db采集', 'StoreLayerDataSource');
 INSERT INTO CODE_INFO  VALUES ('2', '93', '存储层关系-数据来源', '数据库采集', 'StoreLayerDataSource');
@@ -23,22 +18,30 @@ INSERT INTO CODE_INFO  VALUES ('3', '93', '存储层关系-数据来源', '对�
 INSERT INTO CODE_INFO  VALUES ('4', '93', '存储层关系-数据来源', '数据集市', 'StoreLayerDataSource');
 INSERT INTO CODE_INFO  VALUES ('5', '93', '存储层关系-数据来源', '数据管控', 'StoreLayerDataSource');
 INSERT INTO CODE_INFO  VALUES ('6', '93', '存储层关系-数据来源', '自定义', 'StoreLayerDataSource');
---　本引用值的代码个数:4 -------i==5
+--　本引用值的代码个数:4 -------i==4
 delete from code_info where ci_sp_class='94';
 INSERT INTO CODE_INFO  VALUES ('S', '94', '对标-状态', '成功', 'DbmState');
 INSERT INTO CODE_INFO  VALUES ('F', '94', '对标-状态', '失败', 'DbmState');
 INSERT INTO CODE_INFO  VALUES ('R', '94', '对标-状态', '运行', 'DbmState');
 INSERT INTO CODE_INFO  VALUES ('N', '94', '对标-状态', '未运行', 'DbmState');
---　本引用值的代码个数:3 -------i==6
+--　本引用值的代码个数:3 -------i==5
 delete from code_info where ci_sp_class='96';
 INSERT INTO CODE_INFO  VALUES ('1', '96', '数据库采集方式', '贴元登记', 'CollectType');
 INSERT INTO CODE_INFO  VALUES ('2', '96', '数据库采集方式', '数据库抽数', 'CollectType');
 INSERT INTO CODE_INFO  VALUES ('3', '96', '数据库采集方式', '数据库采集', 'CollectType');
---　本引用值的代码个数:3 -------i==7
+--　本引用值的代码个数:3 -------i==6
 delete from code_info where ci_sp_class='105';
 INSERT INTO CODE_INFO  VALUES ('01', '105', '自主取数模板状态', '编辑', 'AutoTemplateStatus');
 INSERT INTO CODE_INFO  VALUES ('04', '105', '自主取数模板状态', '发布', 'AutoTemplateStatus');
 INSERT INTO CODE_INFO  VALUES ('05', '105', '自主取数模板状态', '注销', 'AutoTemplateStatus');
+--　本引用值的代码个数:6 -------i==7
+delete from code_info where ci_sp_class='106';
+INSERT INTO CODE_INFO  VALUES ('01', '106', '自主取数数据展现形式', '文本框', 'AutoDataRetrievalForm');
+INSERT INTO CODE_INFO  VALUES ('02', '106', '自主取数数据展现形式', '下拉选择', 'AutoDataRetrievalForm');
+INSERT INTO CODE_INFO  VALUES ('03', '106', '自主取数数据展现形式', '下拉多选', 'AutoDataRetrievalForm');
+INSERT INTO CODE_INFO  VALUES ('04', '106', '自主取数数据展现形式', '单选按钮', 'AutoDataRetrievalForm');
+INSERT INTO CODE_INFO  VALUES ('05', '106', '自主取数数据展现形式', '复选按钮', 'AutoDataRetrievalForm');
+INSERT INTO CODE_INFO  VALUES ('06', '106', '自主取数数据展现形式', '日期选择', 'AutoDataRetrievalForm');
 --　本引用值的代码个数:38 -------i==8
 delete from code_info where ci_sp_class='17';
 INSERT INTO CODE_INFO  VALUES ('00', '17', '用户类型', '系统管理员', 'UserType');
@@ -79,14 +82,11 @@ INSERT INTO CODE_INFO  VALUES ('97', '17', '用户类型', '系统参数管理',
 INSERT INTO CODE_INFO  VALUES ('96', '17', '用户类型', '数据整理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('95', '17', '用户类型', '数据存储层定义', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('94', '17', '用户类型', '版本管理', 'UserType');
---　本引用值的代码个数:6 -------i==9
-delete from code_info where ci_sp_class='106';
-INSERT INTO CODE_INFO  VALUES ('01', '106', '自主取数数据展现形式', '文本框', 'AutoDataRetrievalForm');
-INSERT INTO CODE_INFO  VALUES ('02', '106', '自主取数数据展现形式', '下拉选择', 'AutoDataRetrievalForm');
-INSERT INTO CODE_INFO  VALUES ('03', '106', '自主取数数据展现形式', '下拉多选', 'AutoDataRetrievalForm');
-INSERT INTO CODE_INFO  VALUES ('04', '106', '自主取数数据展现形式', '单选按钮', 'AutoDataRetrievalForm');
-INSERT INTO CODE_INFO  VALUES ('05', '106', '自主取数数据展现形式', '复选按钮', 'AutoDataRetrievalForm');
-INSERT INTO CODE_INFO  VALUES ('06', '106', '自主取数数据展现形式', '日期选择', 'AutoDataRetrievalForm');
+--　本引用值的代码个数:3 -------i==9
+delete from code_info where ci_sp_class='108';
+INSERT INTO CODE_INFO  VALUES ('01', '108', '自主取数取数状态', '编辑', 'AutoFetchStatus');
+INSERT INTO CODE_INFO  VALUES ('04', '108', '自主取数取数状态', '完成', 'AutoFetchStatus');
+INSERT INTO CODE_INFO  VALUES ('05', '108', '自主取数取数状态', '注销', 'AutoFetchStatus');
 --　本引用值的代码个数:2 -------i==10
 delete from code_info where ci_sp_class='18';
 INSERT INTO CODE_INFO  VALUES ('1', '18', '是否标识', '是', 'IsFlag');
@@ -97,12 +97,7 @@ INSERT INTO CODE_INFO  VALUES ('1', '19', '用户状态', '正常', 'UserState')
 INSERT INTO CODE_INFO  VALUES ('2', '19', '用户状态', '禁用', 'UserState');
 INSERT INTO CODE_INFO  VALUES ('3', '19', '用户状态', '删除', 'UserState');
 INSERT INTO CODE_INFO  VALUES ('4', '19', '用户状态', '正在使用', 'UserState');
---　本引用值的代码个数:3 -------i==12
-delete from code_info where ci_sp_class='108';
-INSERT INTO CODE_INFO  VALUES ('01', '108', '自主取数取数状态', '编辑', 'AutoFetchStatus');
-INSERT INTO CODE_INFO  VALUES ('04', '108', '自主取数取数状态', '完成', 'AutoFetchStatus');
-INSERT INTO CODE_INFO  VALUES ('05', '108', '自主取数取数状态', '注销', 'AutoFetchStatus');
---　本引用值的代码个数:10 -------i==13
+--　本引用值的代码个数:10 -------i==12
 delete from code_info where ci_sp_class='20';
 INSERT INTO CODE_INFO  VALUES ('SHELL', '20', 'ETL作业类型', 'SHELL', 'Pro_Type');
 INSERT INTO CODE_INFO  VALUES ('PERL', '20', 'ETL作业类型', 'PERL', 'Pro_Type');
@@ -114,12 +109,12 @@ INSERT INTO CODE_INFO  VALUES ('DBTRAN', '20', 'ETL作业类型', 'DBTRAN', 'Pro
 INSERT INTO CODE_INFO  VALUES ('DBJOB', '20', 'ETL作业类型', 'DBJOB', 'Pro_Type');
 INSERT INTO CODE_INFO  VALUES ('Yarn', '20', 'ETL作业类型', 'Yarn', 'Pro_Type');
 INSERT INTO CODE_INFO  VALUES ('Thrift', '20', 'ETL作业类型', 'Thrift', 'Pro_Type');
---　本引用值的代码个数:3 -------i==14
+--　本引用值的代码个数:3 -------i==13
 delete from code_info where ci_sp_class='21';
 INSERT INTO CODE_INFO  VALUES ('1', '21', '用户优先级', '高', 'UserPriority');
 INSERT INTO CODE_INFO  VALUES ('2', '21', '用户优先级', '中', 'UserPriority');
 INSERT INTO CODE_INFO  VALUES ('3', '21', '用户优先级', '低', 'UserPriority');
---　本引用值的代码个数:6 -------i==15
+--　本引用值的代码个数:6 -------i==14
 delete from code_info where ci_sp_class='22';
 INSERT INTO CODE_INFO  VALUES ('D', '22', 'ETL调度频率', '天(D)', 'Dispatch_Frequency');
 INSERT INTO CODE_INFO  VALUES ('M', '22', 'ETL调度频率', '月(M)', 'Dispatch_Frequency');
@@ -127,31 +122,19 @@ INSERT INTO CODE_INFO  VALUES ('W', '22', 'ETL调度频率', '周(W)', 'Dispatch
 INSERT INTO CODE_INFO  VALUES ('X', '22', 'ETL调度频率', '旬(X)', 'Dispatch_Frequency');
 INSERT INTO CODE_INFO  VALUES ('Y', '22', 'ETL调度频率', '年(Y)', 'Dispatch_Frequency');
 INSERT INTO CODE_INFO  VALUES ('F', '22', 'ETL调度频率', '频率(F)', 'Dispatch_Frequency');
---　本引用值的代码个数:5 -------i==16
+--　本引用值的代码个数:5 -------i==15
 delete from code_info where ci_sp_class='23';
 INSERT INTO CODE_INFO  VALUES ('B', '23', 'ETL调度类型', '批前(B)', 'Dispatch_Type');
 INSERT INTO CODE_INFO  VALUES ('D', '23', 'ETL调度类型', '依赖触发(D)', 'Dispatch_Type');
 INSERT INTO CODE_INFO  VALUES ('T', '23', 'ETL调度类型', '定时T+1触发(T)', 'Dispatch_Type');
 INSERT INTO CODE_INFO  VALUES ('Z', '23', 'ETL调度类型', '定时T+0触发(Z)', 'Dispatch_Type');
 INSERT INTO CODE_INFO  VALUES ('A', '23', 'ETL调度类型', '批后(A)', 'Dispatch_Type');
---　本引用值的代码个数:3 -------i==17
+--　本引用值的代码个数:3 -------i==16
 delete from code_info where ci_sp_class='24';
 INSERT INTO CODE_INFO  VALUES ('Y', '24', 'ETl作业有效标志', '有效(Y)', 'Job_Effective_Flag');
 INSERT INTO CODE_INFO  VALUES ('N', '24', 'ETl作业有效标志', '无效(N)', 'Job_Effective_Flag');
 INSERT INTO CODE_INFO  VALUES ('V', '24', 'ETl作业有效标志', '空跑(V)', 'Job_Effective_Flag');
---　本引用值的代码个数:6 -------i==18
-delete from code_info where ci_sp_class='25';
-INSERT INTO CODE_INFO  VALUES ('D', '25', 'ETL作业状态', '完成', 'Job_Status');
-INSERT INTO CODE_INFO  VALUES ('E', '25', 'ETL作业状态', '错误', 'Job_Status');
-INSERT INTO CODE_INFO  VALUES ('P', '25', 'ETL作业状态', '挂起', 'Job_Status');
-INSERT INTO CODE_INFO  VALUES ('R', '25', 'ETL作业状态', '运行', 'Job_Status');
-INSERT INTO CODE_INFO  VALUES ('S', '25', 'ETL作业状态', '停止', 'Job_Status');
-INSERT INTO CODE_INFO  VALUES ('W', '25', 'ETL作业状态', '等待', 'Job_Status');
---　本引用值的代码个数:2 -------i==19
-delete from code_info where ci_sp_class='26';
-INSERT INTO CODE_INFO  VALUES ('Y', '26', 'ETL当天调度标志', '是(Y)', 'Today_Dispatch_Flag');
-INSERT INTO CODE_INFO  VALUES ('N', '26', 'ETL当天调度标志', '否(N)', 'Today_Dispatch_Flag');
---　本引用值的代码个数:12 -------i==20
+--　本引用值的代码个数:12 -------i==17
 delete from code_info where ci_sp_class='115';
 INSERT INTO CODE_INFO  VALUES ('01', '115', '可视化数据操作符', '介于', 'AutoDataOperator');
 INSERT INTO CODE_INFO  VALUES ('02', '115', '可视化数据操作符', '不介于', 'AutoDataOperator');
@@ -165,13 +148,15 @@ INSERT INTO CODE_INFO  VALUES ('09', '115', '可视化数据操作符', '最大�
 INSERT INTO CODE_INFO  VALUES ('10', '115', '可视化数据操作符', '最小的N个', 'AutoDataOperator');
 INSERT INTO CODE_INFO  VALUES ('11', '115', '可视化数据操作符', '为空', 'AutoDataOperator');
 INSERT INTO CODE_INFO  VALUES ('12', '115', '可视化数据操作符', '非空', 'AutoDataOperator');
---　本引用值的代码个数:4 -------i==21
-delete from code_info where ci_sp_class='27';
-INSERT INTO CODE_INFO  VALUES ('L', '27', 'ETL主服务器同步', '锁定', 'Main_Server_Sync');
-INSERT INTO CODE_INFO  VALUES ('N', '27', 'ETL主服务器同步', '不同步', 'Main_Server_Sync');
-INSERT INTO CODE_INFO  VALUES ('Y', '27', 'ETL主服务器同步', '同步', 'Main_Server_Sync');
-INSERT INTO CODE_INFO  VALUES ('B', '27', 'ETL主服务器同步', '备份中', 'Main_Server_Sync');
---　本引用值的代码个数:7 -------i==22
+--　本引用值的代码个数:6 -------i==18
+delete from code_info where ci_sp_class='25';
+INSERT INTO CODE_INFO  VALUES ('D', '25', 'ETL作业状态', '完成', 'Job_Status');
+INSERT INTO CODE_INFO  VALUES ('E', '25', 'ETL作业状态', '错误', 'Job_Status');
+INSERT INTO CODE_INFO  VALUES ('P', '25', 'ETL作业状态', '挂起', 'Job_Status');
+INSERT INTO CODE_INFO  VALUES ('R', '25', 'ETL作业状态', '运行', 'Job_Status');
+INSERT INTO CODE_INFO  VALUES ('S', '25', 'ETL作业状态', '停止', 'Job_Status');
+INSERT INTO CODE_INFO  VALUES ('W', '25', 'ETL作业状态', '等待', 'Job_Status');
+--　本引用值的代码个数:7 -------i==19
 delete from code_info where ci_sp_class='116';
 INSERT INTO CODE_INFO  VALUES ('01', '116', '可视化数据汇总类型', '求和', 'AutoDataSumType');
 INSERT INTO CODE_INFO  VALUES ('02', '116', '可视化数据汇总类型', '求平均', 'AutoDataSumType');
@@ -180,16 +165,36 @@ INSERT INTO CODE_INFO  VALUES ('04', '116', '可视化数据汇总类型', '求�
 INSERT INTO CODE_INFO  VALUES ('05', '116', '可视化数据汇总类型', '总行数', 'AutoDataSumType');
 INSERT INTO CODE_INFO  VALUES ('06', '116', '可视化数据汇总类型', '原始数据', 'AutoDataSumType');
 INSERT INTO CODE_INFO  VALUES ('07', '116', '可视化数据汇总类型', '查看全部', 'AutoDataSumType');
---　本引用值的代码个数:2 -------i==23
-delete from code_info where ci_sp_class='28';
-INSERT INTO CODE_INFO  VALUES ('T', '28', 'ETL状态', '有效(T)', 'Status');
-INSERT INTO CODE_INFO  VALUES ('F', '28', 'ETL状态', '失效(F)', 'Status');
---　本引用值的代码个数:3 -------i==24
+--　本引用值的代码个数:2 -------i==20
+delete from code_info where ci_sp_class='26';
+INSERT INTO CODE_INFO  VALUES ('Y', '26', 'ETL当天调度标志', '是(Y)', 'Today_Dispatch_Flag');
+INSERT INTO CODE_INFO  VALUES ('N', '26', 'ETL当天调度标志', '否(N)', 'Today_Dispatch_Flag');
+--　本引用值的代码个数:3 -------i==21
 delete from code_info where ci_sp_class='117';
 INSERT INTO CODE_INFO  VALUES ('01', '117', '可视化源对象', '自主数据数据集', 'AutoSourceObject');
 INSERT INTO CODE_INFO  VALUES ('02', '117', '可视化源对象', '系统级数据集', 'AutoSourceObject');
 INSERT INTO CODE_INFO  VALUES ('03', '117', '可视化源对象', '数据组件数据集', 'AutoSourceObject');
---　本引用值的代码个数:13 -------i==25
+--　本引用值的代码个数:4 -------i==22
+delete from code_info where ci_sp_class='27';
+INSERT INTO CODE_INFO  VALUES ('L', '27', 'ETL主服务器同步', '锁定', 'Main_Server_Sync');
+INSERT INTO CODE_INFO  VALUES ('N', '27', 'ETL主服务器同步', '不同步', 'Main_Server_Sync');
+INSERT INTO CODE_INFO  VALUES ('Y', '27', 'ETL主服务器同步', '同步', 'Main_Server_Sync');
+INSERT INTO CODE_INFO  VALUES ('B', '27', 'ETL主服务器同步', '备份中', 'Main_Server_Sync');
+--　本引用值的代码个数:2 -------i==23
+delete from code_info where ci_sp_class='118';
+INSERT INTO CODE_INFO  VALUES ('1', '118', '可视化轴类型', 'x轴', 'AxisType');
+INSERT INTO CODE_INFO  VALUES ('2', '118', '可视化轴类型', 'y轴', 'AxisType');
+--　本引用值的代码个数:2 -------i==24
+delete from code_info where ci_sp_class='28';
+INSERT INTO CODE_INFO  VALUES ('T', '28', 'ETL状态', '有效(T)', 'Status');
+INSERT INTO CODE_INFO  VALUES ('F', '28', 'ETL状态', '失效(F)', 'Status');
+--　本引用值的代码个数:4 -------i==25
+delete from code_info where ci_sp_class='119';
+INSERT INTO CODE_INFO  VALUES ('01', '119', '值类型', '字符串', 'AutoValueType');
+INSERT INTO CODE_INFO  VALUES ('02', '119', '值类型', '数值', 'AutoValueType');
+INSERT INTO CODE_INFO  VALUES ('03', '119', '值类型', '日期', 'AutoValueType');
+INSERT INTO CODE_INFO  VALUES ('04', '119', '值类型', '枚举', 'AutoValueType');
+--　本引用值的代码个数:13 -------i==26
 delete from code_info where ci_sp_class='29';
 INSERT INTO CODE_INFO  VALUES ('GR', '29', 'ETL干预类型', '分组级续跑', 'Meddle_type');
 INSERT INTO CODE_INFO  VALUES ('GP', '29', 'ETL干预类型', '分组级暂停', 'Meddle_type');
@@ -204,10 +209,6 @@ INSERT INTO CODE_INFO  VALUES ('SS', '29', 'ETL干预类型', '系统停止', 'M
 INSERT INTO CODE_INFO  VALUES ('SP', '29', 'ETL干预类型', '系统级暂停', 'Meddle_type');
 INSERT INTO CODE_INFO  VALUES ('SO', '29', 'ETL干预类型', '系统级重跑，从源头开始', 'Meddle_type');
 INSERT INTO CODE_INFO  VALUES ('SR', '29', 'ETL干预类型', '系统级续跑', 'Meddle_type');
---　本引用值的代码个数:2 -------i==26
-delete from code_info where ci_sp_class='118';
-INSERT INTO CODE_INFO  VALUES ('1', '118', '可视化轴类型', 'x轴', 'AxisType');
-INSERT INTO CODE_INFO  VALUES ('2', '118', '可视化轴类型', 'y轴', 'AxisType');
 --　本引用值的代码个数:5 -------i==27
 delete from code_info where ci_sp_class='30';
 INSERT INTO CODE_INFO  VALUES ('D', '30', 'ETL干预状态', '完成', 'Meddle_status');
@@ -483,9 +484,8 @@ INSERT INTO CODE_INFO  VALUES ('102', '87', '作业运行状态', '暂停', 'Job
 INSERT INTO CODE_INFO  VALUES ('103', '87', '作业运行状态', '中止', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('104', '87', '作业运行状态', '完成', 'JobExecuteState');
 INSERT INTO CODE_INFO  VALUES ('105', '87', '作业运行状态', '失败', 'JobExecuteState');
---　本引用值的代码个数:4 -------i==71
-delete from code_info where ci_sp_class='119';
-INSERT INTO CODE_INFO  VALUES ('01', '119', '值类型', '字符串', 'AutoValueType');
-INSERT INTO CODE_INFO  VALUES ('02', '119', '值类型', '数值', 'AutoValueType');
-INSERT INTO CODE_INFO  VALUES ('03', '119', '值类型', '日期', 'AutoValueType');
-INSERT INTO CODE_INFO  VALUES ('04', '119', '值类型', '枚举', 'AutoValueType');
+--　本引用值的代码个数:3 -------i==71
+delete from code_info where ci_sp_class='88';
+INSERT INTO CODE_INFO  VALUES ('1', '88', 'sql执行引擎', 'JDBC', 'SqlEngine');
+INSERT INTO CODE_INFO  VALUES ('2', '88', 'sql执行引擎', 'SPARK', 'SqlEngine');
+INSERT INTO CODE_INFO  VALUES ('3', '88', 'sql执行引擎', '默认', 'SqlEngine');

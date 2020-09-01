@@ -30,13 +30,13 @@ public class Auto_tp_info extends ProjectTableEntity
 		__tmpPKS.add("template_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="template_name",value="模板名称:",dataType = String.class,required = false)
+	@DocBean(name ="template_name",value="模板名称:",dataType = String.class,required = true)
 	private String template_name;
 	@DocBean(name ="template_desc",value="模板描述:",dataType = String.class,required = false)
 	private String template_desc;
 	@DocBean(name ="data_source",value="数据来源:",dataType = String.class,required = true)
 	private String data_source;
-	@DocBean(name ="template_sql",value="模板sql语句:",dataType = String.class,required = false)
+	@DocBean(name ="template_sql",value="模板sql语句:",dataType = String.class,required = true)
 	private String template_sql;
 	@DocBean(name ="template_status",value="模板状态(AutoTemplateStatus):01-编辑<BianJi> 04-发布<FaBu> 05-注销<ZhuXiao> ",dataType = String.class,required = true)
 	private String template_status;
@@ -44,13 +44,13 @@ public class Auto_tp_info extends ProjectTableEntity
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="template_id",value="模板ID:",dataType = Long.class,required = true)
 	private Long template_id;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 	@DocBean(name ="create_user",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_user;

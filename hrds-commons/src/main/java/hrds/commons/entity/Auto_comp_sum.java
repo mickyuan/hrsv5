@@ -30,7 +30,7 @@ public class Auto_comp_sum extends ProjectTableEntity
 		__tmpPKS.add("component_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="component_name",value="组件名称:",dataType = String.class,required = false)
+	@DocBean(name ="component_name",value="组件名称:",dataType = String.class,required = true)
 	private String component_name;
 	@DocBean(name ="component_desc",value="组件描述:",dataType = String.class,required = false)
 	private String component_desc;
@@ -40,11 +40,11 @@ public class Auto_comp_sum extends ProjectTableEntity
 	private String component_status;
 	@DocBean(name ="create_date",value="创建日期:",dataType = String.class,required = true)
 	private String create_date;
-	@DocBean(name ="create_time",value="时间:",dataType = String.class,required = true)
+	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="component_id",value="组件ID:",dataType = Long.class,required = true)
 	private Long component_id;
@@ -54,19 +54,17 @@ public class Auto_comp_sum extends ProjectTableEntity
 	private String exe_sql;
 	@DocBean(name ="chart_type",value="图表类型:",dataType = String.class,required = false)
 	private String chart_type;
-	@DocBean(name ="chart_theme",value="图形主题:",dataType = String.class,required = false)
+	@DocBean(name ="chart_theme",value="图形主题:",dataType = String.class,required = true)
 	private String chart_theme;
 	@DocBean(name ="background",value="背景色:",dataType = String.class,required = false)
 	private String background;
 	@DocBean(name ="component_buffer",value="组件缓存:",dataType = String.class,required = false)
 	private String component_buffer;
-	@DocBean(name ="condition_sql",value="条件SQL:",dataType = String.class,required = true)
+	@DocBean(name ="condition_sql",value="条件SQL:",dataType = String.class,required = false)
 	private String condition_sql;
-	@DocBean(name ="user_id",value="用户ID:",dataType = Long.class,required = true)
-	private Long user_id;
 	@DocBean(name ="create_user",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_user;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 
 	/** 取得：组件名称 */
@@ -109,11 +107,11 @@ public class Auto_comp_sum extends ProjectTableEntity
 	public void setCreate_date(String create_date){
 		this.create_date=create_date;
 	}
-	/** 取得：时间 */
+	/** 取得：创建时间 */
 	public String getCreate_time(){
 		return create_time;
 	}
-	/** 设置：时间 */
+	/** 设置：创建时间 */
 	public void setCreate_time(String create_time){
 		this.create_time=create_time;
 	}
@@ -202,20 +200,6 @@ public class Auto_comp_sum extends ProjectTableEntity
 	/** 设置：条件SQL */
 	public void setCondition_sql(String condition_sql){
 		this.condition_sql=condition_sql;
-	}
-	/** 取得：用户ID */
-	public Long getUser_id(){
-		return user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(Long user_id){
-		this.user_id=user_id;
-	}
-	/** 设置：用户ID */
-	public void setUser_id(String user_id){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(user_id)){
-			this.user_id=new Long(user_id);
-		}
 	}
 	/** 取得：用户ID */
 	public Long getCreate_user(){

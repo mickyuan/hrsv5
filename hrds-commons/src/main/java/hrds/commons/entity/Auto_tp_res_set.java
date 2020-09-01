@@ -30,9 +30,9 @@ public class Auto_tp_res_set extends ProjectTableEntity
 		__tmpPKS.add("template_res_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="column_en_name",value="字段英文名:",dataType = String.class,required = false)
+	@DocBean(name ="column_en_name",value="字段英文名:",dataType = String.class,required = true)
 	private String column_en_name;
-	@DocBean(name ="column_cn_name",value="字段中文名:",dataType = String.class,required = false)
+	@DocBean(name ="column_cn_name",value="字段中文名:",dataType = String.class,required = true)
 	private String column_cn_name;
 	@DocBean(name ="dese_rule",value="脱敏规则:",dataType = String.class,required = false)
 	private String dese_rule;
@@ -40,23 +40,23 @@ public class Auto_tp_res_set extends ProjectTableEntity
 	private String create_date;
 	@DocBean(name ="create_time",value="创建时间:",dataType = String.class,required = true)
 	private String create_time;
-	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_date",value="最后更新日期:",dataType = String.class,required = false)
 	private String last_update_date;
-	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = true)
+	@DocBean(name ="last_update_time",value="最后更新时间:",dataType = String.class,required = false)
 	private String last_update_time;
 	@DocBean(name ="template_res_id",value="模板结果ID:",dataType = Long.class,required = true)
 	private Long template_res_id;
 	@DocBean(name ="is_dese",value="是否脱敏(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_dese;
-	@DocBean(name ="res_show_column",value="结果显示字段:",dataType = String.class,required = false)
+	@DocBean(name ="res_show_column",value="结果显示字段:",dataType = String.class,required = true)
 	private String res_show_column;
 	@DocBean(name ="template_id",value="模板ID:",dataType = Long.class,required = true)
 	private Long template_id;
-	@DocBean(name ="column_type",value="字段类型:",dataType = String.class,required = false)
+	@DocBean(name ="column_type",value="字段类型:",dataType = String.class,required = true)
 	private String column_type;
-	@DocBean(name ="source_table_name",value="字段来源表名:",dataType = String.class,required = false)
+	@DocBean(name ="source_table_name",value="字段来源表名:",dataType = String.class,required = true)
 	private String source_table_name;
-	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = true)
+	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
 	@DocBean(name ="create_user",value="用户ID:",dataType = Long.class,required = true)
 	private Long create_user;

@@ -488,17 +488,17 @@ CONSTRAINT EDW_SPARKSQL_GRAM_PK PRIMARY KEY(ESG_ID)   );
 DROP TABLE IF EXISTS AUTO_TP_INFO ;
 CREATE TABLE AUTO_TP_INFO(
 TEMPLATE_ID                                       BIGINT default 0 NOT NULL, --模板ID
-TEMPLATE_NAME                                     VARCHAR(100) NULL, --模板名称
+TEMPLATE_NAME                                     VARCHAR(100) NOT NULL, --模板名称
 TEMPLATE_DESC                                     VARCHAR(512) NULL, --模板描述
 DATA_SOURCE                                       CHAR(2) NOT NULL, --数据来源
-TEMPLATE_SQL                                      VARCHAR(512) NULL, --模板sql语句
+TEMPLATE_SQL                                      VARCHAR(512) NOT NULL, --模板sql语句
 TEMPLATE_STATUS                                   CHAR(2) NOT NULL, --模板状态
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 CONSTRAINT AUTO_TP_INFO_PK PRIMARY KEY(TEMPLATE_ID)   );
 
 --模板条件信息表
@@ -506,13 +506,13 @@ DROP TABLE IF EXISTS AUTO_TP_COND_INFO ;
 CREATE TABLE AUTO_TP_COND_INFO(
 TEMPLATE_COND_ID                                  BIGINT default 0 NOT NULL, --模板条件ID
 CON_ROW                                           VARCHAR(32) NULL, --行号
-COND_PARA_NAME                                    VARCHAR(100) NULL, --条件参数名称
-COND_EN_COLUMN                                    VARCHAR(100) NULL, --条件对应的英文字段
+COND_PARA_NAME                                    VARCHAR(100) NOT NULL, --条件参数名称
+COND_EN_COLUMN                                    VARCHAR(100) NOT NULL, --条件对应的英文字段
 COND_CN_COLUMN                                    VARCHAR(100) NULL, --条件对应的中文字段
 CI_SP_NAME                                        VARCHAR(100) NULL, --代码项表名
 CI_SP_CLASS                                       VARCHAR(100) NULL, --代码项类别
 CON_RELATION                                      VARCHAR(16) NULL, --关联关系
-VALUE_TYPE                                        CHAR(2) NULL, --值类型
+VALUE_TYPE                                        CHAR(2) NOT NULL, --值类型
 VALUE_SIZE                                        VARCHAR(100) NULL, --值大小
 SHOW_TYPE                                         CHAR(2) NULL, --展现形式
 PRE_VALUE                                         VARCHAR(100) NULL, --预设值
@@ -526,19 +526,19 @@ DROP TABLE IF EXISTS AUTO_TP_RES_SET ;
 CREATE TABLE AUTO_TP_RES_SET(
 TEMPLATE_RES_ID                                   BIGINT default 0 NOT NULL, --模板结果ID
 TEMPLATE_ID                                       BIGINT default 0 NOT NULL, --模板ID
-COLUMN_EN_NAME                                    VARCHAR(100) NULL, --字段英文名
-COLUMN_CN_NAME                                    VARCHAR(100) NULL, --字段中文名
-RES_SHOW_COLUMN                                   VARCHAR(100) NULL, --结果显示字段
-SOURCE_TABLE_NAME                                 VARCHAR(100) NULL, --字段来源表名
-COLUMN_TYPE                                       VARCHAR(200) NULL, --字段类型
+COLUMN_EN_NAME                                    VARCHAR(100) NOT NULL, --字段英文名
+COLUMN_CN_NAME                                    VARCHAR(100) NOT NULL, --字段中文名
+RES_SHOW_COLUMN                                   VARCHAR(100) NOT NULL, --结果显示字段
+SOURCE_TABLE_NAME                                 VARCHAR(100) NOT NULL, --字段来源表名
+COLUMN_TYPE                                       VARCHAR(200) NOT NULL, --字段类型
 IS_DESE                                           CHAR(1) NOT NULL, --是否脱敏
 DESE_RULE                                         VARCHAR(512) NULL, --脱敏规则
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 CONSTRAINT AUTO_TP_RES_SET_PK PRIMARY KEY(TEMPLATE_RES_ID)   );
 
 --取数汇总表
@@ -550,11 +550,10 @@ FETCH_NAME                                        VARCHAR(100) NOT NULL, --取�
 FETCH_DESC                                        VARCHAR(512) NULL, --取数用途
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 FETCH_STATUS                                      CHAR(2) NOT NULL, --取数状态
 TEMPLATE_ID                                       BIGINT default 0 NOT NULL, --模板ID
 CONSTRAINT AUTO_FETCH_SUM_PK PRIMARY KEY(FETCH_SUM_ID)   );
@@ -797,13 +796,13 @@ CONSTRAINT ETL_SUB_SYS_LIST_PK PRIMARY KEY(SUB_SYS_CD,ETL_SYS_CD)   );
 DROP TABLE IF EXISTS AUTO_COMP_GROUP ;
 CREATE TABLE AUTO_COMP_GROUP(
 COMPONENT_GROUP_ID                                BIGINT default 0 NOT NULL, --分组ID
-COLUMN_NAME                                       VARCHAR(100) NULL, --字段名
+COLUMN_NAME                                       VARCHAR(100) NOT NULL, --字段名
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 COMPONENT_ID                                      BIGINT default 0 NULL, --组件ID
 CONSTRAINT AUTO_COMP_GROUP_PK PRIMARY KEY(COMPONENT_GROUP_ID)   );
 
@@ -829,9 +828,9 @@ OPERATOR                                          VARCHAR(100) NULL, --操作符
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 COMPONENT_ID                                      BIGINT default 0 NULL, --组件ID
 CONSTRAINT AUTO_COMP_COND_PK PRIMARY KEY(COMPONENT_COND_ID)   );
 
@@ -855,12 +854,12 @@ DROP TABLE IF EXISTS AUTO_DB_ACCESS_INFO ;
 CREATE TABLE AUTO_DB_ACCESS_INFO(
 ACCESS_INFO_ID                                    BIGINT default 0 NOT NULL, --数据库访问信息表id
 DB_TYPE                                           BIGINT default 0 NOT NULL, --数据库类型
-DB_NAME                                           VARCHAR(100) NULL, --数据库名称
-DB_IP                                             VARCHAR(100) NULL, --数据库服务ip
-DB_PORT                                           VARCHAR(100) NULL, --数据服访问端口
-DB_USER                                           VARCHAR(100) NULL, --数据库访问用户名
+DB_NAME                                           VARCHAR(100) NOT NULL, --数据库名称
+DB_IP                                             VARCHAR(100) NOT NULL, --数据库服务ip
+DB_PORT                                           VARCHAR(100) NOT NULL, --数据服访问端口
+DB_USER                                           VARCHAR(100) NOT NULL, --数据库访问用户名
 DB_PASSWORD                                       VARCHAR(100) NULL, --数据库访问密码
-JDBCURL                                           VARCHAR(100) NULL, --jdbcurl
+JDBCURL                                           VARCHAR(100) NOT NULL, --jdbcurl
 COMPONENT_ID                                      BIGINT default 0 NULL, --组件ID
 CONSTRAINT AUTO_DB_ACCESS_INFO_PK PRIMARY KEY(ACCESS_INFO_ID)   );
 
@@ -896,9 +895,9 @@ SUMMARY_TYPE                                      CHAR(2) NOT NULL, --汇总类�
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 COMPONENT_ID                                      BIGINT default 0 NULL, --组件ID
 CONSTRAINT AUTO_COMP_DATA_SUM_PK PRIMARY KEY(COMP_DATA_SUM_ID)   );
 
@@ -957,15 +956,15 @@ CONSTRAINT AUTO_GRAPHIC_ATTR_PK PRIMARY KEY(GRAPHIC_ATTR_ID)   );
 DROP TABLE IF EXISTS AUTO_DASHBOARD_INFO ;
 CREATE TABLE AUTO_DASHBOARD_INFO(
 DASHBOARD_ID                                      BIGINT default 0 NOT NULL, --仪表板id
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-DASHBOARD_NAME                                    VARCHAR(512) NULL, --仪表板名称
+DASHBOARD_NAME                                    VARCHAR(512) NOT NULL, --仪表板名称
 DASHBOARD_THEME                                   VARCHAR(512) NULL, --仪表板主题
 DASHBOARD_DESC                                    VARCHAR(512) NULL, --仪表板描述
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
+USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 BORDERTYPE                                        CHAR(2) NULL, --边框类型
 BACKGROUND                                        VARCHAR(16) NULL, --背景色
 BORDERCOLOR                                       CHAR(2) NULL, --边框颜色
@@ -1023,8 +1022,8 @@ CONSTRAINT SYS_ROLE_PK PRIMARY KEY(ROLE_ID)   );
 DROP TABLE IF EXISTS AUTO_COMP_SUM ;
 CREATE TABLE AUTO_COMP_SUM(
 COMPONENT_ID                                      BIGINT default 0 NOT NULL, --组件ID
-CHART_THEME                                       VARCHAR(16) NULL, --图形主题
-COMPONENT_NAME                                    VARCHAR(100) NULL, --组件名称
+CHART_THEME                                       VARCHAR(16) NOT NULL, --图形主题
+COMPONENT_NAME                                    VARCHAR(100) NOT NULL, --组件名称
 COMPONENT_DESC                                    VARCHAR(512) NULL, --组件描述
 DATA_SOURCE                                       CHAR(2) NOT NULL, --数据来源
 COMPONENT_STATUS                                  CHAR(2) NOT NULL, --组件状态
@@ -1034,13 +1033,12 @@ CHART_TYPE                                        VARCHAR(100) NULL, --图表类
 BACKGROUND                                        VARCHAR(16) NULL, --背景色
 COMPONENT_BUFFER                                  VARCHAR(512) NULL, --组件缓存
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
-CREATE_TIME                                       CHAR(6) NOT NULL, --时间
+CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
-LAST_UPDATE_DATE                                  CHAR(8) NOT NULL, --最后更新日期
-LAST_UPDATE_TIME                                  CHAR(6) NOT NULL, --最后更新时间
-UPDATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
-CONDITION_SQL                                     VARCHAR(2048) NOT NULL, --条件SQL
+LAST_UPDATE_DATE                                  CHAR(8) NULL, --最后更新日期
+LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新时间
+UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
+CONDITION_SQL                                     VARCHAR(2048) NULL, --条件SQL
 CONSTRAINT AUTO_COMP_SUM_PK PRIMARY KEY(COMPONENT_ID)   );
 
 --组件信息表
@@ -1144,14 +1142,14 @@ CREATE TABLE AUTO_AXIS_INFO(
 AXIS_ID                                           BIGINT default 0 NOT NULL, --轴编号
 AXIS_TYPE                                         VARCHAR(1) NOT NULL, --轴类型
 SHOW                                              CHAR(1) NOT NULL, --是否显示
-POSITION                                          VARCHAR(16) NOT NULL, --轴位置
-AXISOFFSET                                        BIGINT default 0 NOT NULL, --轴偏移量
-NAME                                              VARCHAR(32) NOT NULL, --轴名称
-NAMELOCATION                                      VARCHAR(16) NOT NULL, --轴名称位置
-NAMEGAP                                           BIGINT default 0 NOT NULL, --名称与轴线距离
-NAMEROTATE                                        BIGINT default 0 NOT NULL, --轴名字旋转角度
-MIN                                               BIGINT default 0 NOT NULL, --轴刻度最小值
-MAX                                               BIGINT default 0 NOT NULL, --轴刻度最大值
+POSITION                                          VARCHAR(16) NULL, --轴位置
+AXISOFFSET                                        BIGINT default 0 NULL, --轴偏移量
+NAME                                              VARCHAR(32) NULL, --轴名称
+NAMELOCATION                                      VARCHAR(16) NULL, --轴名称位置
+NAMEGAP                                           BIGINT default 0 NULL, --名称与轴线距离
+NAMEROTATE                                        BIGINT default 0 NULL, --轴名字旋转角度
+MIN                                               BIGINT default 0 NULL, --轴刻度最小值
+MAX                                               BIGINT default 0 NULL, --轴刻度最大值
 SILENT                                            CHAR(1) NOT NULL, --坐标轴是否静态
 COMPONENT_ID                                      BIGINT default 0 NOT NULL, --组件ID
 CONSTRAINT AUTO_AXIS_INFO_PK PRIMARY KEY(AXIS_ID)   );
@@ -1231,7 +1229,7 @@ CREATE TABLE AUTO_LEGEND_INFO(
 LEGEND_ID                                         BIGINT default 0 NOT NULL, --图例编号
 TYPE                                              VARCHAR(16) NULL, --图例类型
 SHOW                                              CHAR(1) NOT NULL, --是否显示
-Z                                                 BIGINT default 0 NOT NULL, --z值
+Z                                                 BIGINT default 0 NULL, --z值
 LEFT_DISTANCE                                     VARCHAR(16) NULL, --左侧距离
 TOP_DISTANCE                                      VARCHAR(16) NULL, --上侧距离
 RIGHT_DISTANCE                                    VARCHAR(16) NULL, --右侧距离
@@ -1241,20 +1239,20 @@ HEIGHT                                            VARCHAR(16) NULL, --高度
 ORIENT                                            VARCHAR(16) NULL, --布局朝向
 ALIGN                                             VARCHAR(16) NULL, --标记和文本的对齐
 PADDING                                           VARCHAR(16) NULL, --内边距
-ITEMGAP                                           BIGINT default 0 NOT NULL, --图例间隔
-INTERVALNUMBER                                    BIGINT default 0 NOT NULL, --图例个数
-INTERVAL                                          BIGINT default 0 NOT NULL, --图例容量
-ITEMWIDTH                                         BIGINT default 0 NOT NULL, --图形宽度
-ITEMHEIGHT                                        BIGINT default 0 NOT NULL, --图形高度
+ITEMGAP                                           BIGINT default 0 NULL, --图例间隔
+INTERVALNUMBER                                    BIGINT default 0 NULL, --图例个数
+INTERVAL                                          BIGINT default 0 NULL, --图例容量
+ITEMWIDTH                                         BIGINT default 0 NULL, --图形宽度
+ITEMHEIGHT                                        BIGINT default 0 NULL, --图形高度
 FORMATTER                                         VARCHAR(100) NULL, --格式化内容
 SELECTEDMODE                                      VARCHAR(16) NULL, --图例选择
 INACTIVECOLOR                                     VARCHAR(16) NULL, --图例关闭时颜色
 TOOLTIP                                           CHAR(1) NOT NULL, --是否显示提示
 BACKGROUNDCOLOR                                   VARCHAR(32) NULL, --背景色
 BORDERCOLOR                                       VARCHAR(32) NULL, --边框颜色
-BORDERWIDTH                                       BIGINT default 0 NOT NULL, --边框线宽
-BORDERRADIUS                                      BIGINT default 0 NOT NULL, --圆角半径
-ANIMATION                                         CHAR(1) NOT NULL, --图例翻页动画
+BORDERWIDTH                                       BIGINT default 0 NULL, --边框线宽
+BORDERRADIUS                                      BIGINT default 0 NULL, --圆角半径
+ANIMATION                                         CHAR(1) NULL, --图例翻页动画
 COMPONENT_ID                                      BIGINT default 0 NULL, --组件ID
 CONSTRAINT AUTO_LEGEND_INFO_PK PRIMARY KEY(LEGEND_ID)   );
 
