@@ -252,7 +252,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			// 5.构造sys_user表测试数据
 			Sys_user sysUser = new Sys_user();
 			sysUser.setUser_id(USER_ID2);
-			sysUser.setCreate_id("1001");
+			sysUser.setCreate_id("1000");
 			sysUser.setDep_id(DepId1);
 			sysUser.setCreate_date(DateUtil.getSysDate());
 			sysUser.setCreate_time(DateUtil.getSysTime());

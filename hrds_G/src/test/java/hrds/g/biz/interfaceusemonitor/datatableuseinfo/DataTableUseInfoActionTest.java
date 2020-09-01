@@ -34,39 +34,46 @@ public class DataTableUseInfoActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final long SYS_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	private static final String DEP_ID = ParallerTestUtil.TESTINITCONFIG.getString("dep_id");
 	//当前线程的id
 	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
+	private long USER_ID = SYS_USER_ID + THREAD_ID;
 
 	@Before
 	public void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.造sys_user表数据，用于模拟登录
-			Sys_user user = new Sys_user();
-			user.setUser_id(THREAD_ID);
-			user.setCreate_id(USER_ID);
-			user.setDep_id(DEP_ID);
-			user.setRole_id("1001");
-			user.setUser_name("接口测试用户-dhw" + THREAD_ID);
-			user.setUser_password(PASSWORD);
-			// 0：管理员，1：操作员
-			user.setUseris_admin(IsFlag.Shi.getCode());
-			user.setUser_type(UserType.RESTYongHu.getCode());
-			user.setUsertype_group(UserType.RESTYongHu.getCode() + "," + UserType.CaijiGuanLiYuan.getCode());
-			user.setLogin_ip("127.0.0.1");
-			user.setLogin_date(DateUtil.getSysDate());
-			user.setUser_state(UserState.ZhengChang.getCode());
-			user.setCreate_date(DateUtil.getSysDate());
-			user.setCreate_time(DateUtil.getSysTime());
-			user.setUpdate_date(DateUtil.getSysDate());
-			user.setUpdate_time(DateUtil.getSysTime());
-			user.setToken("0");
-			user.setValid_time("0");
-			user.setUser_email("123@163.com");
-			user.setUser_remark("接口测试用户-dhw");
-			assertThat("初始化数据成功", user.add(db), is(1));
+			for (int i = 0; i < 2; i++) {
+				Sys_user user = new Sys_user();
+				if (i == 0) {
+					user.setUser_id(THREAD_ID);
+				} else {
+					user.setUser_id(USER_ID);
+				}
+				user.setCreate_id("1000");
+				user.setDep_id(DEP_ID);
+				user.setRole_id("1001");
+				user.setUser_name("接口测试用户-dhw" + THREAD_ID);
+				user.setUser_password(PASSWORD);
+				// 0：管理员，1：操作员
+				user.setUseris_admin(IsFlag.Shi.getCode());
+				user.setUser_type(UserType.RESTYongHu.getCode());
+				user.setUsertype_group(UserType.RESTYongHu.getCode() + "," + UserType.CaijiGuanLiYuan.getCode());
+				user.setLogin_ip("127.0.0.1");
+				user.setLogin_date(DateUtil.getSysDate());
+				user.setUser_state(UserState.ZhengChang.getCode());
+				user.setCreate_date(DateUtil.getSysDate());
+				user.setCreate_time(DateUtil.getSysTime());
+				user.setUpdate_date(DateUtil.getSysDate());
+				user.setUpdate_time(DateUtil.getSysTime());
+				user.setToken("0");
+				user.setValid_time("0");
+				user.setUser_email("123@163.com");
+				user.setUser_remark("接口测试用户-dhw");
+				assertThat("初始化数据成功", user.add(db), is(1));
+			}
 			// 2.造table_use_info表测试数据
 			Table_use_info table_use_info = new Table_use_info();
 			table_use_info.setUse_id(THREAD_ID);

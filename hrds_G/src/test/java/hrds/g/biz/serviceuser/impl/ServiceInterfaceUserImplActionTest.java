@@ -41,7 +41,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final long SYS_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	// 已经存在的agent id
 	private static final long AgentId = ParallerTestUtil.TESTINITCONFIG.getLong("agent_id");
@@ -56,6 +56,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 	private final long nextId = PrimayKeyGener.getNextId();
 	//当前线程的id
 	private final long THREAD_ID = nextId - Thread.currentThread().getId() * 1000000;
+	private long USER_ID = SYS_USER_ID + THREAD_ID;
 
 	@Before
 	public void before() {
@@ -303,7 +304,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 			sys_user.setUser_name("dhw" + THREAD_ID + i);
 			sys_user.setUser_password(PASSWORD);
 			sys_user.setRole_id("1001");
-			sys_user.setCreate_id(USER_ID);
+			sys_user.setCreate_id("1000");
 			sys_user.setUser_state(UserState.ZhengChang.getCode());
 			if (i == 0) {
 				sys_user.setUser_type(UserType.RESTYongHu.getCode());

@@ -32,7 +32,6 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	private static final long DEP_ID = ParallerTestUtil.TESTINITCONFIG.getLong("dep_id");
 	private final long nextId = PrimayKeyGener.getNextId();
@@ -62,7 +61,7 @@ public class InterfaceUserManageActionTest extends WebBaseTestCase {
 	private Sys_user getSys_user() {
 		Sys_user user = new Sys_user();
 		user.setUser_id(THREAD_ID);
-		user.setCreate_id(THREAD_ID);
+		user.setCreate_id("1000");
 		user.setDep_id(DEP_ID);
 		user.setRole_id("1001");
 		user.setUser_name(user_name);

@@ -205,11 +205,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
 					department_info.setDep_id(DepId1);
-					department_info.setDep_name("测试第" + (i + 1) + "部门" + THREAD_ID);
 				} else {
 					department_info.setDep_id(DepId2);
-					department_info.setDep_name("测试第" + (i + 1) + "部门" + THREAD_ID);
 				}
+				department_info.setDep_name("测试第" + (i + 1) + "部门" + THREAD_ID);
 				department_info.setCreate_date(SysDate);
 				department_info.setCreate_time(SysTime);
 				department_info.setDep_remark("测试");
@@ -315,7 +314,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					sysUser.setDep_id(DepId2);
 					sysUser.setUser_name("采集用户功能测试" + THREAD_ID);
 				}
-				sysUser.setCreate_id("1001");
+				sysUser.setCreate_id("1000");
 				sysUser.setCreate_date(SysDate);
 				sysUser.setCreate_time(SysTime);
 				sysUser.setRole_id("1001");
