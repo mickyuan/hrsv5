@@ -20,8 +20,6 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -147,7 +145,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					agent_info.setUser_id(USER_ID);
 					agent_info.setSource_id(SourceId);
 					agent_info.setAgent_id(SemiAgentId);
-					agent_info.setAgent_type(AgentType.FTP.getCode());
+					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
 					agent_info.setAgent_name("SemiAgent" + THREAD_ID);
 					agent_info.setAgent_ip("10.71.4.54");
 					agent_info.setAgent_port("3454");
@@ -196,17 +194,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					agent_info.setAgent_ip("10.71.4.55");
 					agent_info.setAgent_port("3459");
 				}
-				// 初始化agent不同的连接状态
-				if (i < 2) {
-					// 已连接
-					agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
-				} else if (i < 4) {
-					// 未连接
-					agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
-				} else {
-					// 正在运行
-					agent_info.setAgent_status(AgentStatus.ZhengZaiYunXing.getCode());
-				}
+				agent_info.setAgent_status(AgentStatus.WeiLianJie.getCode());
 				// 初始化agent_info数据
 				int aiNum = agent_info.add(db);
 				assertThat("测试agent_info数据初始化", aiNum, is(1));
@@ -251,19 +239,25 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			databaseSet.add(db);
 			// 5.构造sys_user表测试数据
 			Sys_user sysUser = new Sys_user();
-			sysUser.setUser_id(USER_ID2);
-			sysUser.setCreate_id("1000");
-			sysUser.setDep_id(DepId1);
-			sysUser.setCreate_date(DateUtil.getSysDate());
-			sysUser.setCreate_time(DateUtil.getSysTime());
-			sysUser.setRole_id("1001");
-			sysUser.setUser_name("数据源agent测试用户" + THREAD_ID);
-			sysUser.setUser_password("1");
-			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
-			sysUser.setUseris_admin(IsFlag.Shi.getCode());
-			sysUser.setUsertype_group("02,03,04,08");
-			sysUser.setUser_state(IsFlag.Shi.getCode());
-			sysUser.add(db);
+			for (int i = 0; i < 2; i++) {
+				if (i == 0) {
+					sysUser.setUser_id(USER_ID);
+				} else {
+					sysUser.setUser_id(USER_ID2);
+				}
+				sysUser.setCreate_id("1000");
+				sysUser.setDep_id(DepId1);
+				sysUser.setCreate_date(DateUtil.getSysDate());
+				sysUser.setCreate_time(DateUtil.getSysTime());
+				sysUser.setRole_id("1001");
+				sysUser.setUser_name("数据源agent测试用户" + THREAD_ID);
+				sysUser.setUser_password("1");
+				sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
+				sysUser.setUseris_admin(IsFlag.Shi.getCode());
+				sysUser.setUsertype_group("02,03,04,08");
+				sysUser.setUser_state(IsFlag.Shi.getCode());
+				sysUser.add(db);
+			}
 			// 6.构造department_info部门表测试数据
 			// 创建department_info表实体对象
 			Department_info department_info = new Department_info();
@@ -551,15 +545,17 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证新增数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否新增成功
-			Optional<Agent_info> agentInfo = SqlOperator.queryOneObject(db, Agent_info.class,
+			Agent_info agentInfo = SqlOperator.queryOneObject(db, Agent_info.class,
 					"select * from " + Agent_info.TableName + " where source_id=? and agent_type=?" +
-							" and agent_name=?", SourceId, AgentType.ShuJuKu.getCode(), "sjkAddAgent");
-			assertThat("sjkAddAgent", is(agentInfo.get().getAgent_name()));
-			assertThat(AgentType.ShuJuKu.getCode(), is(agentInfo.get().getAgent_type()));
-			assertThat("10.71.4.52", is(agentInfo.get().getAgent_ip()));
-			assertThat("3451", is(agentInfo.get().getAgent_port()));
-			assertThat(SourceId, is(agentInfo.get().getSource_id()));
-			assertThat(USER_ID, is(agentInfo.get().getUser_id()));
+							" and agent_name=?",
+					SourceId, AgentType.ShuJuKu.getCode(), "sjkAddAgent")
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("sjkAddAgent", is(agentInfo.getAgent_name()));
+			assertThat(AgentType.ShuJuKu.getCode(), is(agentInfo.getAgent_type()));
+			assertThat("10.71.4.52", is(agentInfo.getAgent_ip()));
+			assertThat("3451", is(agentInfo.getAgent_port()));
+			assertThat(SourceId, is(agentInfo.getSource_id()));
+			assertThat(USER_ID, is(agentInfo.getUser_id()));
 		}
 		// 2.正确的数组访问2，新增数据文件agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -576,10 +572,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证新增数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " +
+			long number = SqlOperator.queryNumber(db, "select count(*) from " +
 							" agent_info where source_id=? and agent_type=? and agent_name=?",
-					SourceId, AgentType.DBWenJian.getCode(), "DFAddAgent");
-			assertThat("添加agent_info数据成功", number.getAsLong(), is(1L));
+					SourceId, AgentType.DBWenJian.getCode(), "DFAddAgent")
+					.orElseThrow(() -> new BusinessException("sql查询错误！"));
+			assertThat("添加agent_info数据成功", number, is(1L));
 		}
 		// 3.正确的数组访问3，新增非结构化agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -596,10 +593,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证新增数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " +
+			long number = SqlOperator.queryNumber(db, "select count(*) from " +
 							" agent_info where source_id=? and agent_type=? and agent_name=?",
-					SourceId, AgentType.WenJianXiTong.getCode(), "UnsAddAgent");
-			assertThat("添加agent_info数据成功", number.getAsLong(), is(1L));
+					SourceId, AgentType.WenJianXiTong.getCode(), "UnsAddAgent")
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("添加agent_info数据成功", number, is(1L));
 		}
 		// 4.正确的数组访问4，新增半结构化agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -616,10 +614,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证新增数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " +
+			long number = SqlOperator.queryNumber(db, "select count(*) from " +
 							" agent_info where source_id=? and agent_type=? and agent_name=?",
-					SourceId, AgentType.DuiXiang.getCode(), "SemiAddAgent");
-			assertThat("添加agent_info数据成功", number.getAsLong(), is(1L));
+					SourceId, AgentType.DuiXiang.getCode(), "SemiAddAgent")
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("添加agent_info数据成功", number, is(1L));
 		}
 		// 5.正确的数组访问5，新增FTP agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -636,10 +635,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证新增数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否新增成功
-			OptionalLong number = SqlOperator.queryNumber(db, "select count(*) from " +
+			long number = SqlOperator.queryNumber(db, "select count(*) from " +
 							" agent_info where source_id=? and agent_type=? and agent_name=?",
-					SourceId, AgentType.FTP.getCode(), "ftpAddAgent");
-			assertThat("添加agent_info数据成功", number.getAsLong(), is(1L));
+					SourceId, AgentType.FTP.getCode(), "ftpAddAgent")
+					.orElseThrow(() -> new BusinessException("sql查询错误！"));
+			assertThat("添加agent_info数据成功", number, is(1L));
 		}
 		// 6.错误的数据访问1，新增agent信息,agent_name为空
 		bodyString = new HttpClient()
@@ -652,6 +652,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+		assertThat(ar.isSuccess(), is(false));
 		// 7.错误的数据访问2，新增agent信息,agent_name为空格
 		bodyString = new HttpClient()
 				.addData("agent_name", " ")
@@ -675,6 +676,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.post(getActionUrl("saveAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
+		assertThat(ar.isSuccess(), is(false));
 		// 9.错误的数据访问4，新增agent信息,agent_type为空格
 		bodyString = new HttpClient()
 				.addData("agent_name", "sjkAgent")
@@ -812,7 +814,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_name", "sjkAgent")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
 				.addData("agent_ip", "10.71.4.51")
-				.addData("agent_port", "34567")
+				.addData("agent_port", "3451")
 				.addData("source_id", SourceId)
 				.addData("user_id", USER_ID)
 				.post(getActionUrl("saveAgent")).getBodyString();
@@ -866,8 +868,7 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					"18.错误的数据访问13，更新agent信息,user_id为空" +
 					"19.错误的数据访问14，更新agent信息,user_id为空格" +
 					"20.错误的数据访问15，更新agent信息,端口被占用" +
-					"21.错误的数据访问16，更新agent信息,agent对应的数据源下相同的IP地址中包含相同的端口" +
-					"22.错误的数据访问17，更新agent信息,agent对应的数据源已不存在不可新增" +
+					"21.错误的数据访问16，更新agent信息,agent对应的数据源已不存在不可新增" +
 					"可更新字段：" +
 					"agent_ip   String" +
 					"含义：agent所在服务器ip" +
@@ -899,14 +900,13 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证更新数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否更新成功
-			Optional<Agent_info> sjkAgent = SqlOperator.queryOneObject(db, Agent_info.class,
-					"select * from agent_info where source_id=? and agent_type=? and " +
-							" agent_name=?", SourceId, AgentType.ShuJuKu.getCode(), "sjkUpAgent");
-			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_id(), is(DBAgentId));
-			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_name(), is("sjkUpAgent"));
-			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_ip(), is("10.71.4.52"));
-			assertThat("更新agent_info数据成功", sjkAgent.get().getAgent_port(), is("45678"));
-			assertThat("更新agent_info数据成功", sjkAgent.get().getUser_id(), is(USER_ID2));
+			Agent_info sjkAgent = SqlOperator.queryOneObject(db, Agent_info.class,
+					"select * from agent_info where agent_id=?", DBAgentId)
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("更新agent_info数据成功", sjkAgent.getAgent_name(), is("sjkUpAgent"));
+			assertThat("更新agent_info数据成功", sjkAgent.getAgent_ip(), is("10.71.4.52"));
+			assertThat("更新agent_info数据成功", sjkAgent.getAgent_port(), is("45678"));
+			assertThat("更新agent_info数据成功", sjkAgent.getUser_id(), is(USER_ID2));
 		}
 		// 2.正确的数组访问2，更新数据文件agent信息,数据都有效
 		bodyString = new HttpClient()
@@ -924,19 +924,18 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证更新数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否更新成功
-			Optional<Agent_info> dFileAgent = SqlOperator.queryOneObject(db, Agent_info.class,
-					"select * from agent_info where source_id=? and agent_type=? and " +
-							" agent_name=?", SourceId, AgentType.DBWenJian.getCode(),
-					"DFUpAgent");
-			assertThat("更新agent_info数据成功", dFileAgent.get().getAgent_id(),
+			Agent_info dFileAgent = SqlOperator.queryOneObject(db, Agent_info.class,
+					"select * from agent_info where agent_id=?", DFAgentId)
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("更新agent_info数据成功", dFileAgent.getAgent_id(),
 					is(DFAgentId));
-			assertThat("更新agent_info数据成功", dFileAgent.get().getAgent_name(),
+			assertThat("更新agent_info数据成功", dFileAgent.getAgent_name(),
 					is("DFUpAgent"));
-			assertThat("更新agent_info数据成功", dFileAgent.get().getAgent_ip(),
+			assertThat("更新agent_info数据成功", dFileAgent.getAgent_ip(),
 					is("10.71.4.52"));
-			assertThat("更新agent_info数据成功", dFileAgent.get().getAgent_port(),
+			assertThat("更新agent_info数据成功", dFileAgent.getAgent_port(),
 					is("45679"));
-			assertThat("更新agent_info数据成功", dFileAgent.get().getUser_id(),
+			assertThat("更新agent_info数据成功", dFileAgent.getUser_id(),
 					is(USER_ID2));
 		}
 		// 3.正确的数组访问3，更新非结构化agent信息,数据都有效
@@ -955,19 +954,16 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证更新数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否更新成功
-			Optional<Agent_info> unsUpAgent = SqlOperator.queryOneObject(db, Agent_info.class,
-					"select * from agent_info where source_id=? and agent_type=? and " +
-							" agent_name=?", SourceId, AgentType.WenJianXiTong.getCode(),
-					"UnsUpAgent");
-			assertThat("更新agent_info数据成功", unsUpAgent.get().getAgent_id(),
-					is(UnsAgentId));
-			assertThat("更新agent_info数据成功", unsUpAgent.get().getAgent_name(),
+			Agent_info unsUpAgent = SqlOperator.queryOneObject(db, Agent_info.class,
+					"select * from agent_info where agent_id=?", UnsAgentId)
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+			assertThat("更新agent_info数据成功", unsUpAgent.getAgent_name(),
 					is("UnsUpAgent"));
-			assertThat("更新agent_info数据成功", unsUpAgent.get().getAgent_ip(),
+			assertThat("更新agent_info数据成功", unsUpAgent.getAgent_ip(),
 					is("10.71.4.52"));
-			assertThat("更新agent_info数据成功", unsUpAgent.get().getAgent_port(),
+			assertThat("更新agent_info数据成功", unsUpAgent.getAgent_port(),
 					is("45680"));
-			assertThat("更新agent_info数据成功", unsUpAgent.get().getUser_id(),
+			assertThat("更新agent_info数据成功", unsUpAgent.getUser_id(),
 					is(USER_ID2));
 		}
 		// 4.正确的数组访问4，更新半结构化agent信息,数据都有效
@@ -986,20 +982,16 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证更新数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否更新成功
-			Optional<Agent_info> semiUpAgent = SqlOperator.queryOneObject(db, Agent_info.class,
-					"select * from agent_info where source_id=? and agent_type=? and " +
-							" agent_name=?", SourceId, AgentType.DuiXiang.getCode(),
-					"SemiUpAgent");
-			Optional<Agent_info> sjkAgent = semiUpAgent;
-			assertThat("更新agent_info数据成功", semiUpAgent.get().getAgent_id(),
-					is(SemiAgentId));
-			assertThat("更新agent_info数据成功", semiUpAgent.get().getAgent_name(),
+			Agent_info semiUpAgent = SqlOperator.queryOneObject(db, Agent_info.class,
+					"select * from agent_info where agent_id=?", SemiAgentId)
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("更新agent_info数据成功", semiUpAgent.getAgent_name(),
 					is("SemiUpAgent"));
-			assertThat("更新agent_info数据成功", semiUpAgent.get().getAgent_ip(),
+			assertThat("更新agent_info数据成功", semiUpAgent.getAgent_ip(),
 					is("10.71.4.52"));
-			assertThat("更新agent_info数据成功", semiUpAgent.get().getAgent_port(),
+			assertThat("更新agent_info数据成功", semiUpAgent.getAgent_port(),
 					is("45681"));
-			assertThat("更新agent_info数据成功", semiUpAgent.get().getUser_id(),
+			assertThat("更新agent_info数据成功", semiUpAgent.getUser_id(),
 					is(USER_ID2));
 		}
 		// 5.正确的数组访问5，更新FTP agent信息,数据都有效
@@ -1018,19 +1010,18 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 		// 验证更新数据是否成功
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 判断agent_info表数据是否更新成功
-			Optional<Agent_info> ftpUpAgent = SqlOperator.queryOneObject(db, Agent_info.class,
-					"select * from agent_info where source_id=? and agent_type=? and " +
-							" agent_name=?", SourceId, AgentType.FTP.getCode(),
-					"ftpUpAgent");
-			assertThat("更新agent_info数据成功", ftpUpAgent.get().getAgent_id(),
+			Agent_info ftpUpAgent = SqlOperator.queryOneObject(db, Agent_info.class,
+					"select * from agent_info where agent_id=?", FTPAgentId)
+					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败！"));
+			assertThat("更新agent_info数据成功", ftpUpAgent.getAgent_id(),
 					is(FTPAgentId));
-			assertThat("更新agent_info数据成功", ftpUpAgent.get().getAgent_name(),
+			assertThat("更新agent_info数据成功", ftpUpAgent.getAgent_name(),
 					is("ftpUpAgent"));
-			assertThat("更新agent_info数据成功", ftpUpAgent.get().getAgent_ip(),
+			assertThat("更新agent_info数据成功", ftpUpAgent.getAgent_ip(),
 					is("10.71.4.52"));
-			assertThat("更新agent_info数据成功", ftpUpAgent.get().getAgent_port(),
+			assertThat("更新agent_info数据成功", ftpUpAgent.getAgent_port(),
 					is("45682"));
-			assertThat("更新agent_info数据成功", ftpUpAgent.get().getUser_id(),
+			assertThat("更新agent_info数据成功", ftpUpAgent.getUser_id(),
 					is(USER_ID2));
 		}
 		// 6.错误的数据访问1，更新agent信息,agent_name为空
@@ -1218,28 +1209,15 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.addData("agent_id", DBAgentId5)
 				.addData("agent_name", "sjkAgent5")
 				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agent_ip", "10.71.4.55")
-				.addData("agent_port", "3459")
+				.addData("agent_ip", "10.71.4.57")
+				.addData("agent_port", "3458")
 				.addData("source_id", SourceId)
 				.addData("user_id", USER_ID)
 				.post(getActionUrl("updateAgent")).getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 		assertThat(ar.isSuccess(), is(false));
-		// 21.错误的数据访问16，更新agent信息,agent对应的数据源下相同的IP地址中包含相同的端口
-		bodyString = new HttpClient()
-				.addData("agent_id", DBAgentId)
-				.addData("agent_name", "sjkUpAgent2")
-				.addData("agent_type", AgentType.ShuJuKu.getCode())
-				.addData("agent_ip", "10.71.4.52")
-				.addData("agent_port", "45678")
-				.addData("source_id", SourceId)
-				.addData("user_id", USER_ID)
-				.post(getActionUrl("updateAgent")).getBodyString();
-		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
-		assertThat(ar.isSuccess(), is(false));
-		// 22.错误的数据访问17，更新agent信息,agent对应的数据源已不存在不可更新
+		// 21.错误的数据访问16，更新agent信息,agent对应的数据源已不存在不可更新
 		bodyString = new HttpClient()
 				.addData("agent_id", DBAgentId)
 				.addData("agent_name", "sjkUpAgent3")
@@ -1308,11 +1286,11 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 
 			// 1.正确的数据访问1，删除agent_info表数据，正常删除,agent类型有5种，这里只测一种（其他除了类型都一样）
 			// 删除前查询数据库，确认预期删除的数据存在
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-							" agent_info where agent_id = ? and agent_type=?", DBAgentId5,
-					AgentType.ShuJuKu.getCode());
-			assertThat("删除操作前，保证agent_info表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(1L));
+			long number = SqlOperator.queryNumber(db, "select count(1) from " +
+					" agent_info where agent_id = ?", DBAgentId5)
+					.orElseThrow(() -> new BusinessException("sql查询错误！"));
+			assertThat("删除操作前，保证age" +
+					"nt_info表中的确存在这样一条数据", number, is(1L));
 			String bodyString = new HttpClient().addData("source_id", SourceId)
 					.addData("agent_id", DBAgentId5)
 					.addData("agent_type", AgentType.ShuJuKu.getCode())
@@ -1321,11 +1299,10 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 			assertThat(ar.isSuccess(), is(true));
 			// 删除后查询数据库，确认预期删除的数据存在
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-							" agent_info where agent_id = ? and agent_type=?", DBAgentId5,
-					AgentType.ShuJuKu.getCode());
-			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
-					is(0L));
+			number = SqlOperator.queryNumber(db, "select count(1) from " +
+					" agent_info where agent_id = ?", DBAgentId5)
+					.orElseThrow(() -> new BusinessException("sql查询错误！"));
+			assertThat("删除操作后，确认该条数据被删除", number, is(0L));
 			// 2.错误的数据访问1，删除agent_info表数据，agent已部署不能删除
 			bodyString = new HttpClient().addData("source_id", SourceId)
 					.addData("agent_id", DFAgentId)
