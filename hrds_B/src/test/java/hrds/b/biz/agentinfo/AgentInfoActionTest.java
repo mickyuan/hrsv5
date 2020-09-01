@@ -1,5 +1,6 @@
 package hrds.b.biz.agentinfo;
 
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
@@ -30,13 +31,15 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final long SYS_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	// 已经存在的用户密码,用于模拟登录
 	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	//获取当前线程ID
 	private final long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 初始化登录用户ID，更新agent时更新数据采集用户
 	private final long USER_ID2 = 5556L + THREAD_ID;
+	// 初始化登录用户ID，更新agent时更新数据采集用户
+	private final long USER_ID = SYS_USER_ID + THREAD_ID;
 	// 测试部门ID dep_id,测试第一部门
 	private final long DepId1 = -200000001L + THREAD_ID;
 	// 测试部门ID dep_id 测试第二部门
@@ -248,8 +251,8 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 			databaseSet.add(db);
 			// 5.构造sys_user表测试数据
 			Sys_user sysUser = new Sys_user();
-			sysUser.setUser_id(USER_ID);
-			sysUser.setCreate_id(USER_ID);
+			sysUser.setUser_id(USER_ID2);
+			sysUser.setCreate_id("1001");
 			sysUser.setDep_id(DepId1);
 			sysUser.setCreate_date(DateUtil.getSysDate());
 			sysUser.setCreate_time(DateUtil.getSysTime());
@@ -380,11 +383,12 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 					"count fail!"));
 			assertThat("此条记录删除后，数据为0", dsNum, is(0L));
 			// 7.测试完删除sys_user表测试数据
-			SqlOperator.execute(db, "delete from sys_user where user_id=?", USER_ID);
+			SqlOperator.execute(db, "delete from sys_user where user_id in(?,?)", USER_ID, USER_ID2);
 			// 8.判断sys_user表数据是否被删除
-			long userNum = SqlOperator.queryNumber(db, "select count(1) from sys_user " +
-					" where user_id=?", USER_ID).orElseThrow(() -> new RuntimeException(
-					"count fail!"));
+			long userNum = SqlOperator.queryNumber(db,
+					"select count(1) from sys_user where user_id in (?,?)",
+					USER_ID, USER_ID2)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条记录删除后，数据为0", userNum, is(0L));
 			// 9.测试完成后删除department_info表测试数据
 			SqlOperator.execute(db, "delete from department_info where dep_id=?", DepId1);
@@ -430,7 +434,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
 		assertThat(ar.isSuccess(), is(true));
 		Map<Object, Object> dataForMap = ar.getDataForMap();
-		List<Map<String, Object>> sjkAgent = (List<Map<String, Object>>) dataForMap.get("sjkAgent");
+		List<Map<String, Object>> sjkAgent = JsonUtil.toObject(dataForMap.get(
+				"sjkAgent").toString(), new TypeReference<List<Map<String, Object>>>() {
+		}.getType());
 		if (!sjkAgent.isEmpty()) {
 			for (Map<String, Object> map : sjkAgent) {
 				if (String.valueOf(DBAgentId).equals(map.get("agent_id").toString())) {
@@ -441,7 +447,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				}
 			}
 		}
-		List<Map<String, Object>> dbFileAgent = (List<Map<String, Object>>) dataForMap.get("dbFileAgent");
+		List<Map<String, Object>> dbFileAgent = JsonUtil.toObject(dataForMap.get(
+				"dbFileAgent").toString(), new TypeReference<List<Map<String, Object>>>() {
+		}.getType());
 		if (!dbFileAgent.isEmpty()) {
 			for (Map<String, Object> map : dbFileAgent) {
 				if (String.valueOf(DFAgentId).equals(map.get("agent_id").toString())) {
@@ -452,7 +460,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				}
 			}
 		}
-		List<Map<String, Object>> fileSystemAgent = (List<Map<String, Object>>) dataForMap.get("fileSystemAgent");
+		List<Map<String, Object>> fileSystemAgent = JsonUtil.toObject(dataForMap.get(
+				"fileSystemAgent").toString(), new TypeReference<List<Map<String, Object>>>() {
+		}.getType());
 		if (!fileSystemAgent.isEmpty()) {
 			for (Map<String, Object> map : fileSystemAgent) {
 				if (String.valueOf(UnsAgentId).equals(map.get("agent_id").toString())) {
@@ -463,7 +473,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				}
 			}
 		}
-		List<Map<String, Object>> dxAgent = (List<Map<String, Object>>) dataForMap.get("dxAgent");
+		List<Map<String, Object>> dxAgent = JsonUtil.toObject(dataForMap.get(
+				"dxAgent").toString(), new TypeReference<List<Map<String, Object>>>() {
+		}.getType());
 		if (!dxAgent.isEmpty()) {
 			for (Map<String, Object> map : dxAgent) {
 				if (String.valueOf(SemiAgentId).equals(map.get("agent_id").toString())) {
@@ -474,7 +486,9 @@ public class AgentInfoActionTest extends WebBaseTestCase {
 				}
 			}
 		}
-		List<Map<String, Object>> ftpAgent = (List<Map<String, Object>>) dataForMap.get("ftpAgent");
+		List<Map<String, Object>> ftpAgent = JsonUtil.toObject(dataForMap.get(
+				"ftpAgent").toString(), new TypeReference<List<Map<String, Object>>>() {
+		}.getType());
 		if (!ftpAgent.isEmpty()) {
 			for (Map<String, Object> map : ftpAgent) {
 				if (String.valueOf(FTPAgentId).equals(map.get("agent_id").toString())) {

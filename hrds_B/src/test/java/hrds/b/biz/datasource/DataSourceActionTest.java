@@ -39,16 +39,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @date 2019-09-18 10:48:14
  */
 public class DataSourceActionTest extends WebBaseTestCase {
+	//获取当前线程ID
+	private final long THREAD_ID = Thread.currentThread().getId();
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
-	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final long SYS_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
 	// 已经存在的用户密码,用于模拟登录
 	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
-	//获取当前线程ID
-	private final long THREAD_ID = Thread.currentThread().getId();
 	// 测试数据采集用户
 	private final long CollectUSER_ID = 1234L + THREAD_ID;
+	// 测试数据采集用户
+	private final long USER_ID = SYS_USER_ID + THREAD_ID;
 	// 测试数据源 SourceId
 	private final long SourceId = 10000001L + THREAD_ID;
 	// 测试数据源 SourceId,新建数据源，下面没有agent
@@ -313,7 +315,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					sysUser.setDep_id(DepId2);
 					sysUser.setUser_name("采集用户功能测试" + THREAD_ID);
 				}
-				sysUser.setCreate_id(USER_ID);
+				sysUser.setCreate_id("1001");
 				sysUser.setCreate_date(SysDate);
 				sysUser.setCreate_time(SysTime);
 				sysUser.setRole_id("1001");
