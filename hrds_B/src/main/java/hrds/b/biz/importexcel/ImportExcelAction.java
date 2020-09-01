@@ -1052,12 +1052,10 @@ public class ImportExcelAction extends BaseAction {
 				.queryOneObject("SELECT etl_job FROM "
 						+ Take_relation_etl.TableName
 						+ " t1 JOIN "
-						+ Data_extraction_def.TableName
-						+ " t2 ON t1.ded_id = t2.ded_id JOIN "
 						+ Table_info.TableName
-						+ " t3 ON t3.table_id = t2.table_id WHERE t3.table_name = ?"
-						+ " AND t3.database_id = ? AND t1.etl_sys_cd = ? AND t1.sub_sys_cd = ?", tableName, database_id,
-					etl_sys_cd, sub_sys_cd);
+						+ " t3 ON t3.database_id = t2.database_id WHERE t3.table_name = ?"
+						+ " AND t3.database_id = ? AND t1.etl_sys_cd = ?", tableName, database_id,
+					etl_sys_cd);
 
 			//先设置树的根节点
 			List<Map<String, Object>> treeList = new ArrayList<>();
@@ -1127,15 +1125,13 @@ public class ImportExcelAction extends BaseAction {
 			rootMap.put("background-color", "red");
 			treeList.add(rootMap);
 
-			//找到在系统中的表名称
+			//找到在系统中的表名称 FIXME 需要修改
 			Map<String, Object> map = Dbo.queryOneObject("SELECT hyren_name FROM "
-					+ Data_store_reg.TableName
-					+ " t1 JOIN "
-					+ Table_info.TableName
-					+ " t2 ON t1.table_id = t2.table_id WHERE t1.agent_id = ? "
-					+ " AND t1.source_id = ? AND t1.database_id = ? AND t2.table_name = ?", agent_id, source_id, database_id,
-				tableName);
-
+				+ Data_store_reg.TableName
+				+ " WHERE table_name = ?", tableName);
+			if (map.get("hyren_name") == null) {
+				return;
+			}
 			List<Object> dependTableList = Dbo.queryOneColumnList(
 				"SELECT datatable_en_name FROM "
 					+ Dm_datatable.TableName
