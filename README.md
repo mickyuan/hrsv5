@@ -31,25 +31,31 @@
 
 ### 打包发布
 - 使用gradle进行打包发布
-- 先执行gradle release -x test 项目进行打包
-- 再执行gradle moveBranch 会在项目的同级目录下生成app目录
-- 目录结构A、B...项目目录,每个项目下包括bin（启动脚本等）、dist（项目jar和resources）、logs（日志目录）、progout（项目输出目录，如上传文件等）
-- dbscript：建库脚本目录
-- frontend：前端目录，前端需要使用node单独打包拷贝
-- lib：项目依赖的所有的jar文件
-- Agent：包含agent.jar、hrds_Control.jar、hrds_Trigger.jar
+- 先执行gradle release -x test 项目进行打包,会在项目的目录下生成hyrenv5目录
+- hyrenv5项目打包结果目录
 
 ## 目录结构
 ```
-|--app                                        #根目录
-|  |--A、B、C、D、F、G、H、K、Receive等目录     #每一个子系统的文件夹目录
-|  |  |--bin                                  #启动脚本
-|  |  |--dist                                 #程序目录
-|  |  |   |--xxx.jar                          #可运行的jar文件
-|  |  |   |--resources                        #fdconfig、i18n、log4j2.xml
-|  |  |--logs                                 #每个项目生成的日志文件目录
-|  |  |--progout                              #项目的输出文件目录，如上传文件等
-|  |--Agent                                   #hrds_Agent.jar、hrds_Control.jar、hrds_Trigger.jar
-|  |--dbscript                                #01-create_table.sql ..................sql文件
-|  |--frontend                                #前端部署的程序,这个需要单独打包拷贝到这个目录下
-
+--hyrenv5                       #打包结果目录
+|--hrsapp                       #版本app目录
+| |--bin                        #可执行文件目录
+| |--dist                       #程序根目录
+|  |  |--database               #配置库初始化时依赖文件目录
+|  |  |  |--postgresql          #psql库需要的sql文件目录
+|  |  |  |--redis               #redis服务需要的配置文件目录
+|  |  |--java                   #平台的后台服务启动依赖目录
+|  |  |  |--A,B,C,F,G,H,K,L     #后端服务目录
+|  |  |  |  |--resources        #后端服务依赖资源文件目录
+|  |  |  |  |--upfiles          #后端服务文件上传目录
+|  |  |  |--GlobalShared        #服务启动依赖包目录
+|  |  |  |  |--jdklibs          #服务启动依赖jar文件目录
+|  |  |  |  |--jre              #服务启动依赖jre文件目录
+|  |  |  |--Receive             #web接收端服务目录
+|  |  |  |--spark--thrift       #web后台服务依赖的spark--thrift服务目录
+|  |  |--python                 #python目录
+|  |  |--shell                  #shell目录
+|  |  |--vue                    #前端web目录
+|  |  |  |--config              #前端web服务依赖配置目录
+|  |  |  |--frontend            #前端web服务文件目录
+|  |--logs                      #后端服务运行日志目录
+````
