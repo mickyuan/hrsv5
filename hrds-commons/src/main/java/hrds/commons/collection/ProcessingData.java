@@ -18,6 +18,8 @@ import hrds.commons.utils.DruidParseQuerySql;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @DocClass(desc = "数据处理类，获取表的存储等信息", author = "xchao", createdate = "2020年3月31日 16:32:43")
 public abstract class ProcessingData {
@@ -128,9 +130,11 @@ public abstract class ProcessingData {
 							" where a.collect_type in (?,?) and lower(hyren_name) = ? and b.collect_type = ?",
 					AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase(),
 					CollectType.TieYuanDengJi.getCode());
-			if (objectMap.size() != 0)
-				sql = StringUtil.replace(sql.toUpperCase(), " " + tableName.toUpperCase(),
-						" " + objectMap.get("table_name").toString().toUpperCase() + " ");
+			if (objectMap.size() != 0) {
+				Pattern p = Pattern.compile("([\\s*|\\t|\\r|\\n+])" + tableName.toUpperCase());
+				Matcher m = p.matcher(sql);
+				sql = m.replaceAll(" " + objectMap.get("table_name").toString().toUpperCase());
+			}
 		}
 		return sql;
 		/*
