@@ -576,7 +576,7 @@ public class AgentListAction extends BaseAction {
 				+ " ess join "
 				+ Etl_sys.TableName
 				+ " es on es.etl_sys_cd = ess.etl_sys_cd"
-				+ "where es.user_id = ? and ess.etl_sys_cd = ? ",
+				+ " where es.user_id = ? and ess.etl_sys_cd = ? ",
 			getUserId(),
 			taskId);
 		// 数据可访问权限处理方式
