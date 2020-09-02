@@ -1552,17 +1552,25 @@ public class JobConfiguration extends BaseAction {
 		// 1.数据可访问权限处理方式，通过user_id进行权限验证
 		// 2.验证作业依赖实体字段的合法性
 		checkEtlDependencyField(etlDependency);
-		// 3.判断更新前作业名称对应更新后上游作业名称对应依赖是否已存在
-		if (ETLJobUtil.isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
-				oldEtlJob, etlDependency.getPre_etl_job(), Dbo.db())) {
-			throw new BusinessException("更新前作业名称对应更新后上游作业名称对应依赖已存在");
+		if (etlDependency.getEtl_job().equals(oldEtlJob) && oldPreEtlJob.equals(etlDependency.getPre_etl_job())) {
+			DboExecute.updatesOrThrow("更新作业依赖失败",
+					"update " + Etl_dependency.TableName + " set status=? "
+							+ " where etl_sys_cd=? and pre_etl_sys_cd=? and etl_job=? and pre_etl_job=?",
+					etlDependency.getStatus(), etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
+					etlDependency.getEtl_job(), etlDependency.getPre_etl_job());
+		} else {
+			// 3.判断更新前作业名称对应更新后上游作业名称对应依赖是否已存在
+			if (ETLJobUtil.isEtlDependencyExist(etlDependency.getEtl_sys_cd(), etlDependency.getPre_etl_sys_cd(),
+					oldEtlJob, etlDependency.getPre_etl_job(), Dbo.db())) {
+				throw new BusinessException("更新前作业名称对应更新后上游作业名称对应依赖已存在");
+			}
+			// 4.更新作业依赖，用实体更新,实体更新是用该表的联合主键去更新的，只会改非主键字段
+			DboExecute.updatesOrThrow("更新作业依赖失败", "update " + Etl_dependency.TableName
+							+ " set etl_job=?,pre_etl_sys_cd=?,pre_etl_job=?,"
+							+ "status=? where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
+					etlDependency.getEtl_job(), etlDependency.getPre_etl_sys_cd(), etlDependency.getPre_etl_job(),
+					etlDependency.getStatus(), etlDependency.getEtl_sys_cd(), oldEtlJob, oldPreEtlJob);
 		}
-		// 4.更新作业依赖，用实体更新,实体更新是用该表的联合主键去更新的，只会改非主键字段
-		DboExecute.updatesOrThrow("更新作业依赖失败", "update " + Etl_dependency.TableName
-						+ " set etl_job=?,pre_etl_sys_cd=?,pre_etl_job=?,"
-						+ "status=? where etl_sys_cd=? and etl_job=? and pre_etl_job=?",
-				etlDependency.getEtl_job(), etlDependency.getPre_etl_sys_cd(), etlDependency.getPre_etl_job(),
-				etlDependency.getStatus(), etlDependency.getEtl_sys_cd(), oldEtlJob, oldPreEtlJob);
 	}
 
 	@Method(desc = "删除作业依赖",
