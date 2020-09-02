@@ -132,7 +132,7 @@ public abstract class ProcessingData {
 					CollectType.TieYuanDengJi.getCode());
 			if (objectMap.size() != 0) {
 				Pattern p = Pattern.compile("([\\s*|\\t|\\r|\\n+])" + tableName.toUpperCase());
-				Matcher m = p.matcher(sql);
+				Matcher m = p.matcher(sql.toUpperCase());
 				sql = m.replaceAll(" " + objectMap.get("table_name").toString().toUpperCase());
 			}
 		}
