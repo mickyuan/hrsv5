@@ -9,6 +9,8 @@ import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.*;
+import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.query.DCLDataQuery;
@@ -208,6 +210,40 @@ public class DataTableUtil {
 		return data_meta_info;
 	}
 
+	@Method(desc = "根据表名获取表信息和表的字段信息_包含存储层信息", logicStep = "根据表名获取表信息和表的字段信息")
+	@Param(name = "data_layer", desc = "数据层", range = "String类型 DCL,DML")
+	@Param(name = "file_id", desc = "表源属性id或表id", range = "String")
+	@Return(desc = "表字段信息Map", range = "表字段信息Map")
+	public static List<Map<String, Object>> getColumnInfoByTableName(DatabaseWrapper db, String table_name) {
+		//根据表名获取存储层信息
+		List<LayerBean> layerBeans = ProcessingData.getLayerByTable(table_name, db);
+		if (layerBeans.isEmpty()) {
+			return null;
+		}
+		//获取表对应字段信息
+		List<Map<String, Object>> column_info_s = getColumnByTableName(db, table_name);
+		//获取表中文名
+		String table_cn_name = "";
+		if (null != column_info_s.get(0).get("table_cn_name")) {
+			table_cn_name = (String) column_info_s.get(0).get("table_cn_name");
+		}
+		//初始化待返回表数据信息
+		List<Map<String, Object>> tableList = new ArrayList<>();
+		for (LayerBean layerBean : layerBeans) {
+			//每个存储层表信息Map
+			Map<String, Object> tableMap = new HashMap<>();
+			//封装表存储信息
+			tableMap.put("table_name", table_name);
+			tableMap.put("table_cn_name", table_cn_name);
+			tableMap.put("store_type", layerBean.getStore_type());
+			tableMap.put("dst", layerBean.getDst());
+			tableMap.put("dsl_name", layerBean.getDsl_name());
+			tableMap.put("columns", column_info_s);
+			tableList.add(tableMap);
+		}
+		return tableList;
+	}
+
 	@Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
 	@Param(name = "data_layer", desc = "数据层", range = "String类型,DCL,DML")
 	@Param(name = "data_own_type", desc = "类型标识", range = "dcl_batch:批量数据,dcl_realtime:实时数据", nullable = true)
@@ -269,32 +305,39 @@ public class DataTableUtil {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT * FROM (");
-		//DCL DB文件采集
-		asmSql.addSql("SELECT ti.table_id AS table_id,dsr.hyren_name AS table_name,tc.column_name AS column_name," +
-				" tc.column_ch_name AS column_ch_name, tc.column_type AS column_type FROM " + Data_store_reg.TableName +
-				" dsr JOIN " + Table_info.TableName + " ti ON dsr.database_id = ti.database_id" +
-				" AND dsr.table_name = ti.table_name JOIN " + Table_column.TableName + " tc" +
-				" ON ti.table_id = tc.table_id  WHERE lower(dsr.hyren_name) = lower(?)").addParam(table_name);
+		//DCL (DB,DBA)文件采集
+		asmSql.addSql("SELECT ti.table_id AS table_id,dsr.hyren_name AS table_name,dsr.original_name AS table_cn_name," +
+				" tc.column_name AS column_name,tc.column_ch_name AS column_ch_name, tc.column_type AS column_type" +
+				" FROM " + Data_store_reg.TableName + " dsr" +
+				" JOIN " + Table_info.TableName + " ti ON dsr.database_id = ti.database_id AND dsr.table_name = ti.table_name" +
+				" JOIN " + Table_column.TableName + " tc ON ti.table_id = tc.table_id" +
+				" WHERE lower(dsr.hyren_name) = lower(?)").addParam(table_name);
 		//DCL OBJ文件采集
 		asmSql.addSql("UNION");
-		asmSql.addSql(" SELECT oct.ocs_id AS table_id,oct.en_name AS table_name,ocs.column_name AS column_name," +
-				" ocs.data_desc AS column_ch_name,ocs.column_type AS column_type FROM " + Object_collect_task.TableName + " oct" +
+		asmSql.addSql(" SELECT oct.ocs_id AS table_id,oct.en_name AS table_name,zh_name AS table_cn_name," +
+				" ocs.column_name AS column_name, ocs.data_desc AS column_ch_name,ocs.column_type AS column_type" +
+				" FROM " + Object_collect_task.TableName + " oct" +
 				" JOIN " + Object_collect_struct.TableName + " ocs ON oct.ocs_id=ocs.ocs_id" +
 				" JOIN " + Dtab_relation_store.TableName + " dtab_rs ON dtab_rs.tab_id=oct.ocs_id" +
-				" AND oct.en_name=?").addParam(table_name);
+				" WHERE oct.en_name=?").addParam(table_name);
 		//DML
 		asmSql.addSql("UNION");
-		asmSql.addSql("SELECT dd.datatable_id AS table_id, dd.datatable_en_name AS table_name, dfi.field_en_name AS" +
-				" column_name,dfi.field_cn_name AS column_ch_name,concat(field_type,'(',field_length,')') AS" +
-				" column_type FROM " + Datatable_field_info.TableName + " dfi JOIN " + Dm_datatable.TableName + " dd ON" +
-				" dd.datatable_id = dfi.datatable_id WHERE LOWER(dd.datatable_en_name) = LOWER(?)").addParam(table_name);
+		asmSql.addSql("SELECT dd.datatable_id AS table_id, dd.datatable_en_name AS table_name," +
+				" datatable_cn_name AS table_cn_name,dfi.field_en_name AS column_name,dfi.field_cn_name AS column_ch_name," +
+				" concat(field_type,'(',field_length,')') AS column_type" +
+				" FROM " + Datatable_field_info.TableName + " dfi JOIN " + Dm_datatable.TableName + " dd ON" +
+				" dd.datatable_id = dfi.datatable_id" +
+				" WHERE LOWER(dd.datatable_en_name) = LOWER(?)").addParam(table_name);
 		//UDL
 		asmSql.addSql("UNION");
-		asmSql.addSql("SELECT dti.table_id AS table_id, dti.table_name AS table_name, dtc.column_name AS column_name," +
-				" dtc.field_ch_name AS column_ch_name, dtc.column_type AS column_type FROM " + Dq_table_info.TableName + " dti" +
-				" JOIN " + Dq_table_column.TableName + " dtc ON dti.table_id=dtc.table_id WHERE LOWER(dti.table_name) = LOWER(?)");
+		asmSql.addSql("SELECT dti.table_id AS table_id, dti.table_name AS table_name,ch_name AS table_cn_name," +
+				" dtc.column_name AS column_name,dtc.field_ch_name AS column_ch_name, dtc.column_type AS column_type" +
+				" FROM " + Dq_table_info.TableName + " dti" +
+				" JOIN " + Dq_table_column.TableName + " dtc ON dti.table_id=dtc.table_id" +
+				" WHERE LOWER(dti.table_name) = LOWER(?)");
 		asmSql.addParam(table_name);
-		asmSql.addSql(") tmp group by table_id,table_name,column_name,column_ch_name,column_type order by table_name");
+		asmSql.addSql(") tmp group by table_id,table_name,table_cn_name,column_name,column_ch_name,column_type order by " +
+				"table_name");
 		List<Map<String, Object>> column_list = SqlOperator.queryList(db, asmSql.sql(), asmSql.params());
 		if (!column_list.isEmpty()) {
 			return column_list;
@@ -311,6 +354,7 @@ public class DataTableUtil {
 					Map<String, Object> map = new HashMap<>();
 					map.put("table_id", di3.getRecord_id());
 					map.put("table_name", di3.getTable_name());
+					map.put("table_cn_name", di3.getTable_name());
 					map.put("column_name", column);
 					map.put("column_ch_name", column);
 					map.put("column_type", "VARCHAR(--)");
