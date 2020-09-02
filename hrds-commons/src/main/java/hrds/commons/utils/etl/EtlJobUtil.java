@@ -17,8 +17,13 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.PinyinUtil;
 import hrds.commons.utils.PropertyParaValue;
 
+import hrds.commons.utils.etl.dcletljob.DclEtlJobUtil;
+import hrds.commons.utils.etl.etlbean.EtlJobInfo;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 
 @DocClass(desc = "作业调度工具类", author = "BY-HLL", createdate = "2020/4/8 0008 下午 01:38")
 public class EtlJobUtil {
@@ -49,14 +54,14 @@ public class EtlJobUtil {
 	}
 
 	@Method(desc = "保存作业",
-			logicStep = "保存作业")
+		logicStep = "保存作业")
 	@Param(name = "pkId", desc = "作业id", range = "long类型,该值唯一")
 	@Param(name = "dataSourceType", desc = "DataSourceType数据源类型", range = "DataSourceType类型")
 	@Param(name = "etl_sys_cd", desc = "工程id", range = "String类型")
 	@Param(name = "sub_sys_cd", desc = "任务id", range = "String类型")
 	@Param(name = "collectType", desc = "采集类型", range = "String类型")
 	public static int saveJob(String pkId, DataSourceType dataSourceType, String etl_sys_cd, String sub_sys_cd,
-	                          AgentType agentType) {
+		AgentType agentType) {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//初始化查询sql
 			SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -72,7 +77,30 @@ public class EtlJobUtil {
 					throw new BusinessException("暂未实现!");
 				}
 				if (agentType == AgentType.ShuJuKu || agentType == AgentType.DBWenJian) {
-					throw new BusinessException("暂未实现!");
+					Database_set database_set = new Database_set();
+					database_set.setDatabase_id(pkId);
+
+					//任务下将要生成作业的信息
+					List<Map<String, Object>> previewJob = DclEtlJobUtil.getPreviewJob(database_set.getDatabase_id(), db);
+					//设置作业的默认数据信息
+					List<Etl_job_def> etl_job_defs = DclEtlJobUtil.setDefaultEtlJob(etl_sys_cd, sub_sys_cd, previewJob);
+					//获取当前任务的Agent部署路径和日志路径
+					Map<String, Object> agentPath = DclEtlJobUtil.getAgentPath(database_set.getDatabase_id(), db);
+					//获取到生成作业的抽数信息
+					List<Object> ded_id = previewJob.stream().map(item -> item.get("ded_id")).collect(Collectors.toList());
+					String ded_arr = StringUtils.join(ded_id, "^");
+
+					//组合要生成的作业信息
+					EtlJobInfo etlJobInfo = new EtlJobInfo();
+					etlJobInfo.setDed_arr(ded_arr);
+					etlJobInfo.setEtlJobs(etl_job_defs.toArray(new Etl_job_def[0]));
+					etlJobInfo.setPro_dic(agentPath.get("pro_dic").toString());
+					etlJobInfo.setLog_dic(agentPath.get("log_dic").toString());
+					etlJobInfo.setSource_id(Long.parseLong(agentPath.get("source_id").toString()));
+					etlJobInfo.setColSetId(database_set.getDatabase_id());
+					etlJobInfo.setEtl_sys_cd(etl_sys_cd);
+					etlJobInfo.setSub_sys_cd(sub_sys_cd);
+					DclEtlJobUtil.saveJobDataToDatabase(etlJobInfo, db);
 				}
 			}
 			//DPL层
@@ -87,7 +115,7 @@ public class EtlJobUtil {
 				asmSql.addSql("SELECT * FROM " + Dm_datatable.TableName + " WHERE datatable_id = ?");
 				asmSql.addParam(dm_datatable.getDatatable_id());
 				dm_datatable = SqlOperator.queryOneObject(db, Dm_datatable.class, asmSql.sql(), asmSql.params())
-						.orElseThrow(() -> (new BusinessException("获取规则校验信息的SQL出错!")));
+					.orElseThrow(() -> (new BusinessException("获取规则校验信息的SQL出错!")));
 				//TODO
 				//sub_name 和 sub_sys_desc 有啥意义？
 				String sub_name = sub_sys_cd;
@@ -97,7 +125,7 @@ public class EtlJobUtil {
 				//TODO 修改@
 				String param = pkId + "@" + BATCH_DATE;
 				jobCommonMethod(sub_name, sub_sys_desc, etl_job, etl_job_desc, param, dataSourceType, MARTPRONAME,
-						etl_sys_cd, sub_sys_cd, db);
+					etl_sys_cd, sub_sys_cd, db);
 //                throw new BusinessException("暂未实现!");
 			}
 			//DQC
@@ -108,8 +136,9 @@ public class EtlJobUtil {
 				//获取规则配置信息
 				asmSql.addSql("SELECT * FROM " + Dq_definition.TableName + " WHERE reg_num = ?");
 				asmSql.addParam(dq_definition.getReg_num());
-				Dq_definition dq_definition_rs = SqlOperator.queryOneObject(db, Dq_definition.class, asmSql.sql(), asmSql.params())
-						.orElseThrow(() -> (new BusinessException("获取规则校验信息的SQL出错!")));
+				Dq_definition dq_definition_rs = SqlOperator
+					.queryOneObject(db, Dq_definition.class, asmSql.sql(), asmSql.params())
+					.orElseThrow(() -> (new BusinessException("获取规则校验信息的SQL出错!")));
 				String target_tab = dq_definition_rs.getTarget_tab();
 				String sub_name = dq_definition_rs.getReg_name();
 				String ct_name = dq_definition_rs.getReg_name();
@@ -131,7 +160,7 @@ public class EtlJobUtil {
 					}
 				}
 				jobCommonMethod(target_tab, sub_name, etl_job, ct_name, param, dataSourceType, QUALITY_MANAGE,
-						etl_sys_cd, sub_sys_cd, db);
+					etl_sys_cd, sub_sys_cd, db);
 			}
 			//提交数据库操作
 			db.commit();
@@ -149,18 +178,18 @@ public class EtlJobUtil {
 	@Param(name = "sub_sys_desc", desc = "任务描述", range = "数据采集(任务名) 数据加工(空) 集市加工(空)")
 	@Param(name = "etl_job", desc = "作业名", range = "数据采集(表名) 数据加工(作业名) 集市集市(数据表表名) 数据管控(id)")
 	@Param(name = "etl_job_desc", desc = "作业描述",
-			range = "数据采集(表中文名) 数据加工(模型表的中文描述) 集市加工(数据表中文名) 数据管控(名称)")
+		range = "数据采集(表中文名) 数据加工(模型表的中文描述) 集市加工(数据表中文名) 数据管控(名称)")
 	@Param(name = "param", desc = "作业参数",
-			range = "数据采集(作业主键@作业名称@消息头@表名@#{txdate}) 数据加工(作业名@#{txdate}) 集市加工(作业参数)" +
-					" 数据管控(作业名@#{txdate})")
+		range = "数据采集(作业主键@作业名称@消息头@表名@#{txdate}) 数据加工(作业名@#{txdate}) 集市加工(作业参数)" +
+			" 数据管控(作业名@#{txdate})")
 	@Param(name = "dataSourceType", desc = "DataSourceType数据源类型", range = "DataSourceType类型")
 	@Param(name = "pro_name", desc = "作业程序名称", range = "String类型")
 	@Param(name = "etl_sys_cd", desc = "工程id", range = "String类型")
 	@Param(name = "sub_sys_cd", desc = "任务id", range = "String类型")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	public static void jobCommonMethod(String sub_name, String sub_sys_desc, String etl_job, String etl_job_desc,
-	                                   String param, DataSourceType dataSourceType, String pro_name, String etl_sys_cd,
-	                                   String sub_sys_cd, DatabaseWrapper db) {
+		String param, DataSourceType dataSourceType, String pro_name, String etl_sys_cd,
+		String sub_sys_cd, DatabaseWrapper db) {
 		//创建工程
 		createEtl_sys(db, etl_sys_cd);
 		//作业程序目录
@@ -229,14 +258,14 @@ public class EtlJobUtil {
 	@Param(name = "sub_sys_cd", desc = "任务id", range = "String类型")
 	@Param(name = "etl_job", desc = "作业名", range = "数据采集(表名) 数据加工(作业名) 集市集市(数据表表名) 数据管控(id)")
 	@Param(name = "etl_job_desc", desc = "作业描述",
-			range = "数据采集(表中文名) 数据加工(模型表的中文描述) 集市加工(数据表中文名) 数据管控(名称)")
+		range = "数据采集(表中文名) 数据加工(模型表的中文描述) 集市加工(数据表中文名) 数据管控(名称)")
 	@Param(name = "param", desc = "作业参数", range = "数据采集(作业主键@作业名称@消息头@表名@#{txdate}) 数据加工(作业名@#{txdate})" +
-			" 集市加工(作业参数) 数据管控(作业名@#{txdate})")
+		" 集市加工(作业参数) 数据管控(作业名@#{txdate})")
 	@Param(name = "pro_name", desc = "作业程序名称", range = "String类型")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	@Param(name = "pro_dic", desc = "作业程序目录", range = "String类型")
 	private static void createEtl_job_def(String etl_sys_cd, String subSysCd, String etl_job, String etl_job_desc,
-	                                      String param, String Pro_name, DatabaseWrapper db, String pro_dic) {
+		String param, String Pro_name, DatabaseWrapper db, String pro_dic) {
 
 		Etl_job_def etl_job_def = new Etl_job_def();
 		//工程代码
@@ -278,7 +307,7 @@ public class EtlJobUtil {
 		asmSql.addParam(etl_job_def.getEtl_job());
 		//校验工程作业是否存在,不存在则创建
 		if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-				"检查工程作业定义信息的SQL错误!"))) == 1) {
+			"检查工程作业定义信息的SQL错误!"))) == 1) {
 			throw new BusinessException("作业已经存在于该工程!");
 		} else {
 			etl_job_def.add(db);
@@ -288,19 +317,20 @@ public class EtlJobUtil {
 			etl_job_resource_rela.setResource_type(RESOURCE_TYPE);
 			etl_job_resource_rela.setResource_req(1);
 			asmSql.clean();
-			asmSql.addSql("select count(*) from " + Etl_job_resource_rela.TableName + " where etl_sys_cd = ? and etl_job = ?");
+			asmSql
+				.addSql("select count(*) from " + Etl_job_resource_rela.TableName + " where etl_sys_cd = ? and etl_job = ?");
 			asmSql.addParam(etl_job_resource_rela.getEtl_sys_cd());
 			asmSql.addParam(etl_job_resource_rela.getEtl_job());
 			//校验改工程作业的资源关系是否存在
 			if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-					"检查工程作业资源信息的SQL错误!"))) != 1) {
+				"检查工程作业资源信息的SQL错误!"))) != 1) {
 				etl_job_resource_rela.add(db);
 			}
 		}
 	}
 
 	@Method(desc = "添加任务",
-			logicStep = "添加任务")
+		logicStep = "添加任务")
 	@Param(name = "etl_sub_sys_list", desc = "Etl_sub_sys_list实体", range = "Etl_sub_sys_list实体对象")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	@Return(desc = "子系统代码", range = "String类型")
@@ -319,14 +349,14 @@ public class EtlJobUtil {
 		asmSql.addParam(etl_sub_sys_list.getEtl_sys_cd());
 		asmSql.addParam(etl_sub_sys_list.getSub_sys_cd());
 		if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-				"检查工程子系统定义信息的SQL错误!"))) != 1) {
+			"检查工程子系统定义信息的SQL错误!"))) != 1) {
 			etl_sub_sys_list.add(db);
 		}
 		return etl_sub_sys_list.getSub_sys_cd();
 	}
 
 	@Method(desc = "判断工程是否存在，不存在则添加",
-			logicStep = "判断工程是否存在，不存在则添加")
+		logicStep = "判断工程是否存在，不存在则添加")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	@Param(name = "etl_sys_cd", desc = "工程id", range = "String类型")
 	private static void createEtl_sys(DatabaseWrapper db, String etl_sys_cd) {
@@ -339,7 +369,7 @@ public class EtlJobUtil {
 			asmSql.addParam(etl_sys_cd);
 			//判断已经存在,不存在则添加
 			if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-					"检查工程是否存在的SQL错误!"))) != 1) {
+				"检查工程是否存在的SQL错误!"))) != 1) {
 				//添加作业工程登记表信息
 				asmSql.clean();
 				Etl_sys etl_sys = new Etl_sys();
@@ -393,7 +423,7 @@ public class EtlJobUtil {
 			asmSql.addParam(etl_sys_cd);
 			asmSql.addParam(etl_para.getPara_cd());
 			if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-					"检查参数登记信息的SQL错误!"))) != 1) {
+				"检查参数登记信息的SQL错误!"))) != 1) {
 				etl_para.add(db);
 			}
 			etl_para.setEtl_sys_cd(etl_sys_cd);
@@ -404,7 +434,7 @@ public class EtlJobUtil {
 			asmSql.addParam(etl_sys_cd);
 			asmSql.addParam(etl_para.getPara_cd());
 			if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-					"检查参数登记信息的SQL错误!"))) != 1) {
+				"检查参数登记信息的SQL错误!"))) != 1) {
 				etl_para.add(db);
 			}
 			etl_para.setEtl_sys_cd(etl_sys_cd);
@@ -415,7 +445,7 @@ public class EtlJobUtil {
 			asmSql.addParam(etl_sys_cd);
 			asmSql.addParam(etl_para.getPara_cd());
 			if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-					"检查参数登记信息的SQL错误!"))) != 1) {
+				"检查参数登记信息的SQL错误!"))) != 1) {
 				etl_para.add(db);
 			}
 			//添加资源登记信息
@@ -429,7 +459,7 @@ public class EtlJobUtil {
 			asmSql.addParam(etl_sys_cd);
 			asmSql.addParam(etl_resource.getResource_type());
 			if (SqlOperator.queryNumber(db, asmSql.sql(), asmSql.params()).orElseThrow(() -> (new BusinessException(
-					"检查参数登记信息的SQL错误!"))) != 1) {
+				"检查参数登记信息的SQL错误!"))) != 1) {
 				etl_resource.add(db);
 			}
 		}
@@ -441,21 +471,21 @@ public class EtlJobUtil {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	public static List<Etl_sys> getProInfo(DatabaseWrapper db, long user_id) {
 		return SqlOperator.queryList(db, Etl_sys.class,
-				"select * from " + Etl_sys.TableName + " where user_id=? order by etl_sys_cd", user_id);
+			"select * from " + Etl_sys.TableName + " where user_id=? order by etl_sys_cd", user_id);
 	}
 
 	@Method(desc = "获取作业某个工程下的任务信息",
-			logicStep = "获取作业某个工程下的任务信息")
+		logicStep = "获取作业某个工程下的任务信息")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	@Param(name = "etl_sys_cd", desc = "工程代码", range = "String类型")
 	@Return(desc = "工程下的任务信息", range = "工程下的任务信息")
 	public static List<Etl_sub_sys_list> getTaskInfo(DatabaseWrapper db, String etl_sys_cd) {
 		return SqlOperator.queryList(db, Etl_sub_sys_list.class, "select * from " + Etl_sub_sys_list.TableName + " where" +
-				" etl_sys_cd =? order by sub_sys_cd", etl_sys_cd);
+			" etl_sys_cd =? order by sub_sys_cd", etl_sys_cd);
 	}
 
 	@Method(desc = "对程序作业的作业系统参数经行检查添加", logicStep = "1: 检查当前的作业系统参数是否存在" +
-			"2: 如果不存在则添加")
+		"2: 如果不存在则添加")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不能为空")
 	@Param(name = "para_cd", desc = "工程系统参数变量名称", range = "不能为空")
@@ -463,8 +493,8 @@ public class EtlJobUtil {
 	public static void setDefaultEtlParaConf(DatabaseWrapper db, String etl_sys_cd, String para_cd, String pro_val) {
 		// 1: 检查当前的作业系统参数是否存在
 		long resourceNum = SqlOperator.queryNumber(db,
-				"SELECT COUNT(1) FROM " + Etl_para.TableName + " WHERE etl_sys_cd = ? AND para_cd = ?", etl_sys_cd, para_cd)
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+			"SELECT COUNT(1) FROM " + Etl_para.TableName + " WHERE etl_sys_cd = ? AND para_cd = ?", etl_sys_cd, para_cd)
+			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		// 2: 如果不存在则添加
 		if (resourceNum == 0) {
 			Etl_para etl_para = new Etl_para();
@@ -477,16 +507,16 @@ public class EtlJobUtil {
 	}
 
 	@Method(desc = "设置资源登记信息", logicStep = "1.查询资源类型是否存在" +
-			"2.不存在默认增加一个资源")
+		"2.不存在默认增加一个资源")
 	@Param(name = "db", desc = "DatabaseWrapper连接信息", range = "DatabaseWrapper类型")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "不可为空")
 	public static void setDefaultEtlResource(DatabaseWrapper db, String etl_sys_cd) {
 		// 1.查询资源类型是否存在
 		long resourceNum = SqlOperator.queryNumber(db,
-				"SELECT COUNT(1) FROM " + Etl_resource.TableName
-						+ " WHERE resource_type = ? AND etl_sys_cd = ?",
-				Constant.RESOURCE_THRESHOLD, etl_sys_cd)
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+			"SELECT COUNT(1) FROM " + Etl_resource.TableName
+				+ " WHERE resource_type = ? AND etl_sys_cd = ?",
+			Constant.RESOURCE_THRESHOLD, etl_sys_cd)
+			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		// 2.不存在默认增加一个资源
 		if (resourceNum == 0) {
 			Etl_resource etl_resource = new Etl_resource();
@@ -505,8 +535,8 @@ public class EtlJobUtil {
 	@Return(desc = "返回作业定义下的作业名称集合", range = "可以为空.为空表示没有作业信息存在")
 	public static List<String> getEtlJob(DatabaseWrapper db, String etl_sys_cd, String sub_sys_cd) {
 		return SqlOperator.queryOneColumnList(db,
-				"SELECT etl_job FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
-				etl_sys_cd, sub_sys_cd);
+			"SELECT etl_job FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
+			etl_sys_cd, sub_sys_cd);
 	}
 
 	@Method(desc = "获取作业资源分配的作业信息", logicStep = "")
@@ -515,8 +545,8 @@ public class EtlJobUtil {
 	@Return(desc = "返回作业资源下的作业名称集合", range = "可以为空.为空表示没有作业资源信息存在")
 	public static List<String> getJobResource(DatabaseWrapper db, String etl_sys_cd) {
 		return SqlOperator.queryOneColumnList(db,
-				"SELECT etl_job FROM " + Etl_job_resource_rela.TableName + " WHERE etl_sys_cd = ? ",
-				etl_sys_cd);
+			"SELECT etl_job FROM " + Etl_job_resource_rela.TableName + " WHERE etl_sys_cd = ? ",
+			etl_sys_cd);
 	}
 
 	@Method(desc = "保存作业所需的资源信息", logicStep = "1: 判断当前的作业信息是否存在,如果不存在则添加")
@@ -525,7 +555,7 @@ public class EtlJobUtil {
 	@Param(name = "etl_job_def", desc = "作业资源的信息集合", range = "不可为空", isBean = true)
 	@Param(name = "jobResource", desc = "作业资源的信息名称集合", range = "可为空")
 	public static void setEtl_job_resource_rela(DatabaseWrapper db, String etl_sys_cd, Etl_job_def etl_job_def,
-	                                            List<String> jobResource) {
+		List<String> jobResource) {
 		//    1: 判断当前的作业信息是否存在,如果不存在则添加
 		if (!jobResource.contains(etl_job_def.getEtl_job())) {
 			Etl_job_resource_rela etl_job_resource_rela = new Etl_job_resource_rela();
@@ -538,10 +568,10 @@ public class EtlJobUtil {
 	}
 
 	@Method(desc = "获取下游作业依赖信息",
-			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "2.查询依赖于当前作业的信息(下游)"
-					+ "3.如果下游作业依赖关系不为空，设置字节点"
-					+ "4.返回下游作业依赖关系")
+		logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+			+ "2.查询依赖于当前作业的信息(下游)"
+			+ "3.如果下游作业依赖关系不为空，设置字节点"
+			+ "4.返回下游作业依赖关系")
 	@Param(name = "pre_etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
 	@Return(desc = "返回下游作业依赖关系", range = "无限制")
@@ -549,11 +579,11 @@ public class EtlJobUtil {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.查询依赖于当前作业的信息(下游)
 		Result downJob = SqlOperator.queryResult(db, "select ejd.etl_sys_cd,ejd.etl_job,ed.pre_etl_job from "
-						+ Etl_dependency.TableName + " ed left join " + Etl_job_def.TableName
-						+ " ejd on ed.etl_sys_cd=ejd.etl_sys_cd and ed.etl_job=ejd.etl_job "
-						+ " WHERE ed.pre_etl_sys_cd=? and ed.pre_etl_job=? "
-						+ " order by ejd.job_priority DESC,ed.etl_sys_cd,ed.etl_job",
-				pre_etl_sys_cd, etl_job);
+				+ Etl_dependency.TableName + " ed left join " + Etl_job_def.TableName
+				+ " ejd on ed.etl_sys_cd=ejd.etl_sys_cd and ed.etl_job=ejd.etl_job "
+				+ " WHERE ed.pre_etl_sys_cd=? and ed.pre_etl_job=? "
+				+ " order by ejd.job_priority DESC,ed.etl_sys_cd,ed.etl_job",
+			pre_etl_sys_cd, etl_job);
 		// 3.如果下游作业依赖关系不为空，设置字节点
 		if (!downJob.isEmpty()) {
 			for (int i = 0; i < downJob.getRowCount(); i++) {
@@ -570,10 +600,10 @@ public class EtlJobUtil {
 	}
 
 	@Method(desc = "获取上游作业依赖信息",
-			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
-					+ "2.获取上游作业依赖关系"
-					+ "3.如果上游作业依赖关系不为空，设置字节点"
-					+ "4.返回上游作业依赖关系")
+		logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制"
+			+ "2.获取上游作业依赖关系"
+			+ "3.如果上游作业依赖关系不为空，设置字节点"
+			+ "4.返回上游作业依赖关系")
 	@Param(name = "etl_job", desc = "作业名称", range = "新增作业时生成")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Return(desc = "返回上游作业依赖关系", range = "无限制")
@@ -581,11 +611,11 @@ public class EtlJobUtil {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
 		// 2.获取上游作业依赖关系
 		Result topJob = SqlOperator.queryResult(db,
-				"select ejd.etl_sys_cd,ed.pre_etl_job,ejd.etl_job FROM "
-						+ Etl_dependency.TableName + " ed join " + Etl_job_def.TableName
-						+ " ejd on ed.etl_job=ejd.etl_job and ed.etl_sys_cd=ejd.etl_sys_cd "
-						+ " where ed.etl_job=? and ed.etl_sys_cd=?",
-				etl_job, etl_sys_cd);
+			"select ejd.etl_sys_cd,ed.pre_etl_job,ejd.etl_job FROM "
+				+ Etl_dependency.TableName + " ed join " + Etl_job_def.TableName
+				+ " ejd on ed.etl_job=ejd.etl_job and ed.etl_sys_cd=ejd.etl_sys_cd "
+				+ " where ed.etl_job=? and ed.etl_sys_cd=?",
+			etl_job, etl_sys_cd);
 		// 3.如果上游作业依赖关系不为空，设置子节点
 		if (!topJob.isEmpty()) {
 			for (int i = 0; i < topJob.getRowCount(); i++) {
