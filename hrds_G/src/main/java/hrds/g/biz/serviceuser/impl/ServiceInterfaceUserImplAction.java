@@ -17,12 +17,8 @@ import fd.ng.web.util.RequestUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
-import hrds.commons.utils.CommonVariables;
-import hrds.commons.utils.Constant;
-import hrds.commons.utils.DruidParseQuerySql;
-import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.*;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.g.biz.bean.*;
 import hrds.g.biz.commons.FileDownload;
@@ -39,7 +35,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -281,24 +276,19 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (!InterfaceManager.existsTable(Dbo.db(), userByToken.getUser_id(), tableName)) {
 			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 		}
-		try {
-			// 4.获取表列结构json信息
-			List<Map<String, Object>> columns = ProcessingData.getColumnsByTableName(tableName, Dbo.db());
-			// 5.判断表对应存储层是否存在
-			if (columns == null) {
-				return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
-			}
-			// 6.返回表列结构json信息
-			// 7.记录接口使用日志信息
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
-				insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-						responseMap.get("status").toString());
-			}
-			return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
-		} catch (SQLException e) {
-			logger.info(e);
-			return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
+		// 4.获取表列结构json信息
+		List<Map<String, Object>> columns = DataTableUtil.getColumnInfoByTableName(Dbo.db(), tableName);
+		// 5.判断表对应存储层是否存在
+		if (columns == null) {
+			return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
 		}
+		// 6.返回表列结构json信息
+		// 7.记录接口使用日志信息
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
+		return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
 	}
 
 	private boolean isParamExist(String tableName) {
