@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.*;
@@ -16,7 +17,6 @@ import hrds.commons.utils.DruidParseQuerySql;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.*;
 
 @DocClass(desc = "数据处理类，获取表的存储等信息", author = "xchao", createdate = "2020年3月31日 16:32:43")
@@ -129,15 +129,14 @@ public abstract class ProcessingData {
 					AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase(),
 					CollectType.TieYuanDengJi.getCode());
 			if (objectMap.size() != 0)
-				sql = sql.toUpperCase().replaceAll(" " + tableName.toUpperCase() + " ",
-						" " + objectMap.get("table_name").toString().toUpperCase()) + " ";
+				sql = StringUtil.replace(sql.toUpperCase(), " " + tableName.toUpperCase(),
+						" " + objectMap.get("table_name").toString().toUpperCase() + " ");
 		}
 		return sql;
 		/*
 		 * 判斷存储方式是不是 贴源登记，如果是，需要将表名修改为原始表名 *********************************end
 		 */
 	}
-
 
 	@Method(desc = "获取表的存储位置", logicStep = "获取表的存储位置")
 	@Param(name = "tableName", desc = "表名", range = "取值范围说明")
