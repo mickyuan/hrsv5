@@ -1,8 +1,6 @@
 package hrds.commons.utils.etl.etlbean;
 
 import fd.ng.core.annotation.DocClass;
-import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.commons.codes.DataSourceType;
 import hrds.commons.entity.Etl_job_def;
 
 @DocClass(desc = "生成作业调度时的实体类", author = "Mr.Lee", createdate = "2020-05-29 17:30")
