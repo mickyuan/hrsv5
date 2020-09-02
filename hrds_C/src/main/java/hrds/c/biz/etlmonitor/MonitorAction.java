@@ -589,9 +589,9 @@ public class MonitorAction extends BaseAction {
 							etl_sys_cd);
 			// 15.遍历调度频率不为频率的作业并建立作业之间的依赖关系
 			for (int i = 0; i < dispatchFreqResult.getRowCount(); i++) {
-				String etl_job = dependencyJobResult.getString(i, "etl_job");
+				String etl_job = dispatchFreqResult.getString(i, "etl_job");
 				Result topResult = EtlJobUtil.topEtlJobDependencyInfo(etl_job, etl_sys_cd, Dbo.db());
-				Result downResult = EtlJobUtil.downEtlJobDependencyInfo(etl_job, etl_sys_cd, Dbo.db());
+				Result downResult = EtlJobUtil.downEtlJobDependencyInfo(etl_sys_cd,etl_job,  Dbo.db());
 				// 16.建立依赖关系
 				buildDependencies(nodeMap, list_Edge, etl_job, topResult, downResult);
 			}
