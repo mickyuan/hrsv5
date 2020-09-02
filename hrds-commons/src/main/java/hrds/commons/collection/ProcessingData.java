@@ -6,10 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.StoreLayerDataSource;
-import hrds.commons.codes.Store_type;
+import hrds.commons.codes.*;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
@@ -93,10 +90,11 @@ public abstract class ProcessingData {
 	public List<String> getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end, boolean isCountTotal) {
 
 		LayerTypeBean ltb = getAllTableIsLayer(sql, db);
+		String ofSql = getdStoreReg(sql, db);
 		//只有一个存储，且是jdbc的方式
 		if (ltb.getConnType() == LayerTypeBean.ConnType.oneJdbc) {
 			Long dsl_id = ltb.getLayerBean().getDsl_id();
-			return getResultSet(sql, db, dsl_id, begin, end, isCountTotal);
+			return getResultSet(ofSql, db, dsl_id, begin, end, isCountTotal);
 		}
 		//只有一种存储，是什么，可以使用ltb.getLayerBean().getStore_type(),进行判断
 		else if (ltb.getConnType() == LayerTypeBean.ConnType.oneOther) {
@@ -107,7 +105,7 @@ public abstract class ProcessingData {
 		else if (ltb.getConnType() == LayerTypeBean.ConnType.moreJdbc) {
 			//List<LayerBean> layerBeanList = ltb.getLayerBeanList();
 			//TODO 数据都在关系型数据库，也就说都可以使用jdbc的方式的实现方式
-			return getMoreJdbcResult(sql, begin, end, isCountTotal);
+			return getMoreJdbcResult(ofSql, begin, end, isCountTotal);
 		}
 		// 其他，包含了不同的存储，如jdbc、hbase、solr等不同给情况
 		else if (ltb.getConnType() == LayerTypeBean.ConnType.moreOther) {
@@ -116,6 +114,30 @@ public abstract class ProcessingData {
 		}
 		return null;
 	}
+
+	private static String getdStoreReg(String sql, DatabaseWrapper db) {
+		/*
+		 * 判斷存储方式是不是 贴源登记，如果是，需要将表名修改为原始表名 ******************************start
+		 */
+		Map<String, String> map = new HashMap<>();
+		List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
+		for (String tableName : listTable) {
+			Map<String, Object> objectMap = SqlOperator.queryOneObject(db,
+					"select a.collect_type,a.table_name from " + Data_store_reg.TableName + " a join" +
+							" " + Database_set.TableName + " b on a.database_id = b.database_id " +
+							" where a.collect_type in (?,?) and lower(hyren_name) = ? and b.collect_type = ?",
+					AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase(),
+					CollectType.TieYuanDengJi.getCode());
+			if (objectMap.size() != 0)
+				sql = sql.toUpperCase().replaceAll(" " + tableName.toUpperCase() + " ",
+						" " + objectMap.get("table_name").toString().toUpperCase()) + " ";
+		}
+		return sql;
+		/*
+		 * 判斷存储方式是不是 贴源登记，如果是，需要将表名修改为原始表名 *********************************end
+		 */
+	}
+
 
 	@Method(desc = "获取表的存储位置", logicStep = "获取表的存储位置")
 	@Param(name = "tableName", desc = "表名", range = "取值范围说明")
@@ -341,58 +363,6 @@ public abstract class ProcessingData {
 			dealLine(result);
 		}
 		return colArray;
-	}
-
-	@Method(desc = "获取表列结构json信息", logicStep = "1.根据表名获取存储层信息" +
-			"2.获取查询sql" +
-			"3.封装表对应列信息" +
-			"4.封装表存储信息" +
-			"5.返回表结构json信息")
-	@Param(name = "tableName", desc = "表名称", range = "不能为空")
-	@Param(name = "db", desc = "db连接", range = "无限制")
-	@Return(desc = "返回表列结构json信息", range = "无限制")
-	public static List<Map<String, Object>> getColumnsByTableName(String tableName, DatabaseWrapper db)
-			throws SQLException {
-		// 1.根据表名获取存储层信息
-		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tableName, db);
-		if (layerByTable.isEmpty()) {
-			return null;
-		}
-		List<Map<String, Object>> tableList = new ArrayList<>();
-		// 2.获取查询sql
-		String sql = "select * from " + tableName;
-		for (LayerBean layerBean : layerByTable) {
-			Map<String, Object> tableMap = new HashMap<>();
-			try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, layerBean.getDsl_id())) {
-				ResultSet rs = dbDataConn.queryGetResultSet(sql);
-				ResultSetMetaData meta = rs.getMetaData();
-				int cols = meta.getColumnCount();
-				//获取数据的列信息，存放到list中
-				List<Map<String, Object>> colList = new ArrayList<>();
-				// 3.封装表对应列信息
-				for (int i = 0; i < cols; i++) {
-					Map<String, Object> colMap = new HashMap<>();
-					String colTypeName = meta.getColumnTypeName(i + 1);
-					String columnName = meta.getColumnName(i + 1);
-					if (columnName.contains(".")) {
-						columnName = columnName.substring(columnName.indexOf(".") + 1);
-					}
-					colMap.put("column_name", columnName);
-					colMap.put("column_type", colTypeName);
-					colList.add(colMap);
-				}
-				// 4.封装表存储信息
-				tableMap.put("table_name", tableName);
-				tableMap.put("table_cn_name", tableName);
-				tableMap.put("store_type", layerBean.getStore_type());
-				tableMap.put("dst", layerBean.getDst());
-				tableMap.put("dsl_name", layerBean.getDsl_name());
-				tableMap.put("columns", colList);
-				tableList.add(tableMap);
-			}
-		}
-		// 5.返回表结构json信息
-		return tableList;
 	}
 
 	public abstract void dealLine(Map<String, Object> map) throws Exception;
