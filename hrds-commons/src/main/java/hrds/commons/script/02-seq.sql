@@ -109,6 +109,7 @@ delete from interface_info;
 INSERT INTO interface_info VALUES (104, 'tableUsePermissions', '表使用权限查询接口', '1', '1', '01-123', null, 1001);
 INSERT INTO interface_info VALUES (105, 'generalQuery','单表普通查询接口', '1', '1', '01-124',NULL,  1001);
 INSERT INTO interface_info VALUES ('111', 'tableStructureQuery', '表结构查询接口', '1', '1', '01-130', NULL, '1001');
+INSERT INTO interface_info VALUES ('112', 'tableSearchGetJson', '表结构查询-获取json信息接口', '1', '1', '01-131', NULL, '1001');
 INSERT INTO interface_info VALUES ('114', 'fileAttributeSearch', '文件属性搜索接口', '1', '1', '01-133', NULL, '1001');
 INSERT INTO interface_info VALUES ('115', 'sqlInterfaceSearch', 'sql查询接口', '1', '1', '01-134', NULL, '1001');
 INSERT INTO interface_info VALUES ('118', 'rowKeySearch', 'rowkey查询', '1', '1', '01-137', null, 1001);
