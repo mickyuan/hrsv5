@@ -252,8 +252,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			"3.判断表是否有使用权限" +
 			"4.获取表列结构json信息" +
 			"5.判断表对应存储层是否存在" +
-			"6.返回表列结构json信息" +
-			"7.记录接口使用日志信息")
+			"6.记录接口使用日志信息" +
+			"7.返回表列结构json信息")
 	@Param(name = "tableName", desc = "表名", range = "无限制", nullable = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -282,12 +282,12 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (columns == null) {
 			return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
 		}
-		// 6.返回表列结构json信息
-		// 7.记录接口使用日志信息
+		// 6.记录接口使用日志信息
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
 			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
 					responseMap.get("status").toString());
 		}
+		// 7.返回表列结构json信息
 		return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
 	}
 

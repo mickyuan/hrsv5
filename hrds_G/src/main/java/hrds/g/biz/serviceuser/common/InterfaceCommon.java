@@ -127,7 +127,8 @@ public class InterfaceCommon {
 				return responseMap;
 			}
 			// 5.获取token值
-			token = responseMap.get("token").toString();
+			Map<String, Object> message = (Map<String, Object>)responseMap.get("message");
+			token = message.get("token").toString();
 		}
 		// 6.判断token值是否存在
 		if (InterfaceManager.existsToken(db, token)) {
