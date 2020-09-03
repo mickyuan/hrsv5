@@ -33,7 +33,6 @@ import org.apache.hadoop.fs.Path;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.*;
 
 public class FileOperations {
@@ -113,42 +112,47 @@ public class FileOperations {
 	@Param(name = "ocrText", desc = "是否需要ocr识别", range = "自动生成的id")
 	@Return(desc = "返回值说明", range = "返回值取值范围")
 	public static String getFileInfoByFileId(String fileId, boolean ocrText) {
+		//初始化文件信息
+		Map<String, String> fileInfoMap = new HashMap<>();
 		//1.检查文件是否存在
+		Source_file_attribute source_file_attribute = new Source_file_attribute();
+		source_file_attribute.setFile_id(fileId);
 		Optional<Source_file_attribute> fileRs = Dbo.queryOneObject(Source_file_attribute.class,
-				"SELECT * FROM source_file_attribute WHERE file_id=?", fileId);
+				"SELECT * FROM source_file_attribute WHERE file_id=?", source_file_attribute.getFile_id());
 		if (!fileRs.isPresent()) {
 			throw new BusinessException("申请的文件不存在！fileId=" + fileId);
-		}
-		//2.获取文件属性信息
-		Long fileAvroBlock = fileRs.get().getFile_avro_block();
-		String fileAvroPath = fileRs.get().getFile_avro_path();
-		String originalName = fileRs.get().getOriginal_name();
-		String storageDate = fileRs.get().getStorage_date();
-		String storageTime = fileRs.get().getStorage_time();
-		String originalUpdateDate = fileRs.get().getOriginal_update_date();
-		String originalUpdateTime = fileRs.get().getOriginal_update_time();
-		String fileSuffix = fileRs.get().getFile_suffix();
-		GenericRecord avroRecord = getAvroRecord(fileAvroBlock, fileAvroPath);
-		//3.设置返回数据信息
-		Map<String, String> fileInfoMap = new HashMap<>();
-		fileInfoMap.put("original_name", originalName);
-		fileInfoMap.put("storage_time", storageDate + storageTime);
-		fileInfoMap.put("original_update_time", originalUpdateDate + originalUpdateTime);
-		String fileText = avroRecord.get("file_text").toString();
-		List<String> list = FileTypeUtil.getTypeFileList(FileTypeUtil.TuPian);
-		//如果是图片，就将图片流转换成base64，以便传输到页面展示
-		assert list != null;
-		if (list.contains(fileSuffix)) {
-			ByteBuffer bb = (ByteBuffer) avroRecord.get("file_contents");
-			fileText = Base64.getEncoder().encode(bb).toString();
-			//如果是ture的话，就是只要文本，如果是fase的话就要图片的二进制流，其他情况用的时候在使用
-			if (ocrText) {
-				fileText = getOcrText(fileAvroPath, originalName, fileId);
+		} else {
+			//2.获取文件属性信息
+			Source_file_attribute sfa = fileRs.get();
+			long fileAvroBlock = sfa.getFile_avro_block();
+			String fileAvroPath = sfa.getFile_avro_path();
+			String originalName = sfa.getOriginal_name();
+			String storageDate = sfa.getStorage_date();
+			String storageTime = sfa.getStorage_time();
+			String originalUpdateDate = sfa.getOriginal_update_date();
+			String originalUpdateTime = sfa.getOriginal_update_time();
+			String fileSuffix = sfa.getFile_suffix();
+			GenericRecord avroRecord = getAvroRecord(fileAvroBlock, fileAvroPath);
+			//3.设置返回数据信息
+			fileInfoMap.put("original_name", originalName);
+			fileInfoMap.put("storage_time", storageDate + storageTime);
+			fileInfoMap.put("original_update_time", originalUpdateDate + originalUpdateTime);
+			String fileText = avroRecord.get("file_text").toString();
+			List<String> list = FileTypeUtil.getTypeFileList(FileTypeUtil.TuPian);
+			//如果是图片，就将图片流转换成base64，以便传输到页面展示
+			assert list != null;
+			if (list.contains(fileSuffix)) {
+				ByteBuffer bb = (ByteBuffer) avroRecord.get("file_contents");
+				fileText = Base64.getEncoder().encode(bb).toString();
+				//如果是ture的话，就是只要文本，如果是fase的话就要图片的二进制流，其他情况用的时候在使用
+				if (ocrText) {
+					fileText = getOcrText(fileAvroPath, originalName, fileId);
+				}
 			}
+			fileInfoMap.put("file_content", fileText);
+			fileInfoMap.put("file_id", fileId);
+			fileInfoMap.put("file_suffix", fileSuffix);
 		}
-		fileInfoMap.put("file_content", fileText);
-		fileInfoMap.put("file_id", fileId);
-		fileInfoMap.put("file_suffix", fileSuffix);
 		return JsonUtil.toJson(fileInfoMap);
 	}
 

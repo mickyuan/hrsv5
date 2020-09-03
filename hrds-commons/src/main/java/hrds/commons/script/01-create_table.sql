@@ -1819,7 +1819,7 @@ FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文�
 SOURCE_PATH                                       VARCHAR(512) NULL, --文件路径
 FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
 FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
-FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
+FILE_AVRO_BLOCK                                   BIGINT NULL, --所存avro文件block号
 IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
 IS_CACHE                                          CHAR(1) NULL, --是否本地缓存
 FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
