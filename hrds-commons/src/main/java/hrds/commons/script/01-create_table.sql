@@ -213,7 +213,7 @@ CREATE_DATE                                       CHAR(8) NOT NULL, --创建日�
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CATEGORY_SEQ                                      VARCHAR(512) NULL, --分类序号
 CATEGORY_NUM                                      VARCHAR(512) NOT NULL, --分类编号
-CREATE_ID                                         BIGINT default 0 NOT NULL, --创建用户
+CREATE_ID                                         DECIMAL(10) NOT NULL, --创建用户
 PARENT_CATEGORY_ID                                BIGINT default 0 NOT NULL, --集市分类id
 DATA_MART_ID                                      BIGINT default 0 NOT NULL, --数据集市id
 CONSTRAINT DM_CATEGORY_PK PRIMARY KEY(CATEGORY_ID)   );
