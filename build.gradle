@@ -161,16 +161,8 @@ subprojects {
     def appMainClass = "${project.group}.main.AppMain"
     //设置打包目录 dist
     def distDir = "$rootDir/hyrenv5/hrsapp/dist"
-    //设置数据库所需目录 database
-    def databaseDir = "$distDir/database"
     //设置web服务所需目录 java
     def javaDir = "$distDir/java"
-    //设置python服务所需目录 java
-    def pythonDir = "$distDir/python"
-    //设置shell脚本所需目录 java
-    def shellDir = "$distDir/shell"
-    //设置vue打包文件所需目录 java
-    def vueDir = "$distDir/vue"
     //processResources 发布时不需要将资源文件(resources)目录下的文件打包到jar包内 目的：不将resources打包到jar文件内
     processResources { exclude { "**/*.*" } }
     //创建项目jar包文件,编译项目为为.jar文件
@@ -204,40 +196,11 @@ subprojects {
                 dir.mkdirs()
             }
     }
-    //clean up the packaging directory
-    task clearDistDir(type: Delete) {
-        delete "$distDir"
-    }
-
-    //clean up the package jar files
-    task clearJar(type: Delete) {
-        delete 'build/libs'
-    }
-
-    //initialize the packaging directory
-    task initPackageDir() {
-        //初始化项目打包的目录
-        def initDirPaths = []
-        //添加dist目录
-        initDirPaths.add("$distDir")
-        //数据库数据目录
-        initDirPaths.add("$databaseDir")
-        //添加java目录
-        initDirPaths.add("$javaDir")
-        //添加python目录
-        initDirPaths.add("$pythonDir")
-        //添加shell目录
-        initDirPaths.add("$shellDir")
-        //添加vue目录
-        initDirPaths.add("$vueDir")
-        //创建目录
-        doFirst {
-            initDirPaths.forEach(createDir)
-        }
-    }
 
     //copy the sql script to initialize the database
-    task copySQLScript(type: Copy, dependsOn: [initPackageDir]) {
+    task copySQLScript(type: Copy) {
+        //设置数据库所需目录 database
+        def databaseDir = "$distDir/database"
         if (project.name == "hrds-commons") {
             from "$rootDir/hrds-commons/src/main/java/hrds/commons/script"
             into "$databaseDir/postgresql/dbscript"
@@ -246,10 +209,19 @@ subprojects {
     }
 
     //copy global dependency jar
-    task copyGlobalSharedJar(type: Copy, dependsOn: [copySQLScript]) {
+    task copyGlobalSharedJar(type: Copy, dependsOn: [jar, copySQLScript]) {
         if (project.name == "hrds-commons") {
-//            from configurations.runtime
-//            into "$javaDir/GlobalShared"
+            //拷贝运行依赖包
+            from(configurations.runtime) {
+                include("*.jar")
+                into("jdklibs")
+            }
+            //拷贝hrds-commoms.jar
+            from("$buildDir/libs") {
+                include("*.jar")
+                into("jdklibs")
+            }
+            into "$javaDir/GlobalShared"
         }
     }
 
@@ -281,4 +253,7 @@ subprojects {
             }
         }
     }
+
+    //release
+    task release(type: Copy, dependsOn: [copySubproject]) {}
 }
