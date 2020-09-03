@@ -17,12 +17,8 @@ import fd.ng.web.util.RequestUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
-import hrds.commons.utils.CommonVariables;
-import hrds.commons.utils.Constant;
-import hrds.commons.utils.DruidParseQuerySql;
-import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.*;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.g.biz.bean.*;
 import hrds.g.biz.commons.FileDownload;
@@ -39,7 +35,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.servlet.http.HttpServletResponse;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -257,8 +252,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			"3.判断表是否有使用权限" +
 			"4.获取表列结构json信息" +
 			"5.判断表对应存储层是否存在" +
-			"6.返回表列结构json信息" +
-			"7.记录接口使用日志信息")
+			"6.记录接口使用日志信息" +
+			"7.返回表列结构json信息")
 	@Param(name = "tableName", desc = "表名", range = "无限制", nullable = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
@@ -281,24 +276,19 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (!InterfaceManager.existsTable(Dbo.db(), userByToken.getUser_id(), tableName)) {
 			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 		}
-		try {
-			// 4.获取表列结构json信息
-			List<Map<String, Object>> columns = ProcessingData.getColumnsByTableName(tableName, Dbo.db());
-			// 5.判断表对应存储层是否存在
-			if (columns == null) {
-				return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
-			}
-			// 6.返回表列结构json信息
-			// 7.记录接口使用日志信息
-			if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
-				insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
-						responseMap.get("status").toString());
-			}
-			return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
-		} catch (SQLException e) {
-			logger.info(e);
-			return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
+		// 4.获取表列结构json信息
+		List<Map<String, Object>> columns = DataTableUtil.getColumnInfoByTableName(Dbo.db(), tableName);
+		// 5.判断表对应存储层是否存在
+		if (columns == null) {
+			return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
 		}
+		// 6.记录接口使用日志信息
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
+		// 7.返回表列结构json信息
+		return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
 	}
 
 	private boolean isParamExist(String tableName) {
@@ -666,7 +656,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 	@Param(name = "start", desc = "请求开始时间毫秒数", range = "无限制")
 	@Return(desc = "", range = "")
 	private void insertInterfaceUseLog(String url, long start, Interface_use_log interface_use_log,
-	                                   QueryInterfaceInfo userByToken, String request_state) {
+									   QueryInterfaceInfo userByToken, String request_state) {
 		// 1.获取接口使用信息
 		QueryInterfaceInfo interfaceUseInfo = InterfaceManager.getInterfaceUseInfo(userByToken.getUser_id(),
 				url);
