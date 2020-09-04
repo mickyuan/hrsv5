@@ -2,6 +2,9 @@ package hrds.l.biz.autoanalysis.operate;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.util.JdbcConstants;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -12,6 +15,8 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
@@ -24,14 +29,15 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
+import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
 
+import java.io.File;
 import java.util.*;
 
 @DocClass(desc = "自主分析操作类", author = "dhw", createdate = "2020/8/24 11:29")
 public class OperateAction extends BaseAction {
 
 	private static final String TempTableName = " TEMP_TABLE ";
-
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
 	// 图标类型
 	// 折线图
@@ -659,6 +665,23 @@ public class OperateAction extends BaseAction {
 		return resultData;
 	}
 
+	@Method(desc = "我的取数下载模板", logicStep = "")
+	@Param(name = "fetch_sum_id", desc = "取数汇总表ID", range = "新增我的取数信息时生成")
+	public void downloadMyAccessTemplate(long fetch_sum_id) {
+		Auto_fetch_sum auto_fetch_sum = Dbo.queryOneObject(Auto_fetch_sum.class,
+				"select fetch_sql,fetch_name from " + Auto_fetch_sum.TableName + " where fetch_sum_id = ?",
+				fetch_sum_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+		String fileName = WebinfoConf.FileUpload_SavedDirName + File.separator +
+				auto_fetch_sum.getFetch_name() + "_" + DateUtil.getDateTime() + ".csv";
+		new ProcessingData() {
+			@Override
+			public void dealLine(Map<String, Object> map) {
+				AutoOperateCommon.writeFile(map, fileName);
+			}
+		}.getDataLayer(auto_fetch_sum.getFetch_sql(), Dbo.db());
+	}
+
 	@Method(desc = "获取数据可视化组件信息", logicStep = "1.获取数据可视化组件信息")
 	@Return(desc = "返回获取数据可视化组件信息", range = "无限制")
 	public List<Map<String, Object>> getVisualComponentInfo() {
@@ -880,9 +903,18 @@ public class OperateAction extends BaseAction {
 		return resultMap;
 	}
 
-	private Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
-	                                         String chart_type) {
+	@Method(desc = "获取图表显示", logicStep = "1.获取组件数据" +
+			"2.根据不同图标类型获取图表数据" +
+			"3.返回图标显示数据")
+	@Param(name = "exe_sql", desc = "执行sql", range = "无限制")
+	@Param(name = "x_columns", desc = "x轴列信息", range = "无限制", nullable = true)
+	@Param(name = "y_columns", desc = "y轴列信息", range = "无限制", nullable = true)
+	@Param(name = "chart_type", desc = "图标类型", range = "无限制")
+	@Return(desc = "返回图标显示数据", range = "无限制")
+	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
+	                                        String chart_type) {
 		List<Map<String, Object>> componentList = new ArrayList<>();
+		// 1.获取组件数据
 		new ProcessingData() {
 			@Override
 			public void dealLine(Map<String, Object> map) {
@@ -890,6 +922,7 @@ public class OperateAction extends BaseAction {
 			}
 		}.getDataLayer(exe_sql, Dbo.db());
 		Map<String, Object> resultMap = new HashMap<>();
+		// 2.根据不同图标类型获取图表数据
 		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
 			// 折线图和柱状图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
@@ -931,6 +964,7 @@ public class OperateAction extends BaseAction {
 		} else {
 			throw new BusinessException("暂不支持该种图例类型" + chart_type);
 		}
+		// 3.返回图标显示数据
 		return resultMap;
 	}
 
@@ -1363,9 +1397,9 @@ public class OperateAction extends BaseAction {
 		return operator;
 	}
 
-	@Method(desc = "新增保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
-			"2.判断组件名称是否已存在" +
-			"3.保存组件汇总表数据" +
+	@Method(desc = "更新保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
+			"2.更新组件汇总表数据" +
+			"3.删除组件关联表信息" +
 			"4.保存组件条件表" +
 			"5.保存组件分组表" +
 			"6.保存组件数据汇总信息表" +
@@ -1395,29 +1429,27 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_chartsconfig", desc = "图表配置信息表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
-	public void saveVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
-	                                    Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
-	                                    Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
-	                                    Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
-	                                    Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
-	                                    Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
-	                                    Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
-	                                    Auto_label auto_label, Auto_legend_info auto_legend_info) {
-		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
+	public void updateVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
+	                                      Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+	                                      Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+	                                      Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+	                                      Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+	                                      Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+	                                      Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+	                                      Auto_label auto_label, Auto_legend_info auto_legend_info) {
 		// 1.校验组件汇总表字段合法性
+		Validator.notNull(auto_comp_sum.getComponent_id(), "更新时组件ID不能为空");
 		checkAutoCompSumFields(auto_comp_sum);
-		auto_comp_sum.setCreate_user(getUserId());
-		auto_comp_sum.setSources_obj(componentBean.getFetch_name());
-		auto_comp_sum.setComponent_id(PrimayKeyGener.getNextId());
-		auto_comp_sum.setCreate_date(DateUtil.getSysDate());
-		auto_comp_sum.setCreate_time(DateUtil.getSysTime());
-		auto_comp_sum.setComponent_status(AutoFetchStatus.WanCheng.getCode());
+		auto_comp_sum.setLast_update_date(DateUtil.getSysDate());
+		auto_comp_sum.setLast_update_time(DateUtil.getSysTime());
+		auto_comp_sum.setUpdate_user(getUserId());
 		String exe_sql = getSqlByCondition(componentBean, autoCompConds, autoCompGroups, autoCompDataSums);
 		auto_comp_sum.setExe_sql(exe_sql);
-		// 2.判断组件名称是否已存在
-		isAutoCompSumExist(auto_comp_sum.getComponent_name());
-		// 3.保存组件汇总表数据
-		auto_comp_sum.add(Dbo.db());
+		// 2.更新组件汇总表数据
+		auto_comp_sum.update(Dbo.db());
+		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
+		// 3.删除组件关联表信息
+		deleteComponentAssociateTable(auto_comp_sum.getComponent_id());
 		// 4.保存组件条件表
 		if (autoCompConds != null && autoCompConds.length > 0) {
 			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
@@ -1498,9 +1530,9 @@ public class OperateAction extends BaseAction {
 		auto_legend_info.update(Dbo.db());
 	}
 
-	@Method(desc = "更新保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
-			"2.更新组件汇总表数据" +
-			"3.删除组件关联表信息" +
+	@Method(desc = "新增保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
+			"2.判断组件名称是否已存在" +
+			"3.保存组件汇总表数据" +
 			"4.保存组件条件表" +
 			"5.保存组件分组表" +
 			"6.保存组件数据汇总信息表" +
@@ -1530,27 +1562,33 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_chartsconfig", desc = "图表配置信息表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
-	public void updateVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
-	                                      Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
-	                                      Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
-	                                      Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
-	                                      Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
-	                                      Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
-	                                      Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
-	                                      Auto_label auto_label, Auto_legend_info auto_legend_info) {
+	public void addVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
+	                                   Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+	                                   Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+	                                   Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+	                                   Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+	                                   Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+	                                   Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+	                                   Auto_label auto_label, Auto_legend_info auto_legend_info) {
 		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
 		// 1.校验组件汇总表字段合法性
-		Validator.notNull(auto_comp_sum.getComponent_id(), "更新时组件ID不能为空");
 		checkAutoCompSumFields(auto_comp_sum);
-		auto_comp_sum.setLast_update_date(DateUtil.getSysDate());
-		auto_comp_sum.setLast_update_time(DateUtil.getSysTime());
-		auto_comp_sum.setUpdate_user(getUserId());
+		auto_comp_sum.setCreate_user(getUserId());
+		auto_comp_sum.setSources_obj(componentBean.getFetch_name());
+		auto_comp_sum.setComponent_id(PrimayKeyGener.getNextId());
+		auto_comp_sum.setCreate_date(DateUtil.getSysDate());
+		auto_comp_sum.setCreate_time(DateUtil.getSysTime());
+		auto_comp_sum.setComponent_status(AutoFetchStatus.WanCheng.getCode());
 		String exe_sql = getSqlByCondition(componentBean, autoCompConds, autoCompGroups, autoCompDataSums);
 		auto_comp_sum.setExe_sql(exe_sql);
-		// 2.更新组件汇总表数据
-		auto_comp_sum.update(Dbo.db());
-		// 3.删除组件关联表信息
-		deleteComponentAssociateTable(auto_comp_sum.getComponent_id());
+		Map<String, Object> chartShow = getChartShow(exe_sql, componentBean.getX_columns(),
+				componentBean.getY_columns(), auto_comp_sum.getChart_type());
+		auto_comp_sum.setComponent_buffer(auto_comp_sum.getComponent_buffer() == null ?
+				JsonUtil.toJson(chartShow) : auto_comp_sum.getComponent_buffer());
+		// 2.判断组件名称是否已存在
+		isAutoCompSumExist(auto_comp_sum.getComponent_name());
+		// 3.保存组件汇总表数据
+		auto_comp_sum.add(Dbo.db());
 		// 4.保存组件条件表
 		if (autoCompConds != null && autoCompConds.length > 0) {
 			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
@@ -1768,6 +1806,129 @@ public class OperateAction extends BaseAction {
 		// 13.根据组件id删除图例信息表
 		Dbo.execute("DELETE FROM " + Auto_legend_info.TableName + " WHERE component_id = ?", component_id);
 	}
+
+	@Method(desc = "获取数据仪表盘首页数据", logicStep = "1.查询数据仪表板信息表数据")
+	@Return(desc = "返回数据仪表板信息表数据", range = "无限制")
+	public List<Map<String, Object>> getDataDashboardInfo() {
+		// 1.查询数据仪表板信息表数据
+		return Dbo.queryList("SELECT * FROM " + Auto_dashboard_info.TableName
+				+ " WHERE user_id = ? order by create_date desc,create_time desc", getUserId());
+	}
+
+//	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "")
+//	@Param(name = "", desc = "", range = "")
+//	@Return(desc = "", range = "")
+//	public Map<String, Object> getDataDashboardInfoById(long dashboard_id) {
+//		// 1.根据仪表板id获取数据仪表板信息表数据
+//		Map<String, Object> dashboardInfo = Dbo.queryOneObject(
+//				"SELECT * FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id=?",
+//				dashboard_id);
+//		List<Auto_frame_info> frameInfoList = Dbo.queryList(Auto_frame_info.class,
+//				"SELECT * FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+//		List<Map<String, Object>> dashboardList = new ArrayList<>();
+//		if (!frameInfoList.isEmpty()) {
+//			for (Auto_frame_info auto_frame_info : frameInfoList) {
+//				Map<String, Object> frameMap = new HashMap<>();
+//				frameMap.put("x", auto_frame_info.getX_axis_coord());
+//				frameMap.put("y", auto_frame_info.getY_axis_coord());
+//				frameMap.put("w", auto_frame_info.getLength());
+//				frameMap.put("h", auto_frame_info.getWidth());
+//				frameMap.put("i", auto_frame_info.getSerial_number());
+//				frameMap.put("type", auto_frame_info.getFrame_id());
+//				frameMap.put("label", "2");
+//				frameMap.put("static", true);
+//				dashboardList.add(frameMap);
+//			}
+//			dashboardInfo.put("auto_frame_info_list", frameInfoList);
+//		}
+//		//查询关联信息表
+//		List<Auto_asso_info> autoAssoInfoList = Dbo.queryList(Auto_asso_info.class,
+//				"SELECT * FROM " + Auto_asso_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+//		List<Auto_comp_sum> autoCompSumList = new ArrayList<>();
+//		if (!autoAssoInfoList.isEmpty()) {
+//			for (Auto_asso_info auto_asso_info : autoAssoInfoList) {
+//				Map<String, Object> object = new HashMap<>();
+//				Map<String, Object> componentMap = getVisualComponentInfoById(auto_asso_info.getComponent_id());
+//				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
+//						componentMap.get("compSum").toString(), Auto_comp_sum.class)
+//						.orElseThrow(() -> new BusinessException("转换实体失败"));
+//				auto_comp_sum.getComponent_buffer()
+//				JSONArray chartShowJSON = (JSONArray) JSONArray.parse(component_buffer);
+//
+//				object.put("x", auto_asso_info.getX_axis_coord();
+//				object.put("y", auto_asso_info.getY_axis_coord());
+//				object.put("w", auto_asso_info.getLength());
+//				object.put("h", auto_asso_info.getWidth());
+//				object.put("i", auto_asso_info.getSerial_number());
+//				object.put("type", auto_asso_info.getComponent_id());
+//				object.put("static", true);
+//				autoCompSumList.add(auto_comp_sum);
+//				dashboardInfo.put(String.valueOf(auto_asso_info.getComponent_id()), chartShowJSON.get(0));
+//				dashboardList.add(object);
+//			}
+//
+//			dashboardInfo.put("auto_comp_sum", array_auto_comp_sum);
+//		}
+//		dbo.clear();
+//		dbo.addSql("SELECT * FROM auto_label_info T1 LEFT JOIN auto_font_info T2");
+//		dbo.addSql("ON CAST(T1.label_id AS INT) = T2.font_corr_id AND T2.font_corr_tname = 'auto_label_info'");
+//		dbo.addSql("WHERE dashboard_id = ?");
+//		dbo.addParam(auto_asso_info.getDashboard_id());
+//		Result auto_label_infoResult = dbo.query(db);
+//		if (!auto_label_infoResult.isEmpty()) {
+//			JSONArray auto_label_array = auto_label_infoResult.toJSONArray();
+//			for (int n = 0; n < auto_label_infoResult.getRowCount(); n++) {
+//				JSONObject jsonObject2 = auto_label_array.getJSONObject(n);
+//				Auto_label_info auto_label_info = JSON.toJavaObject(JSONObject.parseObject(jsonObject2.toJSONString()), Auto_label_info.class);
+//				//封装textStyle
+//				Auto_font_info auto_font_info = JSON.toJavaObject(JSONObject.parseObject(jsonObject2.toJSONString()), Auto_font_info.class);
+//				jsonObject2.put("textStyle", JSONObject.toJSON(auto_font_info));
+//				JSONObject object = new JSONObject();
+//				object.put("x", auto_label_info.getX_axis_coord());
+//				object.put("y", auto_label_info.getY_axis_coord());
+//				object.put("w", auto_label_info.getLength());
+//				object.put("h", auto_label_info.getWidth());
+//				object.put("i", auto_label_info.getSerial_number());
+//				object.put("type", auto_label_info.getLabel_id());
+//				object.put("label", "0");
+//				object.put("static", true);
+//				JSONObject contentColorSize = new JSONObject();
+//				contentColorSize.put("label_content", auto_label_info.getLabel_content());
+//				contentColorSize.put("label_color", auto_label_info.getLabel_color());
+//				contentColorSize.put("label_size", auto_label_info.getLabel_size());
+//				dashboardInfo.put(auto_label_info.getLabel_id().toString(), contentColorSize);
+//				dashboardList.add(object);
+//			}
+//			dashboardInfo.put("auto_label_info_array", auto_label_array);
+//		}
+//		dbo.clear();
+//		dbo.addSql("SELECT * FROM auto_line_info WHERE dashboard_id = ?");
+//		dbo.addParam(auto_asso_info.getDashboard_id());
+//		Result auto_line_infoResult = dbo.query(db);
+//		if (!auto_line_infoResult.isEmpty()) {
+//			for (int n = 0; n < auto_line_infoResult.getRowCount(); n++) {
+//				JSONObject jsonObject3 = auto_line_infoResult.toJSONArray().getJSONObject(n);
+//				Auto_line_info auto_line_info = JSON.toJavaObject(JSONObject.parseObject(jsonObject3.toJSONString()), Auto_line_info.class);
+//				JSONObject object = new JSONObject();
+//				object.put("x", auto_line_info.getX_axis_coord());
+//				object.put("y", auto_line_info.getY_axis_coord());
+//				object.put("w", auto_line_info.getLine_length());
+//				object.put("h", auto_line_info.getLine_weight());
+//				object.put("i", auto_line_info.getSerial_number());
+//				object.put("type", auto_line_info.getLine_id());
+//				object.put("label", "1");
+//				object.put("static", true);
+//				JSONObject contentColorType = new JSONObject();
+//				contentColorType.put("line_color", auto_line_info.getLine_color());
+//				contentColorType.put("line_type", auto_line_info.getLine_type());
+//				dashboardInfo.put(auto_line_info.getLine_id().toString(), contentColorType);
+//				dashboardList.add(object);
+//			}
+//			dashboardInfo.put("auto_line_info_array", auto_line_infoResult.toJSONArray());
+//		}
+//
+//		dashboardInfo.put("layout", dashboardList);
+//	}
 
 	public static void main(String[] args) {
 		String template_sql = "SELECT t1.c_customer_sk, t1.c_customer_id, t1.c_current_cdemo_sk, t1.c_current_hdemo_sk, t1.c_current_addr_sk\n" +
