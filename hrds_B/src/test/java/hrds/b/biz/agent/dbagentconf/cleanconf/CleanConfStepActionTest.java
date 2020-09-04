@@ -13,7 +13,6 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.ColumnCleanParam;
 import hrds.b.biz.agent.bean.TableCleanParam;
-import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.FillingType;
