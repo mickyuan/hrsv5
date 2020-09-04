@@ -30,7 +30,7 @@ import java.util.*;
 @DocClass(desc = "自主分析操作类", author = "dhw", createdate = "2020/8/24 11:29")
 public class OperateAction extends BaseAction {
 
-	private static String TempTableName = " TEMP_TABLE ";
+	private static final String TempTableName = " TEMP_TABLE ";
 
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
 	// 图标类型
@@ -161,7 +161,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	@Method(desc = "通过选择历史情况 获取之前的条件以及结果配置页面", logicStep = "1.获取自主取数选择历史信息")
-	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
+	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "新增取数信息时生成")
 	@Return(desc = "返回自主取数选择历史信息", range = "无限制")
 	public List<Map<String, Object>> getAccessCondFromHistory(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
@@ -175,7 +175,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	@Method(desc = "通过选择历史情况 获取之前的条件以及结果配置页面", logicStep = "1.获取自主取数选择历史信息")
-	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
+	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "新增取数信息时生成")
 	@Return(desc = "返回自主取数选择历史信息", range = "无限制")
 	public List<Map<String, Object>> getAccessResultFromHistory(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
@@ -192,7 +192,7 @@ public class OperateAction extends BaseAction {
 			"2.判断取数汇总ID对应的取数sql是否存在" +
 			"3.获取自主取数清单查询结果")
 	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "配置取数模板时生成")
-	@Return(desc = "返回主取数清单查询结果", range = "")
+	@Return(desc = "返回主取数清单查询结果", range = "无限制")
 	public List<Map<String, Object>> getAutoAccessQueryResult(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.根据取数汇总ID获取取数sql
@@ -212,7 +212,7 @@ public class OperateAction extends BaseAction {
 			"2.新增取数汇总表数据" +
 			"3.取数条件表入库" +
 			"4.取数结果选择情况入库")
-	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
+	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
 	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
@@ -880,8 +880,8 @@ public class OperateAction extends BaseAction {
 		return resultMap;
 	}
 
-	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
-	                                        String chart_type) {
+	private Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
+	                                         String chart_type) {
 		List<Map<String, Object>> componentList = new ArrayList<>();
 		new ProcessingData() {
 			@Override
@@ -1192,7 +1192,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	@Method(desc = "可视化创建组件根据条件获取sql", logicStep = "")
-	@Param(name = "component_info", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
 	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致", isBean = true)
@@ -1378,7 +1378,7 @@ public class OperateAction extends BaseAction {
 			"13.保存图表配置信息表" +
 			"14.保存文本标签信息表" +
 			"15.保存图例信息表")
-	@Param(name = "component_info", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
 	@Param(name = "auto_comp_sum", desc = "组件汇总表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", isBean = true)
@@ -1499,8 +1499,8 @@ public class OperateAction extends BaseAction {
 	}
 
 	@Method(desc = "更新保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
-			"2.判断组件名称是否已存在" +
-			"3.保存组件汇总表数据" +
+			"2.更新组件汇总表数据" +
+			"3.删除组件关联表信息" +
 			"4.保存组件条件表" +
 			"5.保存组件分组表" +
 			"6.保存组件数据汇总信息表" +
@@ -1513,7 +1513,7 @@ public class OperateAction extends BaseAction {
 			"13.保存图表配置信息表" +
 			"14.保存文本标签信息表" +
 			"15.保存图例信息表")
-	@Param(name = "component_info", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
 	@Param(name = "auto_comp_sum", desc = "组件汇总表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", isBean = true)
