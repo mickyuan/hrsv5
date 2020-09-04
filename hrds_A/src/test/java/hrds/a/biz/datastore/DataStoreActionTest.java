@@ -56,6 +56,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 	private static final long DTC_ID = PrimayKeyGener.getNextId();
 	// 初始化存储层数据类型长度对照表ID
 	private static final long DLC_ID = PrimayKeyGener.getNextId();
+	private final long THREAD_ID = Thread.currentThread().getId();
 
 	@Method(desc = "构造初始化表测试数据", logicStep = "初始化存储层测试数据")
 	@Before
@@ -326,7 +327,6 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		for (int i = 0; i < 5; i++) {
 			Data_store_layer_attr dataStoreLayerAttr = new Data_store_layer_attr();
 			dataStoreLayerAttr.setDsla_id(PrimayKeyGener.getNextId());
-			dataStoreLayerAttr.setDsl_id(DSL_ID);
 			if (i == 0) {
 				dataStoreLayerAttr.setStorage_property_key(StorageTypeKey.database_type);
 				dataStoreLayerAttr.setStorage_property_val(DatabaseType.Postgresql.getCode());
@@ -343,18 +343,18 @@ public class DataStoreActionTest extends WebBaseTestCase {
 				dataStoreLayerAttr.setStorage_property_key(StorageTypeKey.jdbc_url);
 				dataStoreLayerAttr.setStorage_property_val("jdbc:postgresql://10.71.4.57:31001/hrsdxg");
 			}
-			dataStoreLayerAttr.setDsla_remark("数据存储层配置属性测试");
+			dataStoreLayerAttr.setDsla_remark("dhw" + THREAD_ID);
 			dataStoreLayerAttr.setIs_file(IsFlag.Fou.getCode());
 			storeLayerAttrList.add(dataStoreLayerAttr);
 		}
 		String bodyString = new HttpClient()
 				.reset(SubmitMediaType.MULTIPART)
-				.addData("dsl_name", "addDataStore1")
+				.addData("dsl_name", "addDataStore1" + THREAD_ID)
 				.addData("store_type", Store_type.HIVE.getCode())
 				.addData("dsl_remark", "新增数据存储层配置信息")
 				.addData("dsla_storelayer", new String[]{StoreLayerAdded.ZhuJian.getCode(),
 						StoreLayerAdded.SuoYinLie.getCode()})
-				.addData("dslad_remark", "新增数据存储附加信息")
+				.addData("dslad_remark", "dhw" + THREAD_ID)
 				.addData("dataStoreLayerAttr", JsonUtil.toJson(storeLayerAttrList))
 				.addData("is_hadoopclient", IsFlag.Fou.getCode())
 				.addData("dtcs_id", DTCS_ID)
@@ -369,7 +369,8 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			Data_store_layer dataStoreLayer = SqlOperator.queryOneObject(db, Data_store_layer.class,
 					"select * from " + Data_store_layer.TableName + " where dsl_name=?",
-					"addDataStore1").orElseThrow(() -> new BusinessException("sql查询错误"));
+					"addDataStore1" + THREAD_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
 			assertThat(Store_type.HIVE.getCode(), is(dataStoreLayer.getStore_type()));
 			assertThat(IsFlag.Fou.getCode(), is(dataStoreLayer.getIs_hadoopclient()));
 			assertThat(DLCS_ID, is(dataStoreLayer.getDlcs_id()));
@@ -380,7 +381,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					"select * from " + Data_store_layer_added.TableName + " where dsl_id=? " +
 							"order by dsla_storelayer", dataStoreLayer.getDsl_id());
 			for (Data_store_layer_added layerAdded : layerAddeds) {
-				assertThat("新增数据存储附加信息", is(layerAdded.getDslad_remark()));
+				assertThat("dhw" + THREAD_ID, is(layerAdded.getDslad_remark()));
 			}
 			List<Data_store_layer_attr> layerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
 					"select * from " + Data_store_layer_attr.TableName + " where dsl_id=?",
@@ -742,10 +743,10 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.正常的数据访问1，数据都正常
 			// 删除前查询数据库，确认预期删除的数据存在
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Data_store_layer.TableName + " where dsl_id = ?", DSL_ID);
-			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(1L));
+			long num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName
+					+ " where dsl_id = ?", DSL_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", num, is(1L));
 			String bodyString = new HttpClient()
 					.addData("dsl_id", DSL_ID)
 					.post(getActionUrl("deleteDataStore"))
@@ -754,13 +755,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 			assertThat(ar.isSuccess(), is(true));
 			// 删除后查询数据库，确认预期删除的数据存在
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Data_store_layer.TableName + " where dsl_id = ?", DSL_ID);
-			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
-					is(0L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName
+					+ " where dsl_id = ?", DSL_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作后，确认该条数据被删除", num, is(0L));
 			// 2.错误的数据访问1，dsl_id不存在
 			bodyString = new HttpClient()
-					.addData("dsl_id", 1)
+					.addData("dsl_id", -1)
 					.post(getActionUrl("deleteDataStore"))
 					.getBodyString();
 			ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -900,7 +901,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		}
 		// 3.错误的数据访问1，dsl_id不存在
 		bodyString = new HttpClient()
-				.addData("dsl_id", 1)
+				.addData("dsl_id", -1)
 				.post(getActionUrl("searchDataStoreById"))
 				.getBodyString();
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
@@ -933,13 +934,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					map.put("source_type", "text");
 					map.put("target_type", "CLOB");
 				}
-				map.put("dtc_remark", "类型对照表备注");
+				map.put("dtc_remark", "类型对照表备注" + THREAD_ID);
 				list.add(map);
 			}
 			// 1.正常的数据访问1，数据都正常
 			String bodyString = new HttpClient()
 					.addData("typeContrast", JsonUtil.toJson(list))
-					.addData("dtcs_name", "oracle")
+					.addData("dtcs_name", "dhw" + THREAD_ID)
 					.addData("dtcs_remark", "类型对照主表备注")
 					.post(getActionUrl("addDataTypeContrastInfo"))
 					.getBodyString();
@@ -948,22 +949,20 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(true));
 			// 验证数据正确性
 			Type_contrast_sum typeContrastSum = SqlOperator.queryOneObject(db, Type_contrast_sum.class,
-					"select * from " + Type_contrast_sum.TableName + " where dtcs_name=?", "oracle")
+					"select * from " + Type_contrast_sum.TableName + " where dtcs_name=?",
+					"dhw" + THREAD_ID)
 					.orElseThrow(() -> new BusinessException("sql查询错误！"));
-			assertThat(typeContrastSum.getDtcs_name(), is("oracle"));
 			assertThat(typeContrastSum.getDtcs_remark(), is("类型对照主表备注"));
 			List<Type_contrast> typeContrastList = SqlOperator.queryList(db, Type_contrast.class,
 					"select * from " + Type_contrast.TableName + " where dtcs_id=?",
 					typeContrastSum.getDtcs_id());
 			for (Type_contrast type_contrast : typeContrastList) {
+				assertThat(type_contrast.getDtc_remark(), is("类型对照表备注" + THREAD_ID));
 				if (type_contrast.getTarget_type().equals("varchar2")) {
 					assertThat(type_contrast.getSource_type(), is("varchar"));
-					assertThat(type_contrast.getDtc_remark(), is("类型对照表备注"));
 				} else if (type_contrast.getTarget_type().equals("CLOB")) {
 					assertThat(type_contrast.getSource_type(), is("text"));
-					assertThat(type_contrast.getDtc_remark(), is("类型对照表备注"));
 				}
-				assertThat(type_contrast.getDtcs_id(), is(typeContrastSum.getDtcs_id()));
 			}
 			// 2.错误的数据访问1，dtcs_name为空
 			bodyString = new HttpClient()
@@ -990,7 +989,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			// 4.错误的数据访问3，dtcs_name已存在
 			bodyString = new HttpClient()
 					.addData("typeContrast", JsonUtil.toJson(list))
-					.addData("dtcs_name", "oracle")
+					.addData("dtcs_name", "ORACLE")
 					.addData("dtcs_remark", "类型对照主表备注")
 					.addData("dtc_remark", "类型对照表备注")
 					.post(getActionUrl("addDataTypeContrastInfo"))
@@ -1137,14 +1136,14 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.正常的数据访问1，数据都正常
 			// 删除前查询数据库，确认预期删除的数据存在
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Type_contrast_sum.TableName + " where dtcs_id = ?", DTCS_ID);
-			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(1L));
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Type_contrast.TableName + " where dtcs_id = ?", DTCS_ID);
-			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(2L));
+			long num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Type_contrast_sum.TableName + " where dtcs_id = ?", DTCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", num, is(1L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast.TableName
+					+ " where dtcs_id = ?", DTCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", num, is(2L));
 			String bodyString = new HttpClient()
 					.addData("dtcs_id", DTCS_ID)
 					.post(getActionUrl("deleteDataTypeContrastInfo"))
@@ -1153,14 +1152,14 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 			assertThat(ar.isSuccess(), is(true));
 			// 删除后查询数据库，确认预期删除的数据存在
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Type_contrast_sum.TableName + " where dtcs_id = ?", DTCS_ID);
-			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
-					is(0L));
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Type_contrast.TableName + " where dtcs_id = ?", DTCS_ID);
-			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
-					is(0L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Type_contrast_sum.TableName + " where dtcs_id = ?", DTCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作后，确认该条数据被删除", num, is(0L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Type_contrast.TableName + " where dtcs_id = ?", DTCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作后，确认该条数据被删除", num, is(0L));
 			// 2.错误的数据访问1，dtcs_id不存在
 			bodyString = new HttpClient()
 					.addData("dtcs_id", 100)
@@ -1192,13 +1191,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					map.put("dlc_type", "int");
 					map.put("dlc_length", "10");
 				}
-				map.put("dlc_remark", "类型长度对照表备注");
+				map.put("dlc_remark", "类型长度对照表备注" + THREAD_ID);
 				list.add(map);
 			}
 			// 1.正确的数据访问1，数据都正确
 			String bodyString = new HttpClient()
 					.addData("lengthInfo", JsonUtil.toJson(list))
-					.addData("dlcs_name", "type_contrast")
+					.addData("dlcs_name", "dhw" + THREAD_ID)
 					.addData("dlcs_remark", "类型长度对照主表备注")
 					.post(getActionUrl("addTypeLengthContrastInfo"))
 					.getBodyString();
@@ -1207,14 +1206,14 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			assertThat(ar.isSuccess(), is(true));
 			Length_contrast_sum lengthContrastSum = SqlOperator.queryOneObject(db, Length_contrast_sum.class,
 					"select * from " + Length_contrast_sum.TableName + " where dlcs_name=?",
-					"type_contrast").orElseThrow(() -> new BusinessException("sql查询错误！"));
-			assertThat(lengthContrastSum.getDlcs_name(), is("type_contrast"));
+					"dhw" + THREAD_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误！"));
 			assertThat(lengthContrastSum.getDlcs_remark(), is("类型长度对照主表备注"));
 			List<Length_contrast> lengthContrastList = SqlOperator.queryList(db, Length_contrast.class,
 					"select * from " + Length_contrast.TableName + " where dlcs_id=?",
 					lengthContrastSum.getDlcs_id());
 			for (Length_contrast length_contrast : lengthContrastList) {
-				assertThat(length_contrast.getDlc_remark(), is("类型长度对照表备注"));
+				assertThat(length_contrast.getDlc_remark(), is("类型长度对照表备注" + THREAD_ID));
 				if (length_contrast.getDlc_type().equals("varchar")) {
 					assertThat(length_contrast.getDlc_length(), is(256));
 				} else if (length_contrast.getDlc_type().equals("int")) {
@@ -1225,7 +1224,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			bodyString = new HttpClient()
 					.addData("lengthInfo", "")
 					.addData("dlc_remark", "类型长度对照表备注")
-					.addData("dlcs_name", "type_contrast")
+					.addData("dlcs_name", "dhw" + THREAD_ID)
 					.addData("dlcs_remark", "类型长度对照主表备注")
 					.post(getActionUrl("addTypeLengthContrastInfo"))
 					.getBodyString();
@@ -1269,7 +1268,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			bodyString = new HttpClient()
 					.addData("lengthInfo", JsonUtil.toJson(list))
 					.addData("dlc_remark", "类型长度对照表备注")
-					.addData("dlcs_name", "type_contrast")
+					.addData("dlcs_name", "dhw" + THREAD_ID)
 					.addData("dlcs_remark", "类型长度对照主表备注")
 					.post(getActionUrl("addTypeLengthContrastInfo"))
 					.getBodyString();
@@ -1333,7 +1332,7 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					.addData("dlcs_id", DLCS_ID)
 					.addData("lengthInfo", "")
 					.addData("dlc_remark", "类型长度对照表备注")
-					.addData("dlcs_name", "type_contrast")
+					.addData("dlcs_name", "dhw" + THREAD_ID)
 					.addData("dlcs_remark", "类型长度对照主表备注")
 					.post(getActionUrl("updateTypeLengthContrastInfo"))
 					.getBodyString();
@@ -1387,14 +1386,14 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.正常的数据访问1，数据都正常
 			// 删除前查询数据库，确认预期删除的数据存在
-			OptionalLong optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Length_contrast_sum.TableName + " where dlcs_id = ?", DLCS_ID);
-			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(1L));
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Length_contrast.TableName + " where dlcs_id = ?", DLCS_ID);
-			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", optionalLong.
-					orElse(Long.MIN_VALUE), is(2L));
+			long num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast_sum.TableName
+					+ " where dlcs_id = ?", DLCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", num, is(1L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Length_contrast.TableName + " where dlcs_id = ?", DLCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作前，保证Data_store_layer表中的确存在这样一条数据", num, is(2L));
 			String bodyString = new HttpClient()
 					.addData("dlcs_id", DLCS_ID)
 					.post(getActionUrl("deleteTypeLengthContrastInfo"))
@@ -1403,14 +1402,14 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！！"));
 			assertThat(ar.isSuccess(), is(true));
 			// 删除后查询数据库，确认预期删除的数据存在
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Length_contrast_sum.TableName + " where dlcs_id = ?", DLCS_ID);
-			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
-					is(0L));
-			optionalLong = SqlOperator.queryNumber(db, "select count(1) from " +
-					Length_contrast.TableName + " where dlcs_id = ?", DLCS_ID);
-			assertThat("删除操作后，确认该条数据被删除", optionalLong.orElse(Long.MIN_VALUE),
-					is(0L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast_sum.TableName
+					+ " where dlcs_id = ?", DLCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作后，确认该条数据被删除", num, is(0L));
+			num = SqlOperator.queryNumber(db, "select count(1) from " +
+					Length_contrast.TableName + " where dlcs_id = ?", DLCS_ID)
+					.orElseThrow(() -> new BusinessException("count fail"));
+			assertThat("删除操作后，确认该条数据被删除", num, is(0L));
 			// 2.错误的数据访问1，dtcs_id不存在
 			bodyString = new HttpClient()
 					.addData("dlcs_id", 100)
@@ -1736,11 +1735,13 @@ public class DataStoreActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 测试完删除Data_store_layer表测试数据
 			SqlOperator.execute(db,
-					"delete from " + Data_store_layer.TableName + " where dsl_id in (?,?,?,?,?,?)",
+					"delete from " + Data_store_layer.TableName
+							+ " where dsl_id in (?,?,?,?,?,?)",
 					DSL_ID, DSL_ID + 1, DSL_ID + 2, DSL_ID + 3, DSL_ID + 4, DSL_ID + 5);
-			// 判断department_info数据是否被删除
+			// 判断Data_store_layer数据是否被删除
 			long num = SqlOperator.queryNumber(db,
-					"select count(1) from " + Data_store_layer.TableName + " where dsl_id in (?,?,?,?,?,?)",
+					"select count(1) from " + Data_store_layer.TableName
+							+ " where dsl_id in (?,?,?,?,?,?)",
 					DSL_ID, DSL_ID + 1, DSL_ID + 2, DSL_ID + 3, DSL_ID + 4, DSL_ID + 5)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
@@ -1750,43 +1751,20 @@ public class DataStoreActionTest extends WebBaseTestCase {
 					DSL_ID, DSL_ID + 1, DSL_ID + 2, DSL_ID + 3, DSL_ID + 4, DSL_ID + 5);
 			// 判断Data_store_layer_added数据是否被删除
 			num = SqlOperator.queryNumber(db,
-					"select count(1) from " + Data_store_layer_added.TableName + " where dsl_id in (?,?,?,?,?,?)",
+					"select count(1) from " + Data_store_layer_added.TableName
+							+ " where dsl_id in (?,?,?,?,?,?)",
 					DSL_ID, DSL_ID + 1, DSL_ID + 2, DSL_ID + 3, DSL_ID + 4, DSL_ID + 5)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsl_id in (?,?,?,?,?,?)",
+			// 删除Data_store_layer_attr测试数据
+			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName
+							+ " where dsl_id in (?,?,?,?,?,?)",
 					DSL_ID, DSL_ID + 1, DSL_ID + 2, DSL_ID + 3, DSL_ID + 4, DSL_ID + 5);
 			num = SqlOperator.queryNumber(db,
-					"select count(1) from " + Data_store_layer_attr.TableName + " where dsl_id in (?,?,?,?,?,?)",
+					"select count(1) from " + Data_store_layer_attr.TableName
+							+ " where dsl_id in (?,?,?,?,?,?)",
 					DSL_ID, DSL_ID + 1, DSL_ID + 2, DSL_ID + 3, DSL_ID + 4, DSL_ID + 5)
 					.orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 测试完删除新增数据存储层配置数据
-			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_name=?",
-					"addDataStore1");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName +
-					"  where dsl_name=?", "addDataStore1").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 删除数据存储附件信息数据
-			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName +
-					" where dslad_remark=?", "新增数据存储附加信息");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_added.TableName +
-					"  where dslad_remark=?", "新增数据存储附加信息").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 删除新增数据存储层配置属性信息
-			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
-					" where dsla_remark=?", "新增数据存储层配置属性信息1");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
-					"  where dsla_remark=?", "新增数据存储层配置属性信息1").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsla_remark=?",
-					"新增数据存储层配置属性信息2");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
-					"  where dsla_remark=?", "新增数据存储层配置属性信息2").orElseThrow(() ->
-					new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 测试完删除类型对照主表信息
 			SqlOperator.execute(db,
@@ -1817,55 +1795,63 @@ public class DataStoreActionTest extends WebBaseTestCase {
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 测试完删除类型长度对照表信息
 			SqlOperator.execute(db,
-					"delete from " + Length_contrast.TableName + " where dlcs_id=?", DLCS_ID);
+					"delete from " + Length_contrast.TableName + " where dlcs_id in (?,?)",
+					DLCS_ID, DLCS_ID + 1);
 			num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast.TableName +
-					"  where dlcs_id=?", DLCS_ID).orElseThrow(() ->
-					new RuntimeException("count fail!"));
+					"  where dlcs_id=?", DLCS_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+
+			// 删除新增上传配置文件
+			List<Long> idList = SqlOperator.queryOneColumnList(db,
+					"select dsl_id from " + Data_store_layer.TableName + " where dsl_name=?",
+					"addDataStore1" + THREAD_ID);
+			if (!idList.isEmpty()) {
+				for (Long dsl_id : idList) {
+					SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
+							" where dsl_id=?", dsl_id);
+				}
+			}
+			// 测试完删除新增数据存储层配置数据
+			SqlOperator.execute(db, "delete from " + Data_store_layer.TableName + " where dsl_name=?",
+					"addDataStore1" + THREAD_ID);
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer.TableName +
+					"  where dsl_name=?", "addDataStore1" + THREAD_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+			// 测试完删除新增数据存储附加信息表数据
+			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " where dslad_remark=?",
+					"dhw" + THREAD_ID);
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_added.TableName +
+					"  where dslad_remark=?", "dhw" + THREAD_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
+			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
+			// 测试完删除新增数据存储层配置属性表数据
+			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName + " where dsla_remark=?",
+					"dhw" + THREAD_ID);
+			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
+					"  where dsla_remark=?", "dhw" + THREAD_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 删除新增类型对照以及长度对照表信息
 			SqlOperator.execute(db,
 					"delete from " + Length_contrast.TableName + " where dlc_remark=?",
-					"类型长度对照表备注");
+					"类型长度对照表备注" + THREAD_ID);
 			num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast.TableName +
-					"  where dlc_remark=?", "类型长度对照表备注").orElseThrow(() ->
-					new RuntimeException("count fail!"));
+					"  where dlc_remark=?", "类型长度对照表备注" + THREAD_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			SqlOperator.execute(db, "delete from " + Length_contrast_sum.TableName +
-					" where dlcs_remark=?", "类型长度对照主表备注");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Length_contrast_sum.TableName +
-					"  where dlcs_remark=?", "类型长度对照主表备注").orElseThrow(() ->
-					new RuntimeException("count fail!"));
+					" where dlcs_name=?", "dhw" + THREAD_ID);
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			SqlOperator.execute(db, "delete from " + Type_contrast_sum.TableName +
-					" where dtcs_remark=?", "类型对照主表备注");
+					" where dtcs_name=?", "dhw" + THREAD_ID);
 			num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast_sum.TableName +
-					"  where dtcs_remark=?", "类型对照主表测试").orElseThrow(() ->
-					new RuntimeException("count fail!"));
+					"  where dtcs_name=?", "dhw" + THREAD_ID)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			SqlOperator.execute(db, "delete from " + Type_contrast.TableName +
-					" where dtc_remark=?", "类型对照表备注");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Type_contrast.TableName +
-					"  where dtc_remark=?", "类型对照表备注").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 删除上传配置文件
-			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
-					" where storage_property_key=?", "hdfs-site.xml");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
-					"  where storage_property_key=?", "hdfs-site.xml").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
-					" where storage_property_key=?", "hbase-site.xml");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
-					"  where storage_property_key=?", "hbase-site.xml").orElseThrow(() ->
-					new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Data_store_layer_attr.TableName +
-					" where storage_property_key=?", "core-site.xml");
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Data_store_layer_attr.TableName +
-					"  where storage_property_key=?", "core-site.xml").orElseThrow(() ->
-					new RuntimeException("count fail!"));
+					" where dtc_remark=?", "类型对照表备注" + THREAD_ID);
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
 			// 提交事务
 			SqlOperator.commitTransaction(db);
