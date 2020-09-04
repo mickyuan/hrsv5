@@ -31,6 +31,7 @@ import hrds.commons.entity.Table_column;
 import hrds.commons.entity.Table_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,24 +39,24 @@ import java.util.List;
 /*
  * 由于构造测试数据就有较多代码，所以将这部分代码迁移出来，CleanConfStepActionTest中只保存对被测方法的测试用例
  * */
-public class InitAndDestDataForCleanConf{
+public class InitAndDestDataForCleanConf {
 
+	public static final BaseInitData baseInitData = new BaseInitData();
 	//测试数据用户ID
-	private static final long TEST_USER_ID = 9997L;
-	private static final long SOURCE_ID = 1L;
-	private static final long TEST_DEPT_ID = 9987L;
+	private static final long TEST_USER_ID = baseInitData.TEST_USER_ID;
+	private static final long SOURCE_ID = baseInitData.SOURCE_ID;
+	private static final long TEST_DEPT_ID = baseInitData.TEST_DEPT_ID;
 
-	private static final long SYS_USER_TABLE_ID = 7001L;
-	private static final long CODE_INFO_TABLE_ID = 7002L;
-	private static final long AGENT_INFO_TABLE_ID = 7003L;
-	private static final long DATA_SOURCE_TABLE_ID = 7004L;
+	private static final long SYS_USER_TABLE_ID = baseInitData.SYS_USER_TABLE_ID;
+	private static final long CODE_INFO_TABLE_ID = baseInitData.CODE_INFO_TABLE_ID;
+	private static final long AGENT_INFO_TABLE_ID = baseInitData.AGENT_INFO_TABLE_ID;
+	private static final long DATA_SOURCE_TABLE_ID = baseInitData.DATA_SOURCE_TABLE_ID;
 
-	private static final long FIRST_DATABASESET_ID = 1001L;
-	private static final long BASE_SYS_USER_PRIMARY = 2000L;
+	private static final long FIRST_DATABASESET_ID = baseInitData.FIRST_DATABASE_SET_ID;
+	private static final long BASE_SYS_USER_PRIMARY = baseInitData.BASE_SYS_USER_PRIMARY;
 
-	private static final long FIRST_DB_AGENT_ID = 7001L;
-	private static final long SECOND_DB_AGENT_ID = 7002L;
-	private static final  BaseInitData baseInitData = new BaseInitData();
+	private static final long FIRST_DB_AGENT_ID = baseInitData.FIRST_DB_AGENT_ID;
+	private static final long SECOND_DB_AGENT_ID = baseInitData.SECOND_DB_AGENT_ID;
 	private static final JSONObject tableCleanOrder = baseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = baseInitData.initColumnCleanOrder();
 
@@ -132,7 +133,7 @@ public class InitAndDestDataForCleanConf{
 					tableChName = "数据源表";
 					//自定义采集
 					customizeSQL = "select source_id, datasource_number, datasource_name from data_source where source_id = "
-						+ SOURCE_ID;
+							+ SOURCE_ID;
 					customizFlag = IsFlag.Shi.getCode();
 					parallelFlag = IsFlag.Fou.getCode();
 					pageSql = "";
@@ -159,6 +160,7 @@ public class InitAndDestDataForCleanConf{
 			tableInfo.setTable_count(tableCount);
 			tableInfo.setDataincrement(dataIncrement);
 			tableInfo.setPageparallels(pageParallels);
+			tableInfo.setIs_customize_sql(IsFlag.Fou.getCode());
 
 			tableInfos.add(tableInfo);
 		}
@@ -671,6 +673,8 @@ public class InitAndDestDataForCleanConf{
 				int count = colComple.add(db);
 				columnCleanCount += count;
 			}
+			assertThat("字段清洗参数信息表测试数据初始化", tableCleanCount, is(2));
+
 			int replaceCount = replace.add(db);
 			columnCleanCount += replaceCount;
 			int dateFormatCount = dateFormat.add(db);
@@ -775,25 +779,23 @@ public class InitAndDestDataForCleanConf{
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3004L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3003L);
 			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2010L);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 1717171717L);
 			//11、删除clean_parameter表测试数据
 			SqlOperator
-				.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
+					.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
 			//12、删除column_spilt表测试数据
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3004L);
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
 			//13、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			//14、删除orig_syso_info表数据
-			SqlOperator
-				.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_one");
-			SqlOperator
-				.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_two");
-			SqlOperator
-				.execute(db, "delete from " + Orig_syso_info.TableName + " where Orig_sys_code = ? ", "origSysCode_three");
+			for (String origSysCode : baseInitData.ORIG_LIST) {
+				SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where orig_sys_code = ? ", origSysCode);
+			}
 			//15、删除orig_code_info表数据
-			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6001L);
-			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6002L);
-			SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", 6003L);
+			for (long orig_id : baseInitData.ORIG_CODE_LIST) {
+				SqlOperator.execute(db, "delete from " + Orig_code_info.TableName + " where orig_id = ? ", orig_id);
+			}
 			//16、提交事务
 			SqlOperator.commitTransaction(db);
 		}
