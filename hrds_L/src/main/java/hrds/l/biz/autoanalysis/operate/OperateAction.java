@@ -2,6 +2,7 @@ package hrds.l.biz.autoanalysis.operate;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.util.JdbcConstants;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -19,6 +20,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableUtil;
@@ -27,12 +29,16 @@ import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
 import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.*;
 
 @DocClass(desc = "自主分析操作类", author = "dhw", createdate = "2020/8/24 11:29")
 public class OperateAction extends BaseAction {
+
+	private static final Logger logger = LogManager.getLogger();
 
 	private static final String TempTableName = " TEMP_TABLE ";
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
@@ -1052,7 +1058,9 @@ public class OperateAction extends BaseAction {
 					mapTemp.put("name", childrenName);
 				} else {
 					mapTemp = map.get(childrenName);
-					List<Object> mapList = (List<Object>) mapTemp.get("children");
+					List<Object> mapList = JsonUtil.toObject(JsonUtil.toJson(mapTemp.get("children")),
+							new TypeReference<List<Object>>() {
+							}.getType());
 					mapList.add(map);
 					mapTemp.put("children", mapList);
 				}
@@ -1683,7 +1691,6 @@ public class OperateAction extends BaseAction {
 		auto_chartsconfig.add(Dbo.db());
 		// 14.保存文本标签信息表
 		auto_label.setLable_id(PrimayKeyGener.getNextId());
-		// fixme 这个字段干嘛的？
 		auto_label.setLabel_corr_tname(Auto_chartsconfig.TableName);
 		auto_label.setLabel_corr_id(auto_comp_sum.getComponent_id());
 		auto_label.add(Dbo.db());
@@ -1924,6 +1931,261 @@ public class OperateAction extends BaseAction {
 		dashboardInfo.put("layout", dashboardList);
 		// 6.返回仪表盘信息
 		return dashboardInfo;
+	}
+
+	@Method(desc = "在仪表板上显示组件", logicStep = "1.根据可视化组件ID查看可视化组件信息" +
+			"2.根据组件id查询组件缓存" +
+			"3.返回在仪表盘上展示的组件信息")
+	@Param(name = "autoCompSums", desc = "组件汇总表实体对象数组", range = "与数据库对应规则一致", isBean = true)
+	@Return(desc = "返回在仪表盘上展示的组件信息", range = "无限制")
+	public Map<String, Object> showComponentOnDashboard(Auto_comp_sum[] autoCompSums) {
+		Map<String, Object> componentOnDashBoard = new HashMap<>();
+		if (autoCompSums != null && autoCompSums.length > 0) {
+			List<Map<String, Object>> componentList = new ArrayList<>();
+			for (int i = 0; i < autoCompSums.length; i++) {
+				Auto_comp_sum autoCompSum = autoCompSums[i];
+				Map<String, Object> map = new HashMap<>();
+				// 1.根据可视化组件ID查看可视化组件信息
+				Map<String, Object> componentInfo = getVisualComponentInfoById(autoCompSum.getComponent_id());
+				// 2.根据组件id查询组件缓存
+				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
+						componentInfo.get("compSum").toString(), Auto_comp_sum.class)
+						.orElseThrow(() -> new BusinessException("转换实体失败"));
+				map.put("x", (i % 3) * 33);
+				map.put("y", (i / 3) * 30);
+				map.put("w", 33);
+				map.put("h", 30);
+				map.put("i", autoCompSum.getComponent_id());
+				map.put("static", true);
+				map.put("type", autoCompSum.getComponent_id() + "");
+				componentOnDashBoard.put(String.valueOf(autoCompSum.getComponent_id()),
+						auto_comp_sum.getComponent_buffer());
+				componentList.add(map);
+			}
+			componentOnDashBoard.put("layout", componentList);
+		}
+		// 3.返回在仪表盘上展示的组件信息
+		return componentOnDashBoard;
+	}
+
+	@Method(desc = "保存仪表盘信息", logicStep = "1.校验仪表盘表字段合法性" +
+			"2.判断仪表板名称是否已存在" +
+			"3.新增仪表盘" +
+			"4.新增仪表盘布局信息")
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
+	public void saveDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
+	                                  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+	                                  Auto_frame_info[] autoFrameInfos, String layout) {
+		// 1.校验仪表盘表字段合法性
+		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
+		// 2.判断仪表板名称是否已存在
+		isDashboardNameExist(auto_dashboard_info);
+		auto_dashboard_info.setDashboard_id(PrimayKeyGener.getNextId());
+		auto_dashboard_info.setUser_id(getUserId());
+		auto_dashboard_info.setCreate_date(DateUtil.getSysDate());
+		auto_dashboard_info.setCreate_time(DateUtil.getSysTime());
+		// 使用IsFlag代码项，0:未发布，1:已发布
+		auto_dashboard_info.setDashboard_status(IsFlag.Fou.getCode());
+		// 3.新增仪表盘
+		auto_dashboard_info.add(Dbo.db());
+		// 4.新增仪表盘布局信息
+		addLayoutInfo(auto_dashboard_info, autoFontInfos, autoLabelInfos, autoLineInfos, autoFrameInfos, layout);
+	}
+
+	@Method(desc = "更新仪表盘信息", logicStep = "1.校验仪表盘表字段合法性" +
+			"2.判断仪表板名称是否已存在" +
+			"3.更新仪表盘信息" +
+			"4.删除仪表盘相关表信息" +
+			"5.新增仪表盘布局信息")
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
+	public void updateDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
+	                                    Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+	                                    Auto_frame_info[] autoFrameInfos, String layout) {
+		// 1.校验仪表盘表字段合法性
+		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
+		Validator.notNull(auto_dashboard_info.getDashboard_id(), "更新时仪表盘ID不能为空");
+		// 2.判断仪表板名称是否已存在
+		isDashboardNameExist(auto_dashboard_info);
+		auto_dashboard_info.setUpdate_user(getUserId());
+		auto_dashboard_info.setLast_update_date(DateUtil.getSysDate());
+		auto_dashboard_info.setLast_update_time(DateUtil.getSysTime());
+		// 3.更新仪表盘信息
+		auto_dashboard_info.update(Dbo.db());
+		// 4.删除仪表盘相关表信息
+		deleteDashboardAssoTable(auto_dashboard_info.getDashboard_id());
+		// 5.新增仪表盘布局信息
+		addLayoutInfo(auto_dashboard_info, autoFontInfos, autoLabelInfos, autoLineInfos, autoFrameInfos, layout);
+	}
+
+	@Method(desc = "新增仪表盘布局信息", logicStep = "1.解析仪表盘布局信息" +
+			"2.新增报表组件信息" +
+			"3.新增标题组件信息" +
+			"4.新增分割线组件信息" +
+			"5.新增边框组件信息")
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
+	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
+	                           Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+	                           Auto_frame_info[] autoFrameInfos, String layout) {
+		// 1.解析仪表盘布局信息
+		JSONArray layoutArray = JSONArray.parseArray(layout);
+		for (int i = 0; i < layoutArray.size(); i++) {
+			String label = layoutArray.getJSONObject(i).getString("label");
+			Long primayKey = PrimayKeyGener.getNextId();
+			String operId = PrimayKeyGener.getOperId();
+			if (null == label) {
+				// 2.新增报表组件信息
+				Auto_asso_info asso_info = new Auto_asso_info();
+				asso_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				asso_info.setComponent_id(layoutArray.getJSONObject(i).getString("type"));
+				asso_info.setAsso_info_id(primayKey);
+				asso_info.setLength(layoutArray.getJSONObject(i).getIntValue("w"));
+				asso_info.setWidth(layoutArray.getJSONObject(i).getIntValue("h"));
+				asso_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				asso_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				asso_info.setSerial_number(operId);
+				asso_info.add(Dbo.db());
+			} else if ("0".equals(label)) {
+				// 3.新增标题组件信息
+				Auto_label_info auto_label_info = autoLabelInfos[i];
+				auto_label_info.setLabel_id(primayKey);
+				auto_label_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				auto_label_info.setLength(layoutArray.getJSONObject(i).getIntValue("w"));
+				auto_label_info.setWidth(layoutArray.getJSONObject(i).getIntValue("h"));
+				auto_label_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				auto_label_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				auto_label_info.setSerial_number(operId);
+				auto_label_info.add(Dbo.db());
+				Auto_font_info auto_font_info = autoFontInfos[i];
+				auto_font_info.setFont_id(PrimayKeyGener.getNextId());
+				auto_font_info.setFont_corr_tname(Auto_label_info.TableName);
+				auto_font_info.setFont_corr_id(auto_label_info.getLabel_id());
+				auto_font_info.add(Dbo.db());
+			} else if ("1".equals(label)) {
+				// 4.新增分割线组件信息
+				Auto_line_info auto_line_info = autoLineInfos[i];
+				auto_line_info.setLine_id(primayKey);
+				auto_line_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				auto_line_info.setLine_length(layoutArray.getJSONObject(i).getLongValue("w"));
+				auto_line_info.setLine_weight(layoutArray.getJSONObject(i).getLongValue("h"));
+				auto_line_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				auto_line_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				auto_line_info.setSerial_number(primayKey);
+				auto_line_info.add(Dbo.db());
+			} else if ("2".equals(label)) {
+				// 5.新增边框组件信息
+				Auto_frame_info auto_frame_info = autoFrameInfos[i];
+				auto_frame_info.setFrame_id(primayKey);
+				auto_frame_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				auto_frame_info.setLength(layoutArray.getJSONObject(i).getLongValue("w"));
+				auto_frame_info.setWidth(layoutArray.getJSONObject(i).getLongValue("h"));
+				auto_frame_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				auto_frame_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				auto_frame_info.setSerial_number(operId);
+				auto_frame_info.add(Dbo.db());
+			}
+		}
+	}
+
+	@Method(desc = "发布仪表盘信息", logicStep = "")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	@Param(name = "dashboard_name", desc = "仪表板名称", range = "新建仪表盘的时候生成")
+	public void releaseDashboardInfo(long dashboard_id, String dashboard_name) {
+		// 1.更新仪表盘盘发布状态
+		DboExecute.updatesOrThrow("更新仪表盘盘发布状态失败",
+				"update " + Auto_dashboard_info.TableName + " set dashboard_status=? where dashboard_id=?",
+				IsFlag.Shi.getCode(), dashboard_id);
+		// 2.发布仪表盘
+		String interface_code = Base64.getEncoder().encodeToString(String.valueOf(dashboard_id).getBytes());
+		Map<String, Object> interfaceMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Interface_info.TableName + " WHERE interface_code = ?",
+				interface_code);
+		if (interfaceMap.isEmpty()) {
+			Interface_info interface_info = new Interface_info();
+			interface_info.setInterface_id(PrimayKeyGener.getNextId());
+			interface_info.setUser_id(getUserId());
+			interface_info.setInterface_code(interface_code);
+			interface_info.setInterface_name(dashboard_name);
+			interface_info.setInterface_state(InterfaceState.QiYong.getCode());
+			interface_info.setInterface_type(InterfaceType.BaoBiaoLei.getCode());
+			interface_info.setUrl(Constant.DASHBOARDINTERFACENAME);
+			interface_info.add(Dbo.db());
+		} else {
+			Interface_info interface_info = JsonUtil.toObjectSafety(interfaceMap.toString(), Interface_info.class)
+					.orElseThrow(() -> new BusinessException("转换接口信息表实体对象失败"));
+			interface_info.setInterface_name(dashboard_name);
+			try {
+				interface_info.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+					logger.error(e);
+					throw new BusinessException("更新接口信息失败" + e.getMessage());
+				}
+			}
+		}
+	}
+
+	@Method(desc = "删除仪表盘", logicStep = "1.判断仪表盘是否已发布已发布不能删除" +
+			"2.删除仪表盘信息" +
+			"3.删除仪表盘相关表信息")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	public void deleteDashboardInfo(long dashboard_id) {
+		// 1.判断仪表盘是否已发布已发布不能删除
+		if (Dbo.queryNumber("select count(*) from " + Auto_dashboard_info.TableName
+						+ " where dashboard_id=? and dashboard_status=?",
+				dashboard_id, IsFlag.Shi.getCode())
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("仪表盘已发布不能删除");
+		}
+		// 2.删除仪表盘信息
+		DboExecute.deletesOrThrow("删除仪表盘信息失败：" + dashboard_id,
+				"DELETE FROM" + Auto_dashboard_info.TableName + "WHERE dashboard_id = ? ", dashboard_id);
+		// 3.删除仪表盘相关表信息
+		deleteDashboardAssoTable(dashboard_id);
+	}
+
+	@Method(desc = "删除仪表盘相关表信息", logicStep = "1.删除仪表板组件关联信息表信息" +
+			"2.删除仪表板标题表信息" +
+			"3.删除仪表板分割线表信息" +
+			"4.删除仪表板边框组件信息表信息" +
+			"5.删除字体属性信息表信息")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	private void deleteDashboardAssoTable(long dashboard_id) {
+		// 1.删除仪表板组件关联信息表信息
+		Dbo.execute("DELETE FROM " + Auto_asso_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 2.删除仪表板标题表信息
+		Dbo.execute("DELETE FROM " + Auto_label_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 3.删除仪表板分割线表信息
+		Dbo.execute("DELETE FROM " + Auto_line_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 4.删除仪表板边框组件信息表信息
+		Dbo.execute("DELETE FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 5.删除字体属性信息表信息
+		Dbo.execute("DELETE FROM " + Auto_font_info.TableName + " WHERE font_corr_tname = ?"
+				+ " AND font_corr_id IN (SELECT CAST(label_id AS INT) FROM " + Auto_label_info.TableName
+				+ " WHERE dashboard_id = ?)", Auto_font_info.TableName, dashboard_id);
+	}
+
+	private void isDashboardNameExist(Auto_dashboard_info auto_dashboard_info) {
+		if (Dbo.queryNumber(
+				"SELECT count(1) FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_name = ?",
+				auto_dashboard_info.getDashboard_name())
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("仪表板名称已存在");
+		}
 	}
 
 	public static void main(String[] args) {
