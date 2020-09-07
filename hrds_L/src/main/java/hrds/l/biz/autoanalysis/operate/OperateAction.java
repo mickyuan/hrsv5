@@ -2,8 +2,6 @@ package hrds.l.biz.autoanalysis.operate;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.util.JdbcConstants;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -15,7 +13,6 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
-import fd.ng.db.resultset.Result;
 import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
@@ -1815,120 +1812,119 @@ public class OperateAction extends BaseAction {
 				+ " WHERE user_id = ? order by create_date desc,create_time desc", getUserId());
 	}
 
-//	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "")
-//	@Param(name = "", desc = "", range = "")
-//	@Return(desc = "", range = "")
-//	public Map<String, Object> getDataDashboardInfoById(long dashboard_id) {
-//		// 1.根据仪表板id获取数据仪表板信息表数据
-//		Map<String, Object> dashboardInfo = Dbo.queryOneObject(
-//				"SELECT * FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id=?",
-//				dashboard_id);
-//		List<Auto_frame_info> frameInfoList = Dbo.queryList(Auto_frame_info.class,
-//				"SELECT * FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
-//		List<Map<String, Object>> dashboardList = new ArrayList<>();
-//		if (!frameInfoList.isEmpty()) {
-//			for (Auto_frame_info auto_frame_info : frameInfoList) {
-//				Map<String, Object> frameMap = new HashMap<>();
-//				frameMap.put("x", auto_frame_info.getX_axis_coord());
-//				frameMap.put("y", auto_frame_info.getY_axis_coord());
-//				frameMap.put("w", auto_frame_info.getLength());
-//				frameMap.put("h", auto_frame_info.getWidth());
-//				frameMap.put("i", auto_frame_info.getSerial_number());
-//				frameMap.put("type", auto_frame_info.getFrame_id());
-//				frameMap.put("label", "2");
-//				frameMap.put("static", true);
-//				dashboardList.add(frameMap);
-//			}
-//			dashboardInfo.put("auto_frame_info_list", frameInfoList);
-//		}
-//		//查询关联信息表
-//		List<Auto_asso_info> autoAssoInfoList = Dbo.queryList(Auto_asso_info.class,
-//				"SELECT * FROM " + Auto_asso_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
-//		List<Auto_comp_sum> autoCompSumList = new ArrayList<>();
-//		if (!autoAssoInfoList.isEmpty()) {
-//			for (Auto_asso_info auto_asso_info : autoAssoInfoList) {
-//				Map<String, Object> object = new HashMap<>();
-//				Map<String, Object> componentMap = getVisualComponentInfoById(auto_asso_info.getComponent_id());
-//				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
-//						componentMap.get("compSum").toString(), Auto_comp_sum.class)
-//						.orElseThrow(() -> new BusinessException("转换实体失败"));
-//				auto_comp_sum.getComponent_buffer()
-//				JSONArray chartShowJSON = (JSONArray) JSONArray.parse(component_buffer);
-//
-//				object.put("x", auto_asso_info.getX_axis_coord();
-//				object.put("y", auto_asso_info.getY_axis_coord());
-//				object.put("w", auto_asso_info.getLength());
-//				object.put("h", auto_asso_info.getWidth());
-//				object.put("i", auto_asso_info.getSerial_number());
-//				object.put("type", auto_asso_info.getComponent_id());
-//				object.put("static", true);
-//				autoCompSumList.add(auto_comp_sum);
-//				dashboardInfo.put(String.valueOf(auto_asso_info.getComponent_id()), chartShowJSON.get(0));
-//				dashboardList.add(object);
-//			}
-//
-//			dashboardInfo.put("auto_comp_sum", array_auto_comp_sum);
-//		}
-//		dbo.clear();
-//		dbo.addSql("SELECT * FROM auto_label_info T1 LEFT JOIN auto_font_info T2");
-//		dbo.addSql("ON CAST(T1.label_id AS INT) = T2.font_corr_id AND T2.font_corr_tname = 'auto_label_info'");
-//		dbo.addSql("WHERE dashboard_id = ?");
-//		dbo.addParam(auto_asso_info.getDashboard_id());
-//		Result auto_label_infoResult = dbo.query(db);
-//		if (!auto_label_infoResult.isEmpty()) {
-//			JSONArray auto_label_array = auto_label_infoResult.toJSONArray();
-//			for (int n = 0; n < auto_label_infoResult.getRowCount(); n++) {
-//				JSONObject jsonObject2 = auto_label_array.getJSONObject(n);
-//				Auto_label_info auto_label_info = JSON.toJavaObject(JSONObject.parseObject(jsonObject2.toJSONString()), Auto_label_info.class);
-//				//封装textStyle
-//				Auto_font_info auto_font_info = JSON.toJavaObject(JSONObject.parseObject(jsonObject2.toJSONString()), Auto_font_info.class);
-//				jsonObject2.put("textStyle", JSONObject.toJSON(auto_font_info));
-//				JSONObject object = new JSONObject();
-//				object.put("x", auto_label_info.getX_axis_coord());
-//				object.put("y", auto_label_info.getY_axis_coord());
-//				object.put("w", auto_label_info.getLength());
-//				object.put("h", auto_label_info.getWidth());
-//				object.put("i", auto_label_info.getSerial_number());
-//				object.put("type", auto_label_info.getLabel_id());
-//				object.put("label", "0");
-//				object.put("static", true);
-//				JSONObject contentColorSize = new JSONObject();
-//				contentColorSize.put("label_content", auto_label_info.getLabel_content());
-//				contentColorSize.put("label_color", auto_label_info.getLabel_color());
-//				contentColorSize.put("label_size", auto_label_info.getLabel_size());
-//				dashboardInfo.put(auto_label_info.getLabel_id().toString(), contentColorSize);
-//				dashboardList.add(object);
-//			}
-//			dashboardInfo.put("auto_label_info_array", auto_label_array);
-//		}
-//		dbo.clear();
-//		dbo.addSql("SELECT * FROM auto_line_info WHERE dashboard_id = ?");
-//		dbo.addParam(auto_asso_info.getDashboard_id());
-//		Result auto_line_infoResult = dbo.query(db);
-//		if (!auto_line_infoResult.isEmpty()) {
-//			for (int n = 0; n < auto_line_infoResult.getRowCount(); n++) {
-//				JSONObject jsonObject3 = auto_line_infoResult.toJSONArray().getJSONObject(n);
-//				Auto_line_info auto_line_info = JSON.toJavaObject(JSONObject.parseObject(jsonObject3.toJSONString()), Auto_line_info.class);
-//				JSONObject object = new JSONObject();
-//				object.put("x", auto_line_info.getX_axis_coord());
-//				object.put("y", auto_line_info.getY_axis_coord());
-//				object.put("w", auto_line_info.getLine_length());
-//				object.put("h", auto_line_info.getLine_weight());
-//				object.put("i", auto_line_info.getSerial_number());
-//				object.put("type", auto_line_info.getLine_id());
-//				object.put("label", "1");
-//				object.put("static", true);
-//				JSONObject contentColorType = new JSONObject();
-//				contentColorType.put("line_color", auto_line_info.getLine_color());
-//				contentColorType.put("line_type", auto_line_info.getLine_type());
-//				dashboardInfo.put(auto_line_info.getLine_id().toString(), contentColorType);
-//				dashboardList.add(object);
-//			}
-//			dashboardInfo.put("auto_line_info_array", auto_line_infoResult.toJSONArray());
-//		}
-//
-//		dashboardInfo.put("layout", dashboardList);
-//	}
+	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "1.根据仪表板id获取数据仪表板信息表数据" +
+			"2.获取仪表板边框组件信息表信息" +
+			"3.查询关联信息表" +
+			"4.查询仪表板标题表与字体表信息" +
+			"5.查询仪表板分割线表信息" +
+			"6.返回仪表盘信息")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	@Return(desc = "返回仪表盘信息", range = "无限制")
+	public Map<String, Object> getDataDashboardInfoById(long dashboard_id) {
+		// 1.根据仪表板id获取数据仪表板信息表数据
+		Map<String, Object> dashboardInfo = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id=?",
+				dashboard_id);
+		// 2.获取仪表板边框组件信息表信息
+		List<Auto_frame_info> frameInfoList = Dbo.queryList(Auto_frame_info.class,
+				"SELECT * FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		List<Map<String, Object>> dashboardList = new ArrayList<>();
+		if (!frameInfoList.isEmpty()) {
+			for (Auto_frame_info auto_frame_info : frameInfoList) {
+				Map<String, Object> frameMap = new HashMap<>();
+				frameMap.put("x", auto_frame_info.getX_axis_coord());
+				frameMap.put("y", auto_frame_info.getY_axis_coord());
+				frameMap.put("w", auto_frame_info.getLength());
+				frameMap.put("h", auto_frame_info.getWidth());
+				frameMap.put("i", auto_frame_info.getSerial_number());
+				frameMap.put("type", auto_frame_info.getFrame_id());
+				frameMap.put("label", "2");
+				frameMap.put("static", true);
+				dashboardList.add(frameMap);
+			}
+			dashboardInfo.put("frameInfo", frameInfoList);
+		}
+		// 3.查询关联信息表
+		List<Auto_asso_info> autoAssoInfoList = Dbo.queryList(Auto_asso_info.class,
+				"SELECT * FROM " + Auto_asso_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		List<Auto_comp_sum> autoCompSumList = new ArrayList<>();
+		if (!autoAssoInfoList.isEmpty()) {
+			for (Auto_asso_info auto_asso_info : autoAssoInfoList) {
+				Map<String, Object> object = new HashMap<>();
+				Map<String, Object> componentMap = getVisualComponentInfoById(auto_asso_info.getComponent_id());
+				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
+						componentMap.get("compSum").toString(), Auto_comp_sum.class)
+						.orElseThrow(() -> new BusinessException("转换实体失败"));
+				object.put("x", auto_asso_info.getX_axis_coord());
+				object.put("y", auto_asso_info.getY_axis_coord());
+				object.put("w", auto_asso_info.getLength());
+				object.put("h", auto_asso_info.getWidth());
+				object.put("i", auto_asso_info.getSerial_number());
+				object.put("type", auto_asso_info.getComponent_id());
+				object.put("static", true);
+				autoCompSumList.add(auto_comp_sum);
+				dashboardInfo.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
+				dashboardList.add(object);
+			}
+			dashboardInfo.put("autoCompSum", autoCompSumList);
+		}
+		// 4.查询仪表板标题表与字体表信息
+		List<Map<String, Object>> labelAndFontList = Dbo.queryList(
+				"SELECT * FROM " + Auto_label_info.TableName + " T1 LEFT JOIN "
+						+ Auto_font_info.TableName + " T2 ON CAST(T1.label_id AS INT) = T2.font_corr_id" +
+						" AND T2.font_corr_tname = ? WHERE dashboard_id = ?",
+				Auto_label_info.TableName, dashboard_id);
+		if (!labelAndFontList.isEmpty()) {
+			for (Map<String, Object> map : labelAndFontList) {
+				Auto_label_info auto_label_info = JsonUtil.toObjectSafety(map.toString(), Auto_label_info.class)
+						.orElseThrow(() -> new BusinessException("实体转换失败"));
+				Auto_font_info auto_font_info = JsonUtil.toObjectSafety(map.toString(), Auto_font_info.class)
+						.orElseThrow(() -> new BusinessException("实体转换失败"));
+				map.put("textStyle", auto_font_info);
+				Map<String, Object> labelMap = new HashMap<>();
+				labelMap.put("x", auto_label_info.getX_axis_coord());
+				labelMap.put("y", auto_label_info.getY_axis_coord());
+				labelMap.put("w", auto_label_info.getLength());
+				labelMap.put("h", auto_label_info.getWidth());
+				labelMap.put("i", auto_label_info.getSerial_number());
+				labelMap.put("type", auto_label_info.getLabel_id());
+				labelMap.put("label", "0");
+				labelMap.put("static", true);
+				Map<String, Object> contentColorSize = new HashMap<>();
+				contentColorSize.put("label_content", auto_label_info.getLabel_content());
+				contentColorSize.put("label_color", auto_label_info.getLabel_color());
+				contentColorSize.put("label_size", auto_label_info.getLabel_size());
+				dashboardInfo.put(auto_label_info.getLabel_id().toString(), contentColorSize);
+				dashboardList.add(labelMap);
+			}
+			dashboardInfo.put("labelAndFont", labelAndFontList);
+		}
+		// 5.查询仪表板分割线表信息
+		List<Auto_line_info> autoLineInfoList = Dbo.queryList(Auto_line_info.class,
+				"SELECT * FROM " + Auto_line_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		if (!autoLineInfoList.isEmpty()) {
+			for (Auto_line_info auto_line_info : autoLineInfoList) {
+				Map<String, Object> lineMap = new HashMap<>();
+				lineMap.put("x", auto_line_info.getX_axis_coord());
+				lineMap.put("y", auto_line_info.getY_axis_coord());
+				lineMap.put("w", auto_line_info.getLine_length());
+				lineMap.put("h", auto_line_info.getLine_weight());
+				lineMap.put("i", auto_line_info.getSerial_number());
+				lineMap.put("type", auto_line_info.getLine_id());
+				lineMap.put("label", "1");
+				lineMap.put("static", true);
+				JSONObject contentColorType = new JSONObject();
+				contentColorType.put("line_color", auto_line_info.getLine_color());
+				contentColorType.put("line_type", auto_line_info.getLine_type());
+				dashboardInfo.put(auto_line_info.getLine_id().toString(), contentColorType);
+				dashboardList.add(lineMap);
+			}
+			dashboardInfo.put("autoLineInfo", autoLineInfoList);
+		}
+		dashboardInfo.put("layout", dashboardList);
+		// 6.返回仪表盘信息
+		return dashboardInfo;
+	}
 
 	public static void main(String[] args) {
 		String template_sql = "SELECT t1.c_customer_sk, t1.c_customer_id, t1.c_current_cdemo_sk, t1.c_current_hdemo_sk, t1.c_current_addr_sk\n" +
