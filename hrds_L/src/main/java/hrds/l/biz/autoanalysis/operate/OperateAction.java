@@ -2187,16 +2187,4 @@ public class OperateAction extends BaseAction {
 			throw new BusinessException("仪表板名称已存在");
 		}
 	}
-
-	public static void main(String[] args) {
-		String template_sql = "SELECT t1.c_customer_sk, t1.c_customer_id, t1.c_current_cdemo_sk, t1.c_current_hdemo_sk, t1.c_current_addr_sk\n" +
-				"\t, t1.c_first_shipto_date_sk, t1.c_first_sales_date_sk, t1.c_salutation, t1.c_first_name, t1.c_last_name\n" +
-				"\t, t1.c_preferred_cust_flag,t2.*\n" +
-				"FROM CS01_DB01_CUSTOMER t1\n" +
-				"\tLEFT JOIN CS01_DB01_ITEM t2 ON t1.c_customer_sk = t2.i_item_sk\n" +
-				"WHERE t1.c_customer_sk != 1";
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(template_sql);
-		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
-		selectColumnMap.forEach((k, v) -> System.out.println(k + "-->" + v));
-	}
 }

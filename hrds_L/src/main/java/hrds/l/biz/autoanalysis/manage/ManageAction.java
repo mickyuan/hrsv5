@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.web.util.Dbo;
@@ -23,6 +24,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -40,6 +42,15 @@ import java.util.Map;
 public class ManageAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
+	// SQL关键字
+	private static final String AND = "AND";
+	private static final String OR = "OR";
+	private static final String BETWEEN = "BETWEEN";
+	private static final String WHERE = "WHERE";
+	private static final String UNION = "UNION";
+	private static final String UNIONALL = "UNION ALL";
+	private static final String IN = "IN";
+	private static final String NOTIN = "NOT IN";
 
 	@Method(desc = "获取自主分析模板配置信息", logicStep = "1.查询并返回自主分析模板配置信息")
 	@Return(desc = "返回自主分析模板配置信息", range = "无限制")
@@ -102,7 +113,7 @@ public class ManageAction extends BaseAction {
 
 	@Method(desc = "生成自主分析模板配置参数", logicStep = "")
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
-	public Map<String, Object> generateTemplateParam(String template_sql) {
+	public static Map<String, Object> generateTemplateParam(String template_sql) {
 		String dbType = JdbcConstants.POSTGRESQL;
 		// sql格式化
 		String format_sql = SQLUtils.format(template_sql, dbType).trim();
@@ -111,13 +122,13 @@ public class ManageAction extends BaseAction {
 		}
 		List<Auto_tp_cond_info> autoTpCondInfoList = new ArrayList<>();
 		List<Auto_tp_res_set> autoTpResSets = new ArrayList<>();
-		if (format_sql.toUpperCase().contains("UNION") && !format_sql.contains("UNION ALL")) {
-			List<String> unionSql = StringUtil.split(format_sql, "UNION");
+		if (format_sql.toUpperCase().contains(UNION) && !format_sql.contains(UNIONALL)) {
+			List<String> unionSql = StringUtil.split(format_sql, UNION);
 			for (String sql : unionSql) {
 				getAutoTpCondInfo(autoTpCondInfoList, autoTpResSets, sql);
 			}
-		} else if (format_sql.contains("UNION ALL")) {
-			List<String> unionSql = StringUtil.split(format_sql, "UNION ALL");
+		} else if (format_sql.contains(UNIONALL)) {
+			List<String> unionSql = StringUtil.split(format_sql, UNIONALL);
 			for (String sql : unionSql) {
 				getAutoTpCondInfo(autoTpCondInfoList, autoTpResSets, sql);
 			}
@@ -308,6 +319,24 @@ public class ManageAction extends BaseAction {
 		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
 	}
 
+	public static void main(String[] args) {
+//		String template_sql = "SELECT t1.c_customer_sk, t1.c_customer_id, t1.c_current_cdemo_sk, t1.c_current_hdemo_sk, t1.c_current_addr_sk\n" +
+//				"\t, t1.c_first_shipto_date_sk, t1.c_first_sales_date_sk, t1.c_salutation, t1.c_first_name, t1.c_last_name\n" +
+//				"\t, t1.c_preferred_cust_flag,t2.*\n" +
+//				"FROM CS01_DB01_CUSTOMER t1\n" +
+//				"\tLEFT JOIN CS01_DB01_ITEM t2 ON t1.c_customer_sk = t2.i_item_sk\n" +
+//				"WHERE t1.c_customer_sk != 1";
+		String template_sql = "SELECT t1.*, t2.cs_ship_date_sk AS b\n" +
+				"FROM CS01_DB01_ITEM t1\n" +
+				"\tLEFT JOIN CS01_DB01_CATALOG_SALES t2 ON t1.i_item_sk = t2.cs_warehouse_sk\n" +
+				"WHERE t1.i_item_sk != 1\n" +
+				"\tAND t1.i_class_id BETWEEN 1 AND 2";
+		System.out.println(JsonUtil.toJson(generateTemplateParam(template_sql)));
+//		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(template_sql);
+//		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
+//		selectColumnMap.forEach((k, v) -> System.out.println(k + "-->" + v));
+	}
+
 	@Method(desc = "发布自主取数模板", logicStep = "1.更新模板状态为发布")
 	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
 	public void releaseAutoAnalysisTemplate(long template_id) {
@@ -364,7 +393,7 @@ public class ManageAction extends BaseAction {
 				cond = getCond(autoTpCondInfoList, cond, auto_tp_cond_info);
 				if (i + 1 < whereList.size()) {
 					String child_cond = whereList.get(i + 1).trim();
-					if (child_cond.contains(")") && cond.contains("WHERE")) {
+					if (child_cond.contains(Constant.RXKH) && cond.contains(WHERE)) {
 						getCond(autoTpCondInfoList, cond, auto_tp_cond_info);
 					}
 				}
@@ -374,20 +403,36 @@ public class ManageAction extends BaseAction {
 
 	private static String getCond(List<Auto_tp_cond_info> autoTpCondInfoList, String cond,
 	                              Auto_tp_cond_info auto_tp_cond_info) {
-		if (cond.startsWith("AND")) {
-			cond = cond.replace("AND", "");
+		if (cond.startsWith(AND) && !cond.contains("BETWEEN")) {
+			cond = cond.replace(AND, "");
 		}
-		if (cond.startsWith("OR")) {
-			cond = cond.replace("OR", "");
+		if (cond.startsWith(OR)) {
+			cond = cond.replace(OR, "");
 		}
-		if (cond.startsWith("WHERE")) {
-			cond = cond.replace("WHERE", "");
+		if (cond.startsWith(WHERE)) {
+			cond = cond.replace(WHERE, "");
+		}
+		if (cond.contains(BETWEEN)) {
+			String[] split = cond.split(BETWEEN);
+			String cond_para_name = split[0].trim().replace(AND, "");
+			auto_tp_cond_info.setCond_para_name(cond_para_name);
+			if (cond_para_name.contains(".")) {
+				String column = cond_para_name.substring(cond_para_name.indexOf(".") + 1).trim();
+				auto_tp_cond_info.setCond_en_column(column);
+				auto_tp_cond_info.setCond_cn_column(column);
+			}
+			auto_tp_cond_info.setCon_relation(BETWEEN);
+			auto_tp_cond_info.setPre_value(split[1].replace(AND, ",")
+					.replace(Constant.SPACE, "").trim());
+			autoTpCondInfoList.add(auto_tp_cond_info);
 		}
 		if (cond.contains("!=")) {
 			String[] split = cond.split("!=");
 			auto_tp_cond_info.setCond_para_name(split[0].trim());
 			if (split[0].trim().contains(".")) {
-				auto_tp_cond_info.setCond_en_column(split[0].trim().substring(split[0].trim().indexOf(".") + 1));
+				String column = split[0].trim().substring(split[0].trim().indexOf(".") + 1);
+				auto_tp_cond_info.setCond_en_column(column);
+				auto_tp_cond_info.setCond_cn_column(column);
 			}
 			auto_tp_cond_info.setCon_relation("!=");
 			auto_tp_cond_info.setPre_value(split[1].trim());
@@ -397,7 +442,9 @@ public class ManageAction extends BaseAction {
 			String[] split = cond.split("=");
 			auto_tp_cond_info.setCond_para_name(split[0].trim());
 			if (split[0].trim().contains(".")) {
-				auto_tp_cond_info.setCond_en_column(split[0].trim().substring(split[0].trim().indexOf(".") + 1));
+				String column = split[0].trim().substring(split[0].trim().indexOf(".") + 1).trim();
+				auto_tp_cond_info.setCond_en_column(column);
+				auto_tp_cond_info.setCond_cn_column(column);
 			}
 			auto_tp_cond_info.setCon_relation("=");
 			auto_tp_cond_info.setPre_value(split[1].trim());
@@ -443,29 +490,31 @@ public class ManageAction extends BaseAction {
 			auto_tp_cond_info.setPre_value(split[1].trim());
 			autoTpCondInfoList.add(auto_tp_cond_info);
 		}
-		if (cond.contains("NOT IN")) {
-			String[] split = cond.split("NOT IN");
+		if (cond.contains(NOTIN)) {
+			String[] split = cond.split(NOTIN);
 			auto_tp_cond_info.setCond_para_name(split[0].trim());
 			if (split[0].trim().contains(".")) {
 				auto_tp_cond_info.setCond_en_column(split[0].trim().substring(split[0].trim().indexOf(".") + 1));
 			}
 			auto_tp_cond_info.setCon_relation("IN");
 			if (StringUtil.isNotBlank(split[1])) {
-				auto_tp_cond_info.setPre_value(split[1].replace("(", "").replace(")",
-						"").replace(" ", ""));
+				auto_tp_cond_info.setPre_value(split[1].replace(Constant.LXKH, "")
+						.replace(Constant.RXKH, "")
+						.replace(Constant.SPACE, ""));
 			}
 			autoTpCondInfoList.add(auto_tp_cond_info);
 		}
-		if (cond.contains("IN") && !cond.contains("NOT IN")) {
-			String[] split = cond.split("IN");
+		if (cond.contains(IN) && !cond.contains(NOTIN)) {
+			String[] split = cond.split(IN);
 			auto_tp_cond_info.setCond_para_name(split[0].trim());
 			if (split[0].trim().contains(".")) {
 				auto_tp_cond_info.setCond_en_column(split[0].trim().substring(split[0].trim().indexOf(".") + 1));
 			}
-			auto_tp_cond_info.setCon_relation("IN");
-			if (StringUtil.isNotBlank(split[1].replace("(", ""))) {
-				auto_tp_cond_info.setPre_value(split[1].replace("(", "").replace(")",
-						"").replace(" ", ""));
+			auto_tp_cond_info.setCon_relation(IN);
+			if (StringUtil.isNotBlank(split[1].replace(Constant.LXKH, ""))) {
+				auto_tp_cond_info.setPre_value(split[1].replace(Constant.LXKH, "")
+						.replace(Constant.RXKH, "")
+						.replace(Constant.SPACE, ""));
 				autoTpCondInfoList.add(auto_tp_cond_info);
 			}
 		}
