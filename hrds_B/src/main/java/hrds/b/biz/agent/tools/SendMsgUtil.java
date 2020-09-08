@@ -156,7 +156,7 @@ public class SendMsgUtil {
 		}
 		//6、若响应不成功，记录日志，并抛出异常告知操作失败
 		logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
-		throw new BusinessException("获取目标数据库所有表失败，详情请查看日志");
+		throw new BusinessException(ar.getMessage());
 	}
 
 	@Method(desc = "海云应用管理端向Agent端发送消息，根据表名获取该表的相关信息", logicStep = "" +
