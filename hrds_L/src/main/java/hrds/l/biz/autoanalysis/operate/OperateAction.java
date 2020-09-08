@@ -2,34 +2,79 @@ package hrds.l.biz.autoanalysis.operate;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.util.JdbcConstants;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableUtil;
+import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
+import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.util.*;
 
 @DocClass(desc = "自主分析操作类", author = "dhw", createdate = "2020/8/24 11:29")
 public class OperateAction extends BaseAction {
 
-	private static String TempTableName = " TEMP_TABLE ";
+	private static final Logger logger = LogManager.getLogger();
 
+	private static final String TempTableName = " TEMP_TABLE ";
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
+	// 图标类型
+	// 折线图
+	private static final String LINE = "line";
+	// 柱状图
+	private static final String BAR = "bar";
+	// 柱状折线混合图
+	private static final String BL = "bl";
+	// 柱状折线混合图-简单
+	private static final String BLSIMPLE = "blsimple";
+	// 多维柱状图(3)
+	private static final String BARMD = "barmd";
+	// 极坐标柱状图
+	private static final String POLARBAR = "polarbar";
+	// 散点图
+	private static final String SCATTER = "scatter";
+	// 气泡图
+	private static final String BUBBLE = "bubble";
+	// 饼图
+	private static final String PIE = "pie";
+	// 环形饼图
+	private static final String HUANPIE = "huanpie";
+	// 发散饼图
+	private static final String FASANPIE = "fasanpie";
+	// 卡片
+	private static final String CARD = "card";
+	// 二维表
+	private static final String TABLE = "table";
+	// 矩形树图
+	private static final String TREEMAP = "treemap";
+	// 地理坐标/地图
+	private static final String MAP = "map";
+	// 盒形图
+	private static final String BOXPLOT = "boxplot";
 
 	static {
 		numbersArray.add("int");
@@ -125,7 +170,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	@Method(desc = "通过选择历史情况 获取之前的条件以及结果配置页面", logicStep = "1.获取自主取数选择历史信息")
-	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
+	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "新增取数信息时生成")
 	@Return(desc = "返回自主取数选择历史信息", range = "无限制")
 	public List<Map<String, Object>> getAccessCondFromHistory(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
@@ -139,7 +184,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	@Method(desc = "通过选择历史情况 获取之前的条件以及结果配置页面", logicStep = "1.获取自主取数选择历史信息")
-	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
+	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "新增取数信息时生成")
 	@Return(desc = "返回自主取数选择历史信息", range = "无限制")
 	public List<Map<String, Object>> getAccessResultFromHistory(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
@@ -156,7 +201,7 @@ public class OperateAction extends BaseAction {
 			"2.判断取数汇总ID对应的取数sql是否存在" +
 			"3.获取自主取数清单查询结果")
 	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "配置取数模板时生成")
-	@Return(desc = "返回主取数清单查询结果", range = "")
+	@Return(desc = "返回主取数清单查询结果", range = "无限制")
 	public List<Map<String, Object>> getAutoAccessQueryResult(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.根据取数汇总ID获取取数sql
@@ -176,7 +221,7 @@ public class OperateAction extends BaseAction {
 			"2.新增取数汇总表数据" +
 			"3.取数条件表入库" +
 			"4.取数结果选择情况入库")
-	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
+	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
 	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
@@ -623,6 +668,23 @@ public class OperateAction extends BaseAction {
 		return resultData;
 	}
 
+	@Method(desc = "我的取数下载模板", logicStep = "")
+	@Param(name = "fetch_sum_id", desc = "取数汇总表ID", range = "新增我的取数信息时生成")
+	public void downloadMyAccessTemplate(long fetch_sum_id) {
+		Auto_fetch_sum auto_fetch_sum = Dbo.queryOneObject(Auto_fetch_sum.class,
+				"select fetch_sql,fetch_name from " + Auto_fetch_sum.TableName + " where fetch_sum_id = ?",
+				fetch_sum_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+		String fileName = WebinfoConf.FileUpload_SavedDirName + File.separator +
+				auto_fetch_sum.getFetch_name() + "_" + DateUtil.getDateTime() + ".csv";
+		new ProcessingData() {
+			@Override
+			public void dealLine(Map<String, Object> map) {
+				AutoOperateCommon.writeFile(map, fileName);
+			}
+		}.getDataLayer(auto_fetch_sum.getFetch_sql(), Dbo.db());
+	}
+
 	@Method(desc = "获取数据可视化组件信息", logicStep = "1.获取数据可视化组件信息")
 	@Return(desc = "返回获取数据可视化组件信息", range = "无限制")
 	public List<Map<String, Object>> getVisualComponentInfo() {
@@ -704,14 +766,478 @@ public class OperateAction extends BaseAction {
 		return columnMap;
 	}
 
-	@Method(desc = "可视化创建组件得到答案", logicStep = "")
-	@Param(name = "component_info", desc = "可视化组件参数实体bean", range = "自定义无限制")
+	@Method(desc = "根据可视化组件ID查看可视化组件信息", logicStep = "1.查询组件汇总表" +
+			"2.根据组件id查询组件条件表" +
+			"3.根据组件id查询组件分组表" +
+			"4.根据组件id查询组件数据汇总信息表" +
+			"5.根据组件id查询组件横纵纵轴信息表 字段显示类型show_type使用IsFlag代码项 0:x轴，1:y轴" +
+			"6.根据组件id查询图表标题字体属性信息表" +
+			"7.根据组件id查询x,y轴标签字体属性信息表" +
+			"8.根据组件id查询x/y轴配置信息表" +
+			"9.根据组件id查询x/y轴标签配置信息表" +
+			"10.根据组件id查询x/y轴线配置信息表" +
+			"11.根据组件id查询二维表样式信息表" +
+			"12.根据组件id查询图表配置信息表" +
+			"13.根据组件id查询文本标签信息表" +
+			"14.根据组件id查询图例信息表" +
+			"15.获取组件查询结果" +
+			"16.获取图表结果" +
+			"17.获取列信息" +
+			"18.返回根据可视化组件ID查看可视化组件信息")
+	@Param(name = "component_id", desc = "组件ID", range = "创建组件时生成")
+	@Return(desc = "返回根据可视化组件ID查看可视化组件信息", range = "无限制")
+	public Map<String, Object> getVisualComponentInfoById(long component_id) {
+		Map<String, Object> resultMap = new HashMap<>();
+		// 1.查询组件汇总表
+		Auto_comp_sum auto_comp_sum = Dbo.queryOneObject(Auto_comp_sum.class,
+				"SELECT * FROM " + Auto_comp_sum.TableName + " WHERE component_id = ?",
+				component_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+		resultMap.put("compSum", auto_comp_sum);
+		// 2.根据组件id查询组件条件表
+		List<Map<String, Object>> compCondList = Dbo.queryList(
+				"SELECT * FROM " + Auto_comp_cond.TableName + " WHERE component_id = ?"
+				, component_id);
+		resultMap.put("compCond", compCondList);
+		// 3.根据组件id查询组件分组表
+		List<Map<String, Object>> compGroupList = Dbo.queryList(
+				"SELECT * FROM " + Auto_comp_group.TableName + " WHERE component_id = ?",
+				component_id);
+		resultMap.put("compGroup", compGroupList);
+		// 4.根据组件id查询组件数据汇总信息表
+		List<Map<String, Object>> compDataSumList = Dbo.queryList(
+				"SELECT * FROM " + Auto_comp_data_sum.TableName + " WHERE component_id = ?",
+				component_id);
+		resultMap.put("compDataSum", compDataSumList);
+		// 5.根据组件id查询组件横纵纵轴信息表 字段显示类型show_type使用IsFlag代码项 0:x轴，1:y轴
+		List<Map<String, Object>> xAxisColList = Dbo.queryList(
+				"SELECT * FROM " + Auto_axis_col_info.TableName
+						+ " WHERE component_id = ? AND show_type = ?",
+				component_id, IsFlag.Fou.getCode());
+		resultMap.put("xAxisCol", xAxisColList);
+		List<Map<String, Object>> yAxisColList = Dbo.queryList(
+				"SELECT * FROM " + Auto_axis_col_info.TableName
+						+ " WHERE component_id = ? AND show_type = ?",
+				component_id, IsFlag.Shi.getCode());
+		resultMap.put("yAxisCol", yAxisColList);
+		String[] x_columns = new String[xAxisColList.size()];
+		for (int i = 0; i < xAxisColList.size(); i++) {
+			x_columns[i] = xAxisColList.get(i).get("column_name").toString();
+		}
+		String[] y_columns = new String[yAxisColList.size()];
+		for (int i = 0; i < yAxisColList.size(); i++) {
+			y_columns[i] = yAxisColList.get(i).get("column_name").toString();
+		}
+		// 6.根据组件id查询图表标题字体属性信息表
+		Map<String, Object> fontInfoMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_font_info.TableName + " WHERE font_corr_id = ?",
+				component_id);
+		resultMap.put("titleFontInfo", fontInfoMap);
+		// 7.根据组件id查询x,y轴标签字体属性信息表,因为x/y轴字体是一样的,保存的时候是以x轴编号保存所以这里以x轴编号查询
+		Map<String, Object> xFontInfoMap = Dbo.queryOneObject("SELECT * FROM " + Auto_font_info.TableName
+						+ " WHERE font_corr_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+						+ " WHERE component_id = ? AND axis_type = ?)",
+				component_id, IsFlag.Fou.getCode());
+		resultMap.put("axisFontInfo", xFontInfoMap);
+		// 8.根据组件id查询x/y轴配置信息表
+		List<Map<String, Object>> xAxisInfoList = Dbo.queryList(
+				"SELECT * FROM " + Auto_axis_info.TableName + " WHERE component_id = ? AND axis_type = ?",
+				component_id, IsFlag.Fou.getCode());
+		resultMap.put("xAxisInfo", xAxisInfoList);
+		List<Map<String, Object>> yAxisInfoList = Dbo.queryList(
+				"SELECT * FROM " + Auto_axis_info.TableName + " WHERE component_id = ? AND axis_type = ?",
+				component_id, IsFlag.Shi.getCode());
+		resultMap.put("yAxisInfo", yAxisInfoList);
+		// 9.根据组件id查询x/y轴标签配置信息表
+		Map<String, Object> xAxislabelMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_axislabel_info.TableName
+						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+						+ " WHERE component_id = ? AND axis_type = ?)",
+				component_id, IsFlag.Fou.getCode());
+		resultMap.put("xAxislabel", xAxislabelMap);
+		Map<String, Object> yAxislabelMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_axislabel_info.TableName
+						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+						+ " WHERE component_id = ? AND axis_type = ?)",
+				component_id, IsFlag.Shi.getCode());
+		resultMap.put("yAxislabel", yAxislabelMap);
+		// 10.根据组件id查询x/y轴线配置信息表
+		Map<String, Object> xAxislineMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_axisline_info.TableName
+						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+						+ " WHERE component_id = ? AND axis_type = ?)",
+				component_id, IsFlag.Fou.getCode());
+		resultMap.put("xAxisline", xAxislineMap);
+		Map<String, Object> yAxislineMap = Dbo.queryOneObject("SELECT * FROM " + Auto_axisline_info.TableName
+						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+						+ " WHERE component_id = ? AND axis_type = ?)",
+				component_id, IsFlag.Shi.getCode());
+		resultMap.put("yAxisline", yAxislineMap);
+		// 11.根据组件id查询二维表样式信息表
+		Map<String, Object> tableInfoMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_table_info.TableName + " WHERE component_id = ?",
+				component_id);
+		resultMap.put("twoDimensionalTable", tableInfoMap);
+		// 12.根据组件id查询图表配置信息表
+		Map<String, Object> chartsconfigMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_chartsconfig.TableName + " WHERE component_id = ?",
+				component_id);
+		resultMap.put("chartsconfig", chartsconfigMap);
+		// 13.根据组件id查询文本标签信息表
+		Map<String, Object> textLabelMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_label.TableName + " WHERE label_corr_id = ?", component_id);
+		resultMap.put("textLabel", textLabelMap);
+		// 14.根据组件id查询图例信息表
+		Map<String, Object> legendMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_legend_info.TableName + " WHERE component_id = ?", component_id);
+		resultMap.put("legendInfo", legendMap);
+		// 15.获取组件查询结果
+		Map<String, Object> visualComponentResult = getVisualComponentResult(auto_comp_sum.getExe_sql());
+		resultMap.putAll(visualComponentResult);
+		// 16.获取图表结果
+		Map<String, Object> chartShowMap = getChartShow(auto_comp_sum.getExe_sql(), x_columns, y_columns,
+				auto_comp_sum.getChart_type());
+		resultMap.putAll(chartShowMap);
+		// 17.获取列信息
+		Map<String, Object> tableColumn = getColumnByName(auto_comp_sum.getSources_obj(),
+				auto_comp_sum.getData_source());
+		resultMap.put("columnAndNumberColumnInfo", tableColumn);
+		// 18.返回根据可视化组件ID查看可视化组件信息
+		return resultMap;
+	}
+
+	@Method(desc = "获取图表显示", logicStep = "1.获取组件数据" +
+			"2.根据不同图标类型获取图表数据" +
+			"3.返回图标显示数据")
+	@Param(name = "exe_sql", desc = "执行sql", range = "无限制")
+	@Param(name = "x_columns", desc = "x轴列信息", range = "无限制", nullable = true)
+	@Param(name = "y_columns", desc = "y轴列信息", range = "无限制", nullable = true)
+	@Param(name = "chart_type", desc = "图标类型", range = "无限制")
+	@Return(desc = "返回图标显示数据", range = "无限制")
+	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
+	                                        String chart_type) {
+		List<Map<String, Object>> componentList = new ArrayList<>();
+		// 1.获取组件数据
+		new ProcessingData() {
+			@Override
+			public void dealLine(Map<String, Object> map) {
+				componentList.add(map);
+			}
+		}.getDataLayer(exe_sql, Dbo.db());
+		Map<String, Object> resultMap = new HashMap<>();
+		// 2.根据不同图标类型获取图表数据
+		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
+			// 折线图和柱状图
+			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
+		} else if (PIE.equals(chart_type) || HUANPIE.equals(chart_type) || FASANPIE.equals(chart_type)) {
+			// 饼图
+			putDataForPie(componentList, x_columns, y_columns, chart_type, resultMap);
+		} else if (SCATTER.equals(chart_type)) {
+			// 散点图
+			putDataForScatter(componentList, x_columns, y_columns, resultMap);
+		} else if (CARD.equals(chart_type)) {
+			// 卡片
+			List<Object> cardData = new ArrayList<>();
+			componentList.get(0).forEach((k, v) -> cardData.add(v));
+			resultMap.put("cardData", cardData);
+		} else if (TABLE.equals(chart_type)) {
+			// 二维表
+			resultMap.put("tableData", componentList);
+		} else if (BOXPLOT.equals(chart_type)) {
+			// 盒型图
+			putDataForBoxplot(componentList, x_columns, resultMap);
+		} else if (TREEMAP.equals(chart_type)) {
+			// 矩形树图
+			putDataForTreemap(componentList, x_columns, y_columns, resultMap);
+		} else if (BARMD.equals(chart_type)) {
+			// 混合图
+			putDateForBarmd(componentList, x_columns, y_columns, resultMap);
+		} else if (BUBBLE.equals(chart_type)) {
+			// 气泡图
+			putDataForBubble(componentList, x_columns, y_columns, resultMap);
+		} else if (POLARBAR.equals(chart_type)) {
+			// 极坐标柱状图
+			putDataForPolarbar(componentList, x_columns, y_columns, resultMap);
+		} else if (BLSIMPLE.equals(chart_type)) {
+			// 柱状折线混合图-简单
+			putDataForBLSimple(componentList, x_columns, y_columns, resultMap);
+		} else if (MAP.equals(chart_type)) {
+			// 地理坐标/地图
+			putDataForBubble(componentList, x_columns, y_columns, resultMap);
+		} else {
+			throw new BusinessException("暂不支持该种图例类型" + chart_type);
+		}
+		// 3.返回图标显示数据
+		return resultMap;
+	}
+
+	private void putDataForBLSimple(List<Map<String, Object>> componentList, String[] x_columns,
+	                                String[] y_columns, Map<String, Object> resultMap) {
+		if (x_columns.length < 1 || y_columns.length < 2) {
+			return;
+		}
+		List<Object> xAxisData = new ArrayList<>();
+		List<Object> yAxisData1 = new ArrayList<>();
+		List<Object> yAxisData2 = new ArrayList<>();
+		for (Map<String, Object> stringObjectMap : componentList) {
+			xAxisData.add(stringObjectMap.get(x_columns[0]));
+			yAxisData1.add(stringObjectMap.get(y_columns[0]));
+			yAxisData2.add(stringObjectMap.get(y_columns[1]));
+		}
+		resultMap.put("series1Name", y_columns[0]);
+		resultMap.put("series1Data", yAxisData1);
+		resultMap.put("series2Name", y_columns[1]);
+		resultMap.put("series2Data", yAxisData2);
+		resultMap.put("xAxisData", xAxisData);
+	}
+
+	private void putDataForPolarbar(List<Map<String, Object>> componentList, String[] x_columns,
+	                                String[] y_columns, Map<String, Object> resultMap) {
+		String x_column = x_columns[0];
+		String y_column = y_columns[0];
+		List<Object> radiusData = new ArrayList<>();
+		List<Object> seriesData = new ArrayList<>();
+		for (Map<String, Object> stringObjectMap : componentList) {
+			radiusData.add(stringObjectMap.get(x_column));
+			seriesData.add(stringObjectMap.get(y_column));
+		}
+
+		resultMap.put("radiusData", radiusData);
+		resultMap.put("seriesData", seriesData);
+	}
+
+	private void putDataForBubble(List<Map<String, Object>> componentList, String[] x_columns,
+	                              String[] y_columns, Map<String, Object> resultMap) {
+		List<Map<String, Object>> seriesData = new ArrayList<>();
+		for (Map<String, Object> stringObjectMap : componentList) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("name", stringObjectMap.get(x_columns[0]));
+			map.put("value", stringObjectMap.get(y_columns[0]));
+			seriesData.add(map);
+		}
+		resultMap.put("seriesData", seriesData);
+	}
+
+	private void putDateForBarmd(List<Map<String, Object>> componentList, String[] x_columns,
+	                             String[] y_columns, Map<String, Object> resultMap) {
+		List<List<Object>> data = new ArrayList<>();
+		String y_column = y_columns[0];
+		for (Map<String, Object> stringObjectMap : componentList) {
+			List<Object> dataTmp = new ArrayList<>();
+			for (String x_column : x_columns) {
+				dataTmp.add(stringObjectMap.get(x_column));
+			}
+			//支持各种数值类型
+			dataTmp.add(stringObjectMap.get(y_column));
+			data.add(dataTmp);
+		}
+		resultMap.put("xColLen", x_columns.length);
+		resultMap.put("barmdData", data);
+	}
+
+	private void putDataForTreemap(List<Map<String, Object>> componentList, String[] x_columns,
+	                               String[] y_columns, Map<String, Object> resultMap) {
+		List<Map<String, Object>> seriesData = new ArrayList<>();
+		Map<String, Map<String, Object>> map = new HashMap<>();
+		for (Map<String, Object> stringObjectMap : componentList) {
+			Map<String, Object> xMap = new HashMap<>();
+			if (x_columns.length == 1) {
+				xMap.put("name", stringObjectMap.get(x_columns[0]));
+				xMap.put("value", stringObjectMap.get(y_columns[0]));
+				seriesData.add(xMap);
+			} else {
+				String childrenName = stringObjectMap.get(x_columns[0]).toString();
+				xMap.put("name", stringObjectMap.get(x_columns[1]));
+				xMap.put("value", stringObjectMap.get(y_columns[0]));
+				Map<String, Object> mapTemp;
+				if (!map.containsKey(childrenName)) {
+					mapTemp = new HashMap<>();
+					List<Object> list = new ArrayList<>();
+					list.add(map);
+					mapTemp.put("children", list);
+					mapTemp.put("name", childrenName);
+				} else {
+					mapTemp = map.get(childrenName);
+					List<Object> mapList = JsonUtil.toObject(JsonUtil.toJson(mapTemp.get("children")),
+							new TypeReference<List<Object>>() {
+							}.getType());
+					mapList.add(map);
+					mapTemp.put("children", mapList);
+				}
+				map.put(childrenName, mapTemp);
+			}
+		}
+		if (x_columns.length == 1) {
+			resultMap.put("seriesData", seriesData);
+		} else {
+			resultMap.put("seriesData", map.values());
+		}
+	}
+
+	private void putDataForBoxplot(List<Map<String, Object>> componentList, String[] x_columns,
+	                               Map<String, Object> resultMap) {
+		// 添加legend的值
+		if (x_columns != null && x_columns.length > 0) {
+			List<Object> legend_data = new ArrayList<>();
+			Collections.addAll(legend_data, x_columns);
+			resultMap.put("legend_data", legend_data);
+			// 添加y轴的值
+			List<Map<String, List<Object>>> yList = new ArrayList<>();
+			for (int i = 0; i < componentList.size(); i++) {
+				for (int j = 0; j < x_columns.length; j++) {
+					if (i == 0) {
+						Map<String, List<Object>> map = new HashMap<>();
+						List<Object> xList = new ArrayList<>();
+						xList.add(componentList.get(i).get(x_columns[j].trim()));
+						map.put("data", xList);
+						yList.add(map);
+					} else {
+						yList.get(j).get("data").add(componentList.get(i).get(x_columns[j].trim()));
+					}
+				}
+			}
+			resultMap.put("boxplot", yList);
+		}
+	}
+
+	private void putDataForScatter(List<Map<String, Object>> componentList, String[] x_columns,
+	                               String[] y_columns, Map<String, Object> resultMap) {
+		List<Map<String, Object>> scatterData = new ArrayList<>();
+		for (Map<String, Object> stringObjectMap : componentList) {
+			Map<String, Object> map = new HashMap<>();
+			map.put(IsFlag.Fou.getCode(), stringObjectMap.get(x_columns[0]));
+			map.put(IsFlag.Shi.getCode(), stringObjectMap.get(y_columns[0]));
+			scatterData.add(map);
+		}
+		resultMap.put("scatterData", scatterData);
+	}
+
+	private void putDataForPie(List<Map<String, Object>> componentList, String[] x_columns,
+	                           String[] y_columns, String chart_type, Map<String, Object> resultMap) {
+
+		List<String> legendData = new ArrayList<>();
+		List<Map<String, Object>> seriesArray = new ArrayList<>();
+		List<Map<String, Object>> seriesData = new ArrayList<>();
+		int count = 0;
+		for (Map<String, Object> stringObjectMap : componentList) {
+			Map<String, Object> map = new HashMap<>();
+			legendData.add(stringObjectMap.get(x_columns[0]).toString());
+			map.put("name", stringObjectMap.get(x_columns[0]));
+			map.put("value", stringObjectMap.get(y_columns[0]));
+			count = count + Integer.parseInt(stringObjectMap.get(y_columns[0]).toString());
+			seriesData.add(map);
+		}
+		resultMap.put("count", count);
+		// 饼图series
+		Map<String, Object> series = new HashMap<>();
+		series.put("data", seriesData);
+		series.put("name", x_columns[0]);
+		series.put("type", "pie");
+
+		if (PIE.equals(chart_type)) {
+			// 标准饼图
+			series.put("radius", "50%");
+			resultMap.put("legendData", legendData);
+		} else if (HUANPIE.equals(chart_type)) {
+			// 环形饼图
+			List<String> radius = new ArrayList<>();
+			radius.add("35%");
+			radius.add("60%");
+			series.put("radius", radius);
+			resultMap.put("pietype", "huanpie");
+			resultMap.put("legendData", legendData);
+		} else if (FASANPIE.equals(chart_type)) {
+			// 发散饼图
+			series.put("roseType", "radius");
+			resultMap.put("legendData", legendData);
+		}
+		seriesArray.add(series);
+		resultMap.put("seriesArray", seriesArray);
+	}
+
+	private void putDataForLine(List<Map<String, Object>> componentList, String[] x_columns,
+	                            String[] y_columns, String chart_type,
+	                            Map<String, Object> resultMap) {
+		// 添加legend的值
+		if (y_columns != null && y_columns.length > 0) {
+			List<Object> columns = new ArrayList<>();
+			Collections.addAll(columns, y_columns);
+			resultMap.put("legend_data", columns);
+			// 添加y轴的值
+			List<Map<String, Object>> yList = new ArrayList<>();
+			for (int i = 0; i < componentList.size(); i++) {
+				for (int j = 0; j < y_columns.length; j++) {
+					if (i == 0) {
+						Map<String, Object> map = new HashMap<>();
+						List<Object> data = new ArrayList<>();
+						data.add(componentList.get(i).get(y_columns[j].trim()));
+						resultMap.put("name", y_columns[j]);
+						if ("bl".equals(chart_type)) {
+							if (j < 2) {
+								map.put("type", "bar");
+								map.put("stack", "two");
+							} else {
+								map.put("type", "line");
+								map.put("yAxisIndex", "1");
+							}
+						} else {
+							map.put("type", chart_type);
+						}
+						map.put("data", data);
+						yList.add(map);
+					} else {
+						List<Object> data = JsonUtil.toObject(yList.get(j).get("data").toString(),
+								new TypeReference<List<Object>>() {
+								}.getType());
+						data.add(componentList.get(i).get(y_columns[j].trim()));
+					}
+				}
+			}
+			resultMap.put("seriesArray", yList);
+		}
+		// 添加x轴的值，默认为一个取x_columns[0]
+		if (x_columns != null && x_columns.length > 0) {
+			List<String> xList = new ArrayList<>();
+			for (Map<String, Object> stringObjectMap : componentList) {
+				xList.add(stringObjectMap.get(x_columns[0].trim()).toString());
+			}
+			resultMap.put("xArray", xList);
+		}
+	}
+
+	@Method(desc = "获取可视化组件结果（获取答案）", logicStep = "1.获取列信息" +
+			"2.获取组件数据" +
+			"3.封装并返回列信息与组件结果信息")
+	@Param(name = "exe_sql", desc = "可视化组件执行sql", range = "无限制")
+	@Return(desc = "返回列信息与组件结果信息", range = "无限制")
+	public Map<String, Object> getVisualComponentResult(String exe_sql) {
+		List<Map<String, Object>> visualComponentList = new ArrayList<>();
+		List<String> columnList = new ArrayList<>();
+		new ProcessingData() {
+			@Override
+			public void dealLine(Map<String, Object> map) {
+				// 1.获取列信息
+				map.forEach((k, v) -> columnList.add(k)
+				);
+				// 2.获取组件数据
+				visualComponentList.add(map);
+			}
+		}.getDataLayer(exe_sql, Dbo.db());
+		// 3.封装并返回列信息与组件结果信息
+		Map<String, Object> visualComponentMap = new HashMap<>();
+		visualComponentMap.put("visualComponentList", visualComponentList);
+		visualComponentMap.put("columnList", columnList);
+		return visualComponentMap;
+	}
+
+	@Method(desc = "可视化创建组件根据条件获取sql", logicStep = "")
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
 	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致", isBean = true)
-	@Return(desc = "返回可视化创建组件得到答案", range = "")
-	public String getAnswer(ComponentBean componentBean, Auto_comp_cond[] autoCompConds,
-	                        Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
+	@Return(desc = "返回可视化创建组件过滤条件获取答案信息", range = "")
+	public String getSqlByCondition(ComponentBean componentBean, Auto_comp_cond[] autoCompConds,
+	                                Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
 		Validator.notNull(componentBean.getFetch_name(), "取数名称不能为空");
 		Validator.notNull(componentBean.getData_source(), "数据来源不能为空");
 		Validator.notNull(componentBean.getFetch_sum_id(), "取数汇总ID不能为空");
@@ -760,7 +1286,7 @@ public class OperateAction extends BaseAction {
 		// 对最小的N个做单独处理
 		ArrayList<String> lowArray = new ArrayList<>();
 		boolean flag = true;
-		if (autoCompConds != null && autoCompConds.length != 0) {
+		if (autoCompConds != null && autoCompConds.length > 0) {
 			// 添加 where部分
 			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
 				String cond_en_column = auto_comp_cond.getCond_en_column();
@@ -781,7 +1307,7 @@ public class OperateAction extends BaseAction {
 				result_sql.append(componentBean.getCondition_sql()).append(Constant.SPACE);
 			}
 		}
-		if (autoCompGroups != null && autoCompGroups.length != 0) {
+		if (autoCompGroups != null && autoCompGroups.length > 0) {
 			// 添加 group by
 			result_sql.append(Constant.SPACE).append("GROUP BY").append(Constant.SPACE);
 			for (Auto_comp_group auto_comp_group : autoCompGroups) {
@@ -804,10 +1330,12 @@ public class OperateAction extends BaseAction {
 		return result_sql.toString();
 	}
 
-	@Method(desc = "保存条件逻辑", logicStep = "")
+	@Method(desc = "获取条件逻辑", logicStep = "1.判断操作符是否为最大的N个或者最小的N个" +
+			"2.判断操作符是否为介于或不介于" +
+			"3.返回条件逻辑")
 	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
-	@Return(desc = "", range = "")
-	public String saveConditionLogic(Auto_comp_cond[] autoCompConds) {
+	@Return(desc = "返回条件逻辑", range = "无限制")
+	public String getConditionLogic(Auto_comp_cond[] autoCompConds) {
 		StringBuilder result_where = new StringBuilder();
 		if (autoCompConds != null && autoCompConds.length != 0) {
 			// 添加 where部分
@@ -816,9 +1344,10 @@ public class OperateAction extends BaseAction {
 				String operator = auto_comp_cond.getOperator();
 				String cond_value = auto_comp_cond.getCond_value();
 				String arithmetic_logic = auto_comp_cond.getArithmetic_logic();
-				// 判断是否为最大的N个或者最小的N个
+				// 1.判断操作符是否为最大的N个或者最小的N个
 				if (AutoDataOperator.ZuiDaDeNGe != AutoDataOperator.ofEnumByCode(operator) &&
 						AutoDataOperator.ZuiXiaoDeNGe == AutoDataOperator.ofEnumByCode(operator)) {
+					// 2.判断操作符是否为介于或不介于
 					if (AutoDataOperator.JieYu == AutoDataOperator.ofEnumByCode(operator)
 							|| AutoDataOperator.BuJieYu == AutoDataOperator.ofEnumByCode(operator)) {
 						result_where.append("`").append(cond_en_column).append("`").append(Constant.SPACE)
@@ -836,6 +1365,7 @@ public class OperateAction extends BaseAction {
 			// 去除and
 			result_where.delete(result_where.length() - 4, result_where.length());
 		}
+		// 3.返回条件逻辑
 		return result_where.toString();
 	}
 
@@ -872,15 +1402,789 @@ public class OperateAction extends BaseAction {
 		return operator;
 	}
 
-	public static void main(String[] args) {
-		String template_sql = "SELECT t1.c_customer_sk, t1.c_customer_id, t1.c_current_cdemo_sk, t1.c_current_hdemo_sk, t1.c_current_addr_sk\n" +
-				"\t, t1.c_first_shipto_date_sk, t1.c_first_sales_date_sk, t1.c_salutation, t1.c_first_name, t1.c_last_name\n" +
-				"\t, t1.c_preferred_cust_flag,t2.*\n" +
-				"FROM CS01_DB01_CUSTOMER t1\n" +
-				"\tLEFT JOIN CS01_DB01_ITEM t2 ON t1.c_customer_sk = t2.i_item_sk\n" +
-				"WHERE t1.c_customer_sk != 1";
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(template_sql);
-		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
-		selectColumnMap.forEach((k, v) -> System.out.println(k + "-->" + v));
+	@Method(desc = "更新保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
+			"2.更新组件汇总表数据" +
+			"3.删除组件关联表信息" +
+			"4.保存组件条件表" +
+			"5.保存组件分组表" +
+			"6.保存组件数据汇总信息表" +
+			"7.保存横轴纵轴字段信息表" +
+			"8.保存图表标题字体属性表数据" +
+			"9.保存x/y轴配置信息表数据" +
+			"10.保存x/y轴线配置信息/轴标签配置信息表数据" +
+			"11.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）" +
+			"12.保存二维表样式信息表" +
+			"13.保存图表配置信息表" +
+			"14.保存文本标签信息表" +
+			"15.保存图例信息表")
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
+	@Param(name = "auto_comp_sum", desc = "组件汇总表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "titleFont", desc = "字体属性表对象（标题）", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "axisStyleFont", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoAxisInfos", desc = "轴配置信息表对象数组",
+			range = "与数据库表规则一致,轴类型axis_type使用（IsFlag代码项，0:x轴，1:y轴）", isBean = true)
+	@Param(name = "xAxisLabel", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "yAxisLabel", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "xAxisLine", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "yAxisLine", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_table_info", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_chartsconfig", desc = "图表配置信息表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
+	public void updateVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
+	                                      Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+	                                      Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+	                                      Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+	                                      Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+	                                      Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+	                                      Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+	                                      Auto_label auto_label, Auto_legend_info auto_legend_info) {
+		// 1.校验组件汇总表字段合法性
+		Validator.notNull(auto_comp_sum.getComponent_id(), "更新时组件ID不能为空");
+		checkAutoCompSumFields(auto_comp_sum);
+		auto_comp_sum.setLast_update_date(DateUtil.getSysDate());
+		auto_comp_sum.setLast_update_time(DateUtil.getSysTime());
+		auto_comp_sum.setUpdate_user(getUserId());
+		String exe_sql = getSqlByCondition(componentBean, autoCompConds, autoCompGroups, autoCompDataSums);
+		auto_comp_sum.setExe_sql(exe_sql);
+		// 2.更新组件汇总表数据
+		auto_comp_sum.update(Dbo.db());
+		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
+		// 3.删除组件关联表信息
+		deleteComponentAssociateTable(auto_comp_sum.getComponent_id());
+		// 4.保存组件条件表
+		if (autoCompConds != null && autoCompConds.length > 0) {
+			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
+				Validator.notBlank(auto_comp_cond.getCond_en_column(), "条件英文字段不能为空");
+				Validator.notBlank(auto_comp_cond.getCond_value(), "条件值不能为空");
+				Validator.notBlank(auto_comp_cond.getOperator(), "操作符不能为空");
+				auto_comp_cond.setCreate_date(DateUtil.getSysDate());
+				auto_comp_cond.setCreate_time(DateUtil.getSysTime());
+				auto_comp_cond.setCreate_user(getUserId());
+				auto_comp_cond.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_comp_cond.setComponent_cond_id(PrimayKeyGener.getNextId());
+				auto_comp_cond.add(Dbo.db());
+			}
+		}
+		// 5.保存组件分组表
+		if (autoCompGroups != null && autoCompGroups.length > 0) {
+			for (Auto_comp_group auto_comp_group : autoCompGroups) {
+				Validator.notBlank(auto_comp_group.getColumn_name(), "字段名不能为空");
+				auto_comp_group.setCreate_date(DateUtil.getSysDate());
+				auto_comp_group.setCreate_time(DateUtil.getSysTime());
+				auto_comp_group.setCreate_user(getUserId());
+				auto_comp_group.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_comp_group.setComponent_group_id(PrimayKeyGener.getNextId());
+				auto_comp_group.add(Dbo.db());
+			}
+		}
+		// 6.保存组件数据汇总信息表
+		if (autoCompDataSums != null && autoCompDataSums.length > 0) {
+			for (Auto_comp_data_sum auto_comp_data_sum : autoCompDataSums) {
+				Validator.notBlank(auto_comp_data_sum.getColumn_name(), "字段名不能为空");
+				Validator.notBlank(auto_comp_data_sum.getSummary_type(), "汇总类型不能为空");
+				auto_comp_data_sum.setCreate_date(DateUtil.getSysDate());
+				auto_comp_data_sum.setCreate_time(DateUtil.getSysTime());
+				auto_comp_data_sum.setCreate_user(getUserId());
+				auto_comp_data_sum.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_comp_data_sum.setComp_data_sum_id(PrimayKeyGener.getNextId());
+				auto_comp_data_sum.add(Dbo.db());
+			}
+		}
+		// 7.保存横轴纵轴字段信息表
+		// 字段显示类型 使用IsFlag代码项 0:x轴，1:y轴
+		addAutoAxisColInfo(componentBean, auto_comp_sum);
+		// 8.保存图表标题字体属性表数据
+		Validator.notNull(titleFont.getFont_id(), "更新时标题字体信息id不能为空");
+		titleFont.update(Dbo.db());
+		// 9.保存x/y轴配置信息表数据
+		for (Auto_axis_info auto_axis_info : autoAxisInfos) {
+			Validator.notBlank(auto_axis_info.getAxis_type(), "轴类型不能为空");
+			Validator.notNull(auto_axis_info.getAxis_id(), "更新时轴配置信息轴编号不能为空");
+			Validator.notNull(xAxisLine.getAxisline_id(), "更新时x轴线编号不能为空");
+			Validator.notNull(yAxisLine.getAxisline_id(), "更新时y轴线编号不能为空");
+			Validator.notNull(xAxisLabel.getLable_id(), "更新时x轴标签编号不能为空");
+			Validator.notNull(yAxisLabel.getLable_id(), "更新时y轴标签编号不能为空");
+			Validator.notNull(yAxisLabel.getLable_id(), "更新时x,y轴字体信息ID不能为空");
+			auto_axis_info.update(Dbo.db());
+			// 10.保存x/y轴线配置信息/轴标签配置信息表数据
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(auto_axis_info.getAxis_type())) {
+				// x轴线配置信息表数据
+				xAxisLine.update(Dbo.db());
+				// x轴标签配置信息表数据
+				xAxisLabel.update(Dbo.db());
+				// 11.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）
+				axisStyleFont.update(Dbo.db());
+			} else {
+				// y轴线配置信息表数据
+				yAxisLine.update(Dbo.db());
+				// y轴标签配置信息表数据
+				yAxisLabel.update(Dbo.db());
+			}
+		}
+		// 12.保存二维表样式信息表
+		auto_table_info.update(Dbo.db());
+		// 13.保存图表配置信息表
+		auto_chartsconfig.update(Dbo.db());
+		// 14.保存文本标签信息表
+		auto_label.update(Dbo.db());
+		// 15.保存图例信息表
+		auto_legend_info.update(Dbo.db());
+	}
+
+	@Method(desc = "新增保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
+			"2.判断组件名称是否已存在" +
+			"3.保存组件汇总表数据" +
+			"4.保存组件条件表" +
+			"5.保存组件分组表" +
+			"6.保存组件数据汇总信息表" +
+			"7.保存横轴纵轴字段信息表" +
+			"8.保存图表标题字体属性表数据" +
+			"9.保存x/y轴配置信息表数据" +
+			"10.保存x/y轴线配置信息/轴标签配置信息表数据" +
+			"11.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）" +
+			"12.保存二维表样式信息表" +
+			"13.保存图表配置信息表" +
+			"14.保存文本标签信息表" +
+			"15.保存图例信息表")
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制", isBean = true)
+	@Param(name = "auto_comp_sum", desc = "组件汇总表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "titleFont", desc = "字体属性表对象（标题）", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "axisStyleFont", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "autoAxisInfos", desc = "轴配置信息表对象数组",
+			range = "与数据库表规则一致,轴类型axis_type使用（IsFlag代码项，0:x轴，1:y轴）", isBean = true)
+	@Param(name = "xAxisLabel", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "yAxisLabel", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "xAxisLine", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "yAxisLine", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_table_info", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_chartsconfig", desc = "图表配置信息表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
+	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
+	public void addVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
+	                                   Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+	                                   Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+	                                   Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+	                                   Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+	                                   Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+	                                   Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+	                                   Auto_label auto_label, Auto_legend_info auto_legend_info) {
+		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
+		// 1.校验组件汇总表字段合法性
+		checkAutoCompSumFields(auto_comp_sum);
+		auto_comp_sum.setCreate_user(getUserId());
+		auto_comp_sum.setSources_obj(componentBean.getFetch_name());
+		auto_comp_sum.setComponent_id(PrimayKeyGener.getNextId());
+		auto_comp_sum.setCreate_date(DateUtil.getSysDate());
+		auto_comp_sum.setCreate_time(DateUtil.getSysTime());
+		auto_comp_sum.setComponent_status(AutoFetchStatus.WanCheng.getCode());
+		String exe_sql = getSqlByCondition(componentBean, autoCompConds, autoCompGroups, autoCompDataSums);
+		auto_comp_sum.setExe_sql(exe_sql);
+		Map<String, Object> chartShow = getChartShow(exe_sql, componentBean.getX_columns(),
+				componentBean.getY_columns(), auto_comp_sum.getChart_type());
+		auto_comp_sum.setComponent_buffer(auto_comp_sum.getComponent_buffer() == null ?
+				JsonUtil.toJson(chartShow) : auto_comp_sum.getComponent_buffer());
+		// 2.判断组件名称是否已存在
+		isAutoCompSumExist(auto_comp_sum.getComponent_name());
+		// 3.保存组件汇总表数据
+		auto_comp_sum.add(Dbo.db());
+		// 4.保存组件条件表
+		if (autoCompConds != null && autoCompConds.length > 0) {
+			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
+				Validator.notBlank(auto_comp_cond.getCond_en_column(), "条件英文字段不能为空");
+				Validator.notBlank(auto_comp_cond.getCond_value(), "条件值不能为空");
+				Validator.notBlank(auto_comp_cond.getOperator(), "操作符不能为空");
+				auto_comp_cond.setCreate_date(DateUtil.getSysDate());
+				auto_comp_cond.setCreate_time(DateUtil.getSysTime());
+				auto_comp_cond.setCreate_user(getUserId());
+				auto_comp_cond.setLast_update_date(DateUtil.getSysDate());
+				auto_comp_cond.setLast_update_time(DateUtil.getSysTime());
+				auto_comp_cond.setUpdate_user(getUserId());
+				auto_comp_cond.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_comp_cond.setComponent_cond_id(PrimayKeyGener.getNextId());
+				auto_comp_cond.add(Dbo.db());
+			}
+		}
+		// 5.保存组件分组表
+		if (autoCompGroups != null && autoCompGroups.length > 0) {
+			for (Auto_comp_group auto_comp_group : autoCompGroups) {
+				Validator.notBlank(auto_comp_group.getColumn_name(), "字段名不能为空");
+				auto_comp_group.setCreate_date(DateUtil.getSysDate());
+				auto_comp_group.setCreate_time(DateUtil.getSysTime());
+				auto_comp_group.setCreate_user(getUserId());
+				auto_comp_group.setLast_update_date(DateUtil.getSysDate());
+				auto_comp_group.setLast_update_time(DateUtil.getSysTime());
+				auto_comp_group.setUpdate_user(getUserId());
+				auto_comp_group.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_comp_group.setComponent_group_id(PrimayKeyGener.getNextId());
+				auto_comp_group.add(Dbo.db());
+			}
+		}
+		// 6.保存组件数据汇总信息表
+		if (autoCompDataSums != null && autoCompDataSums.length > 0) {
+			for (Auto_comp_data_sum auto_comp_data_sum : autoCompDataSums) {
+				Validator.notBlank(auto_comp_data_sum.getColumn_name(), "字段名不能为空");
+				Validator.notBlank(auto_comp_data_sum.getSummary_type(), "汇总类型不能为空");
+				auto_comp_data_sum.setCreate_date(DateUtil.getSysDate());
+				auto_comp_data_sum.setCreate_time(DateUtil.getSysTime());
+				auto_comp_data_sum.setCreate_user(getUserId());
+				auto_comp_data_sum.setLast_update_date(DateUtil.getSysTime());
+				auto_comp_data_sum.setLast_update_time(DateUtil.getSysTime());
+				auto_comp_data_sum.setUpdate_user(getUserId());
+				auto_comp_data_sum.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_comp_data_sum.setComp_data_sum_id(PrimayKeyGener.getNextId());
+				auto_comp_data_sum.add(Dbo.db());
+			}
+		}
+		// 7.保存横轴纵轴字段信息表
+		addAutoAxisColInfo(componentBean, auto_comp_sum);
+		// 8.保存图表标题字体属性表数据
+		titleFont.setFont_id(PrimayKeyGener.getNextId());
+		titleFont.setFont_corr_id(auto_comp_sum.getComponent_id());
+		titleFont.setFont_corr_tname(Auto_comp_sum.TableName);
+		titleFont.add(Dbo.db());
+		// 9.保存x/y轴配置信息表数据
+		for (Auto_axis_info auto_axis_info : autoAxisInfos) {
+			Validator.notBlank(auto_axis_info.getAxis_type(), "轴类型不能为空");
+			auto_axis_info.setAxis_id(PrimayKeyGener.getNextId());
+			auto_axis_info.setComponent_id(auto_comp_sum.getComponent_id());
+			auto_axis_info.add(Dbo.db());
+			// 10.保存x/y轴线配置信息/轴标签配置信息表数据
+			if (IsFlag.Fou == IsFlag.ofEnumByCode(auto_axis_info.getAxis_type())) {
+				// x轴线配置信息表数据
+				xAxisLine.setAxis_id(auto_axis_info.getAxis_id());
+				xAxisLine.setAxisline_id(PrimayKeyGener.getNextId());
+				xAxisLine.add(Dbo.db());
+				// x轴标签配置信息表数据
+				xAxisLabel.setLable_id(PrimayKeyGener.getNextId());
+				xAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
+				xAxisLabel.add(Dbo.db());
+				// 11.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）
+				axisStyleFont.setFont_id(PrimayKeyGener.getNextId());
+				axisStyleFont.setFont_corr_id(auto_axis_info.getAxis_id());
+				axisStyleFont.setFont_corr_tname(Auto_axis_info.TableName);
+				axisStyleFont.add(Dbo.db());
+			} else {
+				// y轴线配置信息表数据
+				yAxisLine.setAxis_id(auto_axis_info.getAxis_id());
+				yAxisLine.setAxisline_id(PrimayKeyGener.getNextId());
+				yAxisLine.add(Dbo.db());
+				// y轴标签配置信息表数据
+				yAxisLabel.setLable_id(PrimayKeyGener.getNextId());
+				yAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
+				yAxisLabel.add(Dbo.db());
+			}
+		}
+		// 12.保存二维表样式信息表
+		auto_table_info.setConfig_id(PrimayKeyGener.getNextId());
+		auto_table_info.setComponent_id(auto_comp_sum.getComponent_id());
+		auto_table_info.add(Dbo.db());
+		// 13.保存图表配置信息表
+		auto_chartsconfig.setConfig_id(PrimayKeyGener.getNextId());
+		auto_chartsconfig.setComponent_id(auto_comp_sum.getComponent_id());
+		auto_chartsconfig.add(Dbo.db());
+		// 14.保存文本标签信息表
+		auto_label.setLable_id(PrimayKeyGener.getNextId());
+		auto_label.setLabel_corr_tname(Auto_chartsconfig.TableName);
+		auto_label.setLabel_corr_id(auto_comp_sum.getComponent_id());
+		auto_label.add(Dbo.db());
+		// 15.保存图例信息表
+		auto_legend_info.setLegend_id(PrimayKeyGener.getNextId());
+		auto_legend_info.setComponent_id(auto_comp_sum.getComponent_id());
+		auto_legend_info.add(Dbo.db());
+	}
+
+	private void addAutoAxisColInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum) {
+		// 字段显示类型 使用IsFlag代码项 0:x轴，1:y轴
+		String[] x_columns = componentBean.getX_columns();
+		if (x_columns != null && x_columns.length > 0) {
+			for (int i = 0; i < x_columns.length; i++) {
+				Auto_axis_col_info auto_axis_col_info = new Auto_axis_col_info();
+				auto_axis_col_info.setAxis_column_id(PrimayKeyGener.getNextId());
+				auto_axis_col_info.setSerial_number(i);
+				auto_axis_col_info.setColumn_name(x_columns[i]);
+				// x轴
+				auto_axis_col_info.setShow_type(IsFlag.Fou.getCode());
+				auto_axis_col_info.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_axis_col_info.add(Dbo.db());
+			}
+		}
+		String[] y_columns = componentBean.getY_columns();
+		if (y_columns != null && y_columns.length > 0) {
+			for (int i = 0; i < y_columns.length; i++) {
+				Auto_axis_col_info auto_axis_col_info = new Auto_axis_col_info();
+				auto_axis_col_info.setAxis_column_id(PrimayKeyGener.getNextId());
+				auto_axis_col_info.setSerial_number(i);
+				auto_axis_col_info.setColumn_name(y_columns[i]);
+				auto_axis_col_info.setShow_type(IsFlag.Shi.getCode());
+				auto_axis_col_info.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_axis_col_info.add(Dbo.db());
+			}
+		}
+	}
+
+	@Method(desc = "校验组件汇总表字段合法性", logicStep = "1.校验组件汇总表字段合法性")
+	@Param(name = "auto_comp_sum", desc = "组件汇总表对象", range = "与数据库表规则一致", isBean = true)
+	private void checkAutoCompSumFields(Auto_comp_sum auto_comp_sum) {
+		// 1.校验组件汇总表字段合法性
+		Validator.notBlank(auto_comp_sum.getChart_type(), "图标类型不能为空");
+		Validator.notBlank(auto_comp_sum.getChart_theme(), "图形主题不能为空");
+		Validator.notBlank(auto_comp_sum.getComponent_name(), "组件名称不能为空");
+		Validator.notBlank(auto_comp_sum.getData_source(), "数据来源不能为空");
+	}
+
+	@Method(desc = "判断组件名称是否已存在", logicStep = "1.判断组件名称是否已存在")
+	@Param(name = "component_name", desc = "组件名称", range = "无限制")
+	private void isAutoCompSumExist(String component_name) {
+		// 1.判断组件名称是否已存在
+		if (Dbo.queryNumber(
+				"SELECT count(1) FROM " + Auto_comp_sum.TableName + " WHERE component_name = ?",
+				component_name)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("组件名称已存在");
+		}
+	}
+
+	@Method(desc = "删除可视化组件信息", logicStep = "1.删除可视化组件汇总信息"
+			+ "2.删除组件关联表信息")
+	@Param(name = "component_id", desc = "组件ID", range = "创建组件时生成")
+	public void deleteVisualComponent(long component_id) {
+		// 1.删除可视化组件汇总信息
+		DboExecute.deletesOrThrow("删除可视化组件信息失败",
+				"DELETE FROM " + Auto_comp_sum.TableName + " WHERE component_id = ?", component_id);
+		// 2.删除组件关联表信息
+		deleteComponentAssociateTable(component_id);
+	}
+
+	@Method(desc = "删除组件关联表信息", logicStep = "1.根据组件id删除组件条件表" +
+			"2.根据组件id删除组件分组表" +
+			"3.根据组件id删除组件数据汇总信息表" +
+			"4.根据组件id删除组件横轴纵轴字段信息表" +
+			"5.根据组件id删除组件标题字体信息表" +
+			"6.根据组件id删除轴标签字体属性信息表" +
+			"7.根据组件id删除x,y轴标签配置信息表" +
+			"8.根据组件id删除x,y轴线配置信息表" +
+			"9.根据组件id删除轴配置信息表" +
+			"10.根据组件id删除二维表样式信息表" +
+			"11.根据组件id删除图表配置信息表" +
+			"12.根据组件id删除文本标签信息表" +
+			"13.根据组件id删除图例信息表")
+	@Param(name = "component_id", desc = "组件ID", range = "创建组件时生成")
+	private void deleteComponentAssociateTable(long component_id) {
+		// 1.根据组件id删除组件条件表
+		Dbo.execute("DELETE FROM " + Auto_comp_cond.TableName + " WHERE component_id = ?", component_id);
+		// 2.根据组件id删除组件分组表
+		Dbo.execute("DELETE FROM " + Auto_comp_group.TableName + " WHERE component_id = ?", component_id);
+		// 3.根据组件id删除组件数据汇总信息表
+		Dbo.execute("DELETE FROM " + Auto_comp_data_sum.TableName + " WHERE component_id = ?", component_id);
+		// 4.根据组件id删除组件横轴纵轴字段信息表
+		Dbo.execute("DELETE FROM " + Auto_axis_col_info.TableName + " WHERE component_id = ?", component_id);
+		// 5.根据组件id删除组件标题字体信息表
+		Dbo.execute("DELETE FROM " + Auto_font_info.TableName + " WHERE font_corr_id = ?", component_id);
+		// 6.根据组件id删除轴标签字体属性信息表
+		Dbo.execute("DELETE FROM " + Auto_font_info.TableName
+				+ " WHERE font_corr_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+				+ " WHERE component_id = ?)", component_id);
+		// 7.根据组件id删除x,y轴标签配置信息表
+		Dbo.execute("DELETE FROM " + Auto_axislabel_info.TableName
+				+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
+				+ " WHERE component_id = ?)", component_id);
+		// 8.根据组件id删除x,y轴线配置信息表
+		Dbo.execute("DELETE FROM " + Auto_axisline_info.TableName
+				+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName +
+				" WHERE component_id = ?)", component_id);
+		// 9.根据组件id删除轴配置信息表
+		Dbo.execute("DELETE FROM " + Auto_axis_info.TableName + " WHERE component_id = ?", component_id);
+		// 10.根据组件id删除二维表样式信息表
+		Dbo.execute("DELETE FROM " + Auto_table_info.TableName + " WHERE component_id = ?", component_id);
+		// 11.根据组件id删除图表配置信息表
+		Dbo.execute("DELETE FROM " + Auto_chartsconfig.TableName + " WHERE component_id = ?", component_id);
+		// 12.根据组件id删除文本标签信息表
+		Dbo.execute("DELETE FROM " + Auto_label.TableName + " WHERE label_corr_id = ?", component_id);
+		// 13.根据组件id删除图例信息表
+		Dbo.execute("DELETE FROM " + Auto_legend_info.TableName + " WHERE component_id = ?", component_id);
+	}
+
+	@Method(desc = "获取数据仪表盘首页数据", logicStep = "1.查询数据仪表板信息表数据")
+	@Return(desc = "返回数据仪表板信息表数据", range = "无限制")
+	public List<Map<String, Object>> getDataDashboardInfo() {
+		// 1.查询数据仪表板信息表数据
+		return Dbo.queryList("SELECT * FROM " + Auto_dashboard_info.TableName
+				+ " WHERE user_id = ? order by create_date desc,create_time desc", getUserId());
+	}
+
+	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "1.根据仪表板id获取数据仪表板信息表数据" +
+			"2.获取仪表板边框组件信息表信息" +
+			"3.查询关联信息表" +
+			"4.查询仪表板标题表与字体表信息" +
+			"5.查询仪表板分割线表信息" +
+			"6.返回仪表盘信息")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	@Return(desc = "返回仪表盘信息", range = "无限制")
+	public Map<String, Object> getDataDashboardInfoById(long dashboard_id) {
+		// 1.根据仪表板id获取数据仪表板信息表数据
+		Map<String, Object> dashboardInfo = Dbo.queryOneObject(
+				"SELECT * FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id=?",
+				dashboard_id);
+		// 2.获取仪表板边框组件信息表信息
+		List<Auto_frame_info> frameInfoList = Dbo.queryList(Auto_frame_info.class,
+				"SELECT * FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		List<Map<String, Object>> dashboardList = new ArrayList<>();
+		if (!frameInfoList.isEmpty()) {
+			for (Auto_frame_info auto_frame_info : frameInfoList) {
+				Map<String, Object> frameMap = new HashMap<>();
+				frameMap.put("x", auto_frame_info.getX_axis_coord());
+				frameMap.put("y", auto_frame_info.getY_axis_coord());
+				frameMap.put("w", auto_frame_info.getLength());
+				frameMap.put("h", auto_frame_info.getWidth());
+				frameMap.put("i", auto_frame_info.getSerial_number());
+				frameMap.put("type", auto_frame_info.getFrame_id());
+				frameMap.put("label", "2");
+				frameMap.put("static", true);
+				dashboardList.add(frameMap);
+			}
+			dashboardInfo.put("frameInfo", frameInfoList);
+		}
+		// 3.查询关联信息表
+		List<Auto_asso_info> autoAssoInfoList = Dbo.queryList(Auto_asso_info.class,
+				"SELECT * FROM " + Auto_asso_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		List<Auto_comp_sum> autoCompSumList = new ArrayList<>();
+		if (!autoAssoInfoList.isEmpty()) {
+			for (Auto_asso_info auto_asso_info : autoAssoInfoList) {
+				Map<String, Object> object = new HashMap<>();
+				Map<String, Object> componentMap = getVisualComponentInfoById(auto_asso_info.getComponent_id());
+				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
+						componentMap.get("compSum").toString(), Auto_comp_sum.class)
+						.orElseThrow(() -> new BusinessException("转换实体失败"));
+				object.put("x", auto_asso_info.getX_axis_coord());
+				object.put("y", auto_asso_info.getY_axis_coord());
+				object.put("w", auto_asso_info.getLength());
+				object.put("h", auto_asso_info.getWidth());
+				object.put("i", auto_asso_info.getSerial_number());
+				object.put("type", auto_asso_info.getComponent_id());
+				object.put("static", true);
+				autoCompSumList.add(auto_comp_sum);
+				dashboardInfo.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
+				dashboardList.add(object);
+			}
+			dashboardInfo.put("autoCompSum", autoCompSumList);
+		}
+		// 4.查询仪表板标题表与字体表信息
+		List<Map<String, Object>> labelAndFontList = Dbo.queryList(
+				"SELECT * FROM " + Auto_label_info.TableName + " T1 LEFT JOIN "
+						+ Auto_font_info.TableName + " T2 ON CAST(T1.label_id AS INT) = T2.font_corr_id" +
+						" AND T2.font_corr_tname = ? WHERE dashboard_id = ?",
+				Auto_label_info.TableName, dashboard_id);
+		if (!labelAndFontList.isEmpty()) {
+			for (Map<String, Object> map : labelAndFontList) {
+				Auto_label_info auto_label_info = JsonUtil.toObjectSafety(map.toString(), Auto_label_info.class)
+						.orElseThrow(() -> new BusinessException("实体转换失败"));
+				Auto_font_info auto_font_info = JsonUtil.toObjectSafety(map.toString(), Auto_font_info.class)
+						.orElseThrow(() -> new BusinessException("实体转换失败"));
+				map.put("textStyle", auto_font_info);
+				Map<String, Object> labelMap = new HashMap<>();
+				labelMap.put("x", auto_label_info.getX_axis_coord());
+				labelMap.put("y", auto_label_info.getY_axis_coord());
+				labelMap.put("w", auto_label_info.getLength());
+				labelMap.put("h", auto_label_info.getWidth());
+				labelMap.put("i", auto_label_info.getSerial_number());
+				labelMap.put("type", auto_label_info.getLabel_id());
+				labelMap.put("label", "0");
+				labelMap.put("static", true);
+				Map<String, Object> contentColorSize = new HashMap<>();
+				contentColorSize.put("label_content", auto_label_info.getLabel_content());
+				contentColorSize.put("label_color", auto_label_info.getLabel_color());
+				contentColorSize.put("label_size", auto_label_info.getLabel_size());
+				dashboardInfo.put(auto_label_info.getLabel_id().toString(), contentColorSize);
+				dashboardList.add(labelMap);
+			}
+			dashboardInfo.put("labelAndFont", labelAndFontList);
+		}
+		// 5.查询仪表板分割线表信息
+		List<Auto_line_info> autoLineInfoList = Dbo.queryList(Auto_line_info.class,
+				"SELECT * FROM " + Auto_line_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		if (!autoLineInfoList.isEmpty()) {
+			for (Auto_line_info auto_line_info : autoLineInfoList) {
+				Map<String, Object> lineMap = new HashMap<>();
+				lineMap.put("x", auto_line_info.getX_axis_coord());
+				lineMap.put("y", auto_line_info.getY_axis_coord());
+				lineMap.put("w", auto_line_info.getLine_length());
+				lineMap.put("h", auto_line_info.getLine_weight());
+				lineMap.put("i", auto_line_info.getSerial_number());
+				lineMap.put("type", auto_line_info.getLine_id());
+				lineMap.put("label", "1");
+				lineMap.put("static", true);
+				JSONObject contentColorType = new JSONObject();
+				contentColorType.put("line_color", auto_line_info.getLine_color());
+				contentColorType.put("line_type", auto_line_info.getLine_type());
+				dashboardInfo.put(auto_line_info.getLine_id().toString(), contentColorType);
+				dashboardList.add(lineMap);
+			}
+			dashboardInfo.put("autoLineInfo", autoLineInfoList);
+		}
+		dashboardInfo.put("layout", dashboardList);
+		// 6.返回仪表盘信息
+		return dashboardInfo;
+	}
+
+	@Method(desc = "在仪表板上显示组件", logicStep = "1.根据可视化组件ID查看可视化组件信息" +
+			"2.根据组件id查询组件缓存" +
+			"3.返回在仪表盘上展示的组件信息")
+	@Param(name = "autoCompSums", desc = "组件汇总表实体对象数组", range = "与数据库对应规则一致", isBean = true)
+	@Return(desc = "返回在仪表盘上展示的组件信息", range = "无限制")
+	public Map<String, Object> showComponentOnDashboard(Auto_comp_sum[] autoCompSums) {
+		Map<String, Object> componentOnDashBoard = new HashMap<>();
+		if (autoCompSums != null && autoCompSums.length > 0) {
+			List<Map<String, Object>> componentList = new ArrayList<>();
+			for (int i = 0; i < autoCompSums.length; i++) {
+				Auto_comp_sum autoCompSum = autoCompSums[i];
+				Map<String, Object> map = new HashMap<>();
+				// 1.根据可视化组件ID查看可视化组件信息
+				Map<String, Object> componentInfo = getVisualComponentInfoById(autoCompSum.getComponent_id());
+				// 2.根据组件id查询组件缓存
+				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
+						componentInfo.get("compSum").toString(), Auto_comp_sum.class)
+						.orElseThrow(() -> new BusinessException("转换实体失败"));
+				map.put("x", (i % 3) * 33);
+				map.put("y", (i / 3) * 30);
+				map.put("w", 33);
+				map.put("h", 30);
+				map.put("i", autoCompSum.getComponent_id());
+				map.put("static", true);
+				map.put("type", autoCompSum.getComponent_id() + "");
+				componentOnDashBoard.put(String.valueOf(autoCompSum.getComponent_id()),
+						auto_comp_sum.getComponent_buffer());
+				componentList.add(map);
+			}
+			componentOnDashBoard.put("layout", componentList);
+		}
+		// 3.返回在仪表盘上展示的组件信息
+		return componentOnDashBoard;
+	}
+
+	@Method(desc = "保存仪表盘信息", logicStep = "1.校验仪表盘表字段合法性" +
+			"2.判断仪表板名称是否已存在" +
+			"3.新增仪表盘" +
+			"4.新增仪表盘布局信息")
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
+	public void saveDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
+	                                  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+	                                  Auto_frame_info[] autoFrameInfos, String layout) {
+		// 1.校验仪表盘表字段合法性
+		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
+		// 2.判断仪表板名称是否已存在
+		isDashboardNameExist(auto_dashboard_info);
+		auto_dashboard_info.setDashboard_id(PrimayKeyGener.getNextId());
+		auto_dashboard_info.setUser_id(getUserId());
+		auto_dashboard_info.setCreate_date(DateUtil.getSysDate());
+		auto_dashboard_info.setCreate_time(DateUtil.getSysTime());
+		// 使用IsFlag代码项，0:未发布，1:已发布
+		auto_dashboard_info.setDashboard_status(IsFlag.Fou.getCode());
+		// 3.新增仪表盘
+		auto_dashboard_info.add(Dbo.db());
+		// 4.新增仪表盘布局信息
+		addLayoutInfo(auto_dashboard_info, autoFontInfos, autoLabelInfos, autoLineInfos, autoFrameInfos, layout);
+	}
+
+	@Method(desc = "更新仪表盘信息", logicStep = "1.校验仪表盘表字段合法性" +
+			"2.判断仪表板名称是否已存在" +
+			"3.更新仪表盘信息" +
+			"4.删除仪表盘相关表信息" +
+			"5.新增仪表盘布局信息")
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
+	public void updateDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
+	                                    Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+	                                    Auto_frame_info[] autoFrameInfos, String layout) {
+		// 1.校验仪表盘表字段合法性
+		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
+		Validator.notNull(auto_dashboard_info.getDashboard_id(), "更新时仪表盘ID不能为空");
+		// 2.判断仪表板名称是否已存在
+		isDashboardNameExist(auto_dashboard_info);
+		auto_dashboard_info.setUpdate_user(getUserId());
+		auto_dashboard_info.setLast_update_date(DateUtil.getSysDate());
+		auto_dashboard_info.setLast_update_time(DateUtil.getSysTime());
+		// 3.更新仪表盘信息
+		auto_dashboard_info.update(Dbo.db());
+		// 4.删除仪表盘相关表信息
+		deleteDashboardAssoTable(auto_dashboard_info.getDashboard_id());
+		// 5.新增仪表盘布局信息
+		addLayoutInfo(auto_dashboard_info, autoFontInfos, autoLabelInfos, autoLineInfos, autoFrameInfos, layout);
+	}
+
+	@Method(desc = "新增仪表盘布局信息", logicStep = "1.解析仪表盘布局信息" +
+			"2.新增报表组件信息" +
+			"3.新增标题组件信息" +
+			"4.新增分割线组件信息" +
+			"5.新增边框组件信息")
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
+	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
+	                           Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+	                           Auto_frame_info[] autoFrameInfos, String layout) {
+		// 1.解析仪表盘布局信息
+		JSONArray layoutArray = JSONArray.parseArray(layout);
+		for (int i = 0; i < layoutArray.size(); i++) {
+			String label = layoutArray.getJSONObject(i).getString("label");
+			Long primayKey = PrimayKeyGener.getNextId();
+			String operId = PrimayKeyGener.getOperId();
+			if (null == label) {
+				// 2.新增报表组件信息
+				Auto_asso_info asso_info = new Auto_asso_info();
+				asso_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				asso_info.setComponent_id(layoutArray.getJSONObject(i).getString("type"));
+				asso_info.setAsso_info_id(primayKey);
+				asso_info.setLength(layoutArray.getJSONObject(i).getIntValue("w"));
+				asso_info.setWidth(layoutArray.getJSONObject(i).getIntValue("h"));
+				asso_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				asso_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				asso_info.setSerial_number(operId);
+				asso_info.add(Dbo.db());
+			} else if ("0".equals(label)) {
+				// 3.新增标题组件信息
+				Auto_label_info auto_label_info = autoLabelInfos[i];
+				auto_label_info.setLabel_id(primayKey);
+				auto_label_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				auto_label_info.setLength(layoutArray.getJSONObject(i).getIntValue("w"));
+				auto_label_info.setWidth(layoutArray.getJSONObject(i).getIntValue("h"));
+				auto_label_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				auto_label_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				auto_label_info.setSerial_number(operId);
+				auto_label_info.add(Dbo.db());
+				Auto_font_info auto_font_info = autoFontInfos[i];
+				auto_font_info.setFont_id(PrimayKeyGener.getNextId());
+				auto_font_info.setFont_corr_tname(Auto_label_info.TableName);
+				auto_font_info.setFont_corr_id(auto_label_info.getLabel_id());
+				auto_font_info.add(Dbo.db());
+			} else if ("1".equals(label)) {
+				// 4.新增分割线组件信息
+				Auto_line_info auto_line_info = autoLineInfos[i];
+				auto_line_info.setLine_id(primayKey);
+				auto_line_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				auto_line_info.setLine_length(layoutArray.getJSONObject(i).getLongValue("w"));
+				auto_line_info.setLine_weight(layoutArray.getJSONObject(i).getLongValue("h"));
+				auto_line_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				auto_line_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				auto_line_info.setSerial_number(primayKey);
+				auto_line_info.add(Dbo.db());
+			} else if ("2".equals(label)) {
+				// 5.新增边框组件信息
+				Auto_frame_info auto_frame_info = autoFrameInfos[i];
+				auto_frame_info.setFrame_id(primayKey);
+				auto_frame_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
+				auto_frame_info.setLength(layoutArray.getJSONObject(i).getLongValue("w"));
+				auto_frame_info.setWidth(layoutArray.getJSONObject(i).getLongValue("h"));
+				auto_frame_info.setX_axis_coord(layoutArray.getJSONObject(i).getIntValue("x"));
+				auto_frame_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
+				auto_frame_info.setSerial_number(operId);
+				auto_frame_info.add(Dbo.db());
+			}
+		}
+	}
+
+	@Method(desc = "发布仪表盘信息", logicStep = "")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	@Param(name = "dashboard_name", desc = "仪表板名称", range = "新建仪表盘的时候生成")
+	public void releaseDashboardInfo(long dashboard_id, String dashboard_name) {
+		// 1.更新仪表盘盘发布状态
+		DboExecute.updatesOrThrow("更新仪表盘盘发布状态失败",
+				"update " + Auto_dashboard_info.TableName + " set dashboard_status=? where dashboard_id=?",
+				IsFlag.Shi.getCode(), dashboard_id);
+		// 2.发布仪表盘
+		String interface_code = Base64.getEncoder().encodeToString(String.valueOf(dashboard_id).getBytes());
+		Map<String, Object> interfaceMap = Dbo.queryOneObject(
+				"SELECT * FROM " + Interface_info.TableName + " WHERE interface_code = ?",
+				interface_code);
+		if (interfaceMap.isEmpty()) {
+			Interface_info interface_info = new Interface_info();
+			interface_info.setInterface_id(PrimayKeyGener.getNextId());
+			interface_info.setUser_id(getUserId());
+			interface_info.setInterface_code(interface_code);
+			interface_info.setInterface_name(dashboard_name);
+			interface_info.setInterface_state(InterfaceState.QiYong.getCode());
+			interface_info.setInterface_type(InterfaceType.BaoBiaoLei.getCode());
+			interface_info.setUrl(Constant.DASHBOARDINTERFACENAME);
+			interface_info.add(Dbo.db());
+		} else {
+			Interface_info interface_info = JsonUtil.toObjectSafety(interfaceMap.toString(), Interface_info.class)
+					.orElseThrow(() -> new BusinessException("转换接口信息表实体对象失败"));
+			interface_info.setInterface_name(dashboard_name);
+			try {
+				interface_info.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+					logger.error(e);
+					throw new BusinessException("更新接口信息失败" + e.getMessage());
+				}
+			}
+		}
+	}
+
+	@Method(desc = "删除仪表盘", logicStep = "1.判断仪表盘是否已发布已发布不能删除" +
+			"2.删除仪表盘信息" +
+			"3.删除仪表盘相关表信息")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	public void deleteDashboardInfo(long dashboard_id) {
+		// 1.判断仪表盘是否已发布已发布不能删除
+		if (Dbo.queryNumber("select count(*) from " + Auto_dashboard_info.TableName
+						+ " where dashboard_id=? and dashboard_status=?",
+				dashboard_id, IsFlag.Shi.getCode())
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("仪表盘已发布不能删除");
+		}
+		// 2.删除仪表盘信息
+		DboExecute.deletesOrThrow("删除仪表盘信息失败：" + dashboard_id,
+				"DELETE FROM" + Auto_dashboard_info.TableName + "WHERE dashboard_id = ? ", dashboard_id);
+		// 3.删除仪表盘相关表信息
+		deleteDashboardAssoTable(dashboard_id);
+	}
+
+	@Method(desc = "删除仪表盘相关表信息", logicStep = "1.删除仪表板组件关联信息表信息" +
+			"2.删除仪表板标题表信息" +
+			"3.删除仪表板分割线表信息" +
+			"4.删除仪表板边框组件信息表信息" +
+			"5.删除字体属性信息表信息")
+	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
+	private void deleteDashboardAssoTable(long dashboard_id) {
+		// 1.删除仪表板组件关联信息表信息
+		Dbo.execute("DELETE FROM " + Auto_asso_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 2.删除仪表板标题表信息
+		Dbo.execute("DELETE FROM " + Auto_label_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 3.删除仪表板分割线表信息
+		Dbo.execute("DELETE FROM " + Auto_line_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 4.删除仪表板边框组件信息表信息
+		Dbo.execute("DELETE FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
+		// 5.删除字体属性信息表信息
+		Dbo.execute("DELETE FROM " + Auto_font_info.TableName + " WHERE font_corr_tname = ?"
+				+ " AND font_corr_id IN (SELECT CAST(label_id AS INT) FROM " + Auto_label_info.TableName
+				+ " WHERE dashboard_id = ?)", Auto_font_info.TableName, dashboard_id);
+	}
+
+	private void isDashboardNameExist(Auto_dashboard_info auto_dashboard_info) {
+		if (Dbo.queryNumber(
+				"SELECT count(1) FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_name = ?",
+				auto_dashboard_info.getDashboard_name())
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("仪表板名称已存在");
+		}
 	}
 }
