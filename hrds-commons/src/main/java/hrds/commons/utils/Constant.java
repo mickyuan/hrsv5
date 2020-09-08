@@ -198,7 +198,7 @@ public class Constant {
 	/**
 	 * Agent启动脚本名称
 	 */
-	public static final String START_AGENT  = "agent_operation.sh";
+	public static final String START_AGENT = "agent_operation.sh";
 	/**
 	 * 表默认清洗顺序
 	 */
@@ -273,4 +273,6 @@ public class Constant {
 
 	//自定义静态常量
 	public static final String CUSTOMIZE = "customize";
+	// 仪表盘发布接口名称
+	public static final String DASHBOARDINTERFACENAME = "dashboardRelease";
 }

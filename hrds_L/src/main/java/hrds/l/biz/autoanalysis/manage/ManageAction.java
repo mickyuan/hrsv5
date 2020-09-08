@@ -8,7 +8,6 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
-import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.web.util.Dbo;
@@ -113,7 +112,7 @@ public class ManageAction extends BaseAction {
 
 	@Method(desc = "生成自主分析模板配置参数", logicStep = "")
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
-	public static Map<String, Object> generateTemplateParam(String template_sql) {
+	public  Map<String, Object> generateTemplateParam(String template_sql) {
 		String dbType = JdbcConstants.POSTGRESQL;
 		// sql格式化
 		String format_sql = SQLUtils.format(template_sql, dbType).trim();
@@ -331,7 +330,7 @@ public class ManageAction extends BaseAction {
 				"\tLEFT JOIN CS01_DB01_CATALOG_SALES t2 ON t1.i_item_sk = t2.cs_warehouse_sk\n" +
 				"WHERE t1.i_item_sk != 1\n" +
 				"\tAND t1.i_class_id BETWEEN 1 AND 2";
-		System.out.println(JsonUtil.toJson(generateTemplateParam(template_sql)));
+//		System.out.println(JsonUtil.toJson(generateTemplateParam(template_sql)));
 //		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(template_sql);
 //		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
 //		selectColumnMap.forEach((k, v) -> System.out.println(k + "-->" + v));
@@ -403,7 +402,7 @@ public class ManageAction extends BaseAction {
 
 	private static String getCond(List<Auto_tp_cond_info> autoTpCondInfoList, String cond,
 	                              Auto_tp_cond_info auto_tp_cond_info) {
-		if (cond.startsWith(AND) && !cond.contains("BETWEEN")) {
+		if (cond.startsWith(AND) && !cond.contains(BETWEEN)) {
 			cond = cond.replace(AND, "");
 		}
 		if (cond.startsWith(OR)) {
