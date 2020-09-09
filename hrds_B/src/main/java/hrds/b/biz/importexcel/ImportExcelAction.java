@@ -69,7 +69,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -97,6 +96,9 @@ public class ImportExcelAction extends BaseAction {
 		try {
 			boolean isUpload = Boolean.parseBoolean(upload);
 			uploadedFile = FileUploadUtil.getUploadedFile(file);
+			if (!uploadedFile.exists()) {
+				throw new BusinessException("上传文件不存在！");
+			}
 			workbookFromExcel = ExcelUtil.getWorkbookFromExcel(uploadedFile);
 			DatabaseWrapper db = Dbo.db();
 

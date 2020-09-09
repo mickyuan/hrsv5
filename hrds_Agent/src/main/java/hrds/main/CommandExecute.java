@@ -13,6 +13,7 @@ import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CollectType;
+import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.commons.logging.Log;
@@ -78,8 +79,13 @@ public class CommandExecute {
 					//数据库直连采集
 					startJdbcToDatabase(sourceDataConfBean, collectTableBean);
 				} else if (CollectType.ShuJuKuChouShu.getCode().equals(sourceDataConfBean.getCollect_type())) {
+					String selectFileFormat = args[4];
+					//判断存储层配置是否有作业调度传参的存储层配置
+					if (!isSupportSelectFormat(selectFileFormat, collectTableBean.getData_extraction_def_list())) {
+						throw new AppSystemException("请检查作业调度的参数5(文件格式)和数据库卸数指定的文件格式是否一致");
+					}
 					//根据作业调度指定的文件格式，本次作业只跑指定卸数的文件格式
-					collectTableBean.setSelectFileFormat(args[4]);
+					collectTableBean.setSelectFileFormat(selectFileFormat);
 					startJdbcToFile(sourceDataConfBean, collectTableBean);
 				} else {
 					throw new AppSystemException("不支持的数据库采集类型");
@@ -96,7 +102,19 @@ public class CommandExecute {
 		}
 	}
 
-	private static void startJdbcToDatabase(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
+	private static boolean isSupportSelectFormat(String selectFileFormat,
+												 List<Data_extraction_def> data_extraction_def_list) {
+		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
+			//只执行作业调度指定的文件格式
+			if (selectFileFormat.equals(data_extraction_def.getDbfile_format())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static void startJdbcToDatabase(SourceDataConfBean sourceDataConfBean, CollectTableBean
+			collectTableBean) {
 		ExecutorService executor = null;
 		try {
 			executor = Executors.newFixedThreadPool(1);
@@ -159,7 +177,8 @@ public class CommandExecute {
 		}
 	}
 
-	private static CollectTableBean getCollectTableBean(List<CollectTableBean> collectTableBeanList, String tableName) {
+	private static CollectTableBean getCollectTableBean(List<CollectTableBean> collectTableBeanList, String
+			tableName) {
 		for (CollectTableBean collectTableBean : collectTableBeanList) {
 			if (tableName.equals(collectTableBean.getTable_name())) {
 				return collectTableBean;

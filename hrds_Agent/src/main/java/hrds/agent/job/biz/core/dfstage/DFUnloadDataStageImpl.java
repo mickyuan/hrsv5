@@ -218,7 +218,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	}
 
 	/**
-	 * 获取文件转存的默认编码，目的地有oracle数据库时，会主动去取oracle数据库键值对下配置的编码，
+	 * 获取文件转存的默认编码，目的地数据库有配置database_code时，会主动去取数据库键值对下配置的编码，选择多个目的地，默认使用第一个库的该编码
 	 * 没有设置，取读文件的编码为写文件的编码
 	 *
 	 * @param collectTableBean 采集的表属性实体
@@ -227,9 +227,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 	private String getDbFileArchivedCode(CollectTableBean collectTableBean, String fileCode) {
 		List<DataStoreConfBean> dataStoreConfBean = collectTableBean.getDataStoreConfBean();
 		for (DataStoreConfBean bean : dataStoreConfBean) {
-			if (Store_type.DATABASE.getCode().equals(bean.getStore_type())) {
-				Map<String, String> data_store_connect_attr = bean.getData_store_connect_attr();
-//				if(DatabaseType.Oracle10g.getCode().equals(data_store_connect_attr.get(StorageTypeKey.database_type)))
+			Map<String, String> data_store_connect_attr = bean.getData_store_connect_attr();
+			if (data_store_connect_attr != null && !data_store_connect_attr.isEmpty()) {
 				if (!StringUtil.isEmpty(data_store_connect_attr.get(StorageTypeKey.database_code))) {
 					for (DataBaseCode typeCode : DataBaseCode.values()) {
 						if (typeCode.getValue().equalsIgnoreCase(data_store_connect_attr.

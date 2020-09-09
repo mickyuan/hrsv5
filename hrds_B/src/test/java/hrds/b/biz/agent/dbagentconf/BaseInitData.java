@@ -21,6 +21,7 @@ import hrds.commons.entity.Table_column;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class BaseInitData {
 	/**
 	 * 测试数据用户ID
 	 */
-	public final long TEST_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 2001);
+	public final long TEST_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 2001) + threadId;
 	/**
 	 * 测试部门ID
 	 */
@@ -476,9 +477,10 @@ public class BaseInitData {
 	/**
 	 * 码值转换系统编号集合
 	 */
-	public final List<String> ORIG_LIST = new ArrayList<>();
+	public List<String> ORIG_LIST = null;
 
 	public List<Orig_syso_info> buildOrigSysInfo() {
+		ORIG_LIST = new ArrayList<>();
 		List<Orig_syso_info> origSysoInfos = new ArrayList<>();
 		for (int i = 0; i < 3; i++) {
 			String origSysCode = null;
@@ -517,9 +519,10 @@ public class BaseInitData {
 	/**
 	 * 原系统编码主键集合
 	 */
-	public final List<Long> ORIG_CODE_LIST = new ArrayList<>();
+	public List<Long> ORIG_CODE_LIST = null;
 
 	public List<Orig_code_info> buildOrigCodeInfo() {
+		ORIG_CODE_LIST = new ArrayList<>();
 		List<Orig_code_info> origCodeInfos = new ArrayList<>();
 		String origSysCode;
 		String codeClassify = null;
