@@ -2,6 +2,7 @@ package hrds.b.biz.agent;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
@@ -31,52 +32,50 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class AgentListActionTest extends WebBaseTestCase {
 
 	//当前线程的id
-	private static long THREAD_ID = Thread.currentThread().getId();
+	private static final BaseInitData baseInitData = new BaseInitData();
 	//获取模拟登陆的URL
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url",
 			"http://127.0.0.1:8888/A/action/hrds/a/biz/login/login");
 	//测试数据用户ID
-	private static final long TEST_USER_ID = 9991L;
+	private static final long TEST_USER_ID = 9991L + baseInitData.threadId;
 	//测试用户密码
 	private static final String TEST_USER_PASSWORD = "test_user";
 	//测试部门ID
-	private static final long TEST_DEPT_ID = 9987L;
+	private static final long TEST_DEPT_ID = 9987L + baseInitData.threadId;
 	//source_id
-	private static final long SOURCE_ID = 1L;
+	private static final long SOURCE_ID = 1L + baseInitData.threadId;
 	//数据库agent_id
-	private static final long DB_AGENT_ID = 7001L;
+	private static final long DB_AGENT_ID = 7001L + baseInitData.threadId;
 	//数据文件agent_id
-	private static final long DF_AGENT_ID = 7002L;
+	private static final long DF_AGENT_ID = 7002L + baseInitData.threadId;
 	//FTPagent_id
-	private static final long FTP_AGENT_ID = 7003L;
+	private static final long FTP_AGENT_ID = 7003L + baseInitData.threadId;
 	//半结构化agent_id
-	private static final long HALF_STRUCT_AGENT_ID = 7004L;
+	private static final long HALF_STRUCT_AGENT_ID = 7004L + baseInitData.threadId;
 	//非结构化agent_id
-	private static final long NON_STRUCT_AGENT_ID = 7005L;
+	private static final long NON_STRUCT_AGENT_ID = 7005L + baseInitData.threadId;
 	//数据库直连采集表id
-	private static final long TABLE_ID = 100201L;
-	private static final long FIRST_CLASSIFY_ID = 10086L;
-	private static final long SECOND_CLASSIFY_ID = 10010L;
-
-	private static final long SYS_USER_TABLE_ID = 7001L;
-	private static final long CODE_INFO_TABLE_ID = 7002L;
-	private static final BaseInitData baseInitData = new BaseInitData();
+	private static final long TABLE_ID = 100201L + baseInitData.threadId;
+	private static final long FIRST_CLASSIFY_ID = 10086L + baseInitData.threadId;
+	private static final long SECOND_CLASSIFY_ID = 10010L + baseInitData.threadId;
+	private static final long SYS_USER_TABLE_ID = 7001L + baseInitData.threadId;
+	private static final long CODE_INFO_TABLE_ID = 7002L + baseInitData.threadId;
 	private static final JSONObject tableCleanOrder = baseInitData.initTableCleanOrder();
 	private static final JSONObject columnCleanOrder = baseInitData.initColumnCleanOrder();
 
-	private static final long BASE_SYS_USER_PRIMARY = 2000L;
+	private static final long BASE_SYS_USER_PRIMARY = 2000L + baseInitData.threadId;
 
-	private static final long BASE_EXTRACTION_DEF_ID = 7788L;
+	private static final long BASE_EXTRACTION_DEF_ID = 7788L + baseInitData.threadId;
 
-	private static final long BASE_TB_STORAGE_ID = 10669588L;
+	private static final long BASE_TB_STORAGE_ID = 10669588L + baseInitData.threadId;
 
-	private static final long BASE_LAYER_ID = 4399L;
+	private static final long BASE_LAYER_ID = 4399L + baseInitData.threadId;
 
-	private static final long UNEXPECTED_ID = 999999999L;
+	private static final long UNEXPECTED_ID = 999999999L + baseInitData.threadId;
 
-	private static final long BASE_LAYER_ARR_ID = 43999L;
+	private static final long BASE_LAYER_ARR_ID = 43999L + baseInitData.threadId;
 
-	private static final long DATA_STORE_LAYER_ADDED_ID = 439999L;
+	private static final long DATA_STORE_LAYER_ADDED_ID = 439999L + baseInitData.threadId;
 
 
 	/**
@@ -207,11 +206,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			String driver = i % 2 == 0 ? "" : "org.postgresql.Driver";
 			String ip = i % 2 == 0 ? "" : "127.0.0.1";
 			String port = i % 2 == 0 ? "" : "8888";
-			String databaseCode = i % 2 == 0 ? "" : "1";
 			String url = i % 2 == 0 ? "" : "jdbc:postgresql://127.0.0.1:8888/postgresql";
-			String dbfileFormat = i % 2 == 0 ? "1" : "";
-			String isHidden = i % 2 == 0 ? IsFlag.Fou.getCode() : IsFlag.Shi.getCode();
-			String fileSuffix = i % 2 == 0 ? "dat" : "";
 			String planeUrl = i % 2 == 0 ? "/home/hyrenshufu/wzc/test/data" : "";
 			String rowSeparator = i % 2 == 0 ? "|" : "";
 			String dbFlag = i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode();
@@ -221,10 +216,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 			databaseSet.setAgent_id(agentId);
 			databaseSet.setDatabase_number("dbtest" + i);
 			databaseSet.setDb_agent(dbFlag);
-//			databaseSet.setIs_load(IsFlag.Shi.getCode());
-//			databaseSet.setIs_hidden(isHidden);
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-//			databaseSet.setIs_header(IsFlag.Shi.getCode());
 			databaseSet.setClassify_id(classifyId);
 			databaseSet.setTask_name("wzcTaskName" + i);
 			databaseSet.setDatabase_type(databaseType);
@@ -232,14 +224,12 @@ public class AgentListActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_drive(driver);
 			databaseSet.setDatabase_ip(ip);
 			databaseSet.setDatabase_port(port);
-//			databaseSet.setDatabase_code(databaseCode);
 			databaseSet.setJdbc_url(url);
-//			databaseSet.setDbfile_format(dbfileFormat);
-//			databaseSet.setFile_suffix(fileSuffix);
 			databaseSet.setPlane_url(planeUrl);
 			databaseSet.setRow_separator(rowSeparator);
 			databaseSet.setDatabase_pad(databasePwd);
 			databaseSet.setUser_name(userName);
+			databaseSet.setCollect_type("3");
 
 			databases.add(databaseSet);
 		}
@@ -248,7 +238,6 @@ public class AgentListActionTest extends WebBaseTestCase {
 		List<Object_collect> objectCollects = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
 			long id = i % 2 == 0 ? 2001L : 2002L;
-			String runWay = i % 2 == 0 ? "1" : "2";
 			Object_collect objectCollect = new Object_collect();
 			objectCollect.setOdc_id(id);
 			objectCollect.setObject_collect_type(ObjectCollectType.DuiXiangCaiJi.getCode());
@@ -563,7 +552,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongSourceIdResult.isSuccess(), is(true));
 		Result wrongSourceIdData = wrongSourceIdResult.getDataForResult();
-		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.getRowCount() + "条Agent数据", wrongSourceIdData.getRowCount(), is(0));
+		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.getRowCount() + "条Agent数据",
+				wrongSourceIdData.getRowCount(), is(1));
 
 		//错误数据访问2：构建错误的agentType，判断拿到的数据是否为空
 		String wrongAgentType = "6";
@@ -660,9 +650,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(errorAgentIdString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(ar.isSuccess(), is(false));
-
 		//错误数据访问2：sourceId传入一个errorSourceId，判断ar.isSuccess()是否为false
-		long errorSourceId = 2L;
+		long errorSourceId = -2L;
 		String errorSourceIdString = new HttpClient()
 				.addData("sourceId", errorSourceId)
 				.addData("agentId", DB_AGENT_ID)
@@ -935,7 +924,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
-		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
+		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
+				wrongDatabaseSetData.getRowCount(), is(2));
 	}
 
 	/**
@@ -968,7 +958,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
-		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
+		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
+				wrongDatabaseSetData.getRowCount(), is(2));
 
 	}
 
@@ -1002,7 +993,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
-		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
+		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
+				wrongDatabaseSetData.getRowCount(), is(2));
 	}
 
 	/**
@@ -1035,7 +1027,8 @@ public class AgentListActionTest extends WebBaseTestCase {
 				-> new BusinessException("连接失败!"));
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
-		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.getRowCount() + "项", wrongDatabaseSetData.getRowCount(), is(0));
+		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
+				wrongDatabaseSetData.getRowCount(), is(2));
 	}
 
 //	/**
@@ -1581,6 +1574,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 //		}
 //	}
 
+	@Method(desc = "构造测试发送任务数据", logicStep = "构造测试发送任务数据")
 	private void buildTestDataForSendTask() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 
@@ -2220,6 +2214,13 @@ public class AgentListActionTest extends WebBaseTestCase {
 			}
 			assertThat("<code_info>表对应的字段测试数据初始化", codeInfosCount, is(5));
 
+			int origCodeInfoCount = 0;
+			for (Orig_code_info origCodeInfo : origCodeInfos) {
+				int count = origCodeInfo.add(db);
+				origCodeInfoCount += count;
+			}
+			assertThat("<origCodeInfo>表对应的字段测试数据初始化", origCodeInfoCount, is(5));
+
 			int columnCleanCount = 0;
 			for (Column_clean columnClean : colComples) {
 				int count = columnClean.add(db);
@@ -2394,24 +2395,31 @@ public class AgentListActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE agent_id in (?,?)", DB_AGENT_ID,
 					DF_AGENT_ID);
 			//删除 column_clean
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " WHERE column_id in (?,?,?,?,?,?,?)", 2002L, 2003L,
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " WHERE column_id in (?,?,?,?,?,?,?)",
+					2002L + baseInitData.threadId, 2003L + baseInitData.threadId,
 					2005, 2011, 2010, 3003, 3004);
 			//删除 column_merge
-			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " WHERE table_id in (?)", 7001);
+			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " WHERE table_id in (?)",
+					7001 + baseInitData.threadId);
 			//删除 column_split
-			SqlOperator.execute(db, "delete from " + Column_split.TableName + " WHERE column_id in (?,?)", 3003, 3004);
+			SqlOperator.execute(db, "delete from " + Column_split.TableName + " WHERE column_id in (?,?)",
+					3003 + baseInitData.threadId, 3004 + baseInitData.threadId);
 			//data_extraction_def
-			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " WHERE table_id in (?,?)", 7001, 7002);
+			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " WHERE table_id in (?,?)",
+					7001 + baseInitData.threadId, 7002 + baseInitData.threadId);
 			//table_storage_info
-			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " WHERE storage_id in (?,?)", 10669588,
+			SqlOperator.execute(db, "delete from " + Table_storage_info.TableName + " WHERE storage_id in (?,?)",
+					10669588 + baseInitData.threadId,
 					10669589);
 			//data_store_layer_added
 			SqlOperator.execute(db, "delete from " + Data_store_layer_added.TableName + " WHERE dslad_id in (?,?,?)",
-					439999, 440000, 440001);
+					439999 + baseInitData.threadId, 440000 + baseInitData.threadId, 440001 + baseInitData.threadId);
 			//dtab_relation_store
-			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " WHERE dsl_id in (?)", 4400);
+			SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName + " WHERE dsl_id in (?)",
+					4400 + baseInitData.threadId);
 			//dcol_relation_store
-			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " WHERE dslad_id in (?)", 439999);
+			SqlOperator.execute(db, "delete from " + Dcol_relation_store.TableName + " WHERE dslad_id in (?)",
+					439999 + baseInitData.threadId);
 
 			SqlOperator.commitTransaction(db);
 		}
