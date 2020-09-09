@@ -34,7 +34,7 @@ public class Auto_tp_info extends ProjectTableEntity
 	private String template_name;
 	@DocBean(name ="template_desc",value="模板描述:",dataType = String.class,required = false)
 	private String template_desc;
-	@DocBean(name ="data_source",value="数据来源:",dataType = String.class,required = true)
+	@DocBean(name ="data_source",value="是否为外部数据(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String data_source;
 	@DocBean(name ="template_sql",value="模板sql语句:",dataType = String.class,required = true)
 	private String template_sql;
@@ -71,11 +71,11 @@ public class Auto_tp_info extends ProjectTableEntity
 	public void setTemplate_desc(String template_desc){
 		this.template_desc=template_desc;
 	}
-	/** 取得：数据来源 */
+	/** 取得：是否为外部数据 */
 	public String getData_source(){
 		return data_source;
 	}
-	/** 设置：数据来源 */
+	/** 设置：是否为外部数据 */
 	public void setData_source(String data_source){
 		this.data_source=data_source;
 	}

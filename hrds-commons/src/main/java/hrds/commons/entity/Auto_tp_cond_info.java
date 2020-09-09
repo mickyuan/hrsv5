@@ -48,8 +48,8 @@ public class Auto_tp_cond_info extends ProjectTableEntity
 	private String show_type;
 	@DocBean(name ="pre_value",value="预设值:",dataType = String.class,required = false)
 	private String pre_value;
-	@DocBean(name ="is_flag",value="是否标识(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
-	private String is_flag;
+	@DocBean(name ="is_required",value="是否必填(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_required;
 	@DocBean(name ="is_dept_id",value="是否为部门ID(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_dept_id;
 	@DocBean(name ="template_id",value="模板ID:",dataType = Long.class,required = true)
@@ -139,13 +139,13 @@ public class Auto_tp_cond_info extends ProjectTableEntity
 	public void setPre_value(String pre_value){
 		this.pre_value=pre_value;
 	}
-	/** 取得：是否标识 */
-	public String getIs_flag(){
-		return is_flag;
+	/** 取得：是否必填 */
+	public String getIs_required(){
+		return is_required;
 	}
-	/** 设置：是否标识 */
-	public void setIs_flag(String is_flag){
-		this.is_flag=is_flag;
+	/** 设置：是否必填 */
+	public void setIs_required(String is_required){
+		this.is_required=is_required;
 	}
 	/** 取得：是否为部门ID */
 	public String getIs_dept_id(){

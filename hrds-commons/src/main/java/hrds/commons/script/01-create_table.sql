@@ -213,7 +213,7 @@ CREATE_DATE                                       CHAR(8) NOT NULL, --创建日�
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CATEGORY_SEQ                                      VARCHAR(512) NULL, --分类序号
 CATEGORY_NUM                                      VARCHAR(512) NOT NULL, --分类编号
-CREATE_ID                                         DECIMAL(10) NOT NULL, --创建用户
+CREATE_ID                                         BIGINT default 0 NOT NULL, --创建用户
 PARENT_CATEGORY_ID                                BIGINT default 0 NOT NULL, --集市分类id
 DATA_MART_ID                                      BIGINT default 0 NOT NULL, --数据集市id
 CONSTRAINT DM_CATEGORY_PK PRIMARY KEY(CATEGORY_ID)   );
@@ -490,7 +490,7 @@ CREATE TABLE AUTO_TP_INFO(
 TEMPLATE_ID                                       BIGINT default 0 NOT NULL, --模板ID
 TEMPLATE_NAME                                     VARCHAR(100) NOT NULL, --模板名称
 TEMPLATE_DESC                                     VARCHAR(512) NULL, --模板描述
-DATA_SOURCE                                       CHAR(2) NOT NULL, --数据来源
+DATA_SOURCE                                       CHAR(1) NOT NULL, --是否为外部数据
 TEMPLATE_SQL                                      VARCHAR(512) NOT NULL, --模板sql语句
 TEMPLATE_STATUS                                   CHAR(2) NOT NULL, --模板状态
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
@@ -516,7 +516,7 @@ VALUE_TYPE                                        CHAR(2) NOT NULL, --值类型
 VALUE_SIZE                                        VARCHAR(100) NULL, --值大小
 SHOW_TYPE                                         CHAR(2) NULL, --展现形式
 PRE_VALUE                                         VARCHAR(100) NULL, --预设值
-IS_FLAG                                           CHAR(1) NOT NULL, --是否标识
+IS_REQUIRED                                       CHAR(1) NOT NULL, --是否必填
 IS_DEPT_ID                                        CHAR(1) NOT NULL, --是否为部门ID
 TEMPLATE_ID                                       BIGINT default 0 NOT NULL, --模板ID
 CONSTRAINT AUTO_TP_COND_INFO_PK PRIMARY KEY(TEMPLATE_COND_ID)   );
@@ -1790,7 +1790,7 @@ HDFS_STORAGE_PATH                                 VARCHAR(512) NULL, --hdfs储�
 SOURCE_PATH                                       VARCHAR(512) NOT NULL, --文件路径
 FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
 FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
-FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
+FILE_AVRO_BLOCK                                   BIGINT default 0 NULL, --所存avro文件block号
 IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
 FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
 AGENT_ID                                          BIGINT default 0 NOT NULL, --Agent_id
@@ -1819,7 +1819,7 @@ FILE_SUFFIX                                       VARCHAR(512) NOT NULL, --文�
 SOURCE_PATH                                       VARCHAR(512) NULL, --文件路径
 FILE_MD5                                          VARCHAR(40) NULL, --文件MD5值
 FILE_AVRO_PATH                                    VARCHAR(500) NULL, --所在avro文件地址
-FILE_AVRO_BLOCK                                   BIGINT NULL, --所存avro文件block号
+FILE_AVRO_BLOCK                                   DECIMAL(15) NULL, --所存avro文件block号
 IS_BIG_FILE                                       CHAR(1) default '1' NULL, --是否为大文件
 IS_CACHE                                          CHAR(1) NULL, --是否本地缓存
 FOLDER_ID                                         BIGINT default 0 NOT NULL, --文件夹编号
