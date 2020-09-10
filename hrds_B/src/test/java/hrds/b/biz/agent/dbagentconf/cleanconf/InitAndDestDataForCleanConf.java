@@ -291,7 +291,7 @@ public class InitAndDestDataForCleanConf {
 			String newField;
 			switch (i) {
 				case 1:
-					tbCleanId = 11111L;
+					tbCleanId = 11111L + baseInitData.threadId;
 					compleType = FillingType.QianBuQi.getCode();
 					cleanType = CleanType.ZiFuBuQi.getCode();
 					tableId = SYS_USER_TABLE_ID;
@@ -301,7 +301,7 @@ public class InitAndDestDataForCleanConf {
 					newField = "";
 					break;
 				case 2:
-					tbCleanId = 111111L;
+					tbCleanId = 111111L + baseInitData.threadId;
 					compleType = "";
 					cleanType = CleanType.ZiFuTiHuan.getCode();
 					tableId = SYS_USER_TABLE_ID;
@@ -337,50 +337,50 @@ public class InitAndDestDataForCleanConf {
 			long columnId = i % 2 == 0 ? 2002L : 2003L;
 
 			Column_clean colComple = new Column_clean();
-			colComple.setCol_clean_id(colCleanId);
+			colComple.setCol_clean_id(colCleanId + baseInitData.threadId);
 			colComple.setClean_type(cleanType);
 			colComple.setFilling_type(compleType);
 			colComple.setCharacter_filling(compleChar);
 			colComple.setFilling_length(length);
-			colComple.setColumn_id(columnId);
+			colComple.setColumn_id(columnId + baseInitData.threadId);
 
 			colComples.add(colComple);
 		}
 
 		//11、column_clean表测试数据，给user_name设置字符替换
 		Column_clean replace = new Column_clean();
-		replace.setCol_clean_id(555555L);
-		replace.setColumn_id(2005L);
+		replace.setCol_clean_id(555555L + baseInitData.threadId);
+		replace.setColumn_id(2005L + baseInitData.threadId);
 		replace.setClean_type(CleanType.ZiFuTiHuan.getCode());
 		replace.setField(StringUtil.string2Unicode("ceshi"));
 		replace.setReplace_feild(StringUtil.string2Unicode("test"));
 
 		//12、column_clean表测试数据，给login_date设置日期格式化
 		Column_clean dateFormat = new Column_clean();
-		dateFormat.setCol_clean_id(999999L);
-		dateFormat.setColumn_id(2011L);
+		dateFormat.setCol_clean_id(999999L + baseInitData.threadId);
+		dateFormat.setColumn_id(2011L + baseInitData.threadId);
 		dateFormat.setClean_type(CleanType.ShiJianZhuanHuan.getCode());
 		dateFormat.setOld_format("YYYY-MM-DD");
 		dateFormat.setConvert_format("YYYY-MM");
 
 		//column_clean表测试数据，给user_type设置码值转换
 		Column_clean codeValue = new Column_clean();
-		codeValue.setCol_clean_id(999989L);
-		codeValue.setColumn_id(2010L);
+		codeValue.setCol_clean_id(999989L + baseInitData.threadId);
+		codeValue.setColumn_id(2010L + baseInitData.threadId);
 		codeValue.setCodename("codeClassify_one");
 		codeValue.setCodesys("origSysCode_one");
 		codeValue.setClean_type(CleanType.MaZhiZhuanHuan.getCode());
 
 		//column_clean表测试数据，给ci_sp_name（3004L）设置列拆分
 		Column_clean spilt = new Column_clean();
-		spilt.setCol_clean_id(101010101L);
-		spilt.setColumn_id(3004L);
+		spilt.setCol_clean_id(101010101L + baseInitData.threadId);
+		spilt.setColumn_id(3004L + baseInitData.threadId);
 		spilt.setClean_type(CleanType.ZiFuChaiFen.getCode());
 
 		//column_clean表测试数据，给ci_sp_classname（3003L）设置列拆分
 		Column_clean spiltTwo = new Column_clean();
-		spiltTwo.setCol_clean_id(101010102L);
-		spiltTwo.setColumn_id(3003L);
+		spiltTwo.setCol_clean_id(101010102L + baseInitData.threadId);
+		spiltTwo.setColumn_id(3003L + baseInitData.threadId);
 		spiltTwo.setClean_type(CleanType.ZiFuChaiFen.getCode());
 
 		//13、clean_parameter表测试数据
@@ -411,7 +411,7 @@ public class InitAndDestDataForCleanConf {
 					throw new AppSystemException("意外的错误数据信息");
 			}
 			Clean_parameter cleanParameter = new Clean_parameter();
-			cleanParameter.setC_id(cId);
+			cleanParameter.setC_id(cId + baseInitData.threadId);
 			cleanParameter.setDatabase_id(FIRST_DATABASESET_ID);
 			cleanParameter.setClean_type(cleanType);
 			cleanParameter.setFilling_type(complType);
@@ -436,14 +436,14 @@ public class InitAndDestDataForCleanConf {
 			long columnId = 3004L;
 
 			Column_split columnSplit = new Column_split();
-			columnSplit.setCol_split_id(colSplitId);
+			columnSplit.setCol_split_id(colSplitId + baseInitData.threadId);
 			columnSplit.setCol_offset(offset);
 			columnSplit.setCol_name(columnName);
 			columnSplit.setSplit_type(spiltType);
 			columnSplit.setCol_zhname(columnChName);
 			columnSplit.setCol_type(columnType);
 			columnSplit.setCol_clean_id(colCleanId);
-			columnSplit.setColumn_id(columnId);
+			columnSplit.setColumn_id(columnId + baseInitData.threadId);
 			columnSplit.setValid_e_date(Constant.MAXDATE);
 			columnSplit.setValid_s_date(DateUtil.getSysDate());
 
@@ -483,13 +483,13 @@ public class InitAndDestDataForCleanConf {
 					break;
 			}
 			Column_split columnSplit = new Column_split();
-			columnSplit.setCol_split_id(colSplitId);
+			columnSplit.setCol_split_id(colSplitId + baseInitData.threadId);
 			columnSplit.setCol_name(columnName);
 			columnSplit.setSplit_type(spiltType);
 			columnSplit.setCol_zhname(columnChName);
 			columnSplit.setCol_type(columnType);
-			columnSplit.setCol_clean_id(colCleanId);
-			columnSplit.setColumn_id(columnId);
+			columnSplit.setCol_clean_id(colCleanId + baseInitData.threadId);
+			columnSplit.setColumn_id(columnId + baseInitData.threadId);
 			columnSplit.setValid_e_date(Constant.MAXDATE);
 			columnSplit.setValid_s_date(DateUtil.getSysDate());
 			columnSplit.setSeq(seq);
@@ -508,7 +508,7 @@ public class InitAndDestDataForCleanConf {
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
-			tableColumn.setColumn_id(columnId);
+			tableColumn.setColumn_id(columnId + baseInitData.threadId);
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColumn_name(columnName);
 			tableColumn.setColumn_type("varchar(512)");
@@ -546,7 +546,7 @@ public class InitAndDestDataForCleanConf {
 			Table_column tableColumn = new Table_column();
 			tableColumn.setTable_id(CODE_INFO_TABLE_ID);
 			tableColumn.setIs_new(IsFlag.Shi.getCode());
-			tableColumn.setColumn_id(columnId);
+			tableColumn.setColumn_id(columnId + baseInitData.threadId);
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setColumn_name(columnName);
 			tableColumn.setColumn_type("varchar(512)");
@@ -559,7 +559,7 @@ public class InitAndDestDataForCleanConf {
 
 		//17、column_merge表测试数据，对sys_user表中的user_mobile和useris_admin合并成列，名叫user_mobile_admin
 		Column_merge columnMerge = new Column_merge();
-		columnMerge.setCol_merge_id(16161616L);
+		columnMerge.setCol_merge_id(16161616L + baseInitData.threadId);
 		columnMerge.setTable_id(SYS_USER_TABLE_ID);
 		columnMerge.setCol_name("user_mobile_admin");
 		columnMerge.setOld_name("user_mobile和useris_admin");
@@ -570,7 +570,7 @@ public class InitAndDestDataForCleanConf {
 
 		//18、由于配置了列合并，需要把合并后的列入到table_column表中
 		Table_column mergeColumn = new Table_column();
-		mergeColumn.setColumn_id(1717171717L);
+		mergeColumn.setColumn_id(1717171717L + baseInitData.threadId);
 		mergeColumn.setTable_id(SYS_USER_TABLE_ID);
 		mergeColumn.setIs_new(IsFlag.Shi.getCode());
 		mergeColumn.setIs_primary_key(IsFlag.Fou.getCode());
@@ -769,25 +769,34 @@ public class InitAndDestDataForCleanConf {
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", CODE_INFO_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", AGENT_INFO_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where table_id = ? ", DATA_SOURCE_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_column.TableName + " where column_id in (?,?,?,?,?,?)",
+					121212 + baseInitData.threadId, 232323 + baseInitData.threadId, 141414 + baseInitData.threadId,
+					151515 + baseInitData.threadId, 161616 + baseInitData.threadId, 1717171717 + baseInitData.threadId);
 			//9、删除table_clean表测试数据
 			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Table_clean.TableName + " where table_clean_id in (?,?)",
+					11111L + baseInitData.threadId, 111111L + baseInitData.threadId);
 			//10、删除column_clean表测试数据
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2002L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2003L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2005L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2011L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3004L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 3003L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 2010L);
-			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id = ? ", 1717171717L);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where column_id in(?,?,?,?,?,?)",
+					2002L + baseInitData.threadId, 2005L + baseInitData.threadId, 2010L + baseInitData.threadId,
+					2011L + baseInitData.threadId, 2003L + baseInitData.threadId, 3003L + baseInitData.threadId);
+			SqlOperator.execute(db, "delete from " + Column_clean.TableName + " where col_clean_id in(?,?,?,?,?,?,?)",
+					33333L + baseInitData.threadId, 555555L + baseInitData.threadId, 999999L + baseInitData.threadId,
+					101010101L + baseInitData.threadId, 22222L + baseInitData.threadId, 101010102L + baseInitData.threadId,
+					999989L + baseInitData.threadId);
 			//11、删除clean_parameter表测试数据
-			SqlOperator
-					.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
+			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where database_id = ? ", FIRST_DATABASESET_ID);
+			SqlOperator.execute(db, "delete from " + Clean_parameter.TableName + " where c_id in (?,?) ",
+					666666L + baseInitData.threadId, 777777L + baseInitData.threadId);
 			//12、删除column_spilt表测试数据
-			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3004L);
-			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ", 3003L);
+			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ",
+					3004L + baseInitData.threadId);
+			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ",
+					3003L + baseInitData.threadId);
 			//13、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
+			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where col_merge_id = ? ",
+					16161616L + baseInitData.threadId);
 			//14、删除orig_syso_info表数据
 			for (String origSysCode : baseInitData.ORIG_LIST) {
 				SqlOperator.execute(db, "delete from " + Orig_syso_info.TableName + " where orig_sys_code = ? ", origSysCode);
