@@ -793,6 +793,8 @@ public class InitAndDestDataForCleanConf {
 					3004L + baseInitData.threadId);
 			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where column_id = ? ",
 					3003L + baseInitData.threadId);
+			SqlOperator.execute(db, "delete from " + Column_split.TableName + " where col_name in (?,?,?,?,?)",
+					"ci_sp", "_name", "ci", "sp", "classname");
 			//13、删除column_merge表测试数据
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where table_id = ? ", SYS_USER_TABLE_ID);
 			SqlOperator.execute(db, "delete from " + Column_merge.TableName + " where col_merge_id = ? ",
