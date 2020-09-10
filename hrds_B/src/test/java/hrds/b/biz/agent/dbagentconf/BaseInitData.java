@@ -36,7 +36,7 @@ public class BaseInitData {
 	/**
 	 * 测试数据用户ID
 	 */
-	public final long TEST_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 2001) + threadId;
+	public final long TEST_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id", 2001);
 	/**
 	 * 测试部门ID
 	 */
