@@ -750,7 +750,7 @@ public class InitAndDestDataForCleanConf {
 	public static void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//1、删除用户表(sys_user)测试数据
-			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
+//			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", TEST_USER_ID);
 			//2、删除部门表(department_info)测试数据
 			SqlOperator.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", TEST_DEPT_ID);
 			//3、删除数据源表(data_source)测试数据
