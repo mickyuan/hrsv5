@@ -213,6 +213,7 @@ public class DataConvertedNodeData {
             map.put("dsl_id", dsl_id);
             map.put("file_id", file_id);
             map.put("table_name", table_name);
+            map.put("original_name", table_name);
             map.put("hyren_name", table_name);
             dqcTableNodes.add(map);
         });
@@ -265,6 +266,7 @@ public class DataConvertedNodeData {
             map.put("dsl_id", dsl_id);
             map.put("file_id", file_id);
             map.put("table_name", table_name);
+            map.put("original_name", table_name);
             map.put("hyren_name", table_name);
             udlTableNodes.add(map);
         });

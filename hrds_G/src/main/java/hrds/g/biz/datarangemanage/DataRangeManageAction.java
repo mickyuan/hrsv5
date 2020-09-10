@@ -1,5 +1,6 @@
 package hrds.g.biz.datarangemanage;
 
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -9,14 +10,13 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
+import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
@@ -30,8 +30,6 @@ import java.util.Map;
 
 @DocClass(desc = "接口数据范围管理接口", author = "dhw", createdate = "2020/3/25 17:53")
 public class DataRangeManageAction extends BaseAction {
-	// 有效结束日期
-	public static final String END_DATE = "99991231";
 
 	private static final Logger logger = LogManager.getLogger();
 
@@ -61,14 +59,51 @@ public class DataRangeManageAction extends BaseAction {
 	                          long[] user_id) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		for (TableDataInfo tableDataInfo : tableDataInfos) {
-			if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
-				// 2.保存贴源层数据
-				saveDCLData(table_note, data_layer, tableDataInfo, user_id);
-			} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
-				// 3.保存集市层数据
-				saveDMLData(table_note, data_layer, user_id, tableDataInfo);
-			} else {
-				throw new BusinessException("该数据层还未开发，待续。。。" + data_layer);
+			// 2.根据存储层获取表与字段信息
+			Map<String, Object> tableInfoAndColumnInfo =
+					DataTableUtil.getTableInfoAndColumnInfo(data_layer, tableDataInfo.getFile_id());
+			for (long userId : user_id) {
+				Table_use_info table_use_info = new Table_use_info();
+				// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
+				// 4.获取系统内对应表名
+				String hyren_name = tableInfoAndColumnInfo.get("table_name").toString();
+				// 5.获取原始文件名称
+				String original_name;
+				if (tableInfoAndColumnInfo.get("original_name") == null) {
+					original_name = tableInfoAndColumnInfo.get("table_name").toString();
+				} else {
+					original_name = tableInfoAndColumnInfo.get("original_name").toString();
+				}
+				// 6.根据用户ID、表名查询当前表是否已登记
+				boolean flag = getUserTableInfo(userId, hyren_name);
+				// 7.生成表使用ID
+				String useId = String.valueOf(PrimayKeyGener.getNextId());
+				// 8.判断当前用户对应表是否已登记做不同处理
+				if (flag) {
+					// 8.1已登记,根据用户ID、表名删除接口表数据
+					deleteInterfaceTableInfo(userId, hyren_name);
+				}
+				// 9.新增表使用信息
+				addTableUseInfo(table_note, data_layer, userId, useId, table_use_info,
+						hyren_name, original_name);
+				// 查询列信息
+				String[] table_ch_column = tableDataInfo.getTable_ch_column();
+				String[] table_en_column = tableDataInfo.getTable_en_column();
+				if (table_ch_column == null && table_en_column == null) {
+					// 获取所有列
+					List<Table_column> tableColumnList = JsonUtil.toObject(
+							JsonUtil.toJson(tableInfoAndColumnInfo.get("column_info_list")),
+							new TypeReference<List<Table_column>>() {
+							}.getType());
+					table_ch_column = new String[tableColumnList.size()];
+					table_en_column = new String[tableColumnList.size()];
+					for (int i = 0; i < tableColumnList.size(); i++) {
+						table_ch_column[i] = tableColumnList.get(i).getColumn_ch_name();
+						table_en_column[i] = tableColumnList.get(i).getColumn_name();
+					}
+				}
+				// 新增系统登记表参数信息
+				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
 			}
 			InterfaceManager.initTable(Dbo.db());
 		}
@@ -85,7 +120,8 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "file_id", desc = "文件ID", range = "无限制")
 	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
 	@Param(name = "tableDataInfo", desc = "表数据信息对象", range = "无限制", isBean = true)
-	private void saveDMLData(String table_note, String data_layer, long[] user_id, TableDataInfo tableDataInfo) {
+	private void saveDMLData(String table_note, String data_layer, long[] user_id, TableDataInfo
+			tableDataInfo) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.查询集市层表数据信息
 		for (long userId : user_id) {
@@ -291,35 +327,36 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "file_id", desc = "表ID", range = "无限制", nullable = true)
 	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
 	@Return(desc = "根据不同数据源类型查询表的列信息并返回", range = "无限制")
-	public Result searchFieldById(String file_id, String data_layer) {
+	public Map<String, Object> searchFieldById(String file_id, String data_layer) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.根据不同数据源类型查询表的列信息并返回
-		if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
-			// 2.1贴源层
-			Map<String, Object> dataStoreMap = Dbo.queryOneObject("SELECT hyren_name,collect_type," +
-					" database_id FROM " + Data_store_reg.TableName + " WHERE file_id = ?", file_id);
-			String hyren_name = dataStoreMap.get("hyren_name").toString();
-			String collect_type = dataStoreMap.get("collect_type").toString();
-			String database_id = dataStoreMap.get("database_id").toString();
-			Result columnResult = Dbo.queryResult("SELECT column_name as field_en_name,column_ch_name as " +
-							" field_cn_name,ti.table_id,tc.column_id,dsr.file_id FROM " + Table_column.TableName +
-							"  tc join " + Table_info.TableName + " ti ON tc.table_id = ti.table_id " +
-							" join " + Data_store_reg.TableName + " dsr ON dsr.table_name= ti.table_name "
-							+ " WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name) = lower(?) "
-							+ "  and ti.valid_e_date = ? AND tc.is_get = ? and tc.is_alive = ?", hyren_name,
-					END_DATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
-			if (AgentType.DuiXiang == AgentType.ofEnumByCode(collect_type)) {
-				columnResult = Dbo.queryResult("SELECT coll_name AS field_en_name,data_desc AS field_cn_name FROM " +
-						Object_collect_struct.TableName + " c JOIN " + Object_collect_task.TableName +
-						" t ON c.ocs_id = t.ocs_id WHERE t.odc_id = ?", database_id);
-			}
-			return columnResult;
-		} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
-			// 2.2集市层
-			return Dbo.queryResult("SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
-					+ " WHERE datatable_id = ?", Long.parseLong(file_id));
-		} else {
-			throw new BusinessException("待开发，目前只支持贴源层与集市层");
-		}
+		return DataTableUtil.getTableInfoAndColumnInfo(data_layer, file_id);
+//		// 2.根据不同数据源类型查询表的列信息并返回
+//		if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
+//			// 2.1贴源层
+//			Map<String, Object> dataStoreMap = Dbo.queryOneObject("SELECT hyren_name,collect_type," +
+//					" database_id FROM " + Data_store_reg.TableName + " WHERE file_id = ?", file_id);
+//			String hyren_name = dataStoreMap.get("hyren_name").toString();
+//			String collect_type = dataStoreMap.get("collect_type").toString();
+//			String database_id = dataStoreMap.get("database_id").toString();
+//			Result columnResult = Dbo.queryResult("SELECT column_name as field_en_name,column_ch_name as " +
+//							" field_cn_name,ti.table_id,tc.column_id,dsr.file_id FROM " + Table_column.TableName +
+//							"  tc join " + Table_info.TableName + " ti ON tc.table_id = ti.table_id " +
+//							" join " + Data_store_reg.TableName + " dsr ON dsr.table_name= ti.table_name "
+//							+ " WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name) = lower(?) "
+//							+ "  and ti.valid_e_date = ? AND tc.is_get = ? and tc.is_alive = ?", hyren_name,
+//					END_DATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
+//			if (AgentType.DuiXiang == AgentType.ofEnumByCode(collect_type)) {
+//				columnResult = Dbo.queryResult("SELECT coll_name AS field_en_name,data_desc AS field_cn_name FROM " +
+//						Object_collect_struct.TableName + " c JOIN " + Object_collect_task.TableName +
+//						" t ON c.ocs_id = t.ocs_id WHERE t.odc_id = ?", database_id);
+//			}
+//			return columnResult;
+//		} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
+//			// 2.2集市层
+//			return Dbo.queryResult("SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
+//					+ " WHERE datatable_id = ?", Long.parseLong(file_id));
+//		} else {
+//			throw new BusinessException("待开发，目前只支持贴源层与集市层");
+//		}
 	}
 }
