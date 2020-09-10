@@ -543,7 +543,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，在该数据源下共有" + halfStructData.getRowCount() + "条半结构化Agent数据", halfStructData.getRowCount(), is(1));
 
 		//错误数据访问1：构建错误的sourceId，判断拿到的数据是否为空
-		long wrongSourceId = 2L;
+		long wrongSourceId = -2L;
 		String wrongSourceIdResp = new HttpClient()
 				.addData("sourceId", wrongSourceId)
 				.addData("agentType", AgentType.ShuJuKu.getCode())
@@ -553,7 +553,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(wrongSourceIdResult.isSuccess(), is(true));
 		Result wrongSourceIdData = wrongSourceIdResult.getDataForResult();
 		assertThat("根据测试数据，构造错误的source_id，应该获得" + wrongSourceIdData.getRowCount() + "条Agent数据",
-				wrongSourceIdData.getRowCount(), is(1));
+				wrongSourceIdData.getRowCount(), is(0));
 
 		//错误数据访问2：构建错误的agentType，判断拿到的数据是否为空
 		String wrongAgentType = "6";
@@ -915,7 +915,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，使用正确的sourceId查询得到的数据库采集任务和数据文件采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
 		//错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongSourceId = 2L;
+		long wrongSourceId = -2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
 				.post(getActionUrl("getDBAndDFTaskBySourceId")).getBodyString();
@@ -925,7 +925,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用和错误的sourceId查询得到的数据库采集任务和数据文件采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
-				wrongDatabaseSetData.getRowCount(), is(2));
+				wrongDatabaseSetData.getRowCount(), is(0));
 	}
 
 	/**
@@ -949,7 +949,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，使用和正确的sourceId查询得到的非结构化采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
 		//错误的数据访问1:使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongSourceId = 2L;
+		long wrongSourceId = -2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
 				.post(getActionUrl("getNonStructTaskBySourceId")).getBodyString();
@@ -959,7 +959,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用和错误的sourceId查询得到的非结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
-				wrongDatabaseSetData.getRowCount(), is(2));
+				wrongDatabaseSetData.getRowCount(), is(0));
 
 	}
 
@@ -984,7 +984,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，使用正确的sourceId查询得到的半结构化采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
 		//错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果集中没有数据
-		long wrongSourceId = 2L;
+		long wrongSourceId = -2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
 				.post(getActionUrl("getHalfStructTaskBySourceId")).getBodyString();
@@ -994,7 +994,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用错误的sourceId查询得到的半结构化采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
-				wrongDatabaseSetData.getRowCount(), is(2));
+				wrongDatabaseSetData.getRowCount(), is(0));
 	}
 
 	/**
@@ -1018,7 +1018,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat("根据测试数据，使用正确的sourceId查询得到的FTP采集任务有" + firResult.getRowCount() + "项", firResult.getRowCount(), is(2));
 
 		//错误的数据访问1：使用错误的sourceId,http请求访问被测试方法,得到响应，判断结果是否正确
-		long wrongSourceId = 2L;
+		long wrongSourceId = -2L;
 		String wrongSourceIdString = new HttpClient()
 				.addData("sourceId", wrongSourceId)
 				.post(getActionUrl("getFTPTaskBySourceId")).getBodyString();
@@ -1028,7 +1028,7 @@ public class AgentListActionTest extends WebBaseTestCase {
 		assertThat(wrongDatabaseSetResult.isSuccess(), is(true));
 		Result wrongDatabaseSetData = wrongDatabaseSetResult.getDataForResult();
 		assertThat("根据测试数据，使用错误的sourceId查询得到的FTP采集任务有" + wrongDatabaseSetData.getRowCount() + "项",
-				wrongDatabaseSetData.getRowCount(), is(2));
+				wrongDatabaseSetData.getRowCount(), is(0));
 	}
 
 //	/**
