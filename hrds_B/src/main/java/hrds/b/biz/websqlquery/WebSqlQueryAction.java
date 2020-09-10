@@ -225,7 +225,12 @@ public class WebSqlQueryAction extends BaseAction {
 		//初始化返回结果
 		List<Map<String, Object>> tableColumnInfos = new ArrayList<>();
 		//执行sql的解析结果
-		List<String> table_name_s = DruidParseQuerySql.parseSqlTableToList(sql);
+		List<String> table_name_s = new ArrayList<>();
+		try {
+			table_name_s = DruidParseQuerySql.parseSqlTableToList(sql);
+		} catch (Exception e) {
+			logger.error("请输入合法的sql! " + sql);
+		}
 		if (!table_name_s.isEmpty()) {
 			table_name_s.forEach(table_name -> {
 				Map<String, Object> map = new HashMap<>();
