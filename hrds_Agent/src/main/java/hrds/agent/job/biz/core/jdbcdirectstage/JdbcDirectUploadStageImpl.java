@@ -183,7 +183,7 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 				//执行失败，恢复上次进数的数据
 				recoverBackupToDayTable(todayTableName, db);
 			}
-			throw new AppSystemException("多线程读取文件batch进库" + dataStoreConfBean.getDsl_name() + "下的表"
+			throw new AppSystemException("数据库直连采集batch进库" + dataStoreConfBean.getDsl_name() + "下的表"
 					+ collectTableBean.getHbase_name() + "异常", e);
 		} finally {
 			if (db != null) {

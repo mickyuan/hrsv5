@@ -14,9 +14,8 @@ import hrds.commons.utils.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
+import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -70,45 +69,73 @@ public class ParseResultSetToDataBase {
 				collectTableBean.getHbase_name() + "_" + 1);
 		long counter = 0;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
+			LOGGER.info("连接配置为：" + dataStoreConfBean.getData_store_connect_attr().toString());
+			LOGGER.info("db.getDatabaseName()==============" + db.getDatabaseName());
+			LOGGER.info("db.getConnection().getSchema()==============" + db.getConnection().getSchema());
+			PreparedStatement pst = db.getConnection().prepareStatement(batchSql);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			//用来batch提交
-			List<Object[]> pool = new ArrayList<>();
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
 					Constant.METAINFOSPLIT);
+			int[] typeArray = tableBean.getTypeArray();
 			int numberOfColumns = selectColumnList.size();
 			LOGGER.info("type : " + typeList.size() + "  colName " + numberOfColumns);
 			while (resultSet.next()) {
 				//用来写一行数据
-				Object[] obj;
-				if (JobConstant.ISADDOPERATEINFO) {
-					obj = new Object[numberOfColumns + 4];
-				} else {
-					obj = new Object[numberOfColumns + 1];
-				}
-				// Count it
 				counter++;
-				// Write columns
 				for (int i = 0; i < numberOfColumns; i++) {
-					//获取值
-					obj[i] = resultSet.getObject(selectColumnList.get(i));
+					int type = typeArray[i];
+					//判断类型
+					if (type == Types.BLOB || type == Types.LONGVARBINARY) {
+						Blob blob = resultSet.getBlob(selectColumnList.get(i));
+						if (blob == null) {
+							pst.setBinaryStream(i + 1, null);
+						} else {
+							pst.setBinaryStream(i + 1, blob.getBinaryStream());
+						}
+					} else if (type == Types.CLOB) {
+						Clob clob = resultSet.getClob(selectColumnList.get(i));
+						if (clob == null) {
+							pst.setCharacterStream(i + 1, null);
+						} else {
+							pst.setCharacterStream(i + 1, clob.getCharacterStream());
+						}
+					} else if (type == Types.VARBINARY) {
+						pst.setBinaryStream(i + 1, resultSet.getBinaryStream(selectColumnList.get(i)));
+					} else {
+						//获取值
+						if (resultSet.getObject(selectColumnList.get(i)) == null) {
+							pst.setNull(i + 1, Types.NULL);
+						} else {
+							if (type == Types.DATE) {
+								pst.setObject(i + 1, resultSet.getDate(selectColumnList.get(i)).toString());
+							} else if (type == Types.TIME) {
+								pst.setObject(i + 1, resultSet.getTime(selectColumnList.get(i)).toString());
+							} else if (type == Types.TIMESTAMP) {
+								pst.setObject(i + 1, resultSet.getTimestamp(selectColumnList.get(i)).toString());
+							} else {
+								pst.setObject(i + 1, resultSet.getObject(selectColumnList.get(i)));
+							}
+						}
+					}
 				}
-				obj[numberOfColumns] = etlDate;
+				pst.setString(numberOfColumns + 1, etlDate);
 				//拼接操作时间、操作日期、操作人
-				appendOperateInfo(obj, numberOfColumns);
-				pool.add(obj);
-				if (pool.size() == JobConstant.BUFFER_ROW) {
+				appendOperateInfo(pst, numberOfColumns);
+				pst.addBatch();
+				if (counter % JobConstant.BUFFER_ROW == 0) {
 					LOGGER.info("正在入库，已batch插入" + counter + "行");
-					db.execBatch(batchSql, pool);
-					pool.clear();
+					pst.executeBatch();
 				}
 			}
-			if (pool.size() > 0) {
-				db.execBatch(batchSql, pool);
+			if (counter != 0 && counter % JobConstant.BUFFER_ROW != 0) {
+				pst.executeBatch();
 			}
+			pst.close();
 		} catch (Exception e) {
 			LOGGER.error("batch入库失败", e);
-			throw new AppSystemException("数据库采集卸数Csv文件失败", e);
+			throw new AppSystemException("数据库直连采集batch入库失败", e);
 		}
 		//返回batch插入数据的条数
 		return counter;
@@ -117,11 +144,11 @@ public class ParseResultSetToDataBase {
 	/**
 	 * 添加操作日期、操作时间、操作人
 	 */
-	private void appendOperateInfo(Object[] obj, int numberOfColumns) {
+	private void appendOperateInfo(PreparedStatement pst, int numberOfColumns) throws Exception {
 		if (JobConstant.ISADDOPERATEINFO) {
-			obj[numberOfColumns + 1] = operateDate;
-			obj[numberOfColumns + 2] = operateTime;
-			obj[numberOfColumns + 3] = user_id;
+			pst.setString(numberOfColumns + 2, operateDate);
+			pst.setString(numberOfColumns + 3, operateTime);
+			pst.setString(numberOfColumns + 4, user_id);
 		}
 	}
 
