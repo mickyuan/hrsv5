@@ -1,21 +1,16 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.b.biz.agent.dbagentconf.BaseInitData;
-import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
-import hrds.commons.entity.Department_info;
+import hrds.commons.entity.*;
 import hrds.commons.utils.key.PrimayKeyGener;
-import java.util.ArrayList;
+
 import java.util.List;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "为DBConfStepAction单元测试类初始化和销毁数据", author = "WangZhengcheng")
 public class InitAndDestDataForDBConf {
@@ -106,24 +101,24 @@ public class InitAndDestDataForDBConf {
 //			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " WHERE user_id = ?", baseInitData.TEST_USER_ID);
 			//2、删除部门表(department_info)测试数据
 			SqlOperator
-				.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", baseInitData.TEST_DEPT_ID);
+					.execute(db, "delete from " + Department_info.TableName + " WHERE dep_id = ?", baseInitData.TEST_DEPT_ID);
 			//3、删除数据源表(data_source)测试数据
 			SqlOperator.execute(db, "delete from " + Data_source.TableName + " WHERE source_id = ?",
-				baseInitData.SOURCE_ID);
+					baseInitData.SOURCE_ID);
 			//4、删除Agent信息表(agent_info)测试数据
 			SqlOperator.execute(db, "delete from " + Agent_info.TableName + " WHERE agent_id in (?,?)",
-				baseInitData.FIRST_DB_AGENT_ID, baseInitData.SECOND_DB_AGENT_ID);
+					baseInitData.FIRST_DB_AGENT_ID, baseInitData.SECOND_DB_AGENT_ID);
 			//5、删除database_set表测试数据
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?",
-				baseInitData.FIRST_DB_AGENT_ID);
+					baseInitData.FIRST_DB_AGENT_ID);
 			SqlOperator.execute(db, "delete from " + Database_set.TableName + " WHERE agent_id = ?",
-				baseInitData.SECOND_DB_AGENT_ID);
+					baseInitData.SECOND_DB_AGENT_ID);
 			//6、删除collect_job_classify表测试数据
 			SqlOperator.execute(db, "delete from " + Collect_job_classify.TableName + " WHERE classify_id in (?,?,?)",
-				baseInitData.FIRST_CLASSIFY_ID, baseInitData.SECOND_CLASSIFY_ID, THIRD_CLASSIFY_ID);
+					baseInitData.FIRST_CLASSIFY_ID, baseInitData.SECOND_CLASSIFY_ID, THIRD_CLASSIFY_ID);
 			//7、删除agent_down_info表测试数据
 			SqlOperator.execute(db, "delete from " + Agent_down_info.TableName + " WHERE down_id = ?",
-				baseInitData.AGENT_DOWN_INFO_ID);
+					baseInitData.AGENT_DOWN_INFO_ID);
 
 			SqlOperator.commitTransaction(db);
 		}
