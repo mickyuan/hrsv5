@@ -360,9 +360,10 @@ public class DataTableUtil {
 					map.put("column_type", "VARCHAR(--)");
 					column_list.add(map);
 				}
-			} else {
-				throw new BusinessException("表: " + table_name + " 的字段信息不存在,请检查表是否登记成功!");
 			}
+//			else {
+//				throw new BusinessException("表: " + table_name + " 的字段信息不存在,请检查表是否登记成功!");
+//			}
 		}
 		return column_list;
 	}
