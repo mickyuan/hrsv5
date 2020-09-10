@@ -103,7 +103,9 @@ public class ParseResultSetToDataBase {
 					pool.clear();
 				}
 			}
-			db.execBatch(batchSql, pool);
+			if (pool.size() > 0) {
+				db.execBatch(batchSql, pool);
+			}
 		} catch (Exception e) {
 			LOGGER.error("batch入库失败", e);
 			throw new AppSystemException("数据库采集卸数Csv文件失败", e);
