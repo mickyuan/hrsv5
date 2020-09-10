@@ -254,10 +254,20 @@ public class ConnUtil {
 			List<String> searchTableNames = StringUtil.split(searchTableName, "|");
 			for (String searchTable : searchTableNames) {
 				for (Object xmlTable : xmlTableNameList) {
-					if (xmlTable.toString().contains(searchTable)) {
-						//防止有重复的表名出现
-						if (!processTableList.contains(xmlTable)) {
-							processTableList.add(xmlTable);
+					if (searchTableNames.size() == 1) {
+						if (xmlTable.toString().contains(searchTable)) {
+							//防止有重复的表名出现
+							if (!processTableList.contains(xmlTable)) {
+								processTableList.add(xmlTable);
+							}
+						}
+					}
+					else {
+						if (xmlTable.toString().equals(searchTable)) {
+							//防止有重复的表名出现
+							if (!processTableList.contains(xmlTable)) {
+								processTableList.add(xmlTable);
+							}
 						}
 					}
 				}

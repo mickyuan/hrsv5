@@ -15,6 +15,7 @@ import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.bean.CollTbConfParam;
@@ -980,6 +981,7 @@ public class CollTbConfStepAction extends BaseAction {
 			nullable = true)
 	@Param(name = "tableCycles", desc = "数据库采集周期集合信息", range = "可为空,结构如{table1:{interval_time:xxx,over_date:xxx,tc_id:xxx}}", nullable = true)
 	@Return(desc = "保存成功后返回当前采集任务ID", range = "不为空")
+	@UploadFile
 	public long saveCollTbInfo(
 			String tableInfoString, long colSetId, String collTbConfParamString, String delTbString, String tableCycles) {
 
