@@ -499,8 +499,6 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
-		List<String> sqlList = new ArrayList<>();
-		IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
 		//拼接建表语句
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
 		if (db.getDbtype() == Dbtype.TERADATA) {
@@ -516,9 +514,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		//将最后的逗号删除
 		sql.deleteCharAt(sql.length() - 1);
 		sql.append(")");
-		sqlList.add(sql.toString());
 		//执行建表语句
-		HSqlExecute.executeSql(sqlList, db);
+		db.execute(sql.toString());
 	}
 
 	/**
