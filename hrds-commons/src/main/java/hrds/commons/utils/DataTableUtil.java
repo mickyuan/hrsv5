@@ -130,7 +130,7 @@ public class DataTableUtil {
 		Map<String, Object> data_meta_info = new HashMap<>();
 		//初始化字段解析结果List
 		List<Map<String, String>> column_info_list;
-		String table_id, table_name, table_ch_name, create_date;
+		String table_id, table_name, table_ch_name, create_date, hyren_name;
 		//根据数据层获取不同层下的数据
 		DataSourceType dataSourceType = DataSourceType.ofEnumByCode(data_layer);
 		if (dataSourceType == DataSourceType.ISL) {
@@ -145,6 +145,7 @@ public class DataTableUtil {
 			table_id = table_info.get("table_id").toString();
 			table_name = table_info.get("table_name").toString();
 			table_ch_name = table_info.get("table_ch_name").toString();
+			hyren_name = table_info.get("hyren_name").toString();
 			create_date = table_info.get("original_update_date").toString();
 			//获取并转换字段信息List
 			column_info_list = DataTableFieldUtil.metaInfoToList(DCLDataQuery.getDCLBatchTableColumns(file_id));
@@ -160,6 +161,7 @@ public class DataTableUtil {
 			table_id = dm_datatable.getDatatable_id().toString();
 			table_name = dm_datatable.getDatatable_en_name();
 			table_ch_name = dm_datatable.getDatatable_cn_name();
+			hyren_name = dm_datatable.getDatatable_cn_name();
 			create_date = dm_datatable.getDatatable_create_date();
 			column_info_list = DataTableFieldUtil.metaInfoToList(DMLDataQuery.getDMLTableColumns(table_id));
 		} else if (dataSourceType == DataSourceType.SFL) {
@@ -172,6 +174,7 @@ public class DataTableUtil {
 			table_id = dq_index3record.getRecord_id().toString();
 			table_name = dq_index3record.getTable_name();
 			table_ch_name = dq_index3record.getTable_name();
+			hyren_name = dq_index3record.getTable_name();
 			create_date = dq_index3record.getRecord_date();
 			List<Map<String, Object>> table_column_list = new ArrayList<>();
 			String[] columns = dq_index3record.getTable_col().split(",");
@@ -192,6 +195,7 @@ public class DataTableUtil {
 			table_id = dq_table_info.getTable_id().toString();
 			table_name = dq_table_info.getTable_name();
 			table_ch_name = dq_table_info.getCh_name();
+			hyren_name = dq_table_info.getTable_name();
 			create_date = dq_table_info.getCreate_date();
 			//获取UDL表字段信息
 			List<Map<String, Object>> table_column_list = new ArrayList<>();
@@ -205,6 +209,7 @@ public class DataTableUtil {
 		data_meta_info.put("data_layer", data_layer);
 		data_meta_info.put("table_name", table_name);
 		data_meta_info.put("table_ch_name", table_ch_name);
+		data_meta_info.put("hyren_name", hyren_name);
 		data_meta_info.put("create_date", create_date);
 		data_meta_info.put("column_info_list", column_info_list);
 		return data_meta_info;
