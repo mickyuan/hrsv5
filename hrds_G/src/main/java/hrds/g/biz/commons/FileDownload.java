@@ -4,10 +4,12 @@ import fd.ng.core.utils.CodecUtil;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.entity.Interface_file_info;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.Base64;
 import java.util.Map;
 
 public class FileDownload {
@@ -28,15 +30,14 @@ public class FileDownload {
 			response.reset();
 			// 设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
-				// firefox浏览器
+				// 4.1firefox浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-						+ new String(uuid.getBytes(CodecUtil.UTF8_CHARSET), CodecUtil.GBK_STRING));
+						+ new String(uuid.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
 			} else {
+				// 4.2其它浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-						+ CodecUtil.encodeBASE64(uuid));
+						+ Base64.getEncoder().encodeToString(uuid.getBytes(CodecUtil.UTF8_CHARSET)));
 			}
-			response.setHeader("content-type", "text/html;charset=UTF-8");
-			response.setCharacterEncoding(CodecUtil.UTF8_STRING);
 			response.setContentType("APPLICATION/OCTET-STREAM");
 			//读取要下载的文件，保存到文件输入流
 			in = new BufferedInputStream(new FileInputStream(file_path));

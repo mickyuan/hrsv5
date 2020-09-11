@@ -15,7 +15,6 @@ import fd.ng.web.action.AbstractWebappBaseAction;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.utils.*;
@@ -78,12 +77,12 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.校验接口是否有效,返回响应状态信息
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		// 3.如果响应状态不是normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
 		// 4.正常响应信息，返回有使用权限的表
-		responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
+		responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
 				InterfaceManager.getTableList(userByToken.getUser_id()));
 		// 5.记录接口使用日志
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
@@ -111,7 +110,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		interface_use_log.setRequest_stime(DateUtil.getDateTime());
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -120,7 +119,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				singleTable.getAsynType(), singleTable.getBackurl(), singleTable.getFilepath(),
 				singleTable.getFilename());
 		// 3.如果responseMap响应状态不为normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 4.检查表信息
@@ -156,7 +155,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -199,7 +198,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (isParamExist(tableName)) return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -209,38 +208,16 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(Dbo.db(),
 					userByToken.getUser_id(), tableName);
 			String type = userTableInfo.getTable_blsystem();
-			String sysreg_name = userTableInfo.getSysreg_name();
 			Map<String, Object> res = new HashMap<>();
 			res.put("table_type", type);
-			if (DataSourceType.DML == DataSourceType.ofEnumByCode(type)) {
-				// 5.数据源类型为集市，关联查询数据表字段信息表以及数据表查询字段中英文信息
-				List<Map<String, Object>> list = SqlOperator.queryList(Dbo.db(), "SELECT field_en_name," +
-						"field_cn_name FROM " + Datatable_field_info.TableName + " dfi,"
-						+ Dm_datatable.TableName + " di WHERE dfi.datatable_id=di.datatable_id " +
-						" AND lower(datatable_en_name)=lower(?)", sysreg_name);
-				res.put("field", list);
-			} else if (DataSourceType.DCL == DataSourceType.ofEnumByCode(type)) {
-				// 7.数据源类型为贴源层，关联查询表对应的字段、数据库对应表、源文件属性表查询字段中英文信息
-				List<Map<String, Object>> list = SqlOperator.queryList(Dbo.db(),
-						"SELECT column_name as field_en_name,column_ch_name as field_cn_name FROM "
-								+ Table_column.TableName + " tc join " + Table_info.TableName
-								+ " ti ON tc.table_id = ti.table_id join " + Data_store_reg.TableName
-								+ " dsr ON dsr.table_name = ti.table_name " +
-								" WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name)=lower(?) "
-								+ " and ti.valid_e_date=? AND tc.is_get=?",
-						sysreg_name, Constant.MAXDATE, IsFlag.Shi.getCode());
-				res.put("field", list);
-			} else {
-				// 8.数据源类型为其他，查询源文件属性表信息获取字段中英文信息
-				logger.info("待开发。。。。");
-			}
-			// 9.返回接口响应信息
+			List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(), tableName);
+			res.put("field", columns);
 			// 10.记录接口使用日志信息
 			if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
 				insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
 						responseMap.get("status").toString());
 			}
-			return StateType.getResponseInfo(StateType.NORMAL.getCode(), res);
+			return StateType.getResponseInfo(StateType.NORMAL.name(), res);
 		} else {
 			// 11.没有表使用权限
 			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
@@ -268,7 +245,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (isParamExist(tableName)) return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -288,7 +265,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 					responseMap.get("status").toString());
 		}
 		// 7.返回表列结构json信息
-		return StateType.getResponseInfo(StateType.NORMAL.getCode(), columns);
+		return StateType.getResponseInfo(StateType.NORMAL.name(), columns);
 	}
 
 	private boolean isParamExist(String tableName) {
@@ -324,7 +301,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.token、接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		// 3.如果responseMap响应状态不为normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -350,14 +327,14 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 					fileSizeStart = Integer.parseInt(fileSizeList.get(0));
 					fileSizeEnd = Integer.parseInt(fileSizeList.get(1));
 				} catch (NumberFormatException e) {
-					return StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+					return StateType.getResponseInfo(StateType.EXCEPTION.name(),
 							"输入的文件大小不合法请确认");
 				}
 			} else {
 				try {
 					fileSizeStart = Integer.parseInt(fileSize);
 				} catch (NumberFormatException e) {
-					return StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+					return StateType.getResponseInfo(StateType.EXCEPTION.name(),
 							"输入的文件大小不合法请确认");
 				}
 			}
@@ -372,7 +349,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				+ " JOIN " + Source_file_attribute.TableName + " sfa ON sfa.SOURCE_ID = ds.SOURCE_ID"
 				+ " and  sfa.AGENT_ID = ai.AGENT_ID and sfa.collect_set_id = fcs.FCS_ID "
 				+ " where collect_type = ? ");
-		assembler.addParam(AgentType.WenJianXiTong.getCode());
+		assembler.addParam(AgentType.WenJianXiTong.name());
 		assembler.addLikeParam("original_name", fileAttribute.getFilename());
 		List<Object> sourceIdList = SqlOperator.queryOneColumnList(Dbo.db(), "select source_id from data_source ");
 		assembler.addORParam("sfa.source_id", sourceIdList.toArray());
@@ -420,9 +397,9 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		}
 		// 16.判断文件属性信息是否为空，为空返回空集合，否则返回文件属性信息集合
 		if (fileAttrList.isEmpty()) {
-			return StateType.getResponseInfo(StateType.NORMAL.getCode(), new ArrayList<>());
+			return StateType.getResponseInfo(StateType.NORMAL.name(), new ArrayList<>());
 		}
-		return StateType.getResponseInfo(StateType.NORMAL.getCode(), fileAttrList);
+		return StateType.getResponseInfo(StateType.NORMAL.name(), fileAttrList);
 	}
 
 	@Method(desc = "sql查询接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -455,7 +432,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		interface_use_log.setRequest_stime(DateUtil.getDateTime());
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 3.获取当前用户ID
@@ -465,7 +442,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 				sqlSearch.getAsynType(), sqlSearch.getBackurl(), sqlSearch.getFilepath(),
 				sqlSearch.getFilename());
 		// 5.如果responseMap响应状态不为normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 6.检查sql是否正确
@@ -477,7 +454,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		for (String table : tableList) {
 			// 8.校验表权限
 			responseMap = InterfaceCommon.verifyTable(Dbo.db(), userByToken.getUser_id(), table);
-			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+			if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 				return responseMap;
 			}
 			// 9.获取表的有效列信息
@@ -502,7 +479,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 						}
 						// 14.判断列是否有权限
 						if (InterfaceCommon.columnIsExist(col, columnList)) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
+							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
 									"请求错误,查询列名" + col + "不存在");
 						}
 					}
@@ -543,7 +520,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.token、接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		// 3.如果responseMap响应状态不为normal返回错误响应信息
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -558,16 +535,16 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 						insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
 								responseMap.get("status").toString());
 					}
-					return StateType.getResponseInfo(StateType.NORMAL.getCode(), "下载成功");
+					return StateType.getResponseInfo(StateType.NORMAL.name(), "下载成功");
 				} else {
-					return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), "下载失败");
+					return StateType.getResponseInfo(StateType.EXCEPTION.name(), "下载失败");
 				}
 			} else {
 				return StateType.getResponseInfo(StateType.UUID_NOT_NULL);
 			}
 		} catch (Exception e) {
 			logger.error(e);
-			return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), "下载失败");
+			return StateType.getResponseInfo(StateType.EXCEPTION.name(), "下载失败");
 		}
 	}
 
@@ -591,7 +568,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		interface_use_log.setRequest_stime(DateUtil.getDateTime());
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 3.获取当前用户ID
@@ -600,7 +577,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		responseMap = InterfaceCommon.checkType(rowKeySearch.getDataType(), rowKeySearch.getOutType(),
 				rowKeySearch.getAsynType(), rowKeySearch.getBackurl(), rowKeySearch.getFilepath(),
 				rowKeySearch.getFilename());
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -656,7 +633,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 	@Param(name = "start", desc = "请求开始时间毫秒数", range = "无限制")
 	@Return(desc = "", range = "")
 	private void insertInterfaceUseLog(String url, long start, Interface_use_log interface_use_log,
-									   QueryInterfaceInfo userByToken, String request_state) {
+	                                   QueryInterfaceInfo userByToken, String request_state) {
 		// 1.获取接口使用信息
 		QueryInterfaceInfo interfaceUseInfo = InterfaceManager.getInterfaceUseInfo(userByToken.getUser_id(),
 				url);

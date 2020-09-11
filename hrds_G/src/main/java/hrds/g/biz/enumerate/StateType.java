@@ -12,10 +12,10 @@ public enum StateType {
 	/**
 	 * 正常
 	 */
-	NORMAL("200", "NORMAL"),
+	NORMAL("200", "正常"),
 
 	/**
-	 * 账号或密钥错误
+	 * 该用户非接口用户或者用户不存在
 	 */
 	NOT_REST_USER("400", "该用户非接口用户或者用户不存在"),
 	/**
@@ -25,7 +25,7 @@ public enum StateType {
 	/**
 	 * 接口状态禁用错误
 	 */
-	INTERFACE_STATE("403", "接口状态错误,为禁用状态"),
+	INTERFACE_STATE_ERROR("403", "接口状态错误,为禁用状态"),
 	/**
 	 * 使用有效期错误
 	 */
@@ -45,7 +45,7 @@ public enum StateType {
 	/**
 	 * 没有接口使用权限
 	 */
-	NO_PERMISSIONS("408", "没有接口使用权限"),
+	NO_INTERFACE_USE_PERMISSIONS("408", "没有接口使用权限"),
 	/**
 	 * 接口开始使用日期未到
 	 */
@@ -266,7 +266,7 @@ public enum StateType {
 	 */
 	public static Map<String, Object> getResponseInfo(StateType stateType) {
 		Map<String, Object> stateTypeMap = new HashMap<>();
-		stateTypeMap.put("status", stateType.getCode());
+		stateTypeMap.put("status", stateType.name());
 		stateTypeMap.put("message", stateType.getValue());
 		return stateTypeMap;
 	}

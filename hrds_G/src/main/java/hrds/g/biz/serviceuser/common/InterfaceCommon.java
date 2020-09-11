@@ -83,7 +83,7 @@ public class InterfaceCommon {
 		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(db, user_id);
 		// 3.判断用户信息是否为空，为空返回错误响应信息
 		if (null == queryInterfaceInfo) {
-			return StateType.getResponseInfo(StateType.NOT_REST_USER);
+			return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST);
 		}
 		// 4.检查用户是否存在,密码是否正确
 		if (!user_password.equals(queryInterfaceInfo.getUser_password())) {
@@ -95,7 +95,10 @@ public class InterfaceCommon {
 		tokenMap.put("token", queryInterfaceInfo.getToken());
 		tokenMap.put("expires_in", 7200);
 		tokenMap.put("use_valid_date", queryInterfaceInfo.getUse_valid_date());
-		return StateType.getResponseInfo(StateType.NORMAL.getCode(), tokenMap);
+		Map<String, Object> responseMap = new HashMap<>();
+		responseMap.put("status", StateType.NORMAL.name());
+		responseMap.put("message", tokenMap);
+		return responseMap;
 	}
 
 	@Method(desc = "检查接口响应信息并返回",
@@ -117,17 +120,17 @@ public class InterfaceCommon {
 		if (StringUtil.isBlank(token)) {
 			// 2.token值为空时检查user_id与user_password是否也为空
 			if (checkParam.getUser_id() == null || StringUtil.isBlank(checkParam.getUser_password())) {
-				return StateType.getResponseInfo(StateType.ARGUMENT_ERROR.getCode(),
+				return StateType.getResponseInfo(StateType.ARGUMENT_ERROR.name(),
 						"token值为空时，user_id与user_password不能为空");
 			}
 			// 3.user_id与user_password不为空，获取token值
 			responseMap = getTokenById(db, checkParam.getUser_id(), checkParam.getUser_password());
 			// 4.判断获取token值是否成功
-			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+			if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 				return responseMap;
 			}
 			// 5.获取token值
-			Map<String, Object> message = (Map<String, Object>)responseMap.get("message");
+			Map<String, Object> message = (Map<String, Object>) responseMap.get("message");
 			token = message.get("token").toString();
 		}
 		// 6.判断token值是否存在
@@ -222,13 +225,13 @@ public class InterfaceCommon {
 			// 3.1这里只有报表类型的接口才会由此验证
 			if (StringUtil.isNotBlank(interface_code)) {
 				if (!InterfaceManager.existsReportGraphic(user_id, interface_code)) {
-					return StateType.getResponseInfo(StateType.REPORT_CODE_ERROR.getCode(),
+					return StateType.getResponseInfo(StateType.REPORT_CODE_ERROR.name(),
 							"报表( " + interface_code + " )编码不正确");
 				}
 			}
 			// 3.2检查接口状态
 			if (InterfaceState.JinYong == InterfaceState.ofEnumByCode(queryInterfaceInfo.getUse_state())) {
-				return StateType.getResponseInfo(StateType.INTERFACE_STATE);
+				return StateType.getResponseInfo(StateType.INTERFACE_STATE_ERROR);
 			}
 			// 3.3得到当前日期和有效日期做比较
 			int num = queryInterfaceInfo.getStart_use_date().compareTo(DateUtil.getSysDate());
@@ -244,7 +247,7 @@ public class InterfaceCommon {
 			return StateType.getResponseInfo(StateType.NORMAL);
 		}
 		// 4.不存在，返回接口无效错误信息
-		return StateType.getResponseInfo(StateType.NO_PERMISSIONS);
+		return StateType.getResponseInfo(StateType.NO_INTERFACE_USE_PERMISSIONS);
 	}
 
 	@Method(desc = "检查表", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -303,7 +306,7 @@ public class InterfaceCommon {
 			return checkColumn(db, singleTable, table_en_column, user_id);
 		} catch (Exception e) {
 			if (e instanceof BusinessException) {
-				return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
+				return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
 			}
 			return StateType.getResponseInfo(StateType.EXCEPTION);
 		}
@@ -333,7 +336,7 @@ public class InterfaceCommon {
 					for (String userColumn : userColumns) {
 						// 5.判断当前列名称是否有权限,没有返回错误响应信息
 						if (columnIsExist(userColumn.toLowerCase(), columns)) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
+							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
 									"请求错误,查询列名" + userColumn + "不存在");
 						}
 					}
@@ -447,15 +450,25 @@ public class InterfaceCommon {
 		String uuid = UUID.randomUUID().toString();
 		File createFile = LocalFile.createFile(uuid, dataType);
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		if (num != null) {
+		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+			// 输出数据形式为stream如果num不存在则默认查询100
+			if (num == null) {
+				num = 100;
+			}
 			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
 					.getPageDataLayer(sqlSb, db, 1, num);
 		} else {
-			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
-					.getDataLayer(sqlSb, db);
+			// 输出数据形式为file如果num不存在则查询所有
+			if (num == null) {
+				getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+						.getDataLayer(sqlSb, db);
+			} else {
+				getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+						.getPageDataLayer(sqlSb, db, 1, num);
+			}
 		}
 
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
@@ -464,21 +477,23 @@ public class InterfaceCommon {
 				Map<String, Object> map = new HashMap<>();
 				map.put("column", streamCsv);
 				map.put("data", streamCsvData);
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
 						JsonUtil.toJson(map));
 			} else {
+				Map<String, Object> jsonMap = new HashMap<>();
 				// 8.如果输出数据类型为json则直接返回数据
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						streamJson);
+				jsonMap.put("data", streamJson);
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
+						jsonMap);
 			}
 		} else {
 			// 保存接口文件信息
 			if (InterfaceCommon.saveFileInfo(db, user_id, uuid, dataType,
 					outType, CommonVariables.RESTFILEPATH) != 1) {
-				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 						"保存接口文件信息失败");
 			}
-			responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(), uuid);
+			responseMap = StateType.getResponseInfo(StateType.NORMAL.name(), uuid);
 		}
 		lineCounter = 0;
 		// 9.输出数据形式不是stream返回处理后的响应数据
@@ -558,19 +573,19 @@ public class InterfaceCommon {
 				if (lineCounter % 24608 == 0) {
 					writer.flush();
 				}
-				writer.write(map.toString());
+				writer.write(JsonUtil.toJson(map));
 				writer.newLine();
 				responseMap = StateType.getResponseInfo(StateType.NORMAL);
 			} else {
 				// 11.输出数据类型有误
-				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 						"不知道什么文件");
 			}
 			// 12.关闭连接
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
-			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 					"写文件失败");
 		}
 	}
@@ -658,7 +673,7 @@ public class InterfaceCommon {
 				col_name = col.split("=");
 				symbol = "=";
 			} else {
-				return StateType.getResponseInfo(StateType.CONDITION_ERROR.getCode(),
+				return StateType.getResponseInfo(StateType.CONDITION_ERROR.name(),
 						"请求错误,条件符号错误,暂不支持");
 			}
 			// 3.判断条件列长度是否为2，如果是获取列名、列值
@@ -669,7 +684,7 @@ public class InterfaceCommon {
 				String colVal = col_name[1];
 				// 4.判断列名是否存在,不存在返回错误响应信息
 				if (columnIsExist(colName.toLowerCase(), columns)) {
-					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
+					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
 							"请求错误,条件列名" + colName + "不存在");
 				}
 				// 5.存在，拼接查询条件
@@ -811,7 +826,7 @@ public class InterfaceCommon {
 				}
 				String column = String.join(",", columnList);
 				StringBuilder stringBuilder = new StringBuilder();
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
 						stringBuilder.append(column).append(System.lineSeparator()).append(sb.toString()).toString());
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
@@ -903,7 +918,7 @@ public class InterfaceCommon {
 						// 4.3.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件
 						responseMap =
 								InterfaceCommon.getSqlSelectCondition(columns, whereColumn);
-						if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+						if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 							return responseMap;
 						}
 						condition = responseMap.get("condition").toString();
