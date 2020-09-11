@@ -1008,7 +1008,7 @@ public class ImportExcelAction extends BaseAction {
 			//获取任务下的作业信息
 			StartWayConfAction startWayConfAction = new StartWayConfAction();
 			List<Map<String, Object>> previewJob = startWayConfAction.getPreviewJob(database_id);
-			List<Etl_job_def> jobDefList = new ArrayList<>();
+			JSONArray jobDefList = new JSONArray();
 			List<Object> ded_id = new ArrayList<>();
 			;
 			previewJob.forEach(itemMap -> {
@@ -1031,7 +1031,7 @@ public class ImportExcelAction extends BaseAction {
 
 			String ded_arr = StringUtils.join(ded_id, "^");
 			startWayConfAction.saveJobDataToDatabase(database_id, source_id, etl_sys_cd, sub_sys_cd, pro_dic, log_dic,
-				jobDefList.toArray(new Etl_job_def[jobDefList.size()]), ded_arr, "");
+				jobDefList.toJSONString(), ded_arr, "");
 
 		} else {
 			CheckParam.throwErrorMsg("启动方式选择错误");

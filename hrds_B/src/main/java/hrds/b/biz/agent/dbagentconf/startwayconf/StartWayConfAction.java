@@ -1,5 +1,7 @@
 package hrds.b.biz.agent.dbagentconf.startwayconf;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -8,26 +10,43 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import hrds.b.biz.agent.CheckParam;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.*;
-import hrds.commons.entity.*;
+import hrds.commons.codes.Dispatch_Frequency;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.Job_Effective_Flag;
+import hrds.commons.codes.Pro_Type;
+import hrds.commons.codes.Status;
+import hrds.commons.codes.Today_Dispatch_Flag;
+import hrds.commons.entity.Agent_down_info;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Etl_dependency;
+import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_sub_sys_list;
+import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.Table_info;
+import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.entity.fdentity.ProjectTableEntity.EntityDealZeroException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.jsch.ChineseUtil;
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 @DocClass(desc = "定义启动方式配置", author = "Lee-Qiang")
 public class StartWayConfAction extends BaseAction {
@@ -360,9 +379,9 @@ public class StartWayConfAction extends BaseAction {
 				+ "作业程序类型(pro_type,使用代码项Pro_Type),作业程序目录(pro_dic),作业程序名称(pro_name),"
 				+ "作业程序参数(pro_para),日志目录(log_dic),调度频率(disp_freq,代码项Dispatch_Frequency),"
 				+ "调度时间位移(disp_offset),调度触发方式(disp_type),调度触发时间(disp_time)}",
-		desc = "",
-		isBean = true)
+		desc = "")
 	@Param(name = "ded_arr", desc = "卸数文件的ID", range = "不可为空的字符串,多个参数之间使用 ^ 隔开")
+	@UploadFile
 	public void saveJobDataToDatabase(
 		long colSetId,
 		long source_id,
@@ -370,12 +389,14 @@ public class StartWayConfAction extends BaseAction {
 		String sub_sys_cd,
 		String pro_dic,
 		String log_dic,
-		Etl_job_def[] etlJobs,
+		String etlJobs,
 		String ded_arr,
 		String jobRelations) {
 
 		List<String> dedList = StringUtil.split(ded_arr, "^");
-		if (etlJobs.length != dedList.size()) {
+		Etl_job_def[] etl_job_defs = JSONArray.parseObject(etlJobs, new TypeReference<Etl_job_def[]>() {
+		});
+		if (etl_job_defs.length != dedList.size()) {
 			throw new BusinessException("卸数文件的数量与作业的数量不一致!!!");
 		}
 
@@ -410,7 +431,7 @@ public class StartWayConfAction extends BaseAction {
 
 		// 作业定义信息
 		int index = 0;
-		for (Etl_job_def etl_job_def : etlJobs) {
+		for (Etl_job_def etl_job_def : etl_job_defs) {
 
       /*
        检查必要字段不能为空的情况
