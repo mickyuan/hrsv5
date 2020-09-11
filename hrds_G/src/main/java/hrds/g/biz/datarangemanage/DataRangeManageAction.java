@@ -66,7 +66,7 @@ public class DataRangeManageAction extends BaseAction {
 				Table_use_info table_use_info = new Table_use_info();
 				// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
 				// 4.获取系统内对应表名
-				String hyren_name = tableInfoAndColumnInfo.get("table_name").toString();
+				String hyren_name = tableInfoAndColumnInfo.get("hyren_name").toString();
 				// 5.获取原始文件名称
 				String original_name;
 				if (tableInfoAndColumnInfo.get("original_name") == null) {
@@ -330,33 +330,5 @@ public class DataRangeManageAction extends BaseAction {
 	public Map<String, Object> searchFieldById(String file_id, String data_layer) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		return DataTableUtil.getTableInfoAndColumnInfo(data_layer, file_id);
-//		// 2.根据不同数据源类型查询表的列信息并返回
-//		if (DataSourceType.DCL == DataSourceType.ofEnumByCode(data_layer)) {
-//			// 2.1贴源层
-//			Map<String, Object> dataStoreMap = Dbo.queryOneObject("SELECT hyren_name,collect_type," +
-//					" database_id FROM " + Data_store_reg.TableName + " WHERE file_id = ?", file_id);
-//			String hyren_name = dataStoreMap.get("hyren_name").toString();
-//			String collect_type = dataStoreMap.get("collect_type").toString();
-//			String database_id = dataStoreMap.get("database_id").toString();
-//			Result columnResult = Dbo.queryResult("SELECT column_name as field_en_name,column_ch_name as " +
-//							" field_cn_name,ti.table_id,tc.column_id,dsr.file_id FROM " + Table_column.TableName +
-//							"  tc join " + Table_info.TableName + " ti ON tc.table_id = ti.table_id " +
-//							" join " + Data_store_reg.TableName + " dsr ON dsr.table_name= ti.table_name "
-//							+ " WHERE dsr.database_id = ti.database_id and lower(dsr.hyren_name) = lower(?) "
-//							+ "  and ti.valid_e_date = ? AND tc.is_get = ? and tc.is_alive = ?", hyren_name,
-//					END_DATE, IsFlag.Shi.getCode(), IsFlag.Shi.getCode());
-//			if (AgentType.DuiXiang == AgentType.ofEnumByCode(collect_type)) {
-//				columnResult = Dbo.queryResult("SELECT coll_name AS field_en_name,data_desc AS field_cn_name FROM " +
-//						Object_collect_struct.TableName + " c JOIN " + Object_collect_task.TableName +
-//						" t ON c.ocs_id = t.ocs_id WHERE t.odc_id = ?", database_id);
-//			}
-//			return columnResult;
-//		} else if (DataSourceType.DML == DataSourceType.ofEnumByCode(data_layer)) {
-//			// 2.2集市层
-//			return Dbo.queryResult("SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
-//					+ " WHERE datatable_id = ?", Long.parseLong(file_id));
-//		} else {
-//			throw new BusinessException("待开发，目前只支持贴源层与集市层");
-//		}
 	}
 }
