@@ -5,28 +5,12 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
-import hrds.commons.codes.AgentStatus;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.DataExtractType;
-import hrds.commons.codes.FileFormat;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_down_info;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Collect_job_classify;
-import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.entity.Data_source;
-import hrds.commons.entity.Database_set;
-import hrds.commons.entity.Etl_job_def;
-import hrds.commons.entity.Etl_sub_sys_list;
-import hrds.commons.entity.Etl_sys;
-import hrds.commons.entity.Table_info;
-import hrds.commons.entity.Take_relation_etl;
-import hrds.commons.exception.AppSystemException;
+import hrds.commons.codes.*;
+import hrds.commons.entity.*;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.ParallerTestUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
-import hrds.testbase.WebBaseTestCase;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +41,8 @@ public class InitStartWayData {
 	public final List<Long> DED_ID = new ArrayList<>();
 	//卸数文件的ID集合
 	public final List<Long> TABLE_ID_LIST = new ArrayList<>();
+	//用户id
+	public final String USER_ID = ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001");
 
 	public void initData() {
 
@@ -68,7 +54,7 @@ public class InitStartWayData {
 			data_source.setDatasource_name("lqcs_" + threadId);
 			data_source.setCreate_date(DateUtil.getSysDate());
 			data_source.setCreate_time(DateUtil.getSysTime());
-			data_source.setCreate_user_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
+			data_source.setCreate_user_id(USER_ID);
 			data_source.add(db);
 			//Agent信息
 			Agent_info agent_info = new Agent_info();
@@ -80,7 +66,7 @@ public class InitStartWayData {
 			agent_info.setAgent_status(AgentStatus.YiLianJie.getCode());
 			agent_info.setCreate_date(DateUtil.getSysDate());
 			agent_info.setCreate_time(DateUtil.getSysTime());
-			agent_info.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
+			agent_info.setUser_id(USER_ID);
 			agent_info.setSource_id(SOURCE_ID);
 			agent_info.add(db);
 			//Agent下载地址
@@ -99,14 +85,14 @@ public class InitStartWayData {
 			down_info.setAgent_type(AgentType.ShuJuKu.getCode());
 			down_info.setAgent_id(AGENT_ID);
 			down_info.setAi_desc(AGENT_PATH);
-			down_info.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
+			down_info.setUser_id(USER_ID);
 			down_info.add(db);
 			//分类信息
 			Collect_job_classify classify = new Collect_job_classify();
 			classify.setClassify_id(CLASSIFY_ID);
 			classify.setClassify_num("lqcs" + threadId);
 			classify.setClassify_name("测试" + threadId);
-			classify.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
+			classify.setUser_id(USER_ID);
 			classify.setAgent_id(AGENT_ID);
 			classify.add(db);
 			//初始化采集任务信息
@@ -118,6 +104,7 @@ public class InitStartWayData {
 			database_set.setDb_agent(IsFlag.Shi.getCode());
 			database_set.setIs_sendok(IsFlag.Shi.getCode());
 			database_set.setClassify_id(CLASSIFY_ID);
+			database_set.setCollect_type(CollectType.ShuJuKuCaiJi.getCode());
 			database_set.add(db);
 			//初始化表的数据信息
 			for (int i = 0; i < 5; i++) {
@@ -179,7 +166,7 @@ public class InitStartWayData {
 			Etl_sys etl_sys = new Etl_sys();
 			etl_sys.setEtl_sys_cd(ETL_SYS_CD);
 			etl_sys.setEtl_sys_name("lqcs" + threadId);
-			etl_sys.setUser_id(ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"));
+			etl_sys.setUser_id(USER_ID);
 			etl_sys.add(db);
 			//初始化作业调度的任务数据
 			Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
@@ -187,35 +174,38 @@ public class InitStartWayData {
 			etl_sub_sys_list.setSub_sys_cd(SUB_SYS_CD);
 			etl_sub_sys_list.add(db);
 			SqlOperator.commitTransaction(db);
-		} catch (Exception e) {
-			throw e;
 		}
 	}
 
-
 	public void deleteInitData() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			SqlOperator.execute(db, "DELETE FROM " + Data_source.TableName + " WHERE source_id = ?", SOURCE_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Agent_info.TableName + " WHERE agent_id = ?", AGENT_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Agent_down_info.TableName + " WHERE down_id = ?", AGENT_DOWN_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Collect_job_classify.TableName + " WHERE classify_id = ?", CLASSIFY_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Database_set.TableName + " WHERE database_id = ?", DATABASE_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Data_extraction_def.TableName + " WHERE table_id in ("
-				+ "SELECT table_id FROM " + Table_info.TableName + " WHERE database_id = ?)", DATABASE_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Table_info.TableName + " WHERE database_id = ?", DATABASE_ID);
-			SqlOperator.execute(db, "DELETE FROM " + Etl_sys.TableName + " WHERE etl_sys_cd = ?", ETL_SYS_CD);
-			SqlOperator.execute(db, "DELETE FROM " + Etl_sub_sys_list.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
-				ETL_SYS_CD, SUB_SYS_CD);
-			SqlOperator
-				.execute(db, "DELETE FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?", ETL_SYS_CD,
-					SUB_SYS_CD);
-			SqlOperator
-				.execute(db, "DELETE FROM " + Take_relation_etl.TableName
-						+ " WHERE etl_sys_cd = ? AND sub_sys_cd = ? AND database_id = ?", ETL_SYS_CD,
-					SUB_SYS_CD, DATABASE_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Data_source.TableName + " WHERE source_id = ?", SOURCE_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Agent_info.TableName + " WHERE agent_id = ?", AGENT_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Agent_down_info.TableName + " WHERE down_id = ?", AGENT_DOWN_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Collect_job_classify.TableName + " WHERE classify_id = ?", CLASSIFY_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Database_set.TableName + " WHERE database_id = ?", DATABASE_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Data_extraction_def.TableName + " WHERE table_id in (SELECT table_id" +
+							" FROM " + Table_info.TableName + " WHERE database_id = ?)", DATABASE_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Table_info.TableName + " WHERE database_id = ?", DATABASE_ID);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Etl_sys.TableName + " WHERE etl_sys_cd = ?", ETL_SYS_CD);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Etl_sub_sys_list.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
+					ETL_SYS_CD, SUB_SYS_CD);
+			SqlOperator.execute(db,
+					"DELETE FROM " + Etl_job_def.TableName + " WHERE etl_sys_cd = ? AND sub_sys_cd = ?",
+					ETL_SYS_CD, SUB_SYS_CD);
+			SqlOperator.execute(db, "DELETE FROM " + Take_relation_etl.TableName +
+							" WHERE etl_sys_cd = ? AND sub_sys_cd = ? AND database_id = ?",
+					ETL_SYS_CD, SUB_SYS_CD, DATABASE_ID);
 			SqlOperator.commitTransaction(db);
-		} catch (Exception e) {
-			throw e;
 		}
 	}
 
