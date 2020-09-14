@@ -45,7 +45,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 
 	private static final Logger logger = LogManager.getLogger();
 	// 接口使用日志是否记录标志,1：是，0：否
-	private static final String isRecordInterfaceLog = PropertyParaValue.getString("isRecordInterfaceLog", "1");
+	private static final String isRecordInterfaceLog =
+			PropertyParaValue.getString("isRecordInterfaceLog", "1");
 
 	@Method(desc = "获取token值",
 			logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
@@ -528,6 +529,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		try {
 			if (uuid != null) {
 				Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+				// 下载文件
 				HttpServletResponse response = fileDownload.downLoadFile(uuid, user_id);
 				if (response.getStatus() < 300) {
 					// 记录接口使用日志信息

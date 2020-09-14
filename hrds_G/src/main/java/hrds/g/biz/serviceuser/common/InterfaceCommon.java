@@ -493,7 +493,11 @@ public class InterfaceCommon {
 				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 						"保存接口文件信息失败");
 			}
-			responseMap = StateType.getResponseInfo(StateType.NORMAL.name(), uuid);
+			Map<String, Object> uuidMap = new HashMap<>();
+			uuidMap.put("dataType", dataType);
+			uuidMap.put("outType", outType);
+			uuidMap.put("uuid", uuid);
+			responseMap = StateType.getResponseInfo(StateType.NORMAL.name(), uuidMap);
 		}
 		lineCounter = 0;
 		// 9.输出数据形式不是stream返回处理后的响应数据

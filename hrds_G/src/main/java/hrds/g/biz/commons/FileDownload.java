@@ -1,6 +1,5 @@
 package hrds.g.biz.commons;
 
-import fd.ng.core.utils.CodecUtil;
 import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
@@ -32,12 +31,15 @@ public class FileDownload {
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
 				// 4.1firefox浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-						+ new String(uuid.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+						+ new String(uuid.getBytes(DataBaseCode.UTF_8.getValue()),
+						DataBaseCode.ISO_8859_1.getValue()));
 			} else {
 				// 4.2其它浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-						+ Base64.getEncoder().encodeToString(uuid.getBytes(CodecUtil.UTF8_CHARSET)));
+						+ Base64.getEncoder().encodeToString(uuid.getBytes(DataBaseCode.UTF_8.getValue())));
 			}
+			response.setHeader("content-type", "text/html;charset=" + DataBaseCode.UTF_8.getValue());
+			response.setCharacterEncoding(DataBaseCode.UTF_8.getValue());
 			response.setContentType("APPLICATION/OCTET-STREAM");
 			//读取要下载的文件，保存到文件输入流
 			in = new BufferedInputStream(new FileInputStream(file_path));
