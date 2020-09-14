@@ -25,7 +25,6 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.DboExecute;
-import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
 import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
@@ -99,7 +98,7 @@ public class OperateAction extends BaseAction {
 		return Dbo.queryList(
 				"select t1.template_id,t1.template_name,t1.template_desc,t1.create_date,t1.create_time,"
 						+ "t1.create_user,count(t2.fetch_sum_id) as count_number " +
-						" from " + Auto_tp_info.TableName + " t1 eft join " + Auto_fetch_sum.TableName + " t2"
+						" from " + Auto_tp_info.TableName + " t1 left join " + Auto_fetch_sum.TableName + " t2"
 						+ " on t1.template_id = t2.template_id "
 						+ " where template_status = ? group by t1.template_id "
 						+ " order by t1.create_date desc,t1.create_time desc",
@@ -115,7 +114,7 @@ public class OperateAction extends BaseAction {
 		return Dbo.queryList(
 				"select t1.template_id,t1.template_name,t1.template_desc,t1.create_date,t1.create_time,"
 						+ "t1.create_user,count(t2.fetch_sum_id) as count_number " +
-						" from " + Auto_tp_info.TableName + " t1 eft join " + Auto_fetch_sum.TableName + " t2"
+						" from " + Auto_tp_info.TableName + " t1 left join " + Auto_fetch_sum.TableName + " t2"
 						+ " on t1.template_id = t2.template_id "
 						+ " where template_status = ? and template_name like ?"
 						+ " group by t1.template_id order by t1.create_date desc,t1.create_time desc",
@@ -152,8 +151,7 @@ public class OperateAction extends BaseAction {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.获取自主取数过滤条件
 		return Dbo.queryList(
-				"select is_required,cond_cn_column,con_relation,template_cond_id,pre_value,value_type,value_size "
-						+ Auto_tp_cond_info.TableName + " from where template_id = ?",
+				"select * from " + Auto_tp_cond_info.TableName + " where template_id = ?",
 				template_id);
 	}
 
@@ -217,20 +215,21 @@ public class OperateAction extends BaseAction {
 		return accessResult;
 	}
 
-	@Method(desc = "保存自主取数清单查询入库信息", logicStep = "1.判断模板信息是否已不存在" +
+	@Method(desc = "保存自主取数清单查询入库信息（清单查询前调用）", logicStep = "1.判断模板信息是否已不存在" +
 			"2.新增取数汇总表数据" +
 			"3.取数条件表入库" +
 			"4.取数结果选择情况入库")
 	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
-	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
-	                               Auto_fetch_res[] autoFetchRes) {
+	public Long saveAutoAccessInfoToQuery(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
+	                                      Auto_fetch_res[] autoFetchRes) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.判断模板信息是否已不存在
 		Validator.notNull(auto_fetch_sum.getTemplate_id(), "模板ID不能为空");
-		Validator.notBlank(auto_fetch_sum.getFetch_name(), "取数名称不能为空");
 		isAutoTpInfoExist(auto_fetch_sum.getTemplate_id());
+		// 查询入库时先默认给个空值
+		auto_fetch_sum.setFetch_name("");
 		auto_fetch_sum.setFetch_sum_id(PrimayKeyGener.getNextId());
 		auto_fetch_sum.setCreate_date(DateUtil.getSysDate());
 		auto_fetch_sum.setCreate_time(DateUtil.getSysTime());
@@ -248,18 +247,58 @@ public class OperateAction extends BaseAction {
 			auto_fetch_cond.add(Dbo.db());
 		}
 		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
-			Validator.notBlank(auto_fetch_res.getFetch_res_name(), "取数结果名称不能为空");
 			Validator.notNull(auto_fetch_res.getTemplate_res_id(), "模板结果ID不能为空");
 			List<String> res_show_column = Dbo.queryOneColumnList(
 					"select res_show_column from " + Auto_tp_res_set.TableName
 							+ " where template_res_id = ?",
-					auto_fetch_res.getFetch_res_id());
+					auto_fetch_res.getTemplate_res_id());
 			auto_fetch_res.setFetch_res_name(res_show_column.get(0));
 			auto_fetch_res.setShow_num(auto_fetch_res.getShow_num() == null ? 0 : auto_fetch_res.getShow_num());
 			auto_fetch_res.setFetch_res_id(PrimayKeyGener.getNextId());
 			auto_fetch_res.setFetch_sum_id(auto_fetch_sum.getFetch_sum_id());
 			// 4.取数结果选择情况入库
 			auto_fetch_res.add(Dbo.db());
+		}
+		return auto_fetch_sum.getFetch_sum_id();
+	}
+
+	@Method(desc = "保存自主取数信息", logicStep = "1.更新自主取数汇总表信息" +
+			"2.更新取数条件表信息" +
+			"3.更新取数结果选择情况信息")
+	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
+	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
+	                               Auto_fetch_res[] autoFetchRes) {
+		Validator.notNull(auto_fetch_sum.getTemplate_id(), "模板ID不能为空");
+		Validator.notNull(auto_fetch_sum.getFetch_sum_id(), "取数汇总ID不能为空");
+		Validator.notNull(auto_fetch_sum.getFetch_name(), "取数名称不能为空");
+		auto_fetch_sum.setUpdate_user(getUserId());
+		auto_fetch_sum.setFetch_status(AutoFetchStatus.WanCheng.getCode());
+		auto_fetch_sum.setLast_update_date(DateUtil.getSysDate());
+		auto_fetch_sum.setLast_update_time(DateUtil.getSysTime());
+		try {
+			// 1.更新自主取数汇总表信息
+			auto_fetch_sum.update(Dbo.db());
+		} catch (Exception e) {
+			if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+				throw new BusinessException("更新自主取数汇总数据失败");
+			}
+		}
+		for (Auto_fetch_cond auto_fetch_cond : autoFetchConds) {
+			Validator.notBlank(auto_fetch_cond.getCond_value(), "条件值不能为空");
+			Validator.notNull(auto_fetch_cond.getFetch_cond_id(), "取数条件ID为空");
+			Validator.notNull(auto_fetch_cond.getTemplate_cond_id(), "模板条件ID不能为空");
+			auto_fetch_cond.setFetch_sum_id(auto_fetch_sum.getFetch_sum_id());
+			// 2.更新取数条件表信息
+			auto_fetch_cond.update(Dbo.db());
+		}
+		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
+			Validator.notBlank(auto_fetch_res.getFetch_res_name(), "取数结果名称不能为空");
+			Validator.notNull(auto_fetch_res.getTemplate_res_id(), "模板结果ID不能为空");
+			Validator.notNull(auto_fetch_res.getFetch_res_id(), "取数结果ID不能为空");
+			// 3.更新取数结果选择情况信息
+			auto_fetch_res.update(Dbo.db());
 		}
 	}
 
@@ -277,7 +316,8 @@ public class OperateAction extends BaseAction {
 		List<Long> condIdList = Dbo.queryOneColumnList(
 				"select template_cond_id from " + Auto_tp_cond_info.TableName + " where template_id = ?",
 				template_id);
-		for (long condId : condIdList) {// 模板条件ID
+		for (long condId : condIdList) {
+			// 模板条件ID
 			boolean inMoreConRow = false;
 			boolean flag = false;
 			Auto_tp_cond_info auto_tp_cond_info = new Auto_tp_cond_info();
@@ -619,8 +659,8 @@ public class OperateAction extends BaseAction {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.查询我的取数信息
 		return Dbo.queryList(
-				"select * from " + Auto_fetch_sum.TableName + " where user_id = ? and fetch_name is not null "
-						+ " order by create_date desc,create_time desc",
+				"select * from " + Auto_fetch_sum.TableName + " where create_user = ?" +
+						" and fetch_name is not null order by create_date desc,create_time desc",
 				getUserId());
 	}
 
