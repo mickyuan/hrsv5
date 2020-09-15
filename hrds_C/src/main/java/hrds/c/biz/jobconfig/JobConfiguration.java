@@ -1649,9 +1649,9 @@ public class JobConfiguration extends BaseAction {
 					// 8.存放列数据的集合
 					Map<String, String> map = new HashMap<>();
 					// 9.获取不为空的列个数
-					int physicalNumberOfCells = row.getPhysicalNumberOfCells();
+					int physicalNumberOfCells = sheet.getRow(0).getPhysicalNumberOfCells();
 					// j是从1开始的
-					for (int j = row.getFirstCellNum(); j <= physicalNumberOfCells; j++) {
+					for (int j = sheet.getRow(0).getFirstCellNum(); j <= physicalNumberOfCells; j++) {
 						// 10.如果获取的列数是-1则表示为无效行的单元格,直接跳过
 						if (j == -1) {
 							continue;
