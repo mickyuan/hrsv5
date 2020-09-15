@@ -776,36 +776,40 @@ public class JobConfiguration extends BaseAction {
 			}
 			// 代码项合法性
 			Dispatch_Type.ofEnumByCode(old_dispatch_type);
-		}
-		// 4.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
-		if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
-			// 4.1修改前的调度触发方式是依赖
-			if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
-				if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-					// 5.1.1修改前后的调度触发方式都是依赖,先删除原依赖关系，再新增依赖
-					updateDependencyFromEtlJobDef(etl_dependency, old_pre_etl_job, pre_etl_job);
+			// 4.判断调度频率是否为频率，如果是频率没有依赖，也没有调度触发方式
+			if (Dispatch_Frequency.ofEnumByCode(etl_job_def.getDisp_freq()) != Dispatch_Frequency.PinLv) {
+				// 4.1修改前的调度触发方式是依赖
+				if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(old_dispatch_type)) {
+					if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+						// 5.1.1修改前后的调度触发方式都是依赖,先删除原依赖关系，再新增依赖
+						updateDependencyFromEtlJobDef(etl_dependency, old_pre_etl_job, pre_etl_job);
+					} else {
+						// 5.1.2修改前的调度触发方式是依赖,修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
+						if (old_pre_etl_job != null && old_pre_etl_job.length != 0) {
+							deleteOldDependency(etl_dependency, old_pre_etl_job);
+						}
+					}
 				} else {
-					// 5.1.2修改前的调度触发方式是依赖,修改后的调度方式是定时（依赖-定时），直接删除原依赖关系
-					if (old_pre_etl_job != null && old_pre_etl_job.length != 0) {
-						deleteOldDependency(etl_dependency, old_pre_etl_job);
+					// 4.2修改前的调度触发方式是定时,修改后的调度触发方式为依赖,则新增依赖（定时---->依赖）
+					if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
+						saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
 					}
 				}
-			} else {
-				// 4.2修改前的调度触发方式是定时,修改后的调度触发方式为依赖,则新增依赖（定时---->依赖）
-				if (Dispatch_Type.DEPENDENCE == Dispatch_Type.ofEnumByCode(etl_job_def.getDisp_type())) {
-					saveEtlDependencyFromEtlJobDef(etl_dependency, pre_etl_job);
-				}
 			}
+			// 5.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理
+			isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
+					etl_job_def.getPro_type());
+			// 6.根据调度频率不同封装作业定义实体对象的不同属性
+			isDispatchFrequency(etl_job_def);
+			// 7.保存更新的作业信息
+			etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
+					DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
+			etl_job_def.update(Dbo.db());
+		} else {
+			// 如果修改前是频率先删除再新增
+			deleteEtlJobDef(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job());
+			saveEtlJobDef(etl_job_def, etl_dependency, pre_etl_job);
 		}
-		// 5.判断作业程序类型是否为yarn或者thrift类型，如果是，进行资源分配处理
-		isThriftOrYarnProType(etl_job_def.getEtl_sys_cd(), etl_job_def.getEtl_job(),
-				etl_job_def.getPro_type());
-		// 6.根据调度频率不同封装作业定义实体对象的不同属性
-		isDispatchFrequency(etl_job_def);
-		// 7.保存更新的作业信息
-		etl_job_def.setUpd_time(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()) + " " +
-				DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
-		etl_job_def.update(Dbo.db());
 	}
 
 	@Method(desc = "更新作业时保存所有依赖",
@@ -875,6 +879,9 @@ public class JobConfiguration extends BaseAction {
 			// 2.判断修改前的上游作业名称是否已不存在
 			if (!ETLJobUtil.isEtlJobDefExist(etl_dependency.getEtl_sys_cd(), oldPreEtlJob, Dbo.db())) {
 				throw new BusinessException("修改前的上游作业名称已不存在，pre_etl_job=" + oldPreEtlJob);
+			}
+			if (etl_dependency.getPre_etl_sys_cd() == null) {
+				etl_dependency.setPre_etl_sys_cd(etl_dependency.getEtl_sys_cd());
 			}
 			// 3.循环删除旧依赖关系
 			deleteEtlDependency(etl_dependency.getEtl_sys_cd(), etl_dependency.getPre_etl_sys_cd(),
