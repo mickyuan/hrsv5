@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -225,6 +226,19 @@ public class EltSysAction extends BaseAction {
 		// 6.获取系统状态,如果不是停止说明系统不是停止状态,不是停止状态不能启动control
 		if (Job_Status.STOP != (Job_Status.ofEnumByCode(etlSys.getSys_run_status()))) {
 			throw new BusinessException("系统不是停止状态不能启动control");
+		}
+		// 检查当前工程下的作业有没有分配资源，没有分配资源不能启动
+		List<Etl_job_def> etlJobDefList = Dbo.queryList(Etl_job_def.class,
+				"select * from " + Etl_job_def.TableName + " where etl_sys_cd=?",
+				etl_sys_cd);
+		for (Etl_job_def etl_job_def : etlJobDefList) {
+			if (Dbo.queryNumber(
+					"select count(1) from " + Etl_job_resource_rela.TableName
+							+ " where etl_sys_cd=? and etl_job=?",
+					etl_sys_cd, etl_job_def.getEtl_job())
+					.orElseThrow(() -> new BusinessException("sql查询错误")) != 1) {
+				throw new BusinessException(etl_job_def.getEtl_job() + "作业没有分配资源，不能启动!");
+			}
 		}
 		if (curr_bath_date.contains("-")) {
 			curr_bath_date = curr_bath_date.replaceAll("-", "");
