@@ -822,7 +822,7 @@ public class DruidParseQuerySql {
 
 	public String getSelectSql() {
 		String selectSql = left.toString();
-		selectSql = selectSql.substring(selectSql.indexOf("SELECT"), selectSql.indexOf("FROM") + 4);
+		selectSql = selectSql.substring(selectSql.indexOf("SELECT"), selectSql.indexOf("\nFROM ") + 6);
 		return selectSql;
 	}
 
@@ -844,21 +844,9 @@ public class DruidParseQuerySql {
 
 
 	public static void main(String[] args) {
-		String sql = "\n" +
-				"select  i_item_id\n" +
-				"       ,i_item_desc\n" +
-				"       ,i_current_price\n" +
-				"from  J001_A001_item,  J001_A001_inventory,  J001_A001_date_dim,  J001_A001_store_sales\n" +
-				"where i_current_price between 76 and 76+30\n" +
-				"  and inv_item_sk = i_item_sk\n" +
-				"  and d_date_sk=inv_date_sk\n" +
-				"  and d_date between cast('1998-06-29' as date) and cast(date_add('1998-06-29',60) as date)\n" +
-				"  and i_manufact_id in (512,409,677,16)\n" +
-				"  and inv_quantity_on_hand between 100 and 500\n" +
-				"  and ss_item_sk = i_item_sk\n" +
-				"  group by i_item_id,i_item_desc,i_current_price\n" +
-				"  order by i_item_id\n" +
-				"limit 100;\n";
+		String sql = "SELECT ADVISORYNUM,ACCEPTDATE,BUSINESSTYPE2,BUSINESSTYPE3,STATUS,PROBLEM,STARLEVEL,RESULT," +
+				"PONITSTANDARD,REPORTSOURCE,ORGID,ISMONIT,REPORTER,SECTIONID,COMEFROM,COMP_TYPE,INGLE_TYPE_ID," +
+				"REPORTSOURCE_ID,COMEFROM_ID,HPB_ID,COMPLAINOBJECT,ISVALID,TEL,DISTRICT,STREETNAME,ADDRESS,SECTIONNAME,ORGNAME,BUSINESSTYPE1 FROM S30_I_INGLE";
 //		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
 //		System.out.println(sql1.getSelectSql());
 //		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
@@ -868,9 +856,6 @@ public class DruidParseQuerySql {
 //		List<String> strings = DruidParseQuerySql.parseSqlTableToList(sql);
 //		strings.forEach(System.out::println);
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
-		String[] ands = druidParseQuerySql.whereInfo.toString().split("\n");
-		for (String and : ands) {
-			System.out.println(and.trim());
-		}
+		System.out.println(druidParseQuerySql.getSelectSql());
 	}
 }
