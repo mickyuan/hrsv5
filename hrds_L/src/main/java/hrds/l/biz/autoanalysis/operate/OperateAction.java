@@ -609,7 +609,7 @@ public class OperateAction extends BaseAction {
 			Auto_tp_res_set auto_tp_res_set = Dbo.queryOneObject(Auto_tp_res_set.class,
 					"select * from " + Auto_tp_res_set.TableName
 							+ " where template_res_id = ?",
-					auto_fetch_res.getFetch_res_id())
+					auto_fetch_res.getTemplate_res_id())
 					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
 			// 模板结果中文字段
 			String column_cn_name = auto_tp_res_set.getColumn_cn_name();

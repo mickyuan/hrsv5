@@ -2,11 +2,6 @@ package hrds.l.biz.autoanalysis.manage;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
-import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.expr.SQLAggregateExpr;
-import com.alibaba.druid.sql.ast.expr.SQLAllColumnExpr;
-import com.alibaba.druid.sql.ast.expr.SQLCaseExpr;
-import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -39,11 +34,13 @@ import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
-import hrds.l.biz.autoanalysis.common.ExportTableAliasVisitor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "自主分析管理类", author = "dhw", createdate = "2020/8/21 14:17")
 public class ManageAction extends BaseAction {
@@ -393,60 +390,60 @@ public class ManageAction extends BaseAction {
 		}.getDataLayer(sql, new DatabaseWrapper());
 	}
 
-	@Method(desc = "模板配置结果设置点击 解析sq生成 select 部分的内容", logicStep = "")
-	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
-	@Return(desc = "", range = "")
-	public List<Map<String, Object>> getTemplateResult(String template_sql) {
-		List<String> tableNameList = new ArrayList<>();
-		List<String> columnNameList = new ArrayList<>();
-		List<String> columnTypeList = new ArrayList<>();
-		List<String> resultColumnNameList = new ArrayList<>();
-		List<String> tableNames = DruidParseQuerySql.parseSqlTableToList(template_sql);
-		for (String table_name : tableNames) {
-			List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
-			for (Map<String, Object> column : columns) {
-				Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
-				auto_tp_res_set.setSource_table_name(table_name);
-				auto_tp_res_set.setColumn_en_name(column.get("column_name").toString());
-				auto_tp_res_set.setColumn_cn_name(column.get("column_name").toString());
-//				auto_tp_res_set.setRes_show_column(entry.getKey().trim());
-//				List<Map<String, Object>> columnList =
-//						DataTableUtil.getColumnByTableName(Dbo.db(), auto_tp_res_set.getSource_table_name());
-//				for (Map<String, Object> columnMap : columnList) {
-//					if (columnMap.get("table_name").equals(auto_tp_res_set.getSource_table_name())) {
-//						auto_tp_res_set.setColumn_type(columnMap.get("column_type")==null?
-//								AutoValueType.ZiFuChuan.getCode(),);
-//					}
-//				}
-				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
-//				if (!autoTpResSets.contains(auto_tp_res_set)) {
-//					autoTpResSets.add(auto_tp_res_set);
-//				}
-//				// 对相同列名加序号
-//				if (resultColumnNameList.contains(column.get("column_name").toString())) {
-//					throw new BusinessException("查询字段中存在字段名相同的列，请设置别名");
-//				}
-				resultColumnNameList.add(column.get("column_name").toString());
-				columnTypeList.add(column.get("column_type").toString());
-			}
-		}
-		getTableNameAndColumnName(template_sql, tableNameList, columnNameList, columnTypeList, resultColumnNameList);
-		List<Map<String, Object>> resultSetList = new ArrayList<>();
-		for (int i = 0; i < tableNameList.size(); i++) {
-			Map<String, Object> resultSetMap = new HashMap<>();
-			resultSetMap.put("source_table_name", tableNameList.get(i));
-			resultSetMap.put("column_en_name", columnNameList.get(i));
-			resultSetMap.put("column_cn_name", resultColumnNameList.get(i));
-			resultSetMap.put("res_show_column", resultColumnNameList.get(i));
-			if (numbersArray.contains(columnTypeList.get(i))) {
-				resultSetMap.put("column_type", AutoValueType.ShuZhi.toString());
-			} else {
-				resultSetMap.put("column_type", AutoValueType.ZiFuChuan.toString());
-			}
-			resultSetList.add(resultSetMap);
-		}
-		return resultSetList;
-	}
+//	@Method(desc = "模板配置结果设置点击 解析sq生成 select 部分的内容", logicStep = "")
+//	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
+//	@Return(desc = "", range = "")
+//	public List<Map<String, Object>> getTemplateResult(String template_sql) {
+//		List<String> tableNameList = new ArrayList<>();
+//		List<String> columnNameList = new ArrayList<>();
+//		List<String> columnTypeList = new ArrayList<>();
+//		List<String> resultColumnNameList = new ArrayList<>();
+//		List<String> tableNames = DruidParseQuerySql.parseSqlTableToList(template_sql);
+//		for (String table_name : tableNames) {
+//			List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
+//			for (Map<String, Object> column : columns) {
+//				Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
+//				auto_tp_res_set.setSource_table_name(table_name);
+//				auto_tp_res_set.setColumn_en_name(column.get("column_name").toString());
+//				auto_tp_res_set.setColumn_cn_name(column.get("column_name").toString());
+////				auto_tp_res_set.setRes_show_column(entry.getKey().trim());
+////				List<Map<String, Object>> columnList =
+////						DataTableUtil.getColumnByTableName(Dbo.db(), auto_tp_res_set.getSource_table_name());
+////				for (Map<String, Object> columnMap : columnList) {
+////					if (columnMap.get("table_name").equals(auto_tp_res_set.getSource_table_name())) {
+////						auto_tp_res_set.setColumn_type(columnMap.get("column_type")==null?
+////								AutoValueType.ZiFuChuan.getCode(),);
+////					}
+////				}
+//				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+////				if (!autoTpResSets.contains(auto_tp_res_set)) {
+////					autoTpResSets.add(auto_tp_res_set);
+////				}
+////				// 对相同列名加序号
+////				if (resultColumnNameList.contains(column.get("column_name").toString())) {
+////					throw new BusinessException("查询字段中存在字段名相同的列，请设置别名");
+////				}
+//				resultColumnNameList.add(column.get("column_name").toString());
+//				columnTypeList.add(column.get("column_type").toString());
+//			}
+//		}
+//		getTableNameAndColumnName(template_sql, tableNameList, columnNameList, columnTypeList, resultColumnNameList);
+//		List<Map<String, Object>> resultSetList = new ArrayList<>();
+//		for (int i = 0; i < tableNameList.size(); i++) {
+//			Map<String, Object> resultSetMap = new HashMap<>();
+//			resultSetMap.put("source_table_name", tableNameList.get(i));
+//			resultSetMap.put("column_en_name", columnNameList.get(i));
+//			resultSetMap.put("column_cn_name", resultColumnNameList.get(i));
+//			resultSetMap.put("res_show_column", resultColumnNameList.get(i));
+//			if (numbersArray.contains(columnTypeList.get(i))) {
+//				resultSetMap.put("column_type", AutoValueType.ShuZhi.toString());
+//			} else {
+//				resultSetMap.put("column_type", AutoValueType.ZiFuChuan.toString());
+//			}
+//			resultSetList.add(resultSetMap);
+//		}
+//		return resultSetList;
+//	}
 
 	@Method(desc = "发布自主取数模板", logicStep = "1.更新模板状态为发布")
 	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
@@ -668,177 +665,177 @@ public class ManageAction extends BaseAction {
 		condInfoMap.put("checked", true);
 	}
 
-	@Method(desc = "设置SQL的字段名称，表名和结果字段名称", logicStep = "")
-	@Param(name = "sql", desc = "sql语句", range = "无限制")
-	@Return(desc = "返回SQL的字段名称，表名和结果字段名称", range = "无限制")
-	private Map<String, Object> getTableNameAndColumnName(String sql, List<String> tableName
-			, List<String> columnName, List<String> columnType, List<String> resultColumnName) {
-		Map<String, Object> resultMap = new HashMap<>();
-		boolean flag = false;
-		String dbType = JdbcConstants.ORACLE;
-		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
-		ExportTableAliasVisitor visitor = new ExportTableAliasVisitor();
-		visitor.setFlag(true);
-		visitor.setModelflag(false);
-		visitor.setSelectList(new ArrayList<>());
-		for (SQLStatement stmt : stmtList) {
-			stmt.accept(visitor);
-		}
-		List<SQLSelectItem> selectList = visitor.getSelectList();
-		for (SQLSelectItem item : selectList) {
-			SQLExpr expr = item.getExpr();
-			if (expr instanceof SQLAllColumnExpr) {
-				flag = true;
-				break;
-			}
-		}
-		StringBuilder newSelectPart = new StringBuilder();
-		StringBuilder newSelectPart2 = new StringBuilder();
-		StringBuilder fromParts = new StringBuilder();
-		List<Map<String, String>> fromItems = getFromItems(sql);
-		if (flag) {
-			for (Map<String, String> map : fromItems) {
-				String selectItem = map.get("selectItem");
-				String status = map.get("status");
-				String alias = map.get("alias");
-				List<Map<String, Object>> result = new ArrayList<>();
-				if (status.equals("table")) {// 表示这是一个表
-					List<String> tableNameList = Arrays.asList(selectItem.split(Constant.SPACE));
-					selectItem = tableNameList.get(0);
-					String execSql = "select * from " + selectItem;
-					setColumns(fromParts, execSql, selectItem, result, newSelectPart.append(selectItem), newSelectPart);
-				} else {
-					// 表名这是一个子查询
-					setColumns(fromParts, selectItem, alias, result, newSelectPart.append(selectItem), newSelectPart);
-				}
-			}
-			fromParts = new StringBuilder(fromParts.substring(0, fromParts.length() - 1));
-			sql = getSql(selectList, newSelectPart2, fromParts, newSelectPart.toString());
-			sql = sql.trim();
-		} else {
-			for (Map<String, String> map : fromItems) {
-				String selectItem = map.get("selectItem");
-				String Status = map.get("Status");
-				String alias = map.get("alias");
-				if (Status.equals("table")) {// 表示这是一个表
-					fromParts.append(selectItem).append(",");
-				} else {// 表名这是一个子查询
-					fromParts.append(alias).append(",");
-				}
-			}
-			sql = getSql(selectList, newSelectPart, fromParts, newSelectPart.toString());
-		}
-		// 获取字段名和表名
-		dbType = JdbcConstants.ORACLE;
-		stmtList = SQLUtils.parseStatements(sql, dbType);
-		visitor = new ExportTableAliasVisitor();
-		visitor.setFlag(true);
-		visitor.setModelflag(true);
-		visitor.setColumnname(new ArrayList<>());
-		visitor.setTablename(new ArrayList<>());
-		for (SQLStatement stmt : stmtList) {
-			stmt.accept(visitor);
-		}
-		columnName = visitor.getColumnname();
-		for (int i = 0; i < columnName.size(); i++) {
-			String columnName1 = columnName.get(i);
-			StringBuilder realColumnName = new StringBuilder();
-			List<String> list = StringUtil.split(columnName1, "\n");
-			for (String everySql : list) {
-				realColumnName.append(everySql.trim()).append(Constant.SPACE);
-			}
-			realColumnName = new StringBuilder(realColumnName.toString().trim());
-			columnName.set(i, realColumnName.toString());
-		}
-		tableName = visitor.getTablename();
-		return resultMap;
-	}
+//	@Method(desc = "设置SQL的字段名称，表名和结果字段名称", logicStep = "")
+//	@Param(name = "sql", desc = "sql语句", range = "无限制")
+//	@Return(desc = "返回SQL的字段名称，表名和结果字段名称", range = "无限制")
+//	private Map<String, Object> getTableNameAndColumnName(String sql, List<String> tableName
+//			, List<String> columnName, List<String> columnType, List<String> resultColumnName) {
+//		Map<String, Object> resultMap = new HashMap<>();
+//		boolean flag = false;
+//		String dbType = JdbcConstants.ORACLE;
+//		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
+//		ExportTableAliasVisitor visitor = new ExportTableAliasVisitor();
+//		visitor.setFlag(true);
+//		visitor.setModelflag(false);
+//		visitor.setSelectList(new ArrayList<>());
+//		for (SQLStatement stmt : stmtList) {
+//			stmt.accept(visitor);
+//		}
+//		List<SQLSelectItem> selectList = visitor.getSelectList();
+//		for (SQLSelectItem item : selectList) {
+//			SQLExpr expr = item.getExpr();
+//			if (expr instanceof SQLAllColumnExpr) {
+//				flag = true;
+//				break;
+//			}
+//		}
+//		StringBuilder newSelectPart = new StringBuilder();
+//		StringBuilder newSelectPart2 = new StringBuilder();
+//		StringBuilder fromParts = new StringBuilder();
+//		List<Map<String, String>> fromItems = getFromItems(sql);
+//		if (flag) {
+//			for (Map<String, String> map : fromItems) {
+//				String selectItem = map.get("selectItem");
+//				String status = map.get("status");
+//				String alias = map.get("alias");
+//				List<Map<String, Object>> result = new ArrayList<>();
+//				if (status.equals("table")) {// 表示这是一个表
+//					List<String> tableNameList = Arrays.asList(selectItem.split(Constant.SPACE));
+//					selectItem = tableNameList.get(0);
+//					String execSql = "select * from " + selectItem;
+//					setColumns(fromParts, execSql, selectItem, result, newSelectPart.append(selectItem), newSelectPart);
+//				} else {
+//					// 表名这是一个子查询
+//					setColumns(fromParts, selectItem, alias, result, newSelectPart.append(selectItem), newSelectPart);
+//				}
+//			}
+//			fromParts = new StringBuilder(fromParts.substring(0, fromParts.length() - 1));
+//			sql = getSql(selectList, newSelectPart2, fromParts, newSelectPart.toString());
+//			sql = sql.trim();
+//		} else {
+//			for (Map<String, String> map : fromItems) {
+//				String selectItem = map.get("selectItem");
+//				String Status = map.get("Status");
+//				String alias = map.get("alias");
+//				if (Status.equals("table")) {// 表示这是一个表
+//					fromParts.append(selectItem).append(",");
+//				} else {// 表名这是一个子查询
+//					fromParts.append(alias).append(",");
+//				}
+//			}
+//			sql = getSql(selectList, newSelectPart, fromParts, newSelectPart.toString());
+//		}
+//		// 获取字段名和表名
+//		dbType = JdbcConstants.ORACLE;
+//		stmtList = SQLUtils.parseStatements(sql, dbType);
+//		visitor = new ExportTableAliasVisitor();
+//		visitor.setFlag(true);
+//		visitor.setModelflag(true);
+//		visitor.setColumnname(new ArrayList<>());
+//		visitor.setTablename(new ArrayList<>());
+//		for (SQLStatement stmt : stmtList) {
+//			stmt.accept(visitor);
+//		}
+//		columnName = visitor.getColumnname();
+//		for (int i = 0; i < columnName.size(); i++) {
+//			String columnName1 = columnName.get(i);
+//			StringBuilder realColumnName = new StringBuilder();
+//			List<String> list = StringUtil.split(columnName1, "\n");
+//			for (String everySql : list) {
+//				realColumnName.append(everySql.trim()).append(Constant.SPACE);
+//			}
+//			realColumnName = new StringBuilder(realColumnName.toString().trim());
+//			columnName.set(i, realColumnName.toString());
+//		}
+//		tableName = visitor.getTablename();
+//		return resultMap;
+//	}
+//
+//	private String getSql(List<SQLSelectItem> selectList, StringBuilder newSelectPart2,
+//	                      StringBuilder fromParts, String s) {
+//		String sql;
+//		for (SQLSelectItem item : selectList) {
+//			String everySelectPart;
+//			SQLExpr expr = item.getExpr();
+//			if (expr instanceof SQLCaseExpr) {
+//				everySelectPart = item.getAlias();
+//			} else if (expr instanceof SQLAggregateExpr) {
+//				SQLAggregateExpr sqlaggregateexpr = (SQLAggregateExpr) expr;
+//				List<SQLExpr> arguments = sqlaggregateexpr.getArguments();
+//				if (arguments.size() == 0) {
+//					everySelectPart = item.toString();
+//				} else {
+//					everySelectPart = expr.toString();
+//				}
+//			} else {
+//				everySelectPart = expr.toString();
+//			}
+//			if (expr instanceof SQLAllColumnExpr) {
+//				everySelectPart = s;
+//			}
+//			newSelectPart2.append(everySelectPart).append(",");
+//		}
+//		newSelectPart2 = new StringBuilder(newSelectPart2.substring(0, newSelectPart2.length() - 1));
+//		sql = "select " + newSelectPart2 + " from " + fromParts;
+//		return sql;
+//	}
+//
+//	private void setColumns(StringBuilder fromParts, String selectItem, String alias,
+//	                        List<Map<String, Object>> result, StringBuilder append, StringBuilder newSelectPart) {
+//		new ProcessingData() {
+//			@Override
+//			public void dealLine(Map<String, Object> map) {
+//				result.add(map);
+//			}
+//		}.getDataLayer(selectItem, Dbo.db());
+//		for (Map<String, Object> columnMap : result) {
+//			for (Map.Entry<String, Object> entry : columnMap.entrySet()) {
+//				append.append(".").append(entry.getKey()).append(",");
+//			}
+//		}
+//		fromParts.append(alias).append(",");
+//	}
 
-	private String getSql(List<SQLSelectItem> selectList, StringBuilder newSelectPart2,
-	                      StringBuilder fromParts, String s) {
-		String sql;
-		for (SQLSelectItem item : selectList) {
-			String everySelectPart;
-			SQLExpr expr = item.getExpr();
-			if (expr instanceof SQLCaseExpr) {
-				everySelectPart = item.getAlias();
-			} else if (expr instanceof SQLAggregateExpr) {
-				SQLAggregateExpr sqlaggregateexpr = (SQLAggregateExpr) expr;
-				List<SQLExpr> arguments = sqlaggregateexpr.getArguments();
-				if (arguments.size() == 0) {
-					everySelectPart = item.toString();
-				} else {
-					everySelectPart = expr.toString();
-				}
-			} else {
-				everySelectPart = expr.toString();
-			}
-			if (expr instanceof SQLAllColumnExpr) {
-				everySelectPart = s;
-			}
-			newSelectPart2.append(everySelectPart).append(",");
-		}
-		newSelectPart2 = new StringBuilder(newSelectPart2.substring(0, newSelectPart2.length() - 1));
-		sql = "select " + newSelectPart2 + " from " + fromParts;
-		return sql;
-	}
-
-	private void setColumns(StringBuilder fromParts, String selectItem, String alias,
-	                        List<Map<String, Object>> result, StringBuilder append, StringBuilder newSelectPart) {
-		new ProcessingData() {
-			@Override
-			public void dealLine(Map<String, Object> map) {
-				result.add(map);
-			}
-		}.getDataLayer(selectItem, Dbo.db());
-		for (Map<String, Object> columnMap : result) {
-			for (Map.Entry<String, Object> entry : columnMap.entrySet()) {
-				append.append(".").append(entry.getKey()).append(",");
-			}
-		}
-		fromParts.append(alias).append(",");
-	}
-
-	@Method(desc = "获取sql当中from的部分", logicStep = "")
-	@Param(name = "sql", desc = "sql语句", range = "无限制")
-	@Return(desc = "返回解析sql后的from部分", range = "无限制")
-	private List<Map<String, String>> getFromItems(String sql) {
-
-		List<Map<String, String>> resultList = new ArrayList<>();
-		final String dbType = JdbcConstants.ORACLE;
-		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
-		ExportTableAliasVisitor visitor = new ExportTableAliasVisitor();
-		visitor.setListAllTableName(new ArrayList<>());
-		visitor.setListSubquerySQL(new ArrayList<>());
-		visitor.setListSubqueryAliases(new ArrayList<>());
-		visitor.setIfHaveAliaslist(new ArrayList<>());
-		visitor.setFlag(true);
-		visitor.setModelflag(true);
-		visitor.setCount(1);
-		for (SQLStatement stmt : stmtList) {
-			stmt.accept(visitor);
-		}
-		List<String> listAllTableName = visitor.getListAllTableName();
-		List<String> ListSubquerySQL = visitor.getListSubquerySQL();
-		List<String> listSubqueryAliases = visitor.getListSubqueryAliases();
-		List<String> ifHaveAliasList = visitor.getIfHaveAliaslist();
-		for (int i = 0; i < ListSubquerySQL.size(); i++) {
-			String IfHaveAlias = ifHaveAliasList.get(i);
-			String subQuerySql = ListSubquerySQL.get(i);
-			String subQueryAlias = listSubqueryAliases.get(i);
-			Map<String, String> map = new HashMap<>();
-			map.put("IfHaveAlias", IfHaveAlias);
-			map.put("selectItem", subQuerySql);
-			map.put("Status", "subquery");
-			map.put("alias", subQueryAlias);
-			resultList.add(map);
-		}
-		for (String TableName : listAllTableName) {
-			Map<String, String> map = new HashMap<>();
-			map.put("Status", "table");
-			map.put("selectItem", TableName);
-			resultList.add(map);
-		}
-		return resultList;
-	}
+//	@Method(desc = "获取sql当中from的部分", logicStep = "")
+//	@Param(name = "sql", desc = "sql语句", range = "无限制")
+//	@Return(desc = "返回解析sql后的from部分", range = "无限制")
+//	private List<Map<String, String>> getFromItems(String sql) {
+//
+//		List<Map<String, String>> resultList = new ArrayList<>();
+//		final String dbType = JdbcConstants.ORACLE;
+//		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
+//		ExportTableAliasVisitor visitor = new ExportTableAliasVisitor();
+//		visitor.setListAllTableName(new ArrayList<>());
+//		visitor.setListSubquerySQL(new ArrayList<>());
+//		visitor.setListSubqueryAliases(new ArrayList<>());
+//		visitor.setIfHaveAliaslist(new ArrayList<>());
+//		visitor.setFlag(true);
+//		visitor.setModelflag(true);
+//		visitor.setCount(1);
+//		for (SQLStatement stmt : stmtList) {
+//			stmt.accept(visitor);
+//		}
+//		List<String> listAllTableName = visitor.getListAllTableName();
+//		List<String> ListSubquerySQL = visitor.getListSubquerySQL();
+//		List<String> listSubqueryAliases = visitor.getListSubqueryAliases();
+//		List<String> ifHaveAliasList = visitor.getIfHaveAliaslist();
+//		for (int i = 0; i < ListSubquerySQL.size(); i++) {
+//			String IfHaveAlias = ifHaveAliasList.get(i);
+//			String subQuerySql = ListSubquerySQL.get(i);
+//			String subQueryAlias = listSubqueryAliases.get(i);
+//			Map<String, String> map = new HashMap<>();
+//			map.put("IfHaveAlias", IfHaveAlias);
+//			map.put("selectItem", subQuerySql);
+//			map.put("Status", "subquery");
+//			map.put("alias", subQueryAlias);
+//			resultList.add(map);
+//		}
+//		for (String TableName : listAllTableName) {
+//			Map<String, String> map = new HashMap<>();
+//			map.put("Status", "table");
+//			map.put("selectItem", TableName);
+//			resultList.add(map);
+//		}
+//		return resultList;
+//	}
 }
