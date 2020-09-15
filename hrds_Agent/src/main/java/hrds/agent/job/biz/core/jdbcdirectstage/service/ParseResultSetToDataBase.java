@@ -11,6 +11,7 @@ import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import oracle.sql.STRUCT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,17 +42,13 @@ public class ParseResultSetToDataBase {
 	/**
 	 * 读取文件到数据库构造方法
 	 *
-	 * @param resultSet         ResultSet
-	 *                          含义：采集数据的结果集
-	 * @param tableBean         TableBean
-	 *                          含义：文件对应的表结构信息
-	 * @param collectTableBean  CollectTableBean
-	 *                          含义：文件对应的卸数信息
-	 * @param dataStoreConfBean DataStoreConfBean
-	 *                          含义：文件需要上传到表对应的存储信息
+	 * @param resultSet         ResultSet 含义：采集数据的结果集
+	 * @param tableBean         TableBean 含义：文件对应的表结构信息
+	 * @param collectTableBean  CollectTableBean 含义：文件对应的卸数信息
+	 * @param dataStoreConfBean DataStoreConfBean 含义：文件需要上传到表对应的存储信息
 	 */
 	public ParseResultSetToDataBase(ResultSet resultSet, TableBean tableBean, CollectTableBean collectTableBean,
-									DataStoreConfBean dataStoreConfBean) {
+		DataStoreConfBean dataStoreConfBean) {
 		this.resultSet = resultSet;
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
@@ -66,7 +63,7 @@ public class ParseResultSetToDataBase {
 		List<String> columnMetaInfoList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		String etlDate = collectTableBean.getEtlDate();
 		String batchSql = ReadFileToDataBase.getBatchSql(columnMetaInfoList,
-				collectTableBean.getHbase_name() + "_" + 1);
+			collectTableBean.getHbase_name() + "_" + 1);
 		long counter = 0;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			LOGGER.info("连接配置为：" + dataStoreConfBean.getData_store_connect_attr().toString());
@@ -77,7 +74,7 @@ public class ParseResultSetToDataBase {
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 			//用来batch提交
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
-					Constant.METAINFOSPLIT);
+				Constant.METAINFOSPLIT);
 			int[] typeArray = tableBean.getTypeArray();
 			int numberOfColumns = selectColumnList.size();
 			LOGGER.info("type : " + typeList.size() + "  colName " + numberOfColumns);
@@ -86,6 +83,7 @@ public class ParseResultSetToDataBase {
 				counter++;
 				for (int i = 0; i < numberOfColumns; i++) {
 					int type = typeArray[i];
+//					LOGGER.info("字段类型: " + type + " 字段名称: " + selectColumnList.get(i));
 					//判断类型
 					if (type == Types.BLOB || type == Types.LONGVARBINARY) {
 						Blob blob = resultSet.getBlob(selectColumnList.get(i));
@@ -114,6 +112,8 @@ public class ParseResultSetToDataBase {
 								pst.setObject(i + 1, resultSet.getTime(selectColumnList.get(i)).toString());
 							} else if (type == Types.TIMESTAMP) {
 								pst.setObject(i + 1, resultSet.getTimestamp(selectColumnList.get(i)).toString());
+							} else if (type == Types.STRUCT) {
+								pst.setObject(i + 1, resultSet.getObject(selectColumnList.get(i)).toString());
 							} else {
 								pst.setObject(i + 1, resultSet.getObject(selectColumnList.get(i)));
 							}
