@@ -969,7 +969,7 @@ BORDERTYPE                                        CHAR(2) NULL, --边框类型
 BACKGROUND                                        VARCHAR(16) NULL, --背景色
 BORDERCOLOR                                       CHAR(2) NULL, --边框颜色
 BORDERWIDTH                                       CHAR(2) NULL, --边框宽度
-DASHBOARD_STATUS                                  CHAR(2) NULL, --仪表盘发布状态
+DASHBOARD_STATUS                                  CHAR(1) NOT NULL, --仪表盘发布状态
 CONSTRAINT AUTO_DASHBOARD_INFO_PK PRIMARY KEY(DASHBOARD_ID)   );
 
 --仪表板组件关联信息表

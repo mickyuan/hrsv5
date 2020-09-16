@@ -58,7 +58,7 @@ INSERT INTO CODE_INFO  VALUES ('10', '17', '用户类型', '监控管理', 'User
 INSERT INTO CODE_INFO  VALUES ('11', '17', '用户类型', '服务接口管理', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('12', '17', '用户类型', '服务接口用户', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('13', '17', '用户类型', '分词器管理', 'UserType');
-INSERT INTO CODE_INFO  VALUES ('14', '17', '用户类型', '数据集市', 'UserType');
+INSERT INTO CODE_INFO  VALUES ('14', '17', '用户类型', '数据加工', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('15', '17', '用户类型', '数据加工', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('16', '17', '用户类型', '机器学习工作台', 'UserType');
 INSERT INTO CODE_INFO  VALUES ('17', '17', '用户类型', '机器学习业务', 'UserType');

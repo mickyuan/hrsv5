@@ -52,7 +52,7 @@ public class Auto_dashboard_info extends ProjectTableEntity
 	private String bordercolor;
 	@DocBean(name ="borderwidth",value="边框宽度:",dataType = String.class,required = false)
 	private String borderwidth;
-	@DocBean(name ="dashboard_status",value="仪表盘发布状态:",dataType = String.class,required = false)
+	@DocBean(name ="dashboard_status",value="仪表盘发布状态(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String dashboard_status;
 	@DocBean(name ="background",value="背景色:",dataType = String.class,required = false)
 	private String background;

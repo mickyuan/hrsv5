@@ -27,22 +27,24 @@ public class TaskSqlHelper {
 
 	private static final ThreadLocal<DatabaseWrapper> _dbBox = new ThreadLocal<>();
 
-	private TaskSqlHelper() {}
+	private TaskSqlHelper() {
+	}
 
 	/**
 	 * 用于获取单例的db连接。<br>
 	 * 1.构造DatabaseWrapper实例。
+	 *
+	 * @return fd.ng.db.jdbc.DatabaseWrapper
+	 * 含义：标示一个数据库连接。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @return fd.ng.db.jdbc.DatabaseWrapper
-	 *          含义：标示一个数据库连接。
-	 *          取值范围：不会为null。
 	 */
 	private static DatabaseWrapper getDbConnector() {
 
 		//1.构造DatabaseWrapper实例。
 		DatabaseWrapper db = _dbBox.get();
-		if(db == null) {
+		if (db == null) {
 			db = new DatabaseWrapper();
 			_dbBox.set(db);
 		}
@@ -53,6 +55,7 @@ public class TaskSqlHelper {
 	/**
 	 * 用于关闭db连接。<br>
 	 * 1.关闭DatabaseWrapper实例。
+	 *
 	 * @author Tiger.Wang
 	 * @date 2019/9/23
 	 */
@@ -69,14 +72,14 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号获取调度系统信息。注意，
 	 * 该方法若无法查询到数据，则抛出AppSystemException异常。<br>
 	 * 1.数据库查询，并转换为实体。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @return hrds.commons.entity.Etl_sys
+	 * 含义：标示一个调度系统。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @return hrds.commons.entity.Etl_sys
-	 *          含义：标示一个调度系统。
-	 *          取值范围：不会为null。
 	 */
 	public static Etl_sys getEltSysBySysCode(String etlSysCd) {
 
@@ -88,7 +91,7 @@ public class TaskSqlHelper {
 						"user_name, user_pwd, serv_file_path, remarks FROM " + Etl_sys.TableName +
 						" WHERE etl_sys_cd = ?", etlSysCd);
 
-		if(0 == row.length) {
+		if (0 == row.length) {
 			throw new AppSystemException("无法根据调度系统编号获取系统信息 " + etlSysCd);
 		}
 
@@ -116,17 +119,16 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、调度作业名获取该作业需要的资源。注意，
 	 * 该方法若无法查询到数据，则抛出AppSystemException异常。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @param etlJob   含义：作业标识。
+	 *                 取值范围：不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_job_resource_rela>
+	 * 含义：作业与资源关联关系集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：作业标识。
-	 *          取值范围：不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_job_resource_rela>
-	 *          含义：作业与资源关联关系集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_job_resource_rela> getJobNeedResources(String etlSysCd, String etlJob) {
 
@@ -136,7 +138,7 @@ public class TaskSqlHelper {
 				"SELECT * FROM " + Etl_job_resource_rela.TableName +
 						" WHERE etl_sys_cd = ? AND etl_job = ?", etlSysCd, etlJob);
 		//TODO 为作业配置资源后才认为该作业有效，否则报错
-		if(null == jobNeedResources || jobNeedResources.size() == 0) {
+		if (null == jobNeedResources || jobNeedResources.size() == 0) {
 			throw new AppSystemException("根据调度系统编号、调度作业名获取不到该作业需要的资源 "
 					+ etlJob);
 		}
@@ -148,42 +150,42 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号获取作业定义信息，无效作业不会被查询命中。注意，
 	 * 此处不返回Etl_job_def，而返回EtlJobBean。EtlJobBean重载了前者，增加了设置资源的功能。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @return java.util.List<hrds.control.beans.EtlJobDefBean>
+	 * 含义：作业信息数组（来自作业定义表）。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @return java.util.List<hrds.control.beans.EtlJobDefBean>
-	 *          含义：作业信息数组（来自作业定义表）。
-	 *          取值范围：不会为null。
 	 */
 	public static List<EtlJobDefBean> getAllDefJob(String etlSysCd) {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), EtlJobDefBean.class,
-						"SELECT * FROM " + Etl_job_def.TableName +
-								" WHERE etl_sys_cd = ? AND job_eff_flag != ?",
+				"SELECT * FROM " + Etl_job_def.TableName +
+						" WHERE etl_sys_cd = ? AND job_eff_flag != ?",
 				etlSysCd, Job_Effective_Flag.NO.getCode());
 	}
 
 	/**
 	 * 根据调度系统编号获取作业依赖信息。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_dependency>
+	 * 含义：作业依赖集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_dependency>
-	 *          含义：作业依赖集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_dependency> getJobDependencyBySysCode(String etlSysCd) {
 
 		//1.查询数据库获取数据。
 		return SqlOperator.queryList(TaskSqlHelper.getDbConnector(), Etl_dependency.class,
-						"SELECT * FROM " + Etl_dependency.TableName +
-								" WHERE etl_sys_cd = ? AND status = ?",
+				"SELECT * FROM " + Etl_dependency.TableName +
+						" WHERE etl_sys_cd = ? AND status = ?",
 				etlSysCd, Status.TRUE.getCode());
 	}
 
@@ -191,14 +193,13 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号修改调度系统跑批日期。注意，此处会将[主服务器同步标志]设置为同步。
 	 * 若该方法修改数据失败（影响数据行数不为1），则抛出AppSystemException异常。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
 	 */
 	public static void updateEtlSysBathDate(String etlSysCd, String currBathDate) {
 
@@ -209,7 +210,7 @@ public class TaskSqlHelper {
 						" SET main_serv_sync = ?, curr_bath_date = ? WHERE etl_sys_cd = ?",
 				Main_Server_Sync.YES.getCode(), currBathDate, etlSysCd);
 
-		if(num != 1) {
+		if (num != 1) {
 			SqlOperator.rollbackTransaction(db);
 			throw new AppSystemException("根据调度系统编号修改调度系统跑批日期失败" + etlSysCd);
 		}
@@ -221,14 +222,13 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号修改调度系统运行状态。注意，此处会将[主服务器同步标志]设置为同步。
 	 * 若该方法修改数据失败（影响数据行数不为1），则抛出AppSystemException异常。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd  含义：调度系统编号。
+	 *                  取值范围：不能为null。
+	 * @param runStatus 含义：系统运行状态。
+	 *                  取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param runStatus
-	 *          含义：系统运行状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void updateEtlSysRunStatus(String etlSysCd, String runStatus) {
 
@@ -239,7 +239,7 @@ public class TaskSqlHelper {
 						" SET main_serv_sync = ?, sys_run_status = ? WHERE etl_sys_cd = ?",
 				Main_Server_Sync.YES.getCode(), runStatus, etlSysCd);
 
-		if(num != 1) {
+		if (num != 1) {
 			//FIXME 这里要执行回滚！
 			// 另外，所有抛出Runtime异常的情况，都会导致程序退出，那么，DB连接是如何关闭的？
 			// 将会在ControlManageServer类中设置顶级捕捉异常，在异常处理中关闭db连接，
@@ -254,14 +254,13 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号，修改准备运行的作业（调度状态为挂起、等待）的作业状态到指定作业状态。
 	 * 注意，此方法只修改在[挂起]和[等待]状态下的作业，并且限制[主服务器同步标识]为[是]。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd  含义：调度系统编号。
+	 *                  取值范围：不能为null。
+	 * @param runStatus 含义：作业状态。
+	 *                  取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param runStatus
-	 *          含义：作业状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void updateReadyEtlJobStatus(String etlSysCd, String runStatus) {
 
@@ -282,14 +281,13 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号，修改准备运行的作业（调度状态为挂起、等待）的作业状态到指定作业状态。
 	 * 注意，此方法只修改在[挂起]和[等待]状态下的作业，不限制[主服务器同步标识]。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd   含义：调度系统编号。
+	 *                   取值范围：不能为null。
+	 * @param dispStatus 含义：作业状态。
+	 *                   取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param dispStatus
-	 *          含义：作业状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void updateReadyEtlJobsDispStatus(String etlSysCd, String dispStatus) {
 
@@ -307,17 +305,15 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号修改调度系统运行状态及当前跑批日期。
 	 * 若该方法修改数据失败（影响数据行数不为1），则抛出AppSystemException异常。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd    含义：调度系统编号。
+	 *                    取值范围：不能为null。
+	 * @param strBathDate 含义：当前跑批日期。
+	 *                    取值范围：yyyyMMdd格式字符串，不能为null。
+	 * @param runStatus   含义：运行状态。
+	 *                    取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param strBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
-	 * @param runStatus
-	 *          含义：运行状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void updateEtlSysRunStatusAndBathDate(String etlSysCd, String strBathDate,
 	                                                    String runStatus) {
@@ -330,7 +326,7 @@ public class TaskSqlHelper {
 						" WHERE etl_sys_cd = ?", Main_Server_Sync.YES.getCode(), strBathDate,
 				runStatus, etlSysCd);
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException("根据调度系统编号修改调度系统运行状态及当前跑批日期失败 " +
 					etlSysCd);
 		}
@@ -342,14 +338,13 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、当前批量日期删除作业信息。
 	 * 注意，该方法在系统运行中使用，不会删除作业类型为T+0且按频率调度的作业。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
 	 */
 	public static void deleteEtlJobByBathDate(String etlSysCd, String currBathDate) {
 
@@ -367,11 +362,11 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号删除作业信息。注意，该方法在系统第一次运行的时候使用。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd 含义：作业编号。
+	 *                 取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：作业编号。
-	 *          取值范围：不能为null。
 	 */
 	public static void deleteEtlJobBySysCode(String etlSysCd) {
 
@@ -388,17 +383,15 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、当前跑批日期、调度作业状态来删除etl_job表的信息。
 	 * 注意，该方法不会删除调度触发方式为[频率]的作业。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
+	 * @param jobStatus    含义：调度作业状态。
+	 *                     取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
-	 * @param jobStatus
-	 *          含义：调度作业状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void deleteEtlJobWithoutFrequency(String etlSysCd, String currBathDate,
 	                                                String jobStatus) {
@@ -416,17 +409,15 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号、当前跑批日期、调度作业状态来删除etl_job表的信息。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
+	 * @param jobStatus    含义：。
+	 *                     取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
-	 * @param jobStatus
-	 *          含义：。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void deleteEtlJobByJobStatus(String etlSysCd, String currBathDate,
 	                                           String jobStatus) {
@@ -435,7 +426,7 @@ public class TaskSqlHelper {
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
 		SqlOperator.execute(db, "DELETE FROM " + Etl_job_cur.TableName + " WHERE etl_sys_cd = ? " +
-				"AND curr_bath_date = ? AND job_disp_status = ?",
+						"AND curr_bath_date = ? AND job_disp_status = ?",
 				etlSysCd, currBathDate, jobStatus);
 
 		SqlOperator.commitTransaction(db);
@@ -444,17 +435,16 @@ public class TaskSqlHelper {
 	/**
 	 * 根据系统编号与参数编号查询参数值。注意，该方法若无法查询出数据，则抛出AppSystemException异常。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param eltSysCd 含义：系统编号。
+	 *                 取值范围：不能为null。
+	 * @param paraCd   含义：参数编号。
+	 *                 取值范围：不能为null。
+	 * @return java.lang.String
+	 * 含义：数据库etl_para表的para_val字段数据。
+	 * 取值范围：任意值。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param eltSysCd
-	 *          含义：系统编号。
-	 *          取值范围：不能为null。
-	 * @param paraCd
-	 *          含义：参数编号。
-	 *          取值范围：不能为null。
-	 * @return java.lang.String
-	 *          含义：数据库etl_para表的para_val字段数据。
-	 *          取值范围：任意值。
 	 */
 	public static String getEtlParameterVal(String eltSysCd, String paraCd) {
 
@@ -463,7 +453,7 @@ public class TaskSqlHelper {
 				"SELECT para_val FROM " + Etl_para.TableName +
 						" WHERE etl_sys_cd = ? AND para_cd = ?", eltSysCd, paraCd);
 
-		if(row.length == 0) {
+		if (row.length == 0) {
 			throw new AppSystemException(String.format("找不到对应的变量[%s]", paraCd));
 		}
 
@@ -473,18 +463,62 @@ public class TaskSqlHelper {
 	/**
 	 * 在etl_job_cur表中新增一条数据。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param job 含义：表示数据库etl_job_cur表的一条数据。
+	 *            取值范围：对象中的关键属性不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param job
-	 *          含义：表示数据库etl_job_cur表的一条数据。
-	 *          取值范围：对象中的关键属性不能为null。
 	 */
-	public static void insertIntoJobTable(Etl_job_cur job) {
+	public static Object[] insertIntoJobTable(Etl_job_cur job) {
+		Object[] paramsjob = new Object[]{
+				job.getCom_exe_num(),
+				job.getComments(),
+				job.getCurr_bath_date(),
+				job.getCurr_end_time(),
+				job.getCurr_st_time(),
+				job.getDisp_freq(),
+				job.getDisp_offset(),
+				job.getDisp_time(),
+				job.getDisp_type(),
+				job.getEnd_time(),
+				job.getEtl_job(),
+				job.getEtl_job_desc(),
+				job.getEtl_sys_cd(),
+				job.getExe_frequency(),
+				job.getExe_num(),
+				job.getJob_disp_status(),
+				job.getJob_eff_flag(),
+				job.getJob_priority(),
+				job.getJob_priority_curr(),
+				job.getJob_process_id(),
+				job.getJob_return_val(),
+				job.getLast_exe_time(),
+				job.getLog_dic(),
+				job.getMain_serv_sync(),
+				job.getOverlength_val(),
+				job.getOvertime_val(),
+				job.getPro_dic(),
+				job.getPro_name(),
+				job.getPro_para(),
+				job.getPro_type(),
+				job.getStar_time(),
+				job.getSub_sys_cd(),
+				job.getToday_disp()
+		};
+		return paramsjob;
+	}
+
+	public static void insertIntoJobTable(List<Object[]> paramsList) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
-
-		job.add(db);
+		db.execBatch("insert into etl_job_cur" +
+				"(com_exe_num,comments,curr_bath_date,curr_end_time,curr_st_time,disp_freq," +
+				"disp_offset,disp_time,disp_type,end_time,etl_job,etl_job_desc,etl_sys_cd," +
+				"exe_frequency,exe_num,job_disp_status,job_eff_flag,job_priority,job_priority_curr," +
+				"job_process_id,job_return_val,last_exe_time,log_dic,main_serv_sync,overlength_val," +
+				"overtime_val,pro_dic,pro_name,pro_para,pro_type,star_time,sub_sys_cd,today_disp) " +
+				"values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", paramsList);
 
 		SqlOperator.commitTransaction(db);
 	}
@@ -494,33 +528,29 @@ public class TaskSqlHelper {
 	 * 此处会将[主服务器同步标志]设置为同步。若修改数据影响的数据行数小于1，
 	 * 则抛出AppSystemException异常。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param dispStatus   含义：调度状态。
+	 *                     取值范围：Job_Status枚举值，不能为null。
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前批量日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param dispStatus
-	 *          含义：调度状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前批量日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
 	 */
 	public static void updateEtjJobWithDispStatus(String dispStatus, String etlSysCd,
 	                                              String currBathDate) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
-
 		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
 						" SET job_disp_status = ?, main_serv_sync = ? WHERE etl_sys_cd = ?" +
 						" AND curr_bath_date = ?", dispStatus, Main_Server_Sync.YES.getCode(),
 				etlSysCd, currBathDate);
 
-		if(num < 1) {
+		if (num < 1) {
 			throw new AppSystemException("根据调度系统编号、当前批量日期修改作业信息失败" + etlSysCd);
 		}
-
 		SqlOperator.commitTransaction(db);
 	}
 
@@ -528,23 +558,20 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、调度作业标识、当前批量日期修改作业调度状态的作业信息。注意，
 	 * 若修改数据影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库表数据。
+	 *
+	 * @param dispStatus   含义：作业调度状态。
+	 *                     取值范围：Job_Status枚举值，不能为null。
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param etlJob       含义：调度作业标识。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前批量日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param dispStatus
-	 *          含义：作业调度状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前批量日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
 	 */
 	public static void updateEtlJobDispStatus(String dispStatus, String etlSysCd, String etlJob,
-	                                             String currBathDate) {
+	                                          String currBathDate) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -553,7 +580,7 @@ public class TaskSqlHelper {
 				" SET job_disp_status = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
 				" AND curr_bath_date = ?", dispStatus, etlSysCd, etlJob, currBathDate);
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识、" +
 					"当前批量日期修改作业信息失败" + etlJob);
 		}
@@ -566,17 +593,15 @@ public class TaskSqlHelper {
 	 * etlJobCurs变量中必须含有调度作业标识、当前批量日期；
 	 * 若修改数据影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.批量更新数据库数据。
+	 *
+	 * @param dispStatus 含义：作业调度状态。
+	 *                   取值范围：Job_Status枚举值，不能为null。
+	 * @param etlSysCd   含义：调度系统编号。
+	 *                   取值范围：不能为null。
+	 * @param etlJobCurs 含义：EtlJobBean集合，表示一组作业。
+	 *                   取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param dispStatus
-	 *          含义：作业调度状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJobCurs
-	 *          含义：EtlJobBean集合，表示一组作业。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlJobDispStatus(String dispStatus, String etlSysCd,
 	                                          List<EtlJobBean> etlJobCurs) {
@@ -584,7 +609,7 @@ public class TaskSqlHelper {
 		//1.批量更新数据库数据。
 		//TODO 在批量执行的情况下，数据只能这样组装？执行验证只能如此？
 		List<Object[]> params = new ArrayList<>();
-		for(EtlJobBean etlJobCur : etlJobCurs) {
+		for (EtlJobBean etlJobCur : etlJobCurs) {
 			List<String> items = new ArrayList<>();
 			items.add(dispStatus);
 			items.add(etlSysCd);
@@ -598,8 +623,8 @@ public class TaskSqlHelper {
 				" SET job_disp_status = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
 				" AND curr_bath_date = ?", params);
 
-		for(int i = 0 ; i < nums.length ; i++) {
-			if(nums[i] != 1) {
+		for (int i = 0; i < nums.length; i++) {
+			if (nums[i] != 1) {
 				//params.get(i)[2]，数字2表示etl_job
 				throw new AppSystemException("根据调度系统编号、调度作业标识、" +
 						"当前批量日期修改作业信息失败" + params.get(i)[2]);
@@ -614,17 +639,15 @@ public class TaskSqlHelper {
 	 * 此处会将[主服务器同步标识]设置为[是]。修改数据影响的数据行数不为1，
 	 * 则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param dispStatus 含义：作业状态。
+	 *                   取值范围：Job_Status枚举值，不能为null。
+	 * @param etlSysCd   含义：调度系统编号。
+	 *                   取值范围：不能为null。
+	 * @param etlJob     含义：调度作业标识。
+	 *                   取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param dispStatus
-	 *          含义：作业状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlJobDispStatus(String dispStatus, String etlSysCd, String etlJob) {
 
@@ -636,7 +659,7 @@ public class TaskSqlHelper {
 						" AND etl_job = ?",
 				dispStatus, Main_Server_Sync.YES.getCode(), etlSysCd, etlJob);
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识修改作业信息失败" + etlJob);
 		}
 
@@ -647,17 +670,15 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、调度作业标识，进行修改当前执行时间。注意，
 	 * 若修改数据影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param currStTime 含义：开始执行时间。
+	 *                   取值范围：yyyyMMdd HHmmss格式的字符串，不能为null。
+	 * @param etlSysCd   含义：调度系统编号。
+	 *                   取值范围：不能为null。
+	 * @param etlJob     含义：调度作业标识。
+	 *                   取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param currStTime
-	 *          含义：开始执行时间。
-	 *          取值范围：yyyyMMdd HHmmss格式的字符串，不能为null。
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlJobRunTime(String currStTime, String etlSysCd, String etlJob) {
 
@@ -669,7 +690,7 @@ public class TaskSqlHelper {
 						" AND etl_job = ?", currStTime, Main_Server_Sync.YES.getCode(), etlSysCd,
 				etlJob);
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识，进行修改当前执行时间失败" + etlJob);
 		}
 
@@ -679,26 +700,22 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号、调度作业标识、当前跑批日期修改调度作业信息。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param eltJob       含义：调度作业标识。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
+	 * @param currStTime   含义：currStTime。
+	 *                     取值范围：yyyyMMdd HHmmss格式字符串，不能为null。
+	 * @param currEndTime  含义：currEndTime。
+	 *                     取值范围：yyyyMMdd HHmmss格式字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param eltJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
-	 * @param currStTime
-	 *          含义：currStTime。
-	 *          取值范围：yyyyMMdd HHmmss格式字符串，不能为null。
-	 * @param currEndTime
-	 *          含义：currEndTime。
-	 *          取值范围：yyyyMMdd HHmmss格式字符串，不能为null。
 	 */
 	public static void updateVirtualJob(String etlSysCd, String eltJob, String currBathDate,
-										   String currStTime, String currEndTime) {
+	                                    String currStTime, String currEndTime) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -717,14 +734,13 @@ public class TaskSqlHelper {
 	 * 注意，此处会修改作业调度状态、主服务器同步标志，但会根据条件修改调度系统信息：
 	 * 指定的条件、作业调度状态不在挂起、结束状态、当天调度。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
 	 */
 	public static void updateEtjJobByResumeRun(String etlSysCd, String currBathDate) {
 
@@ -744,17 +760,16 @@ public class TaskSqlHelper {
 	/**
 	 * 据调度系统编号、当前跑批日期，来获取到达调度日期（已登记）的作业。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_job_cur>
+	 * 含义：已登记的作业集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_job_cur>
-	 *          含义：已登记的作业集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_job_cur> getEtlJobs(String etlSysCd, String currBathDate) {
 
@@ -768,20 +783,18 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、调度作业标识、当前跑批日期获取调度作业信息。
 	 * 注意，当无法获取到数据时抛出AppSystemException异常。<br>
 	 * 1.查询数据库获取数据，并转换为Etl_job_cur实体。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param etlJob       含义：调度作业标识。
+	 *                     取值范围：不能为null。
+	 * @param currBathDate 含义：当前跑批日期。
+	 *                     取值范围：yyyyMMdd格式字符串，不能为null。
+	 * @return hrds.commons.entity.Etl_job_cur
+	 * 含义：表示一个已登记执行的作业。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式字符串，不能为null。
-	 * @return hrds.commons.entity.Etl_job_cur
-	 *          含义：表示一个已登记执行的作业。
-	 *          取值范围：不会为null。
 	 */
 	public static Etl_job_cur getEtlJob(String etlSysCd, String etlJob, String currBathDate) {
 
@@ -797,7 +810,7 @@ public class TaskSqlHelper {
 						" WHERE etl_sys_cd = ? AND etl_job = ? AND curr_bath_date = ?",
 				etlSysCd, etlJob, currBathDate);
 
-		if(row.length == 0) {
+		if (row.length == 0) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识、" +
 					"当前跑批日期获取调度作业信息失败 " + etlSysCd);
 		}
@@ -808,17 +821,16 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号、调度作业标识获取调度作业信息。注意，当无法获取到数据时抛出AppSystemException异常。<br>
 	 * 1.查询数据库获取数据，并转换为Etl_job_cur实体。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @param etlJob   含义：调度作业标识。
+	 *                 取值范围：不能为null。
+	 * @return hrds.commons.entity.Etl_job_cur
+	 * 含义：表示一个已登记执行的作业。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
-	 * @return hrds.commons.entity.Etl_job_cur
-	 *          含义：表示一个已登记执行的作业。
-	 *          取值范围：不会为null。
 	 */
 	public static Etl_job_cur getEtlJob(String etlSysCd, String etlJob) {
 
@@ -833,7 +845,7 @@ public class TaskSqlHelper {
 						" star_time, end_time FROM " + Etl_job_cur.TableName +
 						" WHERE etl_sys_cd= ? AND etl_job = ?", etlSysCd, etlJob);
 
-		if(0 == etlJobCurObj.length) {
+		if (0 == etlJobCurObj.length) {
 			throw new AppSystemException("根据调度系统编号、调度作业标识获取调度作业信息失败 "
 					+ etlSysCd);
 		}
@@ -846,19 +858,19 @@ public class TaskSqlHelper {
 	 * 注意，该方法在传入的参数为null或数组个数不为33则会抛出AppSystemException异常。<br>
 	 * 1.检测传入的对象数组参数元素个数是否为33个；<br>
 	 * 2.对象数组转换为实体对象。
+	 *
+	 * @param row 含义：数据库中表的一行数据。
+	 *            取值范围：不能为null。
+	 * @return hrds.commons.entity.Etl_job_cur
+	 * 含义：表示一个已登记执行的作业。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param row
-	 *          含义：数据库中表的一行数据。
-	 *          取值范围：不能为null。
-	 * @return hrds.commons.entity.Etl_job_cur
-	 *          含义：表示一个已登记执行的作业。
-	 *          取值范围：不会为null。
 	 */
 	private static Etl_job_cur obj2EtlJobCur(Object[] row) {
 
 		//1.检测传入的对象数组参数元素个数是否为33个；
-		if(row.length != 33 ) {
+		if (row.length != 33) {
 			throw new AppSystemException("Object[]转换为Etl_job_cur对象失败，元素个数不为33");
 		}
 
@@ -904,14 +916,14 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号获取系统资源信息。注意，若无法查询出数据则抛出AppSystemException异常。<br>
 	 * 1.查询数据库获取数据，并转换为Etl_resource实体。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_resource>
+	 * 含义：系统资源信息集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_resource>
-	 *          含义：系统资源信息集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_resource> getEtlSystemResources(String etlSysCd) {
 
@@ -920,12 +932,12 @@ public class TaskSqlHelper {
 				"SELECT etl_sys_cd, resource_type, resource_max, resource_used, main_serv_sync" +
 						" FROM " + Etl_resource.TableName + " WHERE etl_sys_cd = ?", etlSysCd);
 
-		if(rows.size() == 0) {
+		if (rows.size() == 0) {
 			throw new AppSystemException("根据调度系统编号获取系统资源信息失败" + etlSysCd);
 		}
 
 		List<Etl_resource> etlResources = new ArrayList<>();
-		for(Object[] row : rows) {
+		for (Object[] row : rows) {
 			Etl_resource etlResource = new Etl_resource();
 			etlResource.setEtl_sys_cd((String) row[0]);
 			etlResource.setResource_type((String) row[1]);
@@ -942,14 +954,13 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号来更新[资源使用数]。注意，
 	 * 若更新数据影响数据行数小于1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @param used     含义：资源使用数。
+	 *                 取值范围：int范围内任何数值。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param used
-	 *          含义：资源使用数。
-	 *          取值范围：int范围内任何数值。
 	 */
 	public static void updateEtlResourceUsed(String etlSysCd, int used) {
 
@@ -959,7 +970,7 @@ public class TaskSqlHelper {
 		int num = SqlOperator.execute(db, "UPDATE " + Etl_resource.TableName + " SET" +
 				" resource_used = ? WHERE etl_sys_cd = ?", used, etlSysCd);
 
-		if(num < 1) {
+		if (num < 1) {
 			throw new AppSystemException("根据调度系统编号来更新[资源使用数]失败" + etlSysCd);
 		}
 
@@ -971,21 +982,20 @@ public class TaskSqlHelper {
 	 * 注意，etlResources变量中必须含有已使用资源数、资源类型；
 	 * 若修改数据影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.批量更新数据库数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param etlResources 含义：系统资源集合。
+	 *                     取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlResources
-	 *          含义：系统资源集合。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlResourceUsedByResourceType(String etlSysCd,
 	                                                       List<Etl_resource> etlResources) {
 
 		//TODO 在批量执行的情况下，数据只能这样组装？执行验证只能如此？
 		List<Object[]> params = new ArrayList<>();
-		for(Etl_resource etlResource : etlResources) {
+		for (Etl_resource etlResource : etlResources) {
 			List<Object> items = new ArrayList<>();
 			items.add(etlResource.getResource_used());
 			items.add(etlSysCd);
@@ -998,11 +1008,11 @@ public class TaskSqlHelper {
 		int[] nums = SqlOperator.executeBatch(db, "UPDATE " + Etl_resource.TableName +
 				" SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?", params);
 
-		for(int i = 0 ; i < nums.length ; i++) {
+		for (int i = 0; i < nums.length; i++) {
 			//params.get(i)[2]表示resource_type
-			if(nums[i] != 1) {
+			if (nums[i] != 1) {
 				throw new AppSystemException(String.format("据调度系统编号%s、" +
-								"资源类型%s修改[已使用资源]失败", etlSysCd, params.get(i)[2]));
+						"资源类型%s修改[已使用资源]失败", etlSysCd, params.get(i)[2]));
 			}
 		}
 
@@ -1013,17 +1023,15 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、资源类型批量修改[已使用资源]为指定数。
 	 * 若修改数据影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd     含义：调度系统编号。
+	 *                     取值范围：不能为null。
+	 * @param resourceType 含义：资源类型。
+	 *                     取值范围：不能为null。
+	 * @param used         含义：资源使用数。
+	 *                     取值范围：int范围内任何数值。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param resourceType
-	 *          含义：资源类型。
-	 *          取值范围：不能为null。
-	 * @param used
-	 *          含义：资源使用数。
-	 *          取值范围：int范围内任何数值。
 	 */
 	public static void updateEtlResourceUsedByResourceType(String etlSysCd, String resourceType,
 	                                                       int used) {
@@ -1032,12 +1040,12 @@ public class TaskSqlHelper {
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
 		int num = SqlOperator.execute(db, "UPDATE " + Etl_resource.TableName +
-				" SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?",
+						" SET resource_used = ? WHERE etl_sys_cd = ? AND resource_type = ?",
 				used, etlSysCd, resourceType);
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException(String.format("据调度系统编号%s、" +
-							"资源类型%s修改[已使用资源]失败", etlSysCd, resourceType));
+					"资源类型%s修改[已使用资源]失败", etlSysCd, resourceType));
 		}
 
 		SqlOperator.commitTransaction(db);
@@ -1046,14 +1054,14 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号获取调度作业干预信息。
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSyscd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_job_hand>
+	 * 含义：系统/作业干预集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSyscd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_job_hand>
-	 *          含义：系统/作业干预集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_job_hand> getEtlJobHands(String etlSyscd) {
 
@@ -1070,11 +1078,11 @@ public class TaskSqlHelper {
 	 * main_serv_sync、end_time、warning、etl_sys_cd、etl_job、etl_hand_type。
 	 * 若更新数据影响数据行数小于1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlJobHand 含义：表示一条系统/作业干预信息。
+	 *                   取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlJobHand
-	 *          含义：表示一条系统/作业干预信息。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlJobHandle(Etl_job_hand etlJobHand) {
 
@@ -1088,7 +1096,7 @@ public class TaskSqlHelper {
 				etlJobHand.getEnd_time(), etlJobHand.getWarning(), etlJobHand.getEtl_sys_cd(),
 				etlJobHand.getEtl_job(), etlJobHand.getEtl_hand_type());
 
-		if(num < 1) {
+		if (num < 1) {
 			throw new AppSystemException("修改调度作业干预表（etl_job_hand）失败 " +
 					etlJobHand.getEtl_job());
 		}
@@ -1100,11 +1108,11 @@ public class TaskSqlHelper {
 	 * 在调度作业干预历史表中新增一条数据（etl_job_hand_his）。注意，
 	 * 若新增数据失败则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlJobHandHis 含义：表示一条系统/作业干预历史。
+	 *                      取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlJobHandHis
-	 *          含义：表示一条系统/作业干预历史。
-	 *          取值范围：不能为null。
 	 */
 	public static void insertIntoEtlJobHandleHistory(Etl_job_hand_his etlJobHandHis) {
 
@@ -1119,17 +1127,15 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号、调度作业标识、干预类型删除调度干预表（etl_job_hand）信息。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd    含义：调度系统编号。
+	 *                    取值范围：不能为null。
+	 * @param etlJob      含义：调度作业标识。
+	 *                    取值范围：不能为null。
+	 * @param etlHandType 含义：干预类型。
+	 *                    取值范围：TaskJobHandleHelper类中的固定值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
-	 * @param etlHandType
-	 *          含义：干预类型。
-	 *          取值范围：TaskJobHandleHelper类中的固定值，不能为null。
 	 */
 	public static void deleteEtlJobHand(String etlSysCd, String etlJob, String etlHandType) {
 
@@ -1137,7 +1143,7 @@ public class TaskSqlHelper {
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
 		SqlOperator.execute(db, "DELETE FROM " + Etl_job_hand.TableName +
-				" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
+						" WHERE etl_sys_cd = ? AND etl_job = ? AND etl_hand_type = ?",
 				etlSysCd, etlJob, etlHandType);
 
 		SqlOperator.commitTransaction(db);
@@ -1146,14 +1152,14 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号，获取需要调度的作业（作业状态为挂起或者等待）。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_job_cur>
+	 * 含义：一组已经登记执行的作业集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_job_cur>
-	 *          含义：一组已经登记执行的作业集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_job_cur> getReadyEtlJobs(String etlSysCd) {
 
@@ -1167,17 +1173,16 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号，获取指定作业状态的作业。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param etlSysCd  含义：调度系统编号。
+	 *                  取值范围：不能为null。
+	 * @param jobStatus 含义：作业状态。
+	 *                  取值范围：Job_Status枚举值，不能为null。
+	 * @return java.util.List<hrds.commons.entity.Etl_job_cur>
+	 * 含义：一组已经登记执行的作业集合。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param jobStatus
-	 *          含义：作业状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
-	 * @return java.util.List<hrds.commons.entity.Etl_job_cur>
-	 *          含义：一组已经登记执行的作业集合。
-	 *          取值范围：不会为null。
 	 */
 	public static List<Etl_job_cur> getEtlJobsByJobStatus(String etlSysCd, String jobStatus) {
 
@@ -1192,11 +1197,11 @@ public class TaskSqlHelper {
 	 * 主服务器同步标志设置为[是]，且将作业优先级更新到当前作业优先级。
 	 * 修改的数据，影响的数据行数小于1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd 含义：调度系统编号。
+	 *                 取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlJobToPending(String etlSysCd) {
 
@@ -1209,7 +1214,7 @@ public class TaskSqlHelper {
 				Job_Status.PENDING.getCode(), Main_Server_Sync.YES.getCode(), etlSysCd,
 				Today_Dispatch_Flag.YES.getCode());
 
-		if(num < 1) {
+		if (num < 1) {
 			throw new AppSystemException("根据调度系统编号，将该系统下的作业置为挂起状态失败" +
 					etlSysCd);
 		}
@@ -1220,14 +1225,13 @@ public class TaskSqlHelper {
 	/**
 	 * 根据调度系统编号，将作业状态在[停止]以及[错误]下的作业修改为指定状态。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlSysCd  含义：调度系统编号。
+	 *                  取值范围：不能为null。
+	 * @param jobStatus 含义：作业状态。
+	 *                  取值范围：Job_Status枚举值，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param jobStatus
-	 *          含义：作业状态。
-	 *          取值范围：Job_Status枚举值，不能为null。
 	 */
 	public static void updateEtlJobToPendingInResume(String etlSysCd, String jobStatus) {
 
@@ -1247,32 +1251,29 @@ public class TaskSqlHelper {
 	 * 根据调度系统编号、调度作业编号、当前跑批日期修改指定的当前作业优先级。注意，
 	 * 此处仅会最多修改一条数据。若修改的数据影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param jobPriorityCurr 含义：当前作业优先级。
+	 *                        取值范围：int范围内的任何数值。
+	 * @param etlSysCd        含义：调度系统编号。
+	 *                        取值范围：不能为null。
+	 * @param etlJob          含义：调度作业标识。
+	 *                        取值范围：不能为null。
+	 * @param currBathDate    含义：当前跑批日期。
+	 *                        取值范围：yyyyMMdd格式的字符串，不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param jobPriorityCurr
-	 *          含义：当前作业优先级。
-	 *          取值范围：int范围内的任何数值。
-	 * @param etlSysCd
-	 *          含义：调度系统编号。
-	 *          取值范围：不能为null。
-	 * @param etlJob
-	 *          含义：调度作业标识。
-	 *          取值范围：不能为null。
-	 * @param currBathDate
-	 *          含义：当前跑批日期。
-	 *          取值范围：yyyyMMdd格式的字符串，不能为null。
 	 */
 	public static void updateEtlJobCurrPriority(int jobPriorityCurr, String etlSysCd, String etlJob,
-	                                               String currBathDate) {
+	                                            String currBathDate) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
 
 		int num = SqlOperator.execute(db, "UPDATE " + Etl_job_cur.TableName +
-						" SET job_priority_curr = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
-						" AND curr_bath_date = ?", jobPriorityCurr, etlSysCd, etlJob, currBathDate);
+				" SET job_priority_curr = ? WHERE etl_sys_cd = ? AND etl_job = ?" +
+				" AND curr_bath_date = ?", jobPriorityCurr, etlSysCd, etlJob, currBathDate);
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException("根据调度系统编号、调度作业编号、" +
 					"当前跑批日期修改当前作业优先级失败" + etlJob);
 		}
@@ -1284,11 +1285,11 @@ public class TaskSqlHelper {
 	 * 在etl_job_hand表中新增一条数据。注意，此方法会根据传入的对象所携带的参数来新增数据。
 	 * 若新增数据失败，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param jobHand 含义：表示一个作业干预信息。
+	 *                取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param jobHand
-	 *          含义：表示一个作业干预信息。
-	 *          取值范围：不能为null。
 	 */
 	public static void insertIntoEtlJobHand(Etl_job_hand jobHand) {
 
@@ -1304,11 +1305,11 @@ public class TaskSqlHelper {
 	 * 在etl_job_disp_his表中新增一条数据。注意，此方法会根据传入的对象所携带的参数来新增数据。
 	 * 若新增数据失败，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlJobDispHis 含义：表示作业跑批历史。
+	 *                      取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlJobDispHis 
-	 *          含义：表示作业跑批历史。
-	 *          取值范围：不能为null。
 	 */
 	public static void insertIntoEtlJobDispHis(Etl_job_disp_his etlJobDispHis) {
 
@@ -1325,11 +1326,11 @@ public class TaskSqlHelper {
 	 * curr_end_time、job_return_val、etl_sys_cd、etl_job、curr_bath_date，
 	 * 该方法会将main_serv_sync设置为y。若更新数据所影响的数据行数不为1，则抛出AppSystemException异常。<br>
 	 * 1.更新数据库数据。
+	 *
+	 * @param etlJobCur 含义：表示一个已登记到etl_job_cur表的作业。
+	 *                  取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param etlJobCur
-	 *          含义：表示一个已登记到etl_job_cur表的作业。
-	 *          取值范围：不能为null。
 	 */
 	public static void updateEtlJobFinished(Etl_job_cur etlJobCur) {
 
@@ -1344,7 +1345,7 @@ public class TaskSqlHelper {
 				etlJobCur.getJob_return_val(), etlJobCur.getEtl_sys_cd(), etlJobCur.getEtl_job(),
 				etlJobCur.getCurr_bath_date());
 
-		if(num != 1) {
+		if (num != 1) {
 			throw new AppSystemException("根据系统编号、作业标识、当前作业跑批日期更新作业信息失败"
 					+ etlJobCur.getEtl_job());
 		}
@@ -1356,21 +1357,21 @@ public class TaskSqlHelper {
 	 * 根据参数标识查询参数信息。注意，该方法主要用于验证所使用的参数是否正确。
 	 * 在无法查询出时间时会抛出AppSystemException异常。<br>
 	 * 1.查询数据库获取数据。
+	 *
+	 * @param para 含义：所使用的参数主键。
+	 *             取值范围：不能为null。
+	 * @return java.lang.String
+	 * 含义：数据库etl_para表的para_cd字段数据。
+	 * 取值范围：不会为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/9
-	 * @param para
-	 *          含义：所使用的参数主键。
-	 *          取值范围：不能为null。
-	 * @return java.lang.String
-	 *          含义：数据库etl_para表的para_cd字段数据。
-	 *          取值范围：不会为null。
 	 */
 	public static String getParaByPara(String para) {
 
 		Object[] row = SqlOperator.queryArray(TaskSqlHelper.getDbConnector(),
 				"SELECT para_cd FROM " + Etl_para.TableName + " WHERE para_cd = ?", para);
 
-		if(row.length == 0) {
+		if (row.length == 0) {
 			throw new AppSystemException("所使用的参数标识不存在" + para);
 		}
 
