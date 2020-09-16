@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class AutoOperateCommon {
 	private static final Logger logger = LogManager.getLogger();
-	private static long lineCounter = 0;
+	public static long lineCounter = 0;
 
 	public static void writeFile(Map<String, Object> map, String fileName) {
 		StringBuffer sbCol = new StringBuffer();
@@ -21,7 +21,7 @@ public class AutoOperateCommon {
 			lineCounter++;
 			map.forEach((k, v) -> {
 				sbCol.append(k).append(",");
-				sbVal.append(v.toString()).append(",");
+				sbVal.append(v).append(",");
 			});
 			// 如果文件是CSV则第一行为列信息
 			if (lineCounter == 1) {
