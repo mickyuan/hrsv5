@@ -271,10 +271,7 @@ public class OperateAction extends BaseAction {
 			"2.更新取数条件表信息" +
 			"3.更新取数结果选择情况信息")
 	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
-	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
-	                               Auto_fetch_res[] autoFetchRes) {
+	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum) {
 		Validator.notNull(auto_fetch_sum.getTemplate_id(), "模板ID不能为空");
 		Validator.notNull(auto_fetch_sum.getFetch_sum_id(), "取数汇总ID不能为空");
 		Validator.notNull(auto_fetch_sum.getFetch_name(), "取数名称不能为空");
@@ -290,34 +287,17 @@ public class OperateAction extends BaseAction {
 				throw new BusinessException("更新自主取数汇总数据失败");
 			}
 		}
-		for (Auto_fetch_cond auto_fetch_cond : autoFetchConds) {
-			Validator.notBlank(auto_fetch_cond.getCond_value(), "条件值不能为空");
-			Validator.notNull(auto_fetch_cond.getFetch_cond_id(), "取数条件ID为空");
-			Validator.notNull(auto_fetch_cond.getTemplate_cond_id(), "模板条件ID不能为空");
-			auto_fetch_cond.setFetch_sum_id(auto_fetch_sum.getFetch_sum_id());
-			// 2.更新取数条件表信息
-			auto_fetch_cond.update(Dbo.db());
-		}
-		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
-			Validator.notBlank(auto_fetch_res.getFetch_res_name(), "取数结果名称不能为空");
-			Validator.notNull(auto_fetch_res.getTemplate_res_id(), "模板结果ID不能为空");
-			Validator.notNull(auto_fetch_res.getFetch_res_id(), "取数结果ID不能为空");
-			// 3.更新取数结果选择情况信息
-			auto_fetch_res.update(Dbo.db());
-		}
 	}
 
 	private String getWhereSql(long template_id, Auto_tp_cond_info[] autoTpCondInfos,
 	                           Auto_fetch_res[] autoFetchRes) {
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
-		StringBuilder resultSqlSb = new StringBuilder();
 		StringBuilder resultSql = new StringBuilder("select ");
 		List<String> template_sql = Dbo.queryOneColumnList(
 				"select template_sql from auto_tp_info where template_id = ?",
 				template_id);
 		String dbType = JdbcConstants.POSTGRESQL;
 		String format_sql = SQLUtils.format(template_sql.get(0), dbType);
-		List<String> formatSqlList = StringUtil.split(format_sql, "\n");
 		List<Auto_tp_cond_info> autoTpCondInfoList = Dbo.queryList(Auto_tp_cond_info.class,
 				"select * from " + Auto_tp_cond_info.TableName + " where template_id = ?",
 				template_id);
