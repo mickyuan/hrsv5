@@ -622,7 +622,7 @@ public class InterfaceCommon {
 				if (lineCounter == 1) {
 					streamCsv.add(k);
 				}
-				sbVal.append(v.toString()).append(",");
+				sbVal.append(v).append(",");
 			});
 			// 5.循环添加表对应列值信息
 			streamCsvData.add(sbVal.deleteCharAt(sbVal.length() - 1).toString());
@@ -824,14 +824,14 @@ public class InterfaceCommon {
 						mapType);
 				List<String> dataList = JsonUtil.toObject(message.get("data").toString(), type);
 				List<String> columnList = JsonUtil.toObject(message.get("column").toString(), type);
-				StringBuilder sb = new StringBuilder();
-				for (String data : dataList) {
-					sb.append(data).append(System.lineSeparator());
-				}
+//				StringBuilder sb = new StringBuilder();
+//				for (String data : dataList) {
+//					sb.append(data).append(System.lineSeparator());
+//				}
+				String data = String.join(System.lineSeparator(), dataList);
 				String column = String.join(",", columnList);
-				StringBuilder stringBuilder = new StringBuilder();
 				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
-						stringBuilder.append(column).append(System.lineSeparator()).append(sb.toString()).toString());
+						column + System.lineSeparator() + data);
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
 			}
