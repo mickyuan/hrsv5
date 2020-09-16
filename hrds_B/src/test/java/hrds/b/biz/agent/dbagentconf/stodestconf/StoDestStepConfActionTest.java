@@ -10,6 +10,7 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.bean.DataStoRelaParam;
+import hrds.b.biz.agent.dbagentconf.BaseInitData;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -28,14 +29,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "定义存储目的地配置测试类", author = "WangZhengcheng")
 public class StoDestStepConfActionTest extends WebBaseTestCase {
 
-	private static final long FIRST_DATABASESET_ID = 1001L;
-	private static final long SECOND_DATABASESET_ID = 1002L;
-	private static final long SYS_USER_TABLE_ID = 7001L;
-	private static final long AGENT_INFO_TABLE_ID = 7003L;
-	private static final long DATA_SOURCE_TABLE_ID = 7004L;
-	private static final long TABLE_INFO_TABLE_ID = 7009L;
-	private static final long CODE_INFO_TABLE_ID = 7002L;
-	private static final long TABLE_COLUMN_TABLE_ID = 7100L;
+	private static final BaseInitData baseInitData = InitAndDestDataForStoDest.baseInitData;
+	private static final long threadId = baseInitData.threadId;
+	private static final long FIRST_DATABASESET_ID = baseInitData.FIRST_DATABASE_SET_ID;
+	private static final long SECOND_DATABASESET_ID = baseInitData.SECOND_DATABASE_SET_ID;
+	private static final long SYS_USER_TABLE_ID = baseInitData.SYS_USER_TABLE_ID;
+	private static final long AGENT_INFO_TABLE_ID = baseInitData.AGENT_INFO_TABLE_ID;
+	private static final long DATA_SOURCE_TABLE_ID = baseInitData.DATA_SOURCE_TABLE_ID;
+	private static final long TABLE_INFO_TABLE_ID = 7009L + threadId;
+	private static final long CODE_INFO_TABLE_ID = baseInitData.CODE_INFO_TABLE_ID;
+	private static final long TABLE_COLUMN_TABLE_ID = 7100L + threadId;
 	private static final long UNEXPECTED_ID = 999999999L;
 
 	/**
@@ -105,8 +108,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-
-		Result rightData = rightResult.getDataForResult();
+		Result rightData = (Result) rightResult.getDataForMap().get("storageTableData");
 		assertThat("获取到的数据有四条", rightData.getRowCount(), is(4));
 		for (int i = 0; i < rightData.getRowCount(); i++) {
 			if (rightData.getString(i, "table_name").equalsIgnoreCase("agent_info")) {
