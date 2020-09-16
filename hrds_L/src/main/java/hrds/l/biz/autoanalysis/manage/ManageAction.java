@@ -484,6 +484,7 @@ public class ManageAction extends BaseAction {
 		SQLExpr whereInfo = druidParseQuerySql.whereInfo;
 		// key为字段别名，value为原字段名称
 		List<Map<String, String>> sourceAndAliasName = getSourceAndAliasName(sql);
+		Map<String, String> relationAliasColumn = getSourceRelationAliasColumn(sql);
 		for (Map<String, String> map : sourceAndAliasName) {
 			for (Map.Entry<String, String> entry : map.entrySet()) {
 				// 表名
@@ -518,14 +519,14 @@ public class ManageAction extends BaseAction {
 						if (column.get("column_name").toString().equals(column_name)) {
 							auto_tp_res_set.setColumn_en_name(column_name);
 							auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
-							auto_tp_res_set.setRes_show_column(column.get("column_name").toString());
 							auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+							auto_tp_res_set.setRes_show_column(
+									relationAliasColumn.get(column.get("column_name").toString()));
 							if (numbersArray.contains(column.get("column_type").toString())) {
 								auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
 							} else {
 								auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
 							}
-							// fixme 字段类型应该判断
 							if (!autoTpResSets.contains(auto_tp_res_set)) {
 								autoTpResSets.add(auto_tp_res_set);
 							}
@@ -554,7 +555,7 @@ public class ManageAction extends BaseAction {
 	@Method(desc = "", logicStep = "")
 	@Param(name = "sql", desc = "查询sql", range = "无限制")
 	@Return(desc = "", range = "")
-	public List<Map<String, String>> getSourceAndAliasName(String sql) {
+	private List<Map<String, String>> getSourceAndAliasName(String sql) {
 		String format = SQLUtils.format(sql, JdbcConstants.ORACLE);
 		List<String> split = StringUtil.split(format, "\n");
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
@@ -581,6 +582,25 @@ public class ManageAction extends BaseAction {
 			}
 		}
 		return list;
+	}
+
+	@Method(desc = "获取列原字段对应别名", logicStep = "")
+	@Param(name = "sql", desc = "查询sql", range = "无限制")
+	@Return(desc = "", range = "")
+	private Map<String, String> getSourceRelationAliasColumn(String sql) {
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
+		List<String> originalField = druidParseQuerySql.parseSelectOriginalField();
+		List<String> selectAliasField = druidParseQuerySql.parseSelectAliasField();
+		Map<String, String> columnMap = new HashMap<>();
+		for (int i = 0; i < originalField.size(); i++) {
+			if (originalField.get(i).contains(".")) {
+				columnMap.put(StringUtil.split(originalField.get(i), ".").get(1),
+						selectAliasField.get(i));
+			} else {
+				columnMap.put(originalField.get(i), selectAliasField.get(i));
+			}
+		}
+		return columnMap;
 	}
 
 	private String getCond(List<Map<String, Object>> autoTpCondInfoList, String cond,

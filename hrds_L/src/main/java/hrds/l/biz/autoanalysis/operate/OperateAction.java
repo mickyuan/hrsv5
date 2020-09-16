@@ -5,6 +5,7 @@ import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.alibaba.fastjson.annotation.JSONField;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -217,7 +218,7 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				accessResult.add(map);
 			}
-		}.getDataLayer(fetch_sql, Dbo.db());
+		}.getPageDataLayer(fetch_sql, Dbo.db(), 1, 10);
 		return accessResult;
 	}
 
@@ -338,17 +339,15 @@ public class OperateAction extends BaseAction {
 		}
 		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
 			Auto_tp_res_set auto_tp_res_set = Dbo.queryOneObject(Auto_tp_res_set.class,
-					"select * from " + Auto_tp_res_set.TableName
-							+ " where template_res_id = ?",
+					"select * from " + Auto_tp_res_set.TableName + " where template_res_id = ?",
 					auto_fetch_res.getTemplate_res_id())
 					.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
-			// 模板结果中文字段
-			String column_cn_name = auto_tp_res_set.getColumn_cn_name();
+			String column_en_name = auto_tp_res_set.getColumn_en_name();
 			String res_show_column = auto_tp_res_set.getRes_show_column();
-			if (StringUtil.isNotBlank(res_show_column)) {
-				resultSql.append(column_cn_name).append(" as ").append(res_show_column).append(",");
+			if (StringUtil.isNotBlank(res_show_column) || !column_en_name.equals(res_show_column)) {
+				resultSql.append(res_show_column).append(",");
 			} else {
-				resultSql.append(column_cn_name).append(",");
+				resultSql.append(column_en_name).append(",");
 			}
 		}
 		resultSql = new StringBuilder(resultSql.substring(0, resultSql.length() - 1));
@@ -392,7 +391,7 @@ public class OperateAction extends BaseAction {
 		// 1.查询我的取数信息
 		return Dbo.queryList(
 				"select * from " + Auto_fetch_sum.TableName + " where create_user = ?" +
-						" and fetch_name is not null order by create_date desc,create_time desc",
+						" and fetch_name !='' order by create_date desc,create_time desc",
 				getUserId());
 	}
 
@@ -411,11 +410,10 @@ public class OperateAction extends BaseAction {
 	@Method(desc = "查看我的取数信息", logicStep = "1.查看我的取数信息")
 	@Param(name = "fetch_sum_id", desc = "取数汇总表ID", range = "新增我的取数信息时生成")
 	@Return(desc = "返回查看我的取数信息", range = "无限制")
-	public List<Map<String, Object>> getMyAccessInfoById(long fetch_sum_id) {
+	public Map<String, Object> getMyAccessInfoById(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.查看我的取数信息
-		return Dbo.queryList("select fetch_name, fetch_desc from " + Auto_fetch_sum.TableName
-						+ " where fetch_sum_id = ?",
+		return Dbo.queryOneObject("select * from " + Auto_fetch_sum.TableName + " where fetch_sum_id = ?",
 				fetch_sum_id);
 	}
 
@@ -458,6 +456,7 @@ public class OperateAction extends BaseAction {
 				AutoOperateCommon.writeFile(map, fileName);
 			}
 		}.getDataLayer(auto_fetch_sum.getFetch_sql(), Dbo.db());
+		AutoOperateCommon.lineCounter = 0;
 	}
 
 	@Method(desc = "获取数据可视化组件信息", logicStep = "1.获取数据可视化组件信息")
@@ -496,6 +495,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "table_name", desc = "表名", range = "无限制")
 	@Param(name = "data_source", desc = "可视化源对象值", range = "使用(AutoSourceObject代码项)")
 	@Return(desc = "返回字段信息", range = "无限制")
+	@JSONField(serialize = false)
 	public Map<String, Object> getColumnByName(String table_name, String data_source) {
 		// 数据可访问权限处理方式：该方法不需要进行访问权限限制
 		Map<String, Object> columnMap = new HashMap<>();
@@ -506,8 +506,7 @@ public class OperateAction extends BaseAction {
 		if (AutoSourceObject.ZiZhuShuJuShuJuJi == AutoSourceObject.ofEnumByCode(data_source)) {
 			// 1.获取自主数据集字段信息
 			List<Map<String, Object>> columnList = Dbo.queryList(
-					"SELECT t1.fetch_res_name,t3.column_type as column_type"
-							+ " FROM " + Auto_fetch_res.TableName
+					"SELECT t1.fetch_res_name,t3.column_type FROM " + Auto_fetch_res.TableName
 							+ " t1 left join " + Auto_fetch_sum.TableName
 							+ " t2 on t1.fetch_sum_id = t2.fetch_sum_id"
 							+ " left join " + Auto_tp_res_set.TableName
@@ -516,11 +515,14 @@ public class OperateAction extends BaseAction {
 					table_name, AutoFetchStatus.WanCheng.getCode());
 			for (Map<String, Object> map : columnList) {
 				if (numbersArray.contains(map.get("column_type").toString())) {
-					numColumnList.add(map);
+					if (!numColumnList.contains(map)) {
+						numColumnList.add(map);
+					}
 				}
-				// fixme 02是啥？
-				if ("02".equals(map.get("column_type").toString())) {
-					measureColumnList.add(map);
+				if (AutoValueType.ShuZhi == AutoValueType.ofEnumByCode(map.get("column_type").toString())) {
+					if (!numColumnList.contains(map)) {
+						measureColumnList.add(map);
+					}
 				}
 			}
 			columnMap.put("columns", columnList);
@@ -531,7 +533,9 @@ public class OperateAction extends BaseAction {
 			List<Map<String, Object>> columnList = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
 			for (Map<String, Object> map : columnList) {
 				if (numbersArray.contains(map.get("column_type").toString())) {
-					numColumnList.add(map);
+					if (!numColumnList.contains(map)) {
+						numColumnList.add(map);
+					}
 				}
 			}
 			columnMap.put("columns", columnList);
@@ -1747,7 +1751,8 @@ public class OperateAction extends BaseAction {
 			"2.判断仪表板名称是否已存在" +
 			"3.新增仪表盘" +
 			"4.新增仪表盘布局信息")
-	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象",
+			range = "与数据库对应表规则一致(仪表盘状态使用（IsFlag）代码项，0:未发布，1:已发布)", isBean = true)
 	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
@@ -1876,7 +1881,8 @@ public class OperateAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "发布仪表盘信息", logicStep = "")
+	@Method(desc = "发布仪表盘信息", logicStep = "1.更新仪表盘盘发布状态" +
+			"2.发布仪表盘")
 	@Param(name = "dashboard_id", desc = "仪表板id", range = "新建仪表盘的时候生成")
 	@Param(name = "dashboard_name", desc = "仪表板名称", range = "新建仪表盘的时候生成")
 	public void releaseDashboardInfo(long dashboard_id, String dashboard_name) {
