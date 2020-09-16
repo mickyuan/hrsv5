@@ -167,33 +167,37 @@ public class OperateAction extends BaseAction {
 				template_id);
 	}
 
-	@Method(desc = "通过选择历史情况 获取之前的条件以及结果配置页面", logicStep = "1.获取自主取数选择历史信息")
+	@Method(desc = "通过选择历史情况获取之前的条件", logicStep = "1.获取自主取数选择历史信息")
 	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "新增取数信息时生成")
 	@Return(desc = "返回自主取数选择历史信息", range = "无限制")
 	public List<Map<String, Object>> getAccessCondFromHistory(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 获取到用户之前在页面中 填写的参数值 用模板条件ID进行匹配 template_cond_id
 		return Dbo.queryList(
-				"select t4.*,t1.*"
-						+ " from " + Auto_fetch_cond.TableName + " t1 left join " + Auto_tp_info.TableName + " t2 "
-						+ " on t1.template_id = t2.template_id left join " + Auto_fetch_sum.TableName + " t3 "
-						+ " on t2.template_id = t3.template_id left join " + Auto_tp_cond_info.TableName + " t4 "
-						+ " on t1.template_cond_id = t4.template_cond_id where t3.fetch_sum_id = ?",
+				"select t1.*,t2.* from " + Auto_fetch_cond.TableName
+						+ " t1 left join " + Auto_tp_cond_info.TableName
+						+ " t2 on t1.template_cond_id = t2.template_cond_id"
+						+ " left join " + Auto_fetch_sum.TableName
+						+ " t3 on t1.fetch_sum_id = t3.fetch_sum_id"
+						+ " left join " + Auto_tp_info.TableName
+						+ " t4 on t2.template_id = t4.template_id"
+						+ " where t3.fetch_sum_id = ?",
 				fetch_sum_id);
 	}
 
-	@Method(desc = "通过选择历史情况 获取之前的条件以及结果配置页面", logicStep = "1.获取自主取数选择历史信息")
+	@Method(desc = "通过选择历史情况获取选择结果", logicStep = "1.获取自主取数选择历史信息")
 	@Param(name = "fetch_sum_id", desc = "取数汇总ID", range = "新增取数信息时生成")
 	@Return(desc = "返回自主取数选择历史信息", range = "无限制")
 	public List<Map<String, Object>> getAccessResultFromHistory(long fetch_sum_id) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 获取用户之前在页面上 勾选的 显示结果 用模板结果ID进行匹配 template_res_id
 		return Dbo.queryList(
-				"select t1.*,t4.* "
-						+ " from " + Auto_fetch_res.TableName + " t1 left join " + Auto_fetch_sum.TableName + " t2 "
-						+ " on t1.template_id=t2.template_id left join " + Auto_tp_res_set.TableName + " t3 "
-						+ " on t2.template_id = t3.template_id left join " + Auto_tp_info.TableName + " t4 "
-						+ " on t1.template_res_id=t4.template_res_id where t3.fetch_sum_id = ?",
+				"select distinct t1.fetch_res_name as res_show_column,t1.fetch_res_id,t1.template_res_id"
+						+ " from " + Auto_fetch_res.TableName
+						+ " t1 left join " + Auto_fetch_sum.TableName + " t2 "
+						+ " on t1.fetch_sum_id=t2.fetch_sum_id left join " + Auto_tp_res_set.TableName + " t3"
+						+ " on t2.template_id = t3.template_id left join " + Auto_tp_info.TableName + " t4"
+						+ " on t3.template_id = t4.template_id where t2.fetch_sum_id = ?",
 				fetch_sum_id);
 	}
 
@@ -425,13 +429,16 @@ public class OperateAction extends BaseAction {
 		// 1.获取取数sql
 		String accessSql = getAccessSql(fetch_sum_id);
 		List<Map<String, Object>> resultData = new ArrayList<>();
+		if (showNum > 1000) {
+			showNum = 1000;
+		}
 		// 2.根据sql查询数据结果
 		new ProcessingData() {
 			@Override
 			public void dealLine(Map<String, Object> map) {
 				resultData.add(map);
 			}
-		}.getPageDataLayer(accessSql, Dbo.db(), 0, Math.min(showNum, 1000));
+		}.getPageDataLayer(accessSql, Dbo.db(), 1, showNum <= 0 ? 10 : showNum);
 		// 2.返回数据结果
 		return resultData;
 	}
