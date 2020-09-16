@@ -32,8 +32,8 @@ public enum UserType {
 	RESTYongHu("12","服务接口用户","17","用户类型"),
 	/**分词器管理<FenCiQiGuanLiYuan>  */
 	FenCiQiGuanLiYuan("13","分词器管理","17","用户类型"),
-	/**数据集市<JiShiGuanLiYuan>  */
-	JiShiGuanLiYuan("14","数据集市","17","用户类型"),
+	/**数据加工<JiShiGuanLiYuan>  */
+	JiShiGuanLiYuan("14","数据加工","17","用户类型"),
 	/**数据加工<JiShiJiaGongGuanLiYuan>  */
 	JiShiJiaGongGuanLiYuan("15","数据加工","17","用户类型"),
 	/**机器学习工作台<JiQiXueXiGuanLiYuan>  */
