@@ -174,10 +174,11 @@ public class OperateAction extends BaseAction {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 获取到用户之前在页面中 填写的参数值 用模板条件ID进行匹配 template_cond_id
 		return Dbo.queryList(
-				"select cond_cn_column,con_relation,template_cond_id,pre_value,is_required,value_type,value_size"
-						+ " from " + Auto_tp_cond_info.TableName + " t1 left join " + Auto_tp_info.TableName + " t2 "
+				"select t4.*,t1.*"
+						+ " from " + Auto_fetch_cond.TableName + " t1 left join " + Auto_tp_info.TableName + " t2 "
 						+ " on t1.template_id = t2.template_id left join " + Auto_fetch_sum.TableName + " t3 "
-						+ " on t2.template_id = t3.template_id where t3.fetch_sum_id = ?",
+						+ " on t2.template_id = t3.template_id left join " + Auto_tp_cond_info.TableName + " t4 "
+						+ " on t1.template_cond_id = t4.template_cond_id where t3.fetch_sum_id = ?",
 				fetch_sum_id);
 	}
 
@@ -188,10 +189,11 @@ public class OperateAction extends BaseAction {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 获取用户之前在页面上 勾选的 显示结果 用模板结果ID进行匹配 template_res_id
 		return Dbo.queryList(
-				"select t1.res_show_column,t1.template_res_id,t3.fetch_sum_id "
-						+ " from " + Auto_tp_res_set.TableName + " t1 left join " + Auto_tp_info.TableName + " t2 "
-						+ " on t1.template_id = t2.template_id left join " + Auto_fetch_sum.TableName + " t3 "
-						+ " on t2.template_id = t3.template_id where t3.fetch_sum_id = ?",
+				"select t1.*,t4.* "
+						+ " from " + Auto_fetch_res.TableName + " t1 left join " + Auto_fetch_sum.TableName + " t2 "
+						+ " on t1.template_id=t2.template_id left join " + Auto_tp_res_set.TableName + " t3 "
+						+ " on t2.template_id = t3.template_id left join " + Auto_tp_info.TableName + " t4 "
+						+ " on t1.template_res_id=t4.template_res_id where t3.fetch_sum_id = ?",
 				fetch_sum_id);
 	}
 
@@ -220,9 +222,9 @@ public class OperateAction extends BaseAction {
 			"3.取数条件表入库" +
 			"4.取数结果选择情况入库")
 	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoTpCondInfos", desc = "自主取数模板条件对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
-	public Long saveAutoAccessInfoToQuery(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
+	public Long saveAutoAccessInfoToQuery(Auto_fetch_sum auto_fetch_sum, Auto_tp_cond_info[] autoTpCondInfos,
 	                                      Auto_fetch_res[] autoFetchRes) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.判断模板信息是否已不存在
@@ -234,15 +236,18 @@ public class OperateAction extends BaseAction {
 		auto_fetch_sum.setCreate_date(DateUtil.getSysDate());
 		auto_fetch_sum.setCreate_time(DateUtil.getSysTime());
 		auto_fetch_sum.setCreate_user(getUserId());
-		auto_fetch_sum.setFetch_sql(getWhereSql(auto_fetch_sum.getTemplate_id(), autoFetchConds, autoFetchRes));
+		auto_fetch_sum.setFetch_sql(getWhereSql(auto_fetch_sum.getTemplate_id(), autoTpCondInfos, autoFetchRes));
 		auto_fetch_sum.setFetch_status(AutoFetchStatus.BianJi.getCode());
 		// 2.新增取数汇总表数据
 		auto_fetch_sum.add(Dbo.db());
-		for (Auto_fetch_cond auto_fetch_cond : autoFetchConds) {
-			Validator.notBlank(auto_fetch_cond.getCond_value(), "条件值不能为空");
-			Validator.notNull(auto_fetch_cond.getTemplate_cond_id(), "模板条件ID不能为空");
+		for (Auto_tp_cond_info auto_tp_cond_info : autoTpCondInfos) {
+			Validator.notBlank(auto_tp_cond_info.getPre_value(), "条件值不能为空");
+			Validator.notNull(auto_tp_cond_info.getTemplate_cond_id(), "模板条件ID不能为空");
+			Auto_fetch_cond auto_fetch_cond = new Auto_fetch_cond();
 			auto_fetch_cond.setFetch_cond_id(PrimayKeyGener.getNextId());
 			auto_fetch_cond.setFetch_sum_id(auto_fetch_sum.getFetch_sum_id());
+			auto_fetch_cond.setTemplate_cond_id(auto_tp_cond_info.getTemplate_cond_id());
+			auto_fetch_cond.setCond_value(auto_tp_cond_info.getPre_value());
 			// 3.取数条件表入库
 			auto_fetch_cond.add(Dbo.db());
 		}
@@ -266,10 +271,7 @@ public class OperateAction extends BaseAction {
 			"2.更新取数条件表信息" +
 			"3.更新取数结果选择情况信息")
 	@Param(name = "auto_fetch_sum", desc = "取数汇总表对象", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFetchConds", desc = "自主取数条件对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
-	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum, Auto_fetch_cond[] autoFetchConds,
-	                               Auto_fetch_res[] autoFetchRes) {
+	public void saveAutoAccessInfo(Auto_fetch_sum auto_fetch_sum) {
 		Validator.notNull(auto_fetch_sum.getTemplate_id(), "模板ID不能为空");
 		Validator.notNull(auto_fetch_sum.getFetch_sum_id(), "取数汇总ID不能为空");
 		Validator.notNull(auto_fetch_sum.getFetch_name(), "取数名称不能为空");
@@ -285,326 +287,51 @@ public class OperateAction extends BaseAction {
 				throw new BusinessException("更新自主取数汇总数据失败");
 			}
 		}
-		for (Auto_fetch_cond auto_fetch_cond : autoFetchConds) {
-			Validator.notBlank(auto_fetch_cond.getCond_value(), "条件值不能为空");
-			Validator.notNull(auto_fetch_cond.getFetch_cond_id(), "取数条件ID为空");
-			Validator.notNull(auto_fetch_cond.getTemplate_cond_id(), "模板条件ID不能为空");
-			auto_fetch_cond.setFetch_sum_id(auto_fetch_sum.getFetch_sum_id());
-			// 2.更新取数条件表信息
-			auto_fetch_cond.update(Dbo.db());
-		}
-		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
-			Validator.notBlank(auto_fetch_res.getFetch_res_name(), "取数结果名称不能为空");
-			Validator.notNull(auto_fetch_res.getTemplate_res_id(), "模板结果ID不能为空");
-			Validator.notNull(auto_fetch_res.getFetch_res_id(), "取数结果ID不能为空");
-			// 3.更新取数结果选择情况信息
-			auto_fetch_res.update(Dbo.db());
-		}
 	}
 
-	private String getWhereSql(long template_id, Auto_fetch_cond[] autoFetchConds,
+	private String getWhereSql(long template_id, Auto_tp_cond_info[] autoTpCondInfos,
 	                           Auto_fetch_res[] autoFetchRes) {
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
-		StringBuilder resultSqlSb = new StringBuilder();
 		StringBuilder resultSql = new StringBuilder("select ");
 		List<String> template_sql = Dbo.queryOneColumnList(
 				"select template_sql from auto_tp_info where template_id = ?",
 				template_id);
 		String dbType = JdbcConstants.POSTGRESQL;
 		String format_sql = SQLUtils.format(template_sql.get(0), dbType);
-		List<String> formatSqlList = StringUtil.split(format_sql, "\n");
-		List<Long> condIdList = Dbo.queryOneColumnList(
-				"select template_cond_id from " + Auto_tp_cond_info.TableName + " where template_id = ?",
+		List<Auto_tp_cond_info> autoTpCondInfoList = Dbo.queryList(Auto_tp_cond_info.class,
+				"select * from " + Auto_tp_cond_info.TableName + " where template_id = ?",
 				template_id);
-		for (long condId : condIdList) {
-			// 模板条件ID
-			boolean inMoreConRow = false;
-			boolean flag = false;
-			Auto_tp_cond_info auto_tp_cond_info = new Auto_tp_cond_info();
-			auto_tp_cond_info.setTemplate_cond_id(condId);
-			List<String> conRowList = Dbo.queryOneColumnList(
-					"select con_row from " + Auto_tp_cond_info.TableName
-							+ " where template_cond_id = ?", condId);
-			List<String> con_row_list = StringUtil.split(conRowList.get(0), ",");
-			if (con_row_list.size() != 1) {
-				inMoreConRow = true;
+		for (int i = 0; i < autoTpCondInfoList.size(); i++) {
+			Auto_tp_cond_info auto_tp_cond_info = autoTpCondInfoList.get(i);
+			Auto_tp_cond_info autoTpCondInfo = autoTpCondInfos[i];
+			String condParam;
+			String oldParam;
+			if (auto_tp_cond_info.getCon_relation().equals("IN")) {
+				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE + Constant.LXKH
+						+ auto_tp_cond_info.getPre_value().replace(",", ", ")
+						+ Constant.RXKH;
+				oldParam = autoTpCondInfo.getCond_para_name() + Constant.SPACE
+						+ autoTpCondInfo.getCon_relation() + Constant.SPACE + Constant.LXKH
+						+ autoTpCondInfo.getPre_value().replace(",", ", ")
+						+ Constant.RXKH;
+			} else if (auto_tp_cond_info.getCon_relation().equals("BETWEEN")) {
+				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
+						+ auto_tp_cond_info.getPre_value().replace(",", " AND ");
+				oldParam = autoTpCondInfo.getCond_para_name() + Constant.SPACE
+						+ autoTpCondInfo.getCon_relation() + Constant.SPACE
+						+ autoTpCondInfo.getPre_value().replace(",", " AND ");
+			} else {
+				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
+						+ auto_tp_cond_info.getPre_value();
+				oldParam = autoTpCondInfo.getCond_para_name() + Constant.SPACE
+						+ autoTpCondInfo.getCon_relation() + Constant.SPACE
+						+ autoTpCondInfo.getPre_value();
 			}
-			int con_row = Integer.parseInt(con_row_list.get(0));
-			for (Auto_fetch_cond auto_fetch_cond : autoFetchConds) {
-				// 如果配置了条件而且选了条件
-				if (condId == auto_fetch_cond.getTemplate_cond_id()) {
-					Auto_tp_cond_info autoTpCondInfo = Dbo.queryOneObject(Auto_tp_cond_info.class,
-							"select * from " + Auto_tp_cond_info.TableName + " where template_cond_id = ?",
-							auto_fetch_cond.getTemplate_cond_id())
-							.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
-					String cond_value = auto_fetch_cond.getCond_value();
-					if (AutoValueType.MeiJu == (AutoValueType.ofEnumByCode(autoTpCondInfo.getValue_type()))) {
-						// 本来存的是中文
-						// 需要转换成值
-						List<String> condValueList = StringUtil.split(cond_value, ",");
-						StringBuilder tmpCondValue = new StringBuilder();
-						for (String everyCondValue : condValueList) {
-							List<String> codeList = Dbo.queryOneColumnList(
-									"select ci_sp_code from " + Code_info.TableName
-											+ " where ci_sp_classname = ? and ci_sp_name = ?",
-									autoTpCondInfo.getValue_size(), everyCondValue);
-							tmpCondValue.append(codeList.get(0)).append(",");
-						}
-						cond_value = tmpCondValue.deleteCharAt(tmpCondValue.length() - 1).toString();
-					}
-					if (autoTpCondInfo.getCon_relation().equals("IN")) {
-						List<String> condValueList = StringUtil.split(cond_value, ",");
-						StringBuilder sb = new StringBuilder();
-						for (String s : condValueList) {
-							sb.append(s).append(",");
-						}
-						// 去除,添加）
-						cond_value = sb.deleteCharAt(sb.length() - 1).toString();
-					}
-					String everySql = formatSqlList.get(con_row);
-					StringBuilder everyResultSql = new StringBuilder();
-					StringBuilder condValueParam = new StringBuilder("?");
-					// 如果是WHERE开头的 将拼上 WHERE,n个（ 条件+关系+值,n个)
-					if (everySql.trim().startsWith("WHERE")) {
-						everyResultSql = new StringBuilder("WHERE ");
-						everySql = everySql.replaceFirst("WHERE", "").trim();
-					}
-
-					// 如果是AND开头的 将拼上 WHERE,n个（ 条件+关系+值,n个)
-					else if (everySql.trim().startsWith("AND")) {
-						everyResultSql = new StringBuilder("AND ");
-						everySql = everySql.replaceFirst("AND", "").trim();
-					}
-					// 如果是OR开头的 将拼上 WHERE,n个（ 条件+关系+值,n个)
-					else if (everySql.trim().startsWith("OR")) {
-						everyResultSql = new StringBuilder("OR ");
-						everySql = everySql.replaceFirst("OR", "").trim();
-					}
-					// 考虑（问题
-					while (everySql.startsWith("(")) {
-						everyResultSql.append("( ");
-						everySql = everySql.replaceFirst("\\(", "").trim();
-					}
-					// 开始判断数值问题 如果是IN
-					if (autoTpCondInfo.getCon_relation().equals("IN")) {
-						condValueParam = new StringBuilder("(");
-						List<String> condValueList = StringUtil.split(cond_value, ",");
-						for (String s : condValueList) {
-							condValueParam.append("?,");
-							assembler.addParam(s);
-						}
-						condValueParam = new StringBuilder(condValueParam.substring(0, condValueParam.length() - 1));
-						if (inMoreConRow) {
-							condValueParam.append(")");
-						}
-					}
-					// 如果是BETWEEN
-					else if (autoTpCondInfo.getCon_relation().equals("BETWEEN")) {
-						condValueParam = new StringBuilder("? AND ?");
-						List<String> condValueList = StringUtil.split(cond_value, ",");
-						assembler.addParam(condValueList.get(0));
-						assembler.addParam(condValueList.get(1));
-					} else {
-						assembler.addParam(cond_value);
-					}
-					everyResultSql.append(autoTpCondInfo.getCond_para_name()).append(" ")
-							.append(autoTpCondInfo.getCon_relation()).append(" ").append(condValueParam);
-					// 考虑）问题
-					while (everySql.endsWith(")")) {
-						everyResultSql.append(")");
-						everySql = everySql.trim();
-						everySql = everySql.substring(0, everySql.length() - 1);
-					}
-					formatSqlList.set(con_row, everyResultSql.toString());
-					if (inMoreConRow) {
-						// IN在多行的情况下
-						for (int l = 1; l < con_row_list.size(); l++) {
-							// 替换第一行为in的条件
-							// 然后去除别的行
-							String everycon_row_String = con_row_list.get(l);
-							int everycon_row = Integer.parseInt(everycon_row_String);
-							formatSqlList.set(everycon_row, "");
-						}
-					}
-					flag = true;
-					break;
-				}
-			}
-			if (!flag) {// 如果配置了条件 但是没有选条件
-				String everySql = formatSqlList.get(con_row);
-				StringBuilder everyresultsql;
-				// 如果以WHERE开头 将条件关系值 替换为 1=1
-				if (everySql.trim().startsWith("WHERE")) {
-					everyresultsql = new StringBuilder("WHERE ");
-					everySql = everySql.trim().replaceFirst("WHERE", "").trim();
-					while (everySql.startsWith("(")) {
-						everySql = everySql.replaceFirst("\\(", "").trim();
-						everyresultsql.append("(");
-					}
-					everyresultsql.append(" 1=1 ");
-					formatSqlList.set(con_row, everyresultsql.toString());
-				}
-				// 如果以AND开头,判断是否有(,没有则替换为1=1 不然有(则看下一行的判断如果是OR,则为1=0
-				else if (everySql.trim().startsWith("AND")) {
-					int leftcount = 0;
-					int rightcount = 0;
-					everyresultsql = new StringBuilder("AND ");
-					everySql = everySql.trim().replaceFirst("AND", "").trim();
-					while (everySql.startsWith("(")) {
-						everySql = everySql.replaceFirst("\\(", "").trim();
-						everyresultsql.append("(");
-						leftcount++;
-					}
-					while (everySql.endsWith(")")) {
-						everySql = everySql.substring(0, everySql.length() - 1);
-						rightcount++;
-					}
-					if (everySql.contains(" IN ")) {
-						rightcount--;
-					}
-					if (leftcount == 0) {
-						everyresultsql.append(" 1=1 ");
-					} else {
-						if (con_row + 1 < formatSqlList.size()) {
-							String nextsql = formatSqlList.get(con_row + 1);
-							if (nextsql.startsWith("AND")) {
-								everyresultsql.append(" 1=1 ");
-							} else {
-								everyresultsql.append(" 1=0 ");
-							}
-						}
-					}
-					for (int i = 0; i < rightcount; i++) {
-						everyresultsql.append(")");
-					}
-					formatSqlList.set(con_row, everyresultsql.toString());
-				}
-				// 如果以OR开头,判断是否有(,没有则替换为1=1 不然有(则看下一行的判断如果是OR,则为1=0
-				else if (everySql.trim().startsWith("OR")) {
-					int leftcount = 0;
-					int rightcount = 0;
-					everyresultsql = new StringBuilder("OR ");
-					everySql = everySql.trim().replaceFirst("OR", "").trim();
-					while (everySql.startsWith("(")) {
-						everySql = everySql.replaceFirst("\\(", "").trim();
-						everyresultsql.append("(");
-						leftcount++;
-					}
-					while (everySql.endsWith(")")) {
-						everySql = everySql.substring(0, everySql.length() - 1);
-						rightcount++;
-					}
-					if (everySql.contains(" IN ")) {
-						rightcount--;
-					}
-					if (leftcount == 0) {
-						everyresultsql.append(" 1=0 ");
-					} else {
-						if (con_row + 1 < formatSqlList.size()) {
-							String nextSql = formatSqlList.get(con_row + 1);
-							if (nextSql.startsWith("AND")) {
-								everyresultsql.append(" 1=1 ");
-							} else {
-								everyresultsql.append(" 1=0 ");
-							}
-						}
-					}
-					for (int i = 0; i < rightcount; i++) {
-						everyresultsql.append(")");
-					}
-					formatSqlList.set(con_row, everyresultsql.toString());
-				}
-				// 如果这一行不是以WHERE或者AND或者OR开头
-				else {
-					throw new BusinessException("SQL拼接出错");
-				}
-				if (inMoreConRow) {
-					for (int l = 1; l < con_row_list.size(); l++) {// IN在多行的情况下
-						// 替换第一行为in的条件
-						// 然后去除别的行
-						int everyCon_row = Integer.parseInt(con_row_list.get(l));
-						if (l == con_row_list.size() - 1) {
-							String tempresultsql = formatSqlList.get(everyCon_row);
-							everyresultsql = new StringBuilder(tempresultsql.substring(tempresultsql.indexOf(")")));
-							formatSqlList.set(everyCon_row, everyresultsql.toString());
-						} else {
-							formatSqlList.set(everyCon_row, "");
-						}
-					}
-				}
-			}
+			format_sql.replace(oldParam, condParam);
 		}
-		// 拼接起来 重新格式化一遍
-		for (String s : formatSqlList) {
-			resultSqlSb.append(" ").append(s.trim());
-		}
-		String formatResultSql = SQLUtils.format(resultSqlSb.toString(), dbType);
-		resultSqlSb = new StringBuilder();
-		List<String> formatResultSqlList = Arrays.asList(formatResultSql.split("\n"));
-		for (String s : formatResultSqlList) {
-			resultSqlSb.append(" ").append(s.trim());
-		}
-		// 以下为处理1=0和1=1的问题
-		// 替换1 = 1 和 1 = 0 为空
-		resultSqlSb = new StringBuilder(resultSqlSb.toString().replace("1 = 0", "")
-				.replace("1 = 1", ""));
-		// 如果有括号（那么就考虑去除1=0 和1=1之后可能的情况
-		if (resultSqlSb.toString().contains("(")) {
-			// 去除1=1之后，可能存在 （ 空 and/or 或者 and/or 空）的情况
-			while (resultSqlSb.toString().contains("( AND ") || resultSqlSb.toString().contains(" AND )")
-					|| resultSqlSb.toString().contains("( OR ")
-					|| resultSqlSb.toString().contains(" OR )")) {
-				resultSqlSb = new StringBuilder(resultSqlSb.toString()
-						.replace("( AND ", "(")
-						.replace(" AND )", ")")
-						.replace("( OR ", "(")
-						.replace(" OR )", ")"));
-			}
-			// 去除完以后就不存在（ and/or 或者 and/or）的情况了，但是可能有（）的情况
-			while (resultSqlSb.toString().contains("()")) {
-				resultSqlSb = new StringBuilder(resultSqlSb.toString().replace("()", ""));
-			}
-		}
-		// 考虑完（）的情况后 因为去除了（） 所以 还有可能存在 and 空 or等情况 所以 and与or之间有两个空格
-		while (resultSqlSb.toString().contains("AND  AND") || resultSqlSb.toString().contains("OR  AND")
-				|| resultSqlSb.toString().contains("OR  OR")
-				|| resultSqlSb.toString().contains("AND  OR")) {
-			resultSqlSb = new StringBuilder(resultSqlSb.toString()
-					.replace("AND  AND", "AND")
-					.replace("OR  AND", "AND")
-					.replace("OR  OR", "OR")
-					.replace("AND  OR", "OR"));
-		}
-		// 最后考虑头和为的情况 存在where and的情况时是由于where 空 and造成的 所以where与and之间一样还是两个空格
-		while (resultSqlSb.toString().contains("WHERE  AND") || resultSqlSb.toString().contains("WHERE  OR")) {
-			resultSqlSb = new StringBuilder(resultSqlSb.toString()
-					.replace("WHERE  AND", "WHERE")
-					.replace("WHERE  OR", "WHERE"));
-		}
-		// 去除尾部的空格
-		resultSqlSb = new StringBuilder(resultSqlSb.toString().trim());
-		if (resultSqlSb.toString().endsWith("AND")) {
-			resultSqlSb = new StringBuilder(resultSqlSb.substring(0, resultSqlSb.length() - 3));
-		}
-		if (resultSqlSb.toString().endsWith("OR")) {
-			resultSqlSb = new StringBuilder(resultSqlSb.substring(0, resultSqlSb.length() - 2));
-		}
-		resultSqlSb = new StringBuilder(resultSqlSb.toString().trim());
-		// 考虑尾部 存在and 空的情况，所以先去除空格然后删去尾部的and或者or
-		if (resultSqlSb.toString().contains("AND  ") || resultSqlSb.toString().contains("OR  ")) {
-			resultSqlSb = new StringBuilder(resultSqlSb.toString()
-					.replace("AND  ", "")
-					.replace("OR  ", ""));
-			resultSqlSb = new StringBuilder(resultSqlSb.toString().trim());
-		}
-		// 重新格式化，由于去除((age = 18 ))中多余空格的问题
-		formatResultSql = SQLUtils.format(resultSqlSb.toString(), dbType);
-		resultSqlSb = new StringBuilder();
-		formatResultSqlList = Arrays.asList(formatResultSql.split("\n"));
-		for (String s : formatResultSqlList) {
-			resultSqlSb.append(" ").append(s.trim());
-		}
-		// 格式化完成
 		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
 			Auto_tp_res_set auto_tp_res_set = Dbo.queryOneObject(Auto_tp_res_set.class,
 					"select * from " + Auto_tp_res_set.TableName
@@ -615,16 +342,17 @@ public class OperateAction extends BaseAction {
 			String column_cn_name = auto_tp_res_set.getColumn_cn_name();
 			String res_show_column = auto_tp_res_set.getRes_show_column();
 			if (StringUtil.isNotBlank(res_show_column)) {
-				resultSql.append(" `").append(column_cn_name).append("` as `").append(res_show_column).append("` ,");
+				resultSql.append(column_cn_name).append(" as ").append(res_show_column).append(",");
 			} else {
-				resultSql.append(" `").append(column_cn_name).append("` ,");
+				resultSql.append(column_cn_name).append(",");
 			}
 		}
 		resultSql = new StringBuilder(resultSql.substring(0, resultSql.length() - 1));
-		resultSql.append(" from (").append(resultSqlSb).append(") ").append(TempTableName);
+		resultSql.append(" from (").append(format_sql).append(") ").append(TempTableName);
 		assembler.addSql(resultSql.toString());
 		return assembler.sql();
 	}
+
 
 	@Method(desc = "查看取数sql", logicStep = "1.查询取数sql" +
 			"2.格式化取数sql并返回")
@@ -1391,8 +1119,8 @@ public class OperateAction extends BaseAction {
 					if (AutoDataOperator.JieYu == AutoDataOperator.ofEnumByCode(operator)
 							|| AutoDataOperator.BuJieYu == AutoDataOperator.ofEnumByCode(operator)) {
 						result_where.append("`").append(cond_en_column).append("`").append(Constant.SPACE)
-								.append(transOperator(operator)).append(Constant.SPACE).append("(")
-								.append(cond_value).append(")").append(Constant.SPACE)
+								.append(transOperator(operator)).append(Constant.SPACE).append(Constant.LXKH)
+								.append(cond_value).append(Constant.RXKH).append(Constant.SPACE)
 								.append((arithmetic_logic).toUpperCase()).append(Constant.SPACE);
 					} else {
 						result_where.append("`").append(cond_en_column).append("`").append(Constant.SPACE)
