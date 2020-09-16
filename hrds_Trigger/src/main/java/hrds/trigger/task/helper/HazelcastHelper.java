@@ -6,6 +6,7 @@ import com.hazelcast.config.TcpIpConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IQueue;
+import fd.ng.core.utils.DateUtil;
 import hrds.commons.exception.AppSystemException;
 import hrds.trigger.constans.TriggerConfigure;
 import org.apache.logging.log4j.LogManager;
@@ -84,6 +85,7 @@ public class HazelcastHelper {
 	 * 根据key，将内容追加到hazelcast分布式缓存对应的队列后。
 	 */
 	public void rpush(String key, String content) {
+		logger.info(key + ":\t" + content + "\t追加数据==============================================" + DateUtil.getDateTime());
 		//1.根据key，将内容追加到hazelcast分布式缓存对应的队列后。
 		try {
 			hazelcastInstance.getQueue(key).put(content);
@@ -108,6 +110,7 @@ public class HazelcastHelper {
 	 * 根据键值，将hazelcast中队列最靠前的数据弹出。
 	 */
 	public String lpop(String key) {
+		logger.info(key + ":\t" + "弹出数据==============================================" + DateUtil.getDateTime());
 		//1.弹出hazelcast缓存中对应的key队列最靠前的数据。
 		try {
 			return (String) hazelcastInstance.getQueue(key).take();
