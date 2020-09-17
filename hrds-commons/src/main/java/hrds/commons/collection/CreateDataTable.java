@@ -38,7 +38,7 @@ public class CreateDataTable {
 	                                                 List<Dq_table_column> dqTableColumns) {
 		//获取存储层信息
 		LayerBean layerBean = SqlOperator.queryOneObject(db, LayerBean.class, "select * from " + Data_store_layer.TableName +
-				" where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
+			" where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
 		//根据存储层定义创建数据表
 		createDataTableByStorageLayer(db, layerBean, dqTableInfo, dqTableColumns);
 	}
@@ -118,7 +118,7 @@ public class CreateDataTable {
 				//检查数据表是否在存储层中存在
 				tableIsExistsStorageLayer(dbDataConn, tableSpace, table_name);
 				//设置建表语句
-				createTableSQL.append("CREATE TABLE IF NOT EXISTS");
+				createTableSQL.append("CREATE TABLE");
 				if (StringUtil.isNotBlank(tableSpace)) {
 					createTableSQL.append(" ").append(tableSpace).append(".");
 				}
@@ -129,9 +129,9 @@ public class CreateDataTable {
 				for (Dq_table_column dqTableColumn : dqTableColumns) {
 					//获取字段的附加信息
 					List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
-							"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
-									" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
-									" WHERE col_id=?", dqTableColumn.getField_id());
+						"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
+							" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
+							" WHERE col_id=?", dqTableColumn.getField_id());
 					//设置主键信息
 					for (Map<String, Object> dcol_info : dcol_info_s) {
 						StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
@@ -148,7 +148,7 @@ public class CreateDataTable {
 					//设置建表语句的字段信息
 					createTableSQL.append(table_column).append(Constant.SPACE).append(column_type);
 					if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
-							&& !column_type.equals("boolean")) {
+						&& !column_type.equals("boolean")) {
 						createTableSQL.append("(").append(column_length).append(")");
 					}
 					//是否可为空标识
@@ -198,9 +198,9 @@ public class CreateDataTable {
 				for (Dq_table_column dqTableColumn : dqTableColumns) {
 					//获取字段的附加信息
 					List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
-							"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
-									" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
-									" WHERE col_id=?", dqTableColumn.getField_id());
+						"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
+							" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
+							" WHERE col_id=?", dqTableColumn.getField_id());
 					//设置主键信息
 					for (Map<String, Object> dcol_info : dcol_info_s) {
 						StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
@@ -217,7 +217,7 @@ public class CreateDataTable {
 					//设置建表语句的字段信息
 					createTableSQL.append(table_column).append(Constant.SPACE).append(column_type);
 					if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
-							&& !column_type.equals("boolean")) {
+						&& !column_type.equals("boolean")) {
 						createTableSQL.append("(").append(column_length).append(")");
 					}
 					//是否可为空标识
