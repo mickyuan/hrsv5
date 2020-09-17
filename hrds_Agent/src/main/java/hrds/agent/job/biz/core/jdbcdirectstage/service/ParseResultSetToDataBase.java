@@ -66,8 +66,6 @@ public class ParseResultSetToDataBase {
 		long counter = 0;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			LOGGER.info("连接配置为：" + dataStoreConfBean.getData_store_connect_attr().toString());
-			LOGGER.info("db.getDatabaseName()==============" + db.getDatabaseName());
-			LOGGER.info("db.getConnection().getSchema()==============" + db.getConnection().getSchema());
 			PreparedStatement pst = db.getConnection().prepareStatement(batchSql);
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 			List<String> selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);

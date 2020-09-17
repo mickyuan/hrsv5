@@ -2,6 +2,7 @@ package hrds.commons.utils;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.FileUtil;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.FileFormat;
 
@@ -146,6 +147,10 @@ public class Constant {
 	 * DB文件转存默认的行分隔符
 	 */
 	public static final String DEFAULTLINESEPARATOR = "\n";
+	/**
+	 * DB文件转存默认的行分隔符的字符串形式
+	 */
+	public static final String DEFAULTLINESEPARATORSTR = "\\n";
 	//拼接sql字段的分隔符
 //	public static final String COLUMN_SEPARATOR = ",";
 	/**
@@ -275,4 +280,12 @@ public class Constant {
 	public static final String CUSTOMIZE = "customize";
 	// 仪表盘发布接口名称
 	public static final String DASHBOARDINTERFACENAME = "dashboardRelease";
+	/**
+	 * 数据对标配置类实体序列化路径前缀
+	 */
+	public static final String ALGORITHMS_CONF_SERIALIZE_PATH = FileUtil.TEMP_DIR_NAME +
+			"algorithms-conf-serialize" + FileUtil.PATH_SEPARATOR_CHAR;
+	public static final String HYUCC_RESULT_PATH_NAME = "HyUccOut";
+	public static final String HYFD_RESULT_PATH_NAME = "HyFdOut";
+
 }

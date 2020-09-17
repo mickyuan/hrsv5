@@ -77,7 +77,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			//拿到匹配文件的规则
 			String regex = FileNameUtils.getName(filePathPattern);
 			String[] file_name_list = new File(file_path).list(new FilenameFilter() {
-				private Pattern pattern = Pattern.compile(regex);
+				private final Pattern pattern = Pattern.compile(regex);
 
 				@Override
 				public boolean accept(File dir, String name) {
@@ -230,6 +230,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			Map<String, String> data_store_connect_attr = bean.getData_store_connect_attr();
 			if (data_store_connect_attr != null && !data_store_connect_attr.isEmpty()) {
 				if (!StringUtil.isEmpty(data_store_connect_attr.get(StorageTypeKey.database_code))) {
+					//TODO 这里页面存储层配置要改成代码项
 					for (DataBaseCode typeCode : DataBaseCode.values()) {
 						if (typeCode.getValue().equalsIgnoreCase(data_store_connect_attr.
 								get(StorageTypeKey.database_code))) {

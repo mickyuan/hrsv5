@@ -1,7 +1,6 @@
 package hrds.agent.job.biz.utils;
 
 import fd.ng.core.conf.ConfFileLoader;
-import fd.ng.core.utils.StringUtil;
 import fd.ng.core.yaml.YamlArray;
 import fd.ng.core.yaml.YamlFactory;
 import fd.ng.core.yaml.YamlMap;
@@ -37,6 +36,14 @@ public class DataTypeTransform {
 		list.add("VARCHAR(1024)");
 		list.add("VARCHAR(2048)");
 		list.add("VARCHAR(4000)");
+		list.add("VARCHAR2(32)");
+		list.add("VARCHAR2(64)");
+		list.add("VARCHAR2(128)");
+		list.add("VARCHAR2(256)");
+		list.add("VARCHAR2(512)");
+		list.add("VARCHAR2(1024)");
+		list.add("VARCHAR2(2048)");
+		list.add("VARCHAR2(4000)");
 	}
 
 	/**
@@ -64,31 +71,6 @@ public class DataTypeTransform {
 		} else {
 			return map.get(dsl_name).getString(type, type);
 		}
-	}
-
-	public static String combineform(String type, String length) {
-
-		if (StringUtil.isEmpty(length) || "null".equals(length)) {
-			length = String.valueOf(100);
-		}
-		switch (type.toLowerCase()) {
-			case "char": {
-				type = type + "(" + length + ")";
-			}
-			;
-			break;
-			case "varchar": {
-				type = type + "(" + length + ")";
-			}
-			;
-			break;
-			case "decimal": {
-				type = type + "(" + length + ")";
-			}
-			;
-			break;
-		}
-		return type;
 	}
 
 	/**

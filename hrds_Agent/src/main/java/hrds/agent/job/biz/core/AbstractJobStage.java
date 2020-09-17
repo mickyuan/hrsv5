@@ -39,7 +39,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 * @param todayTableName 上次执行进数的表名
 	 * @param db             数据库连接
 	 */
-	protected void backupToDayTable(String todayTableName, DatabaseWrapper db) {
+	public static void backupToDayTable(String todayTableName, DatabaseWrapper db) {
 		if (db.isExistTable(todayTableName)) {
 			if (db.isExistTable(todayTableName + "b")) {
 				db.execute("DROP TABLE " + todayTableName + "b");
@@ -55,7 +55,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 * @param todayTableName 上次执行进数的表名
 	 * @param helper         HBase操作表的对象
 	 */
-	protected void backupToDayTable(String todayTableName, HBaseHelper helper) {
+	public static void backupToDayTable(String todayTableName, HBaseHelper helper) {
 		try {
 			if (helper.existsTable(todayTableName)) {
 				if (helper.existsTable(todayTableName + "b")) {
@@ -75,7 +75,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 * @param collectTableBean 表配置信息
 	 * @param db               数据库连接
 	 */
-	protected void backupPastTable(CollectTableBean collectTableBean, DatabaseWrapper db) {
+	public static void backupPastTable(CollectTableBean collectTableBean, DatabaseWrapper db) {
 		//获取存储期限值，根据存储期限值对当天卸数的数据进行保存
 		Long storage_time = collectTableBean.getStorage_time();
 		//数据进库之后的表名
@@ -111,7 +111,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 * @param collectTableBean 表配置信息
 	 * @param helper           HBase操作表的对象
 	 */
-	protected void backupPastTable(CollectTableBean collectTableBean, HBaseHelper helper) {
+	public static void backupPastTable(CollectTableBean collectTableBean, HBaseHelper helper) {
 		try {
 			//获取存储期限值，根据存储期限值对当天卸数的数据进行保存
 			Long storage_time = collectTableBean.getStorage_time();
@@ -151,7 +151,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 * @param todayTableName 上次执行进数的表名
 	 * @param db             数据库连接
 	 */
-	protected void recoverBackupToDayTable(String todayTableName, DatabaseWrapper db) {
+	public static void recoverBackupToDayTable(String todayTableName, DatabaseWrapper db) {
 		if (db.isExistTable(todayTableName + "b")) {
 			if (db.isExistTable(todayTableName)) {
 				//判断todayTableName表已经创建，删除
@@ -168,7 +168,7 @@ public abstract class AbstractJobStage implements JobStageInterface {
 	 * @param todayTableName 上次执行进数的表名
 	 * @param helper         HBase操作表的对象
 	 */
-	protected void recoverBackupToDayTable(String todayTableName, HBaseHelper helper) {
+	public static void recoverBackupToDayTable(String todayTableName, HBaseHelper helper) {
 		try {
 			if (helper.existsTable(todayTableName + "b")) {
 				if (helper.existsTable(todayTableName)) {

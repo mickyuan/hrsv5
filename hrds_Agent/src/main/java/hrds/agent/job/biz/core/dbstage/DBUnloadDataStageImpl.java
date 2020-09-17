@@ -83,10 +83,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 					.generateTableInfo(sourceDataConfBean, collectTableBean);
 			if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				//全量卸数
-				fullAmountExtract(stageParamInfo, tableBean);
+				fullAmountExtract(stageParamInfo, tableBean, collectTableBean, sourceDataConfBean);
 			} else if (UnloadType.ZengLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 				//增量卸数
-				incrementExtract(stageParamInfo, tableBean);
+				incrementExtract(stageParamInfo, tableBean, collectTableBean, sourceDataConfBean);
 			} else {
 				throw new AppSystemException("表" + collectTableBean.getTable_name()
 						+ "数据库抽数卸数方式类型不正确");
@@ -243,7 +243,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	/**
 	 * 增量抽取
 	 */
-	private void incrementExtract(StageParamInfo stageParamInfo, TableBean tableBean) {
+	private void incrementExtract(StageParamInfo stageParamInfo, TableBean tableBean,
+								  CollectTableBean collectTableBean, SourceDataConfBean sourceDataConfBean) {
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
@@ -336,7 +337,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * 全量抽取
 	 */
 	@SuppressWarnings("unchecked")
-	private void fullAmountExtract(StageParamInfo stageParamInfo, TableBean tableBean) throws Exception {
+	public static void fullAmountExtract(StageParamInfo stageParamInfo, TableBean tableBean, CollectTableBean
+			collectTableBean, SourceDataConfBean sourceDataConfBean) throws Exception {
 		//fileResult中是生成的所有数据文件的路径，用于判断卸数阶段结果
 		List<String> fileResult = new ArrayList<>();
 		//pageCountResult是本次采集作业每个线程采集到的数据量，用于写meta文件
@@ -347,10 +349,10 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 		if (tableBean.getCollectSQL().contains(Constant.SQLDELIMITER) ||
 				IsFlag.Shi.getCode().equals(collectTableBean.getIs_customize_sql())) {
 			//包含，是否用户自定义的sql进行多线程抽取
-			futures = customizeParallelExtract(tableBean);
+			futures = customizeParallelExtract(tableBean, collectTableBean, sourceDataConfBean);
 		} else {
 			//不包含
-			futures = pageParallelExtract(tableBean);
+			futures = pageParallelExtract(tableBean, collectTableBean, sourceDataConfBean);
 		}
 		//5、获得结果,用于校验多线程采集的结果和写Meta文件
 		for (Future<Map<String, Object>> future : futures) {
@@ -364,7 +366,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	/**
 	 * 自定义并行抽取
 	 */
-	private List<Future<Map<String, Object>>> customizeParallelExtract(TableBean tableBean) {
+	public static List<Future<Map<String, Object>>> customizeParallelExtract(TableBean tableBean, CollectTableBean
+			collectTableBean, SourceDataConfBean sourceDataConfBean) {
 		ExecutorService executorService = null;
 		try {
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();
@@ -394,7 +397,7 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 *
 	 * @param executorService 线程池
 	 */
-	private void closeExecutor(ExecutorService executorService) {
+	public static void closeExecutor(ExecutorService executorService) {
 		//关闭线程池
 		if (executorService != null) {
 			try {
@@ -409,7 +412,8 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	/**
 	 * 分页并行抽取
 	 */
-	private List<Future<Map<String, Object>>> pageParallelExtract(TableBean tableBean) {
+	public static List<Future<Map<String, Object>>> pageParallelExtract(TableBean tableBean, CollectTableBean
+			collectTableBean, SourceDataConfBean sourceDataConfBean) {
 		ExecutorService executorService = null;
 		try {
 			List<Future<Map<String, Object>>> futures = new ArrayList<>();

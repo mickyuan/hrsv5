@@ -95,7 +95,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							//有客户端
 							//通过load方式加载数据到hive
 							createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
-									stageParamInfo.getTableBean());
+									stageParamInfo.getTableBean(),collectTableBean);
 						} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
 							continue;
@@ -106,7 +106,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//根据文件类型bulkload加载数据进hbase
 						bulkloadLoadDataToHbase(todayTableName, hdfsFilePath, collectTableBean.getEtlDate(),
-								dataStoreConfBean, stageParamInfo.getTableBean());
+								dataStoreConfBean, stageParamInfo.getTableBean(),collectTableBean);
 //						LOGGER.warn("DB文件采集数据加载进HBASE没有实现");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 //						LOGGER.info("DB文件采集数据加载进SOLR");
@@ -143,8 +143,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return stageParamInfo;
 	}
 
-	private void bulkloadLoadDataToHbase(String todayTableName, String hdfsFilePath, String etlDate,
-	                                     DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
+	public static void bulkloadLoadDataToHbase(String todayTableName, String hdfsFilePath, String etlDate
+			, DataStoreConfBean dataStoreConfBean, TableBean tableBean,CollectTableBean collectTableBean) {
 		int run;
 		String isMd5 = IsFlag.Fou.getCode();
 		String file_format = tableBean.getFile_format();
@@ -257,7 +257,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean
+	public static void createExternalTableLoadData(String todayTableName, CollectTableBean collectTableBean
 			, DataStoreConfBean dataStoreConfBean, TableBean tableBean, String[] fileNameArr) {
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		String database_type = data_store_connect_attr.get(StorageTypeKey.database_type);
@@ -354,8 +354,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void clearTemporaryFile(String database_type, CollectTableBean collectTableBean,
-	                                String external_root_path, Session session, String[] fileNameArr) throws Exception {
+	public static void clearTemporaryFile(String database_type, CollectTableBean collectTableBean,
+										  String external_root_path, Session session, String[] fileNameArr) throws Exception {
 		//获取数据库抽取任务生成的文件名前缀
 		String past_hbase_name = fileNameArr[0].split(collectTableBean.getTable_name())[0]
 				+ collectTableBean.getTable_name();
@@ -380,8 +380,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void clearTemporaryLog(String database_type, String todayTableName,
-	                               String external_root_path, Session session) throws Exception {
+	public static void clearTemporaryLog(String database_type, String todayTableName,
+										 String external_root_path, Session session) throws Exception {
 		if (FileUtil.isSysDir(external_root_path)) {
 			throw new AppSystemException("请不要删除系统目录下的文件" + external_root_path);
 		}
@@ -394,8 +394,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void clearTemporaryTable(String database_type, String[] fileNameArr,
-	                                 String todayTableName, DatabaseWrapper db, String dsl_name) {
+	public static void clearTemporaryTable(String database_type, String[] fileNameArr,
+										   String todayTableName, DatabaseWrapper db, String dsl_name) {
 		List<String> sqlList = new ArrayList<>();
 		if (DatabaseType.Oracle10g.getCode().equals(database_type) ||
 				DatabaseType.Oracle9i.getCode().equals(database_type)) {
@@ -415,7 +415,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
-	private void createPostgresqlExternalTable(String todayTableName, TableBean tableBean, String[] fileNameArr
+	public static void createPostgresqlExternalTable(String todayTableName, TableBean tableBean, String[] fileNameArr
 			, String dsl_name, String uploadServerPath, List<String> sqlList, DatabaseWrapper db) {
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(
@@ -462,8 +462,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	/*
 	 *拼接创建oracle外部表的sql
 	 */
-	private String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean,
-	                                         String[] fileNameArr, String dsl_name, String external_directory) {
+	public static String createOracleExternalTable(String tmpTodayTableName, TableBean tableBean,
+												   String[] fileNameArr, String dsl_name, String external_directory) {
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo().toUpperCase(),
 				Constant.METAINFOSPLIT), dsl_name);
@@ -500,8 +500,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return sql.toString();
 	}
 
-	private String getTransformsSqlForLobs(List<String> columns, List<String> types,
-	                                       String dsl_name, String external_directory) {
+	public static String getTransformsSqlForLobs(List<String> columns, List<String> types,
+												 String dsl_name, String external_directory) {
 		StringBuilder sb = new StringBuilder(1024);
 		if (types.contains("BLOB") || types.contains("CLOB")) {
 			sb.append("(");
@@ -538,8 +538,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return StageConstant.DATALOADING.getCode();
 	}
 
-	private void createHiveTableLoadData(String todayTableName, String hdfsFilePath,
-	                                     DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
+	public static void createHiveTableLoadData(String todayTableName, String hdfsFilePath, DataStoreConfBean
+			dataStoreConfBean, TableBean tableBean, CollectTableBean collectTableBean) {
 		DatabaseWrapper db = null;
 		try {
 			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
@@ -579,7 +579,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private String genHiveLoadCsv(String todayTableName, TableBean tableBean) {
+	public static String genHiveLoadCsv(String todayTableName, TableBean tableBean) {
 		StringBuilder sql = new StringBuilder(120);
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
@@ -595,7 +595,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		return sql.toString();
 	}
 
-	private String getColumnarFileHiveStored(String fileExtension) {
+	public static String getColumnarFileHiveStored(String fileExtension) {
 		if (FileFormat.PARQUET.getCode().equals(fileExtension)) {
 			return "parquet";
 		} else if (FileFormat.ORC.getCode().equals(fileExtension)) {
@@ -610,8 +610,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	/**
 	 * 创建hive外部表加载列式存储文件
 	 */
-	private String genHiveLoadColumnar(String todayTableName, String file_format,
-	                                   String dsl_name, TableBean tableBean) {
+	public static String genHiveLoadColumnar(String todayTableName, String file_format,
+											 String dsl_name, TableBean tableBean) {
 		String hiveStored = getColumnarFileHiveStored(file_format);
 		String type;
 		StringBuilder sql = new StringBuilder(120);
@@ -644,7 +644,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	/**
 	 * 创建hive外部表加载行式存储文件
 	 */
-	private String genHiveLoad(String todayTableName, TableBean tableBean, String database_separatorr) {
+	public static String genHiveLoad(String todayTableName, TableBean tableBean, String database_separatorr) {
 		StringBuilder sql = new StringBuilder(120);
 		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");

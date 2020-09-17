@@ -100,14 +100,16 @@ public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 					}
 					//清洗操作
 					currValue = sb_.toString();
-					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
-							typeList.get(i), FileFormat.FeiDingChang.getCode(), null,
-							data_extraction_def.getDatabase_code(), dataDelimiter);
+					if(!parseJson.isEmpty()){
+						currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
+								typeList.get(i), FileFormat.FeiDingChang.getCode(), null,
+								data_extraction_def.getDatabase_code(), dataDelimiter);
+					}
 					// Write to output
 					sb.append(currValue).append(dataDelimiter);
 				}
 				//如果有列合并处理合并信息
-				if (!mergeIng.isEmpty()) {
+				if (mergeIng!=null && !mergeIng.isEmpty()) {
 					List<String> arrColString = StringUtil.split(midStringOther.toString(),
 							Constant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),

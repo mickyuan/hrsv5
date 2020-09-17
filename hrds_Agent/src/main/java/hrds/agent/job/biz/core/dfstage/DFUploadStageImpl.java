@@ -19,7 +19,6 @@ import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessInterfac
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToSolr;
-import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -30,7 +29,6 @@ import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.hadoop.solr.SolrParam;
-import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.FileProgressMonitor;
@@ -144,7 +142,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					//数据库类型
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//支持外部表的方式
-						execSftpToDbServer(dataStoreConfBean, stageParamInfo.getFileArr());
+						execSftpToDbServer(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//不支持外部表的方式
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
@@ -159,7 +157,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 							DatabaseType.Hive.getCode());
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
-						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
+						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有hadoop客户端
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
@@ -171,7 +169,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 //					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
 					//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
-					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
+					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 					clearSolrData(dataStoreConfBean);
 					//数据进solr
@@ -263,7 +261,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 上传卸数的文件到hdfs
 	 */
-	private void execHDFSShell(DataStoreConfBean dataStoreConfBean, String[] localFiles) throws Exception {
+	public static void execHDFSShell(DataStoreConfBean dataStoreConfBean, String[] localFiles,
+									 CollectTableBean collectTableBean) throws Exception {
 		//STORECONFIGPATH上传hdfs需要读取的配置文件顶层目录
 		String hdfsPath = getUploadHdfsPath(collectTableBean);
 		//TODO 需要加一个key为hadoop_user_name的键值对，作为普通属性
@@ -332,7 +331,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 执行sftp程序将文件上传到服务器所在机器
 	 */
-	private void execSftpToDbServer(DataStoreConfBean dataStoreConfBean, String[] localFiles) {
+	public static void execSftpToDbServer(DataStoreConfBean dataStoreConfBean, String[] localFiles,
+										  CollectTableBean collectTableBean) {
 		Session session = null;
 		ChannelSftp channel = null;
 		try {
@@ -397,8 +397,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
-										String targetDir, String unload_hbase_name) throws Exception {
+	public static void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
+											  String targetDir, String unload_hbase_name) throws Exception {
 		File file = new File(absolutePath);
 		String LOBs = file.getParent() + File.separator + "LOBS" + File.separator;
 		String[] fileNames = new File(LOBs).list();
@@ -495,7 +495,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * @param db                数据库连接方式
 	 */
 	public static void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
-								  DatabaseWrapper db) {
+										DatabaseWrapper db) {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
@@ -521,7 +521,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 获取上传到hdfs的文件夹路径
 	 */
-	static String getUploadHdfsPath(CollectTableBean collectTableBean) {
+	public static String getUploadHdfsPath(CollectTableBean collectTableBean) {
 		return FileNameUtils.normalize(JobConstant.PREFIX + File.separator + collectTableBean.getDatabase_id()
 				+ File.separator + collectTableBean.getHbase_name() + File.separator, true);
 	}
