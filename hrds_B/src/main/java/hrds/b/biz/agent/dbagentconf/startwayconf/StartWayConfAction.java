@@ -39,11 +39,13 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.jsch.ChineseUtil;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -133,9 +135,7 @@ public class StartWayConfAction extends BaseAction {
      作业描述的组合形式为 : 数据源名称_agent名称_分类名称_表中文名_文件类型
     */
 		tableList.forEach(
-			itemMap -> {
-				setCollectDataBaseParam(colSetId, itemMap, databaseMap);
-			});
+			itemMap -> setCollectDataBaseParam(colSetId, itemMap, databaseMap));
 
 		return tableList;
 	}
@@ -594,8 +594,8 @@ public class StartWayConfAction extends BaseAction {
 
 		logger.info("数据字典的 " + dicTableList);
 		logger.info("数据库的 " + databaseTableNames);
-		List<Object> exists = new ArrayList<Object>(); // 存在的信息
-		List<Object> delete = new ArrayList<Object>(); // 不存在的信息
+		List<Object> exists = new ArrayList<>(); // 存在的信息
+		List<Object> delete = new ArrayList<>(); // 不存在的信息
 		Map<String, List<Object>> differenceMap = new HashedMap();
 		for (Object databaseTableName : databaseTableNames) {
 			/*

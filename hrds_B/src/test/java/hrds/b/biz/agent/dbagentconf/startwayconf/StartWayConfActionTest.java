@@ -12,6 +12,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
+import fd.ng.netclient.http.SubmitMediaType;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.Pro_Type;
@@ -20,8 +21,10 @@ import hrds.commons.entity.Etl_job_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.testbase.WebBaseTestCase;
+
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -87,10 +90,10 @@ public class StartWayConfActionTest extends WebBaseTestCase {
 
 	/**
 	 * 请求采集作业的作业信息
-	 * 	1: 请求正确的数据信息后,检查是否和初始化时的数据量是否一致
-	 * 	2: 模拟一次任务信息不存在的情况
-	 * 	3: 删除一条数据信息后,检查是否和预期的结果一致(也就是29条作业信息)
-	 * 	4: 请求正确的数据信息后,检查是否和预期数据量是否一致
+	 * 1: 请求正确的数据信息后,检查是否和初始化时的数据量是否一致
+	 * 2: 模拟一次任务信息不存在的情况
+	 * 3: 删除一条数据信息后,检查是否和预期的结果一致(也就是29条作业信息)
+	 * 4: 请求正确的数据信息后,检查是否和预期数据量是否一致
 	 */
 	@Test
 	public void getEtlJobData() {
@@ -178,7 +181,9 @@ public class StartWayConfActionTest extends WebBaseTestCase {
 			etl_job_def.setPro_type(Pro_Type.SHELL.getCode());
 		});
 		//3: 向后端发生正确的数据信息
-		getEtlSysData = new HttpClient().addData("colSetId", initStartWayData.DATABASE_ID)
+		getEtlSysData = new HttpClient()
+			.reset(SubmitMediaType.MULTIPART)
+			.addData("colSetId", initStartWayData.DATABASE_ID)
 			.addData("source_id", initStartWayData.SOURCE_ID).addData("etl_sys_cd", initStartWayData.ETL_SYS_CD)
 			.addData("sub_sys_cd", initStartWayData.SUB_SYS_CD).addData("pro_dic", initStartWayData.AGENT_PATH)
 			.addData("log_dic", initStartWayData.AGENT_LOG).addData("etlJobs", JSON.toJSONString(dataForEntityList))
