@@ -12,13 +12,16 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.DBUnloadDataStageImpl;
 import hrds.agent.job.biz.core.dfstage.service.FileConversionThread;
+import hrds.agent.job.biz.core.jdbcdirectstage.JdbcDirectUnloadDataStageImpl;
 import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.*;
+import hrds.commons.codes.AgentType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.StorageTypeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +29,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -119,8 +121,9 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						+ "Db文件采集，不需要转存或者增量采集，卸数跳过");
 			} else if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
 				//获取db文件采集转存的文件编码，
-				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题
-				tableBean.setDbFileArchivedCode(getDbFileArchivedCode(collectTableBean, tableBean.getFile_code()));
+				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题   存储层不指定默认使用要采集的db文件编码
+				tableBean.setDbFileArchivedCode(JdbcDirectUnloadDataStageImpl.getStoreDataBaseCode(
+						collectTableBean.getTable_name(), collectTableBean.getDataStoreConfBean(), tableBean.getFile_code()));
 				//Data_extraction_def targetData_extraction_def = collectTableBean.getTargetData_extraction_def();
 				//TODO 需要转存，根据文件采集的定义，读取文件，卸数文件到指定的目录
 				//根据源定义读取文件，将读取到的文件统一转为List<List>每5000行统一处理一次
@@ -215,32 +218,6 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		//替换文件格式
 		root_path = root_path.replace("#{file_format}", Constant.fileFormatMap.get(file_format));
 		return root_path;
-	}
-
-	/**
-	 * 获取文件转存的默认编码，目的地数据库有配置database_code时，会主动去取数据库键值对下配置的编码，选择多个目的地，默认使用第一个库的该编码
-	 * 没有设置，取读文件的编码为写文件的编码
-	 *
-	 * @param collectTableBean 采集的表属性实体
-	 * @param fileCode         db文件编码
-	 */
-	private String getDbFileArchivedCode(CollectTableBean collectTableBean, String fileCode) {
-		List<DataStoreConfBean> dataStoreConfBean = collectTableBean.getDataStoreConfBean();
-		for (DataStoreConfBean bean : dataStoreConfBean) {
-			Map<String, String> data_store_connect_attr = bean.getData_store_connect_attr();
-			if (data_store_connect_attr != null && !data_store_connect_attr.isEmpty()) {
-				if (!StringUtil.isEmpty(data_store_connect_attr.get(StorageTypeKey.database_code))) {
-					//TODO 这里页面存储层配置要改成代码项
-					for (DataBaseCode typeCode : DataBaseCode.values()) {
-						if (typeCode.getValue().equalsIgnoreCase(data_store_connect_attr.
-								get(StorageTypeKey.database_code))) {
-							return typeCode.getCode();
-						}
-					}
-				}
-			}
-		}
-		return fileCode;
 	}
 
 	@Override

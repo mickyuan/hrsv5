@@ -64,9 +64,9 @@ public class JdbcDirectUnloadDataStageImpl extends AbstractJobStage {
 			//3.判断存储层是否均支持外部表
 			if (doAllSupportExternal(collectTableBean.getDataStoreConfBean())) {
 				//支持外部表
-				//获取写文件编码
+				//获取写文件编码 如果没有填写编码，则默认使用utf-8编码
 				String storeDataBaseCode = getStoreDataBaseCode(collectTableBean.getTable_name(),
-						collectTableBean.getDataStoreConfBean());
+						collectTableBean.getDataStoreConfBean(), DataBaseCode.UTF_8.getCode());
 				//设置默认的卸数目录、换行符、文件分隔符...
 				setTableBeanAndDataExtractionDef(storeDataBaseCode, tableBean, collectTableBean);
 				//防止有进程被kill导致文件夹下有脏数据，清空脏数据
@@ -106,13 +106,6 @@ public class JdbcDirectUnloadDataStageImpl extends AbstractJobStage {
 
 	private void setTableBeanAndDataExtractionDef(String storeDataBaseCode, TableBean tableBean,
 												  CollectTableBean collectTableBean) {
-		//TODO 这里页面存储层配置要改成代码项
-		for (DataBaseCode typeCode : DataBaseCode.values()) {
-			if (typeCode.getValue().equalsIgnoreCase(storeDataBaseCode)) {
-				storeDataBaseCode = typeCode.getCode();
-				break;
-			}
-		}
 		//设置tableBean默认值
 		tableBean.setFile_code(storeDataBaseCode);
 		//列分隔符为默认值
@@ -156,26 +149,34 @@ public class JdbcDirectUnloadDataStageImpl extends AbstractJobStage {
 	/**
 	 * 获取卸数文件的编码
 	 */
-	private String getStoreDataBaseCode(String table_name, List<DataStoreConfBean> dataStoreConfBeanList) {
+	public static String getStoreDataBaseCode(String table_name, List<DataStoreConfBean> dataStoreConfBeanList, String defaultCode) {
 		String code = "";
 		for (DataStoreConfBean storeConfBean : dataStoreConfBeanList) {
 			Map<String, String> data_store_connect_attr = storeConfBean.getData_store_connect_attr();
-			if (data_store_connect_attr.get(StorageTypeKey.database_code) != null) {
-				//为空则说明第一次进来
-				if (StringUtil.isEmpty(code)) {
-					code = data_store_connect_attr.get(StorageTypeKey.database_code);
-				} else {
-					if (!code.equals(data_store_connect_attr.get(StorageTypeKey.database_code))) {
-						throw new AppSystemException("表" + table_name + "数据库直连采集选择多个存储层，存储层的编码" +
-								"不一致，分别为" + DataBaseCode.ofValueByCode(code) + "、" + DataBaseCode.ofValueByCode(
-								data_store_connect_attr.get(StorageTypeKey.database_code)) + "，请配置多个任务执行！");
+			if(data_store_connect_attr !=null && !data_store_connect_attr.isEmpty()) {
+				if (data_store_connect_attr.get(StorageTypeKey.database_code) != null) {
+					//为空则说明第一次进来
+					if (StringUtil.isEmpty(code)) {
+						code = data_store_connect_attr.get(StorageTypeKey.database_code);
+					} else {
+						if (!code.equals(data_store_connect_attr.get(StorageTypeKey.database_code))) {
+							throw new AppSystemException("表" + table_name + "数据库直连采集选择多个存储层，存储层的编码" +
+									"不一致，分别为" + DataBaseCode.ofValueByCode(code) + "、" + DataBaseCode.ofValueByCode(
+									data_store_connect_attr.get(StorageTypeKey.database_code)) + "，请配置多个任务执行！");
+						}
 					}
 				}
 			}
 		}
-		//如果没有填写编码，则默认使用utf-8编码
+		//TODO 这里页面存储层配置要改成代码项
+		for (DataBaseCode typeCode : DataBaseCode.values()) {
+			if (typeCode.getValue().equalsIgnoreCase(code)) {
+				code = typeCode.getCode();
+				break;
+			}
+		}
 		if (StringUtil.isEmpty(code)) {
-			code = DataBaseCode.UTF_8.getCode();
+			code = defaultCode;
 		}
 		return code;
 	}
