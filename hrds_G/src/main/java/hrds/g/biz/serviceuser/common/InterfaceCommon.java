@@ -24,6 +24,7 @@ import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
 import hrds.g.biz.bean.SingleTable;
@@ -56,6 +57,9 @@ public class InterfaceCommon {
 	private static long lineCounter = 0;
 	// 接口响应信息集合
 	private static Map<String, Object> responseMap = new HashMap<>();
+	// 接口使用日志是否记录标志,1：是，0：否
+	private static final String isRecordInterfaceLog =
+			PropertyParaValue.getString("isRecordInterfaceLog", "1");
 
 	static {
 		notCheckFunction.add("count(*)");
@@ -556,7 +560,7 @@ public class InterfaceCommon {
 				// 6.map的key为列名称，value为列名称对应的对象信息
 				map.forEach((k, v) -> {
 					sbCol.append(k).append(",");
-					sbVal.append(v.toString()).append(",");
+					sbVal.append(v).append(",");
 				});
 				// 7.如果文件是CSV则第一行为列信息
 				if (lineCounter == 1) {
@@ -818,19 +822,15 @@ public class InterfaceCommon {
 		// 2.数据类型选择csv,输出数据类型选择stream
 		if (DataType.csv == DataType.ofEnumByCode(dataType)
 				&& OutType.STREAM == OutType.ofEnumByCode(outType)
-				&& StateType.NORMAL == StateType.ofEnumByCode(responseMap.get("status").toString())) {
+				&& StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			try {
 				Map<String, Object> message = JsonUtil.toObject(responseMap.get("message").toString(),
 						mapType);
 				List<String> dataList = JsonUtil.toObject(message.get("data").toString(), type);
 				List<String> columnList = JsonUtil.toObject(message.get("column").toString(), type);
-//				StringBuilder sb = new StringBuilder();
-//				for (String data : dataList) {
-//					sb.append(data).append(System.lineSeparator());
-//				}
 				String data = String.join(System.lineSeparator(), dataList);
 				String column = String.join(",", columnList);
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
+				return StateType.getResponseInfo(StateType.NORMAL.name(),
 						column + System.lineSeparator() + data);
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);

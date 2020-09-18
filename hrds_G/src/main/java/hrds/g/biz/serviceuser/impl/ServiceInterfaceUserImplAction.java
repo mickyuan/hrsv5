@@ -126,7 +126,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 4.检查表信息
 		responseMap = InterfaceCommon.checkTable(Dbo.db(), userByToken.getUser_id(), singleTable);
 		// 5.返回按类型操作接口响应信息
-		responseMap = InterfaceCommon.operateInterfaceByType(singleTable.getDataType(), singleTable.getOutType(),
+		responseMap = InterfaceCommon.operateInterfaceByType(singleTable.getDataType(),
+				singleTable.getOutType(),
 				singleTable.getAsynType(), singleTable.getBackurl(), singleTable.getFilepath(),
 				singleTable.getFilename(), responseMap);
 		// 6.记录接口使用日志
@@ -496,7 +497,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		responseMap = InterfaceCommon.getSqlData(Dbo.db(), sqlSearch.getOutType(),
 				sqlSearch.getDataType(), sqlNew, userByToken.getUser_id(), null);
 		// 17.根据输出数据类型处理数据
-		responseMap = InterfaceCommon.operateInterfaceByType(sqlSearch.getDataType(), sqlSearch.getOutType(),
+		responseMap = InterfaceCommon.operateInterfaceByType(sqlSearch.getDataType(),
+				sqlSearch.getOutType(),
 				sqlSearch.getAsynType(), sqlSearch.getBackurl(), sqlSearch.getFilepath(),
 				sqlSearch.getFilename(), responseMap);
 		// 18.记录接口使用日志信息
@@ -633,7 +635,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 	@Param(name = "userByToken", desc = "根据token获取的用户信息对象", range = "无限制", isBean = true)
 	@Param(name = "request_state", desc = "强求状态", range = "")
 	@Param(name = "start", desc = "请求开始时间毫秒数", range = "无限制")
-	@Return(desc = "", range = "")
 	private void insertInterfaceUseLog(String url, long start, Interface_use_log interface_use_log,
 	                                   QueryInterfaceInfo userByToken, String request_state) {
 		// 1.获取接口使用信息
