@@ -1626,20 +1626,31 @@ public class AgentListAction extends BaseAction {
 		try {
 			//获取上传后的文件
 			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-
-			session = SFTPChannel.getJSchSession(sftpDetails, 60000);
-			//建立远程机器的目录
-			SFTPChannel.execCommandByJSchNoRs(session, "mkdir -p " + targetPath);
-			// 开始传输上传的文件
-			channel = new SFTPChannel();
-			chSftp = channel.getChannel(session, 60000);
-			//将本地的文件传输到目标机器
-			chSftp.put(uploadedFile.getAbsolutePath(), targetPath);
-			//修改传输后的文件名称,因为上传到本地的文件名称会被修改掉...传输到目标机器后,将文件名称还原
-			SFTPChannel.execCommandByJSchNoRs(session,
-				"mv " + targetPath + File.separator + uploadedFile.getName() + " " + targetPath + File.separator
-					+ FileUploadUtil.getOriginalFileName(file));
-
+			//上次的文件如果不存在,则提示错误信息到页面
+			String upFilePath = null;
+			if (!uploadedFile.exists()) {
+				CheckParam.throwErrorMsg("上传的数据字典不存在");
+			} else {
+				//得到上传的文件,并将文件名称修改成原文件名称
+				upFilePath = uploadedFile.getAbsolutePath();
+				if (upFilePath.lastIndexOf(uploadedFile.getName()) >= 0) {
+					upFilePath = upFilePath.substring(0, upFilePath.lastIndexOf(uploadedFile.getName())) + FileUploadUtil
+						.getOriginalFileName(file);
+					uploadedFile.renameTo(new File(upFilePath));
+				}
+				session = SFTPChannel.getJSchSession(sftpDetails, 60000);
+				//建立远程机器的目录
+				SFTPChannel.execCommandByJSchNoRs(session, "mkdir -p " + targetPath);
+				// 开始传输上传的文件
+				channel = new SFTPChannel();
+				chSftp = channel.getChannel(session, 60000);
+				//将本地的文件传输到目标机器
+				chSftp.put(upFilePath, targetPath);
+				//修改传输后的文件名称,因为上传到本地的文件名称会被修改掉...传输到目标机器后,将文件名称还原
+//				SFTPChannel.execCommandByJSchNoRs(session,
+//					"mv " + targetPath + File.separator + uploadedFile.getName() + " " + targetPath + File.separator
+//						+ FileUploadUtil.getOriginalFileName(file));
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
