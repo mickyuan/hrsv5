@@ -72,14 +72,13 @@ public class SolrOperatorImpl5_3_1 extends SolrOperatorImpl implements ISolrOper
 			if (StringUtil.isEmpty(solrParam.getCollection())) {
 				throw new AppSystemException("远程连接solr的collection为空！！！");
 			}
-			if (StringUtil.isEmpty(solrParam.getSolrUrl())) {
-				throw new AppSystemException("远程连接solr的solrUrl为空！！！");
-			}
-			String solrUrl = solrParam.getSolrUrl();
+//			if (StringUtil.isEmpty(solrParam.getSolrUrl())) {
+//				throw new AppSystemException("远程连接solr的solrUrl为空！！！");
+//			}
 			String collection = solrParam.getCollection();
-			logger.info("zookeeper address:" + solrUrl);
+			logger.info("zookeeper address:" + CommonVariables.ZK_HOST);
 			logger.info("collection's name:" + collection);
-			server$ = new CloudSolrClient(solrUrl);
+			server$ = new CloudSolrClient(CommonVariables.ZK_HOST);
 			server$.setDefaultCollection(collection);
 			server$.setZkClientTimeout(60000);
 			server$.setZkConnectTimeout(60000);
