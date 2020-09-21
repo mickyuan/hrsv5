@@ -13,8 +13,11 @@ import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BatchShell;
 import hrds.commons.utils.MapDBHelper;
+import hrds.commons.utils.PropertyParaUtil;
+import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,12 +33,12 @@ import java.util.concurrent.ConcurrentMap;
 public class FileCollectLoadingDataStageImpl implements Callable<String> {
 
 	private static final Log log = LogFactory.getLog(FileCollectLoadingDataStageImpl.class);
-	private FileCollectParamBean fileCollectParamBean;
+	private final FileCollectParamBean fileCollectParamBean;
 	//大文件文件夹路径
 	private static final String BIGFILENAME = "bigFiles";
-	private ConcurrentMap<String, String> fileNameHTreeMap;
+	private final ConcurrentMap<String, String> fileNameHTreeMap;
 	//mapDB操作对象
-	private MapDBHelper mapDBHelper;
+	private final MapDBHelper mapDBHelper;
 
 	FileCollectLoadingDataStageImpl(FileCollectParamBean paramBean,
 	                                ConcurrentMap<String, String> fileNameHTreeMap, MapDBHelper mapDBHelper) {
@@ -45,8 +48,13 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 		String fileCollectHdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator + DataSourceType.DCL.getCode() + File.separator + paramBean.getFcs_id()
 				+ File.separator + paramBean.getFile_source_id() + File.separator + BIGFILENAME, true);
 		if (JobConstant.HAS_HADOOP_ENV) {
-			//创建hdfs文件夹
-			try (HdfsOperator operator = new HdfsOperator()) {
+			//TODO 创建hdfs文件夹,这里agent需要制定参数，选择目的地的话应该从目的地取配置
+			try (HdfsOperator operator = new HdfsOperator(
+					System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+					PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+					PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+					PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf")
+					)) {
 				Path path = new Path(fileCollectHdfsPath);
 				if (!operator.exists(path)) {
 					operator.mkdir(path);
