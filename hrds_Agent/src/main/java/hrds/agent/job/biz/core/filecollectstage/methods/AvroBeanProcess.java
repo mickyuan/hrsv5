@@ -171,7 +171,7 @@ public class AvroBeanProcess {
 					addFileAttributeList[19] = attribute.getStorage_date();
 					addFileAttributeList[20] = attribute.getStorage_time();
 					addFileAttributeList[21] = attribute.getTable_name();
-					logger.info(addFileAttributeList);
+//					logger.info(addFileAttributeList);
 					addParamsPool.add(addFileAttributeList);
 					//插入到Hbase该行的rowKey为：file_id+md5
 					rowKey = fileId + "_" + avroBean.getFile_md5();

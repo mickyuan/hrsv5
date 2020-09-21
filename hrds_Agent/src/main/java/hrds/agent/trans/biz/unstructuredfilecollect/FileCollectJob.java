@@ -9,7 +9,6 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.FileCollectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
-import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.File_source;
 import hrds.commons.exception.AppSystemException;
