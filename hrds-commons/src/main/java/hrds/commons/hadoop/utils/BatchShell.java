@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Param;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.FileProgressMonitor;
@@ -41,8 +42,11 @@ public class BatchShell {
   @Param(name = "localPath", desc = "本地文件路径", range = "不可为空")
   @Param(name = "hdfsPath", desc = "hdfs文件路径", range = "不可为空")
   private static void copyFileToHDFS(String localPath, String hdfsPath) {
-    // 1.调用hdfs操作类将本地文件上传到hdfs
-    try (HdfsOperator operator = new HdfsOperator()) {
+    // 1.调用hdfs操作类将本地文件上传到hdfs TODO
+    try (HdfsOperator operator = new HdfsOperator(System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+            PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+            PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+            PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf"))) {
       operator.upLoad(new Path(localPath), new Path(hdfsPath), true);
     } catch (Exception e) {
       if (e instanceof BusinessException) {

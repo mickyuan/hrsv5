@@ -6,17 +6,20 @@ import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
 import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
+import hrds.commons.utils.PropertyParaUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +29,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.SolrInputDocument;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -86,9 +91,9 @@ public class AvroBeanProcess {
 			"    file_avro_block = ? " +
 			"WHERE " +
 			"    file_id = ?";
-	private FileCollectParamBean fileCollectParamBean;
-	private String sysDate;
-	private String job_rs_id;
+	private final FileCollectParamBean fileCollectParamBean;
+	private final String sysDate;
+	private final String job_rs_id;
 
 	public AvroBeanProcess(FileCollectParamBean fileCollectParamBean, String sysDate, String job_rs_id) {
 		this.fileCollectParamBean = fileCollectParamBean;
@@ -166,7 +171,7 @@ public class AvroBeanProcess {
 					addFileAttributeList[19] = attribute.getStorage_date();
 					addFileAttributeList[20] = attribute.getStorage_time();
 					addFileAttributeList[21] = attribute.getTable_name();
-					logger.info(addFileAttributeList);
+//					logger.info(addFileAttributeList);
 					addParamsPool.add(addFileAttributeList);
 					//插入到Hbase该行的rowKey为：file_id+md5
 					rowKey = fileId + "_" + avroBean.getFile_md5();
@@ -303,7 +308,7 @@ public class AvroBeanProcess {
 	/**
 	 * 在Hbase中存入信息和拉链
 	 */
-	public void saveInHbase(List<String[]> hbaseList) {
+	public void saveInHbase(List<String[]> hbaseList) throws IOException {
 
 		logger.info("Start to saveInHbase...");
 		if (hbaseList == null) {
@@ -332,12 +337,25 @@ public class AvroBeanProcess {
 			}
 			putList.add(put);
 		}
-		try (HBaseHelper helper = HBaseHelper.getHelper(); Table table = helper.getTable(Bytes.toString(FileCollectParamBean.FILE_HBASE))) {
+		Table table = null;
+		try (HBaseHelper helper = HBaseHelper.getHelper(ConfigReader.getConfiguration(
+				System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+				PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+				PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+				PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf")))) {
+			if (!helper.existsTable(FileCollectParamBean.FILE_HBASE_NAME)) {
+				HBaseIncreasement.createDefaultPrePartTable(helper, FileCollectParamBean.FILE_HBASE_NAME,
+						true);
+			}
+			table = helper.getTable(Bytes.toString(FileCollectParamBean.FILE_HBASE));
 			//数据插入到HBase
 			table.put(putList);
 		} catch (Exception e) {
 			logger.error("Failed to putInHbase", e);
 			throw new AppSystemException("Failed to putInHbase..." + e.getMessage());
+		} finally {
+			if (table != null)
+				table.close();
 		}
 	}
 
@@ -351,7 +369,9 @@ public class AvroBeanProcess {
 		SolrParam solrParam = new SolrParam();
 		solrParam.setSolrUrl(JobConstant.SOLRZKHOST);
 		solrParam.setCollection(JobConstant.SOLRCOLLECTION);
-		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam)) {
+		// TODO
+		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam,
+				System.getProperty("user.dir") + File.separator + "conf" + File.separator)) {
 			SolrClient server = os.getServer();
 			List<SolrInputDocument> docs = new ArrayList<>();
 			SolrInputDocument doc;
@@ -431,7 +451,7 @@ public class AvroBeanProcess {
 	 * @param format 时间字符串格式如： yyyy-MM-dd HH:mm:ss
 	 */
 	private String stringToDate(String lo, String format) {
-		long time = Long.valueOf(lo);
+		long time = Long.parseLong(lo);
 		Date date = new Date(time);
 		SimpleDateFormat sd = new SimpleDateFormat(format);
 		return sd.format(date);

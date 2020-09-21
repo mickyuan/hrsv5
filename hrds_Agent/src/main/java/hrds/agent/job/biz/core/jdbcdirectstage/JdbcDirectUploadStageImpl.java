@@ -232,13 +232,13 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 				}
 			}
 		}
-//		if (Dbtype.DB2V1 == db.getDbtype() || Dbtype.DB2V2 == db.getDbtype()) {
-		db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
-				" ( SELECT " + select_join + " FROM ( " + sql + ") AS hyren_dcl_temp )");
-//		} else {
-//			db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
-//					" SELECT " + select_join + " FROM ( " + sql + ") AS hyren_dcl_temp ");
-//		}
+		if (Dbtype.DB2V1 == db.getDbtype() || Dbtype.DB2V2 == db.getDbtype()) {
+			db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
+					" ( SELECT " + select_join + " FROM ( " + sql + ") AS hyren_dcl_temp )");
+		} else {
+			db.execute("INSERT INTO " + todayTableName + "(" + insert_join + ")" +
+					" SELECT " + select_join + " FROM ( " + sql + ") hyren_dcl_temp ");
+		}
 	}
 
 	private boolean isSameJdbc(String source_jdbc_url, String source_database_type, String source_database_name,

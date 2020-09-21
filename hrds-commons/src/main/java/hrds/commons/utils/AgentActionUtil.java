@@ -38,8 +38,10 @@ public class AgentActionUtil {
 	public static final String GETALLTABLESTORAGE = "/hrds/agent/trans/biz/database/getAllTableStorage";
 	//agent调用海云服务端保存采集情况信息表
 	public static final String SAVECOLLECTCASE = "/hrds/server/saveCollectCase";
-	//调用agent端执行文件采集
+	//向agent端发送一个文件采集任务
 	public static final String EXECUTEFILECOLLECT = "/hrds/agent/trans/biz/unstructuredfilecollect/execute";
+	//向agent端发送一个文件采集立即执行的任务
+	public static final String EXECUTEFILECOLLECTIMMEDIATELY = "/hrds/agent/trans/biz/unstructuredfilecollect/executeImmediately";
 	//测试并行抽取SQL
 	public static final String TESTPARALLELSQL = "/hrds/agent/trans/biz/testParallelSQL";
 	//获取单表数据总量
@@ -112,6 +114,7 @@ public class AgentActionUtil {
 		list.add(JDBCCOLLECTEXECUTEIMMEDIATELY);
 		list.add(JDBCDIRECTEXECUTEIMMEDIATELY);
 		list.add(SENDJDBCDIRECTTASKINFO);
+		list.add(EXECUTEFILECOLLECTIMMEDIATELY);
 	}
 
 	private AgentActionUtil() {

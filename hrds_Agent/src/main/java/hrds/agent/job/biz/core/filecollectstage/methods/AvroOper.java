@@ -14,6 +14,7 @@ import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.ReadFileUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -55,19 +56,19 @@ public class AvroOper {
 	//Avro文件的SCHEMA
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
 	//文件采集传递参数的实体
-	private FileCollectParamBean fileCollectParamBean;
+	private final FileCollectParamBean fileCollectParamBean;
 	//文件采集的监听器
-	private CollectionWatcher collectionWatcher;
+	private final CollectionWatcher collectionWatcher;
 	//大文件文件夹路径
 	private static final String BIGFILENAME = "bigFiles";
 	//文件上传到hdfs文件的路径
-	private String fileCollectHdfsPath;
+	private final String fileCollectHdfsPath;
 	//大文件上传到hdfs上的路径
-	private String bigFileCollectHdfsPath;
+	private final String bigFileCollectHdfsPath;
 	//当前线程的消费队列
-	private ArrayBlockingQueue<String> queue;
+	private final ArrayBlockingQueue<String> queue;
 	//mapDB对象
-	private ConcurrentMap<String, String> fileNameHTreeMap;
+	private final ConcurrentMap<String, String> fileNameHTreeMap;
 	//最后一个卸数文件的标识
 	public static final long LASTELEMENT = 0L;
 
@@ -256,12 +257,8 @@ public class AvroOper {
 							writer, isSelect);
 				}
 				//是最后一批文件，则给结束标识
-				if (isLast) {
-					//avro文件写完之后就立刻将该条avro文件信息放入队列，交于消费线程处理
-					putIntoQueue(avroFileAbsolutionPath, fileCollectParamBean, true, false);
-				} else {
-					putIntoQueue(avroFileAbsolutionPath, fileCollectParamBean, false, false);
-				}
+				//avro文件写完之后就立刻将该条avro文件信息放入队列，交于消费线程处理
+				putIntoQueue(avroFileAbsolutionPath, fileCollectParamBean, isLast, false);
 			}
 		} catch (IOException e) {
 			logger.error("Failed to create Avro File...", e);
@@ -331,7 +328,13 @@ public class AvroOper {
 		DataFileStream<Object> reader = null;
 		try {
 			if (JobConstant.HAS_HADOOP_ENV) {
-				fs = FileSystem.get(ConfigReader.getConfiguration());
+				//TODO
+				fs = FileSystem.get(ConfigReader.getConfiguration(
+						System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+						PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+						PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+						PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf")
+				));
 				is = fs.open(avroFilePath);
 			} else {
 				is = new FileInputStream(avroFilePath.toString());

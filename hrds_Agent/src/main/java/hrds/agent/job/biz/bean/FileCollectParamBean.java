@@ -19,7 +19,9 @@ public class FileCollectParamBean implements Serializable {
 
 	public static final byte[] E_DATE = Bytes.toBytes(Constant.EDATENAME);
 
-	public static final byte[] FILE_HBASE = Bytes.toBytes("file_hbase");
+	public static final String FILE_HBASE_NAME = "file_hbase";
+
+	public static final byte[] FILE_HBASE = Bytes.toBytes(FILE_HBASE_NAME);
 
 	@DocBean(name = "fcs_id", value = "文件系统采集ID", dataType = Long.class, required = true)
 	private String fcs_id;
