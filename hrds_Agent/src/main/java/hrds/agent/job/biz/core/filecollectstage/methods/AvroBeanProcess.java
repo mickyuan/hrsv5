@@ -367,7 +367,7 @@ public class AvroBeanProcess {
 		int count = 0;
 		int commitNumber = 500;
 		SolrParam solrParam = new SolrParam();
-		solrParam.setSolrUrl(JobConstant.SOLRZKHOST);
+		solrParam.setSolrZkUrl(JobConstant.SOLRZKHOST);
 		solrParam.setCollection(JobConstant.SOLRCOLLECTION);
 		// TODO
 		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam,

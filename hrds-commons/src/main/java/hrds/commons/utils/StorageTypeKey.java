@@ -54,7 +54,7 @@ public class StorageTypeKey {
 	//oracle服务器外部表操作对象的key
 	public static final String external_directory = "external_directory";
 
-	public static final String solr_url = "solr_url";
+	public static final String solr_zk_url = "solr_zk_url";
 
 	public static final String collection = "collection";
 
@@ -107,7 +107,7 @@ public class StorageTypeKey {
 						platform, hadoop_user_name, prncipal_name, hdfs_site, hbase_site, keytab, krb5));
 		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
-		List<String> solrKeys = new ArrayList<>(Arrays.asList(solr_url, collection));
+		List<String> solrKeys = new ArrayList<>(Arrays.asList(solr_zk_url, collection));
 		FINALLY_STORAGE_KEYS.put(Store_type.SOLR.getCode(), solrKeys);
 
 		UPDATE_FINALLY_STORAGE_KEYS.add(core_site);

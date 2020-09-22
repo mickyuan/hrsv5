@@ -95,7 +95,7 @@ public class ReadFileToSolr implements Callable<Long> {
 				+ dataStoreConfBean.getDsl_name() + File.separator, true);
 		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
 		SolrParam solrParam = new SolrParam();
-		solrParam.setSolrUrl(data_store_connect_attr.get(StorageTypeKey.solr_url));
+		solrParam.setSolrZkUrl(data_store_connect_attr.get(StorageTypeKey.solr_zk_url));
 		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
 		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam, configPath);
 			 SolrClient server = os.getServer()) {
