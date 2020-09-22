@@ -36,7 +36,7 @@ import java.util.Map;
 public class DataClean_Biz implements DataCleanInterface {
 	//打印日志
 	private static final Log log = LogFactory.getLog(DataClean_Biz.class);
-	private ColUtil cutil = new ColUtil();
+	private final ColUtil cutil = new ColUtil();
 
 	/**
 	 * 字符替换
@@ -173,14 +173,13 @@ public class DataClean_Biz implements DataCleanInterface {
 							}
 						} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
 							sb.append(database_separatorr);
-						} else if (FileFormat.DingChang.getCode().equals(fileType)) {
+						} else {
+							//这里直接else就是定长了，因为如果不是定长，在前面的else就直接抛异常了
 							int length = TypeTransLength.getLength(cp.getCol_type());
 							String fixedData = JdbcToFixedFileWriter.columnToFixed(columnData,
 									length, database_code);
 							sb.append(fixedData).append(database_separatorr);
 //							log.error("定长文件，是调用这个类吗？这里要补充");
-						} else {
-							throw new AppSystemException("不支持的文件格式");
 						}
 					} else {
 						try {
@@ -217,14 +216,13 @@ public class DataClean_Biz implements DataCleanInterface {
 								}
 							} else if (FileFormat.FeiDingChang.getCode().equals(fileType)) {
 								sb.append(substr).append(database_separatorr);
-							} else if (FileFormat.DingChang.getCode().equals(fileType)) {
+							} else {
+								//这里直接else就是定长了，因为如果不是定长，在前面的else就直接抛异常了
 								int length = TypeTransLength.getLength(cp.getCol_type());
 								String fixedData = JdbcToFixedFileWriter.columnToFixed(substr,
 										length, database_code);
 								sb.append(fixedData).append(database_separatorr);
 //								log.error("定长文件，是调用这个类吗？这里要补充");
-							} else {
-								throw new AppSystemException("不支持的文件格式");
 							}
 						} catch (Exception e) {
 							throw new AppSystemException("请检查" + colName

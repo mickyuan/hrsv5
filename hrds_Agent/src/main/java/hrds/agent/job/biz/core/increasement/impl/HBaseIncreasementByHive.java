@@ -7,9 +7,9 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -20,10 +20,11 @@ import java.sql.ResultSet;
  * author: zxz
  */
 public class HBaseIncreasementByHive extends HBaseIncreasement {
-	private static final Log logger = LogFactory.getLog(HBaseIncreasementByHive.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 
 	public HBaseIncreasementByHive(TableBean tableBean, String hbase_name, String sysDate, String dsl_name,
-	                               String hadoop_user_name, String platform, String prncipal_name, DatabaseWrapper db) {
+								   String hadoop_user_name, String platform, String prncipal_name, DatabaseWrapper db) {
 		super(tableBean, hbase_name, sysDate, dsl_name, hadoop_user_name, platform, prncipal_name, db);
 	}
 

@@ -11,8 +11,8 @@ import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -22,7 +22,8 @@ import java.util.List;
 @DocClass(desc = "解析ResultSet数据到数据库", author = "zxz", createdate = "2019/12/17 15:43")
 public class ParseResultSetToDataBase {
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(ParseResultSetToDataBase.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//采集数据的结果集
 	private final ResultSet resultSet;
 	//数据采集表对应的存储的所有信息

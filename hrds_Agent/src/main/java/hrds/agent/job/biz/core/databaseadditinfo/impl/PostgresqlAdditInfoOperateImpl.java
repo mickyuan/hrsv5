@@ -4,14 +4,15 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.core.databaseadditinfo.DatabaseAdditInfoOperateInterface;
 import hrds.agent.job.biz.utils.SQLUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 @DocClass(desc = "psql数据库字段添加附加信息属性", author = "zxz", createdate = "2020/5/12 18:02")
 public class PostgresqlAdditInfoOperateImpl implements DatabaseAdditInfoOperateInterface {
-	private static final Log logger = LogFactory.getLog(PostgresqlAdditInfoOperateImpl.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 	private static final String PK = "_pk";
 	private static final String INDEX = "_ix";
 

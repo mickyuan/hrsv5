@@ -9,8 +9,6 @@ import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BKLoadUtil;
 import hrds.commons.utils.Constant;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -26,6 +24,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.orc.mapred.OrcStruct;
 import org.apache.orc.mapreduce.OrcInputFormat;
 import org.apache.parquet.hadoop.ParquetInputFormat;
@@ -37,14 +37,15 @@ import java.util.List;
 @DocClass(author = "zxz", desc = "Orc文件采用bulkLoad方式加载到hbase", createdate = "2020/07/17")
 public class OrcBulkLoadJob extends Configured implements Tool {
 
-	private static final Log logger = LogFactory.getLog(OrcBulkLoadJob.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 
 	public static class BulkLoadMap extends Mapper<NullWritable, OrcStruct, ImmutableBytesWritable, Put> {
 
 		private List<byte[]> headByte = null;
 		private List<Integer> rowKeyIndex = null;
 		private boolean isMd5 = false;
-		private StringBuilder sb = new StringBuilder();
+		private final StringBuilder sb = new StringBuilder();
 
 		/*
 		 * 初始化类参数

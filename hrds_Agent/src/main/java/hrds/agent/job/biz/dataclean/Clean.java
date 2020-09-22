@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class Clean {
 
-	private DataCleanInterface allclean;
+	private final DataCleanInterface allclean;
 	private final Map<String, Map<String, String>> deleSpecialSpace;
 	private final Map<String, Map<String, Column_split>> splitIng;
 	private final Map<String, String> strFilling;
@@ -37,8 +37,6 @@ public class Clean {
 	 * @param group      : 组信息
 	 * @param type       : 字段类型
 	 * @param fileType   : 文件的数据类型(目前四种格式:CSV,ORC,SEQUENCE,PARQUET),后面需要转换为当前文件写入的具体数据类型
-	 * @param list
-	 * @return
 	 */
 	public String cleanColumn(String columndata, String columnname, Group group, String type, String fileType,
 	                          List<Object> list, String database_code, String database_separatorr) {

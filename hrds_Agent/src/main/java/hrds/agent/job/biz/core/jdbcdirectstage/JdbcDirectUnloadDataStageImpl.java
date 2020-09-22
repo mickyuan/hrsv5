@@ -17,8 +17,8 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.StorageTypeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,7 +29,8 @@ import java.util.Map;
 @DocClass(desc = "数据库直连采集数据卸数阶段", author = "zxz")
 public class JdbcDirectUnloadDataStageImpl extends AbstractJobStage {
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(JdbcDirectUnloadDataStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final SourceDataConfBean sourceDataConfBean;
 	private final CollectTableBean collectTableBean;

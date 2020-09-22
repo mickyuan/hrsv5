@@ -9,8 +9,8 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 public class DataExtractUtil {
 
-	private static final Log logger = LogFactory.getLog(DataExtractUtil.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 	private static final String DATADICTIONARY_SUFFIX = ".json";
 
 	/**

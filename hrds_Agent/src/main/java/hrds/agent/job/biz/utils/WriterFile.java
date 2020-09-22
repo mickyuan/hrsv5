@@ -1,7 +1,5 @@
 package hrds.agent.job.biz.utils;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -15,6 +13,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
@@ -22,11 +22,12 @@ import java.io.*;
 
 public class WriterFile implements Closeable {
 
-	private static final Log logger = LogFactory.getLog(WriterFile.class);
-	private String filePath;
-	private RecordWriter orcWriter = null;
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
+	private final String filePath;
+	private RecordWriter<?, ?> orcWriter = null;
 	private FileSystem fs = null;
-	private Configuration conf;
+	private final Configuration conf;
 	private Writer sequenceWriter = null;
 	private BufferedWriter bufferedWriter = null;
 	private BufferedWriter incrementBufferedWriter = null;
@@ -49,7 +50,7 @@ public class WriterFile implements Closeable {
 	/**
 	 *
 	 */
-	public RecordWriter getOrcWrite() {
+	public RecordWriter<?, ?> getOrcWrite() {
 		try {
 			//HDFS配置
 			JobConf jConf = new JobConf();

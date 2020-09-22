@@ -7,16 +7,10 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.db.meta.ColumnMeta;
-import fd.ng.db.meta.TableMeta;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.DatabaseType;
-import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Data_extraction_def;
-import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -25,12 +19,15 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.sql.*;
+import java.sql.Blob;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,7 +36,8 @@ import java.util.Map;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
 public abstract class AbstractFileWriter implements FileWriterInterface {
-	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractFileWriter.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
 			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";//avro schema
 

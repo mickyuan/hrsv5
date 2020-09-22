@@ -24,7 +24,6 @@ import java.util.concurrent.Callable;
 @DocClass(desc = "多线程采集线程类，子线程向主线程返回的有生成的文件路径，当前线程采集到的ResultSet，" +
 		"当前线程采集到的数据量", author = "WangZhengcheng")
 public class CollectPage implements Callable<Map<String, Object>> {
-	//	private final static Logger LOGGER = LoggerFactory.getLogger(CollectPage.class);
 	private final SourceDataConfBean sourceDataConfBean;
 	private final CollectTableBean collectTableBean;
 	private final TableBean tableBean;
@@ -68,7 +67,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
 				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
-				sourceDataConfBean.getDatabase_name(), 4000)) {
+				sourceDataConfBean.getDatabase_name(), 50)) {
 			//获得数据抽取文件格式
 			List<Data_extraction_def> data_extraction_def_list = CollectTableBeanUtil.getTransSeparatorExtractionList(
 					collectTableBean.getData_extraction_def_list());

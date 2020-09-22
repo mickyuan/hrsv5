@@ -8,15 +8,16 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.dfstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
 
 @DocClass(desc = "完成数据文件采集的作业实现")
 public class DataFileJobImpl implements JobInterface {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final CollectTableBean collectTableBean;
 	private final SourceDataConfBean sourceDataConfBean;

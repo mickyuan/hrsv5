@@ -24,8 +24,8 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DeCompressionUtil;
 import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.jsch.SftpOperate;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 @DocClass(desc = "执行ftp采集的作业", author = "zxz", createdate = "2019/10/12 10:29")
 public class FtpCollectJobImpl implements JobInterface {
 	//打印日志
-	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
+	private static final Logger log = LogManager.getLogger();
 	//存放每次启动任务时候的线程的集合
 	private final static ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
 	//是否实时读取，默认为true，保证程序最少进一次循环
@@ -112,7 +112,7 @@ public class FtpCollectJobImpl implements JobInterface {
 				//为了防止
 				try (SftpOperate sftp = new SftpOperate(ftp_collect.getFtp_ip(), ftp_collect.getFtp_username(),
 						StringUtil.unicode2String(ftp_collect.getFtp_password()),
-						Integer.valueOf(ftp_collect.getFtp_port()))) {
+						Integer.parseInt(ftp_collect.getFtp_port()))) {
 					//4.根据ftp表的信息初始化sftp对象
 					//5.根据下级目录类型定义ftp拉取或者推送的下级目录
 					String ftpFolderName;

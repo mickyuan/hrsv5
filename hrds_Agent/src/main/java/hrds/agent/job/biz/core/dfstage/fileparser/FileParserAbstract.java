@@ -29,7 +29,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
 	protected TableBean tableBean;
 	//采集的db文件定义的表信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 	//读文件的全路径
 	protected String readFile;
 	//写文件的流
@@ -37,31 +37,31 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//解析db文件的所有列
 	protected List<String> dictionaryColumnList;
 	//进目标库的所有列，包括列合并、列拆分、HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
-	private List<String> allColumnList;
+	private final List<String> allColumnList;
 	//数据字典定义的所有的列类型
 	protected List<String> dictionaryTypeList;
 	//列合并的map
-	private Map<String, String> mergeIng;
+	private final Map<String, String> mergeIng;
 	//列清洗拆分合并的处理类
-	private Clean cl;
+	private final Clean cl;
 	//拼接每一列的MD5值
-	private StringBuilder midStringOther;
+	private final StringBuilder midStringOther;
 	//拼接每一列的值
-	private StringBuilder lineSb;
+	private final StringBuilder lineSb;
 	//清洗接口
-	private DataCleanInterface allClean;
+	private final DataCleanInterface allClean;
 	//判断是否追加结束日期和MD5字段
-	private boolean isMd5;
+	private final boolean isMd5;
 	//转存落地的文件路径
 	protected String unloadFileAbsolutePath;
 	//跑批日期
-	private String etl_date;
+	private final String etl_date;
 	//操作日期
-	private String operateDate;
+	private final String operateDate;
 	//操作时间
-	private String operateTime;
+	private final String operateTime;
 	//操作人
-	private long user_id;
+	private final long user_id;
 
 	@SuppressWarnings("unchecked")
 	protected FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {

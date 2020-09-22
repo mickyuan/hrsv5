@@ -19,14 +19,15 @@ import hrds.commons.codes.AgentType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.entity.Data_store_reg;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
 @DocClass(desc = "数据库直连采集数据登记阶段", author = "zxz")
 public class JdbcDirectDataRegistrationStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(JdbcDirectUnloadDataStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final CollectTableBean collectTableBean;
 
 	public JdbcDirectDataRegistrationStageImpl(CollectTableBean collectTableBean) {

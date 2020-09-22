@@ -10,8 +10,8 @@ import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
@@ -30,7 +30,8 @@ import java.util.Map;
  * author: zxz
  */
 public abstract class TableProcessAbstract implements TableProcessInterface {
-	private final static Logger LOGGER = LoggerFactory.getLogger(TableProcessAbstract.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//采集db文件的文件信息
 	protected TableBean tableBean;
 	//采集的db文件定义的表信息

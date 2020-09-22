@@ -17,12 +17,12 @@ public class HBaseIncreasementByPhoenix extends HBaseIncreasement {
 	}
 
 	@Override
-	public void calculateIncrement() throws Exception {
+	public void calculateIncrement() {
 
 	}
 
 	@Override
-	public void mergeIncrement() throws Exception {
+	public void mergeIncrement() {
 
 	}
 

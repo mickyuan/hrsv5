@@ -16,8 +16,8 @@ import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.Platform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -29,7 +29,8 @@ import java.util.*;
  * author: zxz
  */
 public abstract class AbstractCollectTableHandle implements CollectTableHandle {
-	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractCollectTableHandle.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	protected static final String STRSPLIT = Constant.METAINFOSPLIT;
 
 	protected ResultSet getResultSet(String collectSQL, DatabaseWrapper db) {

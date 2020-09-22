@@ -23,6 +23,7 @@ import java.util.List;
 
 @DocClass(desc = "解决agent跟服务端做数据，已经通信失败做信息登记", author = "zxz", createdate = "2019/11/22 10:04")
 public class CommunicationUtil {
+	//打印日志
 	private static final Logger logger = LogManager.getLogger();
 
 	static {
@@ -99,7 +100,7 @@ public class CommunicationUtil {
 	 * @param job_rs_id     作业id
 	 */
 	public static void batchAddSourceFileAttribute(List<Object[]> addParamsPool, String addSql,
-	                                               String job_rs_id) {
+												   String job_rs_id) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHADDSOURCEFILEATTRIBUTE);
@@ -133,7 +134,7 @@ public class CommunicationUtil {
 	 * @param job_rs_id     作业id
 	 */
 	public static void batchAddFtpTransfer(List<Object[]> addParamsPool, String addSql,
-	                                       String job_rs_id) {
+										   String job_rs_id) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHADDFTPTRANSFER);
@@ -167,7 +168,7 @@ public class CommunicationUtil {
 	 * @param job_rs_id        作业id
 	 */
 	public static void batchUpdateSourceFileAttribute(List<Object[]> updateParamsPool, String updateSql,
-	                                                  String job_rs_id) {
+													  String job_rs_id) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHUPDATESOURCEFILEATTRIBUTE);
@@ -194,7 +195,7 @@ public class CommunicationUtil {
 	}
 
 	private static void writeCommunicationErrorFile(String methodName, String param, String errorMsg,
-	                                                String job_rs_id) {
+													String job_rs_id) {
 		JSONObject object = new JSONObject();
 		object.put("methodName", methodName);
 		object.put("param", param);

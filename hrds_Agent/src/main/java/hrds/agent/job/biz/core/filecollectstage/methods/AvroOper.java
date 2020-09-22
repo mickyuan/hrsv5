@@ -25,10 +25,10 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 @DocClass(desc = "卸数生成Avro文件到本地目录的程序", author = "zxz", createdate = "2019/11/14 15:32")
 public class AvroOper {
 	//打印日志
-	private static final Log logger = LogFactory.getLog(AvroOper.class);
+	private static final Logger logger = LogManager.getLogger();
 	//写Avro文件的结构
 	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"SmallFilesTest\", " + "\"fields\": [" + "{\"name\":\""
 			+ "file_name" + "\",\"type\":\"string\"}," + "{\"name\":\"" + "file_scr_path" + "\", \"type\":\"string\"}," + "{\"name\":\""
@@ -97,7 +97,7 @@ public class AvroOper {
 	 * @param isSelect     是否增量
 	 */
 	private long putOneFile2Avro(String filePath, long avroFileTotalSize, String avroHdfsPath,
-	                             DataFileWriter<Object> writer, boolean isSelect) throws IOException {
+								 DataFileWriter<Object> writer, boolean isSelect) throws IOException {
 		GenericRecord record = new GenericData.Record(SCHEMA);
 		try {
 			long syncBlock = writer.sync();

@@ -18,14 +18,15 @@ import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.StorageTypeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 @DocClass(desc = "数据库直连采集加载阶段", author = "zxz")
 public class JdbcDirectDataLoadingStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(JdbcDirectUploadStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//数据采集表对应的存储的所有信息
 	private final CollectTableBean collectTableBean;
 

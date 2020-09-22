@@ -18,13 +18,13 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.io.orc.OrcSerde;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,8 +40,8 @@ import java.util.Map;
  */
 public class JdbcToOrcFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToOrcFileWriter.class);
-	private OrcSerde serde = new OrcSerde();
+	private static final Logger log = LogManager.getLogger();
+	private final OrcSerde serde = new OrcSerde();
 
 	public JdbcToOrcFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
 	                           TableBean tableBean, Data_extraction_def data_extraction_def) {

@@ -12,8 +12,8 @@ import hrds.agent.job.biz.core.jdbcdirectstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -23,7 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 @DocClass(desc = "数据库直连采集的作业实现", author = "zxz")
 public class JdbcDirectJobImpl implements JobInterface {
-	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcDirectJobImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final CollectTableBean collectTableBean;
 	private final SourceDataConfBean sourceDataConfBean;
 	private final static Map<String, Thread> threadMap = new ConcurrentHashMap<>();

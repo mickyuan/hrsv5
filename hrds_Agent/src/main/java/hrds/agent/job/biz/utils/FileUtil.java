@@ -2,8 +2,8 @@ package hrds.agent.job.biz.utils;
 
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,8 @@ import java.util.List;
 
 public class FileUtil {
 	//打印日志
-	private static final Log logger = LogFactory.getLog(FileUtil.class);
-	private static List<String> pathList = new ArrayList<>();
+	private static final Logger logger = LogManager.getLogger();
+	private static final List<String> pathList = new ArrayList<>();
 
 	static {
 		pathList.add("/");

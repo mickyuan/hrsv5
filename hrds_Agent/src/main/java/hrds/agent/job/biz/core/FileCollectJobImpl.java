@@ -20,8 +20,8 @@ import hrds.commons.entity.File_source;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
 import hrds.commons.utils.MapDBHelper;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 @DocClass(desc = "文件采集作业实现类", author = "zxz", createdate = "2019/10/28 15:15")
 public class FileCollectJobImpl implements JobInterface {
 	//打印日志
-	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
+	private static final Logger log = LogManager.getLogger();
 	//文件采集需要的参数实体bean
 	private final FileCollectParamBean fileCollectParamBean;
 	//源文件设置表

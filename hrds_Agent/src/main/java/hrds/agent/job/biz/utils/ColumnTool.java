@@ -204,15 +204,15 @@ public class ColumnTool {
 		//XXX 这里基本类型给了默认值0 因为给空会报错 ：not found 10(CC_CLOSED_DATE_SK) element number 0 in group
 		columnType = columnType.toLowerCase();
 		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-			boolean dataResult = StringUtil.isEmpty(data) ? false : Boolean.valueOf(data.trim());
+			boolean dataResult = !StringUtil.isEmpty(data) && Boolean.parseBoolean(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
 				|| columnType.equals(DataTypeConstant.BIGINT.getMessage())
 				|| columnType.equals(DataTypeConstant.LONG.getMessage())) {
-			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.valueOf(data.trim());
+			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.parseLong(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.parseInt(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
 			float dataResult = StringUtil.isEmpty(data) ? Float.valueOf("0") : Float.valueOf(data.trim());
@@ -233,15 +233,15 @@ public class ColumnTool {
 	public static void addData2Inspector(List<Object> lineData, String columnType, String data) {
 		columnType = columnType.toLowerCase();
 		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-			boolean dataResult = StringUtil.isEmpty(data) ? false : Boolean.valueOf(data.trim());
+			boolean dataResult = !StringUtil.isEmpty(data) && Boolean.parseBoolean(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
 				|| columnType.equals(DataTypeConstant.BIGINT.getMessage())
 				|| columnType.equals(DataTypeConstant.LONG.getMessage())) {
-			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.valueOf(data.trim());
+			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.parseLong(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.parseInt(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
 			float dataResult = StringUtil.isEmpty(data) ? Float.valueOf("0") : Float.valueOf(data.trim());

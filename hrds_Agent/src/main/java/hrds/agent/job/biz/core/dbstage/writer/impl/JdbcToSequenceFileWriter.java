@@ -16,11 +16,11 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile.Writer;
 import org.apache.hadoop.io.Text;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,10 +35,10 @@ import java.util.Map;
  */
 public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToSequenceFileWriter.class);
+	private static final Logger log = LogManager.getLogger();
 
 	public JdbcToSequenceFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                                TableBean tableBean, Data_extraction_def data_extraction_def) {
+									TableBean tableBean, Data_extraction_def data_extraction_def) {
 		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
 	}
 

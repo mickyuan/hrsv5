@@ -17,8 +17,8 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,7 +35,7 @@ import java.util.Map;
 public class JdbcToNonFixedFileWriter extends AbstractFileWriter {
 
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToNonFixedFileWriter.class);
+	private static final Logger log = LogManager.getLogger();
 
 	public JdbcToNonFixedFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
 	                                TableBean tableBean, Data_extraction_def data_extraction_def) {

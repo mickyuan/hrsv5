@@ -18,8 +18,8 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.GroupFactory;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class JdbcToParquetFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToParquetFileWriter.class);
+	private static final Logger log = LogManager.getLogger();
 
 	public JdbcToParquetFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
 	                               TableBean tableBean, Data_extraction_def data_extraction_def) {

@@ -10,8 +10,6 @@ import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.BKLoadUtil;
 import hrds.commons.utils.Constant;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -30,6 +28,8 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -39,7 +39,8 @@ import java.util.List;
 @DocClass(author = "zxz", desc = "定长文件采用bulkLoad方式加载到hbase", createdate = "2020/07/17")
 public class FixedBulkLoadJob extends Configured implements Tool {
 
-	private static final Log log = LogFactory.getLog(FixedBulkLoadJob.class);
+	//打印日志
+	private static final Logger log = LogManager.getLogger();
 
 	public static class BulkLoadMap extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
 
@@ -47,7 +48,7 @@ public class FixedBulkLoadJob extends Configured implements Tool {
 		private List<Integer> rowKeyIndex = null;
 		private boolean isMd5 = false;
 		private List<Integer> everyColLength = null;
-		private StringBuilder sb = new StringBuilder();
+		private final StringBuilder sb = new StringBuilder();
 		private String code;
 		private boolean is_header = false;
 

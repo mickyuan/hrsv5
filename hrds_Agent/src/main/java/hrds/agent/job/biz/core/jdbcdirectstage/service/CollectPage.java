@@ -60,7 +60,7 @@ public class CollectPage implements Callable<Long> {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
 				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
-				sourceDataConfBean.getDatabase_name(), 4000)) {
+				sourceDataConfBean.getDatabase_name(), 50)) {
 			long rowCount = 0L;
 			//1、执行查询，获取ResultSet
 			resultSet = getPageData(db);

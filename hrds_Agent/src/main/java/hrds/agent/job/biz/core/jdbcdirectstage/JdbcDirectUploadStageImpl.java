@@ -26,8 +26,8 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.StorageTypeKey;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,7 +40,8 @@ import java.util.concurrent.Future;
 
 @DocClass(desc = "数据库直连采集数据上传阶段", author = "zxz")
 public class JdbcDirectUploadStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(JdbcDirectUploadStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//数据采集表对应的存储的所有信息
 	private final CollectTableBean collectTableBean;
 	private final SourceDataConfBean sourceDataConfBean;

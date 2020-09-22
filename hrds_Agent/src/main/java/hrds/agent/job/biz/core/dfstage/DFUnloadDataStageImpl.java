@@ -22,8 +22,8 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -37,7 +37,8 @@ import java.util.regex.Pattern;
 @DocClass(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
 public class DFUnloadDataStageImpl extends AbstractJobStage {
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(DFUnloadDataStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final SourceDataConfBean sourceDataConfBean;
 	private final CollectTableBean collectTableBean;
 

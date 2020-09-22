@@ -8,12 +8,13 @@ import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Ftp_collect;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @DocClass(desc = "接收页面定义的参数执行ftp采集", author = "zxz", createdate = "2019/10/10 16:29")
 public class FtpCollectJob extends AgentBaseAction {
-	private final static Logger LOGGER = LoggerFactory.getLogger(FtpCollectJob.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	@Method(desc = "ftp采集和前端交互的接口",
 			logicStep = "1.获取参数，校验对象的值是否正确" +

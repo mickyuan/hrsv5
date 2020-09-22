@@ -26,6 +26,8 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.orc.OrcFile;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
@@ -37,8 +39,6 @@ import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.SolrInputDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
@@ -50,7 +50,8 @@ import java.util.concurrent.Callable;
 
 @DocClass(desc = "读取卸数文件到数据库", author = "zxz", createdate = "2019/12/17 15:43")
 public class ReadFileToSolr implements Callable<Long> {
-	private final static Logger LOGGER = LoggerFactory.getLogger(ReadFileToSolr.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//卸数到本地的文件绝对路径
 	private final String fileAbsolutePath;
 	//数据采集表对应的存储的所有信息

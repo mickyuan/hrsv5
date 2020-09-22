@@ -16,8 +16,8 @@ import hrds.commons.codes.CollectType;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.concurrent.Future;
 @DocClass(desc = "作业调度数据库采集、数据库抽取、db文件采集程序入口", author = "zxz", createdate = "2020/1/3 10:38")
 public class CommandExecute {
 	//打印日志
-	private static final Log log = LogFactory.getLog(CommandExecute.class);
+	private static final Logger log = LogManager.getLogger();
 
 	/**
 	 * @param args 主程序入口，获取参数调用采集后台

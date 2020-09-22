@@ -20,8 +20,8 @@ import hrds.commons.base.AgentBaseAction;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.PackUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.concurrent.Future;
 @DocClass(desc = "数据库抽取接收消息接口", author = "zxz", createdate = "2019/12/2 10:35")
 public class JdbcCollectJob extends AgentBaseAction {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcCollectJob.class);
+	private static final Logger log = LogManager.getLogger();
 
 	@Method(desc = "数据库抽取和前端交互生成页面配置到agent所在目录的接口",
 			logicStep = "1.对配置信息解压缩并反序列化为SourceDataConfBean对象" +

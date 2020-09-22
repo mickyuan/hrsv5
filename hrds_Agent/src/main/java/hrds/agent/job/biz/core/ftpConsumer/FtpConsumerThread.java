@@ -2,10 +2,9 @@ package hrds.agent.job.biz.core.ftpConsumer;
 
 import com.alibaba.fastjson.JSONObject;
 import hrds.agent.job.biz.utils.CommunicationUtil;
-import hrds.agent.trans.biz.ftpcollect.FtpCollectJob;
 import hrds.commons.entity.Ftp_transfered;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +19,11 @@ import java.util.concurrent.ConcurrentMap;
  * author: zxz
  */
 public class FtpConsumerThread extends Thread {
-	private final static Logger LOGGER = LoggerFactory.getLogger(FtpCollectJob.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	public static ConcurrentMap<String, ArrayBlockingQueue<String>> queueMap = new ConcurrentHashMap<>();
 	//ftp采集配置表的主键
-	private String ftpId;
+	private final String ftpId;
 	//插入的sql
 	private static final String addSql = "INSERT " +
 			"INTO " +

@@ -14,8 +14,8 @@ import hrds.commons.entity.File_source;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class FileCollectJob extends AgentBaseAction {
 	//每个文件采集，存放队列的集合
 	public static final ConcurrentMap<String, ArrayBlockingQueue<String>> mapQueue = new ConcurrentHashMap<>();
 	//打印日志
-	private static final Log log = LogFactory.getLog(FileCollectJob.class);
+	private static final Logger log = LogManager.getLogger();
 
 
 	@Method(desc = "文件采集和前端交互生成配置文件的接口",

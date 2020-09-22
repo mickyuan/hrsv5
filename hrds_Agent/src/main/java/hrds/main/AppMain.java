@@ -13,7 +13,8 @@ import org.apache.logging.log4j.Logger;
  * @create: 2019-09-05 11:13
  */
 public class AppMain extends WebServer {
-	protected static final Logger logger = LogManager.getLogger(hrds.main.AppMain.class.getName());
+	//打印日志
+	protected static final Logger log = LogManager.getLogger();
 
 	@Override
 	protected void doInit() throws Exception {

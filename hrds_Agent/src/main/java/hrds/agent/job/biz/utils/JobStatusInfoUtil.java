@@ -12,8 +12,8 @@ import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.commons.exception.AppSystemException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
 @DocClass(desc = "作业状态处理工具类", author = "zxz", createdate = "2019/12/2 14:19")
 public class JobStatusInfoUtil {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JobStatusInfoUtil.class);
+	private static final Logger log = LogManager.getLogger();
 
 	@Method(desc = "作业开始，获取前一次作业状态", logicStep = "")
 	@Param(desc = "作业状态保存路径", name = "statusFilePath", range = "不可为空")

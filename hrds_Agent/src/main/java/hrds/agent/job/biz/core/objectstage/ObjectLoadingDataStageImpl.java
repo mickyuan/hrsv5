@@ -27,13 +27,13 @@ import hrds.commons.hadoop.utils.HSqlHandle;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PathUtil;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -43,11 +43,11 @@ import java.util.regex.Pattern;
 @DocClass(desc = "半结构化对象采集数据加载实现", author = "zxz", createdate = "2019/10/24 11:43")
 public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	//打印日志
-	private static final Log log = LogFactory.getLog(ObjectLoadingDataStageImpl.class);
+	private static final Logger log = LogManager.getLogger();
 	//半结构化对象采集设置表对象
-	private Object_collect object_collect;
+	private final Object_collect object_collect;
 	//多条半结构化对象采集存储到hadoop存储信息实体合集
-	private List<ObjectCollectParamBean> objectCollectParamBeanList;
+	private final List<ObjectCollectParamBean> objectCollectParamBeanList;
 	//整条数据进hbase时的列名称
 	private static final String CONTENT = "content";
 	//开始日期
@@ -109,7 +109,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	}
 
 	@Override
-	public int getStageCode(){
+	public int getStageCode() {
 		return StageConstant.DATALOADING.getCode();
 	}
 
@@ -153,7 +153,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	private void uploadHDFS(File[] files, String hdfsPath) {
 		//XXX 上传到hdfs的路径待讨论，这里如果选择了上传hdfs之后文件不解析吗？
 		try (FileSystem fs = FileSystem.get(ConfigReader.getConfiguration());
-		     HdfsOperator operator = new HdfsOperator()) {
+			 HdfsOperator operator = new HdfsOperator()) {
 			//1.hdfs上目录不存在则先创建hdfs上的目录
 			if (!operator.mkdir(hdfsPath)) {
 				throw new BusinessException("创建hdfs目录： " + hdfsPath + " 失败！！！");
@@ -224,7 +224,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	@Param(name = "columnNames", desc = "多条字段名称拼接的字符串，逗号隔开", range = "不可为空")
 	@Param(name = "file_type", desc = "读取的文件类型", range = "不可为空")
 	private void loadDataByLine(BufferedReader bufferedReader, File file, Table table,
-	                            String columnNames, String file_type)
+								String columnNames, String file_type)
 			throws IOException {
 		String lineTxt;
 		//1.取文件所在的上层目录名称当做开始日期

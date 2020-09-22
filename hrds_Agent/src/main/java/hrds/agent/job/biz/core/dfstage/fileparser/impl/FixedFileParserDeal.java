@@ -10,8 +10,8 @@ import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,7 +26,8 @@ import java.util.List;
  * author: zxz
  */
 public class FixedFileParserDeal extends FileParserAbstract {
-	private final static Logger LOGGER = LoggerFactory.getLogger(FixedFileParserDeal.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	public FixedFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {

@@ -11,21 +11,21 @@ import hrds.agent.job.biz.core.objectstage.ObjectLoadingDataStageImpl;
 import hrds.agent.job.biz.core.objectstage.ObjectRegistrationStageImpl;
 import hrds.agent.job.biz.core.objectstage.ObjectUnloadDataStageImpl;
 import hrds.commons.entity.Object_collect;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 @DocClass(desc = "执行半结构化对象采集作业实现类", author = "zxz", createdate = "2019/10/23 17:50")
 public class ObjectCollectJobImpl implements JobInterface {
 	//打印日志
-	private static final Log log = LogFactory.getLog(ObjectCollectJobImpl.class);
+	private static final Logger log = LogManager.getLogger();
 	//作业执行完成的mate信息
 //	private MetaInfoBean mateInfo = new MetaInfoBean();
 	//半结构化对象采集设置表对象
-	private Object_collect object_collect;
+	private final Object_collect object_collect;
 	//多条半结构化对象采集存储到hadoop存储信息实体合集
-	private List<ObjectCollectParamBean> objectCollectParamBeanList;
+	private final List<ObjectCollectParamBean> objectCollectParamBeanList;
 	//JobStatusInfo对象，表示一个作业的状态
 	private JobStatusInfo jobStatus;
 	//XXX 待讨论

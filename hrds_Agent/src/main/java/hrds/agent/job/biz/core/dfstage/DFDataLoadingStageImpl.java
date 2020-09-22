@@ -31,8 +31,8 @@ import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +42,8 @@ import java.util.Map;
 
 @DocClass(desc = "数据文件采集，数据加载阶段实现", author = "WangZhengcheng")
 public class DFDataLoadingStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(DFDataLoadingStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//数据采集表对应的存储的所有信息
 	private final CollectTableBean collectTableBean;
 

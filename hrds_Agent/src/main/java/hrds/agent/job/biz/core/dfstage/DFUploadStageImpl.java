@@ -37,9 +37,9 @@ import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,7 +51,8 @@ import java.util.concurrent.Future;
 
 @DocClass(desc = "数据文件采集，数据上传阶段实现", author = "WangZhengcheng")
 public class DFUploadStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(DFUploadStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final CollectTableBean collectTableBean;
 
 	/**

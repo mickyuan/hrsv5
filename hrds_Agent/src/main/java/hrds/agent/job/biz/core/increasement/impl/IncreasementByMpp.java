@@ -8,8 +8,8 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,8 @@ import java.util.List;
  * Mpp数据库通过sql方式来处理增量问题
  */
 public class IncreasementByMpp extends JDBCIncreasement {
-	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 
 	public IncreasementByMpp(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
 							 String dsl_name) {

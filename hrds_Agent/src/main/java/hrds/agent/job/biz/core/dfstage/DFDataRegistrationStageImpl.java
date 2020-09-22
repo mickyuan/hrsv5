@@ -16,12 +16,13 @@ import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.entity.Data_store_reg;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @DocClass(desc = "数据文件采集，数据登记阶段实现", author = "WangZhengcheng")
 public class DFDataRegistrationStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(DFDataRegistrationStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final CollectTableBean collectTableBean;
 
 	public DFDataRegistrationStageImpl(CollectTableBean collectTableBean) {

@@ -8,11 +8,11 @@ import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.fs.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,7 +24,8 @@ import java.util.List;
  * author: zxz
  */
 public class ParquetFileParserDeal extends FileParserAbstract {
-	private final static Logger LOGGER = LoggerFactory.getLogger(ParquetFileParserDeal.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	public ParquetFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {
