@@ -25,7 +25,7 @@ public class WriterFile implements Closeable {
 	//打印日志
 	private static final Logger logger = LogManager.getLogger();
 	private final String filePath;
-	private RecordWriter<?, ?> orcWriter = null;
+	private RecordWriter orcWriter = null;
 	private FileSystem fs = null;
 	private final Configuration conf;
 	private Writer sequenceWriter = null;
@@ -50,7 +50,7 @@ public class WriterFile implements Closeable {
 	/**
 	 *
 	 */
-	public RecordWriter<?, ?> getOrcWrite() {
+	public RecordWriter getOrcWrite() {
 		try {
 			//HDFS配置
 			JobConf jConf = new JobConf();
