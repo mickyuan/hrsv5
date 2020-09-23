@@ -3361,38 +3361,38 @@ public class MarketInfoAction extends BaseAction {
 				dm_relevant_info.setRel_id(PrimayKeyGener.getNextId());
 				dm_relevant_info.setDatatable_id(dm_datatable.getDatatable_id());
 				// 前置作业
-				String pre_work = ExcelUtil.getValue(row.getCell(12)).toString();
+//				String pre_work = ExcelUtil.getValue(row.getCell(12)).toString();
 				// 后置作业
-				String post_work = ExcelUtil.getValue(row.getCell(13)).toString();
-				dm_relevant_info.setPre_work(pre_work);
+				String post_work = ExcelUtil.getValue(row.getCell(12)).toString();
+//				dm_relevant_info.setPre_work(pre_work);
 				dm_relevant_info.setPost_work(post_work);
 				dm_relevant_info.add(Dbo.db());
 				//存储datatable_field_info表数据
 				// 字段英文名
-				String field_en_name = ExcelUtil.getValue(row.getCell(14)).toString();
+				String field_en_name = ExcelUtil.getValue(row.getCell(13)).toString();
 				Validator.notBlank(field_en_name, "字段英文名不能为空");
 				List<String> fieldEnNameList = StringUtil.split(field_en_name, "|");
 				// 字段中文名
-				String field_cn_name = ExcelUtil.getValue(row.getCell(15)).toString();
+				String field_cn_name = ExcelUtil.getValue(row.getCell(14)).toString();
 				Validator.notBlank(field_cn_name, "字段中文名不能为空");
 				List<String> fieldCnNameList = StringUtil.split(field_cn_name, "|");
 				// 字段类型
-				String field_type = ExcelUtil.getValue(row.getCell(16)).toString();
+				String field_type = ExcelUtil.getValue(row.getCell(15)).toString();
 				Validator.notBlank(field_type, "字段类型不能为空");
 				List<String> fieldTypeList = StringUtil.split(field_type, "|");
 				// 字段长度
-				String field_length = ExcelUtil.getValue(row.getCell(17)).toString();
+				String field_length = ExcelUtil.getValue(row.getCell(16)).toString();
 				List<String> fieldLengthList = StringUtil.split(field_length, "|");
 				// 处理方式
-				String field_process = ExcelUtil.getValue(row.getCell(18)).toString();
+				String field_process = ExcelUtil.getValue(row.getCell(17)).toString();
 				Validator.notBlank(field_process, "处理方式不能为空");
 				List<String> fieldProcessList = StringUtil.split(field_process, "|");
 				// 映射规则mapping
-				String process_mapping = ExcelUtil.getValue(row.getCell(19)).toString();
+				String process_mapping = ExcelUtil.getValue(row.getCell(18)).toString();
 				Validator.notBlank(process_mapping, "映射规则mapping不能为空");
 				List<String> mappingList = StringUtil.split(process_mapping, "|");
 				// 分组映射对应规则
-				String group_mapping = ExcelUtil.getValue(row.getCell(20)).toString();
+				String group_mapping = ExcelUtil.getValue(row.getCell(19)).toString();
 				List<String> groupList = StringUtil.split(group_mapping, "|");
 				if (fieldEnNameList.size() != fieldCnNameList.size()) {
 					throw new BusinessException("字段中文名数量与字段英文名数量不相等");
@@ -3446,17 +3446,17 @@ public class MarketInfoAction extends BaseAction {
 					datatable_field_info.add(Dbo.db());
 				}
 				// 主键
-				String key = ExcelUtil.getValue(row.getCell(21)).toString();
+				String key = ExcelUtil.getValue(row.getCell(20)).toString();
 				// rowkey
-				String rowkey = ExcelUtil.getValue(row.getCell(22)).toString();
+				String rowkey = ExcelUtil.getValue(row.getCell(21)).toString();
 				// 索引列
-				String indexColumn = ExcelUtil.getValue(row.getCell(23)).toString();
+				String indexColumn = ExcelUtil.getValue(row.getCell(22)).toString();
 				// 预聚合列
-				String preAggregatedColumn = ExcelUtil.getValue(row.getCell(24)).toString();
+				String preAggregatedColumn = ExcelUtil.getValue(row.getCell(23)).toString();
 				// 排序列
-				String sortColumn = ExcelUtil.getValue(row.getCell(25)).toString();
+				String sortColumn = ExcelUtil.getValue(row.getCell(24)).toString();
 				// 分区列
-				String partitionColumn = ExcelUtil.getValue(row.getCell(26)).toString();
+				String partitionColumn = ExcelUtil.getValue(row.getCell(25)).toString();
 				// 存储dcol_relation_store表数据
 				dcol_relation_store = new Dcol_relation_store();
 				dcol_relation_store.setCol_id(datatable_field_info.getDatatable_field_id());
@@ -3514,7 +3514,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private void saveDmDataTable(Dm_datatable dm_datatable, String data_mart_id, Row row, int i) {
-		//表名
+		//表英文名
 		String table_name = ExcelUtil.getValue(row.getCell(0)).toString();
 		Validator.notBlank(table_name, "第" + i + "行,表名不能为空");
 		dm_datatable.setDatatable_en_name(table_name);
