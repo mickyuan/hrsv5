@@ -392,9 +392,9 @@ public class DataQueryAction extends BaseAction {
 			throw new BusinessException("申请的文件不存在！fileId=" + fileId);
 		}
 		//2.根据文件id先清除该文件的数据权限信息,然后保存改文件的认证信息
-		DboExecute.deletesOrThrow("删除文件权限信息失败!",
-				"DELETE FROM DATA_AUTH WHERE file_id = ? AND apply_type = ? AND user_id = ? AND dep_id = ?",
-				fileId, applyType, getUserId(), getUser().getDepId());
+		Dbo.execute("DELETE FROM DATA_AUTH WHERE file_id = ? AND apply_type = ? AND user_id = ? AND dep_id = ?",
+			fileId, applyType, getUserId(), getUser().getDepId());
+		//设置申请信息
 		Data_auth dataAuth = new Data_auth();
 		dataAuth.setDa_id(PrimayKeyGener.getNextId());
 		dataAuth.setApply_date(DateUtil.getSysDate());
@@ -402,6 +402,7 @@ public class DataQueryAction extends BaseAction {
 		dataAuth.setApply_type(applyType);
 		dataAuth.setAuth_type(AuthType.ShenQing.getCode());
 		dataAuth.setFile_id(fileId);
+		dataAuth.setUser_id(getUserId());
 		dataAuth.setDep_id(getUser().getDepId());
 		dataAuth.setAgent_id(fileRs.get().getAgent_id());
 		dataAuth.setSource_id(fileRs.get().getSource_id());
@@ -415,13 +416,15 @@ public class DataQueryAction extends BaseAction {
 			"2.如果文件查看权限是一次,看过之后取消权限")
 	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一", example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
 	@Return(desc = "文件信息集合", range = "无限制")
-	public Map<String, Object> viewFile(String fileId) {
+	public Map<String, String> viewFile(String fileId) {
 		//1.根据文件id获取该文件信息
-		Map<String, Object> viewFileMap = new HashMap<>();
-		viewFileMap.put("viewFileMap", FileOperations.getFileInfoByFileId(fileId));
+		Map<String, String> fileInfoMap = FileOperations.getFileInfoByFileId(fileId);
+		if (fileInfoMap.isEmpty()) {
+			throw new BusinessException("根据文件id获取文件信息,结果为空!");
+		}
 		//2.如果文件查看权限是一次,看过之后取消权限
 		FileOperations.updateViewFilePermissions(fileId);
-		return viewFileMap;
+		return fileInfoMap;
 	}
 
 	@Method(desc = "获取用户申请文件信息",
@@ -597,6 +600,8 @@ public class DataQueryAction extends BaseAction {
 					searchResult.setObject(i, "original_name",
 							searchResult.getString(i, "original_name"));
 					searchResult.setObject(i, "is_others_apply", IsFlag.Fou.getCode());
+					searchResult.setObject(i, "auth_type", "");
+					searchResult.setObject(i, "apply_type", "");
 					Result daResult = Dbo.queryResult(
 							"select * from data_auth WHERE file_id = ? and user_id = ? and " +
 									" auth_type != ?", searchResult.getString(i, "file_id"), getUserId(),
