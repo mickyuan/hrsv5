@@ -170,9 +170,8 @@ public class DataSourceAction extends BaseAction {
 		// 2.authType代码项合法性验证，如果不存在该方法直接会抛异常
 		AuthType.ofEnumByCode(auth_type);
 		// 3.根据数据权限设置ID查询数据申请审批信息，确认要审批的信息一定存在
-		if (Dbo.queryNumber("select count(*) from " + Data_auth.TableName + " where da_id=? and " +
-			" user_id=?", da_id, getUserId()).orElseThrow(() ->
-			new BusinessException("sql查询错误")) == 0) {
+		if (Dbo.queryNumber("select count(*) from " + Data_auth.TableName + " where da_id=?", da_id)
+			.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
 			throw new BusinessException("此申请已取消或不存在！");
 		}
 		// 4.根据数据权限设置ID以及权限类型进行审批
