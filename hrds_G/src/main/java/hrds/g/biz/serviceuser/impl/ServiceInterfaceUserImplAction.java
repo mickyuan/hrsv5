@@ -626,6 +626,67 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		return null;
 	}
 
+	@Method(desc = "Solr查询Hbase数据接口", logicStep = "1.校验表名是否存在" +
+			"2.token，接口权限检查" +
+			"3.检查参数" +
+			"4.如果responseMap响应状态不为normal返回错误响应信息" +
+			"5.获取当前用户表信息" +
+			"6.hbase+solr查询" +
+			"7.返回按类型操作接口响应信息" +
+			"8.记录接口使用日志")
+	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	@Override
+	public Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam) {
+		long start = System.currentTimeMillis();
+		Interface_use_log interface_use_log = new Interface_use_log();
+		// 请求开始时间
+		interface_use_log.setRequest_stime(DateUtil.getDateTime());
+		// 1.校验表名是否存在
+		if (isParamExist(hBaseSolr.getTableName())) {
+			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
+		}
+		// 2.token，接口权限检查
+		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			return responseMap;
+		}
+		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
+		// 3.检查参数
+		responseMap = InterfaceCommon.checkType(hBaseSolr.getDataType(), hBaseSolr.getOutType(),
+				hBaseSolr.getAsynType(), hBaseSolr.getBackurl(), hBaseSolr.getFilepath(),
+				hBaseSolr.getFilename());
+		// 4.如果responseMap响应状态不为normal返回错误响应信息
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			return responseMap;
+		}
+		// 5.获取当前用户表信息
+		QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(Dbo.db(),
+				userByToken.getUser_id(), hBaseSolr.getTableName());
+		String selectColumn = hBaseSolr.getSelectColumn();
+		if (StringUtil.isBlank(selectColumn)) {
+			selectColumn = userTableInfo.getTable_en_column();
+		}
+		if (StringUtil.isBlank(hBaseSolr.getWhereColumn())) {
+			return StateType.getResponseInfo(StateType.CONDITION_ERROR);
+		}
+		// 6.hbase+solr查询
+		responseMap = InterfaceCommon.getHbaseSolrQuery(hBaseSolr.getTableName(), hBaseSolr.getWhereColumn(),
+				selectColumn, hBaseSolr.getStart(), hBaseSolr.getNum(), userTableInfo.getTable_en_column(),
+				userTableInfo.getTable_type_name(), responseMap);
+		// 7.返回按类型操作接口响应信息
+		responseMap = InterfaceCommon.operateInterfaceByType(hBaseSolr.getDataType(),
+				hBaseSolr.getOutType(), hBaseSolr.getAsynType(), hBaseSolr.getBackurl(),
+				hBaseSolr.getFilepath(), hBaseSolr.getFilename(), responseMap);
+		// 8.记录接口使用日志
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
+			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
+					responseMap.get("status").toString());
+		}
+		return responseMap;
+	}
+
 	@Method(desc = "记录接口使用日志", logicStep = "1.获取接口使用信息" +
 			"2.请求结束时间毫秒数" +
 			"3.设置接口使用日志对象参数" +

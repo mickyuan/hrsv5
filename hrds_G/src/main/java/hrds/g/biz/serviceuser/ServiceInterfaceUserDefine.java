@@ -133,11 +133,11 @@ public interface ServiceInterfaceUserDefine {
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	Map<String, Object> tableDataUpdate(DataBatchUpdate dataBatchUpdate, CheckParam checkParam);
 
-//	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
-//	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
-//	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
-//	@Return(desc = "返回接口响应信息", range = "无限制")
-//	Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam);
+	@Method(desc = "Solr查询Hbase数据接口", logicStep = "")
+	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
+	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam);
 
 	@Method(desc = "UUID数据下载", logicStep = "")
 	@Param(name = "uuid", desc = "uuid", range = "无限制")

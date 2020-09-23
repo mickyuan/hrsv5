@@ -1,5 +1,6 @@
 package hrds.g.biz.serviceuser.common;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -21,10 +22,13 @@ import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField;
+import hrds.commons.hadoop.hbaseindexer.configure.ConfigurationUtil;
+import hrds.commons.hadoop.hbaseindexer.type.TypeFieldNameMapper;
+import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
-import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
 import hrds.g.biz.bean.SingleTable;
@@ -34,10 +38,15 @@ import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
+import hrds.g.biz.init.InitSolrOnHbaseConnection;
 import hrds.g.biz.init.InterfaceManager;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -57,13 +66,14 @@ public class InterfaceCommon {
 	private static long lineCounter = 0;
 	// 接口响应信息集合
 	private static Map<String, Object> responseMap = new HashMap<>();
-	// 接口使用日志是否记录标志,1：是，0：否
-	private static final String isRecordInterfaceLog =
-			PropertyParaValue.getString("isRecordInterfaceLog", "1");
+	private static ISolrOperator os;
+	private static HBaseHelper helper;
 
 	static {
 		notCheckFunction.add("count(*)");
 		notCheckFunction.add("count(1)");
+		os = InitSolrOnHbaseConnection.getOperSolr();
+		helper = InitSolrOnHbaseConnection.getHelp();
 	}
 
 	private static final Type type = new TypeReference<List<String>>() {
@@ -800,7 +810,7 @@ public class InterfaceCommon {
 		return StateType.getResponseInfo(StateType.NORMAL);
 	}
 
-	@Method(desc = "按类型操作接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
+	@Method(desc = "按类型操作处理接口响应信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.数据类型选择csv,输出数据类型选择stream" +
 			"3.数据类型选择json,输出数据类型选择stream" +
 			"4.输出数据类型选择file,asynType选择同步返回显示" +
@@ -982,4 +992,106 @@ public class InterfaceCommon {
 		return StateType.getResponseInfo(StateType.NORMAL);
 	}
 
+	public static Map<String, Object> getHbaseSolrQuery(String table_name, String whereColumn,
+	                                                    String selectColumn, Integer start, Integer num,
+	                                                    String table_column_name, String tableTypeJsonStr,
+	                                                    Map<String, Object> responseMap) {
+		try {
+			// 当前表的有效全部列
+			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), ",");
+			StringBuilder filter = new StringBuilder();
+			filter.append(ConfigurationUtil.TABLE_NAME_FIELD).append(":").append(table_name).append(" AND ");
+			JSONObject tableTypeJson = JSONObject.parseObject(tableTypeJsonStr);
+			if (StringUtil.isNotBlank(whereColumn)) {
+				String[] cols = whereColumn.split(",");
+				for (String col : cols) {
+					// 将字段的列名称和value分开后,格式为 [name,XX]
+					List<String> col_name;
+					if (col.contains("=")) {
+						col_name = StringUtil.split(col, "=");
+					} else {
+						return StateType.getResponseInfo(StateType.CONDITION_ERROR);
+					}
+					if (col_name.size() == 2) {
+						String colName = col_name.get(0).toUpperCase().trim();
+						String colVal = col_name.get(1);
+						// 查看当前查询列是否为有效
+						if (!columns.contains(colName.toLowerCase())) {
+							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST);
+						}
+						String solrFieldName = solrFieldName(colName, tableTypeJson.getString(colName));
+						filter.append(solrFieldName).append(":").append(colVal).append(" AND ");
+					}
+				}
+			} else {
+				return StateType.getResponseInfo(StateType.CONDITION_ERROR);
+			}
+			// 去掉查询条件中最后一个AND
+			String query = filter.substring(0, filter.lastIndexOf(" AND "));
+			logger.info("query:" + query);
+			// 修改solr连接为长连接
+			if (helper != null) {
+				Map<String, String> params = new HashMap<>();
+				params.put("q", query);
+				params.put("fl", "id");
+				// 查询solr,只获取id的数据
+				List<Map<String, Object>> result = os.querySolrPlus(params, start == null ? 0 : start,
+						num == null ? 10 : num, false);
+				// solr中的id作为hbase的rowkey查询hbase数据
+				// 设置hbase表名对象
+				Table table = helper.getTable(table_name);
+				List<Get> getList = new ArrayList<>();
+				for (Map<String, Object> obj : result) { // 设置rowkey数组
+					String rowkey = StringUtil.replace(obj.get("id").toString(),
+							table_name + "@", "");
+					logger.info("rowkey: " + rowkey);
+					Get get = new Get(rowkey.getBytes());
+					getList.add(get);
+				}
+				List<Map<String, Object>> js = new ArrayList<>();
+				// 根据rowkey查询
+				Result[] results = table.get(getList);
+				Map<String, Object> temp;
+				List<String> selectList = StringUtil.split(selectColumn.toLowerCase(), ",");
+				// 当前查询的全部列
+				for (org.apache.hadoop.hbase.client.Result hResult : results) {
+					if (hResult.isEmpty()) {
+						logger.info("rowkey查询结果为空");
+						continue;
+					}
+					temp = new HashMap<>();
+					List<Cell> cs = hResult.listCells();
+					for (Cell cell : cs) {
+						String column = Bytes.toString(CellUtil.cloneQualifier(cell));// 获取hbase列名
+						String value = Bytes.toString(CellUtil.cloneValue(cell));// 获取hbase列值
+						if (selectList.contains(column.toLowerCase())) {
+							temp.put(column.toLowerCase(), value);
+						}
+					}
+					js.add(temp);
+				}
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(), js);
+			}
+		} catch (Exception e) {
+			logger.error("checkColumn wrong...", e);
+			if (e instanceof BusinessException) {
+				return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
+			} else {
+				return StateType.getResponseInfo(StateType.EXCEPTION);
+			}
+		}
+		return responseMap;
+	}
+
+	private static String solrFieldName(String hbaseFieldName, String type) {
+		if (type == null) {
+			logger.info("column " + hbaseFieldName + "'type is null, so using STRING");
+			type = "STRING";
+		}
+		HbaseSolrField hsf = new HbaseSolrField();
+		hsf.setHbaseColumnName(hbaseFieldName);
+		hsf.setType(type);
+		new TypeFieldNameMapper().map(hsf);
+		return hsf.getSolrColumnName();
+	}
 }
