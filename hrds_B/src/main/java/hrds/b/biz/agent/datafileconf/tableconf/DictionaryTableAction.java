@@ -635,7 +635,7 @@ public class DictionaryTableAction extends BaseAction {
 		assembler.clean();
 		assembler
 			.addSql("DELETE FROM " + Table_info.TableName)
-			.addORParam("table_id", deleteTableId);
+			.addORParam("table_id", deleteTableId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 
 		// 2: 先获取列的ID(column_id)信息,列信息(table_column)
