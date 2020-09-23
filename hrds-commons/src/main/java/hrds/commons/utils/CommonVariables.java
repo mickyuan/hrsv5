@@ -5,6 +5,8 @@ import fd.ng.core.annotation.DocClass;
 @DocClass(desc = "项目中经常用到的变量值", author = "BY-HLL", createdate = "2020/1/7 0007 上午 10:38")
 public class CommonVariables {
 
+    //是否有大数据环境
+    public static final boolean HAS_HADOOP_ENV = "HD".equalsIgnoreCase(PropertyParaValue.getString("ver_type", "DB"));
     //开启kerberos认证后,服务认证实例名
     public static final String PRINCIPLE_NAME = PropertyParaValue.getString("principle.name",
             "hyshf@beyondsoft.com");
