@@ -36,7 +36,7 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 	//更新的where条件列信息
 	private final List<String> whereColumnList;
 	//delete Sql拼接的个数
-	private int deleteNum = 0;
+	private int deleteNum = 1;
 	//存储层名称
 	private final String dsl_name;
 
@@ -123,7 +123,7 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 				}
 			}
 			//先执行删除，再执行更新, 再执行新增
-			if (deleteNum % 900 == 0) {
+			if (deleteNum % 1000 == 0) {
 				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 				//每900条删除一次
 				db.execute(deleteSql.toString());
@@ -133,15 +133,15 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 					deleteSql.append(column).append(",");
 				}
 				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(") IN (");
-				deleteNum = 0;
+				deleteNum = 1;
 			}
 			if (updateParamsPool.size() != 0 && updateParamsPool.size() % 5000 == 0) {
 				//如果更新的有数据，说明delete的值全部读完，这时候判断如果deleteNum不等于0则立即执行剩余的删除操作
-				if (deleteNum > 0) {
+				if (deleteNum > 1) {
 					deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 					//每900条删除一次
 					db.execute(deleteSql.toString());
-					deleteNum = 0;
+					deleteNum = 1;
 				}
 				//每5000条batch提交一次
 				db.execBatch(updateSql, updateParamsPool);
@@ -168,11 +168,11 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 	public void excute() {
 		//最后执行一次提交,如果删除的没有过900，更新和新增的都没有过5000则第一次执行就到这里
 		try {
-			if (deleteNum > 0) {
+			if (deleteNum > 1) {
 				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 				//每900条删除一次
 				db.execute(deleteSql.toString());
-				deleteNum = 0;
+				deleteNum = 1;
 			}
 			if (updateParamsPool.size() > 0) {
 				db.execBatch(updateSql, updateParamsPool);
@@ -246,13 +246,15 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 
 	private List<String> getWhereColumnList() {
 		List<String> whereColumnList = new ArrayList<>();
-		for (String updateColumn : updateColumnList) {
-			if (isPrimaryKeyMap.get(updateColumn)) {
-				whereColumnList.add(updateColumn);
+		if(!updateColumnList.isEmpty()){
+			for (String updateColumn : updateColumnList) {
+				if (isPrimaryKeyMap.get(updateColumn)) {
+					whereColumnList.add(updateColumn);
+				}
 			}
-		}
-		if (whereColumnList.isEmpty()) {
-			throw new AppSystemException("DB文件采集，采集增量数据，直接更新，没有指定主键");
+			if (whereColumnList.isEmpty()) {
+				throw new AppSystemException("DB文件采集，采集增量数据，直接更新，没有指定主键");
+			}
 		}
 		return whereColumnList;
 	}

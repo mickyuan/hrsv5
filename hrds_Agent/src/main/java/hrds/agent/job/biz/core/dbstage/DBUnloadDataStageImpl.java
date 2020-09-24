@@ -475,19 +475,15 @@ public class DBUnloadDataStageImpl extends AbstractJobStage {
 	 * 对增量sql进行排序，保证写文件的顺序是先删除,再更新,再新增。避免出现把新增数据删除或者更新了的情况
 	 */
 	private List<String> getSortJson(JSONObject json) {
-		List<String> sqlList = new ArrayList<>();
-		if (!StringUtil.isEmpty(json.getString("delete"))) {
-			sqlList.add(json.getString("delete"));
-		}
-		if (!StringUtil.isEmpty(json.getString("update"))) {
-			sqlList.add(json.getString("update"));
-		}
-		if (!StringUtil.isEmpty(json.getString("insert"))) {
-			sqlList.add(json.getString("insert"));
-		}
-		if (sqlList.size() == 0) {
+		if (StringUtil.isEmpty(json.getString("delete")) &&
+				StringUtil.isEmpty(json.getString("update")) &&
+				StringUtil.isEmpty(json.getString("insert"))) {
 			throw new AppSystemException("请最少填写一个增量sql");
 		}
+		List<String> sqlList = new ArrayList<>();
+		sqlList.add(json.getString("delete"));
+		sqlList.add(json.getString("update"));
+		sqlList.add(json.getString("insert"));
 		return sqlList;
 	}
 
