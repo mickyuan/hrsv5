@@ -11,10 +11,7 @@ import fd.ng.core.utils.Validator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Database_set;
-import hrds.commons.entity.Object_collect_struct;
-import hrds.commons.entity.Object_collect_task;
-import hrds.commons.entity.Object_handle_type;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
@@ -353,6 +350,69 @@ public class SendMsgUtil {
 				if (!"执行成功".equals(ar.getData())) {
 					throw new BusinessException(ar.getData().toString());
 				}
+			}
+		}
+
+		return ar.getData();
+	}
+
+	@Method(desc = "海云应用管理端向Agent端发送数据库采集任务信息", logicStep = "" +
+			"1、对参数合法性进行校验" +
+			"2、由于向Agent请求的数据量较小，所以不需要压缩" +
+			"3、httpClient发送请求并接收响应" +
+			"4、根据响应状态码判断响应是否成功" +
+			"5、若响应不成功，记录日志，并抛出异常告知操作失败")
+	@Param(name = "colSetId", desc = "源系统数据库设置表ID", range = "不为空")
+	@Param(name = "agentId", desc = "agentId，agent_info表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "userId", desc = "当前登录用户Id，sys_user表主键，agent_down_info表外键", range = "不为空")
+	@Param(name = "taskInfo", desc = "数据库采集任务信息", range = "SourceDataConfBean对象json格式字符串")
+	@Param(name = "etlDate", desc = "采集任务立即执行的跑批日期", range = "如果是立即执行的采集任务此参数请传递,下载数据字典时,请忽略",
+			nullable = true, valueIfNull = "")
+	@Param(name = "is_download", desc = "采集任务数据字典的下载", range = "默认为false,表示不下载", nullable = true, valueIfNull = "false")
+	@Param(name = "methodName", desc = "Agent端的提供服务的方法的方法名", range = "AgentActionUtil类中的静态常量")
+	@Param(name = "sqlParam", range = "sql的参数暂未符号", desc = "SQL的占位参数", nullable = true, valueIfNull = "")
+	public static Object sendObjectCollectTaskInfo(Long odc_id, Long agentId, Long userId, String taskInfo,
+											   String methodName, String etlDate) {
+		//1、对参数合法性进行校验
+		if (agentId == null) {
+			throw new BusinessException("向Agent发送数据库采集任务信息，agentId不能为空");
+		}
+		if (userId == null) {
+			throw new BusinessException("向Agent发送数据库采集任务信息，userId不能为空");
+		}
+		if (StringUtil.isBlank(taskInfo)) {
+			throw new BusinessException("向Agent发送数据库采集任务信息，任务信息不能为空");
+		}
+		if (StringUtil.isBlank(methodName)) {
+			throw new BusinessException("向Agent发送数据库采集任务信息时，methodName不能为空");
+		}
+
+		// 6，这里如果都配置文采则将此次任务的 database_set表中的字段(is_sendok) 更新为是,是表示为当前的配置任务完成
+		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
+				"UPDATE " + Object_collect.TableName + " SET is_sendok = ? WHERE odc_id = ?",
+				IsFlag.Shi.getCode(), odc_id);
+
+		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
+		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
+		logger.debug("准备建立连接，请求的URL为" + url);
+		logger.info("跑批日期==========================" + etlDate);
+		//3、httpClient发送请求并接收响应
+		HttpClient.ResponseValue resVal = new HttpClient()
+				.addData("etlDate", StringUtils.isBlank(etlDate) ? "" : etlDate)
+				.addData("taskInfo", PackUtil.packMsg(taskInfo))
+				.post(url);
+
+		//4、根据响应状态码判断响应是否成功
+		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+		//5、若响应不成功，记录日志，并抛出异常告知操作失败
+		if (!ar.isSuccess()) {
+			logger.error(">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage());
+			throw new BusinessException("Agent通讯异常,请检查Agent是否已启动!!!");
+		} else {
+			//如果任务执行失败,则提示对应的错误信息到前端
+			if (!"执行成功".equals(ar.getData())) {
+				throw new BusinessException(ar.getData().toString());
 			}
 		}
 

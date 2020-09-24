@@ -1,6 +1,6 @@
 package hrds.agent.trans.biz.semistructured;
 
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -8,15 +8,17 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
-import hrds.agent.job.biz.bean.JobParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
-import hrds.agent.job.biz.core.JobFactory;
+import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.utils.FileUtil;
 import hrds.commons.base.AgentBaseAction;
-import hrds.commons.entity.Object_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.xlstoxml.Xls2xml;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,28 +30,50 @@ import java.util.Map;
 
 @DocClass(desc = "接收页面定义的参数执行object采集", author = "zxz", createdate = "2019/10/23 16:29")
 public class ObjectCollectJob extends AgentBaseAction {
-
+	//打印日志
+	private static final Logger log = LogManager.getLogger();
 	private static final Type TYPE = new TypeReference<Map<String, Object>>() {
 	}.getType();
 
-	@Method(desc = "object采集和前端交互的接口",
-			logicStep = "1.获取json数组转成ObjectCollectParamBean的集合" +
-					"2.校验对象的值是否正确" +
-					"3.使用JobFactory工厂类调用后台方法")
-	@Param(name = "object_collect", desc = "半结构化对象采集设置表对象",
-			isBean = true, range = "所有这张表不能为空的字段的值必须有，为空则会抛异常")
-	@Param(name = "objectCollectParamBeanArray", desc = "多条半结构化对象采集存储到hadoop存储信息实体合集的" +
-			"json数组字符串", range = "所有ObjectCollectParamBean这个实体不能为空的字段的值必须有，为空则会抛异常")
-	public void execute(Object_collect object_collect, String objectCollectParamBeanArray) {
-		//1.获取json数组转成ObjectCollectParamBean的集合
-		List<ObjectCollectParamBean> objectCollectParamBeanList = JSONArray.parseArray(objectCollectParamBeanArray,
-				ObjectCollectParamBean.class);
-		//2.校验对象的值是否正确
-		//TODO 使用公共方法校验所有传入参数的对象的值的合法性
-		//TODO Agent这个参数该怎么接，是统一封装成工厂需要的参数吗？
-		//3.使用JobFactory工厂类调用后台方法
-		JobFactory.newInstance(null, null, new JobParamBean(),
-				"", null).runJob();
+	@Method(desc = "半结构化对象采集和前端交互生成配置文件的接口", logicStep = "" +
+			"1.将页面传递过来的压缩信息解压写文件")
+	@Param(name = "taskInfo", desc = "半结构化对象采集需要的参数实体bean的json对象字符串", range = "不能为空")
+	@Return(desc = "执行返回信息", range = "不会为空")
+	public String execute(String taskInfo) {
+		String message = "执行成功";
+		try {
+			//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+			ObjectCollectParamBean objectCollectParamBean =
+					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), ObjectCollectParamBean.class);
+			//2.将页面传递过来的压缩信息解压写文件
+			FileUtil.createFile(JobConstant.MESSAGEFILE + objectCollectParamBean.getOdc_id(),
+					PackUtil.unpackMsg(taskInfo).get("msg"));
+		} catch (Exception e) {
+			log.error(e);
+			message = "对象采集生成配置文件失败:" + e.getMessage();
+		}
+		return message;
+	}
+
+	@Method(desc = "半结构化对象采集和前端交互立即执行的接口", logicStep = "" +
+			"1.将页面传递过来的压缩信息解压写文件")
+	@Param(name = "etlDate", desc = "跑批日期", range = "不能为空")
+	@Param(name = "taskInfo", desc = "半结构化对象采集需要的参数实体bean的json对象字符串", range = "不能为空")
+	@Return(desc = "执行返回信息", range = "不会为空")
+	public String executeImmediately(String etlDate, String taskInfo) {
+		String message = "执行成功";
+		try {
+			//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+			ObjectCollectParamBean objectCollectParamBean =
+					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), ObjectCollectParamBean.class);
+			//2.将页面传递过来的压缩信息解压写文件
+			FileUtil.createFile(JobConstant.MESSAGEFILE + objectCollectParamBean.getOdc_id(),
+					PackUtil.unpackMsg(taskInfo).get("msg"));
+		} catch (Exception e) {
+			log.error(e);
+			message = "对象采集生成配置文件失败:" + e.getMessage();
+		}
+		return message;
 	}
 
 	@Method(desc = "有数据字典时解析半结构化采集数据字典获取表数据",

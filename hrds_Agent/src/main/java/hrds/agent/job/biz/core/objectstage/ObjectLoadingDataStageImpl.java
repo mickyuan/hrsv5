@@ -9,6 +9,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
+import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
 import hrds.agent.job.biz.constant.RunStatusConstant;
@@ -45,9 +46,9 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	//打印日志
 	private static final Logger log = LogManager.getLogger();
 	//半结构化对象采集设置表对象
-	private final Object_collect object_collect;
+	private final ObjectCollectParamBean objectCollectParamBean;
 	//多条半结构化对象采集存储到hadoop存储信息实体合集
-	private final List<ObjectCollectParamBean> objectCollectParamBeanList;
+	private final List<ObjectTableBean> objectTableBeanList;
 	//整条数据进hbase时的列名称
 	private static final String CONTENT = "content";
 	//开始日期
@@ -56,17 +57,16 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	/**
 	 * 半结构化对象采集数据加载实现类构造方法
 	 *
-	 * @param object_collect             Object_collect
+	 * @param objectCollectParamBean             Object_collect
 	 *                                   含义：半结构化对象采集设置表对象
 	 *                                   取值范围：所有这张表不能为空的字段的值必须有，为空则会抛异常
-	 * @param objectCollectParamBeanList List<ObjectCollectParamBean>
+	 * @param objectTableBeanList List<ObjectCollectParamBean>
 	 *                                   含义：多条半结构化对象采集存储到hadoop配置信息实体合集
 	 *                                   取值范围：所有这个实体不能为空的字段的值必须有，为空则会抛异常
 	 */
-	public ObjectLoadingDataStageImpl(Object_collect object_collect, List<ObjectCollectParamBean>
-			objectCollectParamBeanList) {
-		this.object_collect = object_collect;
-		this.objectCollectParamBeanList = objectCollectParamBeanList;
+	public ObjectLoadingDataStageImpl(ObjectCollectParamBean objectCollectParamBean, List<ObjectTableBean> objectTableBeanList) {
+		this.objectCollectParamBean = objectCollectParamBean;
+		this.objectTableBeanList = objectTableBeanList;
 	}
 
 	@Method(desc = "半结构化对象采集，数据加载阶段实现，处理完成后，无论成功还是失败，" +
@@ -80,17 +80,17 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	public StageParamInfo handleStage(StageParamInfo stageParamInfo) {
 		//1.设置数据加载阶段的任务id,开始日期开始时间
 		StageStatusInfo statusInfo = new StageStatusInfo();
-		statusInfo.setJobId(String.valueOf(object_collect.getOdc_id()));
+		statusInfo.setJobId(String.valueOf(objectCollectParamBean.getOdc_id()));
 		statusInfo.setStageNameCode(StageConstant.DATALOADING.getCode());
 		statusInfo.setStartDate(DateUtil.getSysDate());
 		statusInfo.setStartTime(DateUtil.getSysTime());
 		try {
-			String file_path = object_collect.getFile_path();
+			String file_path = objectCollectParamBean.getFile_path();
 			//2.取客户给定的采集目录下取到最新的目录（修改日期最近的），作为采集目录
 			String collectDir = getNewestDir(file_path);
 			collectDir = FileNameUtils.normalize(collectDir, true);
 			//3.遍历对象采集任务，根据对应的配置找到指定的文件进行采集
-			for (ObjectCollectParamBean bean : objectCollectParamBeanList) {
+			for (ObjectTableBean bean : objectTableBeanList) {
 				processTableJob(bean, collectDir);
 			}
 		} catch (Exception e) {
@@ -118,7 +118,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 					"2.判断非结构化对象采集任务存储目的地，调用对应方法")
 	@Param(name = "bean", desc = "多条半结构化对象采集存储到hadoop配置信息", range = "实体不可为空的值不能为空")
 	@Param(name = "collectDir", desc = "采集文件所在的目录", range = "不可为空")
-	private void processTableJob(ObjectCollectParamBean bean, String collectDir) {
+	private void processTableJob(ObjectTableBean bean, String collectDir) {
 		try {
 			//1.找到文件夹下符合规则的文件
 			File[] files = new File(collectDir).listFiles((file) -> Pattern.compile(bean.getZh_name()).
@@ -128,17 +128,17 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 				return;
 			}
 			//2.判断非结构化对象采集任务存储目的地，调用对应方法
-			if (IsFlag.Shi.getCode().equals(bean.getIs_hdfs())) {
+//			if (IsFlag.Shi.getCode().equals(bean.getIs_hdfs())) {
 				//拼接上传到hdfs的路径
-				String hdfsPath = PathUtil.DCLRELEASE + object_collect.getOdc_id() + "/" + bean.getEn_name() + "/";
-				hdfsPath = FileNameUtils.normalize(hdfsPath, true);
+//				String hdfsPath = PathUtil.DCLRELEASE + object_collect.getOdc_id() + "/" + bean.getEn_name() + "/";
+//				hdfsPath = FileNameUtils.normalize(hdfsPath, true);
 				//数据上传到HDFS
-				uploadHDFS(files, hdfsPath);
-			}
-			if (IsFlag.Shi.toString().equals(bean.getIs_hbase())) {
+//				uploadHDFS(files, hdfsPath);
+//			}
+//			if (IsFlag.Shi.toString().equals(bean.getIs_hbase())) {
 				//数据加载进HBase
 				loadIntoHBase(bean, files);
-			}
+//			}
 		} catch (Exception e) {
 			log.error("处理表失败：" + bean.getEn_name(), e);
 			throw new BusinessException("处理表失败：" + bean.getEn_name());
@@ -176,18 +176,18 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 					"5.对hbase表做hive的映射")
 	@Param(name = "bean", desc = "对象采集解析文件所需要的实体", range = "实体不能为空的字段必须有值")
 	@Param(name = "files", desc = "加载进hbase的文件的数组", range = "不可为空")
-	private void loadIntoHBase(ObjectCollectParamBean bean, File[] files) {
+	private void loadIntoHBase(ObjectTableBean bean, File[] files) {
 		log.info("load HBase ... ");
 		//1.页面没有给解析半结构化对象的字段时，给默认值
-		String columnNames = StringUtil.isBlank(bean.getColl_names()) ?
-				CONTENT + "," + HYREN_S_DATE : bean.getColl_names();
-		String columnTypes = StringUtil.isBlank(bean.getStruct_types()) ? "string,string" : bean.getStruct_types();
+//		String columnNames = StringUtil.isBlank(bean.getColl_names()) ?
+//				CONTENT + "," + HYREN_S_DATE : bean.getColl_names();
+//		String columnTypes = StringUtil.isBlank(bean.getStruct_types()) ? "string,string" : bean.getStruct_types();
 		//2.字段个数和字段类型个数不匹配时抛异常
-		if (!StringUtil.isBlank(columnNames)) {
-			if (columnNames.split(",").length != columnTypes.split(",").length) {
-				throw new BusinessException("字段名称和字段类型个数不匹配");
-			}
-		}
+//		if (!StringUtil.isBlank(columnNames)) {
+//			if (columnNames.split(",").length != columnTypes.split(",").length) {
+//				throw new BusinessException("字段名称和字段类型个数不匹配");
+//			}
+//		}
 		String hbaseTableName = bean.getEn_name();
 		//3.创建hbase表
 		try (HBaseHelper helper = HBaseHelper.getHelper()) {
@@ -201,11 +201,11 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 			for (File file : files) {
 				try (BufferedReader bufferedReader = new BufferedReader(
 						new InputStreamReader(new FileInputStream(file), charset))) {
-					loadDataByLine(bufferedReader, file, table, columnNames, bean.getCollect_data_type());
+//					loadDataByLine(bufferedReader, file, table, columnNames, bean.getCollect_data_type());
 				}
 			}
 			//5.对hbase表做hive的映射
-			mapHive(hbaseTableName, columnNames, columnTypes);
+//			mapHive(hbaseTableName, columnNames, columnTypes);
 		} catch (Exception e) {
 			log.error(e);
 			throw new BusinessException("load Hbase 失败！！！");

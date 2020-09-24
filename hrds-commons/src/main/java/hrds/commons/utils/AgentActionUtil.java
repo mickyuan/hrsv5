@@ -80,6 +80,10 @@ public class AgentActionUtil {
 	public static final String GETFIRSTLINEDATA = "/hrds/agent/trans/biz/semistructured/getFirstLineData";
 	//向agent发送一个半结构化直连重写数据字典任务
 	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/semistructured/writeDictionary";
+	//向agent端发送一个对象采集任务
+	public static final String OBJECTCOLLECTEXECUTE = "/hrds/agent/trans/biz/semistructured/execute";
+	//向agent端发送一个对象立即执行的任务
+	public static final String OBJECTCOLLECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/semistructured/executeImmediately";
 
 	static {
 		list = new ArrayList<>();
@@ -115,6 +119,8 @@ public class AgentActionUtil {
 		list.add(JDBCDIRECTEXECUTEIMMEDIATELY);
 		list.add(SENDJDBCDIRECTTASKINFO);
 		list.add(EXECUTEFILECOLLECTIMMEDIATELY);
+		list.add(OBJECTCOLLECTEXECUTE);
+		list.add(OBJECTCOLLECTEXECUTEIMMEDIATELY);
 	}
 
 	private AgentActionUtil() {

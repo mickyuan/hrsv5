@@ -7,6 +7,7 @@ import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
+import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.core.objectstage.ObjectLoadingDataStageImpl;
 import hrds.agent.job.biz.core.objectstage.ObjectRegistrationStageImpl;
 import hrds.agent.job.biz.core.objectstage.ObjectUnloadDataStageImpl;
@@ -23,9 +24,9 @@ public class ObjectCollectJobImpl implements JobInterface {
 	//作业执行完成的mate信息
 //	private MetaInfoBean mateInfo = new MetaInfoBean();
 	//半结构化对象采集设置表对象
-	private final Object_collect object_collect;
+	private final ObjectCollectParamBean objectCollectParamBean;
 	//多条半结构化对象采集存储到hadoop存储信息实体合集
-	private final List<ObjectCollectParamBean> objectCollectParamBeanList;
+	private final List<ObjectTableBean> objectTableBeanList;
 	//JobStatusInfo对象，表示一个作业的状态
 	private JobStatusInfo jobStatus;
 	//XXX 待讨论
@@ -34,20 +35,20 @@ public class ObjectCollectJobImpl implements JobInterface {
 	/**
 	 * 半结构化对象采集的作业实现类构造方法.
 	 *
-	 * @param object_collect             Object_collect
+	 * @param objectCollectParamBean             Object_collect
 	 *                                   含义：半结构化对象采集设置表对象
 	 *                                   取值范围：所有这张表不能为空的字段的值必须有，为空则会抛异常
-	 * @param objectCollectParamBeanList List<ObjectCollectParamBean>
+	 * @param objectTableBeanList List<ObjectCollectParamBean>
 	 *                                   含义：多条半结构化对象采集存储到hadoop配置信息实体合集
 	 *                                   取值范围：所有这个实体不能为空的字段的值必须有，为空则会抛异常
 	 * @param jobStatus                  JobStatusInfo
 	 *                                   含义：JobStatusInfo对象，表示一个作业的状态
 	 *                                   取值范围：不能为空
 	 */
-	public ObjectCollectJobImpl(Object_collect object_collect, List<ObjectCollectParamBean> objectCollectParamBeanList
+	public ObjectCollectJobImpl(ObjectCollectParamBean objectCollectParamBean, List<ObjectTableBean> objectTableBeanList
 			, JobStatusInfo jobStatus) {
-		this.object_collect = object_collect;
-		this.objectCollectParamBeanList = objectCollectParamBeanList;
+		this.objectCollectParamBean = objectCollectParamBean;
+		this.objectTableBeanList = objectTableBeanList;
 		this.jobStatus = jobStatus;
 	}
 
@@ -60,15 +61,15 @@ public class ObjectCollectJobImpl implements JobInterface {
 	@Override
 	public JobStatusInfo runJob() {
 		//1、设置作业ID
-		jobStatus.setJobId(String.valueOf(object_collect.getOdc_id()));
+		jobStatus.setJobId(String.valueOf(objectCollectParamBean.getOdc_id()));
 		//设置作业开始时间
 		jobStatus.setStartDate(DateUtil.getSysDate());
 		jobStatus.setStartTime(DateUtil.getSysTime());
 		//2、构建每个阶段具体的实现类，按照顺序执行(卸数,数据加载,数据登记)
 		//空实现
 		JobStageInterface unloadData = new ObjectUnloadDataStageImpl();
-		JobStageInterface upload = new ObjectLoadingDataStageImpl(this.object_collect,
-				this.objectCollectParamBeanList);
+		JobStageInterface upload = new ObjectLoadingDataStageImpl(this.objectCollectParamBean,
+				this.objectTableBeanList);
 		//空实现
 		JobStageInterface dataRegistration = new ObjectRegistrationStageImpl();
 		//利用JobStageController构建本次半结构化对象采集作业流程
