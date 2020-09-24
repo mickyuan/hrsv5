@@ -84,7 +84,7 @@ public class DataStoreAction extends BaseAction {
 		addDataStorageLayerAttr(dataStoreLayerAttr, dataStoreLayer.getDsl_id());
 		// 6.判断文件是否存在，存在则上传配置文件
 		if (files != null && files.length != 0) {
-			uploadConfFile(files, dataStoreLayer.getDsl_id());
+			uploadConfFile(files, dataStoreLayer.getDsl_id(), dsl_name);
 		}
 	}
 
@@ -107,7 +107,7 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "files", desc = "上传的配置文件", range = "无限制", nullable = true)
 	@Param(name = "dsla_remark", desc = "数据存储层配置属性表备注", range = "无限制", nullable = true)
 	@Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
-	private void uploadConfFile(String[] files, long dsl_id) {
+	private void uploadConfFile(String[] files, long dsl_id, String dsl_name) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.存在，遍历文件
 		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
@@ -115,25 +115,26 @@ public class DataStoreAction extends BaseAction {
 			// 3.循环新增数据存储层配置属性信息
 			data_store_layer_attr.setDsla_id(PrimayKeyGener.getNextId());
 			data_store_layer_attr.setDsl_id(dsl_id);
-			data_store_layer_attr.setStorage_property_key(FileUploadUtil.getOriginalFileName(file));
+			String originalFileName = FileUploadUtil.getOriginalFileName(file);
+			data_store_layer_attr.setStorage_property_key(originalFileName);
 			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			File destFile = new File(uploadedFile.getParent() + File.separator +
-					FileUploadUtil.getOriginalFileName(file));
-			if (destFile.exists()) {
-				// 文件存在先删除后新增
-				try {
-					Files.delete(destFile.toPath());
-				} catch (IOException e) {
-					throw new BusinessException("删除文件失败" + e.getMessage());
+			File destFile = new File(uploadedFile.getParent() + File.separator + dsl_name);
+			// 目标文件目录不存在则创建
+			if (!destFile.exists() && !destFile.isDirectory()) {
+				if (!destFile.mkdirs()) {
+					throw new BusinessException("创建文件目录失败");
 				}
 			}
 			// 文件存在则不需要重新命名
-			if (!uploadedFile.renameTo(destFile)) {
+			if (!uploadedFile.renameTo(new File(destFile.getPath() + File.separator + originalFileName))) {
+				if (uploadedFile.delete()) {
+					throw new BusinessException("删除文件失败");
+				}
 				throw new BusinessException("文件重命名失败");
 			}
-			data_store_layer_attr.setStorage_property_val(destFile.getPath());
+			data_store_layer_attr.setStorage_property_val(destFile.getPath() + File.separator + originalFileName);
 			data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
-			data_store_layer_attr.setDsla_remark(FileUploadUtil.getOriginalFileName(file) + "文件已上传");
+			data_store_layer_attr.setDsla_remark(originalFileName + "文件已上传");
 			data_store_layer_attr.add(Dbo.db());
 		}
 	}
@@ -561,7 +562,7 @@ public class DataStoreAction extends BaseAction {
 		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除文件要放在删除属性之前
 		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
-			uploadConfFile(files, dsl_id);
+			uploadConfFile(files, dsl_id, dsl_name);
 		}
 		// 7.更新数据存储层配置属性信息
 		updateDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
