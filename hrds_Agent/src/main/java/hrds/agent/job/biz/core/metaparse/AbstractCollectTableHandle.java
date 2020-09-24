@@ -107,7 +107,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		//抽取的sql最后可能需要有过滤条件，需要拼接到collectSQL后面
 		if (!StringUtil.isEmpty(filter)) {
 			for (String sql : StringUtil.split(collectSql, Constant.SQLDELIMITER)) {
-				addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_where ")
+				addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" hyren_tmp_where ")
 						.append(" WHERE ").append(filter).append(Constant.SQLDELIMITER);
 			}
 			//去掉最后一个分隔符
