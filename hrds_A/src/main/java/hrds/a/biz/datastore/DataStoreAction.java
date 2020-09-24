@@ -119,11 +119,17 @@ public class DataStoreAction extends BaseAction {
 			File uploadedFile = FileUploadUtil.getUploadedFile(file);
 			File destFile = new File(uploadedFile.getParent() + File.separator +
 					FileUploadUtil.getOriginalFileName(file));
-			if (!destFile.exists()) {
-				// 文件存在则不需要重新命名
-				if (uploadedFile.renameTo(destFile)) {
-					throw new BusinessException("文件重命名失败");
+			if (destFile.exists()) {
+				// 文件存在先删除后新增
+				try {
+					Files.delete(destFile.toPath());
+				} catch (IOException e) {
+					throw new BusinessException("删除文件失败" + e.getMessage());
 				}
+			}
+			// 文件存在则不需要重新命名
+			if (!uploadedFile.renameTo(destFile)) {
+				throw new BusinessException("文件重命名失败");
 			}
 			data_store_layer_attr.setStorage_property_val(destFile.getPath());
 			data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
