@@ -428,8 +428,8 @@ public class JobConfiguration extends BaseAction {
 		}
 		// 2.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
 		return Dbo.queryOneColumnList(
-				"select etl_job from " + Etl_job_def.TableName + " where etl_sys_cd=? and user_id=?",
-				etl_sys_cd, getUserId());
+				"select etl_job from " + Etl_job_def.TableName + " where etl_sys_cd=?",
+				etl_sys_cd);
 	}
 
 	@Method(desc = "新增保存作业信息",
