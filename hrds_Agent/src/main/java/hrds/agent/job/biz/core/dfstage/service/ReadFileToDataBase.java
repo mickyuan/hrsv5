@@ -156,6 +156,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				List<String> valueList = StringUtil.split(line, dataDelimiter);
+				if (valueList.size() != columnList.size()) {
+					throw new AppSystemException("取到数据的列的数量跟数据字典定义的列的长度不一致，请检查数据是否有问题：========"
+							+ valueList.toString());
+				}
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
@@ -168,7 +172,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				doBatch(batchSql, pool, num, db);
 			}
 		} catch (Exception e) {
-			throw new AppSystemException("bash插入数据库失败", e);
+			throw new AppSystemException("bash插入数据库失败:", e);
 		}
 		return num;
 	}
@@ -213,6 +217,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				List<String> valueList = getDingChangValueList(line, lengthList, database_code);
+				if (valueList.size() != columnList.size()) {
+					throw new AppSystemException("取到数据的列的数量跟数据字典定义的列的长度不一致，请检查数据是否有问题：========"
+							+ valueList.toString());
+				}
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
@@ -252,6 +260,10 @@ public class ReadFileToDataBase implements Callable<Long> {
 				//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 				//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。batch方式使用默认的去解析
 				List<String> valueList = StringUtil.split(str, Constant.SEQUENCEDELIMITER);
+				if (valueList.size() != columnList.size()) {
+					throw new AppSystemException("取到数据的列的数量跟数据字典定义的列的长度不一致，请检查数据是否有问题：========"
+							+ valueList.toString());
+				}
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
 					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
@@ -477,11 +489,11 @@ public class ReadFileToDataBase implements Callable<Long> {
 	private void doBatch(String batchSql, List<Object[]> pool, long num, DatabaseWrapper db) {
 		int[] ints = db.execBatch(batchSql, pool);
 //		for (int i : ints) {
-		//XXX Oracle数据库batch插入，这边返回值是-2
+//		XXX Oracle数据库batch插入，这边返回值是-2
 //			if (i != 1) {
 //				throw new AppSystemException("批量插入数据出现错误,退出");
 //			}
-//		LOGGER.info("batch插入的返回值为" + i);
+//			LOGGER.info("batch插入的返回值为" + i);
 //		}
 		LOGGER.info("本次batch插入" + ints.length);
 		LOGGER.info("数据库已插入" + num + "条！");
