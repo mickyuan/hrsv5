@@ -62,16 +62,15 @@ public class JobLevelInterventionAction extends BaseAction {
 		asmSql.addParam(etl_sys_cd);
 		// 2.判断作业名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(etl_job)) {
-			asmSql.addLikeParam("t1.etl_job", "%" + etl_job + "%");
+			asmSql.addLikeParam("lower(t1.etl_job)", "%" + etl_job.toLowerCase() + "%");
 		}
 		// 3.判断任务名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(sub_sys_desc)) {
-			asmSql.addLikeParam("t2.sub_sys_desc", "%" + sub_sys_desc + "%");
+			asmSql.addLikeParam("lower(t2.sub_sys_desc)", "%" + sub_sys_desc.toLowerCase() + "%");
 		}
 		// 4.判断作业调度状态是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(job_status)) {
-			asmSql.addSql(" AND t1.job_disp_status=?");
-			asmSql.addParam(job_status);
+			asmSql.addSql(" AND t1.job_disp_status=?").addParam(job_status);
 		}
 		asmSql.addSql(" order by etl_job");
 		// 5.分页查询作业级干预作业情况

@@ -90,7 +90,7 @@ public class JobConfiguration extends BaseAction {
 		asmSql.addParam(etl_sys_cd);
 		// 3.判断任务编号是否为空，如果为空则查询所有任务信息，如果不为空则模糊查询任务信息（搜索）
 		if (StringUtil.isNotBlank(sub_sys_cd)) {
-			asmSql.addLikeParam("sub_sys_cd", "%" + sub_sys_cd + "%");
+			asmSql.addLikeParam("lower(sub_sys_cd)", "%" + sub_sys_cd.toLowerCase() + "%");
 		}
 		asmSql.addSql(" order by etl_sys_cd,sub_sys_cd");
 		Page page = new DefaultPageImpl(currPage, pageSize);
@@ -373,15 +373,15 @@ public class JobConfiguration extends BaseAction {
 		}
 		// 4.判断作业名称是否为空，不为空，加条件查询
 		if (StringUtil.isNotBlank(etl_job)) {
-			asmSql.addLikeParam("etl_job", "%" + etl_job + "%");
+			asmSql.addLikeParam("lower(etl_job)", "%" + etl_job.toLowerCase() + "%");
 		}
 		// 5.判断作业程序名称是否为空，不为空，加条件查询
 		if (StringUtil.isNotBlank(pro_name)) {
-			asmSql.addLikeParam("pro_name", "%" + pro_name + "%");
+			asmSql.addLikeParam("lower(pro_name)", "%" + pro_name.toLowerCase() + "%");
 		}
 		// 6.判断任务编号是否为空，不为空，加条件查询
 		if (StringUtil.isNotBlank(sub_sys_cd)) {
-			asmSql.addLikeParam("sub_sys_cd", "%" + sub_sys_cd + "%");
+			asmSql.addLikeParam("lower(sub_sys_cd)", "%" + sub_sys_cd.toLowerCase() + "%");
 		}
 		// 7.分页查询作业定义信息
 		Page page = new DefaultPageImpl(currPage, pageSize);
@@ -416,7 +416,7 @@ public class JobConfiguration extends BaseAction {
 		return etlJobDef;
 	}
 
-	@Method(desc = "查询作业名称信息",
+	@Method(desc = "模糊查询作业名称信息",
 			logicStep = "1.数据可访问权限处理方式，通过user_id进行权限验证" +
 					"2.返回查询作业定义信息，实体字段基本都需要所以查询所有字段")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
@@ -427,8 +427,9 @@ public class JobConfiguration extends BaseAction {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.返回根据工程编号、作业名称查询作业定义信息，实体字段基本都需要所以查询所有字段
-		return Dbo.queryOneColumnList("select etl_job from " + Etl_job_def.TableName + " where etl_sys_cd=?" +
-				" order by etl_job", etl_sys_cd);
+		return Dbo.queryOneColumnList(
+				"select etl_job from " + Etl_job_def.TableName + " where etl_sys_cd=?",
+				etl_sys_cd);
 	}
 
 	@Method(desc = "新增保存作业信息",
@@ -687,11 +688,11 @@ public class JobConfiguration extends BaseAction {
 		asmSql.addParam(etl_sys_cd);
 		// 2.判断作业名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(etl_job)) {
-			asmSql.addLikeParam("etl_job", "%" + etl_job + "%");
+			asmSql.addLikeParam("lower(etl_job)", "%" + etl_job.toLowerCase() + "%");
 		}
 		// 3.判断参数类型是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(resource_type)) {
-			asmSql.addLikeParam("resource_type", "%" + resource_type + "%");
+			asmSql.addLikeParam("lower(resource_type)", "%" + resource_type.toLowerCase() + "%");
 		}
 		asmSql.addSql("order by etl_sys_cd,etl_job");
 		Page page = new DefaultPageImpl(currPage, pageSize);
@@ -1046,7 +1047,7 @@ public class JobConfiguration extends BaseAction {
 		asmSql.addParam(etl_sys_cd);
 		// 3.判断资源类型是否存在，存在加条件查询
 		if (StringUtil.isNotBlank(resource_type)) {
-			asmSql.addLikeParam("resource_type", "%" + resource_type + "%");
+			asmSql.addLikeParam("lower(resource_type)", "%" + resource_type.toLowerCase() + "%");
 		}
 		asmSql.addSql(" order by etl_sys_cd,resource_type");
 		// 4.分页查询资源信息
@@ -1195,7 +1196,7 @@ public class JobConfiguration extends BaseAction {
 		asmSql.addParam(DefaultEtlSysCd);
 		// 3.判断变量名称是否存在，存在加条件查询
 		if (StringUtil.isNotBlank(para_cd)) {
-			asmSql.addLikeParam("para_cd", "%" + para_cd + "%");
+			asmSql.addLikeParam("lower(para_cd)", "%" + para_cd.toLowerCase() + "%");
 		}
 		asmSql.addSql(" order by etl_sys_cd,para_cd");
 		Page page = new DefaultPageImpl(currPage, pageSize);
@@ -1345,11 +1346,11 @@ public class JobConfiguration extends BaseAction {
 		asmSql.addParam(etl_sys_cd);
 		// 2.判断作业名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(etl_job)) {
-			asmSql.addLikeParam("etl_job", "%" + etl_job + "%");
+			asmSql.addLikeParam("lower(etl_job)", "%" + etl_job.toLowerCase() + "%");
 		}
 		// 3.判断上游作业名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(pre_etl_job)) {
-			asmSql.addLikeParam("pre_etl_job", "%" + pre_etl_job + "%");
+			asmSql.addLikeParam("lower(pre_etl_job)", "%" + pre_etl_job.toLowerCase() + "%");
 		}
 		asmSql.addSql(" order by etl_sys_cd,etl_job");
 		Page page = new DefaultPageImpl(currPage, pageSize);
