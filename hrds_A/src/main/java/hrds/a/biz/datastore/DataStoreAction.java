@@ -116,7 +116,16 @@ public class DataStoreAction extends BaseAction {
 			data_store_layer_attr.setDsla_id(PrimayKeyGener.getNextId());
 			data_store_layer_attr.setDsl_id(dsl_id);
 			data_store_layer_attr.setStorage_property_key(FileUploadUtil.getOriginalFileName(file));
-			data_store_layer_attr.setStorage_property_val(FileUploadUtil.getUploadedFile(file).getPath());
+			File uploadedFile = FileUploadUtil.getUploadedFile(file);
+			File destFile = new File(uploadedFile.getParent() + File.separator +
+					FileUploadUtil.getOriginalFileName(file));
+			if (!destFile.exists()) {
+				// 文件存在则不需要重新命名
+				if (uploadedFile.renameTo(destFile)) {
+					throw new BusinessException("文件重命名失败");
+				}
+			}
+			data_store_layer_attr.setStorage_property_val(destFile.getPath());
 			data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
 			data_store_layer_attr.setDsla_remark(FileUploadUtil.getOriginalFileName(file) + "文件已上传");
 			data_store_layer_attr.add(Dbo.db());
@@ -543,7 +552,7 @@ public class DataStoreAction extends BaseAction {
 		deleteDataStoreLayerAdded(dsl_id);
 		// 5.更新数据存储附加信息
 		addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
-		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除要放在删除
+		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除文件要放在删除属性之前
 		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
 			uploadConfFile(files, dsl_id);
