@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @DocClass(desc = "数据存储层配置管理", author = "dhw", createdate = "2019/11/22 11:25")
 public class DataStoreAction extends BaseAction {
@@ -84,7 +85,7 @@ public class DataStoreAction extends BaseAction {
 		addDataStorageLayerAttr(dataStoreLayerAttr, dataStoreLayer.getDsl_id());
 		// 6.判断文件是否存在，存在则上传配置文件
 		if (files != null && files.length != 0) {
-			uploadConfFile(files, dataStoreLayer.getDsl_id(), dsl_name);
+			uploadConfFile(files, dataStoreLayer.getDsl_id(), dsl_name, dataStoreLayerAttr);
 		}
 	}
 
@@ -107,35 +108,46 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "files", desc = "上传的配置文件", range = "无限制", nullable = true)
 	@Param(name = "dsla_remark", desc = "数据存储层配置属性表备注", range = "无限制", nullable = true)
 	@Param(name = "dsl_id", desc = "数据存储层配置表主键", range = "新增数据存储层时生成")
-	private void uploadConfFile(String[] files, long dsl_id, String dsl_name) {
+	@Param(name = "dataStoreLayerAttr", desc = "数据存储层信息属性信息集合,(is_file使用代码项（IsFlag）)",
+			range = "key,value类型的json字符串")
+	private void uploadConfFile(String[] files, long dsl_id, String dsl_name, String dataStoreLayerAttr) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.存在，遍历文件
 		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
+		List<Map<String, String>> attrList = getMaps(dataStoreLayerAttr);
+		attrList = attrList.stream()
+				.filter(map -> IsFlag.Shi == IsFlag.ofEnumByCode(map.get("is_file")))
+				.collect(Collectors.toList());
 		for (String file : files) {
 			// 3.循环新增数据存储层配置属性信息
 			data_store_layer_attr.setDsla_id(PrimayKeyGener.getNextId());
 			data_store_layer_attr.setDsl_id(dsl_id);
-			String originalFileName = FileUploadUtil.getOriginalFileName(file);
-			data_store_layer_attr.setStorage_property_key(originalFileName);
-			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			File destFile = new File(uploadedFile.getParent() + File.separator + dsl_name);
-			// 目标文件目录不存在则创建
-			if (!destFile.exists() && !destFile.isDirectory()) {
-				if (!destFile.mkdirs()) {
-					throw new BusinessException("创建文件目录失败");
+			for (Map<String, String> map : attrList) {
+				String storage_property_val = map.get("storage_property_val");
+				String originalFileName = FileUploadUtil.getOriginalFileName(file);
+				if (storage_property_val.equals(originalFileName)) {
+					data_store_layer_attr.setStorage_property_key(map.get("storage_property_key"));
+					File uploadedFile = FileUploadUtil.getUploadedFile(file);
+					File destFile = new File(uploadedFile.getParent() + File.separator + dsl_name);
+					// 目标文件目录不存在则创建
+					if (!destFile.exists() && !destFile.isDirectory()) {
+						if (!destFile.mkdirs()) {
+							throw new BusinessException("创建文件目录失败");
+						}
+					}
+					// 文件存在则不需要重新命名
+					if (!uploadedFile.renameTo(new File(destFile.getPath() + File.separator + originalFileName))) {
+						if (uploadedFile.delete()) {
+							throw new BusinessException("删除文件失败");
+						}
+						throw new BusinessException("文件重命名失败");
+					}
+					data_store_layer_attr.setStorage_property_val(destFile.getPath() + File.separator + originalFileName);
+					data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
+					data_store_layer_attr.setDsla_remark(originalFileName + "文件已上传");
+					data_store_layer_attr.add(Dbo.db());
 				}
 			}
-			// 文件存在则不需要重新命名
-			if (!uploadedFile.renameTo(new File(destFile.getPath() + File.separator + originalFileName))) {
-				if (uploadedFile.delete()) {
-					throw new BusinessException("删除文件失败");
-				}
-				throw new BusinessException("文件重命名失败");
-			}
-			data_store_layer_attr.setStorage_property_val(destFile.getPath() + File.separator + originalFileName);
-			data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
-			data_store_layer_attr.setDsla_remark(originalFileName + "文件已上传");
-			data_store_layer_attr.add(Dbo.db());
 		}
 	}
 
@@ -206,9 +218,7 @@ public class DataStoreAction extends BaseAction {
 	private void addDataStorageLayerAttr(String dataStoreLayerAttr, long dsl_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.获取存放数据存储配置属性的key,value值
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> layerAttrList = JsonUtil.toObject(dataStoreLayerAttr, type);
+		List<Map<String, String>> layerAttrList = getMaps(dataStoreLayerAttr);
 		// 3.循环获取数据存储配置属性的key,value值
 		Data_store_layer_attr data_store_layer_attr = new Data_store_layer_attr();
 		for (Map<String, String> layerAttr : layerAttrList) {
@@ -227,6 +237,12 @@ public class DataStoreAction extends BaseAction {
 				data_store_layer_attr.add(Dbo.db());
 			}
 		}
+	}
+
+	private List<Map<String, String>> getMaps(String dataStoreLayerAttr) {
+		Type type = new TypeReference<List<Map<String, String>>>() {
+		}.getType();
+		return JsonUtil.toObject(dataStoreLayerAttr, type);
 	}
 
 	@Method(desc = "更新保存数据存储层配置属性信息",
@@ -264,9 +280,7 @@ public class DataStoreAction extends BaseAction {
 			throw new BusinessException("类型对照名称已存在");
 		}
 		// 4.获取源表数据类型，目标表数据类型信息
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> typeContrastList = JsonUtil.toObject(typeContrast, type);
+		List<Map<String, String>> typeContrastList = getMaps(typeContrast);
 		if (!typeContrastList.isEmpty()) {
 			// 5.新增数据类型对照主表信息
 			type_contrast_sum.setDtcs_id(PrimayKeyGener.getNextId());
@@ -305,9 +319,7 @@ public class DataStoreAction extends BaseAction {
 			throw new BusinessException("长度对照名称已存在");
 		}
 		// 4.获取字段类型，字段长度信息
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> lengthContrastList = JsonUtil.toObject(lengthInfo, type);
+		List<Map<String, String>> lengthContrastList = getMaps(lengthInfo);
 		// 5.新增存储层数据类型长度对照主表信息
 		length_contrast_sum.setDlcs_id(PrimayKeyGener.getNextId());
 		length_contrast_sum.add(Dbo.db());
@@ -360,9 +372,7 @@ public class DataStoreAction extends BaseAction {
 			throw new BusinessException("更新时类型对照ID不能为空");
 		}
 		// 3.获取源表数据类型，目标表数据类型信息
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> typeContrastList = JsonUtil.toObject(typeContrast, type);
+		List<Map<String, String>> typeContrastList = getMaps(typeContrast);
 		if (!typeContrastList.isEmpty()) {
 			// 4.更新数据类型对照主表信息
 			type_contrast_sum.update(Dbo.db());
@@ -424,9 +434,7 @@ public class DataStoreAction extends BaseAction {
 			throw new BusinessException("更新时长度对照表ID不能为空");
 		}
 		// 3.获取字段类型，字段长度信息
-		Type type = new TypeReference<List<Map<String, String>>>() {
-		}.getType();
-		List<Map<String, String>> lengthContrastList = JsonUtil.toObject(lengthInfo, type);
+		List<Map<String, String>> lengthContrastList = getMaps(lengthInfo);
 		// 4.新增存储层数据类型长度对照主表信息
 		length_contrast_sum.update(Dbo.db());
 		// 5.新增前先删除原存储层数据类型长度对照表信息
@@ -562,7 +570,7 @@ public class DataStoreAction extends BaseAction {
 		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除文件要放在删除属性之前
 		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
-			uploadConfFile(files, dsl_id, dsl_name);
+			uploadConfFile(files, dsl_id, dsl_name, dataStoreLayerAttr);
 		}
 		// 7.更新数据存储层配置属性信息
 		updateDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
