@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
@@ -12,6 +13,7 @@ import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.b.biz.dataquery.tools.FileOperations;
 import hrds.commons.base.BaseAction;
@@ -20,11 +22,12 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.FileTypeUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.util.*;
 
 @DocClass(desc = "Web服务查询数据界面后台处理类", author = "BY-HLL", createdate = "2019/9/3 0003 下午 03:26")
@@ -106,7 +109,7 @@ public class DataQueryAction extends BaseAction {
 	)
 	@Param(name = "fileId", desc = "文件id", range = "String类型值的唯一id（32位），不包含特殊字符")
 	@Param(name = "fileName", desc = "文件名", range = "String类型值，无输入限制")
-	@Param(name = "queryKeyword", desc = "文件查询关键字", range = "String类型值，无输入限制", nullable = true)
+	@Param(name = "queryKeyword", desc = "文件查询关键字", range = "String类型值，无输入限制", valueIfNull = "")
 	public void downloadFile(String fileId, String fileName, String queryKeyword) {
 		//数据可访问权限处理方式: 无数据库操作不需要权限检查
 		//1.根据文件id检查文件是否有下载权限
@@ -114,6 +117,19 @@ public class DataQueryAction extends BaseAction {
 			throw new BusinessException("文件没有下载权限! fileName=" + fileName);
 		}
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream()) {
+			// 清空response
+			ResponseUtil.getResponse().reset();
+			// 设置响应头，控制浏览器下载该文件
+			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+				// firefox浏览器
+				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+					+ new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+			} else {
+				// 其它浏览器
+				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+					+ Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
+			}
+			ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
 			//2.通过文件id获取文件的 byte
 			byte[] bye = FileOperations.getFileBytesFromAvro(fileId);
 			if (bye == null) {
@@ -415,8 +431,9 @@ public class DataQueryAction extends BaseAction {
 	@Method(desc = "查看文件", logicStep = "1.根据文件id获取该文件信息" +
 		"2.如果文件查看权限是一次,看过之后取消权限")
 	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一", example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
+	@Param(name = "fileType", desc = "文件类型", range = "String类型字符")
 	@Return(desc = "文件信息集合", range = "无限制")
-	public Map<String, String> viewFile(String fileId) {
+	public Map<String, String> viewFile(String fileId, String fileType) {
 		//数据校验,判断文件是否有查看权限
 		Result dataAuthRs = Dbo.queryResult(
 			"select * from data_auth where file_id=? and apply_type = ? and auth_type in (?,?)",
@@ -429,6 +446,25 @@ public class DataQueryAction extends BaseAction {
 		if (fileInfoMap.isEmpty()) {
 			throw new BusinessException("根据文件id获取文件信息,结果为空!");
 		}
+		//判断需要查看文件是否是图片
+//		FileType fileTypeEnum = FileType.ofEnumByCode(fileType);
+//		if (fileTypeEnum == FileType.TuPian) {
+//			HttpServletResponse response = ResponseUtil.getResponse();
+//			response.setContentType("image/jpeg");
+//			//输出图片的byte流
+//			try (OutputStream outputStream = response.getOutputStream()) {
+//				//获取图片的byte流
+//				InputStream in = new ByteArrayInputStream(fileInfoMap.get("file_content").getBytes());
+//				int len;
+//				byte[] buf = new byte[1024];
+//				while ((len = in.read(buf, 0, 1024)) != -1) {
+//					outputStream.write(buf, 0, len);
+//				}
+//				outputStream.flush();
+//			} catch (IOException ioe) {
+//				ioe.printStackTrace();
+//			}
+//		}
 		//2.如果文件查看权限是一次,看过之后取消权限
 		FileOperations.updateViewFilePermissions(fileId);
 		return fileInfoMap;

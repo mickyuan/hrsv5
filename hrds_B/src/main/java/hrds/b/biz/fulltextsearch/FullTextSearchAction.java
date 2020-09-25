@@ -47,7 +47,8 @@ public class FullTextSearchAction extends BaseAction {
 		queryNum = Math.min(queryNum, 99);
 		//2.获取当前用户已经收藏的文件列表
 		//数据可访问权限处理方式: 根据 User_fav 的 user_id 做权限检查
-		return Dbo.queryList("SELECT * FROM " + User_fav.TableName +
+		return Dbo.queryList("SELECT uf.*,sfa.file_suffix,sfa.hbase_name,sfa.file_type FROM " + User_fav.TableName + " uf" +
+				" JOIN " + Source_file_attribute.TableName + " sfa ON sfa.file_id = uf.file_id" +
 				" WHERE user_id = ? AND fav_flag = ?" +
 				" ORDER BY fav_id DESC LIMIT ?",
 			getUserId(), IsFlag.Shi.getCode(), queryNum
@@ -194,7 +195,7 @@ public class FullTextSearchAction extends BaseAction {
 		asmSql.addSql(" SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
 			" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
 			" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id," +
-			" fcs.fcs_name,datasource_name,agent_name,si.si_count,uf.fav_id,uf.fav_flag" +
+			" fcs.fcs_name,datasource_name,agent_name,si.si_count,uf.fav_id,uf.fav_flag,sfa.file_type" +
 			" FROM " + Data_source.TableName + " ds" +
 			" JOIN " + Agent_info.TableName + " gi ON gi.SOURCE_ID = ds.SOURCE_ID" +
 			" JOIN " + File_collect_set.TableName + " fcs ON fcs.agent_id = gi.agent_id" +
