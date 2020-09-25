@@ -79,7 +79,7 @@ public class FileOperations {
 		GenericRecord avroRecord = getAvroRecord(fileAvroBlock, fileAvroPath);
 		//4.是否为大文件：1是 2否
 		String isBigFile = avroRecord.get("is_big_file").toString();
-		if (IsFlag.Shi.toString().equals(isBigFile)) {
+		if (IsFlag.Shi.getCode().equals(isBigFile)) {
 			//4-1.是大文件file_contents存储文件的实际存储路径,然后根据从hdfs获取的文件路径获取文件二进制流
 			String filePath = new String(((ByteBuffer) avroRecord.get("file_contents")).array(), CodecUtil.UTF8_CHARSET);
 			String fileHdfsPath = PathUtil.convertLocalPathToHDFSPath(filePath);
