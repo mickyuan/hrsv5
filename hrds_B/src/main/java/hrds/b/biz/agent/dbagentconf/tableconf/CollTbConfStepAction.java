@@ -1640,7 +1640,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "unloadType", desc = "卸数方式(代码项: UnloadType)", range = "不可为空")
 	@Param(name = "sql", desc = "获取列的SQL", range = "不可为空")
 	@Param(name = "tableId", desc = "表设置ID", range = "可为空,为空表示未设置过", nullable = true, valueIfNull = "0")
-	@Param(name = "tableName", desc = "表名称", range = "不可为空,为空表示未设置过")
+	@Param(name = "tableName", desc = "表名称", range = "不可为空,为空表示未设置过",nullable = true)
 	@Return(desc = "返回检查后的表数据信息", range = "不可为空")
 	public Set<Table_column> getSqlColumnData(long colSetId, String unloadType, String sql, long tableId,
 		String tableName) {
