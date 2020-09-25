@@ -481,6 +481,7 @@ CLASS_URL                                         VARCHAR(512) NULL, --函数类
 JAR_URL                                           VARCHAR(512) NULL, --jar路径
 HIVEDB_NAME                                       VARCHAR(100) NULL, --hive库名
 IS_SPARKSQL                                       CHAR(1) NOT NULL, --是否同时使用sparksql
+FUNCTION_CLASSIFY                                 VARCHAR(100) NOT NULL, --函数分类
 REMARK                                            VARCHAR(512) NULL, --备注
 CONSTRAINT EDW_SPARKSQL_GRAM_PK PRIMARY KEY(ESG_ID)   );
 

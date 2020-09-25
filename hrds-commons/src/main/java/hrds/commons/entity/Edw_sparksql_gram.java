@@ -52,6 +52,8 @@ public class Edw_sparksql_gram extends ProjectTableEntity
 	private String is_sparksql;
 	@DocBean(name ="hivedb_name",value="hive库名:",dataType = String.class,required = false)
 	private String hivedb_name;
+	@DocBean(name ="function_classify",value="函数分类:",dataType = String.class,required = true)
+	private String function_classify;
 
 	/** 取得：序号 */
 	public Long getEsg_id(){
@@ -146,5 +148,13 @@ public class Edw_sparksql_gram extends ProjectTableEntity
 	/** 设置：hive库名 */
 	public void setHivedb_name(String hivedb_name){
 		this.hivedb_name=hivedb_name;
+	}
+	/** 取得：函数分类 */
+	public String getFunction_classify(){
+		return function_classify;
+	}
+	/** 设置：函数分类 */
+	public void setFunction_classify(String function_classify){
+		this.function_classify=function_classify;
 	}
 }
