@@ -83,6 +83,22 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 		}
 	}
 
+	@Override
+	public void replace() {
+		try {
+			//历史表存在，删除历史表
+			if (helper.existsTable(tableNameInHBase)) {
+				helper.dropTable(tableNameInHBase);
+			}
+			//将当天加载的表的数据克隆到历史表
+			helper.cloneTable(todayTableName, tableNameInHBase);
+			//3.创建hive映射HBase的表
+			hiveMapHBase(tableNameInHBase);
+		} catch (IOException e) {
+			throw new AppSystemException("替换HBase表失败", e);
+		}
+	}
+
 	/**
 	 * 恢复数据
 	 *

@@ -55,20 +55,6 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 	}
 
 	@Override
-	public void replace() {
-		try {
-			//历史表存在，删除历史表
-			if (helper.existsTable(tableNameInHBase)) {
-				helper.dropTable(tableNameInHBase);
-			}
-			//将当天加载的表的数据克隆到历史表
-			helper.cloneTable(todayTableName, tableNameInHBase);
-		} catch (IOException e) {
-			throw new AppSystemException("替换HBase表失败", e);
-		}
-	}
-
-	@Override
 	public void close() throws IOException {
 		if (db != null) {
 			db.close();

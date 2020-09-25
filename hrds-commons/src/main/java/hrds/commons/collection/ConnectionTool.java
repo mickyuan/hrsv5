@@ -11,7 +11,9 @@ import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.DbConfBean;
+import hrds.commons.entity.Data_store_layer;
 import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
@@ -81,7 +83,20 @@ public class ConnectionTool {
 		dbConfBean.setJdbc_url(dbConfigMap.get(StorageTypeKey.jdbc_url));
 		dbConfBean.setUser_name(dbConfigMap.get(StorageTypeKey.user_name));
 		dbConfBean.setDatabase_pad(dbConfigMap.get(StorageTypeKey.database_pwd));
-		dbConfBean.setDatabase_type(dbConfigMap.get(StorageTypeKey.database_type));
+		if (Store_type.HIVE.getCode().equals(dbConfigMap.get("store_type"))) {
+			dbConfBean.setDatabase_type(DatabaseType.Hive.getCode());
+		} else if (Store_type.HBASE.getCode().equals(dbConfigMap.get("store_type"))) {
+			if ("hive".equals(dbConfigMap.get(StorageTypeKey.increment_engine))) {
+				dbConfBean.setDatabase_type(DatabaseType.Hive.getCode());
+			} else if ("phoenix".equals(dbConfigMap.get(StorageTypeKey.increment_engine))) {
+				//TODO
+				throw new AppSystemException("暂时没支持");
+			} else {
+				throw new AppSystemException("hbase的增量引擎不能为空");
+			}
+		} else {
+			dbConfBean.setDatabase_type(dbConfigMap.get(StorageTypeKey.database_type));
+		}
 		dbConfBean.setDatabase_name(dbConfigMap.get(StorageTypeKey.database_name));
 		return dbConfBean;
 	}
@@ -149,7 +164,9 @@ public class ConnectionTool {
 			logicStep = "返回一个存储层的信息")
 	public static List<Map<String, Object>> getLayerList(DatabaseWrapper db, long dsl_id) {
 		//根据存储层id获取存储层配置信息列表
-		return SqlOperator.queryList(db, "select * from " + Data_store_layer_attr.TableName + " where dsl_id = ?", dsl_id);
+
+		return SqlOperator.queryList(db, "select t1.*,store_type from " + Data_store_layer_attr.TableName + " t1 " +
+				"left join " + Data_store_layer.TableName + " t2 on t1.dsl_id = t2.dsl_id where t1.dsl_id = ?", dsl_id);
 	}
 
 	@Method(desc = "使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val",
@@ -169,6 +186,7 @@ public class ConnectionTool {
 			String val = dbMap.get("storage_property_val").toString();
 			dbConfigMap.put(key, val);
 		}
+		dbConfigMap.put("store_type", dbConfig.get(0).get("store_type").toString());
 		return dbConfigMap;
 	}
 

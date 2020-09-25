@@ -17,8 +17,6 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.commons.codes.CollectDataType;
 import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Object_collect;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
@@ -26,7 +24,6 @@ import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.hadoop.utils.HSqlHandle;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.PathUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -48,7 +45,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	//半结构化对象采集设置表对象
 	private final ObjectCollectParamBean objectCollectParamBean;
 	//多条半结构化对象采集存储到hadoop存储信息实体合集
-	private final List<ObjectTableBean> objectTableBeanList;
+	private final ObjectTableBean objectTableBean;
 	//整条数据进hbase时的列名称
 	private static final String CONTENT = "content";
 	//开始日期
@@ -57,16 +54,16 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	/**
 	 * 半结构化对象采集数据加载实现类构造方法
 	 *
-	 * @param objectCollectParamBean             Object_collect
-	 *                                   含义：半结构化对象采集设置表对象
-	 *                                   取值范围：所有这张表不能为空的字段的值必须有，为空则会抛异常
-	 * @param objectTableBeanList List<ObjectCollectParamBean>
-	 *                                   含义：多条半结构化对象采集存储到hadoop配置信息实体合集
-	 *                                   取值范围：所有这个实体不能为空的字段的值必须有，为空则会抛异常
+	 * @param objectCollectParamBean ObjectCollectParamBean
+	 *                               含义：半结构化对象采集设置表对象
+	 *                               取值范围：所有这张表不能为空的字段的值必须有，为空则会抛异常
+	 * @param objectTableBean        ObjectTableBean
+	 *                               含义：多条半结构化对象采集存储到hadoop配置信息实体合集
+	 *                               取值范围：所有这个实体不能为空的字段的值必须有，为空则会抛异常
 	 */
-	public ObjectLoadingDataStageImpl(ObjectCollectParamBean objectCollectParamBean, List<ObjectTableBean> objectTableBeanList) {
+	public ObjectLoadingDataStageImpl(ObjectCollectParamBean objectCollectParamBean, ObjectTableBean objectTableBean) {
 		this.objectCollectParamBean = objectCollectParamBean;
-		this.objectTableBeanList = objectTableBeanList;
+		this.objectTableBean = objectTableBean;
 	}
 
 	@Method(desc = "半结构化对象采集，数据加载阶段实现，处理完成后，无论成功还是失败，" +
@@ -90,9 +87,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 			String collectDir = getNewestDir(file_path);
 			collectDir = FileNameUtils.normalize(collectDir, true);
 			//3.遍历对象采集任务，根据对应的配置找到指定的文件进行采集
-			for (ObjectTableBean bean : objectTableBeanList) {
-				processTableJob(bean, collectDir);
-			}
+			processTableJob(objectTableBean, collectDir);
 		} catch (Exception e) {
 			statusInfo.setEndDate(DateUtil.getSysDate());
 			statusInfo.setEndTime(DateUtil.getSysTime());
@@ -129,15 +124,15 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 			}
 			//2.判断非结构化对象采集任务存储目的地，调用对应方法
 //			if (IsFlag.Shi.getCode().equals(bean.getIs_hdfs())) {
-				//拼接上传到hdfs的路径
+			//拼接上传到hdfs的路径
 //				String hdfsPath = PathUtil.DCLRELEASE + object_collect.getOdc_id() + "/" + bean.getEn_name() + "/";
 //				hdfsPath = FileNameUtils.normalize(hdfsPath, true);
-				//数据上传到HDFS
+			//数据上传到HDFS
 //				uploadHDFS(files, hdfsPath);
 //			}
 //			if (IsFlag.Shi.toString().equals(bean.getIs_hbase())) {
-				//数据加载进HBase
-				loadIntoHBase(bean, files);
+			//数据加载进HBase
+			loadIntoHBase(bean, files);
 //			}
 		} catch (Exception e) {
 			log.error("处理表失败：" + bean.getEn_name(), e);

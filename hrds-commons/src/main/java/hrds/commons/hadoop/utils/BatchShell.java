@@ -10,14 +10,14 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.PropertyParaUtil;
-import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.FileProgressMonitor;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
-import java.io.File;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+
+import java.io.File;
 
 @DocClass(desc = "拼接执行命令的工具类", author = "zxz", createdate = "2019/11/1 10:18")
 public class BatchShell {

@@ -8,12 +8,16 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
+import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
-import hrds.agent.job.biz.bean.SourceDataConfBean;
+import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.ObjectCollectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
+import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.base.AgentBaseAction;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.BeanUtils;
 import hrds.commons.utils.ConnUtil;
 import hrds.commons.utils.PackUtil;
 import hrds.commons.utils.xlstoxml.Xls2xml;
@@ -25,8 +29,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @DocClass(desc = "接收页面定义的参数执行object采集", author = "zxz", createdate = "2019/10/23 16:29")
 public class ObjectCollectJob extends AgentBaseAction {
@@ -42,7 +50,7 @@ public class ObjectCollectJob extends AgentBaseAction {
 	public String execute(String taskInfo) {
 		String message = "执行成功";
 		try {
-			//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+			//1.对配置信息解压缩并反序列化为ObjectCollectParamBean对象
 			ObjectCollectParamBean objectCollectParamBean =
 					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), ObjectCollectParamBean.class);
 			//2.将页面传递过来的压缩信息解压写文件
@@ -62,16 +70,38 @@ public class ObjectCollectJob extends AgentBaseAction {
 	@Return(desc = "执行返回信息", range = "不会为空")
 	public String executeImmediately(String etlDate, String taskInfo) {
 		String message = "执行成功";
+		ExecutorService executor = null;
 		try {
-			//1.对配置信息解压缩并反序列化为SourceDataConfBean对象
+			//1.对配置信息解压缩并反序列化为ObjectCollectParamBean对象
 			ObjectCollectParamBean objectCollectParamBean =
 					JSONObject.parseObject(PackUtil.unpackMsg(taskInfo).get("msg"), ObjectCollectParamBean.class);
 			//2.将页面传递过来的压缩信息解压写文件
 			FileUtil.createFile(JobConstant.MESSAGEFILE + objectCollectParamBean.getOdc_id(),
 					PackUtil.unpackMsg(taskInfo).get("msg"));
+			//3.获取json数组转成CollectTableBean的集合
+			List<ObjectTableBean> objectTableBeanList = objectCollectParamBean.getObjectTableBeanList();
+			executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+			List<Future<JobStatusInfo>> list = new ArrayList<>();
+			//4.遍历，设置跑批日期，多线程执行任务
+			for (ObjectTableBean objectTableBean : objectTableBeanList) {
+				//设置跑批日期
+				objectTableBean.setEtlDate(etlDate);
+				//设置sql占位符参数
+				//为了确保多个线程之间的值不互相干涉，复制对象的值。
+				ObjectCollectParamBean objectCollectParamBean1 = new ObjectCollectParamBean();
+				BeanUtils.copyProperties(objectCollectParamBean, objectCollectParamBean1);
+				ObjectCollectJobImpl objectCollectJob = new ObjectCollectJobImpl(objectCollectParamBean1, objectTableBean);
+				Future<JobStatusInfo> submit = executor.submit(objectCollectJob);
+				list.add(submit);
+			}
+			//5.打印每个线程执行情况
+			JobStatusInfoUtil.printJobStatusInfo(list);
 		} catch (Exception e) {
 			log.error(e);
-			message = "对象采集生成配置文件失败:" + e.getMessage();
+			message = "执行对象采集入库任务失败:" + e.getMessage();
+		} finally {
+			if (executor != null)
+				executor.shutdown();
 		}
 		return message;
 	}

@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ObjectTableBean implements Serializable {
 	@DocBean(name = "ocs_id", value = "对象采集任务编号:", dataType = Long.class, required = true)
-	private Long ocs_id;
+	private String ocs_id;
 	@DocBean(name = "en_name", value = "英文名称:", dataType = String.class, required = true)
 	private String en_name;
 	@DocBean(name = "zh_name", value = "中文名称:", dataType = String.class, required = true)
@@ -25,7 +25,7 @@ public class ObjectTableBean implements Serializable {
 	@DocBean(name = "firstline", value = "第一行数据:", dataType = String.class, required = false)
 	private String firstline;
 	@DocBean(name = "odc_id", value = "对象采集id:", dataType = Long.class, required = false)
-	private Long odc_id;
+	private String odc_id;
 	@DocBean(name = "updatetype", value = "更新方式(UpdateType):0-直接更新<DirectUpdate> 1-拉链更新<IncrementUpdate> ",
 			dataType = String.class, required = true)
 	private String updatetype;
@@ -46,11 +46,11 @@ public class ObjectTableBean implements Serializable {
 	@DocBean(name = "dataStoreConfBean", value = "表存储配置信息", dataType = DataStoreConfBean.class)
 	private List<DataStoreConfBean> dataStoreConfBean;
 
-	public Long getOcs_id() {
+	public String getOcs_id() {
 		return ocs_id;
 	}
 
-	public void setOcs_id(Long ocs_id) {
+	public void setOcs_id(String ocs_id) {
 		this.ocs_id = ocs_id;
 	}
 
@@ -102,11 +102,11 @@ public class ObjectTableBean implements Serializable {
 		this.firstline = firstline;
 	}
 
-	public Long getOdc_id() {
+	public String getOdc_id() {
 		return odc_id;
 	}
 
-	public void setOdc_id(Long odc_id) {
+	public void setOdc_id(String odc_id) {
 		this.odc_id = odc_id;
 	}
 

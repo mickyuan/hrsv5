@@ -93,12 +93,18 @@ public abstract class AbstractJobStage implements JobStageInterface {
 					if (i == storage_time) {
 						db.execute("DROP TABLE " + hbase_name + "_" + i);
 					} else {
+						if (db.isExistTable(hbase_name + "_" + (i + 1))) {
+							db.execute("DROP TABLE " + hbase_name + "_" + (i + 1));
+						}
 						db.execute(db.getDbtype().ofRenameSql(hbase_name + "_" + i, hbase_name
 								+ "_" + (i + 1)));
 					}
 				}
 			}
 			if (db.isExistTable(hbase_name + "_1b")) {
+				if (db.isExistTable(hbase_name + "_" + 2)) {
+					db.execute("DROP TABLE " + hbase_name + "_" + 2);
+				}
 				//修改备份的表
 				db.execute(db.getDbtype().ofRenameSql(hbase_name + "_1b", hbase_name + "_" + 2));
 			}
@@ -130,12 +136,18 @@ public abstract class AbstractJobStage implements JobStageInterface {
 						if (i == storage_time) {
 							helper.dropTable(hbase_name + "_" + i);
 						} else {
+							if (helper.existsTable(hbase_name + "_" + (i + 1))) {
+								helper.dropTable(hbase_name + "_" + (i + 1));
+							}
 							helper.renameTable(hbase_name + "_" + i, hbase_name
 									+ "_" + (i + 1));
 						}
 					}
 				}
 				if (helper.existsTable(hbase_name + "_1b")) {
+					if (helper.existsTable(hbase_name + "_" + 2)) {
+						helper.dropTable(hbase_name + "_" + 2);
+					}
 					//修改备份的表
 					helper.renameTable(hbase_name + "_1b", hbase_name + "_" + 2);
 				}

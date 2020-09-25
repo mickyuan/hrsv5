@@ -3,6 +3,9 @@ package hrds.agent.job.biz.core.increasement.impl;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
+import hrds.commons.exception.AppSystemException;
+
+import java.io.IOException;
 
 /**
  * HBaseIncreasementByPhoenix
@@ -33,6 +36,11 @@ public class HBaseIncreasementByPhoenix extends HBaseIncreasement {
 
 	@Override
 	public void restore(String storageType) {
+
+	}
+
+	@Override
+	public void replace() {
 
 	}
 }
