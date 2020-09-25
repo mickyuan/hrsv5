@@ -43,7 +43,7 @@ public class AgentDeploy {
 	 */
 	public static final String SEPARATOR = File.separator;
 	/**
-	 * 系统路径的符号
+	 * 日志文件XML
 	 */
 	public static final String LOG4J2_NAME = "log4j2.xml";
 
