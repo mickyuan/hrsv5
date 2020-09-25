@@ -1,5 +1,3 @@
-
-
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('100','approx_count_distinct','approx_count_distinct(expr[, relativeSD])','通过HyperLogLog ++返回估计的基数，relativeSD定义允许的最大估计误差','1','1','1','聚合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('101','avg','avg(expr)','返回expr列的平均值','1','1','1','聚合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('102','collect_list','collect_list(expr)','聚合指定字段的值到list','1','1','1','聚合函数');
@@ -26,7 +24,6 @@ insert into edw_sparksql_gram(esg_id,function_name,function_example,function_des
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('123','var_pop','var_pop(col)','总体方差（population variance）','1','1','1','聚合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('124','var_samp','var_samp(expr)','样本无偏方差（unbiased variance）','1','1','1','聚合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('125','variance','variance(expr)','即var_samp；返回expr列所有数值的样本方差','1','1','1','聚合函数');
-insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('','','','','1','1','1','');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('126','array_contains',' array_contains(Array<T>, value)','如该数组Array<T>包含value返回true，否则返回false','1','1','1','集合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('127','explode','explode(expr) ','将Array格式的expr分割成多行或者Map格式的expr分割成多行和多列','1','1','1','集合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('128','explode_outer','','同explode，但当array或map为空或null时，会展开为null。','1','1','1','集合函数');
@@ -40,7 +37,6 @@ insert into edw_sparksql_gram(esg_id,function_name,function_example,function_des
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('136','map_values','map_values(Map<K.V>)','返回map的值组成的array','1','1','1','集合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('137','size','size(Array<T>)','array 或 map 的长度','1','1','1','集合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('138','sort_array','sort_array(e: Column, asc: Boolean)','将array中元素排序（自然排序），默认asc。','1','1','1','集合函数');
-insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('','','','','1','1','1','');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('139','add_months','add_months(startDate: Column, numMonths: Int)','指定日期添加n月','1','1','1','时间函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('140','date_add','date_add(start: Column, days: Int)','指定日期之后n天: select date_add(‘2018-01-01’,3)','1','1','1','时间函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('141','date_sub','date_sub(start: Column, days: Int)','指定日期之前n天','1','1','1','时间函数');
@@ -69,7 +65,6 @@ insert into edw_sparksql_gram(esg_id,function_name,function_example,function_des
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('164','unix_timestamp','unix_timestamp(s: Column)','同上，默认格式为 yyyy-MM-dd HH:mm:ss','1','1','1','时间函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('165','unix_timestamp','unix_timestamp()','当前时间戳(秒),底层实现为unix_timestamp(current_timestamp(), yyyy-MM-dd HH:mm:ss)','1','1','1','时间函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('166','window','window(timeColumn: Column, windowDuration: String, slideDuration: String, startTime: String)','时间窗口函数，将指定时间(TimestampType)划分到窗口','1','1','1','时间函数');
-insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('','','','','1','1','1','');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('167','cos','cos(a)','返回a的余弦值','1','1','1','数学函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('168','sin','sin(a)','求a的正弦值','1','1','1','数学函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('169','tan','tan(a)','返回a的正切值','1','1','1','数学函数');
@@ -101,13 +96,11 @@ insert into edw_sparksql_gram(esg_id,function_name,function_example,function_des
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('195','sqrt','sqrt(e: Column)','平方根','1','1','1','数学函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('196','hex','hex(column: Column)','转十六进制','1','1','1','数学函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('197','unhex','unhex(column: Column)','逆转十六进制','1','1','1','数学函数');
-insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('','','','','1','1','1','');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('198','crc32','crc32(e: Column)','计算CRC32,返回bigint','1','1','1','混杂misc函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('199','hash','hash(cols: Column*)','计算 hash code，返回int','1','1','1','混杂misc函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('200','md5','md5(e: Column)','计算MD5摘要，返回32位，16进制字符串','1','1','1','混杂misc函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('201','sha1','sha1(e: Column)','计算SHA-1摘要，返回40位，16进制字符串','1','1','1','混杂misc函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('202','sha2','sha2(e: Column, numBits: Int)','计算SHA-1摘要，返回numBits位，16进制字符串。numBits支持224, 256, 384, or 512.','1','1','1','混杂misc函数');
-insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('','','','','1','1','1','');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('204','abs','abs(e: Column)','绝对值','1','1','1','非聚合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('205','array','array(cols: Column*)','多列合并为array，cols必须为同类型','1','1','1','非聚合函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('206','map','map(cols: Column*)','将多列组织为map，输入列必须为（key,value)形式，各列的key/value分别为同一类型。','1','1','1','非聚合函数');
@@ -185,3 +178,4 @@ insert into edw_sparksql_gram(esg_id,function_name,function_example,function_des
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('282','lead','lead(e: Column, offset: Int, defaultValue: Any)','返回当前行后偏移行的值','1','1','1','窗口函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('283','ntile','ntile(n: Int)','返回一个有序窗口分区中的ntile组id(从1到n)。','1','1','1','窗口函数');
 insert into edw_sparksql_gram(esg_id,function_name,function_example,function_desc,is_available,is_udf,is_sparksql,function_classify) values ('284','unboundedFollowing','unboundedFollowing()','返回表示窗口分区中最后一行的特殊框架边界。','1','1','1','窗口函数');
+
