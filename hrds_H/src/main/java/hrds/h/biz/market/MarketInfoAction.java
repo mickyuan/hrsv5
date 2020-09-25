@@ -3579,18 +3579,18 @@ public class MarketInfoAction extends BaseAction {
 			"select * from " + Edw_sparksql_gram.TableName + " ORDER BY function_name");
 
 		Map<String, List<Object>> sparkSqlGramsMap = new LinkedHashMap<>();
-		List<Object> classisyList = new ArrayList<>();
+		List<Object> classifyList = new ArrayList<>();
 		sparkSqlGramsList.forEach(itemBean -> {
 			if (sparkSqlGramsMap.containsKey(itemBean.getFunction_classify())) {
 				sparkSqlGramsMap.get(itemBean.getFunction_classify()).add(itemBean);
 			} else {
-				classisyList.add(itemBean.getFunction_classify());
+				classifyList.add(itemBean.getFunction_classify());
 				List<Object> itemList = new ArrayList<>();
 				itemList.add(itemBean);
 				sparkSqlGramsMap.put(itemBean.getFunction_classify(), itemList);
 			}
 		});
-		sparkSqlGramsMap.put("classify", classisyList);
+		sparkSqlGramsMap.put("classify", classifyList);
 		return sparkSqlGramsMap;
 	}
 }
