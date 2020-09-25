@@ -1,7 +1,9 @@
 package hrds.l.biz.autoanalysis.operate;
 
 import com.alibaba.druid.sql.SQLUtils;
+import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.util.JdbcConstants;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -26,6 +28,7 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
 import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
@@ -310,32 +313,43 @@ public class OperateAction extends BaseAction {
 			Auto_tp_cond_info auto_tp_cond_info = autoTpCondInfoList.get(i);
 			Auto_tp_cond_info autoTpCondInfo = autoTpCondInfos[i];
 			String condParam;
-			String oldParam;
-			if (auto_tp_cond_info.getCon_relation().equals("IN")) {
-				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
-						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE + Constant.LXKH
-						+ auto_tp_cond_info.getPre_value().replace(",", ", ")
-						+ Constant.RXKH;
-				oldParam = autoTpCondInfo.getCond_para_name() + Constant.SPACE
-						+ autoTpCondInfo.getCon_relation() + Constant.SPACE + Constant.LXKH
-						+ autoTpCondInfo.getPre_value().replace(",", ", ")
-						+ Constant.RXKH;
-			} else if (auto_tp_cond_info.getCon_relation().equals("BETWEEN")) {
-				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
-						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
-						+ auto_tp_cond_info.getPre_value().replace(",", " AND ");
-				oldParam = autoTpCondInfo.getCond_para_name() + Constant.SPACE
-						+ autoTpCondInfo.getCon_relation() + Constant.SPACE
-						+ autoTpCondInfo.getPre_value().replace(",", " AND ");
+			String newParam;
+			if (auto_tp_cond_info.getTemplate_cond_id().equals(autoTpCondInfo.getTemplate_cond_id())) {
+				if (auto_tp_cond_info.getCon_relation().equals("IN")) {
+					condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+							+ auto_tp_cond_info.getCon_relation() + Constant.SPACE + Constant.LXKH
+							+ auto_tp_cond_info.getPre_value().replace(",", ", ")
+							+ Constant.RXKH;
+					newParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+							+ autoTpCondInfo.getCon_relation() + Constant.SPACE + Constant.LXKH
+							+ autoTpCondInfo.getPre_value().replace(",", ", ")
+							+ Constant.RXKH;
+				} else if (auto_tp_cond_info.getCon_relation().equals("BETWEEN")) {
+					condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+							+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
+							+ auto_tp_cond_info.getPre_value().replace(",", " AND ");
+					newParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+							+ autoTpCondInfo.getCon_relation() + Constant.SPACE
+							+ autoTpCondInfo.getPre_value().replace(",", " AND ");
+				} else {
+					condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+							+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
+							+ auto_tp_cond_info.getPre_value();
+					newParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
+							+ autoTpCondInfo.getCon_relation() + Constant.SPACE
+							+ autoTpCondInfo.getPre_value();
+				}
+				format_sql = StringUtil.replace(format_sql, condParam, newParam);
 			} else {
 				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
 						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
 						+ auto_tp_cond_info.getPre_value();
-				oldParam = autoTpCondInfo.getCond_para_name() + Constant.SPACE
-						+ autoTpCondInfo.getCon_relation() + Constant.SPACE
-						+ autoTpCondInfo.getPre_value();
+				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(format_sql);
+				SQLExpr whereInfo = druidParseQuerySql.whereInfo;
+				List<String> whereList = StringUtil.split(whereInfo.toString(), "\n");
+
+				format_sql = StringUtil.replace(format_sql, condParam, "");
 			}
-			format_sql.replace(oldParam, condParam);
 		}
 		for (Auto_fetch_res auto_fetch_res : autoFetchRes) {
 			Auto_tp_res_set auto_tp_res_set = Dbo.queryOneObject(Auto_tp_res_set.class,
@@ -526,8 +540,8 @@ public class OperateAction extends BaseAction {
 				}
 			}
 			columnMap.put("columns", columnList);
-			columnMap.put("numColumns", numColumnList);
-			columnMap.put("measureColumns", measureColumnList);
+			columnMap.put("numColumns", JSONArray.parseArray(JSON.toJSONString(numColumnList)));
+			columnMap.put("measureColumns", JSONArray.parseArray(JSON.toJSONString(measureColumnList)));
 		} else if (AutoSourceObject.XiTongJiShuJuJi == AutoSourceObject.ofEnumByCode(data_source)) {
 			// 2.根据表名获取系统数据集字段信息
 			List<Map<String, Object>> columnList = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
@@ -538,8 +552,8 @@ public class OperateAction extends BaseAction {
 					}
 				}
 			}
+			columnMap.put("numColumns", JSONArray.parseArray(JSON.toJSONString(numColumnList)));
 			columnMap.put("columns", columnList);
-			columnMap.put("numColumns", numColumnList);
 		}
 		// 3.返回字段信息
 		return columnMap;
@@ -671,7 +685,8 @@ public class OperateAction extends BaseAction {
 				"SELECT * FROM " + Auto_legend_info.TableName + " WHERE component_id = ?", component_id);
 		resultMap.put("legendInfo", legendMap);
 		// 15.获取组件查询结果
-		Map<String, Object> visualComponentResult = getVisualComponentResult(auto_comp_sum.getExe_sql());
+		Map<String, Object> visualComponentResult = getVisualComponentResult(auto_comp_sum.getExe_sql(),
+				100);
 		resultMap.putAll(visualComponentResult);
 		// 16.获取图表结果
 		Map<String, Object> chartShowMap = getChartShow(auto_comp_sum.getExe_sql(), x_columns, y_columns,
@@ -943,14 +958,14 @@ public class OperateAction extends BaseAction {
 			Collections.addAll(columns, y_columns);
 			resultMap.put("legend_data", columns);
 			// 添加y轴的值
-			List<Map<String, Object>> yList = new ArrayList<>();
+			List<Object> yList = new ArrayList<>();
+			Map<String, Object> map = new HashMap<>();
+			List<Object> data = new ArrayList<>();
 			for (int i = 0; i < componentList.size(); i++) {
 				for (int j = 0; j < y_columns.length; j++) {
+					data.add(componentList.get(i).get(y_columns[j].trim()));
 					if (i == 0) {
-						Map<String, Object> map = new HashMap<>();
-						List<Object> data = new ArrayList<>();
-						data.add(componentList.get(i).get(y_columns[j].trim()));
-						resultMap.put("name", y_columns[j]);
+						map.put("name", y_columns[j]);
 						if ("bl".equals(chart_type)) {
 							if (j < 2) {
 								map.put("type", "bar");
@@ -964,11 +979,6 @@ public class OperateAction extends BaseAction {
 						}
 						map.put("data", data);
 						yList.add(map);
-					} else {
-						List<Object> data = JsonUtil.toObject(yList.get(j).get("data").toString(),
-								new TypeReference<List<Object>>() {
-								}.getType());
-						data.add(componentList.get(i).get(y_columns[j].trim()));
 					}
 				}
 			}
@@ -984,14 +994,16 @@ public class OperateAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "获取可视化组件结果（获取答案）", logicStep = "1.获取列信息" +
-			"2.获取组件数据" +
-			"3.封装并返回列信息与组件结果信息")
+	@Method(desc = "获取可视化组件结果（获取答案），执行前先调用getSqlByCondition方法",
+			logicStep = "1.获取列信息" +
+					"2.获取组件数据" +
+					"3.封装并返回列信息与组件结果信息")
 	@Param(name = "exe_sql", desc = "可视化组件执行sql", range = "无限制")
+	@Param(name = "showNum", desc = "显示条数", range = "大于0的正整数", valueIfNull = "100")
 	@Return(desc = "返回列信息与组件结果信息", range = "无限制")
-	public Map<String, Object> getVisualComponentResult(String exe_sql) {
+	public Map<String, Object> getVisualComponentResult(String exe_sql, int showNum) {
 		List<Map<String, Object>> visualComponentList = new ArrayList<>();
-		List<String> columnList = new ArrayList<>();
+		Set<String> columnList = new HashSet<>();
 		new ProcessingData() {
 			@Override
 			public void dealLine(Map<String, Object> map) {
@@ -1001,7 +1013,7 @@ public class OperateAction extends BaseAction {
 				// 2.获取组件数据
 				visualComponentList.add(map);
 			}
-		}.getDataLayer(exe_sql, Dbo.db());
+		}.getPageDataLayer(exe_sql, Dbo.db(), 1, showNum <= 0 ? 100 : showNum);
 		// 3.封装并返回列信息与组件结果信息
 		Map<String, Object> visualComponentMap = new HashMap<>();
 		visualComponentMap.put("visualComponentList", visualComponentList);
@@ -1019,12 +1031,14 @@ public class OperateAction extends BaseAction {
 	                                Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
 		Validator.notNull(componentBean.getFetch_name(), "取数名称不能为空");
 		Validator.notNull(componentBean.getData_source(), "数据来源不能为空");
-		Validator.notNull(componentBean.getFetch_sum_id(), "取数汇总ID不能为空");
 		String fetch_sql;
 		if (AutoSourceObject.ZiZhuShuJuShuJuJi == AutoSourceObject.ofEnumByCode(componentBean.getData_source())) {
 			// 自主取数数据集
 			// 获取自主取数部分的sql
-			fetch_sql = getAccessSql(componentBean.getFetch_sum_id());
+			List<Long> idList = Dbo.queryOneColumnList(
+					"select fetch_sum_id from " + Auto_fetch_sum.TableName + " where fetch_name=?",
+					componentBean.getFetch_name());
+			fetch_sql = getAccessSql(idList.get(0));
 		} else if (AutoSourceObject.XiTongJiShuJuJi == AutoSourceObject.ofEnumByCode(componentBean.getData_source())) {
 			// 系统级数据集
 			// 拼接系统数据集sql
@@ -1091,7 +1105,7 @@ public class OperateAction extends BaseAction {
 			result_sql.append(Constant.SPACE).append("GROUP BY").append(Constant.SPACE);
 			for (Auto_comp_group auto_comp_group : autoCompGroups) {
 				String column_name = auto_comp_group.getColumn_name();
-				result_sql.append("`").append(column_name).append("`,");
+				result_sql.append(column_name).append("`,");
 			}
 			// 去除,添加limit条件
 			result_sql.deleteCharAt(result_sql.length() - 1);
@@ -1129,12 +1143,12 @@ public class OperateAction extends BaseAction {
 					// 2.判断操作符是否为介于或不介于
 					if (AutoDataOperator.JieYu == AutoDataOperator.ofEnumByCode(operator)
 							|| AutoDataOperator.BuJieYu == AutoDataOperator.ofEnumByCode(operator)) {
-						result_where.append("`").append(cond_en_column).append("`").append(Constant.SPACE)
+						result_where.append(cond_en_column).append(Constant.SPACE)
 								.append(transOperator(operator)).append(Constant.SPACE).append(Constant.LXKH)
 								.append(cond_value).append(Constant.RXKH).append(Constant.SPACE)
 								.append((arithmetic_logic).toUpperCase()).append(Constant.SPACE);
 					} else {
-						result_where.append("`").append(cond_en_column).append("`").append(Constant.SPACE)
+						result_where.append(cond_en_column).append(Constant.SPACE)
 								.append(transOperator(operator)).append(Constant.SPACE).append(cond_value)
 								.append(Constant.SPACE).append((arithmetic_logic).toUpperCase())
 								.append(Constant.SPACE);
@@ -1728,7 +1742,7 @@ public class OperateAction extends BaseAction {
 				Map<String, Object> componentInfo = getVisualComponentInfoById(autoCompSum.getComponent_id());
 				// 2.根据组件id查询组件缓存
 				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
-						componentInfo.get("compSum").toString(), Auto_comp_sum.class)
+						JsonUtil.toJson(componentInfo.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
 				map.put("x", (i % 3) * 33);
 				map.put("y", (i / 3) * 30);

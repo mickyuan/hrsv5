@@ -9,10 +9,8 @@ import hrds.commons.entity.fdentity.ProjectTableEntity;
 @Table(tableName = "component_bean")
 public class ComponentBean extends ProjectTableEntity {
 
-	@DocBean(name = "fetch_sum_id", value = "取数汇总ID:", dataType = Long.class)
-	private Long fetch_sum_id;
-	@DocBean(name = "showNum", value = "显示条数:", dataType = Long.class)
-	private Long showNum;
+	@DocBean(name = "showNum", value = "显示条数:", dataType = Integer.class)
+	private Integer showNum;
 	@DocBean(name = "condition_sql", value = "条件sql:", dataType = String.class)
 	private String condition_sql;
 	@DocBean(name = "fetch_name", value = "取数名称:", dataType = String.class)
@@ -24,19 +22,11 @@ public class ComponentBean extends ProjectTableEntity {
 	@DocBean(name = "y_columns", value = "纵轴列信息:", dataType = String[].class)
 	private String[] y_columns;
 
-	public Long getFetch_sum_id() {
-		return fetch_sum_id;
-	}
-
-	public void setFetch_sum_id(Long fetch_sum_id) {
-		this.fetch_sum_id = fetch_sum_id;
-	}
-
-	public Long getShowNum() {
+	public Integer getShowNum() {
 		return showNum;
 	}
 
-	public void setShowNum(Long showNum) {
+	public void setShowNum(Integer showNum) {
 		this.showNum = showNum;
 	}
 

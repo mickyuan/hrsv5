@@ -2,6 +2,10 @@ package hrds.l.biz.autoanalysis.manage;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
+import com.alibaba.druid.sql.ast.expr.SQLAggregateExpr;
+import com.alibaba.druid.sql.ast.expr.SQLAllColumnExpr;
+import com.alibaba.druid.sql.ast.expr.SQLPropertyExpr;
+import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
@@ -12,7 +16,6 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
-import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AutoTemplateStatus;
@@ -37,10 +40,7 @@ import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @DocClass(desc = "自主分析管理类", author = "dhw", createdate = "2020/8/21 14:17")
 public class ManageAction extends BaseAction {
@@ -130,34 +130,52 @@ public class ManageAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "生成自主分析模板配置参数", logicStep = "")
+	@Method(desc = "生成自主分析模板配置参数", logicStep = "1.校验sql是否正确" +
+			"2.sql格式化并处理sql去除;结尾" +
+			"3.判断sql是否为union 或者union all解析sql获取where条件以及select条件" +
+			"4.返回SQL WHERE 条件以及SQL SELECT条件")
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
 	public Map<String, Object> generateTemplateParam(String template_sql) {
-//		verifySqlIsLegal(template_sql);
+		// 1.校验sql是否正确
+		verifySqlIsLegal(template_sql);
 		String dbType = JdbcConstants.POSTGRESQL;
-		// sql格式化
+		// 2.sql格式化并处理sql去除;结尾
 		String format_sql = SQLUtils.format(template_sql, dbType).trim();
 		if (format_sql.endsWith(";")) {
 			format_sql = format_sql.substring(0, format_sql.length() - 1);
 		}
 		List<Map<String, Object>> autoTpCondInfoList = new ArrayList<>();
 		List<Auto_tp_res_set> autoTpResSets = new ArrayList<>();
+		// 3.判断sql是否为union 或者union all解析sql获取where条件以及select条件
 		if (format_sql.toUpperCase().contains(UNION) && !format_sql.contains(UNIONALL)) {
 			List<String> unionSql = StringUtil.split(format_sql, UNION);
 			for (String sql : unionSql) {
-				getAutoTpCondInfo(autoTpCondInfoList, autoTpResSets, sql);
+				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
+				// 获取模板结果配置信息
+				getAutoTpResSet(autoTpResSets, sql, druidParseQuerySql.selectList);
+				// 获取模板条件信息
+				getAutoTpCondInfo(autoTpCondInfoList, druidParseQuerySql.whereInfo);
 			}
 		} else if (format_sql.contains(UNIONALL)) {
 			List<String> unionSql = StringUtil.split(format_sql, UNIONALL);
 			for (String sql : unionSql) {
-				getAutoTpCondInfo(autoTpCondInfoList, autoTpResSets, sql);
+				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
+				// 获取模板结果配置信息
+				getAutoTpResSet(autoTpResSets, sql, druidParseQuerySql.selectList);
+				// 获取模板条件信息
+				getAutoTpCondInfo(autoTpCondInfoList, druidParseQuerySql.whereInfo);
 			}
 		} else {
-			getAutoTpCondInfo(autoTpCondInfoList, autoTpResSets, format_sql);
+			DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(format_sql);
+			// 获取模板结果配置信息
+			getAutoTpResSet(autoTpResSets, format_sql, druidParseQuerySql.selectList);
+			// 获取模板条件信息
+			getAutoTpCondInfo(autoTpCondInfoList, druidParseQuerySql.whereInfo);
 		}
 		Map<String, Object> templateMap = new HashMap<>();
 		templateMap.put("autoTpCondInfo", autoTpCondInfoList);
 		templateMap.put("autoTpResSetInfo", autoTpResSets);
+		// 4.返回SQL WHERE 条件以及SQL SELECT条件
 		return templateMap;
 	}
 
@@ -360,90 +378,30 @@ public class ManageAction extends BaseAction {
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
 	@Param(name = "showNum", desc = "显示条数", range = "正整数", valueIfNull = "10")
 	@Return(desc = "返回数据结果", range = "无限制")
-	public List<Map<String, Object>> getPreviewData(String template_sql, int showNum) {
+	public Map<String, Object> getPreviewData(String template_sql, int showNum) {
 		// 数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 最多只显示1000行
 		List<Map<String, Object>> resultData = new ArrayList<>();
 		if (showNum > 1000) {
 			showNum = 1000;
 		}
+		Set<String> columns = new HashSet<>();
 		// 1.根据sql查询数据结果
 		new ProcessingData() {
 			@Override
 			public void dealLine(Map<String, Object> map) {
+				map.forEach((k, v) -> {
+					columns.add(k);
+				});
 				resultData.add(map);
 			}
 		}.getPageDataLayer(template_sql, Dbo.db(), 1, showNum <= 0 ? 10 : showNum);
 		// 2.返回数据结果
-		return resultData;
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("resultData", resultData);
+		resultMap.put("columns", columns);
+		return resultMap;
 	}
-
-	public static void main(String[] args) {
-		String sql = "select * from ZXZ_z2_table_info";
-		new ProcessingData() {
-			@Override
-			public void dealLine(Map<String, Object> map) {
-				for (Map.Entry<String, Object> entry : map.entrySet()) {
-					System.out.println(entry.getKey() + "===" + entry.getValue());
-				}
-			}
-		}.getDataLayer(sql, new DatabaseWrapper());
-	}
-
-//	@Method(desc = "模板配置结果设置点击 解析sq生成 select 部分的内容", logicStep = "")
-//	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
-//	@Return(desc = "", range = "")
-//	public List<Map<String, Object>> getTemplateResult(String template_sql) {
-//		List<String> tableNameList = new ArrayList<>();
-//		List<String> columnNameList = new ArrayList<>();
-//		List<String> columnTypeList = new ArrayList<>();
-//		List<String> resultColumnNameList = new ArrayList<>();
-//		List<String> tableNames = DruidParseQuerySql.parseSqlTableToList(template_sql);
-//		for (String table_name : tableNames) {
-//			List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
-//			for (Map<String, Object> column : columns) {
-//				Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
-//				auto_tp_res_set.setSource_table_name(table_name);
-//				auto_tp_res_set.setColumn_en_name(column.get("column_name").toString());
-//				auto_tp_res_set.setColumn_cn_name(column.get("column_name").toString());
-////				auto_tp_res_set.setRes_show_column(entry.getKey().trim());
-////				List<Map<String, Object>> columnList =
-////						DataTableUtil.getColumnByTableName(Dbo.db(), auto_tp_res_set.getSource_table_name());
-////				for (Map<String, Object> columnMap : columnList) {
-////					if (columnMap.get("table_name").equals(auto_tp_res_set.getSource_table_name())) {
-////						auto_tp_res_set.setColumn_type(columnMap.get("column_type")==null?
-////								AutoValueType.ZiFuChuan.getCode(),);
-////					}
-////				}
-//				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
-////				if (!autoTpResSets.contains(auto_tp_res_set)) {
-////					autoTpResSets.add(auto_tp_res_set);
-////				}
-////				// 对相同列名加序号
-////				if (resultColumnNameList.contains(column.get("column_name").toString())) {
-////					throw new BusinessException("查询字段中存在字段名相同的列，请设置别名");
-////				}
-//				resultColumnNameList.add(column.get("column_name").toString());
-//				columnTypeList.add(column.get("column_type").toString());
-//			}
-//		}
-//		getTableNameAndColumnName(template_sql, tableNameList, columnNameList, columnTypeList, resultColumnNameList);
-//		List<Map<String, Object>> resultSetList = new ArrayList<>();
-//		for (int i = 0; i < tableNameList.size(); i++) {
-//			Map<String, Object> resultSetMap = new HashMap<>();
-//			resultSetMap.put("source_table_name", tableNameList.get(i));
-//			resultSetMap.put("column_en_name", columnNameList.get(i));
-//			resultSetMap.put("column_cn_name", resultColumnNameList.get(i));
-//			resultSetMap.put("res_show_column", resultColumnNameList.get(i));
-//			if (numbersArray.contains(columnTypeList.get(i))) {
-//				resultSetMap.put("column_type", AutoValueType.ShuZhi.toString());
-//			} else {
-//				resultSetMap.put("column_type", AutoValueType.ZiFuChuan.toString());
-//			}
-//			resultSetList.add(resultSetMap);
-//		}
-//		return resultSetList;
-//	}
 
 	@Method(desc = "发布自主取数模板", logicStep = "1.更新模板状态为发布")
 	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
@@ -478,63 +436,7 @@ public class ManageAction extends BaseAction {
 		}
 	}
 
-	private void getAutoTpCondInfo(List<Map<String, Object>> autoTpCondInfoList,
-	                               List<Auto_tp_res_set> autoTpResSets, String sql) {
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
-		SQLExpr whereInfo = druidParseQuerySql.whereInfo;
-		// key为字段别名，value为原字段名称
-		List<Map<String, String>> sourceAndAliasName = getSourceAndAliasName(sql);
-		Map<String, String> relationAliasColumn = getSourceRelationAliasColumn(sql);
-		for (Map<String, String> map : sourceAndAliasName) {
-			for (Map.Entry<String, String> entry : map.entrySet()) {
-				// 表名
-				String table_name = entry.getKey();
-				// 列名
-				String column_name = entry.getValue();
-				List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(),
-						table_name);
-				if (column_name.contains("*")) {
-					for (Map<String, Object> column : columns) {
-						Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
-						auto_tp_res_set.setSource_table_name(table_name);
-						auto_tp_res_set.setColumn_en_name(column.get("column_name").toString());
-						auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
-						auto_tp_res_set.setRes_show_column(column.get("column_name").toString());
-						if (numbersArray.contains(column.get("column_type").toString())) {
-							auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
-						} else {
-							auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
-						}
-						if (!autoTpResSets.contains(auto_tp_res_set)) {
-							autoTpResSets.add(auto_tp_res_set);
-						}
-					}
-				} else {
-					Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
-					auto_tp_res_set.setSource_table_name(table_name);
-					if (column_name.contains(".")) {
-						column_name = StringUtil.split(column_name, ".").get(1);
-					}
-					for (Map<String, Object> column : columns) {
-						if (column.get("column_name").toString().equals(column_name)) {
-							auto_tp_res_set.setColumn_en_name(column_name);
-							auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
-							auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
-							auto_tp_res_set.setRes_show_column(
-									relationAliasColumn.get(column.get("column_name").toString()));
-							if (numbersArray.contains(column.get("column_type").toString())) {
-								auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
-							} else {
-								auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
-							}
-							if (!autoTpResSets.contains(auto_tp_res_set)) {
-								autoTpResSets.add(auto_tp_res_set);
-							}
-						}
-					}
-				}
-			}
-		}
+	private void getAutoTpCondInfo(List<Map<String, Object>> autoTpCondInfoList, SQLExpr whereInfo) {
 		if (null != whereInfo) {
 			List<String> whereList = StringUtil.split(whereInfo.toString(), "\n");
 			for (int i = 0; i < whereList.size(); i++) {
@@ -552,55 +454,123 @@ public class ManageAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "", logicStep = "")
-	@Param(name = "sql", desc = "查询sql", range = "无限制")
-	@Return(desc = "", range = "")
-	private List<Map<String, String>> getSourceAndAliasName(String sql) {
-		String format = SQLUtils.format(sql, JdbcConstants.ORACLE);
-		List<String> split = StringUtil.split(format, "\n");
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
-		List<String> originalField = druidParseQuerySql.parseSelectOriginalField();
-		List<Map<String, String>> list = new ArrayList<>();
-		for (String s : split) {
-			Map<String, String> map = new HashMap<>();
-			if (s.startsWith("FROM")) {
-				List<String> split1 = StringUtil.split(s, Constant.SPACE);
-				for (String field : originalField) {
-					if (field.contains(split1.get(2))) {
-						map.put(split1.get(1), field);
-					}
+	private void getAutoTpResSet(List<Auto_tp_res_set> autoTpResSets, String sql,
+	                             List<SQLSelectItem> selectList) {
+		// 获取表名对应别名，key为原表名，value为表别名
+		Map<String, String> sourceAndAliasName = getTableAndAliasName(sql);
+		for (SQLSelectItem sqlSelectItem : selectList) {
+			String expr = sqlSelectItem.getExpr().toString();
+			String alias = sqlSelectItem.getAlias();
+			if (sqlSelectItem.getExpr() instanceof SQLAllColumnExpr) {
+				// 所有列
+				getAllColumnsBySql(autoTpResSets, sql);
+			} else if (sqlSelectItem.getExpr() instanceof SQLPropertyExpr) {
+				// 字段带表别名
+				SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlSelectItem.getExpr();
+				// 子段名
+				String column_en_name = sqlPropertyExpr.getName();
+				String table_alias = sqlPropertyExpr.getOwner().toString();
+				String table_name = sourceAndAliasName.get(table_alias);
+				List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
+				if (column_en_name.equals("*")) {
+					setAllColumns(autoTpResSets, table_name, columns);
+				} else {
+					Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
+					auto_tp_res_set.setSource_table_name(table_name);
+					auto_tp_res_set.setColumn_en_name(column_en_name);
+					auto_tp_res_set.setRes_show_column(StringUtil.isBlank(alias) ? column_en_name : alias);
+					setAutoTpResSet(autoTpResSets, auto_tp_res_set, columns);
 				}
-				list.add(map);
-			} else if (s.contains("ON")) {
-				List<String> split1 = StringUtil.split(s, Constant.SPACE);
-				for (String field : originalField) {
-					if (field.contains(split1.get(3))) {
-						map.put(split1.get(2), field);
-					}
-				}
-				list.add(map);
+			} else if (sqlSelectItem.getExpr() instanceof SQLAggregateExpr) {
+				// 聚合函数
+				Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
+				auto_tp_res_set.setSource_table_name("UNKNOW");
+				auto_tp_res_set.setColumn_en_name(expr);
+				auto_tp_res_set.setColumn_cn_name(expr);
+				auto_tp_res_set.setRes_show_column(StringUtil.isBlank(alias) ? expr : alias);
+				auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
+				autoTpResSets.add(auto_tp_res_set);
+			} else {
+				throw new BusinessException("暂不支持此种类型的sql");
 			}
 		}
-		return list;
 	}
 
-	@Method(desc = "获取列原字段对应别名", logicStep = "")
-	@Param(name = "sql", desc = "查询sql", range = "无限制")
-	@Return(desc = "", range = "")
-	private Map<String, String> getSourceRelationAliasColumn(String sql) {
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
-		List<String> originalField = druidParseQuerySql.parseSelectOriginalField();
-		List<String> selectAliasField = druidParseQuerySql.parseSelectAliasField();
-		Map<String, String> columnMap = new HashMap<>();
-		for (int i = 0; i < originalField.size(); i++) {
-			if (originalField.get(i).contains(".")) {
-				columnMap.put(StringUtil.split(originalField.get(i), ".").get(1),
-						selectAliasField.get(i));
-			} else {
-				columnMap.put(originalField.get(i), selectAliasField.get(i));
+	private void getAllColumnsBySql(List<Auto_tp_res_set> autoTpResSets, String sql) {
+		List<String> tableList = DruidParseQuerySql.parseSqlTableToList(sql);
+		if (tableList.isEmpty()) {
+			throw new BusinessException("该sql有误请检查");
+		}
+		// 查询select *
+		for (String table_name : tableList) {
+			List<Map<String, Object>> columns = DataTableUtil.getColumnByTableName(Dbo.db(),
+					table_name);
+			setAllColumns(autoTpResSets, table_name, columns);
+		}
+	}
+
+	private void setAutoTpResSet(List<Auto_tp_res_set> autoTpResSets, Auto_tp_res_set auto_tp_res_set,
+	                             List<Map<String, Object>> columns) {
+		for (Map<String, Object> column : columns) {
+			if (auto_tp_res_set.getColumn_en_name().equals(column.get("column_name").toString())) {
+				auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
+				if (numbersArray.contains(column.get("column_ch_name").toString())) {
+					auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
+				} else {
+					auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+				}
+				if (!autoTpResSets.contains(auto_tp_res_set)) {
+					autoTpResSets.add(auto_tp_res_set);
+				}
 			}
 		}
-		return columnMap;
+	}
+
+	private void setAllColumns(List<Auto_tp_res_set> autoTpResSets, String table_name,
+	                           List<Map<String, Object>> columns) {
+		for (Map<String, Object> column : columns) {
+			Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
+			auto_tp_res_set.setSource_table_name(table_name);
+			auto_tp_res_set.setColumn_en_name(column.get("column_name").toString());
+			auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
+			auto_tp_res_set.setRes_show_column(column.get("column_name").toString());
+			if (numbersArray.contains(column.get("column_type").toString())) {
+				auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
+			} else {
+				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+			}
+			if (!autoTpResSets.contains(auto_tp_res_set)) {
+				autoTpResSets.add(auto_tp_res_set);
+			}
+		}
+	}
+
+	@Method(desc = "获取表名对应别名", logicStep = "1.格式化sql" +
+			"2.获取sql片段" +
+			"3.根据条件获取表名以及表别名")
+	@Param(name = "sql", desc = "查询sql", range = "无限制")
+	@Return(desc = "返回表名对应别名", range = "无限制")
+	private Map<String, String> getTableAndAliasName(String sql) {
+		// 1.格式化sql
+		String format = SQLUtils.format(sql, JdbcConstants.ORACLE);
+		// 2.获取sql片段
+		List<String> sqlPartList = StringUtil.split(format, "\n");
+		Map<String, String> map = new HashMap<>();
+		// 3.根据条件获取表名以及表别名
+		for (String sqlPart : sqlPartList) {
+			if (sqlPart.startsWith("FROM")) {
+				List<String> tableAlias = StringUtil.split(sqlPart, Constant.SPACE);
+				if (tableAlias.size() == 3) {
+					map.put(tableAlias.get(2), tableAlias.get(1));
+				} else {
+					map.put(tableAlias.get(1), tableAlias.get(1));
+				}
+			} else if (sqlPart.contains("ON")) {
+				List<String> tableAlias = StringUtil.split(sqlPart, Constant.SPACE);
+				map.put(tableAlias.get(3), tableAlias.get(2));
+			}
+		}
+		return map;
 	}
 
 	private String getCond(List<Map<String, Object>> autoTpCondInfoList, String cond,
