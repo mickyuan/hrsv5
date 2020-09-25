@@ -23,7 +23,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	private static final Logger logger = LogManager.getLogger();
 
 	public IncreasementBySpark(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
-	                           String dsl_name) {
+							   String dsl_name) {
 		super(tableBean, hbase_name, sysDate, db, dsl_name);
 	}
 
@@ -182,12 +182,31 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	}
 
 	private void getDeltaDataSql(ArrayList<String> sqlList) {
+//		String deltaDatasql = "insert into " + deltaTableName;
+//		deltaDatasql += " select * from " + yesterdayTableName;
+//		deltaDatasql += " where ";
+//		deltaDatasql += yesterdayTableName + "." + Constant.EDATENAME + " <> '" + Constant.MAXDATE + "'";
+//		deltaDatasql += " or ";
+//		deltaDatasql += "( ";
+//		deltaDatasql += " not exists ";
+//		deltaDatasql += "(";
+//		deltaDatasql += " select " + deltaTableName + "." + Constant.MD5NAME + " from " + deltaTableName + " where "
+//				+ deltaTableName + "." + Constant.EDATENAME + " <> '" + Constant.MAXDATE + "'";
+//		deltaDatasql += " and " + yesterdayTableName + "." + Constant.MD5NAME + "=" + deltaTableName + "."
+//				+ Constant.MD5NAME + ")";
+//		deltaDatasql += " and " + yesterdayTableName + "." + Constant.EDATENAME + " = '" + Constant.MAXDATE + "'";
+//		deltaDatasql += ")";
+//		sqlList.add(deltaDatasql);
+		//TODO 上面的sql只能在spark-sql上跑，hive的要拆成下面的两个sql
 		String deltaDatasql = "insert into " + deltaTableName;
 		deltaDatasql += " select * from " + yesterdayTableName;
 		deltaDatasql += " where ";
 		deltaDatasql += yesterdayTableName + "." + Constant.EDATENAME + " <> '" + Constant.MAXDATE + "'";
-		deltaDatasql += " or ";
-		deltaDatasql += "( ";
+		sqlList.add(deltaDatasql);
+
+		deltaDatasql = "insert into " + deltaTableName;
+		deltaDatasql += " select * from " + yesterdayTableName;
+		deltaDatasql += " where ( ";
 		deltaDatasql += " not exists ";
 		deltaDatasql += "(";
 		deltaDatasql += " select " + deltaTableName + "." + Constant.MD5NAME + " from " + deltaTableName + " where "
@@ -197,7 +216,6 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		deltaDatasql += " and " + yesterdayTableName + "." + Constant.EDATENAME + " = '" + Constant.MAXDATE + "'";
 		deltaDatasql += ")";
 		sqlList.add(deltaDatasql);
-
 	}
 
 	/*
@@ -238,14 +256,18 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	private void getDeleteDataSql(ArrayList<String> sqlList) {
 
 		StringBuilder deleteDatasql = new StringBuilder(120);
-
-		String join = StringUtils.join(columns, ',');
-		join = StringUtils.replace(join, Constant.EDATENAME, "'" + sysDate + "'");
+		StringBuilder join = new StringBuilder(120);
+		for (String column : columns) {
+			join.append(this.yesterdayTableName).append(".").append(column).append(",");
+		}
+		join.delete(join.length() - 1, join.length());
+		String select_sql = StringUtils.replace(join.toString(), this.yesterdayTableName + "."
+				+ Constant.EDATENAME, "'" + sysDate + "'");
 		// 拼接查找增量并插入增量表
 		deleteDatasql.append("INSERT INTO ");
 		deleteDatasql.append(this.deltaTableName);
 		deleteDatasql.append(" select ");
-		deleteDatasql.append(join);
+		deleteDatasql.append(select_sql);
 		deleteDatasql.append(" from ");
 		deleteDatasql.append(this.yesterdayTableName);
 		deleteDatasql.append(" WHERE NOT EXISTS ");
