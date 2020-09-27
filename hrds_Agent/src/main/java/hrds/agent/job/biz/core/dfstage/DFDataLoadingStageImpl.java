@@ -591,7 +591,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		sql.append(") ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' stored as TEXTFILE");
 		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
 			//包含表头，跳过第一行
-			sql.append("tblproperties (\"skip.header.line.count\"=\"1\")");
+			sql.append(" tblproperties (\"skip.header.line.count\"=\"1\")");
 		}
 		return sql.toString();
 	}

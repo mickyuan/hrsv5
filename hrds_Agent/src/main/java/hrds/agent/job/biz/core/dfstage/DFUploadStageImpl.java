@@ -300,6 +300,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			} else {
 				//这里只支持windows和linux，其他机器不支持，linux下使用命令上传hdfs
 				StringBuilder fsSql = new StringBuilder();
+				fsSql.append("source /etc/profile;source ~/.bashrc;");
 				//拼接认证
 				//TODO 有认证需要加认证文件key必须为keytab_file，需要加认证用户，key必须为keytab_user
 				if (!StringUtil.isEmpty(dataStoreConfBean.getData_store_layer_file().get(StorageTypeKey.keytab_file))) {
