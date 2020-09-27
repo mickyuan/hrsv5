@@ -96,7 +96,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							//有客户端
 							//通过load方式加载数据到hive
 							createHiveTableLoadData(todayTableName, hdfsFilePath, dataStoreConfBean,
-									stageParamInfo.getTableBean(),collectTableBean);
+									stageParamInfo.getTableBean(), collectTableBean);
 						} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 							//没有客户端，则表示为数据库类型在upload时已经装载数据了，直接跳过
 							continue;
@@ -107,7 +107,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//根据文件类型bulkload加载数据进hbase
 						bulkloadLoadDataToHbase(todayTableName, hdfsFilePath, collectTableBean.getEtlDate(),
-								dataStoreConfBean, stageParamInfo.getTableBean(),collectTableBean);
+								dataStoreConfBean, stageParamInfo.getTableBean(), collectTableBean);
 //						LOGGER.warn("DB文件采集数据加载进HBASE没有实现");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 //						LOGGER.info("DB文件采集数据加载进SOLR");
@@ -145,7 +145,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 	}
 
 	public static void bulkloadLoadDataToHbase(String todayTableName, String hdfsFilePath, String etlDate
-			, DataStoreConfBean dataStoreConfBean, TableBean tableBean,CollectTableBean collectTableBean) {
+			, DataStoreConfBean dataStoreConfBean, TableBean tableBean, CollectTableBean collectTableBean) {
 		int run;
 		String isMd5 = IsFlag.Fou.getCode();
 		String file_format = tableBean.getFile_format();
@@ -653,12 +653,14 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			sql.append("`").append(column).append("` ").append(" string,");
 		}
 		sql.deleteCharAt(sql.length() - 1);
-		sql.append(") ROW FORMAT DELIMITED FIELDS TERMINATED BY  '").append(database_separatorr)
-				.append("'").append("stored as textfile");
+		sql.append(") ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.MultiDelimitSerDe' WITH  " +
+				"SERDEPROPERTIES (\"field.delim\"=\"").append(database_separatorr).append("\") stored as  textfile");
+//		sql.append(") ROW FORMAT DELIMITED FIELDS TERMINATED BY  '").append(database_separatorr)
+//				.append("'").append("stored as textfile");
 		//判断是否有表头
 		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
 			//包含表头，跳过第一行
-			sql.append("tblproperties (\"skip.header.line.count\"=\"1\")");
+			sql.append(" tblproperties (\"skip.header.line.count\"=\"1\")");
 		}
 		return sql.toString();
 	}
