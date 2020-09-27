@@ -12,10 +12,7 @@ import hrds.h.biz.config.MarketConfUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static hrds.commons.utils.Constant.*;
@@ -38,7 +35,6 @@ public class Utils {
 	 *
 	 * @param conf            集市配置类实体
 	 * @param isDatabase      是否是关系型数据库
-	 * @param isMultipleInput 是否是多集市输入
 	 * @return 字段名，字段类型组合
 	 */
 	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {

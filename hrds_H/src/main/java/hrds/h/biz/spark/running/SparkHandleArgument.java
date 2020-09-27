@@ -3,13 +3,17 @@ package hrds.h.biz.spark.running;
 import fd.ng.core.utils.JsonUtil;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Author: Mick Yuan
  * @Date:
  * @Since jdk1.8
  */
-public class SparkHandleArgument {
+public class SparkHandleArgument implements Serializable {
     /**
      * 处理类型，如 database,hive,hbase,solr.etc
      */
@@ -177,5 +181,48 @@ public class SparkHandleArgument {
             this.columns = columns;
         }
 
+    }
+
+    /**
+     * hbase solr 相关参数实体
+     */
+    public static class HbaseSolrArgs extends SparkHandleArgument {
+
+        List<String> columns;
+        List<String> rowkeys;
+        List<String> solrCols;
+        List<HbaseSolrField> hbaseSolrFields;
+
+        public List<String> getColumns() {
+            return columns;
+        }
+
+        public void setColumns(List<String> columns) {
+            this.columns = columns;
+        }
+
+        public List<String> getRowkeys() {
+            return rowkeys;
+        }
+
+        public void setRowkeys(List<String> rowkeys) {
+            this.rowkeys = rowkeys;
+        }
+
+        public List<String> getSolrCols() {
+            return solrCols;
+        }
+
+        public void setSolrCols(List<String> solrCols) {
+            this.solrCols = solrCols;
+        }
+
+        public List<HbaseSolrField> getHbaseSolrFields() {
+            return hbaseSolrFields;
+        }
+
+        public void setHbaseSolrFields(List<HbaseSolrField> hbaseSolrFields) {
+            this.hbaseSolrFields = hbaseSolrFields;
+        }
     }
 }

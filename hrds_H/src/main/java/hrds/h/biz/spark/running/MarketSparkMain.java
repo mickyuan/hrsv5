@@ -8,8 +8,7 @@ import hrds.h.biz.spark.dealdataset.DatasetProcessBack;
 import hrds.h.biz.spark.dealdataset.SparkDataset;
 import org.apache.spark.sql.SparkSession;
 
-import static hrds.h.biz.spark.running.SparkHandleArgument.DatabaseArgs;
-import static hrds.h.biz.spark.running.SparkHandleArgument.HiveArgs;
+import static hrds.h.biz.spark.running.SparkHandleArgument.*;
 
 /**
  * spark 任务提交
@@ -21,7 +20,7 @@ import static hrds.h.biz.spark.running.SparkHandleArgument.HiveArgs;
  */
 public class MarketSparkMain {
 
-    private static void handle(final Handler handler) {
+    private static void handle(final Handler handler) throws Exception {
         if (handler.getArgs().isIncrement()) {
             handler.increment();
         } else {
@@ -29,7 +28,7 @@ public class MarketSparkMain {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         String datatableId = args[0];
         String handleArgs = args[1];
 
@@ -54,6 +53,9 @@ public class MarketSparkMain {
             } else if (Store_type.HIVE.equals(handleType)) {
                 handler = new HiveHandler(spark, sparkDataset.getDataset(),
                         (HiveArgs) SparkHandleArgument.fromString(handleArgs, HiveArgs.class));
+            } else if (Store_type.HBASE.equals(handleType)||Store_type.SOLR.equals(handleType)) {
+                handler = new HbaseSolrHandler(spark, sparkDataset.getDataset(),
+                        (HbaseSolrArgs) SparkHandleArgument.fromString(handleArgs, HbaseSolrArgs.class));
             } else {
                 throw new AppSystemException("无法处理类型：" + handleType.getValue());
             }

@@ -4,13 +4,15 @@ import hrds.commons.hadoop.hbaseindexer.type.DataTypeTransformSolr;
 import hrds.commons.hadoop.hbaseindexer.type.TypeFieldNameMapper;
 import hrds.commons.hadoop.hbaseindexer.type.FieldNameMapper;
 
+import java.io.Serializable;
+
 /**
  * solr字段bean包含 field 信息 注意setType方法，同时做了solr字段，和类型的初始化
  *
  * @author Mick
  *
  */
-public class HbaseSolrField {
+public class HbaseSolrField implements Serializable {
 
 	private static final FieldNameMapper FIELD_NAME_MAPPER = new TypeFieldNameMapper();
 

@@ -4,6 +4,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.io.Serializable;
+
 /**
  * @author mick
  * @title: Handle
@@ -11,7 +13,7 @@ import org.apache.spark.sql.SparkSession;
  * @description: TODO
  * @date 20-4-13下午6:00
  */
-public abstract class Handler {
+public abstract class Handler implements Serializable {
     SparkSession spark;
     Dataset<Row> dataset;
     SparkHandleArgument args;
@@ -24,9 +26,11 @@ public abstract class Handler {
         this.tableName = args.getTableName();
     }
 
-    public abstract void insert();
+    public abstract void insert() throws Exception;
 
     public abstract void increment();
 
-    public SparkHandleArgument getArgs(){ return args;}
+    public SparkHandleArgument getArgs() {
+        return args;
+    }
 }

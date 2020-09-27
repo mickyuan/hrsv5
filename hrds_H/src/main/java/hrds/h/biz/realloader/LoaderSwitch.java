@@ -39,6 +39,10 @@ public class LoaderSwitch {
             return new HiveLoader(conf);
         }
 
+        if (Store_type.HBASE.getCode().equals(storeType)) {
+            return new HbaseOverSolrLoader(conf);
+        }
+
         throw new AppSystemException("无法识别存储码： " + storeType);
     }
 

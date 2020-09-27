@@ -6,9 +6,9 @@ import hrds.h.biz.spark.function.Function;
 import hrds.h.biz.spark.function.FunctionsReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 import org.apache.spark.sql.UDFRegistration;
@@ -19,24 +19,22 @@ import java.util.Iterator;
 
 /**
  * 初始化SparkSession对象
+ *
  * @Author: mick
  */
 public class SparkSessionBuilder {
 
     private static final Log logger = LogFactory.getLog(SparkSessionBuilder.class);
-    //hadoop配置文件所放的位置
-    private static final String SPARK_CONF_DIR = System.getProperty("user.dir") + Path.SEPARATOR + "conf";
-
-    static {
-        ClassPathResLoader.loadResourceDir(SPARK_CONF_DIR);//加载hadoop配置文件到classpath中
-    }
 
     public static SparkSession build(MarketConf conf) {
         System.setProperty("HADOOP_USER_NAME", "hyshf");
         Logger.getLogger("org").setLevel(Level.ERROR);
         logger.debug("Initializing SparkSession with configuration: ");
         Builder builder = SparkSession.builder()
+                .config(sparkSessionWithKyro())//目前 spark 序列化只支持 kyro
                 .appName("Market_Spark_" + conf.getDmDatatable().getDatatable_en_name());
+
+        SparkConfLoader.setConf(builder);
 
         //TODO 引擎有两种，一种是 spark，一种是 spark[local]
         if (SqlEngine.SPARK.getCode().equals(conf.getDmDatatable().getSql_engine())) {
@@ -54,6 +52,16 @@ public class SparkSessionBuilder {
         registerUdf(sparkSession.udf());
         logger.info(" SparkSession initialization is completed.");
         return sparkSession;
+    }
+
+    private static SparkConf sparkSessionWithKyro() {
+        SparkConf sparkConf = new SparkConf();
+        sparkConf.registerKryoClasses(new Class[]{
+                org.apache.hadoop.hbase.io.ImmutableBytesWritable.class,
+                hrds.h.biz.spark.running.HbaseSolrHandler.class,
+                hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField.class,
+                hrds.h.biz.spark.running.SparkHandleArgument.class});
+        return sparkConf;
     }
 
     /**

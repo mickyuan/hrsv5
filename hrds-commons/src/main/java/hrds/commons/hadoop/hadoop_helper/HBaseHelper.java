@@ -1,15 +1,16 @@
 package hrds.commons.hadoop.hadoop_helper;
 
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -24,7 +25,7 @@ import java.util.Map;
  */
 public class HBaseHelper implements Closeable {
 
-	private static final Log logger = LogFactory.getLog(HBaseHelper.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	private Configuration configuration = null;
 
@@ -33,10 +34,6 @@ public class HBaseHelper implements Closeable {
 	private Admin admin = null;
 
 	private Table table = null;
-
-//	static {
-//		System.setProperty("HADOOP_USER_NAME", PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf"));
-//	}
 
 	protected HBaseHelper(Configuration configuration) throws IOException {
 
@@ -149,6 +146,37 @@ public class HBaseHelper implements Closeable {
 		return admin.tableExists(table);
 	}
 
+	public void createTableHashedPartitions(String table, int partitions, String... colfams) throws IOException {
+
+		if( partitions < 2 || partitions > 100 ) {
+			throw new IllegalArgumentException(
+					"Partitions count must be a nature number which " +
+							"between 2 and 200 but got an unexpected number: " + partitions);
+		}
+		HashChoreWoker worker = new HashChoreWoker(1000000, partitions);
+		byte[][] splitKeys = worker.calcSplitKeys();
+		createTable(table, splitKeys, colfams);
+		logger.info("Created table {} with {} hashed partitions.", table, partitions);
+	}
+
+	public void createTableCustomPartitions(String table, String partitions, String... colfams) throws IOException {
+
+		HashChoreWoker worker = new HashChoreWoker(partitions);
+		byte[][] splitKeys = worker.coustomSplitKeys();
+		createTable(table, splitKeys, colfams);
+		logger.info("Created table {} with customized splitKeys: {}.", table, partitions);
+	}
+
+	public void createTableWithPartitions(String table, String partitions, String... colfams) throws NumberFormatException, IOException {
+
+		if( StringUtils.isNumeric(partitions) ) {
+			createTableHashedPartitions(table, Integer.parseInt(partitions), colfams);
+		}
+		else {
+			createTableCustomPartitions(table, partitions, colfams);
+		}
+	}
+
 	public void createTableWithNamespace(String namespace, String table, String... colfams) throws IOException {
 
 		createTable(TableName.valueOf(namespace + ":" + table), 1, null, true, colfams);
@@ -157,6 +185,11 @@ public class HBaseHelper implements Closeable {
 	public void createTable(String table, String... colfams) throws IOException {
 
 		createTable(TableName.valueOf(table), 1, null, true, colfams);
+	}
+
+	public void createSimpleTable(TableName table) throws IOException {
+
+		createTable(table, 1, null, true, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
 	}
 
 	public void createTable(TableName table, String... colfams) throws IOException {

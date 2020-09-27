@@ -4,7 +4,6 @@ import hrds.commons.codes.ProcessType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.Constant;
 import hrds.h.biz.config.MarketConf;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -15,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static hrds.commons.utils.Constant.*;
 
 /**
  * Description: 对原始的dataset根据用户定义字段做一些处理
@@ -27,7 +28,15 @@ import java.util.stream.Collectors;
  */
 public class AddColumnsForDataSet implements DataSetProcesser {
 
-	private static final String HYREN_COLUMN_SUFFIX = "hyren_";
+	/**
+	 * 自己设定的值，这些值不做MD5计算
+	 */
+	private static final List<String> HYREN_COLUMNS = new ArrayList<String>() {{
+		add(MD5NAME);
+		add(SDATENAME);
+		add(EDATENAME);
+		add(TABLE_ID_NAME);
+	}};
 
 	private MarketConf marketConf;
 
@@ -103,14 +112,14 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 		 */
 		if (marketConf.isMultipleInput()) {
 			dataSet = dataSet
-					.withColumn(Constant.TABLE_ID_NAME, functions.lit(marketConf.getDatatableId()));
+					.withColumn(TABLE_ID_NAME, functions.lit(marketConf.getDatatableId()));
 		}
 		dataSet = dataSet
-				.withColumn(Constant.SDATENAME, functions.lit(marketConf.getEtlDate()));
+				.withColumn(SDATENAME, functions.lit(marketConf.getEtlDate()));
 
 		if(marketConf.isIncrement()){
-			dataSet = dataSet.withColumn(Constant.EDATENAME, functions.lit(Constant.MAXDATE))
-					.withColumn(Constant.MD5NAME, functions.md5(functions.array(md5Array).cast("string")));
+			dataSet = dataSet.withColumn(EDATENAME, functions.lit(MAXDATE))
+					.withColumn(MD5NAME, functions.md5(functions.array(md5Array).cast("string")));
 		}
 
 		dataSet.printSchema();
@@ -129,7 +138,7 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 		 * 自己添加的列，不需要做处理（HYREN_S_DATE,HYREN_E_DATE,HYREN_MD5_VAL），也不需放到md5值计算
 		 */
 		for (Datatable_field_info field : allFields) {
-			if (!field.getField_en_name().startsWith(HYREN_COLUMN_SUFFIX)) {
+			if (!HYREN_COLUMNS.contains(field.getField_en_name().toUpperCase())) {
 				needToHandleFields.add(field);
 			}
 		}
