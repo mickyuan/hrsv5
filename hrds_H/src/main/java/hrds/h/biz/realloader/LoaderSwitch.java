@@ -1,14 +1,12 @@
 package hrds.h.biz.realloader;
 
 import fd.ng.db.jdbc.DatabaseWrapper;
-import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
-import hrds.commons.utils.StorageTypeKey;
 import hrds.h.biz.config.MarketConf;
 
 import java.util.List;
@@ -36,6 +34,11 @@ public class LoaderSwitch {
         if (Store_type.DATABASE.getCode().equals(storeType)) {
             return new DatabaseLoader(conf);
         }
+
+        if (Store_type.HIVE.getCode().equals(storeType)) {
+            return new HiveLoader(conf);
+        }
+
         throw new AppSystemException("无法识别存储码： " + storeType);
     }
 
