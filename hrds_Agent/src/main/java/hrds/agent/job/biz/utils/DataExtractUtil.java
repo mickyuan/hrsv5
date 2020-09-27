@@ -48,8 +48,8 @@ public class DataExtractUtil {
 					fileLock = fileChannel.tryLock();
 					break;
 				} catch (Exception e) {
-					logger.info("有其他线程正在操作该文件，当前线程休眠100毫秒");
-					TimeUnit.MILLISECONDS.sleep(100);
+					logger.info("有其他线程正在操作该文件，当前线程休眠1秒");
+					TimeUnit.SECONDS.sleep(1);
 				}
 			}
 			String line;
