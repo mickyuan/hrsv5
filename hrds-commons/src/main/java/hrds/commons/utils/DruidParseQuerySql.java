@@ -280,7 +280,12 @@ public class DruidParseQuerySql {
 						}
 					} else if (sqlexpr instanceof SQLPropertyExpr) {
 						SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlexpr;
-						putResult(templist, alias, sqlPropertyExpr.getName(), sqlTableSource.toString());
+						SQLExpr owner = sqlPropertyExpr.getOwner();
+						String alias1 = oracleSelectTableReference.getAlias();
+						SQLExpr expr = oracleSelectTableReference.getExpr();
+						if (owner.toString().equals(alias1) || owner.equals(expr)) {
+							putResult(templist, alias, sqlPropertyExpr.getName(), sqlTableSource.toString());
+						}
 					}
 				}
 			} else {
