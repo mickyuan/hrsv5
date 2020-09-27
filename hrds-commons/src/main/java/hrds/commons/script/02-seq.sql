@@ -89,7 +89,7 @@ INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, me
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (107, '/serviceUser', '12', '服务接口用户', 'G000', 'el-icon-cpu');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (108, '/marketVersionManage', '48', '版本管理', 'H000', 'el-icon-connection');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (109, '/dataControl', '24', '数据管控', 'K001', 'el-icon-s-finance');
-INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (110, '/dbck', '55', '标准元查看', 'K001', 'el-icon-s-finance');
+INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (110, '/dbck', '55', '标准元查看', 'K001', 'el-icon-data-analysis');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (111, '/tsb', '38', '表结构对标', 'K001', 'el-icon-receiving');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (112, '/tdb', '39', '表数据对标', 'K001', 'el-icon-film');
 INSERT INTO component_menu(menu_id, menu_path, user_type, menu_name, comp_id, menu_remark) VALUES (113,'/autonomousAnalysisOperate', '40', '自主分析操作', 'L001', 'el-icon-s-operation');
@@ -114,6 +114,8 @@ INSERT INTO interface_info VALUES ('114', 'fileAttributeSearch', '文件属性�
 INSERT INTO interface_info VALUES ('115', 'sqlInterfaceSearch', 'sql查询接口', '1', '1', '01-134', NULL, '1001');
 INSERT INTO interface_info VALUES ('118', 'rowKeySearch', 'rowkey查询', '1', '1', '01-137', null, 1001);
 INSERT INTO interface_info VALUES (123, 'uuidDownload', 'UUID数据下载', '2', '1', '01-143', null, 1001);
+INSERT INTO interface_info VALUES (124, 'hbaseSolrQuery', 'Solr查询Hbase数据接口', '2', '1', '01-144', null, 1001);
+
 
 delete from dq_rule_def;
 INSERT INTO dq_rule_def (CASE_TYPE, CASE_TYPE_DESC, INDEX_DESC1, INDEX_DESC2, INDEX_DESC3, REMARK) VALUES ('COL ENUM', '字段枚举检测', '不在范围内的记录数', '检查总记录数', '', '检测目标表名的 目标表关键字段是否在清单值域 内，格式转义需用户直接转义');

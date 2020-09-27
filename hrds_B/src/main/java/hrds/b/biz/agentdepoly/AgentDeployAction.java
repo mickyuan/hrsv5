@@ -96,22 +96,21 @@ public class AgentDeployAction extends BaseAction {
 			desc = "获取当前部署的Agent信息",
 			logicStep = "1 : 根据选择的数据源及Agent类型查询其对应的Agent信息" + "2 : 将系统默认路径放入")
 	@Param(name = "agent_id", desc = "数据源ID", range = "不能为空的整数")
-	@Param(name = "agent_type", desc = "Agent类型 (AgentType)", range = "不能为空的字符串")
+//	@Param(name = "agent_type", desc = "Agent类型 (AgentType)", range = "不能为空的字符串")
 	@Return(desc = "当前Agent的部署信息", range = "可以为空,因为会出现是第一次部署")
-	public Map<String, Object> getAgentDownInfo(long agent_id, String agent_type) {
+	public Map<String, Object> getAgentDownInfo(long agent_id) {
 
 		/* 1 : 根据选择的数据源及Agent类型查询其对应的Agent信息 */
 		Map<String, Object> queryOneObject =
 				Dbo.queryOneObject(
 						"SELECT t2.* FROM "
 								+ Agent_info.TableName
-								+ " t1 left join "
+								+ " t1 join "
 								+ Agent_down_info.TableName
 								+ " t2 on t1.agent_ip = t2.agent_ip AND t1.agent_port = t2.agent_port WHERE "
-								+ "t1.agent_id = ? AND t1.user_id = ? AND t2.agent_type=?",
+								+ "t1.agent_id = ? AND t1.user_id = ?",
 						agent_id,
-						getUserId(),
-						agent_type);
+						getUserId());
 		/* 2 : 将系统默认路径放入 */
 		queryOneObject.put(
 				"agentDeployPath", PropertyParaValue.getString("agentDeployPath", "/home/hyshf/"));
