@@ -39,7 +39,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	private static final Logger log = LogManager.getLogger();
 
 	public JdbcToFixedFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                             TableBean tableBean, Data_extraction_def data_extraction_def) {
+								 TableBean tableBean, Data_extraction_def data_extraction_def) {
 		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
 	}
 
@@ -114,7 +114,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					if (splitIng.get(selectColumnList.get(i).toUpperCase()) == null
 							|| splitIng.get(selectColumnList.get(i).toUpperCase()).size() == 0) {
 						sb.append(columnToFixed(currValue, TypeTransLength.getLength(
-								typeList.get(i)), database_code)).append(database_separatorr);
+								typeList.get(i)), database_code, selectColumnList.get(i))).append(database_separatorr);
 					} else {
 						sb.append(currValue).append(database_separatorr);
 					}

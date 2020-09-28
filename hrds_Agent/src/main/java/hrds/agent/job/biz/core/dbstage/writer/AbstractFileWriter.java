@@ -335,7 +335,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	/**
 	 * 字段变为定长
 	 */
-	public static String columnToFixed(String columnValue, int length, String database_code) {
+	public static String columnToFixed(String columnValue, int length, String database_code, String column_name) {
 		StringBuilder sb;
 		try {
 			byte[] bytes = columnValue.getBytes(DataBaseCode.ofValueByCode(database_code));
@@ -347,7 +347,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 					sb.append(' ');
 				}
 			} else {
-				throw new AppSystemException("定长指定的长度小于源数据长度");
+				throw new AppSystemException(column_name + "字段定长指定的长度小于源数据长度；字段自定长度为：" + length
+						+ ",实际值长度为：" + columnValueLength);
 			}
 			return sb.toString();
 		} catch (UnsupportedEncodingException e) {

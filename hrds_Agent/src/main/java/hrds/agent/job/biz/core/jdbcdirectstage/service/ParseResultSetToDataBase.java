@@ -110,10 +110,10 @@ public class ParseResultSetToDataBase {
 								pst.setObject(i + 1, resultSet.getTime(selectColumnList.get(i)).toString());
 							} else if (type == Types.TIMESTAMP) {
 								pst.setObject(i + 1, resultSet.getTimestamp(selectColumnList.get(i)).toString());
-							}/* else if (type == Types.STRUCT) {
+							} else if (type == Types.STRUCT) {
 								pst.setObject(i + 1, resultSet.getObject(selectColumnList.get(i)).toString());
-							}*/ else {
-								pst.setObject(i + 1, resultSet.getObject(selectColumnList.get(i)).toString());
+							} else {
+								pst.setObject(i + 1, resultSet.getObject(selectColumnList.get(i)));
 							}
 						}
 					}

@@ -94,11 +94,13 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 						//如果是查询的列，取值拼接
 						getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 								typeValueMap.get(allColumnList.get(i)), sb_, allColumnList.get(i), hbase_name, midName);
-						line.append(columnToFixed(sb_.toString(), allLengthList.get(i), database_code));
+						line.append(columnToFixed(sb_.toString(), allLengthList.get(i), database_code
+								, allColumnList.get(i)));
 						sb_.delete(0, sb_.length());
 					} else {
 						//如果不是查询的列，直接拼空值
-						line.append(columnToFixed(" ", allLengthList.get(i), database_code));
+						line.append(columnToFixed(" ", allLengthList.get(i), database_code
+								, allColumnList.get(i)));
 					}
 					if (i != allColumnList.size() - 1) {
 						//定长可能有填写列分隔符
