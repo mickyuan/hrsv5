@@ -585,7 +585,8 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			return responseMap;
 		}
 		// 3.获取当前用户ID
-		Long user_id = InterfaceManager.getUserByToken(responseMap.get("token").toString()).getUser_id();
+		String token = responseMap.get("token").toString();
+		Long user_id = InterfaceManager.getUserByToken(token).getUser_id();
 		// 4.检查参数合法性
 		responseMap = InterfaceCommon.checkType(rowKeySearch.getDataType(), rowKeySearch.getOutType(),
 				rowKeySearch.getAsynType(), rowKeySearch.getBackurl(), rowKeySearch.getFilepath(),
@@ -593,12 +594,12 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
-		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
+		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
 		// 5.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息
-		Query queryByRK = new QueryByRowkey(rowKeySearch.getEnTable(), rowKeySearch.getRowkey(),
-				rowKeySearch.getEnColumn(), rowKeySearch.getVersion());
+		Query queryByRK = new QueryByRowkey(rowKeySearch.getEn_table(), rowKeySearch.getRowkey(),
+				rowKeySearch.getEn_column(), rowKeySearch.getGet_version());
 		Map<String, Object> feedback = queryByRK.query().feedback();
-		if (StateType.NORMAL != StateType.ofEnumByCode(feedback.get("status").toString())) {
+		if (StateType.NORMAL.name().equals(feedback.get("status").toString())) {
 			return feedback;
 		}
 		// 6.将数据写成对应的数据文件
@@ -621,7 +622,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 					responseMap.get("status").toString());
 		}
 		// 8.封装表英文名并返回接口响应信息
-		responseMap.put("enTable", rowKeySearch.getEnTable());
+		responseMap.put("enTable", rowKeySearch.getEn_table());
 		return responseMap;
 	}
 

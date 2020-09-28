@@ -15,12 +15,12 @@ public class RowKeySearch extends ProjectTableEntity {
 
 	@DocBean(name = "rowkey", value = "rowkey:", dataType = String.class, required = true)
 	private String rowkey;
-	@DocBean(name = "enTable", value = "表英文名:", dataType = String.class, required = true)
-	private String enTable;
-	@DocBean(name = "enColumn", value = "列英文名:", dataType = String.class, required = false)
-	private String enColumn;
-	@DocBean(name = "version", value = "数据版本号:", dataType = String.class, required = false)
-	private String version;
+	@DocBean(name = "en_table", value = "表英文名:", dataType = String.class, required = true)
+	private String en_table;
+	@DocBean(name = "en_column", value = "列英文名:", dataType = String.class, required = false)
+	private String en_column;
+	@DocBean(name = "get_version", value = "数据版本号:", dataType = String.class, required = false)
+	private String get_version;
 	@DocBean(name = "dataType", value = "数据类型:(json/csv)只能选择一种", dataType = String.class,
 			required = true)
 	private String dataType;
@@ -55,28 +55,28 @@ public class RowKeySearch extends ProjectTableEntity {
 		this.rowkey = rowkey;
 	}
 
-	public String getEnTable() {
-		return enTable;
+	public String getEn_table() {
+		return en_table;
 	}
 
-	public void setEnTable(String enTable) {
-		this.enTable = enTable;
+	public void setEn_table(String en_table) {
+		this.en_table = en_table;
 	}
 
-	public String getEnColumn() {
-		return enColumn;
+	public String getEn_column() {
+		return en_column;
 	}
 
-	public void setEnColumn(String enColumn) {
-		this.enColumn = enColumn;
+	public void setEn_column(String en_column) {
+		this.en_column = en_column;
 	}
 
-	public String getVersion() {
-		return version;
+	public String getGet_version() {
+		return get_version;
 	}
 
-	public void setVersion(String version) {
-		this.version = version;
+	public void setGet_version(String get_version) {
+		this.get_version = get_version;
 	}
 
 	public String getOutType() {

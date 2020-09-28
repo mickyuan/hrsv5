@@ -38,7 +38,6 @@ import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
-import hrds.g.biz.init.InitSolrOnHbaseConnection;
 import hrds.g.biz.init.InterfaceManager;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -72,8 +71,8 @@ public class InterfaceCommon {
 	static {
 		notCheckFunction.add("count(*)");
 		notCheckFunction.add("count(1)");
-		os = InitSolrOnHbaseConnection.getOperSolr();
-		helper = InitSolrOnHbaseConnection.getHelp();
+//		os = InitSolrOnHbaseConnection.getOperSolr();
+//		helper = InitSolrOnHbaseConnection.getHelp();
 	}
 
 	private static final Type type = new TypeReference<List<String>>() {
@@ -423,7 +422,7 @@ public class InterfaceCommon {
 		if (StringUtil.isNotBlank(whereColumn)) {
 			// 7.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件
 			Map<String, Object> sqlSelectCondition = getSqlSelectCondition(columns, whereColumn);
-			if (StateType.NORMAL != StateType.ofEnumByCode(sqlSelectCondition.get("status").toString())) {
+			if (!StateType.NORMAL.name() .equals(sqlSelectCondition.get("status").toString())) {
 				return sqlSelectCondition;
 			}
 			condition = sqlSelectCondition.get("condition").toString();
