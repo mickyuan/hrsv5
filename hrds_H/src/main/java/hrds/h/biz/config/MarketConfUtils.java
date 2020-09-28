@@ -75,13 +75,14 @@ public class MarketConfUtils {
             根据主键 datatable_id 查询 字段 实体
              */
 			List<Datatable_field_info> datatableFields = SqlOperator.queryList(db, Datatable_field_info.class,
-				"select * from " + Datatable_field_info.TableName + " where datatable_id = ? AND end_date = ? order by field_seq", datatableId,
+				"select * from " + Datatable_field_info.TableName
+					+ " where datatable_id = ? AND end_date = ? order by field_seq", datatableId,
 				Constant.MAXDATE);
 			Validator.notEmpty(String.format(nullQueryExceptString,
 				Datatable_field_info.TableName, "datatable_id", datatableId));
 
 			//添加自定义HYREN字段，字段全部转小写
-			handleFields(datatableFields, marketConf.isMultipleInput(),marketConf.isIncrement());
+			handleFields(datatableFields, marketConf.isMultipleInput(), marketConf.isIncrement());
 			marketConf.setDatatableFields(datatableFields);
 			//判断是否有分组映射
 			for (Datatable_field_info field_info : datatableFields) {
@@ -175,7 +176,7 @@ public class MarketConfUtils {
 	 * @param datatableFields 所有字段实体
 	 */
 	private static void handleFields(List<Datatable_field_info> datatableFields,
-                                     boolean isMultipleInput, boolean isIncrement) {
+		boolean isMultipleInput, boolean isIncrement) {
 		if (datatableFields.size() == 0) {
 			throw new AppSystemException("从数据库中获取的字段数量为0");
 		}
@@ -206,6 +207,7 @@ public class MarketConfUtils {
 			}
 		}
 		//去掉重复的列
+		Collections.reverse(indexList);
 		for (int i : indexList) {
 			datatableFields.remove(i);
 		}
@@ -227,19 +229,19 @@ public class MarketConfUtils {
 		sDateField.setField_type(DEFAULT_STRING_TYPE);
 		datatableFields.add(sDateField);
 		//只有增量时才需要这两列
-        
-		if(isIncrement){
-            //添加 HYREN_E_DATE
-            Datatable_field_info eDateField = new Datatable_field_info();
-            eDateField.setField_en_name(Constant.EDATENAME);
-            eDateField.setField_type(DEFAULT_STRING_TYPE);
-            datatableFields.add(eDateField);
-            //添加 HYREN_MD5_VAL
-            Datatable_field_info md5Field = new Datatable_field_info();
-            md5Field.setField_en_name(Constant.MD5NAME);
-            md5Field.setField_type(DEFAULT_STRING_TYPE);
-            datatableFields.add(md5Field);
-        }
+
+		if (isIncrement) {
+			//添加 HYREN_E_DATE
+			Datatable_field_info eDateField = new Datatable_field_info();
+			eDateField.setField_en_name(Constant.EDATENAME);
+			eDateField.setField_type(DEFAULT_STRING_TYPE);
+			datatableFields.add(eDateField);
+			//添加 HYREN_MD5_VAL
+			Datatable_field_info md5Field = new Datatable_field_info();
+			md5Field.setField_en_name(Constant.MD5NAME);
+			md5Field.setField_type(DEFAULT_STRING_TYPE);
+			datatableFields.add(md5Field);
+		}
 		//字段全部转小写
 		datatableFields.forEach(datatableField ->
 			datatableField.setField_en_name(datatableField.getField_en_name().toLowerCase()));
