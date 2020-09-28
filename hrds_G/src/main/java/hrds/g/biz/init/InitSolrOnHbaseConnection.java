@@ -36,7 +36,9 @@ public class InitSolrOnHbaseConnection {
 		//初始化solr连接
 		SolrParam param = new SolrParam();
 		String collection = PropertyParaValue.getString("solrOnHbase", "HrdsHbaseOverSolr");
+		String solrZkUrl = PropertyParaValue.getString("zkHost", "cdh063:2181,cdh064:2181,cdh065:2181/solr");
 		param.setCollection(collection);
+		param.setSolrZkUrl(solrZkUrl);
 		os = SolrFactory.getInstance(param);
 		logger.info("solr service " + collection + " start");
 		try {

@@ -7,11 +7,12 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Sysreg_parameter_info;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_use_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
@@ -106,119 +107,6 @@ public class DataRangeManageAction extends BaseAction {
 				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
 			}
 			InterfaceManager.initTable(Dbo.db());
-		}
-	}
-
-	@Method(desc = "保存集市层数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.查询集市层表数据信息" +
-			"3.删除接口表信息" +
-			"4.保存系统登记表使用信息" +
-			"5.判断列信息是否为空" +
-			"6.保存系统登记参数表信息，一对多存储")
-	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Param(name = "table_note", desc = "备注", range = "无限制")
-	@Param(name = "file_id", desc = "文件ID", range = "无限制")
-	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
-	@Param(name = "tableDataInfo", desc = "表数据信息对象", range = "无限制", isBean = true)
-	private void saveDMLData(String table_note, String data_layer, long[] user_id, TableDataInfo
-			tableDataInfo) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.查询集市层表数据信息
-		for (long userId : user_id) {
-			List<Dm_datatable> dmDataTables = Dbo.queryList(Dm_datatable.class,
-					"SELECT datatable_en_name,datatable_cn_name FROM " + Dm_datatable.TableName +
-							" WHERE datatable_id = ?", Long.parseLong(tableDataInfo.getFile_id()));
-			for (Dm_datatable dmDataTable : dmDataTables) {
-				// 3.删除接口表信息
-				deleteInterfaceTableInfo(userId, dmDataTable.getDatatable_en_name());
-				// 生成主键,并记录
-				String useId = String.valueOf(PrimayKeyGener.getNextId());
-				// 4.保存系统登记表使用信息
-				addTableUseInfo(table_note, data_layer, userId, useId, new Table_use_info(),
-						dmDataTable.getDatatable_en_name(), dmDataTable.getDatatable_cn_name());
-				// 查询列信息
-				String[] table_ch_column = tableDataInfo.getTable_ch_column();
-				String[] table_en_column = tableDataInfo.getTable_en_column();
-				if (table_ch_column == null && table_en_column == null) {
-					// 获取所有列
-					List<Datatable_field_info> tableColumns = Dbo.queryList(Datatable_field_info.class,
-							"SELECT field_en_name,field_cn_name FROM " + Datatable_field_info.TableName
-									+ " WHERE datatable_id = ?", Long.parseLong(tableDataInfo.getFile_id()));
-					table_ch_column = new String[tableColumns.size()];
-					table_en_column = new String[tableColumns.size()];
-					for (int j = 0; j < tableColumns.size(); j++) {
-						table_ch_column[j] = tableColumns.get(j).getField_cn_name();
-						table_en_column[j] = tableColumns.get(j).getField_en_name();
-					}
-				}
-				// 5.判断列信息是否为空
-				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
-			}
-		}
-	}
-
-	@Method(desc = "保存贴源层数据", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
-			"2.查询贴源层表数据信息" +
-			"3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息" +
-			"4.获取原始登记表名称" +
-			"5.获取原始文件名称" +
-			"6.根据用户ID、表名查询当前表是否已登记" +
-			"7.生成表使用ID" +
-			"8.判断当前用户对应表是否已登记做不同处理" +
-			"8.1根据用户ID、表名删除接口表数据" +
-			"9.新增表使用信息" +
-			"10.保存系统登记表参数信息")
-	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
-	@Param(name = "table_note", desc = "备注", range = "无限制")
-	@Param(name = "file_id", desc = "文件ID", range = "无限制")
-	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
-	@Param(name = "columnDataInfo", desc = "表列信息实体对象", range = "无限制")
-	private void saveDCLData(String table_note, String data_layer,
-	                         TableDataInfo tableDataInfo, long[] user_id) {
-		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
-		// 2.查询贴源层表数据信息
-		Result tableResult = Dbo.queryResult("SELECT table_id,hyren_name,meta_info,original_name FROM " +
-				Data_store_reg.TableName + " WHERE file_id = ?", tableDataInfo.getFile_id());
-		for (long userId : user_id) {
-			Table_use_info table_use_info = new Table_use_info();
-			// 3.遍历贴源层表数据信息保存表使用信息以及系统登记表参数信息
-			for (int i = 0; i < tableResult.getRowCount(); i++) {
-				// 4.获取系统内对应表名
-				String hyren_name = tableResult.getString(i, "hyren_name");
-				long table_id = tableResult.getLong(i, "table_id");
-				// 5.获取原始文件名称
-				String original_name = tableResult.getString(i, "original_name");
-				// 6.根据用户ID、表名查询当前表是否已登记
-				boolean flag = getUserTableInfo(userId, hyren_name);
-				// 7.生成表使用ID
-				String useId = String.valueOf(PrimayKeyGener.getNextId());
-				// 8.判断当前用户对应表是否已登记做不同处理
-				if (flag) {
-					// 8.1已登记,根据用户ID、表名删除接口表数据
-					deleteInterfaceTableInfo(userId, hyren_name);
-				}
-				// 9.新增表使用信息
-				addTableUseInfo(table_note, data_layer, userId, useId, table_use_info,
-						hyren_name, original_name);
-				// 查询列信息
-				String[] table_ch_column = tableDataInfo.getTable_ch_column();
-				String[] table_en_column = tableDataInfo.getTable_en_column();
-				if (table_ch_column == null && table_en_column == null) {
-					// 获取所有列
-					List<Table_column> tableColumns = Dbo.queryList(Table_column.class,
-							"select column_name,column_ch_name from " + Table_column.TableName +
-									" where table_id=?", table_id);
-					table_ch_column = new String[tableColumns.size()];
-					table_en_column = new String[tableColumns.size()];
-					for (int j = 0; j < tableColumns.size(); j++) {
-						Table_column table_column = tableColumns.get(j);
-						table_ch_column[j] = table_column.getColumn_ch_name();
-						table_en_column[j] = table_column.getColumn_name();
-					}
-				}
-				// 10.新增系统登记表参数信息
-				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
-			}
 		}
 	}
 

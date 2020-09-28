@@ -79,6 +79,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		// 3.如果响应状态不是normal返回错误响应信息
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -112,6 +113,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -158,6 +160,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -201,6 +204,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -248,6 +252,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.检查token以及接口是否有效
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -304,6 +309,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		// 3.如果responseMap响应状态不为normal返回错误响应信息
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -435,6 +441,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		// 3.获取当前用户ID
@@ -524,6 +531,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		// 3.如果responseMap响应状态不为normal返回错误响应信息
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
@@ -573,6 +581,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		// 3.获取当前用户ID
@@ -650,6 +659,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 2.token，接口权限检查
 		Map<String, Object> responseMap = InterfaceCommon.checkTokenAndInterface(Dbo.db(), checkParam);
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			responseMap.remove("token");
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
