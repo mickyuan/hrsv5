@@ -99,7 +99,7 @@ public class ObjectUnloadDataStageImpl extends AbstractJobStage {
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, objectTableBean
-				, AgentType.ShuJuKu.getCode());
+				, AgentType.DuiXiang.getCode());
 		return stageParamInfo;
 	}
 

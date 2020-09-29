@@ -7,7 +7,6 @@ import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.MetaInfoBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.bean.ObjectTableBean;
-import hrds.agent.job.biz.core.dfstage.*;
 import hrds.agent.job.biz.core.objectstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.utils.Constant;
@@ -60,7 +59,7 @@ public class ObjectCollectJobImpl implements JobInterface {
 		//上传
 		JobStageInterface upload = new ObjectUploadStageImpl(objectTableBean);
 		//加载
-		JobStageInterface dataLoading = new ObjectLoadingDataStageImpl(objectCollectParamBean,objectTableBean);
+		JobStageInterface dataLoading = new ObjectLoadingDataStageImpl(objectTableBean);
 		//增量
 		JobStageInterface calIncrement = new ObjectCalIncrementStageImpl(objectTableBean);
 		//登记
