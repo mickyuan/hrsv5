@@ -14,7 +14,7 @@ INSERT INTO sys_para VALUES ('11', 'redis_ip', '10.71.4.61', 'system.properties'
 INSERT INTO sys_para VALUES ('12', 'redis_port', '56379', 'system.properties', 'Redis服务监听端口');
 INSERT INTO sys_para VALUES ('13', 'is_save_operation_log', '0', 'system.properties', '是否保存操作日志 (1:是,0:否)');
 -- 公共配置
-INSERT INTO sys_para VALUES ('101', 'solrclassname', 'opersolr.OperSolrImpl5_3_1', 'common.properties', 'solr具体实现类全名hrds.commons.hadoop.solr.impl.SolrOperatorImpl5_3_1');
+INSERT INTO sys_para VALUES ('101', 'solrclassname', 'hrds.commons.hadoop.solr.impl.SolrOperatorImpl5_3_1', 'common.properties', 'solr具体实现类全名hrds.commons.hadoop.solr.impl.SolrOperatorImpl5_3_1');
 INSERT INTO sys_para VALUES ('102', 'zkHost', 'hdp001.beyondsoft.com:2181,hdp002.beyondsoft.com:2181,hdp003.beyondsoft.com:2181/solr', 'common.properties', 'solr的zookeeper配置');
 INSERT INTO sys_para VALUES ('103', 'collection', 'HrdsFullTextIndexing', 'common.properties', 'solr的collection');
 INSERT INTO sys_para VALUES ('104', 'solr_bulk_submissions_num', '50000', 'common.properties', 'solr创建索引批量提交数');
