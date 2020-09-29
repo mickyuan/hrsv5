@@ -1,16 +1,21 @@
 package hrds.agent.job.biz.core.objectstage;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
+import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
+import hrds.commons.entity.Data_store_reg;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,33 +43,30 @@ public class ObjectRegistrationStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, objectTableBean.getOcs_id(),
 				StageConstant.DATAREGISTRATION.getCode());
 		try {
-			//数据库抽取不做登记，避免跟db文件采集冲突
-//			Data_store_reg data_store_reg = new Data_store_reg();
-//			data_store_reg.setAgent_id(collectTableBean.getAgent_id());
-//			data_store_reg.setDatabase_id(collectTableBean.getDatabase_id());
-//			data_store_reg.setTable_id(collectTableBean.getTable_id());
-//			data_store_reg.setSource_id(collectTableBean.getSource_id());
-//			data_store_reg.setCollect_type(AgentType.ShuJuKu.getCode());
-//			data_store_reg.setFile_size(stageParamInfo.getFileSize());
-//			//TODO 下面这个可为空吧
-//			data_store_reg.setHyren_name(collectTableBean.getHbase_name());
-//			data_store_reg.setTable_name(collectTableBean.getTable_name());
-//			data_store_reg.setOriginal_name(collectTableBean.getTable_ch_name());
-//			data_store_reg.setOriginal_update_date(DateUtil.getSysDate());
-//			data_store_reg.setOriginal_update_time(DateUtil.getSysTime());
-//			data_store_reg.setStorage_date(DateUtil.getSysDate());
-//			data_store_reg.setStorage_time(DateUtil.getSysTime());
-//			JSONObject metaInfoObj = new JSONObject();
-//			metaInfoObj.put("records", stageParamInfo.getRowCount());
-//			metaInfoObj.put("mr", "n");
-//			TableBean tableBean = stageParamInfo.getTableBean();
-//			metaInfoObj.put("column", tableBean.getColumnMetaInfo());
-//			metaInfoObj.put("length", tableBean.getColLengthInfo());
-//			metaInfoObj.put("fileSize", stageParamInfo.getFileSize());
-//			metaInfoObj.put("tableName", collectTableBean.getTable_name());
-//			metaInfoObj.put("type", tableBean.getColTypeMetaInfo());
-//			data_store_reg.setMeta_info(metaInfoObj.toJSONString());
-//			CommunicationUtil.addDataStoreReg(data_store_reg, collectTableBean.getDatabase_id());
+			Data_store_reg data_store_reg = new Data_store_reg();
+			data_store_reg.setAgent_id(objectTableBean.getAgent_id());
+			data_store_reg.setDatabase_id(objectTableBean.getOdc_id());
+			data_store_reg.setTable_id(objectTableBean.getOcs_id());
+			data_store_reg.setSource_id(objectTableBean.getSource_id());
+			data_store_reg.setCollect_type(AgentType.DuiXiang.getCode());
+			data_store_reg.setFile_size(stageParamInfo.getFileSize());
+			//TODO 下面这个可为空吧
+			data_store_reg.setHyren_name(objectTableBean.getEn_name());
+			data_store_reg.setTable_name(objectTableBean.getEn_name());
+			data_store_reg.setOriginal_name(objectTableBean.getZh_name());
+			data_store_reg.setOriginal_update_date(DateUtil.getSysDate());
+			data_store_reg.setOriginal_update_time(DateUtil.getSysTime());
+			data_store_reg.setStorage_date(DateUtil.getSysDate());
+			data_store_reg.setStorage_time(DateUtil.getSysTime());
+			JSONObject metaInfoObj = new JSONObject();
+			TableBean tableBean = stageParamInfo.getTableBean();
+			metaInfoObj.put("column", tableBean.getColumnMetaInfo());
+			metaInfoObj.put("length", tableBean.getColLengthInfo());
+			metaInfoObj.put("fileSize", stageParamInfo.getFileSize());
+			metaInfoObj.put("tableName", objectTableBean.getEn_name());
+			metaInfoObj.put("type", tableBean.getColTypeMetaInfo());
+			data_store_reg.setMeta_info(metaInfoObj.toJSONString());
+			CommunicationUtil.addDataStoreReg(data_store_reg, objectTableBean.getOdc_id());
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
 			LOGGER.info("------------------表" + objectTableBean.getEn_name()
 					+ "数据库抽数数据登记阶段成功------------------执行时间为："
@@ -76,7 +78,7 @@ public class ObjectRegistrationStageImpl extends AbstractJobStage {
 		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, objectTableBean
-				, AgentType.ShuJuKu.getCode());
+				, AgentType.DuiXiang.getCode());
 		return stageParamInfo;
 	}
 

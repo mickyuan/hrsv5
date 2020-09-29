@@ -44,6 +44,7 @@ public class DataTypeTransform {
 		list.add("VARCHAR2(1024)");
 		list.add("VARCHAR2(2048)");
 		list.add("VARCHAR2(4000)");
+		list.add("STRING");
 	}
 
 	/**

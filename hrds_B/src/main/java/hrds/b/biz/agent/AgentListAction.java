@@ -1377,7 +1377,7 @@ public class AgentListAction extends BaseAction {
 		Result collectTableResult =
 				Dbo.queryResult(
 						"SELECT oc.odc_id,oct.ocs_id,oct.en_name,oct.zh_name,oct.collect_data_type," +
-								"oct.database_code,oct.firstline,oct.updatetype, ds.datasource_name, " +
+								"oct.database_code,oct.updatetype, ds.datasource_name, " +
 								"ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
 								+ "dsr.storage_date FROM "
 								+ Data_source.TableName

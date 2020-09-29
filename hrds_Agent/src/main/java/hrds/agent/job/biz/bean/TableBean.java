@@ -20,6 +20,7 @@ public class TableBean {
 	private String primaryKeyInfo; //是否为主键
 	private String operate; //操作类型
 	private String is_archived; //是否转存
+	private String operate_column;  //操作字段
 	private String insertColumnInfo = ""; //获取新增数据的sql涉及的列
 	private String updateColumnInfo = ""; //获取更新数据的sql涉及的列
 	private String deleteColumnInfo = ""; //获取删除数据的sql涉及的列
@@ -208,5 +209,13 @@ public class TableBean {
 
 	public void setDeleteColumnInfo(String deleteColumnInfo) {
 		this.deleteColumnInfo = deleteColumnInfo;
+	}
+
+	public String getOperate_column() {
+		return operate_column;
+	}
+
+	public void setOperate_column(String operate_column) {
+		this.operate_column = operate_column;
 	}
 }

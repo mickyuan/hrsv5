@@ -43,7 +43,7 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 				+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, objectTableBean
-				, AgentType.ShuJuKu.getCode());
+				, AgentType.DuiXiang.getCode());
 		return stageParamInfo;
 	}
 
