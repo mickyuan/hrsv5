@@ -7,7 +7,9 @@ import hrds.commons.utils.StorageTypeKey;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 @DocClass(desc = "表存储配置信息", author = "zxz", createdate = "2019/11/29 21:15")
 public class DataStoreConfBean implements Serializable {
@@ -106,10 +108,14 @@ public class DataStoreConfBean implements Serializable {
 	}
 
 	public void setAdditInfoFieldMap(Map<String, Map<String, Integer>> additInfoFieldMap) {
-		Map<String, Map<String, Integer>> sortAdditInfoFieldMap = new HashMap<>();
-		for (String key : additInfoFieldMap.keySet()) {
-			List<Map.Entry<String, Integer>> list = new ArrayList<>(additInfoFieldMap.get(key).entrySet());
+		this.additInfoFieldMap = additInfoFieldMap;
+	}
 
+	public Map<String, Map<Integer, String>> getSortAdditInfoFieldMap() {
+		Map<String, Map<Integer, String>> sortAdditInfoFieldMap = new HashMap<>();
+		for (String key : additInfoFieldMap.keySet()) {
+			Map<String, Integer> stringIntegerMap = additInfoFieldMap.get(key);
+//			List<Map.Entry<String, Integer>> list = new ArrayList<>(additInfoFieldMap.get(key).entrySet());
 			//比较器排序
 //			list.sort(new Comparator<Map.Entry<String, Integer>>() {
 //				@Override
@@ -122,31 +128,31 @@ public class DataStoreConfBean implements Serializable {
 //			list.sort((Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2)
 //					-> o1.getValue().compareTo(o2.getValue()));
 			//lambda表达式简化写法
-			list.sort(Comparator.comparing(Map.Entry<String, Integer>::getValue));
-
-			Map<String, Integer> sortMap = new TreeMap<>();
-			for (Map.Entry<String, Integer> map : list) {
-				sortMap.put(map.getKey(), map.getValue());
+//			list.sort(Comparator.comparing(Map.Entry<String, Integer>::getValue));
+			Map<Integer, String> sortMap = new TreeMap<>();
+			for (String key2 : stringIntegerMap.keySet()) {
+				sortMap.put(stringIntegerMap.get(key2), key2);
 			}
 			sortAdditInfoFieldMap.put(key, sortMap);
 		}
-		this.additInfoFieldMap = sortAdditInfoFieldMap;
+		return sortAdditInfoFieldMap;
 	}
 
 	public static void main(String[] args) {
 		DataStoreConfBean dataStoreConfBean = new DataStoreConfBean();
 		Map<String, Map<String, Integer>> sortAdditInfoFieldMap = new HashMap<>();
 		Map<String, Integer> aaa = new HashMap<>();
-		aaa.put("aaa9", 9);
-		aaa.put("aaa7", 7);
-		aaa.put("aaa5", 5);
-		aaa.put("aaa1", 1);
-		aaa.put("aaa2", 2);
-		aaa.put("aaa3", 3);
+		aaa.put("asd", 9);
+		aaa.put("ewwe", 7);
+		aaa.put("vzxaaa1", 1);
+		aaa.put("asdsq", 5);
+		aaa.put("qwe", 2);
+		aaa.put("aaa", 3);
 		sortAdditInfoFieldMap.put("aaa", aaa);
 		dataStoreConfBean.setAdditInfoFieldMap(sortAdditInfoFieldMap);
-		for (String key : dataStoreConfBean.getAdditInfoFieldMap().get("aaa").keySet()) {
-			System.out.println(dataStoreConfBean.getAdditInfoFieldMap().get("aaa").get(key));
+		Map<String, Map<Integer, String>> sortAdditInfoFieldMap1 = dataStoreConfBean.getSortAdditInfoFieldMap();
+		for (int key : sortAdditInfoFieldMap1.get("aaa").keySet()) {
+			System.out.println(key+"==============="+dataStoreConfBean.getSortAdditInfoFieldMap().get("aaa").get(key));
 		}
 	}
 }
