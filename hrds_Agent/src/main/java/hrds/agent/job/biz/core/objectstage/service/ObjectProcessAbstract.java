@@ -57,6 +57,9 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 		this.handleTypeMap = getHandleTypeMap(objectTableBean.getObject_handle_typeList());
 		//这里的主键其实是跟新列，不会在建表的时候设置主键属性的
 		List<String> primaryKeyList = StringUtil.split(tableBean.getPrimaryKeyInfo(), Constant.METAINFOSPLIT);
+		for(String column : metaColumnList){
+			this.isZipperKeyMap.put(column,false);
+		}
 		for (int i = 0; i < primaryKeyList.size(); i++) {
 			this.isZipperKeyMap.put(selectColumnList.get(i), IsFlag.Shi.getCode().equals(primaryKeyList.get(i)));
 		}

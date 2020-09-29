@@ -60,6 +60,8 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		this.dsl_name = dataStoreConfBean.getDsl_name();
 		//获取batch插入的sql
 		this.insertSql = getBatchInsertSql();
+		//获取需要跟新的数据的判断条件
+		this.whereColumnList = getWhereColumnList();
 		//获取batch更新的sql
 		this.updateSql = getBatchUpdateSql();
 		//获取是否设置主键属性
@@ -73,8 +75,6 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		this.deleteColumnList = getDeleteColumnList(isZipperKeyMap);
 		//获取需要更新的数据
 		this.setColumnList = getSetColumnList(isZipperKeyMap);
-		//获取需要跟新的数据的判断条件
-		this.whereColumnList = getWhereColumnList();
 		deleteSql.append("DELETE FROM ").append(objectTableBean.getEn_name()).append(" WHERE ").append("(");
 		for (String column : deleteColumnList) {
 			deleteSql.append(column).append(",");
@@ -304,23 +304,26 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 	 * 获取batch更新的sql
 	 */
 	private String getBatchUpdateSql() {
-		StringBuilder updateSql = new StringBuilder();
-		updateSql.append("UPDATE ").append(objectTableBean.getEn_name()).append(" SET ");
-		StringBuilder sb = new StringBuilder();
-		sb.append(" WHERE ");
-		for (String updateColumn : metaColumnList) {
-			if (!isZipperKeyMap.get(updateColumn)) {
-				//不是主键
-				updateSql.append(updateColumn).append(" = ?,");
-			} else {
-				//是主键
-				sb.append(updateColumn).append(" = ? and ");
+		if(!this.whereColumnList.isEmpty()){
+			StringBuilder updateSql = new StringBuilder();
+			updateSql.append("UPDATE ").append(objectTableBean.getEn_name()).append(" SET ");
+			StringBuilder sb = new StringBuilder();
+			sb.append(" WHERE ");
+			for (String updateColumn : metaColumnList) {
+				if (!isZipperKeyMap.get(updateColumn)) {
+					//不是主键
+					updateSql.append(updateColumn).append(" = ?,");
+				} else {
+					//是主键
+					sb.append(updateColumn).append(" = ? and ");
+				}
 			}
+			updateSql.delete(updateSql.length() - 1, updateSql.length());
+			sb.delete(sb.length() - 4, sb.length());
+			updateSql.append(sb);
+			return updateSql.toString();
 		}
-		updateSql.delete(updateSql.length() - 1, updateSql.length());
-		sb.delete(sb.length() - 4, sb.length());
-		updateSql.append(sb);
-		return updateSql.toString();
+		return "";
 	}
 
 	/**
