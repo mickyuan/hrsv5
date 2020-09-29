@@ -78,7 +78,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 									collectTableBean.getEtlDate(), db, dataStoreConf.getDsl_name());
 							execIncreasement(increase);
 							//配置附加属性
-							configureAdditInfo(collectTableBean.getHbase_name(), dataStoreConf.getAdditInfoFieldMap(),
+							configureAdditInfo(collectTableBean.getHbase_name(), dataStoreConf.getSortAdditInfoFieldMap(),
 									dataStoreConf.getData_store_connect_attr().get(StorageTypeKey.database_type), db);
 						} catch (Exception e) {
 							if (increase != null) {
@@ -195,7 +195,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	 * @param database_type     数据库类型
 	 * @param db                数据库的连接
 	 */
-	private void configureAdditInfo(String hbase_name, Map<String, Map<String, Integer>> additInfoFieldMap,
+	private void configureAdditInfo(String hbase_name, Map<String, Map<Integer, String>> additInfoFieldMap,
 									String database_type, DatabaseWrapper db) {
 		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
 			DatabaseAdditInfoOperateInterface additInfoOperateInterface;
@@ -211,7 +211,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 				return;
 			}
 			for (String dsla_storelayer : additInfoFieldMap.keySet()) {
-				List<String> columnList = new ArrayList<>(additInfoFieldMap.get(dsla_storelayer).keySet());
+				List<String> columnList = new ArrayList<>(additInfoFieldMap.get(dsla_storelayer).values());
 				if (StoreLayerAdded.ZhuJian.getCode().equals(dsla_storelayer)) {
 					additInfoOperateInterface.addPkConstraint(hbase_name, columnList, db);
 				} else if (StoreLayerAdded.SuoYinLie.getCode().equals(dsla_storelayer)) {

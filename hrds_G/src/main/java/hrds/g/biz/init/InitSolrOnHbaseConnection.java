@@ -1,14 +1,11 @@
 package hrds.g.biz.init;
 
-import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.io.IOException;
 
 /**
  * <p>标    题: 海云数服 V3.5</p>
@@ -26,7 +23,6 @@ public class InitSolrOnHbaseConnection {
 	private static final Log logger = LogFactory.getLog(InitSolrOnHbaseConnection.class);
 
 	private static ISolrOperator os;
-	private static HBaseHelper helper = null;
 
 	/**
 	 * 获取solr连接
@@ -41,12 +37,6 @@ public class InitSolrOnHbaseConnection {
 		param.setSolrZkUrl(solrZkUrl);
 		os = SolrFactory.getInstance(param);
 		logger.info("solr service " + collection + " start");
-		try {
-			helper = HBaseHelper.getHelper();
-		} catch (IOException e) {
-			logger.error("获取 HBaseHelper 失败:" + e);
-		}
-
 	}
 
 	/**
@@ -60,13 +50,4 @@ public class InitSolrOnHbaseConnection {
 
 	}
 
-	/**
-	 * Get HBase Connection Instance
-	 *
-	 * @return
-	 */
-	public static HBaseHelper getHelp() {
-
-		return helper;
-	}
 }

@@ -933,7 +933,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "dm_datatable", desc = "dm_datatable", range = "与dm_datatable表字段规则一致",
 		isBean = true)
 	@Param(name = "dsl_id", desc = "dsl_id", range = "与Dm_info表字段规则一致")
-	public Map<String, Object> updateDMDataTable(Dm_datatable dm_datatable, String dsl_id) {
+	public Map<String, Object> updateDMDataTable(Dm_datatable dm_datatable, long dsl_id) {
 		Map<String, Object> map = new HashMap<>();
 		//1检查数据合法性
 		CheckColummn(dm_datatable.getDatatable_en_name(), "表英文名");
@@ -949,7 +949,7 @@ public class MarketInfoAction extends BaseAction {
 		} else {
 			dm_datatable.setDatatable_due_date(Constant.MAXDATE);
 		}
-		CheckColummn(dsl_id, "数据存储");
+
 		if (Dbo.queryNumber(
 			"select count(*) from " + Dm_datatable.TableName + " where  datatable_en_name = ? and datatable_id != ?",
 			dm_datatable.getDatatable_en_name(), dm_datatable.getDatatable_id())
@@ -971,8 +971,9 @@ public class MarketInfoAction extends BaseAction {
 		//更新dm_relation_datatable库中的数据
 		if (dm_relation_datatableOptional.isPresent()) {
 			Dtab_relation_store dm_relation_datatable = dm_relation_datatableOptional.get();
-			dm_relation_datatable.setDsl_id(dsl_id);
-			updatebean(dm_relation_datatable);
+			DboExecute.updatesOrThrow("更新的存储层信息超出了预期范围",
+				"UPDATE " + Dtab_relation_store.TableName + " SET dsl_id = ? WHERE tab_id = ?",
+				dsl_id,dm_relation_datatable.getTab_id());
 		}
 		//6 返回主键datatable_id
 		map.put("datatable_id", String.valueOf(dm_datatable.getDatatable_id()));

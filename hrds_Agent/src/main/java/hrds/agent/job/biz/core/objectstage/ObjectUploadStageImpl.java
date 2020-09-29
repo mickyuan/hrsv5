@@ -11,6 +11,7 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.objectstage.service.ObjectProcessInterface;
+import hrds.agent.job.biz.core.objectstage.service.impl.HiveTableProcessImpl;
 import hrds.agent.job.biz.core.objectstage.service.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
@@ -56,6 +57,10 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 					if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//关系型数据库
 						processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
+								objectTableBean, dataStoreConfBean);
+					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+						//关系型数据库
+						processInterface = new HiveTableProcessImpl(stageParamInfo.getTableBean(),
 								objectTableBean, dataStoreConfBean);
 					} else {
 						throw new AppSystemException("半结构化对象采集目前不支持入" + dataStoreConfBean.getDsl_name());

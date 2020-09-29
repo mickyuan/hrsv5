@@ -153,14 +153,14 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 		List<String> columnList = StringUtil.split(columnMetaInfo, Constant.METAINFOSPLIT);
 		StringBuilder rowKeyIndex = new StringBuilder();
 		//获取配置的hbase的rowkey列
-		Map<String, Map<String, Integer>> additInfoFieldMap = dataStoreConfBean.getAdditInfoFieldMap();
+		Map<String, Map<Integer, String>> additInfoFieldMap = dataStoreConfBean.getSortAdditInfoFieldMap();
 		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
-			Map<String, Integer> column_map = additInfoFieldMap.get(StoreLayerAdded.RowKey.getCode());
+			Map<Integer, String> column_map = additInfoFieldMap.get(StoreLayerAdded.RowKey.getCode());
 			if (column_map != null && !column_map.isEmpty()) {
 				//获取配置rowKey的列在文件中的下标
-				for (String key : column_map.keySet()) {
+				for (int key : column_map.keySet()) {
 					for (int i = 0; i < columnList.size(); i++) {
-						if (key.equalsIgnoreCase(columnList.get(i))) {
+						if (column_map.get(key).equalsIgnoreCase(columnList.get(i))) {
 							rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
 						}
 					}

@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -25,6 +26,7 @@ import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField;
 import hrds.commons.hadoop.hbaseindexer.configure.ConfigurationUtil;
 import hrds.commons.hadoop.hbaseindexer.type.TypeFieldNameMapper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
@@ -38,6 +40,7 @@ import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
+import hrds.g.biz.init.InitSolrOnHbaseConnection;
 import hrds.g.biz.init.InterfaceManager;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -66,13 +69,11 @@ public class InterfaceCommon {
 	// 接口响应信息集合
 	private static Map<String, Object> responseMap = new HashMap<>();
 	private static ISolrOperator os;
-	private static HBaseHelper helper;
 
 	static {
 		notCheckFunction.add("count(*)");
 		notCheckFunction.add("count(1)");
-//		os = InitSolrOnHbaseConnection.getOperSolr();
-//		helper = InitSolrOnHbaseConnection.getHelp();
+		os = InitSolrOnHbaseConnection.getOperSolr();
 	}
 
 	private static final Type type = new TypeReference<List<String>>() {
@@ -143,7 +144,9 @@ public class InterfaceCommon {
 				return responseMap;
 			}
 			// 5.获取token值
-			Map<String, Object> message = (Map<String, Object>) responseMap.get("message");
+			Map<String, Object> message = JsonUtil.toObject(JsonUtil.toJson(responseMap.get("message")),
+					new TypeReference<Map<String, Object>>() {
+					}.getType());
 			token = message.get("token").toString();
 		}
 		// 6.判断token值是否存在
@@ -422,7 +425,7 @@ public class InterfaceCommon {
 		if (StringUtil.isNotBlank(whereColumn)) {
 			// 7.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件
 			Map<String, Object> sqlSelectCondition = getSqlSelectCondition(columns, whereColumn);
-			if (!StateType.NORMAL.name() .equals(sqlSelectCondition.get("status").toString())) {
+			if (!StateType.NORMAL.name().equals(sqlSelectCondition.get("status").toString())) {
 				return sqlSelectCondition;
 			}
 			condition = sqlSelectCondition.get("condition").toString();
@@ -994,8 +997,12 @@ public class InterfaceCommon {
 	public static Map<String, Object> getHbaseSolrQuery(String table_name, String whereColumn,
 	                                                    String selectColumn, Integer start, Integer num,
 	                                                    String table_column_name, String tableTypeJsonStr,
-	                                                    Map<String, Object> responseMap) {
-		try {
+	                                                    String dsl_name, String platform, String prncipal_name,
+	                                                    String hadoop_user_name) {
+		try (HBaseHelper helper = HBaseHelper.getHelper(ConfigReader.getConfiguration(
+				FileNameUtils.normalize(
+						Constant.STORECONFIGPATH + dsl_name + File.separator, true),
+				platform, prncipal_name, hadoop_user_name))) {
 			// 当前表的有效全部列
 			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), ",");
 			StringBuilder filter = new StringBuilder();
@@ -1029,48 +1036,47 @@ public class InterfaceCommon {
 			String query = filter.substring(0, filter.lastIndexOf(" AND "));
 			logger.info("query:" + query);
 			// 修改solr连接为长连接
-			if (helper != null) {
-				Map<String, String> params = new HashMap<>();
-				params.put("q", query);
-				params.put("fl", "id");
-				// 查询solr,只获取id的数据
-				List<Map<String, Object>> result = os.querySolrPlus(params, start == null ? 0 : start,
-						num == null ? 10 : num, false);
-				// solr中的id作为hbase的rowkey查询hbase数据
-				// 设置hbase表名对象
-				Table table = helper.getTable(table_name);
-				List<Get> getList = new ArrayList<>();
-				for (Map<String, Object> obj : result) { // 设置rowkey数组
-					String rowkey = StringUtil.replace(obj.get("id").toString(),
-							table_name + "@", "");
-					logger.info("rowkey: " + rowkey);
-					Get get = new Get(rowkey.getBytes());
-					getList.add(get);
-				}
-				List<Map<String, Object>> js = new ArrayList<>();
-				// 根据rowkey查询
-				Result[] results = table.get(getList);
-				Map<String, Object> temp;
-				List<String> selectList = StringUtil.split(selectColumn.toLowerCase(), ",");
-				// 当前查询的全部列
-				for (org.apache.hadoop.hbase.client.Result hResult : results) {
-					if (hResult.isEmpty()) {
-						logger.info("rowkey查询结果为空");
-						continue;
-					}
-					temp = new HashMap<>();
-					List<Cell> cs = hResult.listCells();
-					for (Cell cell : cs) {
-						String column = Bytes.toString(CellUtil.cloneQualifier(cell));// 获取hbase列名
-						String value = Bytes.toString(CellUtil.cloneValue(cell));// 获取hbase列值
-						if (selectList.contains(column.toLowerCase())) {
-							temp.put(column.toLowerCase(), value);
-						}
-					}
-					js.add(temp);
-				}
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(), js);
+			Map<String, String> params = new HashMap<>();
+			params.put("q", query);
+			params.put("fl", "id");
+			// 查询solr,只获取id的数据
+			List<Map<String, Object>> result = os.querySolrPlus(params, start == null ? 0 : start,
+					num == null ? 10 : num, false);
+			// solr中的id作为hbase的rowkey查询hbase数据
+			// 设置hbase表名对象
+			Table table = helper.getTable(table_name);
+			List<Get> getList = new ArrayList<>();
+			for (Map<String, Object> obj : result) {
+				// 设置rowkey数组
+				String rowkey = StringUtil.replace(obj.get("id").toString(),
+						table_name + "@", "");
+				logger.info("rowkey: " + rowkey);
+				Get get = new Get(rowkey.getBytes());
+				getList.add(get);
 			}
+			List<Map<String, Object>> js = new ArrayList<>();
+			// 根据rowkey查询
+			Result[] results = table.get(getList);
+			Map<String, Object> temp;
+			List<String> selectList = StringUtil.split(selectColumn.toLowerCase(), ",");
+			// 当前查询的全部列
+			for (Result hResult : results) {
+				if (hResult.isEmpty()) {
+					logger.info("rowkey查询结果为空");
+					continue;
+				}
+				temp = new HashMap<>();
+				List<Cell> cs = hResult.listCells();
+				for (Cell cell : cs) {
+					String column = Bytes.toString(CellUtil.cloneQualifier(cell));// 获取hbase列名
+					String value = Bytes.toString(CellUtil.cloneValue(cell));// 获取hbase列值
+					if (selectList.contains(column.toLowerCase())) {
+						temp.put(column.toLowerCase(), value);
+					}
+				}
+				js.add(temp);
+			}
+			return StateType.getResponseInfo(StateType.NORMAL.name(), js);
 		} catch (Exception e) {
 			logger.error("checkColumn wrong...", e);
 			if (e instanceof BusinessException) {
@@ -1079,7 +1085,6 @@ public class InterfaceCommon {
 				return StateType.getResponseInfo(StateType.EXCEPTION);
 			}
 		}
-		return responseMap;
 	}
 
 	private static String solrFieldName(String hbaseFieldName, String type) {

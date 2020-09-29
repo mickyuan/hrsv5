@@ -55,7 +55,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		//获取batch更新的sql
 		this.updateSql = getBatchUpdateSql();
 		//获取是否设置主键属性
-		this.isPrimaryKeyMap = getPrimaryKeyMap(dataStoreConfBean.getAdditInfoFieldMap());
+		this.isPrimaryKeyMap = getPrimaryKeyMap(dataStoreConfBean.getSortAdditInfoFieldMap());
 		//数据库的连接
 		this.db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 		this.db.beginTrans();
@@ -87,12 +87,12 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		return delColumnList;
 	}
 
-	private Map<String, Boolean> getPrimaryKeyMap(Map<String, Map<String, Integer>> additInfoFieldMap) {
+	private Map<String, Boolean> getPrimaryKeyMap(Map<String, Map<Integer, String>> additInfoFieldMap) {
 		Map<String, Boolean> pMap = new HashMap<>();
 		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
 			for (String dsla_storelayer : additInfoFieldMap.keySet()) {
 				if (StoreLayerAdded.ZhuJian.getCode().equals(dsla_storelayer)) {
-					List<String> primaryColumnList = new ArrayList<>(additInfoFieldMap.get(dsla_storelayer).keySet());
+					List<String> primaryColumnList = new ArrayList<>(additInfoFieldMap.get(dsla_storelayer).values());
 					for (String column : metaColumnList) {
 						if (primaryColumnList.contains(column)) {
 							pMap.put(column, true);

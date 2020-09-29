@@ -16,6 +16,9 @@ import fd.ng.web.util.Dbo;
 import fd.ng.web.util.RequestUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.Store_type;
+import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.utils.*;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -28,7 +31,6 @@ import hrds.g.biz.enumerate.StateType;
 import hrds.g.biz.init.InterfaceManager;
 import hrds.g.biz.serviceuser.ServiceInterfaceUserDefine;
 import hrds.g.biz.serviceuser.common.InterfaceCommon;
-import hrds.g.biz.serviceuser.query.Query;
 import hrds.g.biz.serviceuser.query.QueryByRowkey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @DocClass(desc = "接口服务实现类（接口api）", author = "dhw", createdate = "2020/3/30 15:39")
 public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
@@ -595,15 +598,25 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			return responseMap;
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
+		List<LayerBean> hbaseLayerList = getLayerBeans(rowKeySearch.getEn_table());
+		// 判断存储层类型为hbase的存储层是否存在
+		if (hbaseLayerList.isEmpty()) {
+			return StateType.getResponseInfo(StateType.TABLE_NOT_EXIST_ON_HBASE_STOREAGE);
+		}
+		// 如果有多个默认取第一个hbase配置
+		LayerBean layerBean = hbaseLayerList.get(0);
+		Map<String, String> layerAttr = layerBean.getLayerAttr();
+		// 通过rowkey查询数据
+		responseMap = QueryByRowkey.query(rowKeySearch.getEn_table(), rowKeySearch.getRowkey(),
+				rowKeySearch.getEn_column(), rowKeySearch.getGet_version(), layerBean.getDsl_name(),
+				layerAttr.get(StorageTypeKey.platform), layerAttr.get(StorageTypeKey.prncipal_name),
+				layerAttr.get(StorageTypeKey.hadoop_user_name));
 		// 5.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息
-		Query queryByRK = new QueryByRowkey(rowKeySearch.getEn_table(), rowKeySearch.getRowkey(),
-				rowKeySearch.getEn_column(), rowKeySearch.getGet_version());
-		Map<String, Object> feedback = queryByRK.query().feedback();
-		if (StateType.NORMAL.name().equals(feedback.get("status").toString())) {
-			return feedback;
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+			return responseMap;
 		}
 		// 6.将数据写成对应的数据文件
-		LocalFile.writeFile(Dbo.db(), feedback, rowKeySearch.getDataType(), rowKeySearch.getOutType(),
+		LocalFile.writeFile(Dbo.db(), responseMap, rowKeySearch.getDataType(), rowKeySearch.getOutType(),
 				user_id);
 		if (OutType.FILE == OutType.ofEnumByCode(rowKeySearch.getOutType())) {
 			// 7.判断是同步还是异步回调或者异步轮询
@@ -624,6 +637,16 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 8.封装表英文名并返回接口响应信息
 		responseMap.put("enTable", rowKeySearch.getEn_table());
 		return responseMap;
+	}
+
+	private List<LayerBean> getLayerBeans(String tableName) {
+		// 通过表名获取存储层
+		List<LayerBean> layerByTableList = ProcessingData.getLayerByTable(tableName,
+				Dbo.db());
+		// 获取存储层类型为hbase的存储层
+		return layerByTableList.stream().filter(layerBean ->
+				Store_type.HBASE == Store_type.ofEnumByCode(layerBean.getStore_type()))
+				.collect(Collectors.toList());
 	}
 
 	@Method(desc = "单表数据批量更新接口", logicStep = "")
@@ -682,10 +705,20 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (StringUtil.isBlank(hBaseSolr.getWhereColumn())) {
 			return StateType.getResponseInfo(StateType.CONDITION_ERROR);
 		}
+		List<LayerBean> hbaseLayerList = getLayerBeans(hBaseSolr.getTableName());
+		// 判断存储层类型为hbase的存储层是否存在
+		if (hbaseLayerList.isEmpty()) {
+			return StateType.getResponseInfo(StateType.TABLE_NOT_EXIST_ON_HBASE_STOREAGE);
+		}
+		// 如果有多个默认取第一个hbase配置
+		LayerBean layerBean = hbaseLayerList.get(0);
+		Map<String, String> layerAttr = layerBean.getLayerAttr();
 		// 6.hbase+solr查询
 		responseMap = InterfaceCommon.getHbaseSolrQuery(hBaseSolr.getTableName(), hBaseSolr.getWhereColumn(),
 				selectColumn, hBaseSolr.getStart(), hBaseSolr.getNum(), userTableInfo.getTable_en_column(),
-				userTableInfo.getTable_type_name(), responseMap);
+				userTableInfo.getTable_type_name(), layerBean.getDsl_name(),
+				layerAttr.get(StorageTypeKey.platform), layerAttr.get(StorageTypeKey.prncipal_name),
+				layerAttr.get(StorageTypeKey.hadoop_user_name));
 		// 7.返回按类型操作接口响应信息
 		responseMap = InterfaceCommon.operateInterfaceByType(hBaseSolr.getDataType(),
 				hBaseSolr.getOutType(), hBaseSolr.getAsynType(), hBaseSolr.getBackurl(),
