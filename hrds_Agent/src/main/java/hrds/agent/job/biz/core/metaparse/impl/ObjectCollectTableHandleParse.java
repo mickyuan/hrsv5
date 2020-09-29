@@ -7,9 +7,10 @@ import fd.ng.core.annotation.Return;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
 import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.core.jdbcdirectstage.JdbcDirectUnloadDataStageImpl;
 import hrds.agent.job.biz.utils.TypeTransLength;
+import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.UpdateType;
 import hrds.commons.entity.Object_collect_struct;
 import hrds.commons.utils.Constant;
 
@@ -75,12 +76,18 @@ public class ObjectCollectTableHandleParse {
 			columnMetaInfo.delete(columnMetaInfo.length() - 1, columnMetaInfo.length());
 			primaryKeyInfo.delete(primaryKeyInfo.length() - 1, primaryKeyInfo.length());
 		}
-		//拉链跟新，增加结束日期和开始日期两个字段
-		if (UpdateType.IncrementUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
-			columnMetaInfo.append(Constant.METAINFOSPLIT).append(Constant.SDATENAME).append(Constant.METAINFOSPLIT).append(Constant.EDATENAME);
-			colTypeMetaInfo.append(Constant.METAINFOSPLIT).append("char(8)").append(Constant.METAINFOSPLIT).append("char(32)");
-			colLengthInfo.append(Constant.METAINFOSPLIT).append("8").append(Constant.METAINFOSPLIT).append("32");
-		}
+		//拉链跟新，增加结束日期和开始日期和md5三个字段
+//		if (UpdateType.IncrementUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
+		columnMetaInfo.append(Constant.METAINFOSPLIT).append(Constant.SDATENAME).append(Constant.METAINFOSPLIT)
+				.append(Constant.EDATENAME).append(Constant.METAINFOSPLIT).append(Constant.MD5NAME);
+		colTypeMetaInfo.append(Constant.METAINFOSPLIT).append("char(8)").append(Constant.METAINFOSPLIT)
+				.append("char(8)").append(Constant.METAINFOSPLIT).append("char(32)");
+		colLengthInfo.append(Constant.METAINFOSPLIT).append("8").append(Constant.METAINFOSPLIT).append("8")
+				.append(Constant.METAINFOSPLIT).append("32");
+//		}
+		tableBean.setDbFileArchivedCode(JdbcDirectUnloadDataStageImpl.getStoreDataBaseCode(
+				objectTableBean.getEn_name(), objectTableBean.getDataStoreConfBean(),
+				objectCollectParamBean.getDatabase_code()));
 		// 页面定义的清洗格式进行卸数
 		tableBean.setAllColumns(allColumns.toString());
 		tableBean.setAllType(allType.toString());
@@ -88,6 +95,12 @@ public class ObjectCollectTableHandleParse {
 		tableBean.setColTypeMetaInfo(colTypeMetaInfo.toString());
 		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
 		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
+		tableBean.setColumn_separator(Constant.DATADELIMITER);
+		tableBean.setIs_header(IsFlag.Fou.getCode());
+		//XXX 换行符默认使用linux的换行符
+		tableBean.setRow_separator(Constant.DEFAULTLINESEPARATOR);
+		tableBean.setFile_format(FileFormat.FeiDingChang.getCode());
+		tableBean.setFile_code(tableBean.getDbFileArchivedCode());
 		//返回表信息
 		return tableBean;
 	}

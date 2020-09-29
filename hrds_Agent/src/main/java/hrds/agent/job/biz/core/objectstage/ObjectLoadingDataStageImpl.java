@@ -3,16 +3,28 @@ package hrds.agent.job.biz.core.objectstage;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
-import hrds.agent.job.biz.bean.ObjectTableBean;
-import hrds.agent.job.biz.bean.StageParamInfo;
-import hrds.agent.job.biz.bean.StageStatusInfo;
+import fd.ng.core.utils.FileNameUtils;
+import fd.ng.db.jdbc.DatabaseWrapper;
+import hrds.agent.job.biz.bean.*;
+import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.dfstage.DFDataLoadingStageImpl;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.Store_type;
+import hrds.commons.collection.ConnectionTool;
+import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.utils.HSqlExecute;
+import hrds.commons.utils.StorageTypeKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @DocClass(desc = "半结构化对象采集数据加载实现", author = "zxz", createdate = "2019/10/24 11:43")
 public class ObjectLoadingDataStageImpl extends AbstractJobStage {
@@ -28,9 +40,9 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 	/**
 	 * 半结构化对象采集数据加载实现类构造方法
 	 *
-	 * @param objectTableBean        ObjectTableBean
-	 *                               含义：多条半结构化对象采集存储到hadoop配置信息实体合集
-	 *                               取值范围：所有这个实体不能为空的字段的值必须有，为空则会抛异常
+	 * @param objectTableBean ObjectTableBean
+	 *                        含义：多条半结构化对象采集存储到hadoop配置信息实体合集
+	 *                        取值范围：所有这个实体不能为空的字段的值必须有，为空则会抛异常
 	 */
 	public ObjectLoadingDataStageImpl(ObjectTableBean objectTableBean) {
 		this.objectTableBean = objectTableBean;
@@ -48,14 +60,64 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, objectTableBean.getOcs_id(),
 				StageConstant.DATALOADING.getCode());
-		JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
-		log.info("------------------表" + objectTableBean.getEn_name()
-				+ "半结构化对象采集数据加载阶段成功------------------执行时间为："
-				+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
+		try {
+			String todayTableName = objectTableBean.getEn_name() + "_" + 1;
+			String hdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator
+					+ objectTableBean.getOdc_id() + File.separator + objectTableBean.getEn_name()
+					+ File.separator, true);
+			List<DataStoreConfBean> dataStoreConfBeanList = objectTableBean.getDataStoreConfBean();
+			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
+				if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//设置hive的默认类型
+					dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
+							DatabaseType.Hive.getCode());
+					createHiveTableLoadData(todayTableName, hdfsPath, dataStoreConfBean,
+							stageParamInfo.getTableBean());
+				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+
+				}
+			}
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			log.info("------------------表" + objectTableBean.getEn_name()
+					+ "半结构化对象采集数据加载阶段成功------------------执行时间为："
+					+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
+		} catch (Exception e) {
+			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.FAILED.getCode(), "执行失败");
+			log.error("表" + objectTableBean.getEn_name()
+					+ "半结构化对象采集数据加载阶段失败：", e);
+		}
 		//结束给stageParamInfo塞值
 		JobStatusInfoUtil.endStageParamInfo(stageParamInfo, statusInfo, objectTableBean
 				, AgentType.DuiXiang.getCode());
 		return stageParamInfo;
+	}
+
+	public static void createHiveTableLoadData(String todayTableName, String hdfsFilePath, DataStoreConfBean
+			dataStoreConfBean, TableBean tableBean) {
+		DatabaseWrapper db = null;
+		try {
+			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
+			List<String> sqlList = new ArrayList<>();
+			//1.如果表已存在,备份表上次执行进数的数据
+			backupToDayTable(todayTableName, db);
+			//2.创建表
+			sqlList.add(DFDataLoadingStageImpl.genHiveLoad(
+					todayTableName, tableBean, tableBean.getColumn_separator()));
+			//3.加载数据
+			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);
+			//4.执行sql语句
+			HSqlExecute.executeSql(sqlList, db);
+		} catch (Exception e) {
+			if (db != null) {
+				//执行失败，恢复上次进数的数据
+				recoverBackupToDayTable(todayTableName, db);
+			}
+			throw new AppSystemException("执行hive加载数据的sql报错", e);
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
 	}
 
 //	@Method(desc = "半结构化对象采集，数据加载阶段实现，处理完成后，无论成功还是失败，" +

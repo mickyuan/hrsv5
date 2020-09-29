@@ -145,7 +145,7 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 	 * @param etlDate       跑批日期
 	 * @param dataStoreConf 存储层配置信息
 	 */
-	private HBaseIncreasement getHBaseIncreasement(TableBean tableBean, String hbase_name, String etlDate,
+	public static HBaseIncreasement getHBaseIncreasement(TableBean tableBean, String hbase_name, String etlDate,
 												   DataStoreConfBean dataStoreConf) {
 		HBaseIncreasement hbaseIncreasement;
 		Map<String, String> data_store_connect_attr = dataStoreConf.getData_store_connect_attr();

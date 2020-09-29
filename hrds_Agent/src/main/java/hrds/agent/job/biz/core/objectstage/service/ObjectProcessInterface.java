@@ -11,9 +11,5 @@ public interface ObjectProcessInterface {
 
 	void parserFileToTable(String readFile);
 
-	void dealData(Map<String, Map<String, Object>> valueList);
-
-	void excute();
-
 	void close();
 }

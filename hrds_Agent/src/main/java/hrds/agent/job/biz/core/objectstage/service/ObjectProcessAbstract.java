@@ -8,19 +8,12 @@ import hrds.agent.job.biz.bean.Node;
 import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
-import hrds.commons.codes.CollectDataType;
-import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.OperationType;
 import hrds.commons.entity.Object_collect_struct;
 import hrds.commons.entity.Object_handle_type;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,11 +40,15 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 	//是否为拉链更新或者直接更新的列
 	protected Map<String, Boolean> isZipperKeyMap = new HashMap<>();
 	private final List<Object_collect_struct> object_collect_structList;
-	private final Map<String, String> handleTypeMap;
+	protected final Map<String, String> handleTypeMap;
+	protected String operate_column;
+	protected String etlDate;
 
 	protected ObjectProcessAbstract(TableBean tableBean, ObjectTableBean objectTableBean) {
 		this.objectTableBean = objectTableBean;
 		this.tableBean = tableBean;
+		this.operate_column = tableBean.getOperate_column();
+		this.etlDate = objectTableBean.getEtlDate();
 		//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
 		this.selectColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 		this.metaColumnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
@@ -73,45 +70,8 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 		return hMap;
 	}
 
-	@Override
-	public void parserFileToTable(String readFile) {
-		if (CollectDataType.JSON.getCode().equals(objectTableBean.getCollect_data_type())) {
-			parseJsonFileToTable(readFile);
-		} else if (CollectDataType.XML.getCode().equals(objectTableBean.getCollect_data_type())) {
-			//xml
-			throw new AppSystemException("暂不支持xml半结构化文件采集");
-//			parseXmlFileToTable(readFile);
-		} else {
-			throw new AppSystemException("半结构化对象采集入库只支持JSON和XML两种格式");
-		}
-	}
-
-	private void parseJsonFileToTable(String readFile) {
-		String lineValue;
-		String code = DataBaseCode.ofValueByCode(objectTableBean.getDatabase_code());
-		// 存储全量插入信息的list
-		List<Map<String, Map<String, Object>>> list;
-		long num = 0;
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream(new File(readFile)), code))) {
-			while ((lineValue = br.readLine()) != null) {
-				num++;
-				//获取定长文件，解析每行数据转为list
-				list = getJsonValueList(lineValue, num);
-				//处理数据
-				for (Map<String, Map<String, Object>> map : list) {
-					dealData(map);
-				}
-			}
-			//读完了，再执行一次，确保数据完全执行完
-			excute();
-		} catch (Exception e) {
-			throw new AppSystemException("解析非定长文件转存报错", e);
-		}
-	}
-
-	private List<Map<String, Map<String, Object>>> getJsonValueList(String lineValue, long num) {
-		List<Map<String, Map<String, Object>>> list = new ArrayList<>();
+	protected List<Map<String, Object>> getListTiledAttributes(String lineValue, long num) {
+		List<Map<String, Object>> list = new ArrayList<>();
 		try {
 			Object object = JSONObject.parse(lineValue);
 			List<Node> nodeList = new ArrayList<>();
@@ -120,22 +80,7 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 			for (Node node : nodeList) {
 				Map<String, Object> attributes = new HashMap<>();
 				getTiledAttributes(node, attributes);
-				Map<String, Map<String, Object>> dealMap = new HashMap<>();
-				//拿到操作列的值
-				if (OperationType.INSERT.getCode().equals(handleTypeMap.get(attributes.
-						get(tableBean.getOperate_column()).toString()))) {
-					dealMap.put("insert", attributes);
-				} else if (OperationType.UPDATE.getCode().equals(handleTypeMap.get(attributes.
-						get(tableBean.getOperate_column()).toString()))) {
-					dealMap.put("update", attributes);
-				} else if (OperationType.DELETE.getCode().equals(handleTypeMap.get(attributes.
-						get(tableBean.getOperate_column()).toString()))) {
-					dealMap.put("delete", attributes);
-				} else {
-					throw new AppSystemException("不支持的操作类型" + attributes.
-							get(tableBean.getOperate_column()));
-				}
-				list.add(dealMap);
+				list.add(attributes);
 			}
 		} catch (JSONException e) {
 			throw new AppSystemException("半结构化对象采集第" + num + "行数据格式不正确,数据为:" + lineValue);

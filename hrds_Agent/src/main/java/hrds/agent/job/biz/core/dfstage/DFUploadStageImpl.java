@@ -135,6 +135,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		//TODO Runtime.getRuntime().availableProcessors()此处不能用这个,因为可能同时有多个数据库采集同时进行
 		//这里多个文件，使用多线程读取文件，batch进外部数据库。
 		ExecutorService executor = null;
+		boolean flag = true;
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
@@ -156,9 +157,10 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					//设置hive的默认类型
 					dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
 							DatabaseType.Hive.getCode());
-					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
+					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient()) && flag) {
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
 						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
+						flag = false;
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有hadoop客户端
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
@@ -167,10 +169,11 @@ public class DFUploadStageImpl extends AbstractJobStage {
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
-				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type()) && flag) {
 //					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
 					//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
 					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
+					flag = false;
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 					clearSolrData(dataStoreConfBean);
 					//数据进solr

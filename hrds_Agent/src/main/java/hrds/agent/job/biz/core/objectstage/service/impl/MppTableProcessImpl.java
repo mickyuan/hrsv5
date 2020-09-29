@@ -6,10 +6,18 @@ import hrds.agent.job.biz.bean.ObjectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.objectstage.service.ObjectProcessAbstract;
 import hrds.agent.job.biz.utils.DataTypeTransform;
+import hrds.commons.codes.CollectDataType;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.OperationType;
 import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +82,62 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(") IN (");
 	}
 
+	@Override
+	public void parserFileToTable(String readFile) {
+		if (CollectDataType.JSON.getCode().equals(objectTableBean.getCollect_data_type())) {
+			parseJsonFileToTable(readFile);
+		} else if (CollectDataType.XML.getCode().equals(objectTableBean.getCollect_data_type())) {
+			//xml
+			throw new AppSystemException("暂不支持xml半结构化文件采集");
+//			parseXmlFileToTable(readFile);
+		} else {
+			throw new AppSystemException("半结构化对象采集入库只支持JSON和XML两种格式");
+		}
+	}
+
+	private void parseJsonFileToTable(String readFile) {
+		String lineValue;
+		String code = DataBaseCode.ofValueByCode(objectTableBean.getDatabase_code());
+		// 存储全量插入信息的list
+		long num = 0;
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(
+				new FileInputStream(new File(readFile)), code))) {
+			while ((lineValue = br.readLine()) != null) {
+				num++;
+				//获取定长文件，解析每行数据进行处理
+				List<Map<String, Object>> listTiledAttributes = getListTiledAttributes(lineValue, num);
+				//遍历所有的nodeList
+				for (Map<String, Object> map : listTiledAttributes) {
+					Map<String, Map<String, Object>> dealMap = new HashMap<>();
+					//增加开始日期结束日期和md5
+					map.put(Constant.SDATENAME, etlDate);
+					map.put(Constant.EDATENAME, Constant.MAXDATE);
+					//这里不算md5给默认值
+					map.put(Constant.MD5NAME, Constant.MD5NAME);
+					//拿到操作列的值
+					if (OperationType.INSERT.getCode().equals(handleTypeMap.get(map.
+							get(tableBean.getOperate_column()).toString()))) {
+						dealMap.put("insert", map);
+					} else if (OperationType.UPDATE.getCode().equals(handleTypeMap.get(map.
+							get(tableBean.getOperate_column()).toString()))) {
+						dealMap.put("update", map);
+					} else if (OperationType.DELETE.getCode().equals(handleTypeMap.get(map.
+							get(tableBean.getOperate_column()).toString()))) {
+						dealMap.put("delete", map);
+					} else {
+						throw new AppSystemException("不支持的操作类型" + map.
+								get(tableBean.getOperate_column()));
+					}
+					dealData(dealMap);
+				}
+			}
+			//读完了，再执行一次，确保数据完全执行完
+			excute();
+		} catch (Exception e) {
+			throw new AppSystemException("解析半结构化对象文件报错", e);
+		}
+	}
+
 	private List<String> getDeleteColumnList(Map<String, Boolean> isZipperKeyMap) {
 		List<String> delColumnList = new ArrayList<>();
 		for (String column : selectColumnList) {
@@ -135,7 +199,6 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		}
 	}
 
-	@Override
 	public void dealData(Map<String, Map<String, Object>> valueList) {
 		try {
 			for (String operate : valueList.keySet()) {
@@ -215,7 +278,6 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		}
 	}
 
-	@Override
 	public void excute() {
 		//最后执行一次提交,如果删除的没有过900，更新和新增的都没有过5000则第一次执行就到这里
 		try {
@@ -278,6 +340,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		insertSql.append(sb);
 		return insertSql.toString();
 	}
+
 
 	@Override
 	public void close() {

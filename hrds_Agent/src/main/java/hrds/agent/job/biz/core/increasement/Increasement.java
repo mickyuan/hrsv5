@@ -31,4 +31,5 @@ public interface Increasement {
 	 */
 	void restore(String storageType);
 
+	void close();
 }

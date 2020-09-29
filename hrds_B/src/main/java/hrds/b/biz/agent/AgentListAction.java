@@ -1507,9 +1507,9 @@ public class AgentListAction extends BaseAction {
 										+ " dsla"
 										+ " on dsla.dslad_id = csi.dslad_id"
 										+ " join "
-										+ Table_column.TableName
+										+ Object_collect_struct.TableName
 										+ " tc "
-										+ " on csi.col_id = tc.column_id"
+										+ " on csi.col_id = tc.struct_id"
 										+ " where csi.col_id in (select struct_id from "
 										+ Object_collect_struct.TableName
 										+ " where ocs_id = ?) and dsla.dsl_id = ? AND csi.data_source = ?",

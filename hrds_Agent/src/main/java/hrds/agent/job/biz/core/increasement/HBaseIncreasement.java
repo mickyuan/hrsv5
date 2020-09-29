@@ -55,12 +55,16 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 	}
 
 	@Override
-	public void close() throws IOException {
-		if (db != null) {
-			db.close();
-		}
-		if (helper != null) {
-			helper.close();
+	public void close() {
+		try {
+			if (db != null) {
+				db.close();
+			}
+			if (helper != null) {
+				helper.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -68,7 +72,7 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 	 * 创建默认预分区的HBase表
 	 */
 	public static void createDefaultPrePartTable(HBaseHelper helper, String table,
-	                                             boolean snappycompress) {
+												 boolean snappycompress) {
 		try {
 			// 预分区建表
 			HashChoreWoker worker = new HashChoreWoker(1000000, 10);
