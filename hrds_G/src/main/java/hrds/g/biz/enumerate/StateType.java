@@ -207,6 +207,10 @@ public enum StateType {
 	 */
 	DELETE_TABLE_DATA_FAILED("448", "删除表数据失败"),
 	/**
+	 * 表不在hbase存储层中
+	 */
+	TABLE_NOT_EXIST_ON_HBASE_STOREAGE("449", "表不在任何hbase存储层中"),
+	/**
 	 * 系统错误
 	 */
 	EXCEPTION("500", "系统错误");
