@@ -283,7 +283,7 @@ public class CollectFileConfAction extends BaseAction {
 	@Param(name = "dicColumnByTable", desc = "数据字典对应表对应列信息", range = "无限制")
 	@Param(name = "objectCollectStructList", desc = "数据库对应表对应列信息", range = "无限制")
 	private void addOrDeleteColumns(long ocs_id, List<Object_collect_struct> dicColumnByTable,
-	                                List<Object_collect_struct> objectCollectStructList) {
+									List<Object_collect_struct> objectCollectStructList) {
 		// 1.获取数据字典以及数据库表对应列名称
 		List<String> dicColumnNameList = getColumnName(dicColumnByTable);
 		List<String> columnNameList = getColumnName(objectCollectStructList);
@@ -357,7 +357,7 @@ public class CollectFileConfAction extends BaseAction {
 	@Param(name = "en_name", desc = "表英文名称", range = "无限制")
 	@Return(desc = "根据表名获取表对应列信息并返回", range = "无限制")
 	private List<Object_collect_struct> getDicColumnsByTableName(Object_collect object_collect,
-	                                                             String en_name) {
+																 String en_name) {
 		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
 		// 1.获取数据字典所有表对应列信息
 		Map<String, List<Object_collect_struct>> allDicColumns = SendMsgUtil.getAllDicColumns(
@@ -431,7 +431,7 @@ public class CollectFileConfAction extends BaseAction {
 	@Param(name = "en_name", desc = "表英文名称", range = "无限制")
 	@Return(desc = "返回对象采集数据处理类型对应表信息", range = "无限制")
 	private List<Object_handle_type> getObjectHandleTypeList(Object_collect object_collect,
-	                                                         String en_name) {
+															 String en_name) {
 		// 1.获取数据字典对象采集数据处理类型对应表信息
 		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
 		Validator.notNull(object_collect.getAgent_id(), "agent ID不能为空");
@@ -522,7 +522,10 @@ public class CollectFileConfAction extends BaseAction {
 				JSONObject jsonobject = (JSONObject) everyObject;
 				// 5.1如果location不为空，则通过当前树节点去查询当前节点下的信息
 				if (StringUtil.isNotBlank(location)) {
-					jsonobject = makeJsonFileToJsonObj(jsonobject, treeId.get(treeId.size() - 1));
+					for (int i = 0; i < treeId.size(); i++) {
+						jsonobject = makeJsonFileToJsonObj(jsonobject, treeId.get(i));
+					}
+//					jsonobject = makeJsonFileToJsonObj(jsonobject, treeId.get(treeId.size() - 1));
 				}
 				// 5.2根据树节点获取当前树节点信息
 				treeInfo = getTree(jsonobject, location);
@@ -535,7 +538,10 @@ public class CollectFileConfAction extends BaseAction {
 				JSONObject parseObject = JSONObject.parseObject(firstLine);
 				// 6.1如果location不为空，则通过当前树节点去查询当前节点下的信息
 				if (StringUtil.isNotBlank(location)) {
-					parseObject = makeJsonFileToJsonObj(parseObject, treeId.get(treeId.size() - 1));
+//					parseObject = makeJsonFileToJsonObj(parseObject, treeId.get(treeId.size() - 1));
+					for (int i = 0; i < treeId.size(); i++) {
+						parseObject = makeJsonFileToJsonObj(parseObject, treeId.get(i));
+					}
 				}
 				// 6.2根据树节点获取当前树节点信息
 				treeInfo = getTree(parseObject, location);
