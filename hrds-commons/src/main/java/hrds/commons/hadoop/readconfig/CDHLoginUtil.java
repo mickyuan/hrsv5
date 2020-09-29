@@ -28,10 +28,6 @@ public class CDHLoginUtil {
 	private static final String LOGIN_FAILED_CAUSE_PRINCIPAL_WRONG = "(no rule) principal format not support by default, need add property hadoop.security.auth_to_local(in core-site.xml) value RULE:[1:$1] RULE:[2:$1]";
 	private static final String LOGIN_FAILED_CAUSE_TIME_OUT = "(time out) can not connect to kdc server or there is fire wall in the network";
 
-	private static String PRINCIPAL = "username.client.kerberos.principal";
-	private static String KEYTAB = "username.client.keytab.file";
-
-	private static String confDir;
 	public static String PATH_TO_KEYTAB;
 	public static String PATH_TO_KRB5_CONF;
 	public static String PATH_TO_JAAS;
@@ -50,14 +46,12 @@ public class CDHLoginUtil {
 	 * 读取配置文件并认证
 	 *
 	 * @param conf 配置文件
-	 * @return
-	 * @throws IOException
 	 */
 	public synchronized static Configuration login(Configuration conf, String prncipal_name) throws IOException {
 		if (conf == null) {
 			throw new AppSystemException("初始化配置为空！");
 		}
-		confDir = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
+		String confDir = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 		PATH_TO_KEYTAB = confDir + "user.keytab";
 		PATH_TO_KRB5_CONF = confDir + "krb5.conf";
 		PATH_TO_JAAS = confDir + "jaas.conf";
@@ -69,14 +63,6 @@ public class CDHLoginUtil {
 		if ((prncipal_name == null) || (prncipal_name.length() <= 0)) {
 			log.error("input userPrincipal is invalid.");
 			throw new IOException("input userPrincipal is invalid.");
-		}
-		if (userKeytabPath.length() <= 0) {
-			log.error("input userKeytabPath is invalid.");
-			throw new IOException("input userKeytabPath is invalid.");
-		}
-		if (krb5ConfPath.length() <= 0) {
-			log.error("input krb5ConfPath is invalid.");
-			throw new IOException("input krb5ConfPath is invalid.");
 		}
 		// 2.check file exsits
 		File userKeytabFile = new File(userKeytabPath);
@@ -100,7 +86,9 @@ public class CDHLoginUtil {
 
 		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
 
+		String KEYTAB = "username.client.keytab.file";
 		conf.set(KEYTAB, PATH_TO_KEYTAB);
+		String PRINCIPAL = "username.client.kerberos.principal";
 		conf.set(PRINCIPAL, prncipal_name);
 
 		// 3.set and check krb5config
@@ -113,7 +101,7 @@ public class CDHLoginUtil {
 		return conf;
 	}
 
-	private static void setConfiguration(Configuration conf) throws IOException {
+	private static void setConfiguration(Configuration conf) {
 		UserGroupInformation.setConfiguration(conf);
 	}
 

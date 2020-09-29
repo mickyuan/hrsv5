@@ -116,7 +116,7 @@ public class LoginUtil {
 		log.info("Login success!!!!!!!!!!!!!!");
 	}
 
-	private static void setConfiguration(Configuration conf) throws IOException {
+	private static void setConfiguration(Configuration conf) {
 
 		UserGroupInformation.setConfiguration(conf);
 	}
@@ -145,13 +145,13 @@ public class LoginUtil {
 	 * make the keytab and principal in example to current user's keytab and
 	 * username
 	 */
-	public Configuration authentication(Configuration conf,String principle_name) throws IOException {
+	public Configuration authentication(Configuration conf, String principle_name) throws IOException {
 		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
 		login(principle_name, PATH_TO_KEYTAB, PATH_TO_KRB5_CONF, conf);
 		return conf;
 	}
 
-	public Configuration hbaseLogin(Configuration conf,String principle_name) throws IOException {
+	public Configuration hbaseLogin(Configuration conf, String principle_name) throws IOException {
 
 		System.setProperty("java.security.auth.login.config", confDir + "jaas.conf");
 
@@ -208,7 +208,7 @@ public class LoginUtil {
 		}
 
 		javax.security.auth.login.Configuration
-				.setConfiguration(new JaasConfiguration(loginContextName, principal, userKeytabFile.getAbsolutePath()));
+			.setConfiguration(new JaasConfiguration(loginContextName, principal, userKeytabFile.getAbsolutePath()));
 
 		javax.security.auth.login.Configuration conf = javax.security.auth.login.Configuration.getConfiguration();
 		if (!(conf instanceof JaasConfiguration)) {
@@ -224,17 +224,17 @@ public class LoginUtil {
 
 		boolean checkPrincipal = false;
 		boolean checkKeytab = false;
-		for (int i = 0; i < entrys.length; i++) {
-			if (entrys[i].getOptions().get("principal").equals(principal)) {
+		for (AppConfigurationEntry entry : entrys) {
+			if (entry.getOptions().get("principal").equals(principal)) {
 				checkPrincipal = true;
 			}
 
 			if (IS_IBM_JDK) {
-				if (entrys[i].getOptions().get("useKeytab").equals(keytabFile)) {
+				if (entry.getOptions().get("useKeytab").equals(keytabFile)) {
 					checkKeytab = true;
 				}
 			} else {
-				if (entrys[i].getOptions().get("keyTab").equals(keytabFile)) {
+				if (entry.getOptions().get("keyTab").equals(keytabFile)) {
 					checkKeytab = true;
 				}
 			}
@@ -289,16 +289,16 @@ public class LoginUtil {
 	 */
 	private static class JaasConfiguration extends javax.security.auth.login.Configuration {
 
-		private static final Map<String, String> BASIC_JAAS_OPTIONS = new HashMap<String, String>();
+		private static final Map<String, String> BASIC_JAAS_OPTIONS = new HashMap<>();
 
 		static {
 			String jaasEnvVar = System.getenv("HBASE_JAAS_DEBUG");
-			if (jaasEnvVar != null && "true".equalsIgnoreCase(jaasEnvVar)) {
+			if ("true".equalsIgnoreCase(jaasEnvVar)) {
 				BASIC_JAAS_OPTIONS.put("debug", "true");
 			}
 		}
 
-		private static final Map<String, String> KEYTAB_KERBEROS_OPTIONS = new HashMap<String, String>();
+		private static final Map<String, String> KEYTAB_KERBEROS_OPTIONS = new HashMap<>();
 
 		static {
 			if (IS_IBM_JDK) {
@@ -314,7 +314,7 @@ public class LoginUtil {
 		}
 
 		private static final AppConfigurationEntry KEYTAB_KERBEROS_LOGIN = new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
-				LoginModuleControlFlag.REQUIRED, KEYTAB_KERBEROS_OPTIONS);
+			LoginModuleControlFlag.REQUIRED, KEYTAB_KERBEROS_OPTIONS);
 
 		private static final AppConfigurationEntry[] KEYTAB_KERBEROS_CONF = new AppConfigurationEntry[]{KEYTAB_KERBEROS_LOGIN};
 
@@ -328,12 +328,12 @@ public class LoginUtil {
 
 		private final String principal;
 
-		public JaasConfiguration(String loginContextName, String principal, String keytabFile) throws IOException {
+		public JaasConfiguration(String loginContextName, String principal, String keytabFile) {
 
 			this(loginContextName, principal, keytabFile, keytabFile == null || keytabFile.length() == 0);
 		}
 
-		private JaasConfiguration(String loginContextName, String principal, String keytabFile, boolean useTicketCache) throws IOException {
+		private JaasConfiguration(String loginContextName, String principal, String keytabFile, boolean useTicketCache) {
 
 			try {
 				this.baseConfig = javax.security.auth.login.Configuration.getConfiguration();
@@ -347,10 +347,10 @@ public class LoginUtil {
 
 			initKerberosOption();
 			log.info("JaasConfiguration loginContextName=" + loginContextName + " principal=" + principal + " useTicketCache=" + useTicketCache
-					+ " keytabFile=" + keytabFile);
+				+ " keytabFile=" + keytabFile);
 		}
 
-		private void initKerberosOption() throws IOException {
+		private void initKerberosOption() {
 
 			if (!useTicketCache) {
 				if (IS_IBM_JDK) {
@@ -358,7 +358,7 @@ public class LoginUtil {
 				} else {
 					KEYTAB_KERBEROS_OPTIONS.put("keyTab", keytabFile);
 					KEYTAB_KERBEROS_OPTIONS.put("useKeyTab", "true");
-					KEYTAB_KERBEROS_OPTIONS.put("useTicketCache", useTicketCache ? "true" : "false");
+					KEYTAB_KERBEROS_OPTIONS.put("useTicketCache", "false");
 				}
 			}
 			KEYTAB_KERBEROS_OPTIONS.put("principal", principal);

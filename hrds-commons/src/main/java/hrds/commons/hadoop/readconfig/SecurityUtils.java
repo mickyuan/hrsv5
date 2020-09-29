@@ -77,11 +77,6 @@ public class SecurityUtils {
 
 	/**
 	 * HBase login
-	 *
-	 * @param keytabFileName
-	 * @param principalName
-	 * @return
-	 * @throws Exception
 	 */
 	public static Configuration HBaselogin(Configuration conf, String keytabFileName, String principalName) throws Exception {
 		if (conf == null) {
@@ -110,7 +105,7 @@ public class SecurityUtils {
 	/**
 	 * kerberos security authentication
 	 */
-	public static Configuration authentication(Configuration conf) throws IOException {
+	public static Configuration authentication(Configuration conf) {
 		if (conf == null) {
 			throw new AppSystemException("input conf is invalid.");
 		}
@@ -140,7 +135,7 @@ public class SecurityUtils {
 	/**
 	 * Add configuration file
 	 */
-	public static Configuration confLoad() throws IOException {
+	public static Configuration confLoad() {
 
 		Configuration conf = new Configuration();
 		// conf file
