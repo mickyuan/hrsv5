@@ -9,6 +9,7 @@ import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -16,7 +17,10 @@ import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.User;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "贴源层(DCL)层数据信息查询类", author = "BY-HLL", createdate = "2020/1/7 0007 上午 11:10")
 public class DCLDataQuery {
@@ -133,6 +137,45 @@ public class DCLDataQuery {
 		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
+	@Method(desc = "获取批量数据下半结构化采集任务信息",
+			logicStep = "1.获取批量数据下数据源下分类信息,如果是系统管理员,则不过滤部门")
+	@Param(name = "source_id", desc = "数据源id", range = "数据源id,唯一")
+	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+	@Return(desc = "对象采集信息列表", range = "无限制")
+	public static List<Map<String, Object>> getDCLBatchObjectCollectInfos(String source_id, User user) {
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.clean();
+		UserType userType = UserType.ofEnumByCode(user.getUserType());
+		Agent_info agent_info = new Agent_info();
+		//1.获取数据源下分类信息,如果是系统管理员,则不过滤部门
+		if (UserType.XiTongGuanLiYuan != userType) {
+			asmSql.addSql(
+					"SELECT oc.obj_collect_name as classify_name,oc.odc_id as classify_id," +
+							"oc.obj_number as classify_num,oc.agent_id,ds.source_id,oc.remark"
+							+ " FROM " + Object_collect.TableName + " oc"
+							+ " JOIN " + Agent_info.TableName + " ai ON oc.agent_id=ai.agent_id"
+							+ " JOIN " + Data_source.TableName + " ds" + " ON ai.source_id = ds.source_id"
+							+ " JOIN " + Source_relation_dep.TableName + " srd ON ds.source_id = srd.source_id"
+							+ " where srd.dep_id = ?").addParam(user.getDepId());
+			if (StringUtil.isNotBlank(source_id)) {
+				agent_info.setSource_id(source_id);
+				asmSql.addSql(" AND ds.source_id = ?").addParam(agent_info.getSource_id());
+			}
+		} else {
+			asmSql.addSql(
+					"SELECT oc.obj_collect_name as classify_name,oc.odc_id as classify_id," +
+							"oc.obj_number as classify_num,oc.agent_id,ds.source_id,oc.remark"
+							+ " FROM " + Object_collect.TableName + " oc"
+							+ " JOIN " + Agent_info.TableName + " ai ON oc.agent_id = ai.agent_id"
+							+ " JOIN " + Data_source.TableName + " ds ON ds.source_id = ai.source_id");
+			if (StringUtil.isNotBlank(source_id)) {
+				agent_info.setSource_id(source_id);
+				asmSql.addSql(" WHERE ds.source_id = ? ").addParam(agent_info.getSource_id());
+			}
+		}
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
+	}
+
 	@Method(desc = "获取分类id获取分类下表信息",
 			logicStep = "1.获取分类id获取分类下表信息")
 	@Param(name = "classify_id", desc = "分类id", range = "分类id,唯一")
@@ -180,13 +223,58 @@ public class DCLDataQuery {
 		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
+	@Method(desc = "根据对象采集id获取任务下表信息", logicStep = "1.根据对象采集id获取任务下表信息")
+	@Param(name = "classify_id", desc = "对象采集id", range = "对象采集id,唯一")
+	@Param(name = "user", desc = "User", range = "登录用户User的对象实例")
+	@Return(desc = "分类下表信息", range = "无限制")
+	public static List<Map<String, Object>> getDCLBatchObjectCollectTableInfos(String odc_id, User user) {
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		//1.根据对象采集id获取任务下表信息
+		asmSql.clean();
+		UserType userType = UserType.ofEnumByCode(user.getUserType());
+		Object_collect object_collect = new Object_collect();
+		object_collect.setOdc_id(odc_id);
+		if (UserType.XiTongGuanLiYuan != userType) {
+			asmSql.addSql(
+					"SELECT t1.*,t2.obj_collect_name as classify_name,t2.odc_id as classify_id,t2" +
+							".obj_collect_name as task_name,t2.obj_number as classify_num,t2.remark"
+							+ " FROM " + Data_store_reg.TableName + " t1"
+							+ " JOIN " + Object_collect.TableName + " t2 ON t1.database_id = t2.odc_id"
+							+ " JOIN " + Agent_info.TableName + " t3 ON t3.agent_id = t2.agent_id"
+							+ " JOIN " + Data_source.TableName + " t4 ON t4.source_id = t3.source_id"
+							+ " JOIN " + Source_relation_dep.TableName + " t5 ON t5.source_id = t4.source_id"
+							+ " WHERE t2.odc_id = ?");
+		} else {
+			asmSql.addSql(
+					"SELECT t1.*,t2.obj_collect_name as classify_name,t2.odc_id as classify_id,t2" +
+							".obj_collect_name as task_name,t2.obj_number as classify_num,t2.remark"
+							+ " FROM " + Data_store_reg.TableName + " t1"
+							+ " JOIN " + Object_collect.TableName + " t2 ON t1.database_id = t2.odc_id"
+							+ " JOIN " + Agent_info.TableName + " t3 ON t3.agent_id = t2.agent_id"
+							+ " JOIN " + Data_source.TableName + " t4 ON t4.source_id = t3.source_id"
+							+ " WHERE t2.odc_id = ?");
+		}
+		asmSql.addParam(object_collect.getOdc_id());
+		if (UserType.XiTongGuanLiYuan != userType) {
+			asmSql.addSql(" AND t5.dep_id = ?").addParam(user.getDepId());
+		}
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
+	}
+
 	@Method(desc = "根据表id获取DCL层批量表信息", logicStep = "根据表id获取DCL层批量表信息")
 	@Param(name = "file_id", desc = "表源属性id", range = "String字符串,唯一")
 	@Return(desc = "返回值说明", range = "返回值取值范围")
 	public static Map<String, Object> getDCLBatchTableInfo(String file_id) {
-		return Dbo.queryOneObject("SELECT dsr.*,ti.* FROM " + Data_store_reg.TableName + " dsr" +
-				" JOIN " + Table_info.TableName + " ti ON dsr.database_id = ti.database_id AND dsr.table_name = ti.table_name" +
-				" WHERE dsr.file_id =?", file_id);
+		return Dbo.queryOneObject(
+				"SELECT dsr.*,ti.table_ch_name FROM " + Data_store_reg.TableName + " dsr"
+						+ " JOIN " + Table_info.TableName + " ti"
+						+ " ON dsr.database_id = ti.database_id AND dsr.table_name = ti.table_name"
+						+ " WHERE dsr.file_id =?"
+						+ " UNION"
+						+ " SELECT dsr.*,oct.zh_name as table_ch_name FROM " + Data_store_reg.TableName + " dsr"
+						+ " JOIN " + Object_collect_task.TableName + " oct"
+						+ " ON dsr.database_id = oct.odc_id AND dsr.table_name = oct.en_name" +
+						" WHERE dsr.file_id =?", file_id, file_id);
 	}
 
 	@Method(desc = "根据表id获取DCL层批量表字段",
@@ -204,7 +292,16 @@ public class DCLDataQuery {
 						" FROM " + Data_store_reg.TableName + " dsr" +
 						" JOIN " + Table_info.TableName + " ti ON dsr.database_id=ti.database_id AND dsr.table_name=ti.table_name" +
 						" JOIN " + Table_column.TableName + " tc ON ti.table_id=tc.table_id" +
-						" WHERE dsr.file_id = ?", dsr.getFile_id());
+						" WHERE dsr.file_id = ?" +
+						" UNION" +
+						" SELECT ocs.struct_id as column_id, ocs.column_name as column_name," +
+						"ocs.data_desc as column_ch_name,ocs.remark,ocs.column_type as column_type,"
+						+ "'" + IsFlag.Fou.getCode() + "'" + " as is_primary_key" +
+						" FROM " + Data_store_reg.TableName + " dsr"
+						+ " JOIN " + Object_collect_task.TableName + " oct"
+						+ " ON dsr.database_id=oct.odc_id AND dsr.table_name=oct.en_name"
+						+ " JOIN " + Object_collect_struct.TableName + " ocs ON oct.ocs_id=ocs.ocs_id" +
+						" WHERE dsr.file_id = ?", dsr.getFile_id(), dsr.getFile_id());
 		if (column_list.isEmpty()) {
 			throw new BusinessException("表的Mate信息查询结果为空!");
 		}

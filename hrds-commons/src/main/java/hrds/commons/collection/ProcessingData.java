@@ -150,17 +150,31 @@ public abstract class ProcessingData {
 		List<LayerBean> tableStorageLayerBeans = new ArrayList<>();
 		//查询贴元表信息，也就是通过数据采集过来的数据表
 		Optional<Data_store_reg> dsr_optional = SqlOperator.queryOneObject(db, Data_store_reg.class,
-				"select * from " + Data_store_reg.TableName + " where collect_type in (?,?) and lower(hyren_name) = ?",
-				AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase());
+				"select * from " + Data_store_reg.TableName + " where collect_type in (?,?,?)" +
+						" and lower(hyren_name) = ?",
+				AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), AgentType.DuiXiang.getCode(),
+				tableName.toLowerCase());
 		//如果登记表存在数据,则设置改表登记的存储层信息
 		if (dsr_optional.isPresent()) {
 			Data_store_reg dsr = dsr_optional.get();
-			List<LayerBean> dcl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
-					"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst from " + Table_storage_info.TableName + " tsi" +
-							" join " + Dtab_relation_store.TableName + " dtrs on tsi.storage_id = dtrs.tab_id" +
-							" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
-							" where tsi.table_id = ? and dtrs.data_source in (?,?)",
-					dsr.getTable_id(), StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode());
+			List<LayerBean> dcl_layerBeans;
+			if (AgentType.DuiXiang == AgentType.ofEnumByCode(dsr.getCollect_type())) {
+				dcl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
+						"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst"
+								+ " from " + Dtab_relation_store.TableName + " dtrs"
+								+ " join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+								" where dtrs.tab_id = ? and dtrs.data_source =?",
+						dsr.getTable_id(), StoreLayerDataSource.OBJ.getCode());
+			} else {
+				dcl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
+						"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst from "
+								+ Table_storage_info.TableName + " tsi" +
+								" join " + Dtab_relation_store.TableName + " dtrs on tsi.storage_id = dtrs.tab_id" +
+								" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+								" where tsi.table_id = ? and dtrs.data_source in (?,?)",
+						dsr.getTable_id(), StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode());
+			}
+
 			//记录数据表所在存储层信息
 			tableStorageLayerBeans.addAll(dcl_layerBeans);
 		}
