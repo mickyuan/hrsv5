@@ -8,6 +8,7 @@ ALTER TABLE dq_failure_column ALTER COLUMN "column_meta_info" TYPE text;
 -- 数据采集
 ALTER TABLE source_file_attribute ALTER COLUMN "meta_info" TYPE text;
 ALTER TABLE source_file_detailed ALTER COLUMN "meta_info" TYPE text;
+ALTER TABLE object_collect_task ALTER COLUMN "firstline" TYPE text;
 -- 数据集市
 ALTER TABLE dm_operation_info ALTER COLUMN "view_sql" TYPE text;
 ALTER TABLE dm_operation_info ALTER COLUMN "execute_sql" TYPE text;

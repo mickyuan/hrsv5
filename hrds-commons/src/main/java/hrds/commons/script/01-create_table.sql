@@ -2134,6 +2134,7 @@ OCS_ID                                            BIGINT default 0 NOT NULL, --�
 COLUMN_NAME                                       VARCHAR(512) NOT NULL, --字段英文名称
 DATA_DESC                                         VARCHAR(200) NULL, --字段中文描述信息
 IS_OPERATE                                        CHAR(1) NOT NULL, --是否操作标识字段
+IS_ZIPPER_FIELD                                   CHAR(1) NOT NULL, --是否为拉链字段
 COLUMNPOSITION                                    VARCHAR(100) NOT NULL, --字段位置
 COLUMN_TYPE                                       VARCHAR(100) NOT NULL, --字段类型
 REMARK                                            VARCHAR(512) NULL, --备注
