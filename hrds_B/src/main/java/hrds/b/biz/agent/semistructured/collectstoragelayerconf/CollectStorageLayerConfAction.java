@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.AgentListAction;
 import hrds.b.biz.agent.bean.ColStoParam;
 import hrds.b.biz.agent.bean.DataStoRelaParam;
 import hrds.b.biz.agent.tools.CommonUtils;
@@ -301,5 +302,14 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.查询所有数据存储层配置信息
 		return Dbo.queryResult("select * from " + Data_store_layer.TableName);
+	}
+
+	@Method(desc = "调用接口，立即启动采集半结构化数据",
+			logicStep = "1.调用接口，立即启动采集半结构化数据")
+	@Param(name = "odc_id", desc = "对象采集ID", range = "新增对象采集配置时生成")
+	@Param(name = "etl_date", desc = "跑批日期", range = "新增对象采集配置时生成")
+	public void execute(Long odc_id,String etl_date){
+		AgentListAction agentListAction = new AgentListAction();
+		agentListAction.sendObjectCollectTaskById(odc_id,etl_date);
 	}
 }
