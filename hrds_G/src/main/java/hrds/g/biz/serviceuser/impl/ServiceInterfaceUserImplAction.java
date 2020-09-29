@@ -737,7 +737,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		}
 		// 浏览器版本
 		Version browserVersion = userAgent.getBrowserVersion();
-		interface_use_log.setBrowser_version(browserVersion.toString());
+		interface_use_log.setBrowser_version(browserVersion == null ? header : browserVersion.toString());
 		// 系统类型
 		OperatingSystem operatingSystem = userAgent.getOperatingSystem();
 		if ("UNKNOWN".equalsIgnoreCase(operatingSystem.toString())) {
