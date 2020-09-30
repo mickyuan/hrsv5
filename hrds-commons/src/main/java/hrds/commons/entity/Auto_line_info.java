@@ -30,8 +30,6 @@ public class Auto_line_info extends ProjectTableEntity
 		__tmpPKS.add("line_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="serial_number",value="序号:",dataType = Long.class,required = true)
-	private Long serial_number;
 	@DocBean(name ="x_axis_coord",value="X轴坐标:",dataType = Integer.class,required = true)
 	private Integer x_axis_coord;
 	@DocBean(name ="y_axis_coord",value="Y轴坐标:",dataType = Integer.class,required = true)
@@ -48,21 +46,9 @@ public class Auto_line_info extends ProjectTableEntity
 	private Long line_length;
 	@DocBean(name ="line_weight",value="分割线宽度:",dataType = Long.class,required = true)
 	private Long line_weight;
+	@DocBean(name ="serial_number",value="序号:",dataType = Long.class,required = true)
+	private Long serial_number;
 
-	/** 取得：序号 */
-	public Long getSerial_number(){
-		return serial_number;
-	}
-	/** 设置：序号 */
-	public void setSerial_number(Long serial_number){
-		this.serial_number=serial_number;
-	}
-	/** 设置：序号 */
-	public void setSerial_number(String serial_number){
-		if(!fd.ng.core.utils.StringUtil.isEmpty(serial_number)){
-			this.serial_number=new Long(serial_number);
-		}
-	}
 	/** 取得：X轴坐标 */
 	public Integer getX_axis_coord(){
 		return x_axis_coord;
@@ -161,6 +147,20 @@ public class Auto_line_info extends ProjectTableEntity
 	public void setLine_weight(String line_weight){
 		if(!fd.ng.core.utils.StringUtil.isEmpty(line_weight)){
 			this.line_weight=new Long(line_weight);
+		}
+	}
+	/** 取得：序号 */
+	public Long getSerial_number(){
+		return serial_number;
+	}
+	/** 设置：序号 */
+	public void setSerial_number(Long serial_number){
+		this.serial_number=serial_number;
+	}
+	/** 设置：序号 */
+	public void setSerial_number(String serial_number){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(serial_number)){
+			this.serial_number=new Long(serial_number);
 		}
 	}
 }

@@ -15,7 +15,9 @@ public enum Store_type {
 	/**ElasticSearch<ElasticSearch>  */
 	ElasticSearch("5","ElasticSearch","59","存储层类型"),
 	/**mongodb<MONGODB>  */
-	MONGODB("6","mongodb","59","存储层类型");
+	MONGODB("6","mongodb","59","存储层类型"),
+	/**CarBonData<CARBONDATA>  */
+	CARBONDATA("7","CarBonData","59","存储层类型");
 
 	private final String code;
 	private final String value;

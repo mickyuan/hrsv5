@@ -34,7 +34,7 @@ public class Data_store_layer_added extends ProjectTableEntity
 	private Long dslad_id;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;
-	@DocBean(name ="dsla_storelayer",value="配置附加属性信息(StoreLayerAdded):01-主键<ZhuJian> 02-rowkey<RowKey> 03-索引列<SuoYinLie> 04-预聚合列<YuJuHe> 05-排序列<PaiXuLie> 06-分区列<FenQuLie> ",dataType = String.class,required = true)
+	@DocBean(name ="dsla_storelayer",value="配置附加属性信息(StoreLayerAdded):01-主键<ZhuJian> 02-rowkey<RowKey> 03-索引列<SuoYinLie> 04-预聚合列<YuJuHe> 05-排序列<PaiXuLie> 06-分区列<FenQuLie> 07-Solr列<Solr> ",dataType = String.class,required = true)
 	private String dsla_storelayer;
 	@DocBean(name ="dslad_remark",value="备注:",dataType = String.class,required = false)
 	private String dslad_remark;

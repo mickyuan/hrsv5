@@ -364,7 +364,7 @@ INSERT INTO CODE_INFO  VALUES ('1', '58', '权限类型', '允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('2', '58', '权限类型', '不允许', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('3', '58', '权限类型', '一次', 'AuthType');
 INSERT INTO CODE_INFO  VALUES ('0', '58', '权限类型', '申请', 'AuthType');
---　本引用值的代码个数:6 -------i==53
+--　本引用值的代码个数:7 -------i==53
 delete from code_info where ci_sp_class='59';
 INSERT INTO CODE_INFO  VALUES ('1', '59', '存储层类型', '关系型数据库', 'Store_type');
 INSERT INTO CODE_INFO  VALUES ('2', '59', '存储层类型', 'hive', 'Store_type');
@@ -372,6 +372,7 @@ INSERT INTO CODE_INFO  VALUES ('3', '59', '存储层类型', 'Hbase', 'Store_typ
 INSERT INTO CODE_INFO  VALUES ('4', '59', '存储层类型', 'solr', 'Store_type');
 INSERT INTO CODE_INFO  VALUES ('5', '59', '存储层类型', 'ElasticSearch', 'Store_type');
 INSERT INTO CODE_INFO  VALUES ('6', '59', '存储层类型', 'mongodb', 'Store_type');
+INSERT INTO CODE_INFO  VALUES ('7', '59', '存储层类型', 'CarBonData', 'Store_type');
 --　本引用值的代码个数:12 -------i==54
 delete from code_info where ci_sp_class='60';
 INSERT INTO CODE_INFO  VALUES ('1001', '60', '文件类型', '全部文件', 'FileType');
@@ -386,7 +387,7 @@ INSERT INTO CODE_INFO  VALUES ('1063', '60', '文件类型', '表数据文件', 
 INSERT INTO CODE_INFO  VALUES ('1004', '60', '文件类型', '视频', 'FileType');
 INSERT INTO CODE_INFO  VALUES ('1005', '60', '文件类型', '音频', 'FileType');
 INSERT INTO CODE_INFO  VALUES ('1006', '60', '文件类型', '其它', 'FileType');
---　本引用值的代码个数:6 -------i==55
+--　本引用值的代码个数:7 -------i==55
 delete from code_info where ci_sp_class='62';
 INSERT INTO CODE_INFO  VALUES ('01', '62', '存储层附件属性', '主键', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('02', '62', '存储层附件属性', 'rowkey', 'StoreLayerAdded');
@@ -394,6 +395,7 @@ INSERT INTO CODE_INFO  VALUES ('03', '62', '存储层附件属性', '索引列',
 INSERT INTO CODE_INFO  VALUES ('04', '62', '存储层附件属性', '预聚合列', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('05', '62', '存储层附件属性', '排序列', 'StoreLayerAdded');
 INSERT INTO CODE_INFO  VALUES ('06', '62', '存储层附件属性', '分区列', 'StoreLayerAdded');
+INSERT INTO CODE_INFO  VALUES ('07', '62', '存储层附件属性', 'Solr列', 'StoreLayerAdded');
 --　本引用值的代码个数:8 -------i==56
 delete from code_info where ci_sp_class='63';
 INSERT INTO CODE_INFO  VALUES ('ISL', '63', '数据源类型', '贴源层_01', 'DataSourceType');

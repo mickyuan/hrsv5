@@ -31,23 +31,15 @@ public class Dtab_relation_store extends ProjectTableEntity
 		__tmpPKS.add("tab_id");
 		__PrimaryKeys = Collections.unmodifiableSet(__tmpPKS);
 	}
-	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> 6-自定义<UD> ",dataType = String.class,required = true)
-	private String data_source;
 	@DocBean(name ="is_successful",value="是否入库成功(JobExecuteState):100-等待<DengDai> 101-运行<YunXing> 102-暂停<ZanTing> 103-中止<ZhongZhi> 104-完成<WanCheng> 105-失败<ShiBai> ",dataType = String.class,required = false)
 	private String is_successful;
 	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = true)
 	private Long dsl_id;
 	@DocBean(name ="tab_id",value="对象采集任务编号:",dataType = Long.class,required = true)
 	private Long tab_id;
+	@DocBean(name ="data_source",value="存储层-数据来源(StoreLayerDataSource):1-db采集<DB> 2-数据库采集<DBA> 3-对象采集<OBJ> 4-数据集市<DM> 5-数据管控<DQ> 6-自定义<UD> ",dataType = String.class,required = true)
+	private String data_source;
 
-	/** 取得：存储层-数据来源 */
-	public String getData_source(){
-		return data_source;
-	}
-	/** 设置：存储层-数据来源 */
-	public void setData_source(String data_source){
-		this.data_source=data_source;
-	}
 	/** 取得：是否入库成功 */
 	public String getIs_successful(){
 		return is_successful;
@@ -83,5 +75,13 @@ public class Dtab_relation_store extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(tab_id)){
 			this.tab_id=new Long(tab_id);
 		}
+	}
+	/** 取得：存储层-数据来源 */
+	public String getData_source(){
+		return data_source;
+	}
+	/** 设置：存储层-数据来源 */
+	public void setData_source(String data_source){
+		this.data_source=data_source;
 	}
 }

@@ -16,8 +16,9 @@ public enum StoreLayerAdded {
 	PaiXuLie("05","排序列","62","存储层附件属性"),
 	/**分区列<FenQuLie>  */
 	FenQuLie("06","分区列","62","存储层附件属性"),
-	/**Solr列<FenQuLie>  */
+	/**Solr列<Solr>  */
 	Solr("07","Solr列","62","存储层附件属性");
+
 	private final String code;
 	private final String value;
 	private final String catCode;
