@@ -72,8 +72,11 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 						processInterface = new MppTableProcessImpl(stageParamInfo.getTableBean(),
 								objectTableBean, dataStoreConfBean);
 					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
-						//默认为
-						//关系型数据库
+						//这里先将json文件写成非定长分隔符的文件
+						processInterface = new HiveTableProcessImpl(stageParamInfo.getTableBean(),
+								objectTableBean);
+					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
+						//这里先将json文件写成非定长分隔符的文件
 						processInterface = new HiveTableProcessImpl(stageParamInfo.getTableBean(),
 								objectTableBean);
 					} else {
@@ -87,9 +90,9 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 					if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())
 							|| Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						String unloadFileAbsolutePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
-								objectTableBean.getOdc_id() + File.separator + objectTableBean.getEn_name() +
+								objectTableBean.getOdc_id() + File.separator + objectTableBean.getHyren_name() +
 								File.separator + objectTableBean.getEtlDate() + File.separator +
-								objectTableBean.getEn_name() + ".dat", true);
+								objectTableBean.getHyren_name() + ".dat", true);
 						//直接上传hdfs，映射外部表的方式进hive
 						execHDFSShell(dataStoreConfBean, unloadFileAbsolutePath, objectTableBean);
 					}
@@ -123,7 +126,7 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 							   ObjectTableBean objectTableBean) throws Exception {
 		//STORECONFIGPATH上传hdfs需要读取的配置文件顶层目录
 		String hdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator
-				+ objectTableBean.getOdc_id() + File.separator + objectTableBean.getEn_name()
+				+ objectTableBean.getOdc_id() + File.separator + objectTableBean.getHyren_name()
 				+ File.separator, true);
 		//TODO 需要加一个key为hadoop_user_name的键值对，作为普通属性
 		//TODO 需要加一个key为platform的键值对，作为普通属性
@@ -169,7 +172,7 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 				fsSql.append("hadoop fs -put -f ").append(localFilePath).append(" ").append(hdfsPath)
 						.append(" ").append(System.lineSeparator());
 				String hdfsShellFile = FileNameUtils.normalize(Constant.HDFSSHELLFILE + objectTableBean
-						.getEn_name() + ".sh", true);
+						.getHyren_name() + ".sh", true);
 				//写脚本文件
 				FileUtil.createFile(hdfsShellFile, fsSql.toString());
 				String command = "sh " + hdfsShellFile;

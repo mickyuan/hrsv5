@@ -1376,10 +1376,11 @@ public class AgentListAction extends BaseAction {
 		// 2-4、查询并组装采集表配置信息数组，除数据库中查询出的内容，还需要组装表采集字段集合、列合并参数信息、表存储配置信息
 		Result collectTableResult =
 				Dbo.queryResult(
-						"SELECT oc.odc_id,oct.ocs_id,oct.en_name,oct.zh_name,oct.collect_data_type," +
-								"oct.database_code,oct.updatetype, ds.datasource_name, " +
-								"ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
-								+ "dsr.storage_date FROM "
+						"SELECT oc.odc_id,oct.ocs_id,oct.en_name,oct.zh_name,oct.collect_data_type,"
+								+ "oct.database_code,oct.updatetype, ds.datasource_name, "
+								+ "ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
+								+ "lower(ds.datasource_name || '_' || oc.obj_number || '_' ||  oct.en_name) "
+								+ "as hyren_name,dsr.storage_date FROM "
 								+ Data_source.TableName
 								+ " ds "
 								+ " JOIN "

@@ -206,7 +206,7 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 		String insertColumn = Constant.HIVEMAPPINGROWKEY + "," + StringUtils.join(columns, ',').toLowerCase();
 		// 拼接查找增量并插入增量表
 		String insertDataSql = "INSERT INTO " + deltaTableName + "(" + insertColumn + ") SELECT "
-				+ getSelectColumn(todayTableName) + "  FROM " + todayTableName + " WHERE NOT EXISTS  ( SELECT "
+				+ getConcatSelectColumn(todayTableName) + "  FROM " + todayTableName + " WHERE NOT EXISTS  ( SELECT "
 				+ getSelectColumn(yesterdayTableName) + " FROM " + yesterdayTableName + " where "
 				+ todayTableName + "." + Constant.HIVEMAPPINGROWKEY + " = " + yesterdayTableName + "."
 				+ Constant.HIVEMAPPINGROWKEY + " AND " + yesterdayTableName + "." + Constant.EDATENAME + " = '"
@@ -219,6 +219,18 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 	 *
 	 * @param todayTableName 表名
 	 */
+	private String getConcatSelectColumn(String todayTableName) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("concat(").append(todayTableName).append(".").append(Constant.HIVEMAPPINGROWKEY).append(",'_")
+				.append(sysDate).append("'").append(") as ").append(Constant.HIVEMAPPINGROWKEY).append(",");
+		for (String column : columns) {
+			sb.append(todayTableName).append(".").append(column).append(" as ").
+					append(column).append(",");
+		}
+		sb.delete(sb.length() - 1, sb.length());
+		return sb.toString();
+	}
+
 	private String getSelectColumn(String todayTableName) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(todayTableName).append(".").append(Constant.HIVEMAPPINGROWKEY).append(" as ").
