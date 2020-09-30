@@ -78,7 +78,6 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 			long rowCount = 0;
 			//遍历多个存储目的地，TODO 这里目前先不用多线程采集，因为后续作业调度，每个目的地都会生成一个作业
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
-			boolean flag = true;
 			if (JdbcDirectUnloadDataStageImpl.doAllSupportExternal(collectTableBean.getDataStoreConfBean())) {
 				//支持外部表
 				for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
@@ -86,17 +85,15 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 					if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						DFUploadStageImpl.execSftpToDbServer(dataStoreConfBean, stageParamInfo.getFileArr()
 								, collectTableBean);
-					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type()) && flag) {
+					} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//设置hive的默认类型
 						dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
 								DatabaseType.Hive.getCode());
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
 						DFUploadStageImpl.execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
-						flag = false;
-					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type()) && flag) {
+					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
 						DFUploadStageImpl.execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
-						flag = false;
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 						LOGGER.warn("数据库直连采集数据上传进Solr没有实现");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {

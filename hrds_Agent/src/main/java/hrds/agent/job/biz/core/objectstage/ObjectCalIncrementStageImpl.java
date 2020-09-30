@@ -9,16 +9,10 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.DFCalIncrementStageImpl;
-import hrds.agent.job.biz.core.dfstage.DFDataLoadingStageImpl;
 import hrds.agent.job.biz.core.increasement.Increasement;
-import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
-import hrds.agent.job.biz.core.increasement.impl.HBaseIncreasementByHive;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementBySpark;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DatabaseType;
-import hrds.commons.codes.StorageType;
-import hrds.commons.codes.Store_type;
+import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.StorageTypeKey;
@@ -63,15 +57,30 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 						DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 						increase = new IncreasementBySpark(tableBean, objectTableBean.getEn_name(),
 								objectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
-						LOGGER.info("----------------------------替换--------------------------------");
-						//替换
-						increase.replace();
+						if (UpdateType.DirectUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
+							LOGGER.info("----------------------------直接更新--------------------------------");
+							//替换
+							increase.replace();
+						} else if (UpdateType.IncrementUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
+							LOGGER.info("----------------------------拉链跟新--------------------------------");
+							//替换
+							increase.calculateIncrement();
+							increase.mergeIncrement();
+						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						increase = DFCalIncrementStageImpl.getHBaseIncreasement(tableBean, objectTableBean.getEn_name()
 								, objectTableBean.getEtlDate(), dataStoreConfBean);
-						LOGGER.info("----------------------------替换--------------------------------");
-						//替换
-						increase.replace();
+						//hive和Hbase的直接更新是替换、拉链更新就是增量（这里的增量后面会拆分成全拉链跟新和增量拉链跟新、目前逻辑是前者）
+						if (UpdateType.DirectUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
+							LOGGER.info("----------------------------直接更新--------------------------------");
+							//替换
+							increase.replace();
+						} else if (UpdateType.IncrementUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
+							LOGGER.info("----------------------------拉链跟新--------------------------------");
+							//替换
+							increase.calculateIncrement();
+							increase.mergeIncrement();
+						}
 					}
 				} catch (Exception e) {
 					if (increase != null) {

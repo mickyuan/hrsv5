@@ -61,7 +61,6 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 		StageStatusInfo statusInfo = new StageStatusInfo();
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, objectTableBean.getOcs_id(),
 				StageConstant.UPLOAD.getCode());
-		boolean flag = true;
 		try {
 			ObjectProcessInterface processInterface = null;
 			try {
@@ -86,14 +85,13 @@ public class ObjectUploadStageImpl extends AbstractJobStage {
 					}
 					//如果是hive或者Hbase，将转换之后的数据上传到hdfs
 					if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())
-							|| Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type()) && flag) {
+							|| Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						String unloadFileAbsolutePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
 								objectTableBean.getOdc_id() + File.separator + objectTableBean.getEn_name() +
 								File.separator + objectTableBean.getEtlDate() + File.separator +
 								objectTableBean.getEn_name() + ".dat", true);
 						//直接上传hdfs，映射外部表的方式进hive
 						execHDFSShell(dataStoreConfBean, unloadFileAbsolutePath, objectTableBean);
-						flag = false;
 					}
 				}
 			} catch (Exception e) {

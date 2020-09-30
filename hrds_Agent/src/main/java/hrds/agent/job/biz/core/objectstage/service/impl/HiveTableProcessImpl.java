@@ -57,26 +57,29 @@ public class HiveTableProcessImpl extends ObjectProcessAbstract {
 			StringBuilder md5_sb = new StringBuilder();
 			StringBuilder value_sb = new StringBuilder();
 			while ((lineValue = br.readLine()) != null) {
-				num++;
 				//获取定长文件，解析每行数据进行处理
 				List<Map<String, Object>> listTiledAttributes = getListTiledAttributes(lineValue, num);
 				//hive这里上传默认给文件转成固定分隔符的文件，根据选择的拉链字段算MD5,如果没选择，则使用全字段算md5
 				for (Map<String, Object> map : listTiledAttributes) {
-					for (String key : selectColumnList) {
-						//拼接md
-						if (isZipperKeyMap.get(key)) {
-							md5_sb.append(map.get(key));
+					//不要delete逻辑的数据
+					if (!"delete".equals(map.get(operate_column))) {
+						num++;
+						for (String key : selectColumnList) {
+							//拼接md
+							if (isZipperKeyMap.get(key)) {
+								md5_sb.append(map.get(key));
+							}
+							value_sb.append(map.get(key)).append(Constant.DATADELIMITER);
 						}
-						value_sb.append(map.get(key)).append(Constant.DATADELIMITER);
+						//取值完毕，算md5
+						value_sb.append(etlDate).append(Constant.DATADELIMITER);
+						value_sb.append(Constant.MAXDATE).append(Constant.DATADELIMITER);
+						value_sb.append(MD5Util.md5String(md5_sb.toString()));
+						writer.write(value_sb.toString());
+						writer.write(Constant.DEFAULTLINESEPARATOR);
+						value_sb.delete(0, value_sb.length());
+						md5_sb.delete(0, value_sb.length());
 					}
-					//取值完毕，算md5
-					value_sb.append(etlDate).append(Constant.DATADELIMITER);
-					value_sb.append(Constant.MAXDATE).append(Constant.DATADELIMITER);
-					value_sb.append(MD5Util.md5String(md5_sb.toString()));
-					writer.write(value_sb.toString());
-					writer.write(Constant.DEFAULTLINESEPARATOR);
-					value_sb.delete(0, value_sb.length());
-					md5_sb.delete(0, value_sb.length());
 				}
 				if (num > JobConstant.BUFFER_ROW) {
 					writer.flush();
