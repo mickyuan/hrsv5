@@ -40,7 +40,7 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 	protected final Map<String, String> handleTypeMap;
 	protected String operate_column;
 	protected String etlDate;
-	private Set<Integer> columnLevel = new HashSet<>();
+	private final Set<Integer> columnLevel = new HashSet<>();
 
 	protected ObjectProcessAbstract(TableBean tableBean, ObjectTableBean objectTableBean) {
 		this.objectTableBean = objectTableBean;
@@ -101,7 +101,9 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 			}
 			getTiledAttributes(node.getParentNode(), attributes);
 		} else {
-			attributes.putAll(node.getAttributes());
+			if (node.getAttributes() != null) {
+				attributes.putAll(node.getAttributes());
+			}
 		}
 	}
 
