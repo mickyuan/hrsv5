@@ -304,12 +304,12 @@ public class CollectStorageLayerConfAction extends BaseAction {
 		return Dbo.queryResult("select * from " + Data_store_layer.TableName);
 	}
 
-	@Method(desc = "调用接口，立即启动采集半结构化数据",
-			logicStep = "1.调用接口，立即启动采集半结构化数据")
-	@Param(name = "odc_id", desc = "对象采集ID", range = "新增对象采集配置时生成")
-	@Param(name = "etl_date", desc = "跑批日期", range = "新增对象采集配置时生成")
-	public void execute(Long odc_id,String etl_date){
-		AgentListAction agentListAction = new AgentListAction();
-		agentListAction.sendObjectCollectTaskById(odc_id,etl_date);
-	}
+//	@Method(desc = "调用接口，立即启动采集半结构化数据",
+//			logicStep = "1.调用接口，立即启动采集半结构化数据")
+//	@Param(name = "odc_id", desc = "对象采集ID", range = "新增对象采集配置时生成")
+//	@Param(name = "etl_date", desc = "跑批日期", range = "新增对象采集配置时生成")
+//	public void execute(Long odc_id,String etl_date){
+//		AgentListAction agentListAction = new AgentListAction();
+//		agentListAction.sendObjectCollectTaskById(odc_id,etl_date);
+//	}
 }
