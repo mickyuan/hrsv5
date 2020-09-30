@@ -51,7 +51,7 @@ public class ObjectRegistrationStageImpl extends AbstractJobStage {
 			data_store_reg.setCollect_type(AgentType.DuiXiang.getCode());
 			data_store_reg.setFile_size(stageParamInfo.getFileSize());
 			//TODO 下面这个可为空吧
-			data_store_reg.setHyren_name(objectTableBean.getEn_name());
+			data_store_reg.setHyren_name(objectTableBean.getHyren_name());
 			data_store_reg.setTable_name(objectTableBean.getEn_name());
 			data_store_reg.setOriginal_name(objectTableBean.getZh_name());
 			data_store_reg.setOriginal_update_date(DateUtil.getSysDate());

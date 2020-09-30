@@ -33,9 +33,9 @@ public class HiveTableProcessImpl extends ObjectProcessAbstract {
 		}
 		//转存落地的文件路径
 		String unloadFileAbsolutePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
-				objectTableBean.getOdc_id() + File.separator + objectTableBean.getEn_name() +
+				objectTableBean.getOdc_id() + File.separator + objectTableBean.getHyren_name() +
 				File.separator + objectTableBean.getEtlDate() + File.separator +
-				objectTableBean.getEn_name() + ".dat", true);
+				objectTableBean.getHyren_name() + ".dat", true);
 		try {
 			FileUtil.forceMkdir(new File(FileNameUtils.getFullPath(unloadFileAbsolutePath)));
 			this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(unloadFileAbsolutePath),

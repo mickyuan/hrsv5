@@ -55,7 +55,7 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 						dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
 								DatabaseType.Hive.getCode());
 						DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
-						increase = new IncreasementBySpark(tableBean, objectTableBean.getEn_name(),
+						increase = new IncreasementBySpark(tableBean, objectTableBean.getHyren_name(),
 								objectTableBean.getEtlDate(), db, dataStoreConfBean.getDsl_name());
 						if (UpdateType.DirectUpdate.getCode().equals(objectTableBean.getUpdatetype())) {
 							LOGGER.info("----------------------------直接更新--------------------------------");
@@ -68,7 +68,7 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 							increase.mergeIncrement();
 						}
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-						increase = DFCalIncrementStageImpl.getHBaseIncreasement(tableBean, objectTableBean.getEn_name()
+						increase = DFCalIncrementStageImpl.getHBaseIncreasement(tableBean, objectTableBean.getHyren_name()
 								, objectTableBean.getEtlDate(), dataStoreConfBean);
 						//hive和Hbase的直接更新是替换、拉链更新就是增量（这里的增量后面会拆分成全拉链跟新和增量拉链跟新、目前逻辑是前者）
 						if (UpdateType.DirectUpdate.getCode().equals(objectTableBean.getUpdatetype())) {

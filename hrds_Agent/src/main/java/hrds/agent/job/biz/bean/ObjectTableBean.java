@@ -12,6 +12,8 @@ public class ObjectTableBean implements Serializable {
 	private String ocs_id;
 	@DocBean(name = "en_name", value = "英文名称:", dataType = String.class, required = true)
 	private String en_name;
+	@DocBean(name = "hyren_name", value = "入库后的英文名称:", dataType = String.class, required = true)
+	private String hyren_name;
 	@DocBean(name = "zh_name", value = "中文名称:", dataType = String.class, required = true)
 	private String zh_name;
 	@DocBean(name = "collect_data_type", value = "数据类型(CollectDataType):1-xml<XML> 2-json<JSON> ", dataType =
@@ -180,5 +182,13 @@ public class ObjectTableBean implements Serializable {
 
 	public void setDataStoreConfBean(List<DataStoreConfBean> dataStoreConfBean) {
 		this.dataStoreConfBean = dataStoreConfBean;
+	}
+
+	public String getHyren_name() {
+		return hyren_name;
+	}
+
+	public void setHyren_name(String hyren_name) {
+		this.hyren_name = hyren_name;
 	}
 }

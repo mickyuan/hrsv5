@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -11,20 +12,27 @@ import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.DFDataLoadingStageImpl;
+import hrds.agent.job.biz.core.dfstage.bulkload.*;
+import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.AgentType;
-import hrds.commons.codes.DatabaseType;
-import hrds.commons.codes.Store_type;
+import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.utils.HSqlExecute;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.StorageTypeKey;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "半结构化对象采集数据加载实现", author = "zxz", createdate = "2019/10/24 11:43")
 public class ObjectLoadingDataStageImpl extends AbstractJobStage {
@@ -61,9 +69,9 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 		JobStatusInfoUtil.startStageStatusInfo(statusInfo, objectTableBean.getOcs_id(),
 				StageConstant.DATALOADING.getCode());
 		try {
-			String todayTableName = objectTableBean.getEn_name() + "_" + 1;
+			String todayTableName = objectTableBean.getHyren_name() + "_" + 1;
 			String hdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator
-					+ objectTableBean.getOdc_id() + File.separator + objectTableBean.getEn_name()
+					+ objectTableBean.getOdc_id() + File.separator + objectTableBean.getHyren_name()
 					+ File.separator, true);
 			List<DataStoreConfBean> dataStoreConfBeanList = objectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
@@ -74,7 +82,8 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 					createHiveTableLoadData(todayTableName, hdfsPath, dataStoreConfBean,
 							stageParamInfo.getTableBean());
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-
+					bulkloadLoadDataToHbase(todayTableName, hdfsPath, objectTableBean.getEtlDate(), dataStoreConfBean,
+							stageParamInfo.getTableBean());
 				}
 			}
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
@@ -362,4 +371,116 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 //		}
 //		return newFile.getAbsolutePath();
 //	}
+
+	private void bulkloadLoadDataToHbase(String todayTableName, String hdfsFilePath, String etlDate
+			, DataStoreConfBean dataStoreConfBean, TableBean tableBean) {
+		int run;
+		String isMd5 = IsFlag.Fou.getCode();
+		String file_format = tableBean.getFile_format();
+		String columnMetaInfo = tableBean.getColumnMetaInfo();
+		List<String> columnList = StringUtil.split(columnMetaInfo, Constant.METAINFOSPLIT);
+		StringBuilder rowKeyIndex = new StringBuilder();
+		//获取配置的hbase的rowkey列
+		Map<String, Map<Integer, String>> additInfoFieldMap = dataStoreConfBean.getSortAdditInfoFieldMap();
+		if (additInfoFieldMap != null && !additInfoFieldMap.isEmpty()) {
+			Map<Integer, String> column_map = additInfoFieldMap.get(StoreLayerAdded.RowKey.getCode());
+			if (column_map != null && !column_map.isEmpty()) {
+				//获取配置rowKey的列在文件中的下标
+				for (int key : column_map.keySet()) {
+					for (int i = 0; i < columnList.size(); i++) {
+						if (column_map.get(key).equalsIgnoreCase(columnList.get(i))) {
+							rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
+						}
+					}
+				}
+			}
+		}
+		if (rowKeyIndex.length() == 0) {
+			//择表示没有选择rowkey，则默认使用md5值
+			if (columnList.contains(Constant.MD5NAME)) {
+				for (int i = 0; i < columnList.size(); i++) {
+					if (Constant.MD5NAME.equals(columnList.get(i))) {
+						rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
+					}
+				}
+			} else {
+				//没有算MD5，则使用全字段的值，这里的全字段的值，算md5,不包括海云拼接的字段
+				for (int i = 0; i < columnList.size(); i++) {
+					String colName = columnList.get(i);
+					if (!(Constant.SDATENAME.equals(colName) || Constant.EDATENAME.equals(colName)
+							|| Constant.HYREN_OPER_DATE.equals(colName) || Constant.HYREN_OPER_TIME.equals(colName)
+							|| Constant.HYREN_OPER_PERSON.equals(colName))) {
+						rowKeyIndex.append(i).append(Constant.METAINFOSPLIT);
+					}
+				}
+				isMd5 = IsFlag.Shi.getCode();
+			}
+		}
+		rowKeyIndex.delete(rowKeyIndex.length() - Constant.METAINFOSPLIT.length(), rowKeyIndex.length());
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH
+				+ dataStoreConfBean.getDsl_name() + File.separator, true);
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		String[] args = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
+				isMd5, data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+				data_store_connect_attr.get(StorageTypeKey.platform),
+				data_store_connect_attr.get(StorageTypeKey.prncipal_name), tableBean.getIs_header()};
+		//如果表已经存在，先删除当天的表
+		HBaseHelper helper = null;
+		try {
+			Configuration conf = ConfigReader.getConfiguration(configPath,
+					data_store_connect_attr.get(StorageTypeKey.platform),
+					data_store_connect_attr.get(StorageTypeKey.prncipal_name),
+					data_store_connect_attr.get(StorageTypeKey.hadoop_user_name));
+			helper = HBaseHelper.getHelper(conf);
+			//备份表
+			backupToDayTable(todayTableName, helper);
+			//默认是不压缩   TODO 是否压缩需要从页面配置
+			HBaseIncreasement.createDefaultPrePartTable(helper, todayTableName, false);
+			//根据文件类型使用bulkload解析文件生成HFile，加载数据到HBase表
+			if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
+				run = ToolRunner.run(conf, new SequeceBulkLoadJob(), args);
+			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
+				//非定长需要文件分隔符
+				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
+						isMd5, data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name),
+						tableBean.getColumn_separator(), tableBean.getIs_header()};
+				run = ToolRunner.run(conf, new NonFixedBulkLoadJob(), args2);
+			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
+				run = ToolRunner.run(conf, new ParquetBulkLoadJob(), args);
+			} else if (FileFormat.ORC.getCode().equals(file_format)) {
+				run = ToolRunner.run(conf, new OrcBulkLoadJob(), args);
+			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
+				//定长需要根据文件的编码去获取字节长度,需要每一列的长度
+				String[] args2 = {todayTableName, hdfsFilePath, columnMetaInfo, rowKeyIndex.toString(), configPath, etlDate,
+						isMd5, data_store_connect_attr.get(StorageTypeKey.hadoop_user_name),
+						data_store_connect_attr.get(StorageTypeKey.platform),
+						data_store_connect_attr.get(StorageTypeKey.prncipal_name),
+						DataBaseCode.ofValueByCode(tableBean.getFile_code()), tableBean.getColLengthInfo(),
+						tableBean.getIs_header()};
+				run = ToolRunner.run(conf, new FixedBulkLoadJob(), args2);
+			} else if (FileFormat.CSV.getCode().equals(file_format)) {
+				run = ToolRunner.run(conf, new CsvBulkLoadJob(), args);
+			} else {
+				throw new AppSystemException("暂不支持定长或者其他类型直接加载到hive表");
+			}
+			if (run != 0) {
+				throw new AppSystemException("半结构化对象采集数据加载table hbase 失败 " + todayTableName);
+			}
+		} catch (Exception e) {
+			if (helper != null) {
+				//执行失败，恢复上次进数的数据
+				recoverBackupToDayTable(todayTableName, helper);
+			}
+			throw new AppSystemException("半结构化对象采集数据加载table hbase 失败 " + todayTableName, e);
+		} finally {
+			try {
+				if (helper != null)
+					helper.close();
+			} catch (IOException e) {
+				log.warn("关闭HBaseHelper异常", e);
+			}
+		}
+	}
 }

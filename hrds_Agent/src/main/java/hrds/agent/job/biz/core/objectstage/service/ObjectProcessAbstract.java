@@ -14,10 +14,7 @@ import hrds.commons.entity.Object_handle_type;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * TableProcessAbstract
@@ -43,6 +40,7 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 	protected final Map<String, String> handleTypeMap;
 	protected String operate_column;
 	protected String etlDate;
+	private Set<Integer> columnLevel = new HashSet<>();
 
 	protected ObjectProcessAbstract(TableBean tableBean, ObjectTableBean objectTableBean) {
 		this.objectTableBean = objectTableBean;
@@ -55,13 +53,18 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 		this.metaTypeList = StringUtil.split(tableBean.getColTypeMetaInfo(), Constant.METAINFOSPLIT);
 		this.object_collect_structList = objectTableBean.getObject_collect_structList();
 		this.handleTypeMap = getHandleTypeMap(objectTableBean.getObject_handle_typeList());
+
 		//这里的主键其实是跟新列，不会在建表的时候设置主键属性的
 		List<String> primaryKeyList = StringUtil.split(tableBean.getPrimaryKeyInfo(), Constant.METAINFOSPLIT);
-		for(String column : metaColumnList){
-			this.isZipperKeyMap.put(column,false);
+		for (String column : metaColumnList) {
+			this.isZipperKeyMap.put(column, false);
 		}
 		for (int i = 0; i < primaryKeyList.size(); i++) {
 			this.isZipperKeyMap.put(selectColumnList.get(i), IsFlag.Shi.getCode().equals(primaryKeyList.get(i)));
+		}
+		//获取所有的getColumnposition的层级关系，避免某一层没有选择列，无法进入下一层
+		for (Object_collect_struct object_collect_struct : objectTableBean.getObject_collect_structList()) {
+			columnLevel.add(object_collect_struct.getColumnposition().split(",").length);
 		}
 	}
 
@@ -93,7 +96,9 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 
 	private void getTiledAttributes(Node node, Map<String, Object> attributes) {
 		if (node.getParentNode() != null) {
-			attributes.putAll(node.getAttributes());
+			if (node.getAttributes() != null) {
+				attributes.putAll(node.getAttributes());
+			}
 			getTiledAttributes(node.getParentNode(), attributes);
 		} else {
 			attributes.putAll(node.getAttributes());
@@ -122,7 +127,9 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 									jsonObject.get(key).toString()));
 							node.setAttributes(attributes);
 						}
-					} else if (split.length == index + 2 && key.equals(split[index]) && !keyList.contains(key)) {
+					} else if ((split.length == index + 2 && key.equals(split[index]) && !keyList.contains(key))
+							|| ((!columnLevel.contains(index + 2)) && split.length > index + 1 &&
+							key.equals(split[index]) && !keyList.contains(key))) {
 						keyList.add(key);
 						flag = false;
 						//表明一定是个json数组或者对象

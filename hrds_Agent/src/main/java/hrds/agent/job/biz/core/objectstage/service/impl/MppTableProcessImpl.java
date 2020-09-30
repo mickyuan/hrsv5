@@ -75,7 +75,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		this.deleteColumnList = getDeleteColumnList(isZipperKeyMap);
 		//获取需要更新的数据
 		this.setColumnList = getSetColumnList(isZipperKeyMap);
-		deleteSql.append("DELETE FROM ").append(objectTableBean.getEn_name()).append(" WHERE ").append("(");
+		deleteSql.append("DELETE FROM ").append(objectTableBean.getHyren_name()).append(" WHERE ").append("(");
 		for (String column : deleteColumnList) {
 			deleteSql.append(column).append(",");
 		}
@@ -179,10 +179,10 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 	 * 判断增量表是否存在，不存在创建表
 	 */
 	private void createTableIfNotExist() {
-		if (!db.isExistTable(objectTableBean.getEn_name())) {
+		if (!db.isExistTable(objectTableBean.getHyren_name())) {
 			StringBuilder create = new StringBuilder(1024);
 			create.append("CREATE TABLE ");
-			create.append(objectTableBean.getEn_name());
+			create.append(objectTableBean.getHyren_name());
 			create.append("(");
 			for (int i = 0; i < metaColumnList.size(); i++) {
 				create.append(metaColumnList.get(i)).append(" ").append(
@@ -242,7 +242,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 				//每900条删除一次
 				db.execute(deleteSql.toString());
 				deleteSql.delete(0, deleteSql.length());
-				deleteSql.append("DELETE FROM ").append(objectTableBean.getEn_name()).append(" WHERE ").append("(");
+				deleteSql.append("DELETE FROM ").append(objectTableBean.getHyren_name()).append(" WHERE ").append("(");
 				for (String column : deleteColumnList) {
 					deleteSql.append(column).append(",");
 				}
@@ -306,7 +306,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 	private String getBatchUpdateSql() {
 		if(!this.whereColumnList.isEmpty()){
 			StringBuilder updateSql = new StringBuilder();
-			updateSql.append("UPDATE ").append(objectTableBean.getEn_name()).append(" SET ");
+			updateSql.append("UPDATE ").append(objectTableBean.getHyren_name()).append(" SET ");
 			StringBuilder sb = new StringBuilder();
 			sb.append(" WHERE ");
 			for (String updateColumn : metaColumnList) {
@@ -331,7 +331,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 	 */
 	private String getBatchInsertSql() {
 		StringBuilder insertSql = new StringBuilder();
-		insertSql.append("INSERT INTO ").append(objectTableBean.getEn_name()).append(" (");
+		insertSql.append("INSERT INTO ").append(objectTableBean.getHyren_name()).append(" (");
 		StringBuilder sb = new StringBuilder();
 		sb.append(" ) VALUES (");
 		for (String column : metaColumnList) {

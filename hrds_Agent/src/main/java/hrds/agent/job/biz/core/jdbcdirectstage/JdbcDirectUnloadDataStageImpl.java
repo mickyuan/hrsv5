@@ -161,7 +161,7 @@ public class JdbcDirectUnloadDataStageImpl extends AbstractJobStage {
 						code = data_store_connect_attr.get(StorageTypeKey.database_code);
 					} else {
 						if (!code.equals(data_store_connect_attr.get(StorageTypeKey.database_code))) {
-							throw new AppSystemException("表" + table_name + "数据库直连采集选择多个存储层，存储层的编码" +
+							throw new AppSystemException("表" + table_name + "采集选择多个存储层，存储层的编码" +
 									"不一致，分别为" + DataBaseCode.ofValueByCode(code) + "、" + DataBaseCode.ofValueByCode(
 									data_store_connect_attr.get(StorageTypeKey.database_code)) + "，请配置多个任务执行！");
 						}
