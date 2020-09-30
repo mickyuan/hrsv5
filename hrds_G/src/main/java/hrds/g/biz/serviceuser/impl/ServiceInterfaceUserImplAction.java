@@ -589,7 +589,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		}
 		// 3.获取当前用户ID
 		String token = responseMap.get("token").toString();
-		Long user_id = InterfaceManager.getUserByToken(token).getUser_id();
+		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
 		// 4.检查参数合法性
 		responseMap = InterfaceCommon.checkType(rowKeySearch.getDataType(), rowKeySearch.getOutType(),
 				rowKeySearch.getAsynType(), rowKeySearch.getBackurl(), rowKeySearch.getFilepath(),
@@ -597,7 +597,6 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
-		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
 		List<LayerBean> hbaseLayerList = getLayerBeans(rowKeySearch.getEn_table());
 		// 判断存储层类型为hbase的存储层是否存在
 		if (hbaseLayerList.isEmpty()) {
@@ -610,14 +609,14 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		responseMap = QueryByRowkey.query(rowKeySearch.getEn_table(), rowKeySearch.getRowkey(),
 				rowKeySearch.getEn_column(), rowKeySearch.getGet_version(), layerBean.getDsl_name(),
 				layerAttr.get(StorageTypeKey.platform), layerAttr.get(StorageTypeKey.prncipal_name),
-				layerAttr.get(StorageTypeKey.hadoop_user_name));
+				layerAttr.get(StorageTypeKey.hadoop_user_name), userByToken.getUser_id(), Dbo.db());
 		// 5.根据rowkey，表名称、数据版本号获取hbase表信息,如果返回状态信息不为normal则返回错误响应信息
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 6.将数据写成对应的数据文件
 		LocalFile.writeFile(Dbo.db(), responseMap, rowKeySearch.getDataType(), rowKeySearch.getOutType(),
-				user_id);
+				userByToken.getUser_id());
 		if (OutType.FILE == OutType.ofEnumByCode(rowKeySearch.getOutType())) {
 			// 7.判断是同步还是异步回调或者异步轮询
 			if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(rowKeySearch.getAsynType())) {

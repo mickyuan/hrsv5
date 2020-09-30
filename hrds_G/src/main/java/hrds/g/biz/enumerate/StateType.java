@@ -211,6 +211,10 @@ public enum StateType {
 	 */
 	TABLE_NOT_EXIST_ON_HBASE_STOREAGE("449", "表不在任何hbase存储层中"),
 	/**
+	 * rowkey查询列名格式有误
+	 */
+	ROWKEY_COLUMN_FORMAT_ERROR("449", "rowkey查询列名格式有误，格式为：（列族名:列英文名）"),
+	/**
 	 * 系统错误
 	 */
 	EXCEPTION("500", "系统错误");
