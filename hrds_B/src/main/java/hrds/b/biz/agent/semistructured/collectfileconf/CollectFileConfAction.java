@@ -100,6 +100,7 @@ public class CollectFileConfAction extends BaseAction {
 		// 5.保存对象采集对应信息表数据
 		addObjectCollectTask(object_collect.getOdc_id(), object_collect.getAgent_id(), dicTableList);
 		// 6.返回数据库与数据字典并集的对象采集对应信息数据集合
+
 		dicTableList.addAll(dataBaseList);
 		return dicTableList;
 	}
@@ -115,7 +116,8 @@ public class CollectFileConfAction extends BaseAction {
 	@Param(name = "dicTableList", desc = "数据字典中的所有表信息", range = "无限制")
 	@Return(desc = "", range = "")
 	private void addObjectCollectTask(long odc_id, long agent_id, List<Object_collect_task> dicTableList) {
-		// 1.获取数据库当前半结构化采集任务对应的对象采集对应信息
+
+		//1.获取数据库当前半结构化采集任务对应的对象采集对应信息
 		List<Object_collect_task> objCollectTaskList = getObjectCollectTaskList(odc_id);
 		// 2.获取数据字典与数据库表集合
 		List<String> dicTableNameList = getTableName(dicTableList);
@@ -124,15 +126,24 @@ public class CollectFileConfAction extends BaseAction {
 		List<String> deleteList =
 				tableNameList.stream().filter(item -> !dicTableNameList.contains(item))
 						.collect(Collectors.toList());
-		objCollectTaskList.removeIf(object_collect_task -> deleteList.contains(object_collect_task.getEn_name()));
+//		objCollectTaskList.removeIf(object_collect_task -> deleteList.contains(object_collect_task.getEn_name()));
 		// 4.删除数据库中多余的表数据
 		deleteTable(odc_id, deleteList);
+		//如果都存在就更新
+		for (Object_collect_task object_collect_task : objCollectTaskList) {
+			for(Object_collect_task object_collect_task2 : dicTableList){
+				if(object_collect_task.getEn_name().equals(object_collect_task2.getEn_name())){
+					object_collect_task.setFirstline(object_collect_task2.getFirstline());
+					object_collect_task.update(Dbo.db());
+				}
+			}
+		}
 		// 5.数据字典有，数据库没有（新增）
 		List<String> addList =
 				dicTableNameList.stream().filter(item -> !tableNameList.contains(item))
 						.collect(Collectors.toList());
 		dicTableList.removeIf(object_collect_task -> !addList.contains(object_collect_task.getEn_name()));
-		// 6.保存数据字典新增的的对象采集对应信息
+		//6. 保存数据字典新增的的对象采集对应信息
 		addDicTable(odc_id, agent_id, dicTableList);
 	}
 
