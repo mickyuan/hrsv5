@@ -170,10 +170,10 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 		db.execute(deleteDataSql);
 
 		String deleteDataSql2 = "INSERT INTO " + deltaTableName + "(" + insertColumn + ") SELECT " + getSelectColumn(yesterdayTableName)
-				+ " FROM " + yesterdayTableName + " where (  not exists ( select " + deltaTableName + "." + Constant.HIVEMAPPINGROWKEY
+				+ " FROM " + yesterdayTableName + " where (  not exists ( select " + deltaTableName + "." + Constant.MD5NAME
 				+ " from " + deltaTableName + " where " + deltaTableName + "." + Constant.EDATENAME + " <> '"
-				+ Constant.MAXDATE + "' and " + yesterdayTableName + "." + Constant.HIVEMAPPINGROWKEY + "="
-				+ deltaTableName + "." + Constant.HIVEMAPPINGROWKEY + ") and " + yesterdayTableName + "."
+				+ Constant.MAXDATE + "' and " + yesterdayTableName + "." + Constant.MD5NAME + "="
+				+ deltaTableName + "." + Constant.MD5NAME + ") and " + yesterdayTableName + "."
 				+ Constant.EDATENAME + " = '" + Constant.MAXDATE + "')";
 		db.execute(deleteDataSql2);
 	}
@@ -192,8 +192,8 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 		deleteDataSql.append(" SELECT ").append(selectColumn).append(" FROM ").append(yesterdayTableName);
 		deleteDataSql.append(" WHERE NOT EXISTS ").append(" ( SELECT ").append(getSelectColumn(todayTableName))
 				.append(" FROM ").append(todayTableName);
-		deleteDataSql.append(" WHERE ").append(yesterdayTableName).append(".").append(Constant.HIVEMAPPINGROWKEY);
-		deleteDataSql.append(" = ").append(todayTableName).append(".").append(Constant.HIVEMAPPINGROWKEY);
+		deleteDataSql.append(" WHERE ").append(yesterdayTableName).append(".").append(Constant.MD5NAME);
+		deleteDataSql.append(" = ").append(todayTableName).append(".").append(Constant.MD5NAME);
 		deleteDataSql.append(") AND ").append(yesterdayTableName).append(".").append(Constant.EDATENAME);
 		deleteDataSql.append(" = '").append(Constant.MAXDATE).append("'");
 		db.execute(deleteDataSql.toString());
@@ -208,8 +208,8 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 		String insertDataSql = "INSERT INTO " + deltaTableName + "(" + insertColumn + ") SELECT "
 				+ getConcatSelectColumn(todayTableName) + "  FROM " + todayTableName + " WHERE NOT EXISTS  ( SELECT "
 				+ getSelectColumn(yesterdayTableName) + " FROM " + yesterdayTableName + " where "
-				+ todayTableName + "." + Constant.HIVEMAPPINGROWKEY + " = " + yesterdayTableName + "."
-				+ Constant.HIVEMAPPINGROWKEY + " AND " + yesterdayTableName + "." + Constant.EDATENAME + " = '"
+				+ todayTableName + "." + Constant.MD5NAME + " = " + yesterdayTableName + "."
+				+ Constant.MD5NAME + " AND " + yesterdayTableName + "." + Constant.EDATENAME + " = '"
 				+ Constant.MAXDATE + "'" + " ) ";
 		db.execute(insertDataSql);
 	}
