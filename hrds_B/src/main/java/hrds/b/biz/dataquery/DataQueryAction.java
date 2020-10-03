@@ -548,7 +548,9 @@ public class DataQueryAction extends BaseAction {
 		}
 		asmSql.addSql(" GROUP BY file_id,apply_type) a JOIN data_auth da on a.applytime = concat(da.apply_date," +
 			" da.apply_time) ON da.file_id = sfa.file_id where da.apply_type !=''");
-		asmSql.addLikeParam("original_name", original_name);
+		if (StringUtil.isNotBlank(original_name)) {
+			asmSql.addLikeParam("original_name", '%' + original_name + '%');
+		}
 		asmSql.addSql(" ORDER BY da.apply_date DESC,da.apply_time DESC");
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> myApplyRecordRs = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
