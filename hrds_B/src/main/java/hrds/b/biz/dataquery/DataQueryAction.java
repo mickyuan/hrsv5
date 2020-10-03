@@ -245,10 +245,9 @@ public class DataQueryAction extends BaseAction {
 		//2.根据统计类型设置返回的map结果集
 		List<Map<String, Object>> classificationSumList = new ArrayList<>();
 		if (!fcsList.isEmpty()) {
-			Map<String, Object> classificationSumMap = new HashMap<>();
 			for (Map<String, Object> fcsMap : fcsList) {
-				classificationSumMap.put(FileType.ofValueByCode((String) fcsMap.get("file_type")),
-					fcsMap.get("sum_num"));
+				Map<String, Object> classificationSumMap = new HashMap<>();
+				classificationSumMap.put(FileType.ofValueByCode((String) fcsMap.get("file_type")), fcsMap.get("sum_num"));
 				classificationSumMap.put("file_type", FileType.ofValueByCode((String) fcsMap.get("file_type")));
 				classificationSumMap.put("sum_num", fcsMap.get("sum_num"));
 				classificationSumList.add(classificationSumMap);
@@ -272,17 +271,18 @@ public class DataQueryAction extends BaseAction {
 		//3.根据查询结果设置返回的map结果集
 		List<Map<String, Object>> sevenDayCollectFileSumList = new ArrayList<>();
 		if (!scfList.isEmpty()) {
-			Map<String, Object> sevenDayCollectFileSumMap = new HashMap<>();
 			for (Map<String, Object> scfMap : scfList) {
+				Map<String, Object> sevenDayCollectFileSumMap = new HashMap<>();
 				String collectDate = (String) scfMap.get("storage_date");
 				int collectSum = Integer.parseInt(scfMap.get("count").toString());
-				if (sevenDayCollectFileSumMap.containsKey("collectDate")) {
-					sevenDayCollectFileSumMap.put("collectDate", collectDate);
-					sevenDayCollectFileSumMap.put("collectSum", collectSum + collectSum);
-				} else {
+//				sevenDayCollectFileSumMap.put(collectDate, collectSum);
+//				if (sevenDayCollectFileSumMap.containsKey("collectDate")) {
+//					sevenDayCollectFileSumMap.put("collectDate", collectDate);
+//					sevenDayCollectFileSumMap.put("collectSum", collectSum + collectSum);
+//				} else {
 					sevenDayCollectFileSumMap.put("collectDate", collectDate);
 					sevenDayCollectFileSumMap.put("collectSum", collectSum);
-				}
+//				}
 				sevenDayCollectFileSumList.add(sevenDayCollectFileSumMap);
 			}
 		}
