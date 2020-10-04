@@ -90,4 +90,8 @@ public class HiveLoader extends AbstractRealLoader {
                 "STORED AS PARQUET", tableName, createTableColumnTypes));
     }
 
+    @Override
+    public void restore() {
+        //TODO 怎么回滚
+    }
 }

@@ -56,6 +56,9 @@ public class MarketSparkMain {
             } else if (Store_type.HBASE.equals(handleType)||Store_type.SOLR.equals(handleType)) {
                 handler = new HbaseSolrHandler(spark, sparkDataset.getDataset(),
                         (HbaseSolrArgs) SparkHandleArgument.fromString(handleArgs, HbaseSolrArgs.class));
+            } else if (Store_type.CARBONDATA.equals(handleType)) {
+                handler = new CarbondataHandler(spark, sparkDataset.getDataset(),
+                        (CarbonArgs) SparkHandleArgument.fromString(handleArgs, CarbonArgs.class));
             } else {
                 throw new AppSystemException("无法处理类型：" + handleType.getValue());
             }

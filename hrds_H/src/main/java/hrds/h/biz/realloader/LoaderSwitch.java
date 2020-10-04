@@ -43,6 +43,10 @@ public class LoaderSwitch {
             return new HbaseOverSolrLoader(conf);
         }
 
+        if(Store_type.CARBONDATA.getCode().equals(storeType)){
+            return new CarbondataLoader(conf);
+        }
+
         throw new AppSystemException("无法识别存储码： " + storeType);
     }
 

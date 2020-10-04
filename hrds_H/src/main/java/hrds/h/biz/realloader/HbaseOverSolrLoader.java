@@ -173,6 +173,7 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
 
     @Override
     public void restore() {
+        //TODO  怎么回滚
 //        try (HBaseHelper helper = HBaseHelper.getHelper()) {
 //            Scan scan = new Scan();
 //            scan.addFamily(Constant.HBASE_COLUMN_FAMILY);
