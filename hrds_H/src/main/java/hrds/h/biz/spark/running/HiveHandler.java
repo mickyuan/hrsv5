@@ -14,9 +14,9 @@ public class HiveHandler extends Handler {
     private final SparkHandleArgument.HiveArgs hiveArgs;
 
     HiveHandler(SparkSession spark, Dataset<Row> dataset,
-                SparkHandleArgument.HiveArgs databaseArgs) {
-        super(spark, dataset, databaseArgs);
-        this.hiveArgs = databaseArgs;
+                SparkHandleArgument.HiveArgs hiveArgs) {
+        super(spark, dataset, hiveArgs);
+        this.hiveArgs = hiveArgs;
 
         setDatabase();
     }
@@ -24,7 +24,6 @@ public class HiveHandler extends Handler {
     private void setDatabase() {
         String database = hiveArgs.getDatabase();
         if (spark.catalog().databaseExists(database)) {
-
             spark.catalog().setCurrentDatabase(database);
         }
     }
