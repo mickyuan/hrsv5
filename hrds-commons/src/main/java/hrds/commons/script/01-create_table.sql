@@ -2183,3 +2183,16 @@ TABLE_NOTE                                        VARCHAR(512) NULL, --表说明
 USER_ID                                           BIGINT default 0 NOT NULL, --用户ID
 CONSTRAINT TABLE_USE_INFO_PK PRIMARY KEY(USE_ID)   );
 
+--carbondata预聚合信息表
+DROP TABLE IF EXISTS CB_PREAGGREGATE ;
+CREATE TABLE CB_PREAGGREGATE(
+AGG_ID                                            DECIMAL(10) NOT NULL, --预聚合id
+DATATABLE_ID                                      BIGINT default 0 NOT NULL, --数据表id
+AGG_NAME                                          VARCHAR(512) NOT NULL, --预聚合名称
+AGG_SQL                                           VARCHAR(512) NOT NULL, --预聚合SQL
+AGG_DATE                                          CHAR(8) NOT NULL, --日期
+AGG_TIME                                          CHAR(6) NOT NULL, --时间
+AGG_STATUS                                        CHAR(3) default '105' NULL, --预聚合是否成功
+REMARK                                            VARCHAR(512) NULL, --备注
+CONSTRAINT CB_PREAGGREGATE_PK PRIMARY KEY(AGG_ID)   );
+
