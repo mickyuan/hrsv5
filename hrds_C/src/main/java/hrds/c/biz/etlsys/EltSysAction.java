@@ -23,13 +23,14 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.*;
 import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,18 +58,22 @@ public class EltSysAction extends BaseAction {
 					+ "4.判断remarks是否为空，不为空则分割获取部署工程的redis ip与port并封装数据返回")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新增工程时生成")
 	@Return(desc = "返回根据工程编号查询的工程信息", range = "无限制")
-	public Etl_sys searchEtlSysById(String etl_sys_cd) {
+	public Map<String, Object> searchEtlSysById(String etl_sys_cd) {
 		// 1.数据可访问权限处理方式，根据user_id进行权限控制
 		// 2.根据工程编号查询工程信息
 		Etl_sys etl_sys = ETLJobUtil.getEtlSysById(etl_sys_cd, getUserId(), Dbo.db());
 		// 系统默认作业部署路径
 		String etlDeployPath = PropertyParaValue.getString("etlDeployPath", "/home/hyshf/");
-		if (StringUtils.isBlank(etl_sys.getServ_file_path()) ||
+		Map<String, Object> etlSysMap = new HashMap<>();
+		if (StringUtil.isBlank(etl_sys.getServ_file_path()) ||
 				etl_sys.getServ_file_path().equals(etlDeployPath)) {
-			// 部署路径等于默认路径或者部署路径不为空即新增设置路径为空
-			etl_sys.setServ_file_path("");
+			// 部署路径等于默认路径或部署路径为空则为默认部署路径
+			etlSysMap.put("isCustomize", IsFlag.Fou.getCode());
+		} else {
+			etlSysMap.put("isCustomize", IsFlag.Shi.getCode());
 		}
-		return etl_sys;
+		etlSysMap.put("etlSys", etl_sys);
+		return etlSysMap;
 	}
 
 	@Method(
