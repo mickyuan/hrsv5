@@ -91,15 +91,16 @@ public abstract class ProcessingData {
 	public List<String> getPageDataLayer(String sql, DatabaseWrapper db, int begin, int end, boolean isCountTotal) {
 		//获取存储类型自定义Bean
 		LayerTypeBean ltb = getAllTableIsLayer(sql, db);
-		long dsl_id = ltb.getLayerBean().getDsl_id();
 		String ofSql = getdStoreReg(sql, db);
 		//只有一个存储，且是jdbc的方式
 		if (ltb.getConnType() == LayerTypeBean.ConnType.oneJdbc) {
+			long dsl_id = ltb.getLayerBean().getDsl_id();
 			return getResultSet(ofSql, db, dsl_id, begin, end, isCountTotal);
 		}
 		//只有一种存储，是什么，可以使用ltb.getLayerBean().getStore_type(),进行判断
 		else if (ltb.getConnType() == LayerTypeBean.ConnType.oneOther) {
 			//TODO 数据在一种存介质中，但不是jdbc
+			long dsl_id = ltb.getLayerBean().getDsl_id();
 			return getResultSet(ofSql, db, dsl_id, begin, end, isCountTotal);
 		}
 		//有多种存储，但都支持JDBC，是否可以使用dblink的方式
