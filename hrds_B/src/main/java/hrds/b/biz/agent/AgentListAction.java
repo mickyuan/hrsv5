@@ -1379,7 +1379,7 @@ public class AgentListAction extends BaseAction {
 						"SELECT oc.odc_id,oct.ocs_id,oct.en_name,oct.zh_name,oct.collect_data_type,"
 								+ "oct.database_code,oct.updatetype, ds.datasource_name, "
 								+ "ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
-								+ "lower(ds.datasource_name || '_' || oc.obj_number || '_' ||  oct.en_name) "
+								+ "lower(ds.datasource_number || '_' || oc.obj_number || '_' ||  oct.en_name) "
 								+ "as hyren_name,dsr.storage_date FROM "
 								+ Data_source.TableName
 								+ " ds "
