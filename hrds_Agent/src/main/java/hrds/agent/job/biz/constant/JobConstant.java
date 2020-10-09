@@ -1,8 +1,8 @@
 package hrds.agent.job.biz.constant;
 
 
+import hrds.agent.job.biz.utils.PropertyParaUtil;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.utils.PropertyParaUtil;
 
 import java.io.File;
 
