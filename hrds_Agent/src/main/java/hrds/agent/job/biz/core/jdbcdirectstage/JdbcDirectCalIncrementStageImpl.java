@@ -12,6 +12,8 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.databaseadditinfo.DatabaseAdditInfoOperateInterface;
 import hrds.agent.job.biz.core.databaseadditinfo.impl.OracleAdditInfoOperateImpl;
 import hrds.agent.job.biz.core.databaseadditinfo.impl.PostgresqlAdditInfoOperateImpl;
+import hrds.agent.job.biz.core.dfstage.DFCalIncrementStageImpl;
+import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
 import hrds.agent.job.biz.core.increasement.Increasement;
 import hrds.agent.job.biz.core.increasement.JDBCIncreasement;
 import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
@@ -84,7 +86,21 @@ public class JdbcDirectCalIncrementStageImpl extends AbstractJobStage {
 							increase.close();
 					}
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConf.getStore_type())) {
-					LOGGER.warn("数据进Hbase计算增量不做任何操作....");
+					HBaseIncreasement increase = null;
+					try {
+						increase = DFCalIncrementStageImpl.getHBaseIncreasement(tableBean, collectTableBean.getHbase_name(),
+								collectTableBean.getEtlDate(), dataStoreConf);
+						execIncreasement(increase);
+					} catch (Exception e) {
+						if (increase != null) {
+							//报错删除当次跑批数据
+							increase.restore(collectTableBean.getStorage_type());
+						}
+						throw new AppSystemException("计算增量失败", e);
+					} finally {
+						if (increase != null)
+							increase.close();
+					}
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConf.getStore_type())) {
 					LOGGER.warn("数据进Solr计算增量不做任何操作....");
 				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConf.getStore_type())) {

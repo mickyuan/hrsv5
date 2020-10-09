@@ -116,7 +116,8 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 								DatabaseType.Hive.getCode());
 						rowCount = jdbcToDataBase(stageParamInfo.getTableBean(), dataStoreConfBean);
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-						LOGGER.warn("数据库直连采集数据上传进HBASE没有实现");
+						LOGGER.warn("数据库直连采集数据上传进HBASE没有实现:hbase类型的存储层" +
+								dataStoreConfBean.getDsl_name() + "未选择支持外部表");
 					} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
 						LOGGER.warn("数据库直连采集数据上传进SOlR没有实现");
 					} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
