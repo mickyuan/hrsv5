@@ -48,7 +48,6 @@ public class HiveHandler extends Handler {
         String deltaTable = "delta_hyren_" + tableName;
 
         spark.sql(String.format("CREATE TABLE %s " +
-                "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t' " +
                 "STORED AS PARQUET " +
                 "AS SELECT * FROM %s ", deltaTable, tableName));
 

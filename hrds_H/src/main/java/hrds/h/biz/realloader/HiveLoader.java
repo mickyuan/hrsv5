@@ -86,7 +86,6 @@ public class HiveLoader extends AbstractRealLoader {
 
     private void createHiveTable(DatabaseWrapper hiveDb, String tableName) {
         hiveDb.execute(String.format("CREATE TABLE IF NOT EXISTS %s ( %s ) " +
-                "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t' " +
                 "STORED AS PARQUET", tableName, createTableColumnTypes));
     }
 
