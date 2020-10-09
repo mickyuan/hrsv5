@@ -466,22 +466,26 @@ public class InterfaceCommon {
 		String uuid = UUID.randomUUID().toString();
 		File createFile = LocalFile.createFile(uuid, dataType);
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
-			// 输出数据形式为stream如果num不存在则默认查询100
-			if (num == null) {
-				num = 100;
-			}
-			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
-					.getPageDataLayer(sqlSb, db, 1, num);
-		} else {
-			// 输出数据形式为file如果num不存在则查询所有
-			if (num == null) {
-				getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
-						.getDataLayer(sqlSb, db);
-			} else {
+		try {
+			if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+				// 输出数据形式为stream如果num不存在则默认查询100
+				if (num == null) {
+					num = 100;
+				}
 				getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
 						.getPageDataLayer(sqlSb, db, 1, num);
+			} else {
+				// 输出数据形式为file如果num不存在则查询所有
+				if (num == null) {
+					getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+							.getDataLayer(sqlSb, db);
+				} else {
+					getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+							.getPageDataLayer(sqlSb, db, 1, num);
+				}
 			}
+		} catch (Exception e) {
+			return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
 		}
 
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
