@@ -103,7 +103,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 
 	public static void createHiveTableLoadData(String todayTableName, String hdfsFilePath, DataStoreConfBean
 			dataStoreConfBean, TableBean tableBean) {
-		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());) {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			List<String> sqlList = new ArrayList<>();
 			//1.如果表存在,删除当天卸数的表
 			if (db.isExistTable(todayTableName)) {
