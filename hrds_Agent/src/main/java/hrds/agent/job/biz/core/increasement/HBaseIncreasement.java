@@ -9,12 +9,16 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hadoop_helper.HashChoreWoker;
 import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,6 +27,8 @@ import java.util.List;
  * author: zxz
  */
 public abstract class HBaseIncreasement implements Closeable, Increasement {
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 	protected DatabaseWrapper db;
 	protected List<String> columns;// csv中存有的字段
 	protected List<String> types;// csv中存有的字段类型
@@ -56,6 +62,8 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 
 	@Override
 	public void close() {
+		//清楚临时增量表
+		dropAllTmpTable();
 		try {
 			if (db != null) {
 				db.close();
@@ -80,6 +88,35 @@ public abstract class HBaseIncreasement implements Closeable, Increasement {
 			helper.createTable(table, splitKeys, snappycompress, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
 		} catch (IOException e) {
 			throw new AppSystemException("创建默认预分区的HBase表失败", e);
+		}
+	}
+
+	/**
+	 * 删除临时增量表
+	 */
+	private void dropAllTmpTable() {
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		JDBCIncreasement.dropTableIfExists(deltaTableName, db, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
+	}
+
+	/**
+	 * 对象采集，没有数据保留天数，删除当天卸数下来的数据
+	 */
+	public void dropTodayTable() {
+		//删除映射表
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		JDBCIncreasement.dropTableIfExists(todayTableName, db, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
+		//删除hbase上的表
+		try {
+			helper.dropTable(todayTableName);
+		} catch (IOException e) {
+			logger.warn(e);
 		}
 	}
 

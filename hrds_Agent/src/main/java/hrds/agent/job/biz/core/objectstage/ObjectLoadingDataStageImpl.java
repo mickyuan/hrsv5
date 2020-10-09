@@ -103,12 +103,12 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 
 	public static void createHiveTableLoadData(String todayTableName, String hdfsFilePath, DataStoreConfBean
 			dataStoreConfBean, TableBean tableBean) {
-		DatabaseWrapper db = null;
-		try {
-			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());) {
 			List<String> sqlList = new ArrayList<>();
-			//1.如果表已存在,备份表上次执行进数的数据
-			backupToDayTable(todayTableName, db);
+			//1.如果表存在,删除当天卸数的表
+			if (db.isExistTable(todayTableName)) {
+				db.execute("DROP TABLE " + todayTableName);
+			}
 			//2.创建表
 			sqlList.add(DFDataLoadingStageImpl.genHiveLoad(
 					todayTableName, tableBean, tableBean.getColumn_separator()));
@@ -117,15 +117,7 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 			//4.执行sql语句
 			HSqlExecute.executeSql(sqlList, db);
 		} catch (Exception e) {
-			if (db != null) {
-				//执行失败，恢复上次进数的数据
-				recoverBackupToDayTable(todayTableName, db);
-			}
 			throw new AppSystemException("执行hive加载数据的sql报错", e);
-		} finally {
-			if (db != null) {
-				db.close();
-			}
 		}
 	}
 
@@ -432,8 +424,8 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 					data_store_connect_attr.get(StorageTypeKey.prncipal_name),
 					data_store_connect_attr.get(StorageTypeKey.hadoop_user_name));
 			helper = HBaseHelper.getHelper(conf);
-			//备份表
-			backupToDayTable(todayTableName, helper);
+			//判断当天卸数的表，如果存在，删除
+			helper.dropTable(todayTableName);
 			//默认是不压缩   TODO 是否压缩需要从页面配置
 			HBaseIncreasement.createDefaultPrePartTable(helper, todayTableName, false);
 			//根据文件类型使用bulkload解析文件生成HFile，加载数据到HBase表
@@ -469,10 +461,6 @@ public class ObjectLoadingDataStageImpl extends AbstractJobStage {
 				throw new AppSystemException("半结构化对象采集数据加载table hbase 失败 " + todayTableName);
 			}
 		} catch (Exception e) {
-			if (helper != null) {
-				//执行失败，恢复上次进数的数据
-				recoverBackupToDayTable(todayTableName, helper);
-			}
 			throw new AppSystemException("半结构化对象采集数据加载table hbase 失败 " + todayTableName, e);
 		} finally {
 			try {

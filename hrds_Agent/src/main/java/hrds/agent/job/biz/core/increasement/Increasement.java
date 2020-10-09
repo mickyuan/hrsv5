@@ -32,4 +32,9 @@ public interface Increasement {
 	void restore(String storageType);
 
 	void close();
+
+	/**
+	 * 没有数据保留天数的时候，删除当天卸数的数据
+	 */
+	void dropTodayTable();
 }

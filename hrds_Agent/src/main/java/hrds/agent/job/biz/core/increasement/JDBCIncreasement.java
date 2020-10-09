@@ -62,4 +62,14 @@ public abstract class JDBCIncreasement implements Closeable, Increasement {
 		insertDataSql.append(sourceTableName);
 		return insertDataSql.toString();
 	}
+
+	/**
+	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
+	 */
+	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
+		//如果有数据则表明该表存在，创建表
+		if (db.isExistTable(tableName)) {
+			sqlList.add("DROP TABLE " + tableName);
+		}
+	}
 }

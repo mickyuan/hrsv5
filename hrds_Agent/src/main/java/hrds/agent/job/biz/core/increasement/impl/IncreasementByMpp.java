@@ -11,6 +11,7 @@ import hrds.commons.utils.Constant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -329,16 +330,6 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	}
 
 	/**
-	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
-	 */
-	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
-		//如果有数据则表明该表存在，创建表
-		if (db.isExistTable(tableName)) {
-			sqlList.add("DROP TABLE " + tableName);
-		}
-	}
-
-	/**
 	 * 创建表，如果表不存在
 	 */
 	private String createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types) {
@@ -371,6 +362,19 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		List<String> deleteInfo = new ArrayList<>();
 		//删除临时增量表
 		dropTableIfExists(deltaTableName, db, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
+	}
+
+	/**
+	 * 对象采集，没有数据保留天数，删除当天卸数下来的数据
+	 */
+	@Override
+	public void dropTodayTable(){
+		//删除映射表
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		JDBCIncreasement.dropTableIfExists(todayTableName, db, deleteInfo);
 		//清空表数据
 		HSqlExecute.executeSql(deleteInfo, db);
 	}

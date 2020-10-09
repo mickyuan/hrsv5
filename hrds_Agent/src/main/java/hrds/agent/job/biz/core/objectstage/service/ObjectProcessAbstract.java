@@ -56,11 +56,10 @@ public abstract class ObjectProcessAbstract implements ObjectProcessInterface {
 
 		//这里的主键其实是跟新列，不会在建表的时候设置主键属性的
 		List<String> primaryKeyList = StringUtil.split(tableBean.getPrimaryKeyInfo(), Constant.METAINFOSPLIT);
-		for (String column : metaColumnList) {
-			this.isZipperKeyMap.put(column, false);
-		}
 		for (int i = 0; i < primaryKeyList.size(); i++) {
-			this.isZipperKeyMap.put(selectColumnList.get(i), IsFlag.Shi.getCode().equals(primaryKeyList.get(i)));
+			if (IsFlag.Shi.getCode().equals(primaryKeyList.get(i))) {
+				this.isZipperKeyMap.put(selectColumnList.get(i), true);
+			}
 		}
 		//获取所有的getColumnposition的层级关系，避免某一层没有选择列，无法进入下一层
 		for (Object_collect_struct object_collect_struct : objectTableBean.getObject_collect_structList()) {

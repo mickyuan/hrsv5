@@ -78,7 +78,7 @@ public class HiveTableProcessImpl extends ObjectProcessAbstract {
 						writer.write(value_sb.toString());
 						writer.write(Constant.DEFAULTLINESEPARATOR);
 						value_sb.delete(0, value_sb.length());
-						md5_sb.delete(0, value_sb.length());
+						md5_sb.delete(0, md5_sb.length());
 					}
 				}
 				if (num > JobConstant.BUFFER_ROW) {

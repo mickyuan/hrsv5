@@ -67,6 +67,8 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 							increase.calculateIncrement();
 							increase.mergeIncrement();
 						}
+						//对象采集没有数据保留天数，成功删除当天卸数下来的表
+						increase.dropTodayTable();
 					} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 						increase = DFCalIncrementStageImpl.getHBaseIncreasement(tableBean, objectTableBean.getHyren_name()
 								, objectTableBean.getEtlDate(), dataStoreConfBean);
@@ -81,6 +83,8 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 							increase.calculateIncrement();
 							increase.mergeIncrement();
 						}
+     					//对象采集没有数据保留天数，成功删除当天卸数下来的表
+						increase.dropTodayTable();
 					}
 				} catch (Exception e) {
 					if (increase != null) {
@@ -89,6 +93,7 @@ public class ObjectCalIncrementStageImpl extends AbstractJobStage {
 					}
 					throw new AppSystemException("计算增量失败");
 				} finally {
+					//清楚临时表和本次跑批的数据
 					if (increase != null)
 						increase.close();
 				}
