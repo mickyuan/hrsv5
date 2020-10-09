@@ -46,23 +46,23 @@ public class Clean {
 			for (int i = 1; i <= colMap.size(); i++) {
 				switch (colMap.get(i)) {
 					case "2":
-						columndata = allclean.replace(deleSpecialSpace, columndata, columnname);//字符替换
+						columndata = allclean.replace(deleSpecialSpace, columndata, columnname.toUpperCase());//字符替换
 						break;
 					case "1":
-						columndata = allclean.filling(strFilling, columndata, columnname);//字符补齐
+						columndata = allclean.filling(strFilling, columndata, columnname.toUpperCase());//字符补齐
 						break;
 					case "4":
-						columndata = allclean.codeTrans(codeIng, columndata, columnname);//码值转换
+						columndata = allclean.codeTrans(codeIng, columndata, columnname.toUpperCase());//码值转换
 						break;
 					case "6":
-						columndata = allclean.split(splitIng, columndata, columnname, group, type, fileType,
+						columndata = allclean.split(splitIng, columndata, columnname.toUpperCase(), group, type, fileType,
 								list, database_code, database_separatorr);//字段拆分;
 						break;
 					case "7":
-						columndata = allclean.trim(Triming, columndata, columnname);//去空
+						columndata = allclean.trim(Triming, columndata, columnname.toUpperCase());//去空
 						break;
 					case "3":
-						columndata = allclean.dateing(dating, columndata, columnname);//日期转换
+						columndata = allclean.dateing(dating, columndata, columnname.toUpperCase());//日期转换
 						break;
 				}
 			}
