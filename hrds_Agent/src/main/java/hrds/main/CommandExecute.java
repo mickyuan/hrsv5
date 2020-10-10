@@ -3,17 +3,20 @@ package hrds.main;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.JobStatusInfo;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.DataBaseJobImpl;
 import hrds.agent.job.biz.core.DataFileJobImpl;
+import hrds.agent.job.biz.core.FileCollectJobImpl;
 import hrds.agent.job.biz.core.JdbcDirectJobImpl;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CollectType;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.File_source;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.logging.log4j.LogManager;
@@ -44,7 +47,7 @@ public class CommandExecute {
 		if (args == null || args.length < 5) {
 			log.info("请按照规定的格式传入参数，必须参数不能为空");
 			log.info("必须参数：参数1：任务ID；参数2：表名；参数3：采集类型；参数4：跑批日期；" +
-					"参数5：文件格式或存储目的地名称");
+				"参数5：文件格式或存储目的地名称");
 			log.info("非必须参数：参数6-N：sql占位符参数 condition=value");
 			System.exit(-1);
 		}
@@ -62,7 +65,7 @@ public class CommandExecute {
 		}
 		try {
 			String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE
-					+ taskId));
+				+ taskId));
 			//对配置信息解压缩并反序列化为SourceDataConfBean对象
 			SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
 			//1.获取json数组转成File_source的集合
@@ -93,6 +96,8 @@ public class CommandExecute {
 			} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
 				//TODO 根据作业指定存储目的地名称，本次作业只进数指定存储目的地
 				startDbFileCollect(sourceDataConfBean, collectTableBean);
+			} else if (AgentType.WenJianXiTong.getCode().equals(collectType)) {
+				startFileCollectJob(taskId);
 			} else {
 				throw new AppSystemException("不支持的采集类型");
 			}
@@ -103,7 +108,7 @@ public class CommandExecute {
 	}
 
 	private static boolean isSupportSelectFormat(String selectFileFormat,
-												 List<Data_extraction_def> data_extraction_def_list) {
+	                                             List<Data_extraction_def> data_extraction_def_list) {
 		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
 			//只执行作业调度指定的文件格式
 			if (selectFileFormat.equals(data_extraction_def.getDbfile_format())) {
@@ -114,7 +119,7 @@ public class CommandExecute {
 	}
 
 	private static void startJdbcToDatabase(SourceDataConfBean sourceDataConfBean, CollectTableBean
-			collectTableBean) {
+		collectTableBean) {
 		ExecutorService executor = null;
 		try {
 			executor = Executors.newFixedThreadPool(1);
@@ -177,8 +182,46 @@ public class CommandExecute {
 		}
 	}
 
+	private static void startFileCollectJob(String taskId) {
+		String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE
+			+ taskId));
+		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(
+			taskInfo, FileCollectParamBean.class);
+		//1.将页面传递过来的压缩信息解压写文件
+		ExecutorService executor = null;
+		try {
+			//2.初始化当前任务需要保存的文件的根目录
+			String[] paths = {Constant.MAPDBPATH + File.separator + fileCollectParamBean.getFcs_id(),
+				Constant.JOBINFOPATH + File.separator + fileCollectParamBean.getFcs_id()
+				, Constant.FILEUNLOADFOLDER + File.separator + fileCollectParamBean.getFcs_id()};
+			FileUtil.initPath(paths);
+			//3.获取json数组转成File_source的集合
+			List<File_source> fileSourceList = fileCollectParamBean.getFile_sourceList();
+			//此处不会有海量的任务需要执行，不会出现队列中等待的任务对象过多的OOM事件。
+			executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+			List<Future<JobStatusInfo>> list = new ArrayList<>();
+			//4.多线程执行文件采集
+			for (File_source file_source : fileSourceList) {
+				//为了确保两个线程之间的值不互相干涉，复制对象的值。
+				FileCollectParamBean fileCollectParamBean1 = JSONObject.parseObject(
+					JSONObject.toJSONString(fileCollectParamBean), FileCollectParamBean.class);
+				//多线程执行
+				FileCollectJobImpl fileCollectJob = new FileCollectJobImpl(fileCollectParamBean1, file_source);
+				Future<JobStatusInfo> submit = executor.submit(fileCollectJob);
+				list.add(submit);
+			}
+			//5.打印每个线程执行情况
+			log.info(list);
+		} catch (Exception e) {
+			throw new AppSystemException("执行文件采集失败!", e);
+		} finally {
+			if (executor != null)
+				executor.shutdown();
+		}
+	}
+
 	private static CollectTableBean getCollectTableBean(List<CollectTableBean> collectTableBeanList, String
-			tableName) {
+		tableName) {
 		for (CollectTableBean collectTableBean : collectTableBeanList) {
 			if (tableName.equals(collectTableBean.getTable_name())) {
 				return collectTableBean;

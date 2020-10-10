@@ -207,7 +207,7 @@ public class UnstructuredFileCollectAction extends BaseAction {
 			"UPDATE " + File_collect_set.TableName + " SET is_sendok = ?"
 				+ " WHERE fcs_id = ? ", IsFlag.Shi.getCode(), fcs_id);
 		//发送数据到agent进行执行
-//		executeJob(fcs_id, "execute_etl");
+		executeJob(fcs_id, "execute_etl");
 	}
 
 	@Method(desc = "执行文件采集", logicStep = "")
