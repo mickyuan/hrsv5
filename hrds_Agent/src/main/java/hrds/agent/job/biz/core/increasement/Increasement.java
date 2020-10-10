@@ -37,4 +37,9 @@ public interface Increasement {
 	 * 没有数据保留天数的时候，删除当天卸数的数据
 	 */
 	void dropTodayTable();
+
+	/**
+	 * 增量数据算拉链
+	 */
+	void incrementalDataZipper() throws Exception;
 }

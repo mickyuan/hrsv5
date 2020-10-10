@@ -100,6 +100,98 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 	}
 
 	/**
+	 * 采集增量数据算拉链
+	 */
+	@Override
+	public void incrementalDataZipper() throws Exception {
+		//1.创建当天加载的HBase表在hive上的映射表
+		hiveMapHBase(todayTableName);
+		//1.为了防止第一次执行，tableNameInHBase表不存在，创建空表
+		if (!helper.existsTable(tableNameInHBase)) {
+			//默认是不压缩   TODO 是否压缩需要从页面配置
+			createDefaultPrePartTable(helper, tableNameInHBase, false);
+		}
+		//2.创建hive映射HBase的表
+		hiveMapHBase(tableNameInHBase);
+		//3.创建增量临时表
+		getCreateDeltaSql();
+		//3.防止重跑恢复今天入库的数据
+		restore(StorageType.ZengLiang.getCode());
+		//4.找出需要关链的数据，插入临时表
+		insertInvalidDataSql();
+		//5.插入有效数据
+		insertValidDataSql();
+		//6.插入增量数据
+		// 拼接查找增量并插入增量表
+		String insertDataSql = "INSERT INTO " + deltaTableName + "(" + Constant.HIVEMAPPINGROWKEY + ","
+				+ StringUtils.join(columns, ',').toLowerCase() + ") SELECT "
+				+ getConcatSelectColumn(todayTableName) + "  FROM " + todayTableName;
+		db.execute(insertDataSql);
+		//7.删除上次采集的数据表
+		//删除历史表
+		helper.dropTable(tableNameInHBase);
+		//将增量表重命名为历史表
+		helper.renameTable(deltaTableName, tableNameInHBase);
+		//删除hive增量表的映射
+		db.execute("DROP TABLE IF EXISTS " + deltaTableName);
+	}
+
+	private void insertValidDataSql() {
+		// 拼接查找增量并插入增量表
+		String deleteDatasql = "INSERT INTO " +
+				this.deltaTableName +
+				" select *  from " +
+				this.yesterdayTableName +
+				" WHERE NOT EXISTS " +
+				" ( select " + Constant.MD5NAME + " from " +
+				this.todayTableName +
+				" where " +
+				this.yesterdayTableName + "." + Constant.MD5NAME +
+				" = " +
+				this.todayTableName + "." + Constant.MD5NAME +
+				") AND " + this.yesterdayTableName + "." + Constant.EDATENAME +
+				" = '" + Constant.MAXDATE + "'";
+		db.execute(deleteDatasql);
+		// 拼接查找增量并插入增量表
+		String deleteDatasql2 = "INSERT INTO " +
+				this.deltaTableName +
+				" select *  from " +
+				this.yesterdayTableName +
+				" WHERE " + this.yesterdayTableName + "." + Constant.EDATENAME +
+				" <> '" + Constant.MAXDATE + "'";
+		db.execute(deleteDatasql2);
+	}
+
+	private void insertInvalidDataSql() {
+		StringBuilder deleteDatasql = new StringBuilder(120);
+		StringBuilder join = new StringBuilder(120);
+		join.append(this.yesterdayTableName).append(".").append(Constant.HIVEMAPPINGROWKEY).append(",");
+		for (String column : columns) {
+			join.append(this.yesterdayTableName).append(".").append(column).append(",");
+		}
+		join.delete(join.length() - 1, join.length());
+		String select_sql = StringUtils.replace(join.toString(), this.yesterdayTableName + "."
+				+ Constant.EDATENAME, "'" + sysDate + "'");
+		// 拼接查找增量并插入增量表
+		deleteDatasql.append("INSERT INTO ");
+		deleteDatasql.append(this.deltaTableName);
+		deleteDatasql.append(" select ");
+		deleteDatasql.append(select_sql);
+		deleteDatasql.append(" from ");
+		deleteDatasql.append(this.yesterdayTableName);
+		deleteDatasql.append(" WHERE EXISTS ");
+		deleteDatasql.append(" ( select ").append(Constant.MD5NAME).append(" from ");
+		deleteDatasql.append(this.todayTableName);
+		deleteDatasql.append(" where ");
+		deleteDatasql.append(this.yesterdayTableName).append(".").append(Constant.MD5NAME);
+		deleteDatasql.append(" = ");
+		deleteDatasql.append(this.todayTableName).append(".").append(Constant.MD5NAME);
+		deleteDatasql.append(") AND ").append(this.yesterdayTableName).append(".").append(Constant.EDATENAME);
+		deleteDatasql.append(" = '").append(Constant.MAXDATE).append("'");
+		db.execute(deleteDatasql.toString());
+	}
+
+	/**
 	 * 恢复数据
 	 *
 	 * @param storageType 拉链算法存储模式

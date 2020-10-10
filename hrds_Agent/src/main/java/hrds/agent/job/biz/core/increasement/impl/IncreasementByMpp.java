@@ -11,7 +11,6 @@ import hrds.commons.utils.Constant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,6 +134,51 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			throw new AppSystemException("错误的增量拉链参数代码项");
 		}
 		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 采集增量数据算拉链
+	 */
+	@Override
+	public void incrementalDataZipper() {
+		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName, db, columns, types), db);
+		ArrayList<String> sqlList = new ArrayList<>();
+		//1.复制表的数据到增量临时表
+		sqlList.add(db.getDbtype().ofCopyTableSchemasSql(yesterdayTableName, deltaTableName));
+		sqlList.add(db.getDbtype().ofCopyTableDataSql(yesterdayTableName, deltaTableName));
+		//2.防止重跑恢复今天入库的数据
+		restore(StorageType.ZengLiang.getCode());
+		//3.找出需要关链的数据，进行关链
+		updateInvalidDataSql(sqlList);
+		//4.插入增量数据
+		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
+		//5.删除上次采集的数据表
+		dropTableIfExists(yesterdayTableName, db, sqlList);
+		//6.将临时表改名为进数之后的表
+		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 找出需要关链的数据，进行关链
+	 */
+	private void updateInvalidDataSql(ArrayList<String> sqlList) {
+		//拼接查找增量并插入增量表
+		String updateDataSql = "UPDATE " +
+				deltaTableName +
+				" SET " + Constant.EDATENAME +
+				"='" + sysDate + "'" +
+				" WHERE EXISTS " +
+				" ( select " + Constant.MD5NAME + " from " +
+				todayTableName +
+				" where " +
+				deltaTableName + "." + Constant.MD5NAME +
+				" = " +
+				todayTableName + "." + Constant.MD5NAME + ")" +
+				" AND " + deltaTableName + "." + Constant.EDATENAME +
+				" = '" + Constant.MAXDATE + "'";
+		sqlList.add(updateDataSql);
 	}
 
 	/**
@@ -370,7 +414,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	 * 对象采集，没有数据保留天数，删除当天卸数下来的数据
 	 */
 	@Override
-	public void dropTodayTable(){
+	public void dropTodayTable() {
 		//删除映射表
 		List<String> deleteInfo = new ArrayList<>();
 		//删除临时增量表

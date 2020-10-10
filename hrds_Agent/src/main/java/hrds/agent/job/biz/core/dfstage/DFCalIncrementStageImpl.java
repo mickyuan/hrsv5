@@ -259,6 +259,8 @@ public class DFCalIncrementStageImpl extends AbstractJobStage {
 			increasement.calculateIncrement();
 			//合并增量表
 			increasement.mergeIncrement();
+			//TODO 增量数据算拉链，前端待补充
+//			increasement.incrementalDataZipper();
 		} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
 			LOGGER.info("----------------------------追加--------------------------------");
 			//追加

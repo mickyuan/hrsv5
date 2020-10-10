@@ -3,9 +3,6 @@ package hrds.agent.job.biz.core.increasement.impl;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
-import hrds.commons.exception.AppSystemException;
-
-import java.io.IOException;
 
 /**
  * HBaseIncreasementByPhoenix
@@ -41,6 +38,14 @@ public class HBaseIncreasementByPhoenix extends HBaseIncreasement {
 
 	@Override
 	public void replace() {
+
+	}
+
+	/**
+	 * 采集增量数据算拉链
+	 */
+	@Override
+	public void incrementalDataZipper(){
 
 	}
 }
