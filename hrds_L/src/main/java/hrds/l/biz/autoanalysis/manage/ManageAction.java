@@ -2,9 +2,7 @@ package hrds.l.biz.autoanalysis.manage;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
-import com.alibaba.druid.sql.ast.expr.SQLAggregateExpr;
-import com.alibaba.druid.sql.ast.expr.SQLAllColumnExpr;
-import com.alibaba.druid.sql.ast.expr.SQLPropertyExpr;
+import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.TypeReference;
@@ -47,14 +45,10 @@ public class ManageAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 	// SQL关键字
-	private static final String AND = "AND";
-	private static final String OR = "OR";
 	private static final String BETWEEN = "BETWEEN";
-	private static final String WHERE = "WHERE";
 	private static final String UNION = "UNION";
 	private static final String UNIONALL = "UNION ALL";
 	private static final String IN = "IN";
-	private static final String NOTIN = "NOT IN";
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
 
 	static {
@@ -378,29 +372,21 @@ public class ManageAction extends BaseAction {
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
 	@Param(name = "showNum", desc = "显示条数", range = "正整数", valueIfNull = "10")
 	@Return(desc = "返回数据结果", range = "无限制")
-	public Map<String, Object> getPreviewData(String template_sql, int showNum) {
+	public List<Map<String, Object>> getPreviewData(String template_sql, int showNum) {
 		// 数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 最多只显示1000行
 		List<Map<String, Object>> resultData = new ArrayList<>();
 		if (showNum > 1000) {
 			showNum = 1000;
 		}
-		Set<String> columns = new HashSet<>();
 		// 1.根据sql查询数据结果
 		new ProcessingData() {
 			@Override
 			public void dealLine(Map<String, Object> map) {
-				map.forEach((k, v) -> {
-					columns.add(k);
-				});
 				resultData.add(map);
 			}
-		}.getPageDataLayer(template_sql, Dbo.db(), 1, showNum <= 0 ? 10 : showNum);
-		// 2.返回数据结果
-		Map<String, Object> resultMap = new HashMap<>();
-		resultMap.put("resultData", resultData);
-		resultMap.put("columns", columns);
-		return resultMap;
+		}.getPageDataLayer(template_sql, Dbo.db(), 1, showNum <= 0 ? 100 : showNum);
+		return resultData;
 	}
 
 	@Method(desc = "发布自主取数模板", logicStep = "1.更新模板状态为发布")
@@ -438,19 +424,91 @@ public class ManageAction extends BaseAction {
 
 	private void getAutoTpCondInfo(List<Map<String, Object>> autoTpCondInfoList, SQLExpr whereInfo) {
 		if (null != whereInfo) {
-			List<String> whereList = StringUtil.split(whereInfo.toString(), "\n");
-			for (int i = 0; i < whereList.size(); i++) {
-				String cond = whereList.get(i).trim();
-				Map<String, Object> condInfoMap = new HashMap<>();
-				condInfoMap.put("con_row", i);
-				cond = getCond(autoTpCondInfoList, cond, condInfoMap);
-				if (i + 1 < whereList.size()) {
-					String child_cond = whereList.get(i + 1).trim();
-					if (child_cond.contains(Constant.RXKH) && cond.contains(WHERE)) {
-						getCond(autoTpCondInfoList, cond, condInfoMap);
-					}
-				}
+			setAutoTpCond(autoTpCondInfoList, whereInfo);
+//			List<String> whereList = StringUtil.split(whereInfo.toString(), "\n");
+//			for (int i = 0; i < whereList.size(); i++) {
+//				// 获取每个where条件
+//				String cond = whereList.get(i).trim();
+//				Map<String, Object> condInfoMap = new HashMap<>();
+//				condInfoMap.put("con_row", i);
+//				cond = getCond(autoTpCondInfoList, cond, condInfoMap);
+//				if (i + 1 < whereList.size()) {
+//					String child_cond = whereList.get(i + 1).trim();
+//					if (child_cond.contains(Constant.RXKH) && cond.contains(WHERE)) {
+//						getCond(autoTpCondInfoList, cond, condInfoMap);
+//					}
+//				}
+//			}
+		}
+	}
+
+	private void setAutoTpCond(List<Map<String, Object>> autoTpCondInfoList, SQLExpr sqlExpr) {
+		Map<String, Object> condInfoMap = new HashMap<>();
+		if (sqlExpr instanceof SQLBetweenExpr) {
+			SQLBetweenExpr sqlBetweenExpr = (SQLBetweenExpr) sqlExpr;
+			SQLExpr testExpr = sqlBetweenExpr.testExpr;
+			setSqlPropertyExpr(condInfoMap, testExpr);
+			condInfoMap.put("con_relation", BETWEEN);
+			// fixme 有问题
+			condInfoMap.put("value_size", 64);
+			SQLExpr beginExpr = sqlBetweenExpr.beginExpr;
+			String pre_value = beginExpr.toString() + "," + sqlBetweenExpr.endExpr.toString();
+			setAutoTpCondBySqlExpr(autoTpCondInfoList, condInfoMap, beginExpr, pre_value);
+		} else if (sqlExpr instanceof SQLBinaryOpExpr) {
+			SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) sqlExpr;
+			SQLExpr exprLeft = sqlBinaryOpExpr.getLeft();
+			SQLExpr exprRight = sqlBinaryOpExpr.getRight();
+			if (exprLeft instanceof SQLIdentifierExpr || exprLeft instanceof SQLPropertyExpr) {
+				setSqlPropertyExpr(condInfoMap, exprLeft);
+				condInfoMap.put("con_relation", sqlBinaryOpExpr.getOperator().name);
+				condInfoMap.put("value_size", 64);
+				SQLExpr right = sqlBinaryOpExpr.getRight();
+				setAutoTpCondBySqlExpr(autoTpCondInfoList, condInfoMap, right, right.toString());
+			} else {
+				setAutoTpCond(autoTpCondInfoList, exprLeft);
+				setAutoTpCond(autoTpCondInfoList, exprRight);
 			}
+		} else if (sqlExpr instanceof SQLInListExpr) {
+			SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlExpr;
+			setSqlPropertyExpr(condInfoMap, sqlInListExpr.getExpr());
+			condInfoMap.put("con_relation", IN);
+			// fixme 有问题
+			condInfoMap.put("value_size", 64);
+			List<SQLExpr> targetList = sqlInListExpr.getTargetList();
+			StringBuilder sb = new StringBuilder();
+			for (SQLExpr expr : targetList) {
+				sb.append(expr.toString()).append(",");
+			}
+			setAutoTpCondBySqlExpr(autoTpCondInfoList, condInfoMap, sqlInListExpr.getExpr(),
+					sb.deleteCharAt(sb.length() - 1).toString());
+		}
+	}
+
+	private void setAutoTpCondBySqlExpr(List<Map<String, Object>> autoTpCondInfoList,
+	                                    Map<String, Object> condInfoMap, SQLExpr sqlExpr, String pre_value) {
+		if (sqlExpr instanceof SQLIntegerExpr) {
+			condInfoMap.put("value_type", AutoValueType.ShuZhi.getCode());
+		} else if (sqlExpr instanceof SQLDateExpr) {
+			condInfoMap.put("value_type", AutoValueType.RiQi.getCode());
+		} else {
+			condInfoMap.put("value_type", AutoValueType.ZiFuChuan.getCode());
+		}
+		condInfoMap.put("is_required", IsFlag.Shi.getCode());
+		condInfoMap.put("pre_value", pre_value);
+		condInfoMap.put("checked", true);
+		autoTpCondInfoList.add(condInfoMap);
+	}
+
+	private void setSqlPropertyExpr(Map<String, Object> condInfoMap, SQLExpr sqlExpr) {
+		if (sqlExpr instanceof SQLPropertyExpr) {
+			SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlExpr;
+			condInfoMap.put("cond_para_name", sqlPropertyExpr.toString());
+			condInfoMap.put("cond_en_column", sqlPropertyExpr.getName());
+			condInfoMap.put("cond_cn_column", sqlPropertyExpr.getName());
+		} else {
+			condInfoMap.put("cond_para_name", sqlExpr.toString());
+			condInfoMap.put("cond_en_column", sqlExpr.toString());
+			condInfoMap.put("cond_cn_column", sqlExpr.toString());
 		}
 	}
 
@@ -573,86 +631,97 @@ public class ManageAction extends BaseAction {
 		return map;
 	}
 
-	private String getCond(List<Map<String, Object>> autoTpCondInfoList, String cond,
-	                       Map<String, Object> condInfoMap) {
-		if (cond.startsWith(AND) && !cond.contains(BETWEEN)) {
-			cond = cond.replace(AND, "");
-		}
-		if (cond.startsWith(OR)) {
-			cond = cond.replace(OR, "");
-		}
-		if (cond.startsWith(WHERE)) {
-			cond = cond.replace(WHERE, "");
-		}
-		if (cond.contains(BETWEEN)) {
-			setAutoCondInfo(cond, condInfoMap, BETWEEN);
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains("!=")) {
-			setAutoCondInfo(cond, condInfoMap, "!=");
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains("=") && !cond.contains("!=") && !cond.contains(">=") && !cond.contains("<=")) {
-			setAutoCondInfo(cond, condInfoMap, "=");
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains(">=")) {
-			setAutoCondInfo(cond, condInfoMap, ">=");
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains("<=")) {
-			setAutoCondInfo(cond, condInfoMap, "<=");
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains(">") && !cond.contains(">=")) {
-			setAutoCondInfo(cond, condInfoMap, ">");
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains("<") && !cond.contains("<=")) {
-			setAutoCondInfo(cond, condInfoMap, "<");
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains(NOTIN)) {
-			setAutoCondInfo(cond, condInfoMap, NOTIN);
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		if (cond.contains(IN) && !cond.contains(NOTIN)) {
-			setAutoCondInfo(cond, condInfoMap, IN);
-			autoTpCondInfoList.add(condInfoMap);
-		}
-		return cond;
-	}
+//	private String getCond(List<Map<String, Object>> autoTpCondInfoList, String cond,
+//	                       Map<String, Object> condInfoMap) {
+//		if (cond.startsWith(AND) && !cond.contains(BETWEEN)) {
+//			cond = cond.replace(AND, "");
+//		}
+//		if (cond.startsWith(OR)) {
+//			cond = cond.replace(OR, "");
+//		}
+//		if (cond.startsWith(WHERE)) {
+//			cond = cond.replace(WHERE, "");
+//		}
+//		if (cond.contains(BETWEEN)) {
+//			setAutoCondInfo(cond, condInfoMap, BETWEEN);
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains("!=")) {
+//			setAutoCondInfo(cond, condInfoMap, "!=");
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains("=") && !cond.contains("!=") && !cond.contains(">=") && !cond.contains("<=")) {
+//			setAutoCondInfo(cond, condInfoMap, "=");
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains(">=")) {
+//			setAutoCondInfo(cond, condInfoMap, ">=");
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains("<=")) {
+//			setAutoCondInfo(cond, condInfoMap, "<=");
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains(">") && !cond.contains(">=")) {
+//			setAutoCondInfo(cond, condInfoMap, ">");
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains("<") && !cond.contains("<=")) {
+//			setAutoCondInfo(cond, condInfoMap, "<");
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains(NOTIN)) {
+//			setAutoCondInfo(cond, condInfoMap, NOTIN);
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		if (cond.contains(IN) && !cond.contains(NOTIN)) {
+//			setAutoCondInfo(cond, condInfoMap, IN);
+//			autoTpCondInfoList.add(condInfoMap);
+//		}
+//		return cond;
+//	}
 
-	private void setAutoCondInfo(String cond, Map<String, Object> condInfoMap, String s) {
-		List<String> condList = StringUtil.split(cond, s);
-		String cond_para_name = condList.get(0).trim();
-		if (BETWEEN.equals(s)) {
-			cond_para_name = cond_para_name.replace(AND, "").trim();
-			condInfoMap.put("pre_value", condList.get(1).replace(AND, ",")
-					.replace(Constant.SPACE, "").trim());
-		} else if (NOTIN.equals(s) || IN.equals(s)) {
-			if (StringUtil.isNotBlank(condList.get(1))) {
-				condInfoMap.put("pre_value", condList.get(1).replace(Constant.LXKH, "")
-						.replace(Constant.RXKH, "")
-						.replace(Constant.SPACE, ""));
-			}
-		} else {
-			condInfoMap.put("pre_value", condList.get(1).trim());
-		}
-		condInfoMap.put("value_size", 64);
-		condInfoMap.put("cond_para_name", cond_para_name);
-		if (cond_para_name.contains(".")) {
-			String column = cond_para_name.substring(cond_para_name.indexOf(".") + 1);
-			condInfoMap.put("cond_en_column", column);
-			condInfoMap.put("cond_cn_column", column);
-		} else {
-			condInfoMap.put("cond_en_column", cond_para_name);
-			condInfoMap.put("cond_cn_column", cond_para_name);
-		}
-		condInfoMap.put("con_relation", s);
-		condInfoMap.put("value_type", AutoValueType.ZiFuChuan.getCode());
-		condInfoMap.put("is_required", IsFlag.Shi.getCode());
-		condInfoMap.put("checked", true);
-	}
+//	private void setAutoCondInfo(String cond, Map<String, Object> condInfoMap, String s) {
+//		List<String> condList = StringUtil.split(cond, s);
+//		String cond_para_name = condList.get(0).trim();
+//		if (BETWEEN.equals(s)) {
+//			cond_para_name = cond_para_name.replace(AND, "").trim();
+//			condInfoMap.put("pre_value", condList.get(1).replace(AND, ",")
+//					.replace(Constant.SPACE, "").trim());
+//		} else if (NOTIN.equals(s) || IN.equals(s)) {
+//			if (StringUtil.isNotBlank(condList.get(1))) {
+//				condInfoMap.put("pre_value", condList.get(1).replace(Constant.LXKH, "")
+//						.replace(Constant.RXKH, "")
+//						.replace(Constant.SPACE, ""));
+//			}
+//		} else {
+//			condInfoMap.put("pre_value", condList.get(1).trim());
+//		}
+//		condInfoMap.put("value_size", 64);
+//		condInfoMap.put("cond_para_name", cond_para_name);
+//		if (cond_para_name.contains(".")) {
+//			String column = cond_para_name.substring(cond_para_name.indexOf(".") + 1);
+//			condInfoMap.put("cond_en_column", column);
+//			condInfoMap.put("cond_cn_column", column);
+//		} else {
+//			condInfoMap.put("cond_en_column", cond_para_name);
+//			condInfoMap.put("cond_cn_column", cond_para_name);
+//		}
+//		condInfoMap.put("con_relation", s);
+//		condInfoMap.put("value_type", AutoValueType.ZiFuChuan.getCode());
+//		condInfoMap.put("is_required", IsFlag.Shi.getCode());
+//		condInfoMap.put("checked", true);
+//	}
 
+	@Method(desc = "根据ID查询列信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
+			"2.根据不同数据源类型查询表的列信息并返回" +
+			"2.1贴源层" +
+			"2.2集市层")
+	@Param(name = "file_id", desc = "表ID", range = "无限制", nullable = true)
+	@Param(name = "data_layer", desc = "数据层，树根节点", range = "无限制")
+	@Return(desc = "根据不同数据源类型查询表的列信息并返回", range = "无限制")
+	public Map<String, Object> searchFieldById(String file_id, String data_layer) {
+		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
+		return DataTableUtil.getTableInfoAndColumnInfo(data_layer, file_id);
+	}
 }

@@ -221,7 +221,8 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				accessResult.add(map);
 			}
-		}.getPageDataLayer(fetch_sql, Dbo.db(), 1, 10);
+		}
+		.getPageDataLayer(fetch_sql, Dbo.db(), 1, 100);
 		return accessResult;
 	}
 
@@ -450,7 +451,7 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				resultData.add(map);
 			}
-		}.getPageDataLayer(accessSql, Dbo.db(), 1, showNum <= 0 ? 10 : showNum);
+		}.getPageDataLayer(accessSql, Dbo.db(), 1, showNum <= 0 ? 100 : showNum);
 		// 2.返回数据结果
 		return resultData;
 	}
@@ -717,7 +718,7 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				componentList.add(map);
 			}
-		}.getDataLayer(exe_sql, Dbo.db());
+		}.getPageDataLayer(exe_sql, Dbo.db(), 1, 100);
 		Map<String, Object> resultMap = new HashMap<>();
 		// 2.根据不同图标类型获取图表数据
 		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
