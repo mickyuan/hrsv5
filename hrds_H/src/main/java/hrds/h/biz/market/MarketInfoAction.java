@@ -23,45 +23,103 @@ import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.*;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.DataSourceType;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.JobExecuteState;
+import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.SqlEngine;
+import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
+import hrds.commons.codes.StoreLayerDataSource;
+import hrds.commons.codes.Store_type;
+import hrds.commons.codes.TableLifeCycle;
+import hrds.commons.codes.TableStorage;
 import hrds.commons.codes.fdCode.WebCodesItem;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Cb_preaggregate;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_added;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Data_store_reg;
+import hrds.commons.entity.Datatable_field_info;
+import hrds.commons.entity.Dcol_relation_store;
+import hrds.commons.entity.Dm_category;
+import hrds.commons.entity.Dm_datatable;
+import hrds.commons.entity.Dm_datatable_source;
+import hrds.commons.entity.Dm_etlmap_info;
+import hrds.commons.entity.Dm_info;
+import hrds.commons.entity.Dm_operation_info;
+import hrds.commons.entity.Dm_relevant_info;
+import hrds.commons.entity.Dtab_relation_store;
+import hrds.commons.entity.Edw_sparksql_gram;
+import hrds.commons.entity.Etl_job_def;
+import hrds.commons.entity.Etl_sub_sys_list;
+import hrds.commons.entity.Etl_sys;
+import hrds.commons.entity.Own_source_field;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_storage_info;
+import hrds.commons.entity.Type_contrast;
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
-import hrds.commons.utils.*;
+import hrds.commons.utils.BeanUtils;
+import hrds.commons.utils.Constant;
+import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.ExcelUtil;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
 import hrds.h.biz.bean.CategoryRelationBean;
+import java.awt.Color;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.awt.Color;
-import java.io.*;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
@@ -707,12 +765,16 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setData_mart_id(data_mart_id);
 		return Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " +
-				Datatable_field_info.TableName + ") then true else false end as isadd from " +
+				Datatable_field_info.TableName + ") then true else false end as isadd,"
+				+ "case when ? in (select ds.store_type from "
+				+ Data_store_layer.TableName
+				+ " ds where dsl_id = t2.dsl_id) "
+				+ "then true else false end as iscb from " +
 				Dm_datatable.TableName + " t1 left join " + Dtab_relation_store.TableName +
 				" t2 on t1.datatable_id = t2.tab_id left join " + Dm_category.TableName +
 				" t3 on t1.category_id=t3.category_id" +
 				" where t1.data_mart_id = ? and t2.data_source = ? order by t1.datatable_id asc",
-			dm_datatable.getData_mart_id(), StoreLayerDataSource.DM.getCode());
+			Store_type.CARBONDATA.getCode(), dm_datatable.getData_mart_id(), StoreLayerDataSource.DM.getCode());
 	}
 
 
@@ -973,7 +1035,7 @@ public class MarketInfoAction extends BaseAction {
 			Dtab_relation_store dm_relation_datatable = dm_relation_datatableOptional.get();
 			DboExecute.updatesOrThrow("更新的存储层信息超出了预期范围",
 				"UPDATE " + Dtab_relation_store.TableName + " SET dsl_id = ? WHERE tab_id = ?",
-				dsl_id,dm_relation_datatable.getTab_id());
+				dsl_id, dm_relation_datatable.getTab_id());
 		}
 		//6 返回主键datatable_id
 		map.put("datatable_id", String.valueOf(dm_datatable.getDatatable_id()));
@@ -3593,5 +3655,33 @@ public class MarketInfoAction extends BaseAction {
 		});
 		sparkSqlGramsMap.put("classify", classifyList);
 		return sparkSqlGramsMap;
+	}
+
+	@Method(desc = "获取预聚合SQL数据信息", logicStep = "1.根据表ID获取预聚合数据信息")
+	@Param(name = "datatable_id", range = "集市表ID信息", desc = "不可为空")
+	@Return(desc = "返回当前表ID的预聚合SQL信息", range = "可为空,首次配置")
+	public Map<String, Object> prePolymerization(long datatable_id) {
+
+		return Dbo.queryOneObject("SELECT * FROM " + Cb_preaggregate.TableName + " WHERE datatable_id = ?", datatable_id);
+	}
+
+	@Method(desc = "获取预聚合SQL数据信息", logicStep = "1.根据表ID获取预聚合数据信息")
+	@Param(name = "cb_preaggregate", range = "预聚合保存数据信息", desc = "不可为空", isBean = true)
+	public void savePrePolymerization(Cb_preaggregate cb_preaggregate) {
+
+		Validator.notBlank(cb_preaggregate.getAgg_name(), "预聚合名称不能为空");
+		Validator.notBlank(cb_preaggregate.getAgg_sql(), "预聚合SQL不能为空");
+
+		//更新预聚合
+		if (cb_preaggregate.getAgg_id() != null && cb_preaggregate.getAgg_id() != 0) {
+			cb_preaggregate.update(Dbo.db());
+		} else {
+			//保存预聚合SQL信息
+			cb_preaggregate.setAgg_id(PrimayKeyGener.getNextId());
+			cb_preaggregate.setAgg_date(DateUtil.getSysDate());
+			cb_preaggregate.setAgg_time(DateUtil.getSysTime());
+			cb_preaggregate.setAgg_status(JobExecuteState.ShiBai.getCode());
+			cb_preaggregate.add(Dbo.db());
+		}
 	}
 }
