@@ -212,7 +212,7 @@ public abstract class ProcessingData {
 		}
 		//TODO 这里以后需要添加加工数据、机器学习、流数据、系统管理维护的表、系统管理等
 		if (tableStorageLayerBeans.isEmpty()) {
-			throw new BusinessException("表: " + tableName + " 未在任何存储层中存在!");
+			throw new AppSystemException("表: " + tableName + " 未在任何存储层中存在!");
 		}
 		return tableStorageLayerBeans;
 	}
