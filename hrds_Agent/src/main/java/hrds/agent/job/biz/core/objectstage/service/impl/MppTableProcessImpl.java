@@ -57,6 +57,11 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 	public MppTableProcessImpl(TableBean tableBean, ObjectTableBean objectTableBean,
 							   DataStoreConfBean dataStoreConfBean) {
 		super(tableBean, objectTableBean);
+		if (isZipperKeyMap.isEmpty()) {
+			for (String column : selectColumnList) {
+				isZipperKeyMap.put(column, false);
+			}
+		}
 		this.dsl_name = dataStoreConfBean.getDsl_name();
 		//获取batch插入的sql
 		this.insertSql = getBatchInsertSql();
@@ -351,10 +356,10 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 		db.close();
 	}
 
-	private List<String> getSetColumnList(Map<String, Boolean> isPrimaryKeyMap) {
+	private List<String> getSetColumnList(Map<String, Boolean> isZipperKeyMap) {
 		List<String> setColumnList = new ArrayList<>();
 		for (String updateColumn : metaColumnList) {
-			if (!isPrimaryKeyMap.get(updateColumn)) {
+			if (isZipperKeyMap.get(updateColumn) !=null && !isZipperKeyMap.get(updateColumn)) {
 				setColumnList.add(updateColumn);
 			}
 		}
@@ -364,7 +369,7 @@ public class MppTableProcessImpl extends ObjectProcessAbstract {
 	private List<String> getWhereColumnList() {
 		List<String> whereColumnList = new ArrayList<>();
 		for (String updateColumn : metaColumnList) {
-			if (isZipperKeyMap.get(updateColumn)) {
+			if (isZipperKeyMap.get(updateColumn) !=null && isZipperKeyMap.get(updateColumn)) {
 				whereColumnList.add(updateColumn);
 			}
 		}
