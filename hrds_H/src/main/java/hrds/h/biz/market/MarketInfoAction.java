@@ -3660,28 +3660,37 @@ public class MarketInfoAction extends BaseAction {
 	@Method(desc = "获取预聚合SQL数据信息", logicStep = "1.根据表ID获取预聚合数据信息")
 	@Param(name = "datatable_id", range = "集市表ID信息", desc = "不可为空")
 	@Return(desc = "返回当前表ID的预聚合SQL信息", range = "可为空,首次配置")
-	public Map<String, Object> prePolymerization(long datatable_id) {
+	public List<Map<String, Object>> prePolymerization(long datatable_id) {
 
-		return Dbo.queryOneObject("SELECT * FROM " + Cb_preaggregate.TableName + " WHERE datatable_id = ?", datatable_id);
+		return Dbo.queryList("SELECT * FROM " + Cb_preaggregate.TableName + " WHERE datatable_id = ?", datatable_id);
 	}
 
 	@Method(desc = "获取预聚合SQL数据信息", logicStep = "1.根据表ID获取预聚合数据信息")
-	@Param(name = "cb_preaggregate", range = "预聚合保存数据信息", desc = "不可为空", isBean = true)
-	public void savePrePolymerization(Cb_preaggregate cb_preaggregate) {
+	@Param(name = "preaggregate", range = "预聚合保存数据信息", desc = "不可为空", isBean = true)
+	public void savePrePolymerization(Cb_preaggregate[] preaggregate) {
 
-		Validator.notBlank(cb_preaggregate.getAgg_name(), "预聚合名称不能为空");
-		Validator.notBlank(cb_preaggregate.getAgg_sql(), "预聚合SQL不能为空");
+		List<String> nameList = new ArrayList<>();
+		for (Cb_preaggregate cb_preaggregate : preaggregate) {
 
-		//更新预聚合
-		if (cb_preaggregate.getAgg_id() != null && cb_preaggregate.getAgg_id() != 0) {
-			cb_preaggregate.update(Dbo.db());
-		} else {
-			//保存预聚合SQL信息
-			cb_preaggregate.setAgg_id(PrimayKeyGener.getNextId());
-			cb_preaggregate.setAgg_date(DateUtil.getSysDate());
-			cb_preaggregate.setAgg_time(DateUtil.getSysTime());
-			cb_preaggregate.setAgg_status(JobExecuteState.ShiBai.getCode());
-			cb_preaggregate.add(Dbo.db());
+			if (!nameList.contains(cb_preaggregate.getAgg_name())) {
+				nameList.add(cb_preaggregate.getAgg_name());
+			} else {
+				throw new BusinessException("预聚合名称: " + cb_preaggregate.getAgg_name() + " 重复");
+			}
+			Validator.notBlank(cb_preaggregate.getAgg_name(), "预聚合名称不能为空");
+			Validator.notBlank(cb_preaggregate.getAgg_sql(), "预聚合SQL不能为空");
+
+			//更新预聚合
+			if (cb_preaggregate.getAgg_id() != null && cb_preaggregate.getAgg_id() != 0) {
+				cb_preaggregate.update(Dbo.db());
+			} else {
+				//保存预聚合SQL信息
+				cb_preaggregate.setAgg_id(PrimayKeyGener.getNextId());
+				cb_preaggregate.setAgg_date(DateUtil.getSysDate());
+				cb_preaggregate.setAgg_time(DateUtil.getSysTime());
+				cb_preaggregate.setAgg_status(JobExecuteState.ShiBai.getCode());
+				cb_preaggregate.add(Dbo.db());
+			}
 		}
 	}
 }
