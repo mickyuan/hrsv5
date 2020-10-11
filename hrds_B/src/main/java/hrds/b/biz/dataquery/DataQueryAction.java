@@ -87,7 +87,7 @@ public class DataQueryAction extends BaseAction {
 			getUserId(), fileId, ApplyType.XiaZai.getCode()
 		);
 		if (authResult.isEmpty()) {
-			throw new BusinessException("下载文件不存在! fileId=" + fileId);
+			throw new BusinessException("没有文件申请下载的信息,请先申请下载! fileId=" + fileId);
 		}
 		//2.检查申请的操作是否是下载
 		ApplyType applyType = ApplyType.ofEnumByCode(authResult.getString(0, "apply_type"));
@@ -279,8 +279,8 @@ public class DataQueryAction extends BaseAction {
 //					sevenDayCollectFileSumMap.put("collectDate", collectDate);
 //					sevenDayCollectFileSumMap.put("collectSum", collectSum + collectSum);
 //				} else {
-					sevenDayCollectFileSumMap.put("collectDate", collectDate);
-					sevenDayCollectFileSumMap.put("collectSum", collectSum);
+				sevenDayCollectFileSumMap.put("collectDate", collectDate);
+				sevenDayCollectFileSumMap.put("collectSum", collectSum);
 //				}
 				sevenDayCollectFileSumList.add(sevenDayCollectFileSumMap);
 			}
