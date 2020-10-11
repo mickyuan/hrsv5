@@ -113,6 +113,7 @@ public abstract class ProcessingData {
 		else if (ltb.getConnType() == LayerTypeBean.ConnType.moreOther) {
 			//List<LayerBean> layerBeanList = ltb.getLayerBeanList();
 			// TODO 混搭模式
+			return getMoreJdbcResult(ofSql, begin, end, isCountTotal);
 		}
 		return null;
 	}

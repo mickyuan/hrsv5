@@ -12,7 +12,12 @@ import hrds.h.biz.config.MarketConfUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static hrds.commons.utils.Constant.*;
@@ -123,6 +128,83 @@ public class Utils {
 			}
 		}
 	}
+
+	/**
+	 * 恢复关系型数据库的数据到上次跑批结果
+	 *
+	 * @param db DatabaseWrapper
+	 */
+	static boolean hasTodayData(DatabaseWrapper db, String tableName,
+								String etlDate, String datatableId, boolean isMultipleInput, boolean isIncrement) throws SQLException {
+
+		if (isMultipleInput) {
+			ResultSet resultSet = db.queryPagedGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' AND %s = '%s'",
+					tableName, SDATENAME, etlDate, TABLE_ID_NAME, datatableId), 0, 1, false);
+			if (resultSet.next()) {
+				return true;
+			}
+			if (isIncrement) {
+				resultSet = db.queryPagedGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' AND %s = '%s'",
+						tableName, EDATENAME, MAXDATE, TABLE_ID_NAME, datatableId), 0, 1, false);
+				if (resultSet.next()) {
+					return true;
+				}
+			}
+		} else {
+			ResultSet resultSet = db.queryPagedGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s'",
+					tableName, SDATENAME, etlDate), 0, 1, false);
+			if (resultSet.next()) {
+				return true;
+			}
+			db.execute(String.format("SELECT * FROM %s WHERE %s = '%s'",
+					tableName, SDATENAME, etlDate));
+			if (isIncrement) {
+				resultSet = db.queryPagedGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s'",
+						tableName, EDATENAME, MAXDATE), 0, 1, false);
+				if (resultSet.next()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	static boolean hasTodayDataLimit(DatabaseWrapper db, String tableName,
+								String etlDate, String datatableId, boolean isMultipleInput, boolean isIncrement) throws SQLException {
+
+		if (isMultipleInput) {
+			ResultSet resultSet = db.queryGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' AND %s = '%s' LIMIT 1",
+					tableName, SDATENAME, etlDate, TABLE_ID_NAME, datatableId));
+			if (resultSet.next()) {
+				return true;
+			}
+			if (isIncrement) {
+				resultSet = db.queryGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' AND %s = '%s' LIMIT 1",
+						tableName, EDATENAME, MAXDATE, TABLE_ID_NAME, datatableId));
+				if (resultSet.next()) {
+					return true;
+				}
+			}
+		} else {
+			ResultSet resultSet = db.queryGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' LIMIT 1",
+					tableName, SDATENAME, etlDate));
+			if (resultSet.next()) {
+				return true;
+			}
+			db.execute(String.format("SELECT * FROM %s WHERE %s = '%s'",
+					tableName, SDATENAME, etlDate));
+			if (isIncrement) {
+				resultSet = db.queryGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' LIMIT 1",
+						tableName, EDATENAME, MAXDATE));
+				if (resultSet.next()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+
 
 	/**
 	 * 创建表

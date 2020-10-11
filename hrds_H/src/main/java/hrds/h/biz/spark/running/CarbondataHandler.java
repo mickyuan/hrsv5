@@ -1,10 +1,15 @@
 package hrds.h.biz.spark.running;
 
+import fd.ng.core.utils.StringUtil;
+import hrds.commons.exception.AppSystemException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.spark.sql.*;
 
 import static hrds.commons.utils.Constant.*;
 
 public class CarbondataHandler extends Handler {
+    Logger logger = LogManager.getLogger();
     private final SparkHandleArgument.CarbonArgs carbonArgs;
 
     CarbondataHandler(SparkSession spark, Dataset<Row> dataset,
@@ -17,9 +22,11 @@ public class CarbondataHandler extends Handler {
 
     private void setDatabase() {
         String database = carbonArgs.getDatabase();
-        if (spark.catalog().databaseExists(database)) {
-            spark.catalog().setCurrentDatabase(database);
+        if(StringUtil.isBlank(database)){
+            throw new AppSystemException("Can not set database to null string");
         }
+        spark.catalog().setCurrentDatabase(database);
+
     }
 
     @Override

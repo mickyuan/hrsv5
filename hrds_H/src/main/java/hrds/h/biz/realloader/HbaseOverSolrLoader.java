@@ -144,26 +144,31 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
     @Override
     public void replace() {
 //        String replaceTempTable = tableName + "_hyren_r";
-//        try (HBaseHelper helper = HBaseHelper.getHelper()) {
-//            if (helper.existsTable(replaceTempTable)) {
-//                helper.dropTable(replaceTempTable);
-//            }
-//            helper.createTable(replaceTempTable,Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
-//            //solr可能是没有选择的
-//            if (hbaseSolrArgs.getSolrCols() != null) {
-//                CollectionUtil.deleteCollection(tableName);
-//                CollectionUtil.createCollection(tableName);
-//            }
-//
-//        hbaseSolrArgs.setOverWrite(false);
-//        hbaseSolrArgs.setTableName(replaceTempTable);
+        try (HBaseHelper helper = HBaseHelper.getHelper()) {
+
+            if (helper.existsTable(tableName)) {
+                helper.truncateTable(tableName, false);
+            }
+//            helper.createTable(tableName, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
+            //solr可能是没有选择的
+            if (hbaseSolrArgs.getSolrCols() != null) {
+                CollectionUtil.deleteCollection(CollectionUtil.getCollection(tableName));
+                Thread.sleep(2000);
+                CollectionUtil.createCollection(CollectionUtil.getCollection(tableName));
+            }
+
+            hbaseSolrArgs.setOverWrite(true);
+            hbaseSolrArgs.setTableName(tableName);
+            SparkJobRunner.runJob(hbaseSolrArgs);
+//            helper.dropTable(tableName);
+//            helper.renameTable(replaceTempTable, tableName);
+        } catch (IOException | InterruptedException e) {
+            throw new AppSystemException(e);
+        }
+
+//        hbaseSolrArgs.setOverWrite(true);
 //        SparkJobRunner.runJob(hbaseSolrArgs);
 
-        hbaseSolrArgs.setOverWrite(true);
-        SparkJobRunner.runJob(hbaseSolrArgs);
-//        } catch (IOException e) {
-//            throw new AppSystemException("创建 hbase 临时表失败："+replaceTempTable, e);
-//        }
     }
 
     @Override

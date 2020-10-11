@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
+import java.sql.SQLException;
 
 /**
  * 所有 Loader 类的 业务接口
@@ -65,7 +66,7 @@ public interface Loader extends Closeable {
      * Date:2018年10月31日10:25:36
      * @since JDK 1.7
      */
-    void restore();
+    void restore() throws SQLException;
 
     /**
      * 后置作业

@@ -8,6 +8,8 @@ import hrds.h.biz.realloader.Loader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.sql.SQLException;
+
 /**
  * 根据存储类型来运行的程序逻辑
  * 是loader基础实现的业务包装类
@@ -54,11 +56,15 @@ public final class BusinessForStorageType implements ILoadBussiness {
             } catch (Exception warn) {
                 logger.warn("作业回滚异常： ", e);
             }
-            throw e;
+            try {
+                throw e;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
         }
     }
 
-    private void restore() {
+    private void restore() throws SQLException {
         if (conf.isRerun()) {
             logger.info("此任务在日期 " + conf.getEtlDate() + " 已运行过，恢复数据到上次跑批完的数据状态.");
             loader.restore();
@@ -70,14 +76,14 @@ public final class BusinessForStorageType implements ILoadBussiness {
         loader.replace();
     }
 
-    private void append() {
+    private void append() throws SQLException {
         logger.info("======================= 追加 =======================");
         // 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
         restore();
         loader.append();
     }
 
-    private void increment() {
+    private void increment() throws SQLException {
         logger.info("======================= 增量 =======================");
         // 支持增量重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
         restore();

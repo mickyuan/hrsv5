@@ -7,6 +7,8 @@ import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.running.SparkHandleArgument.DatabaseArgs;
 import hrds.h.biz.spark.running.SparkJobRunner;
 
+import java.sql.SQLException;
+
 import static hrds.commons.utils.StorageTypeKey.*;
 
 /**
@@ -85,10 +87,12 @@ public class DatabaseLoader extends AbstractRealLoader {
 	}
 
 	@Override
-	public void restore() {
+	public void restore() throws SQLException {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-			Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(),
-					conf.getDatatableId(), conf.isMultipleInput(), conf.isIncrement());
+			if (Utils.hasTodayData(db, tableName, etlDate, datatableId, isMultipleInput, conf.isIncrement())) {
+				Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(),
+						conf.getDatatableId(), conf.isMultipleInput(), conf.isIncrement());
+			}
 		}
 	}
 

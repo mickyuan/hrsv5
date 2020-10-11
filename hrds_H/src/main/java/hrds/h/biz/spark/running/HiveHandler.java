@@ -23,9 +23,7 @@ public class HiveHandler extends Handler {
 
     private void setDatabase() {
         String database = hiveArgs.getDatabase();
-        if (spark.catalog().databaseExists(database)) {
-            spark.catalog().setCurrentDatabase(database);
-        }
+        spark.catalog().setCurrentDatabase(database);
     }
 
     @Override
@@ -47,6 +45,7 @@ public class HiveHandler extends Handler {
 
         String deltaTable = "delta_hyren_" + tableName;
 
+        spark.sql("DROP TABLE IF EXISTS " + deltaTable);
         spark.sql(String.format("CREATE TABLE %s " +
                 "STORED AS PARQUET " +
                 "AS SELECT * FROM %s ", deltaTable, tableName));

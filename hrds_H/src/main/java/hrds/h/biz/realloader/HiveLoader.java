@@ -1,17 +1,19 @@
 package hrds.h.biz.realloader;
 
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.Store_type;
 import hrds.commons.collection.ConnectionTool;
-import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.spark.running.SparkHandleArgument.HiveArgs;
 import hrds.h.biz.spark.running.SparkJobRunner;
 
-import java.util.stream.Collectors;
+import java.sql.SQLException;
+
+import static hrds.commons.utils.Constant.*;
 
 
 /**
@@ -81,7 +83,9 @@ public class HiveLoader extends AbstractRealLoader {
 
     private DatabaseWrapper getHiveDb() {
         tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
-        return ConnectionTool.getDBWrapper(tableLayerAttrs);
+        DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper(tableLayerAttrs);
+        dbWrapper.execute("use " + hiveArgs.getDatabase());
+        return dbWrapper;
     }
 
     private void createHiveTable(DatabaseWrapper hiveDb, String tableName) {
@@ -90,7 +94,19 @@ public class HiveLoader extends AbstractRealLoader {
     }
 
     @Override
-    public void restore() {
-        //TODO 怎么回滚
+    public void restore() throws SQLException {
+        try (DatabaseWrapper db = getHiveDb()) {
+            if (Utils.hasTodayDataLimit(db, tableName, etlDate,
+                    datatableId, isMultipleInput, conf.isIncrement())) {
+                String after = "case " + EDATENAME + " when '" + etlDate + "' then '" + MAXDATE + "' else "
+                        + EDATENAME + " end " + EDATENAME;
+                String join = StringUtil.replace(hiveArgs.getColumns(), EDATENAME, after);
+                String restoreSql = "create table " + tableName + "_restore as select  " + join + " from " + tableName + " where "
+                        + SDATENAME + "<>'" + etlDate + "'";
+                db.execute(restoreSql);
+                db.execute("drop table if exists " + tableName);
+                db.execute("alter table " + tableName + "_restore rename to " + tableName);
+            }
+        }
     }
 }

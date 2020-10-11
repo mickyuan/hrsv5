@@ -3,6 +3,7 @@ package hrds.h.biz.realloader;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,7 +65,7 @@ public abstract class AbstractRealLoader implements Loader {
      * 防止同一天重跑时出现数据错误问题
      */
     @Override
-    public void restore() {
+    public void restore() throws SQLException {
         throw new AppSystemException(this.getClass().getSimpleName() +
                 " 不支持恢复数据至上次跑批结果");
     }
