@@ -434,24 +434,25 @@ public class InterfaceManager {
 				queryInterfaceInfo.setSysreg_name(sysreg_name);
 				List<Sysreg_parameter_info> parameterInfos = SqlOperator.queryList(db,
 						Sysreg_parameter_info.class,
-						"select table_ch_column,table_en_column from " + Sysreg_parameter_info.TableName
+						"select * from " + Sysreg_parameter_info.TableName
 								+ " where use_id=? and user_id=?", use_id, user_id);
 				StringBuilder chColumns = new StringBuilder();
 				StringBuilder enColumns = new StringBuilder();
+				StringBuilder remarks = new StringBuilder();
 				if (parameterInfos != null && parameterInfos.size() > 0) {
 					for (Sysreg_parameter_info parameterInfo : parameterInfos) {
 						chColumns.append(parameterInfo.getTable_ch_column()).append(Constant.METAINFOSPLIT);
 						enColumns.append(parameterInfo.getTable_en_column()).append(Constant.METAINFOSPLIT);
+						remarks.append(parameterInfo.getRemark()).append(Constant.METAINFOSPLIT);
 					}
 					queryInterfaceInfo.setTable_ch_column(chColumns.deleteCharAt(chColumns.length() - 1).toString());
 					queryInterfaceInfo.setTable_en_column(enColumns.deleteCharAt(enColumns.length() - 1).toString());
+					// 表remark列(其实存的是字段类型对应的json字符串)
+					queryInterfaceInfo.setTable_type_name(remarks.deleteCharAt(remarks.length() - 1).toString());
 				} else {
 					queryInterfaceInfo.setTable_ch_column("");
 					queryInterfaceInfo.setTable_en_column("");
 				}
-				// 表字段列
-				// 表remark列(其实存的是字段类型对应的json字符串)
-				queryInterfaceInfo.setTable_type_name(tableResult.getString(i, "remark"));
 				// 表中文名
 				queryInterfaceInfo.setOriginal_name(tableResult.getString(i, "original_name"));
 				// 表来源

@@ -104,7 +104,8 @@ public class DataRangeManageAction extends BaseAction {
 					}
 				}
 				// 新增系统登记表参数信息
-				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column);
+				addSysRegParameterInfo(useId, userId, table_ch_column, table_en_column,
+						tableInfoAndColumnInfo.get("column_info_list"));
 			}
 			InterfaceManager.initTable(Dbo.db());
 		}
@@ -118,19 +119,29 @@ public class DataRangeManageAction extends BaseAction {
 	@Param(name = "userId", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "table_ch_column", desc = "列中文名称", range = "无限制")
 	@Param(name = "table_en_column", desc = "列英文名称", range = "无限制")
-	private void addSysRegParameterInfo(String useId,
-	                                    long userId, String[] table_ch_column, String[] table_en_column) {
+	@Param(name = "column_info_list", desc = "字段的mate信息", range = "无限制")
+	private void addSysRegParameterInfo(String useId, long userId, String[] table_ch_column,
+	                                    String[] table_en_column, Object column_info_list) {
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.封装系统登记参数表信息
 		Sysreg_parameter_info sysreg_parameter_info = new Sysreg_parameter_info();
 		sysreg_parameter_info.setUse_id(useId);
 		sysreg_parameter_info.setIs_flag(IsFlag.Fou.getCode());
 		sysreg_parameter_info.setUser_id(userId);
+		System.out.println(JsonUtil.toJson(column_info_list));
+		List<Map<String, String>> columnInfoList = JsonUtil.toObject(JsonUtil.toJson(column_info_list),
+				new TypeReference<List<Map<String, String>>>() {
+				}.getType());
 		// 3.循环保存系统登记表参数信息
 		for (int i = 0; i < table_en_column.length; i++) {
 			sysreg_parameter_info.setParameter_id(PrimayKeyGener.getNextId());
 			sysreg_parameter_info.setTable_ch_column(table_ch_column[i]);
 			sysreg_parameter_info.setTable_en_column(table_en_column[i]);
+			for (Map<String, String> map : columnInfoList) {
+				if (map.get("column_name").equals(table_en_column[i])) {
+					sysreg_parameter_info.setRemark(JsonUtil.toJson(map));
+				}
+			}
 			sysreg_parameter_info.add(Dbo.db());
 		}
 	}

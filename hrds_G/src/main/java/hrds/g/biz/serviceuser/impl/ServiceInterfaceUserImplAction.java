@@ -670,7 +670,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
-	public Map<String, Object> hBaseSolrQuery(HBaseSolr hBaseSolr, CheckParam checkParam) {
+	public Map<String, Object> hbaseSolrQuery(HbaseSolr hBaseSolr, CheckParam checkParam) {
 		long start = System.currentTimeMillis();
 		Interface_use_log interface_use_log = new Interface_use_log();
 		// 请求开始时间

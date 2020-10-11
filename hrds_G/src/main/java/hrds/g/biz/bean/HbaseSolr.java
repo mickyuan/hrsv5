@@ -7,7 +7,7 @@ import hrds.commons.entity.fdentity.ProjectTableEntity;
 
 @DocClass(desc = "HBaseSolr查询参数实体", author = "dhw", createdate = "2020/4/1 15:36")
 @Table(tableName = "hbase_solr")
-public class HBaseSolr extends ProjectTableEntity {
+public class HbaseSolr extends ProjectTableEntity {
 	private static final long serialVersionUID = 321566870187324L;
 
 	public static final String TableName = "hbase_solr";

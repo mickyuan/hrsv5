@@ -1008,10 +1008,11 @@ public class InterfaceCommon {
 						Constant.STORECONFIGPATH + dsl_name + File.separator, true),
 				platform, prncipal_name, hadoop_user_name))) {
 			// 当前表的有效全部列
-			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), ",");
+			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), Constant.METAINFOSPLIT);
 			StringBuilder filter = new StringBuilder();
 			filter.append(ConfigurationUtil.TABLE_NAME_FIELD).append(":").append(table_name).append(" AND ");
-			JSONObject tableTypeJson = JSONObject.parseObject(tableTypeJsonStr);
+			System.out.println(tableTypeJsonStr);
+			List<String> tableTypeList = StringUtil.split(tableTypeJsonStr, Constant.METAINFOSPLIT);
 			if (StringUtil.isNotBlank(whereColumn)) {
 				String[] cols = whereColumn.split(",");
 				for (String col : cols) {
@@ -1023,14 +1024,21 @@ public class InterfaceCommon {
 						return StateType.getResponseInfo(StateType.CONDITION_ERROR);
 					}
 					if (col_name.size() == 2) {
-						String colName = col_name.get(0).toUpperCase().trim();
+						String colName = col_name.get(0).trim();
 						String colVal = col_name.get(1);
 						// 查看当前查询列是否为有效
 						if (!columns.contains(colName.toLowerCase())) {
 							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST);
 						}
-						String solrFieldName = solrFieldName(colName, tableTypeJson.getString(colName));
-						filter.append(solrFieldName).append(":").append(colVal).append(" AND ");
+						for (String tableType : tableTypeList) {
+							JSONObject tableTypeJson = JSONObject.parseObject(tableType);
+							String column_name = tableTypeJson.getString("column_name");
+							if (colName.equals(column_name)) {
+								String solrFieldName = solrFieldName(colName,
+										tableTypeJson.getString("column_id"));
+								filter.append(solrFieldName).append(":").append(colVal).append(" AND ");
+							}
+						}
 					}
 				}
 			} else {
