@@ -1011,7 +1011,6 @@ public class InterfaceCommon {
 			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), Constant.METAINFOSPLIT);
 			StringBuilder filter = new StringBuilder();
 			filter.append(ConfigurationUtil.TABLE_NAME_FIELD).append(":").append(table_name).append(" AND ");
-			System.out.println(tableTypeJsonStr);
 			List<String> tableTypeList = StringUtil.split(tableTypeJsonStr, Constant.METAINFOSPLIT);
 			if (StringUtil.isNotBlank(whereColumn)) {
 				String[] cols = whereColumn.split(",");
