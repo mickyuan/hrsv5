@@ -83,7 +83,8 @@ public class ConnectionTool {
 		dbConfBean.setJdbc_url(dbConfigMap.get(StorageTypeKey.jdbc_url));
 		dbConfBean.setUser_name(dbConfigMap.get(StorageTypeKey.user_name));
 		dbConfBean.setDatabase_pad(dbConfigMap.get(StorageTypeKey.database_pwd));
-		if (Store_type.HIVE.getCode().equals(dbConfigMap.get("store_type"))) {
+		if (Store_type.HIVE.getCode().equals(dbConfigMap.get("store_type"))
+				|| Store_type.CARBONDATA.getCode().equals(dbConfigMap.get("store_type"))) {
 			dbConfBean.setDatabase_type(DatabaseType.Hive.getCode());
 		} else if (Store_type.HBASE.getCode().equals(dbConfigMap.get("store_type"))) {
 			if ("hive".equals(dbConfigMap.get(StorageTypeKey.increment_engine))) {
@@ -135,6 +136,9 @@ public class ConnectionTool {
 		DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbInfo).create();
 		if (db.getDbtype() == Dbtype.TERADATA && db.getDatabaseName() != null) {
 			db.execute("DATABASE " + db.getDatabaseName().toUpperCase());
+		}
+		if (db.getDbtype() == Dbtype.HIVE && db.getDatabaseName() != null) {
+			db.execute("USE " + db.getDatabaseName().toUpperCase());
 		}
 		return db;
 	}
