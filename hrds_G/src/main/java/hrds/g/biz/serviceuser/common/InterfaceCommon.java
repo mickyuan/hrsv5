@@ -1034,7 +1034,7 @@ public class InterfaceCommon {
 							String column_name = tableTypeJson.getString("column_name");
 							if (colName.equals(column_name)) {
 								String solrFieldName = solrFieldName(colName,
-										tableTypeJson.getString("column_id"));
+										tableTypeJson.getString("data_type"));
 								filter.append(solrFieldName).append(":").append(colVal).append(" AND ");
 							}
 						}
