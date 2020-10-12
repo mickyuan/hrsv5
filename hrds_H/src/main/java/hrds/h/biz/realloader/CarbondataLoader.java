@@ -26,12 +26,13 @@ public class CarbondataLoader extends AbstractRealLoader {
         super(conf);
         initArgs();
         createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, false);
+        tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
         //验证啥的
         ConfigReader.getConfiguration();
     }
 
     private void initArgs() {
-        carbonArgs.setHandleType(Store_type.HIVE);
+        carbonArgs.setHandleType(Store_type.CARBONDATA);
         carbonArgs.setEtlDate(etlDate);
         carbonArgs.setTableName(tableName);
         carbonArgs.setMultipleInput(isMultipleInput);
@@ -60,10 +61,8 @@ public class CarbondataLoader extends AbstractRealLoader {
      * @return db连接封装对象
      */
     private DatabaseWrapper getCarbonDb() {
-        tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
-        DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper(tableLayerAttrs);
-        dbWrapper.execute("use " + carbonArgs.getDatabase());
-        return dbWrapper;
+
+        return ConnectionTool.getDBWrapper(tableLayerAttrs);
     }
 
     @Override
