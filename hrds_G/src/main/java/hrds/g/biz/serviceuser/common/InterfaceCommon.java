@@ -70,12 +70,10 @@ public class InterfaceCommon {
 	private static long lineCounter = 0;
 	// 接口响应信息集合
 	private static Map<String, Object> responseMap = new HashMap<>();
-//	private static ISolrOperator os;
 
 	static {
 		notCheckFunction.add("count(*)");
 		notCheckFunction.add("count(1)");
-//		os = InitSolrOnHbaseConnection.getOperSolr();
 	}
 
 	private static final Type type = new TypeReference<List<String>>() {
