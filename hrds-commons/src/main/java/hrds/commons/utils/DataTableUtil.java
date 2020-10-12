@@ -161,7 +161,7 @@ public class DataTableUtil {
 			table_id = dm_datatable.getDatatable_id().toString();
 			table_name = dm_datatable.getDatatable_en_name();
 			table_ch_name = dm_datatable.getDatatable_cn_name();
-			hyren_name = dm_datatable.getDatatable_cn_name();
+			hyren_name = dm_datatable.getDatatable_en_name();
 			create_date = dm_datatable.getDatatable_create_date();
 			column_info_list = DataTableFieldUtil.metaInfoToList(DMLDataQuery.getDMLTableColumns(table_id));
 		} else if (dataSourceType == DataSourceType.SFL) {

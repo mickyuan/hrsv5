@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import hrds.commons.hadoop.solr.ISolrOperator;
@@ -77,7 +78,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 	}
 
 	@Method(desc = "获取语句解析字段",
-		logicStep = "获取语句解析字段")
+			logicStep = "获取语句解析字段")
 	@Param(name = "sentence", desc = "需要解析的字符串", range = "字符串", example = "今天天气很好!")
 	@Return(desc = "返回值说明", range = "返回值取值范围")
 	@Override
@@ -164,7 +165,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 				for (String fieldName : singleDoc.getFieldNames()) {
 					if (!flag) {
 						if (!fieldName.equals("_version_") && !fieldName.equals("score")
-							&& !fieldName.equals("tf-text_content") && !fieldName.equals("tf-file_text")) {
+								&& !fieldName.equals("tf-text_content") && !fieldName.equals("tf-file_text")) {
 							//去掉tf-前缀
 							if (!fieldName.equals("id") && !fieldName.equals("table-name")) {
 								sub_field = fieldName.substring(3).trim();
@@ -175,7 +176,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 						}
 					} else {
 						if (!fieldName.equals("_version_") && !fieldName.equals("score")
-							&& !fieldName.equals("tf-text_content")) {
+								&& !fieldName.equals("tf-text_content")) {
 							//去掉tf-前缀
 							if (!fieldName.equals("id") && !fieldName.equals("table-name")) {
 								sub_field = fieldName.substring(3).trim();
@@ -190,7 +191,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 			}
 		} catch (Exception e) {
 			logger.error("获取solr检索结果失败!");
-			throw new AppSystemException("获取solr检索结果失败!");
+			throw new BusinessException("获取solr检索结果失败:"+e.getMessage());
 		}
 		return solrDocList;
 	}
@@ -337,7 +338,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 				processSingleCsv(hbaseName.toUpperCase(), new Path(HDFSPath), operator, columnLine);
 			} else {
 				FileStatus[] filesStatus = fs.listStatus(path, p ->
-					p.getName().toLowerCase().contains(tableName.toLowerCase()));
+						p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					logger.info("开始处理CSV文件: " + file.getPath());
 					//处理单个CSV文件入solr
@@ -377,7 +378,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 				processSingleParquet(hbaseName.toUpperCase(), new Path(filePath), conf, columnLine);
 			} else {
 				FileStatus[] filesStatus = fs.listStatus(path, p ->
-					p.getName().toLowerCase().contains(tableName.toLowerCase()));
+						p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					if (file.getLen() == 0) {
 						logger.info("待处理文件为空跳过:" + file.getPath());
@@ -516,7 +517,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 				processSingleSeq(hbaseName.toUpperCase(), new Path(filePath), operator, columnLine);
 			} else {
 				FileStatus[] filesStatus = fs.listStatus(path, p ->
-					p.getName().toLowerCase().contains(tableName.toLowerCase()));
+						p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					logger.info("开始处理SequenceFile文件: " + file.getPath());
 					processSingleSeq(hbaseName.toUpperCase(), file.getPath(), operator, columnLine);
@@ -529,7 +530,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 	}
 
 	@Method(desc = "索引HBase Scanner到的数据",
-		logicStep = "逻辑说明")
+			logicStep = "逻辑说明")
 	@Param(name = "scanner", desc = "HBase根据表扫描到的数据", range = "String类型")
 	@Param(name = "tableName", desc = "HBase表名", range = "String类型")
 	@Return(desc = "返回值说明", range = "返回值取值范围")
@@ -625,7 +626,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 		long start = System.currentTimeMillis();
 		String[] columnNames = columnLine.split(",");
 		try (ParquetReader<Group> reader =
-			     ParquetReader.builder(new GroupReadSupport(), parquetPath).withConf(conf).build()) {
+				     ParquetReader.builder(new GroupReadSupport(), parquetPath).withConf(conf).build()) {
 			Group group;
 			logger.info("[开始读取文件 ] " + parquetPath);
 			List<SolrInputDocument> docs = new ArrayList<>();
@@ -727,7 +728,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 		//记录耗时
 		long start = System.currentTimeMillis();
 		try (SequenceFile.Reader reader = new SequenceFile.Reader(operator.getConfiguration(),
-			SequenceFile.Reader.file(sequenceFilePath))) {
+				SequenceFile.Reader.file(sequenceFilePath))) {
 			Writable key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), operator.getConfiguration());
 			Writable val = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), operator.getConfiguration());
 			//列名称
