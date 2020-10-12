@@ -74,7 +74,7 @@ public class CarbondataHandler extends Handler {
 
         String deltaTable = "delta_hyren_" + tableName;
         invalidDF.createOrReplaceTempView(deltaTable);
-        String sql = String.format("UPDATE %s SET %s = '%s' WHERE %s in (SELECT %s FROM %s)",
+        String sql = String.format("UPDATE %s SET (%s) = ('%s') WHERE %s in (SELECT %s FROM %s)",
                 tableName, EDATENAME, carbonArgs.getEtlDate(), MD5NAME, MD5NAME, deltaTable);
         if (carbonArgs.isMultipleInput()) {
             sql = sql + " AND " + TABLE_ID_NAME + " = '" + carbonArgs.getDatatableId() + "'";

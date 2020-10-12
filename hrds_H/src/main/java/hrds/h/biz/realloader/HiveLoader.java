@@ -34,6 +34,7 @@ public class HiveLoader extends AbstractRealLoader {
         super(conf);
         initArgs();
         createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, false);
+        tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
         //验证啥的
         ConfigReader.getConfiguration();
     }
@@ -82,10 +83,7 @@ public class HiveLoader extends AbstractRealLoader {
     }
 
     private DatabaseWrapper getHiveDb() {
-        tableLayerAttrs.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
-        DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper(tableLayerAttrs);
-        dbWrapper.execute("use " + hiveArgs.getDatabase());
-        return dbWrapper;
+        return ConnectionTool.getDBWrapper(tableLayerAttrs);
     }
 
     private void createHiveTable(DatabaseWrapper hiveDb, String tableName) {
@@ -108,5 +106,10 @@ public class HiveLoader extends AbstractRealLoader {
                 db.execute("alter table " + tableName + "_restore rename to " + tableName);
             }
         }
+    }
+
+    @Override
+    public void finalWork() {
+        Utils.finalWorkWithinTrans(finalSql,tableLayerAttrs);
     }
 }
