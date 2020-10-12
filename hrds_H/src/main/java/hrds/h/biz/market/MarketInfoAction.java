@@ -3693,4 +3693,12 @@ public class MarketInfoAction extends BaseAction {
 			}
 		}
 	}
+
+	@Method(desc = "删除预聚合SQL", logicStep = "1.根据预聚合ID删除预聚合数据信息")
+	@Param(name = "agg_id", range = "预聚合主键ID", desc = "不可为空")
+	public void deletePrePolymerization(long agg_id) {
+
+		DboExecute.deletesOrThrow("删除的预聚合信息超出了范围", "DELETE FROM "
+			+ Cb_preaggregate.TableName + " WHERE agg_id = ?", agg_id);
+	}
 }
