@@ -24,13 +24,16 @@ import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField;
-import hrds.commons.hadoop.hbaseindexer.configure.ConfigurationUtil;
 import hrds.commons.hadoop.hbaseindexer.type.TypeFieldNameMapper;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.solr.ISolrOperator;
+import hrds.commons.hadoop.solr.SolrFactory;
+import hrds.commons.hadoop.solr.SolrParam;
+import hrds.commons.hadoop.solr.utils.CollectionUtil;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
 import hrds.g.biz.bean.SingleTable;
@@ -40,7 +43,6 @@ import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
-import hrds.g.biz.init.InitSolrOnHbaseConnection;
 import hrds.g.biz.init.InterfaceManager;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -68,12 +70,12 @@ public class InterfaceCommon {
 	private static long lineCounter = 0;
 	// 接口响应信息集合
 	private static Map<String, Object> responseMap = new HashMap<>();
-	private static ISolrOperator os;
+//	private static ISolrOperator os;
 
 	static {
 		notCheckFunction.add("count(*)");
 		notCheckFunction.add("count(1)");
-		os = InitSolrOnHbaseConnection.getOperSolr();
+//		os = InitSolrOnHbaseConnection.getOperSolr();
 	}
 
 	private static final Type type = new TypeReference<List<String>>() {
@@ -1010,7 +1012,7 @@ public class InterfaceCommon {
 			// 当前表的有效全部列
 			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), Constant.METAINFOSPLIT);
 			StringBuilder filter = new StringBuilder();
-			filter.append(ConfigurationUtil.TABLE_NAME_FIELD).append(":").append(table_name).append(" AND ");
+//			filter.append(ConfigurationUtil.TABLE_NAME_FIELD).append(":").append(table_name).append(" AND ");
 			List<String> tableTypeList = StringUtil.split(tableTypeJsonStr, Constant.METAINFOSPLIT);
 			if (StringUtil.isNotBlank(whereColumn)) {
 				String[] cols = whereColumn.split(",");
@@ -1050,8 +1052,10 @@ public class InterfaceCommon {
 			Map<String, String> params = new HashMap<>();
 			params.put("q", query);
 			params.put("fl", "id");
+			//初始化solr连接
+			ISolrOperator iSolrOperator = getISolrOperator(table_name);
 			// 查询solr,只获取id的数据
-			List<Map<String, Object>> result = os.querySolrPlus(params, start == null ? 0 : start,
+			List<Map<String, Object>> result = iSolrOperator.querySolrPlus(params, start == null ? 0 : start,
 					num == null ? 10 : num, false);
 			// solr中的id作为hbase的rowkey查询hbase数据
 			// 设置hbase表名对象
@@ -1069,7 +1073,7 @@ public class InterfaceCommon {
 			// 根据rowkey查询
 			Result[] results = table.get(getList);
 			Map<String, Object> temp;
-			List<String> selectList = StringUtil.split(selectColumn.toLowerCase(), ",");
+			List<String> selectList = StringUtil.split(selectColumn.toLowerCase(), Constant.METAINFOSPLIT);
 			// 当前查询的全部列
 			for (Result hResult : results) {
 				if (hResult.isEmpty()) {
@@ -1096,6 +1100,14 @@ public class InterfaceCommon {
 				return StateType.getResponseInfo(StateType.EXCEPTION);
 			}
 		}
+	}
+
+	private static ISolrOperator getISolrOperator(String table_name) {
+		SolrParam param = new SolrParam();
+		String solrZkUrl = PropertyParaValue.getString("zkHost", "cdh063:2181,cdh064:2181,cdh065:2181/solr");
+		param.setCollection(CollectionUtil.getCollection(table_name));
+		param.setSolrZkUrl(solrZkUrl);
+		return SolrFactory.getInstance(param);
 	}
 
 	private static String solrFieldName(String hbaseFieldName, String type) {
