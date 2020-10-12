@@ -1860,7 +1860,7 @@ public class MarketInfoAction extends BaseAction {
 		} else {
 			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
 			//先格式化查询的sql,替换掉原始查询SQL的select部分
-			return SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
+			return SQLUtils.format(querySql, JdbcConstants.HIVE).replace(
 				druidParseQuerySql.getSelectSql(), selectSql);
 		}
 	}
