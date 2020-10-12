@@ -64,42 +64,47 @@ public class CommandExecute {
 			sqlParam.delete(sqlParam.length() - Constant.SQLDELIMITER.length(), sqlParam.length());
 		}
 		try {
-			String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE
-				+ taskId));
-			//对配置信息解压缩并反序列化为SourceDataConfBean对象
-			SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
-			//1.获取json数组转成File_source的集合
-			List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
-			//获取需要采集的表对象
-			CollectTableBean collectTableBean = getCollectTableBean(collectTableBeanList, tableName);
-			//设置跑批日期
-			collectTableBean.setEtlDate(etlDate);
-			//设置sql占位符参数
-			collectTableBean.setSqlParam(sqlParam.toString());
-			//判断采集类型，根据采集类型调用对应的方法
-			if (AgentType.ShuJuKu.getCode().equals(collectType)) {
-				if (CollectType.ShuJuKuCaiJi.getCode().equals(sourceDataConfBean.getCollect_type())) {
-					//数据库直连采集
-					startJdbcToDatabase(sourceDataConfBean, collectTableBean);
-				} else if (CollectType.ShuJuKuChouShu.getCode().equals(sourceDataConfBean.getCollect_type())) {
-					String selectFileFormat = args[4];
-					//判断存储层配置是否有作业调度传参的存储层配置
-					if (!isSupportSelectFormat(selectFileFormat, collectTableBean.getData_extraction_def_list())) {
-						throw new AppSystemException("请检查作业调度的参数5(文件格式)和数据库卸数指定的文件格式是否一致");
+			//获取任务信息
+			String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE + taskId));
+			//采集类型是非结构化采集
+			if (AgentType.WenJianXiTong.getCode().equals(collectType)) {
+				startFileCollectJob(taskId, taskInfo);
+			}
+			//采集类型不是非结构化采集
+			else {
+				//对配置信息解压缩并反序列化为SourceDataConfBean对象
+				SourceDataConfBean sourceDataConfBean = JSONObject.parseObject(taskInfo, SourceDataConfBean.class);
+				//1.获取json数组转成File_source的集合
+				List<CollectTableBean> collectTableBeanList = sourceDataConfBean.getCollectTableBeanArray();
+				//获取需要采集的表对象
+				CollectTableBean collectTableBean = getCollectTableBean(collectTableBeanList, tableName);
+				//设置跑批日期
+				collectTableBean.setEtlDate(etlDate);
+				//设置sql占位符参数
+				collectTableBean.setSqlParam(sqlParam.toString());
+				//判断采集类型，根据采集类型调用对应的方法
+				if (AgentType.ShuJuKu.getCode().equals(collectType)) {
+					if (CollectType.ShuJuKuCaiJi.getCode().equals(sourceDataConfBean.getCollect_type())) {
+						//数据库直连采集
+						startJdbcToDatabase(sourceDataConfBean, collectTableBean);
+					} else if (CollectType.ShuJuKuChouShu.getCode().equals(sourceDataConfBean.getCollect_type())) {
+						String selectFileFormat = args[4];
+						//判断存储层配置是否有作业调度传参的存储层配置
+						if (!isSupportSelectFormat(selectFileFormat, collectTableBean.getData_extraction_def_list())) {
+							throw new AppSystemException("请检查作业调度的参数5(文件格式)和数据库卸数指定的文件格式是否一致");
+						}
+						//根据作业调度指定的文件格式，本次作业只跑指定卸数的文件格式
+						collectTableBean.setSelectFileFormat(selectFileFormat);
+						startJdbcToFile(sourceDataConfBean, collectTableBean);
+					} else {
+						throw new AppSystemException("不支持的数据库采集类型");
 					}
-					//根据作业调度指定的文件格式，本次作业只跑指定卸数的文件格式
-					collectTableBean.setSelectFileFormat(selectFileFormat);
-					startJdbcToFile(sourceDataConfBean, collectTableBean);
+				} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
+					//TODO 根据作业指定存储目的地名称，本次作业只进数指定存储目的地
+					startDbFileCollect(sourceDataConfBean, collectTableBean);
 				} else {
-					throw new AppSystemException("不支持的数据库采集类型");
+					throw new AppSystemException("不支持的采集类型");
 				}
-			} else if (AgentType.DBWenJian.getCode().equals(collectType)) {
-				//TODO 根据作业指定存储目的地名称，本次作业只进数指定存储目的地
-				startDbFileCollect(sourceDataConfBean, collectTableBean);
-			} else if (AgentType.WenJianXiTong.getCode().equals(collectType)) {
-				startFileCollectJob(taskId);
-			} else {
-				throw new AppSystemException("不支持的采集类型");
 			}
 		} catch (Exception e) {
 			log.error("执行采集失败!", e);
@@ -182,11 +187,14 @@ public class CommandExecute {
 		}
 	}
 
-	private static void startFileCollectJob(String taskId) {
-		String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE
-			+ taskId));
-		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(
-			taskInfo, FileCollectParamBean.class);
+	/**
+	 * 开始文件采集作业
+	 *
+	 * @param taskId 采集任务id
+	 */
+	private static void startFileCollectJob(String taskId, String taskInfo) {
+		//文件采集需要的参数实体bean
+		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(taskInfo, FileCollectParamBean.class);
 		//1.将页面传递过来的压缩信息解压写文件
 		ExecutorService executor = null;
 		try {
