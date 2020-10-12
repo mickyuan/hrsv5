@@ -1,0 +1,9 @@
+放置路径：
+需要将hrds_G-5.0.jar放置在hyren程序所在位置：23上的位置为：/data/project/hyrenv5/hrsapp/dist/java/G/
+sh callinterface.sh 脚本即可调用脚本
+脚本可能需要改动的地方：需要确认java 环境是否具备 如果缺失，则可以使用采集agent下的java环境
+
+使用脚本的实例：
+sh callinterface.sh http://172.168.0.23:8091/G/action/hrds/g/biz/serviceuser/impl/getToken "{\"user_id\":\"2001\",\"user_password\":\"1\"}"
+
+
