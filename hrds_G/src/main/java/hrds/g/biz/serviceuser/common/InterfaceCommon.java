@@ -1091,7 +1091,7 @@ public class InterfaceCommon {
 			}
 			return StateType.getResponseInfo(StateType.NORMAL.name(), js);
 		} catch (Exception e) {
-			logger.error("checkColumn wrong...", e);
+			logger.error(e);
 			if (e instanceof BusinessException) {
 				return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
 			} else {

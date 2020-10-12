@@ -663,20 +663,22 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			"3.检查参数" +
 			"4.如果responseMap响应状态不为normal返回错误响应信息" +
 			"5.获取当前用户表信息" +
-			"6.hbase+solr查询" +
-			"7.返回按类型操作接口响应信息" +
-			"8.记录接口使用日志")
-	@Param(name = "hBaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
+			"5.判断表是否有使用权限" +
+			"6.获取当前用户表信息" +
+			"7.hbase+solr查询" +
+			"8.返回按类型操作接口响应信息" +
+			"9.记录接口使用日志")
+	@Param(name = "hbaseSolr", desc = "HBaseSolr查询参数实体", range = "无限制", isBean = true)
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回接口响应信息", range = "无限制")
 	@Override
-	public Map<String, Object> hbaseSolrQuery(HbaseSolr hBaseSolr, CheckParam checkParam) {
+	public Map<String, Object> hbaseSolrQuery(HbaseSolr hbaseSolr, CheckParam checkParam) {
 		long start = System.currentTimeMillis();
 		Interface_use_log interface_use_log = new Interface_use_log();
 		// 请求开始时间
 		interface_use_log.setRequest_stime(DateUtil.getDateTime());
 		// 1.校验表名是否存在
-		if (isParamExist(hBaseSolr.getTableName())) {
+		if (isParamExist(hbaseSolr.getTableName())) {
 			return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
 		}
 		// 2.token，接口权限检查
@@ -687,24 +689,28 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		}
 		QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(responseMap.get("token").toString());
 		// 3.检查参数
-		responseMap = InterfaceCommon.checkType(hBaseSolr.getDataType(), hBaseSolr.getOutType(),
-				hBaseSolr.getAsynType(), hBaseSolr.getBackurl(), hBaseSolr.getFilepath(),
-				hBaseSolr.getFilename());
+		responseMap = InterfaceCommon.checkType(hbaseSolr.getDataType(), hbaseSolr.getOutType(),
+				hbaseSolr.getAsynType(), hbaseSolr.getBackurl(), hbaseSolr.getFilepath(),
+				hbaseSolr.getFilename());
 		// 4.如果responseMap响应状态不为normal返回错误响应信息
 		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
-		// 5.获取当前用户表信息
+		// 5.判断表是否有使用权限
+		if (!InterfaceManager.existsTable(Dbo.db(), userByToken.getUser_id(), hbaseSolr.getTableName())) {
+			return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
+		}
+		// 6.获取当前用户表信息
 		QueryInterfaceInfo userTableInfo = InterfaceManager.getUserTableInfo(Dbo.db(),
-				userByToken.getUser_id(), hBaseSolr.getTableName());
-		String selectColumn = hBaseSolr.getSelectColumn();
+				userByToken.getUser_id(), hbaseSolr.getTableName());
+		String selectColumn = hbaseSolr.getSelectColumn();
 		if (StringUtil.isBlank(selectColumn)) {
 			selectColumn = userTableInfo.getTable_en_column();
 		}
-		if (StringUtil.isBlank(hBaseSolr.getWhereColumn())) {
+		if (StringUtil.isBlank(hbaseSolr.getWhereColumn())) {
 			return StateType.getResponseInfo(StateType.CONDITION_ERROR);
 		}
-		List<LayerBean> hbaseLayerList = getLayerBeans(hBaseSolr.getTableName());
+		List<LayerBean> hbaseLayerList = getLayerBeans(hbaseSolr.getTableName());
 		// 判断存储层类型为hbase的存储层是否存在
 		if (hbaseLayerList.isEmpty()) {
 			return StateType.getResponseInfo(StateType.TABLE_NOT_EXIST_ON_HBASE_STOREAGE);
@@ -712,17 +718,17 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 		// 如果有多个默认取第一个hbase配置
 		LayerBean layerBean = hbaseLayerList.get(0);
 		Map<String, String> layerAttr = layerBean.getLayerAttr();
-		// 6.hbase+solr查询
-		responseMap = InterfaceCommon.getHbaseSolrQuery(hBaseSolr.getTableName(), hBaseSolr.getWhereColumn(),
-				selectColumn, hBaseSolr.getStart(), hBaseSolr.getNum(), userTableInfo.getTable_en_column(),
+		// 7.hbase+solr查询
+		responseMap = InterfaceCommon.getHbaseSolrQuery(hbaseSolr.getTableName(), hbaseSolr.getWhereColumn(),
+				selectColumn, hbaseSolr.getStart(), hbaseSolr.getNum(), userTableInfo.getTable_en_column(),
 				userTableInfo.getTable_type_name(), layerBean.getDsl_name(),
 				layerAttr.get(StorageTypeKey.platform), layerAttr.get(StorageTypeKey.prncipal_name),
 				layerAttr.get(StorageTypeKey.hadoop_user_name));
-		// 7.返回按类型操作接口响应信息
-		responseMap = InterfaceCommon.operateInterfaceByType(hBaseSolr.getDataType(),
-				hBaseSolr.getOutType(), hBaseSolr.getAsynType(), hBaseSolr.getBackurl(),
-				hBaseSolr.getFilepath(), hBaseSolr.getFilename(), responseMap);
-		// 8.记录接口使用日志
+		// 8.返回按类型操作接口响应信息
+		responseMap = InterfaceCommon.operateInterfaceByType(hbaseSolr.getDataType(),
+				hbaseSolr.getOutType(), hbaseSolr.getAsynType(), hbaseSolr.getBackurl(),
+				hbaseSolr.getFilepath(), hbaseSolr.getFilename(), responseMap);
+		// 9.记录接口使用日志
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(isRecordInterfaceLog)) {
 			insertInterfaceUseLog(checkParam.getUrl(), start, interface_use_log, userByToken,
 					responseMap.get("status").toString());
