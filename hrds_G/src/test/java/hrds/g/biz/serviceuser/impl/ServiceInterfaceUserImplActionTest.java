@@ -415,7 +415,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 		tsi.setHyren_name(TABLE_NAME);
 		tsi.setStorage_id(THREAD_ID);
 		tsi.setFile_format(FileFormat.FeiDingChang.getCode());
-		tsi.setStorage_type(StorageType.ZengLiang.getCode());
+		tsi.setStorage_type(StorageType.QuanLiang.getCode());
 		tsi.setIs_zipper(IsFlag.Shi.getCode());
 		tsi.setStorage_time("0");
 		tsi.setTable_id(THREAD_ID);

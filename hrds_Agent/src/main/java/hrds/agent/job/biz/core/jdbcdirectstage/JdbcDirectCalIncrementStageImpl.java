@@ -194,12 +194,15 @@ public class JdbcDirectCalIncrementStageImpl extends AbstractJobStage {
 	 * @param increasement 执行增量的接口
 	 */
 	private void execIncreasement(Increasement increasement) throws Exception {
-		if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
-			LOGGER.info("----------------------------增量--------------------------------");
+		if (StorageType.QuanLiang.getCode().equals(collectTableBean.getStorage_type())) {
+			LOGGER.info("----------------------------全量拉链--------------------------------");
 			//计算增量
 			increasement.calculateIncrement();
 			//合并增量表
 			increasement.mergeIncrement();
+		} else if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+			LOGGER.info("----------------------------增量拉链--------------------------------");
+			increasement.incrementalDataZipper();
 		} else if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
 			LOGGER.info("----------------------------追加--------------------------------");
 			//追加

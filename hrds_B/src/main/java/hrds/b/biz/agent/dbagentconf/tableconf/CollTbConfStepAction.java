@@ -58,7 +58,7 @@ public class CollTbConfStepAction extends BaseAction {
 					+ " THEN 'true' ELSE 'false' END ) is_primary_key FROM "
 					+ Table_info.TableName
 					+ " ti "
-					+ " WHERE ti.database_id = ? AND ti.is_user_defined = ? ",
+					+ " WHERE ti.database_id = ? AND ti.is_user_defined = ? ORDER BY table_name",
 				IsFlag.Shi.getCode(),
 				colSetId,
 				IsFlag.Fou.getCode());

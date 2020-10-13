@@ -39,7 +39,8 @@ public class DruidParseQuerySql {
 	public static String sourcecolumn = "sourcecolumn";
 	public static String sourcetable = "sourcetable";
 	public List<SQLSelectItem> selectList = null;
-	public SQLExpr whereInfo = null;
+	public SQLExpr leftWhere = null;
+	public SQLExpr rightWhere = null;
 	private OracleSelectQueryBlock left = null;
 	private List<HashMap<String, Object>> listmap = new ArrayList<>();
 	private List<HashMap<String, Object>> columnlist = new ArrayList<>();
@@ -64,12 +65,13 @@ public class DruidParseQuerySql {
 		if (query instanceof SQLUnionQuery) {
 			SQLUnionQuery unionQuery = (SQLUnionQuery) query;
 			this.left = (OracleSelectQueryBlock) unionQuery.getLeft();
-
+			OracleSelectQueryBlock right = (OracleSelectQueryBlock) unionQuery.getRight();
+			this.rightWhere = right.getWhere();
 		} else {
 			this.left = (OracleSelectQueryBlock) query;
 		}
 		this.selectList = this.left.getSelectList();
-		this.whereInfo = this.left.getWhere();
+		this.leftWhere = this.left.getWhere();
 	}
 
 	public DruidParseQuerySql() {

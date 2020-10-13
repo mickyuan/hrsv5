@@ -694,7 +694,7 @@ public class InitAndDestDataForStartWay {
 		for (int i = 0; i < 2; i++) {
 			long id = i % 2 == 0 ? BASE_TB_STORAGE_ID : BASE_TB_STORAGE_ID + 1;
 			String fileFormat = i % 2 == 0 ? FileFormat.ORC.getCode() : FileFormat.FeiDingChang.getCode();
-			String storageType = i % 2 == 0 ? StorageType.ZengLiang.getCode() : StorageType.ZhuiJia.getCode();
+			String storageType = i % 2 == 0 ? StorageType.QuanLiang.getCode() : StorageType.ZhuiJia.getCode();
 			String zipperFlag = i % 2 == 0 ? IsFlag.Shi.getCode() : IsFlag.Fou.getCode();
 			long tableId = i % 2 == 0 ? AGENT_INFO_TABLE_ID : DATA_SOURCE_TABLE_ID;
 			long time = i % 2 == 0 ? 7L : 1L;

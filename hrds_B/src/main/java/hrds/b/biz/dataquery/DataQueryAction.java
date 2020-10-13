@@ -427,6 +427,18 @@ public class DataQueryAction extends BaseAction {
 		}
 	}
 
+	@Method(desc = "检查查看文件的权限", logicStep = "1.检查查看文件的权限")
+	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一")
+	@Param(name = "fileType", desc = "文件类型", range = "String类型字符")
+	@Return(desc = "boolean", range = "是否有文件查看权限")
+	public boolean checkFileViewPermissions(String fileId, String fileType) {
+		//数据校验,判断文件是否有查看权限
+		Result dataAuthRs = Dbo.queryResult(
+			"select * from data_auth where file_id=? and apply_type = ? and auth_type in (?,?)",
+			fileId, ApplyType.ChaKan.getCode(), AuthType.YiCi.getCode(), AuthType.YunXu.getCode());
+		return !dataAuthRs.isEmpty() && dataAuthRs.getRowCount() > 0;
+	}
+
 	@Method(desc = "查看文件", logicStep = "1.根据文件id获取该文件信息" +
 		"2.如果文件查看权限是一次,看过之后取消权限")
 	@Param(name = "fileId", desc = "文件id", range = "String类型字符,长度最长40,该值唯一", example = "12f48c4f-bebd-4f19-b38d-a161929fb350")
@@ -434,10 +446,7 @@ public class DataQueryAction extends BaseAction {
 	@Return(desc = "文件信息集合", range = "无限制")
 	public Map<String, String> viewFile(String fileId, String fileType) {
 		//数据校验,判断文件是否有查看权限
-		Result dataAuthRs = Dbo.queryResult(
-			"select * from data_auth where file_id=? and apply_type = ? and auth_type in (?,?)",
-			fileId, ApplyType.ChaKan.getCode(), AuthType.YiCi.getCode(), AuthType.YunXu.getCode());
-		if (dataAuthRs.isEmpty()) {
+		if (!checkFileViewPermissions(fileId, fileType)) {
 			throw new BusinessException("没有该文件的查看权限,请先申请后再查看!");
 		}
 		//1.根据文件id获取该文件信息

@@ -20,6 +20,7 @@ import hrds.commons.utils.Constant;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,6 +113,8 @@ public class JdbcDirectCollectTableHandleParse extends AbstractCollectTableHandl
 			}
 			//根据字段名称和页面选择的信息，判断是否为主键
 			StringBuilder primaryKeyInfo = new StringBuilder();//字段是否为主键
+			//字段是否为了拉链字段
+			Map<String, Boolean> isZipperFieldInfo = new HashMap<>();
 			List<String> column_list = StringUtil.split(columnMetaInfo.toString(), STRSPLIT);
 			List<CollectTableColumnBean> collectTableColumnBeanList = collectTableBean.getCollectTableColumnBeanList();
 			for (String col : column_list) {
@@ -126,6 +129,18 @@ public class JdbcDirectCollectTableHandleParse extends AbstractCollectTableHandl
 				if (flag) {
 					primaryKeyInfo.append(IsFlag.Fou.getCode()).append(STRSPLIT);
 				}
+				//拼接是否为拉链字段
+				boolean zipper_flag = true;
+				for (CollectTableColumnBean columnBean : collectTableColumnBeanList) {
+					if (columnBean.getColumn_name().equals(col)) {
+						isZipperFieldInfo.put(col, IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
+						zipper_flag = false;
+						break;
+					}
+				}
+				if (zipper_flag) {
+					isZipperFieldInfo.put(col, false);
+				}
 			}
 			primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//主键
 			// 页面定义的清洗格式进行卸数
@@ -136,6 +151,7 @@ public class JdbcDirectCollectTableHandleParse extends AbstractCollectTableHandl
 			tableBean.setColumnMetaInfo(columnMetaInfo.toString().toUpperCase());
 			tableBean.setTypeArray(typeArray);
 			tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
+			tableBean.setIsZipperFieldInfo(isZipperFieldInfo);
 		} catch (Exception e) {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		} finally {

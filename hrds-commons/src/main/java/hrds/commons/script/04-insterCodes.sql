@@ -273,11 +273,12 @@ INSERT INTO CODE_INFO  VALUES ('99', '39', '运行状态', '运行失败', 'Exec
 INSERT INTO CODE_INFO  VALUES ('20', '39', '运行状态', '通知成功', 'ExecuteState');
 INSERT INTO CODE_INFO  VALUES ('21', '39', '运行状态', '通知失败', 'ExecuteState');
 INSERT INTO CODE_INFO  VALUES ('30', '39', '运行状态', '暂停运行', 'ExecuteState');
---　本引用值的代码个数:3 -------i==37
+--　本引用值的代码个数:4 -------i==37
 delete from code_info where ci_sp_class='41';
-INSERT INTO CODE_INFO  VALUES ('1', '41', '进数方式', '增量', 'StorageType');
 INSERT INTO CODE_INFO  VALUES ('2', '41', '进数方式', '追加', 'StorageType');
 INSERT INTO CODE_INFO  VALUES ('3', '41', '进数方式', '替换', 'StorageType');
+INSERT INTO CODE_INFO  VALUES ('4', '41', '进数方式', '全量拉链', 'StorageType');
+INSERT INTO CODE_INFO  VALUES ('5', '41', '进数方式', '增量拉链', 'StorageType');
 --　本引用值的代码个数:5 -------i==38
 delete from code_info where ci_sp_class='42';
 INSERT INTO CODE_INFO  VALUES ('1', '42', '采集编码', 'UTF-8', 'DataBaseCode');

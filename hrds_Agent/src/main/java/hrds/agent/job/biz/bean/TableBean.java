@@ -18,6 +18,8 @@ public class TableBean {
 	private String root_path;   //采集文件根路径
 	private String file_code;   //文件编码
 	private String primaryKeyInfo; //是否为主键
+	//字段是否为了拉链字段
+	private Map<String, Boolean> isZipperFieldInfo;
 	private String operate; //操作类型
 	private String is_archived; //是否转存
 	private String operate_column;  //操作字段
@@ -217,5 +219,13 @@ public class TableBean {
 
 	public void setOperate_column(String operate_column) {
 		this.operate_column = operate_column;
+	}
+
+	public Map<String, Boolean> getIsZipperFieldInfo() {
+		return isZipperFieldInfo;
+	}
+
+	public void setIsZipperFieldInfo(Map<String, Boolean> isZipperFieldInfo) {
+		this.isZipperFieldInfo = isZipperFieldInfo;
 	}
 }

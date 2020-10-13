@@ -36,7 +36,7 @@ public class Table_storage_info extends ProjectTableEntity
 	private String file_format;
 	@DocBean(name ="table_id",value="表名ID:",dataType = Long.class,required = false)
 	private Long table_id;
-	@DocBean(name ="storage_type",value="进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ",dataType = String.class,required = true)
+	@DocBean(name ="storage_type",value="进数方式(StorageType):2-追加<ZhuiJia> 3-替换<TiHuan> 4-全量拉链<QuanLiang> 5-增量拉链<ZengLiang> ",dataType = String.class,required = true)
 	private String storage_type;
 	@DocBean(name ="storage_time",value="存储期限（以天为单位）:",dataType = Long.class,required = true)
 	private Long storage_time;

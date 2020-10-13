@@ -141,7 +141,7 @@ public class MarketInfoActionTest extends WebBaseTestCase {
 		dm_datatable.setDatatable_lifecycle(TableLifeCycle.YongJiu.getCode());
 		dm_datatable.setSoruce_size("9999999999.00");
 		dm_datatable.setEtl_date(Constant.MAXDATE);
-		dm_datatable.setStorage_type(StorageType.ZengLiang.getCode());
+		dm_datatable.setStorage_type(StorageType.QuanLiang.getCode());
 		dm_datatable.setTable_storage(TableStorage.ShuJuBiao.getCode());
 		dm_datatable.setRepeat_flag(IsFlag.Fou.getCode());
 		dm_datatable.setCategory_id(CATEGORY_ID);

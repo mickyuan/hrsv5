@@ -83,7 +83,11 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>)
 					parseJson.get("splitIng");
 			Clean cl = new Clean(parseJson, allClean);
-			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
+			//获取所有列的值用来做列合并
+			StringBuilder mergeStringTmp = new StringBuilder(1024 * 1024);
+			//获取页面选择列算拉链时算md5的列，当没有选择拉链字段，默认使用全字段算md5
+			Map<String, Boolean> md5Col = transMd5ColMap(tableBean.getIsZipperFieldInfo());
+			StringBuilder md5StringTmp = new StringBuilder(1024 * 1024);
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
 			List<String> typeList = StringUtil.split(tableBean.getAllType(),
@@ -98,21 +102,25 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 			while (resultSet.next()) {
 				// Count it
 				counter++;
-				//获取所有列的值用来生成MD5值
-				midStringOther.delete(0, midStringOther.length());
+				md5StringTmp.delete(0, md5StringTmp.length());
+				mergeStringTmp.delete(0, mergeStringTmp.length());
 				// Write columns
 
 				lineData = new ArrayList<>();
 				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
+					mergeStringTmp.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 							typeArray[i], sb_, selectColumnList.get(i), hbase_name, midName));
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(Constant.DATADELIMITER);
+						mergeStringTmp.append(Constant.DATADELIMITER);
+					}
+					currValue = sb_.toString();
+					//判断是否是算md5的列，算md5
+					if (md5Col.get(selectColumnList.get(i)) != null && md5Col.get(selectColumnList.get(i))) {
+						md5StringTmp.append(currValue);
 					}
 					//清洗操作
-					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
 							typeList.get(i), FileFormat.ORC.getCode(), lineData,
 							data_extraction_def.getDatabase_code(), dataDelimiter);
@@ -123,7 +131,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					List<String> arrColString = StringUtil.split(midStringOther.toString(),
+					List<String> arrColString = StringUtil.split(mergeStringTmp.toString(),
 							Constant.DATADELIMITER);
 					//字段合并
 					allClean.merge(mergeIng, arrColString.toArray(new String[0]),
@@ -133,7 +141,7 @@ public class JdbcToOrcFileWriter extends AbstractFileWriter {
 				lineData.add(eltDate);
 				//根据是否算MD5判断是否追加结束日期和MD5两个字段
 				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
-					String md5 = toMD5(midStringOther.toString());
+					String md5 = toMD5(md5StringTmp.toString());
 					lineData.add(Constant.MAXDATE);
 					lineData.add(md5);
 				}
