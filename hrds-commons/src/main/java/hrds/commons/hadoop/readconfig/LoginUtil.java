@@ -1,12 +1,12 @@
 package hrds.commons.hadoop.readconfig;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class LoginUtil {
 
-	private static final Log log = LogFactory.getLog(LoginUtil.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	private String confDir;
 	public String PATH_TO_KEYTAB;
@@ -67,43 +67,43 @@ public class LoginUtil {
 
 		// 1.check input parameters
 		if ((userPrincipal == null) || (userPrincipal.length() <= 0)) {
-			log.error("input userPrincipal is invalid.");
+			logger.error("input userPrincipal is invalid.");
 			throw new IOException("input userPrincipal is invalid.");
 		}
 
 		if ((userKeytabPath == null) || (userKeytabPath.length() <= 0)) {
-			log.error("input userKeytabPath is invalid.");
+			logger.error("input userKeytabPath is invalid.");
 			throw new IOException("input userKeytabPath is invalid.");
 		}
 
 		if ((krb5ConfPath == null) || (krb5ConfPath.length() <= 0)) {
-			log.error("input krb5ConfPath is invalid.");
+			logger.error("input krb5ConfPath is invalid.");
 			throw new IOException("input krb5ConfPath is invalid.");
 		}
 
 		if ((conf == null)) {
-			log.error("input conf is invalid.");
+			logger.error("input conf is invalid.");
 			throw new IOException("input conf is invalid.");
 		}
 
 		// 2.check file exsits
 		File userKeytabFile = new File(userKeytabPath);
 		if (!userKeytabFile.exists()) {
-			log.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
+			logger.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
 			throw new IOException("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
 		}
 		if (!userKeytabFile.isFile()) {
-			log.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") is not a file.");
+			logger.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") is not a file.");
 			throw new IOException("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") is not a file.");
 		}
 
 		File krb5ConfFile = new File(krb5ConfPath);
 		if (!krb5ConfFile.exists()) {
-			log.error("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") does not exsit.");
+			logger.error("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") does not exsit.");
 			throw new IOException("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") does not exsit.");
 		}
 		if (!krb5ConfFile.isFile()) {
-			log.error("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") is not a file.");
+			logger.error("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") is not a file.");
 			throw new IOException("krb5ConfFile(" + krb5ConfFile.getAbsolutePath() + ") is not a file.");
 		}
 
@@ -113,7 +113,7 @@ public class LoginUtil {
 
 		// 4.login and check for hadoop
 		loginHadoop(userPrincipal, userKeytabFile.getAbsolutePath());
-		log.info("Login success!!!!!!!!!!!!!!");
+		logger.info("Login success!!!!!!!!!!!!!!");
 	}
 
 	private static void setConfiguration(Configuration conf) {
@@ -129,13 +129,11 @@ public class LoginUtil {
 	public Configuration confLoad() {
 		Configuration conf = HBaseConfiguration.create();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
-		// conf file
 		conf.addResource(new Path(PATH_TO_CORE_SITE_XML));
 		conf.addResource(new Path(PATH_TO_HDFS_SITE_XML));
 		conf.addResource(new Path(PATH_TO_HBASE_SITE_XML));
 		conf.addResource(new Path(PATH_TO_MAPRED_SITE_XML));
 		conf.addResource(new Path(PATH_TO_YARN_SITE_XML));
-
 		return conf;
 	}
 
@@ -175,11 +173,11 @@ public class LoginUtil {
 		System.setProperty(JAVA_SECURITY_KRB5_CONF_KEY, krb5ConfFile);
 		String ret = System.getProperty(JAVA_SECURITY_KRB5_CONF_KEY);
 		if (ret == null) {
-			log.error(JAVA_SECURITY_KRB5_CONF_KEY + " is null.");
+			logger.error(JAVA_SECURITY_KRB5_CONF_KEY + " is null.");
 			throw new IOException(JAVA_SECURITY_KRB5_CONF_KEY + " is null.");
 		}
 		if (!ret.equals(krb5ConfFile)) {
-			log.error(JAVA_SECURITY_KRB5_CONF_KEY + " is " + ret + " is not " + krb5ConfFile + ".");
+			logger.error(JAVA_SECURITY_KRB5_CONF_KEY + " is " + ret + " is not " + krb5ConfFile + ".");
 			throw new IOException(JAVA_SECURITY_KRB5_CONF_KEY + " is " + ret + " is not " + krb5ConfFile + ".");
 		}
 	}
@@ -187,23 +185,23 @@ public class LoginUtil {
 	public static void setJaasConf(String loginContextName, String principal, String keytabFile) throws IOException {
 
 		if ((loginContextName == null) || (loginContextName.length() <= 0)) {
-			log.error("input loginContextName is invalid.");
+			logger.error("input loginContextName is invalid.");
 			throw new IOException("input loginContextName is invalid.");
 		}
 
 		if ((principal == null) || (principal.length() <= 0)) {
-			log.error("input principal is invalid.");
+			logger.error("input principal is invalid.");
 			throw new IOException("input principal is invalid.");
 		}
 
 		if ((keytabFile == null) || (keytabFile.length() <= 0)) {
-			log.error("input keytabFile is invalid.");
+			logger.error("input keytabFile is invalid.");
 			throw new IOException("input keytabFile is invalid.");
 		}
 
 		File userKeytabFile = new File(keytabFile);
 		if (!userKeytabFile.exists()) {
-			log.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
+			logger.error("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
 			throw new IOException("userKeytabFile(" + userKeytabFile.getAbsolutePath() + ") does not exsit.");
 		}
 
@@ -212,13 +210,13 @@ public class LoginUtil {
 
 		javax.security.auth.login.Configuration conf = javax.security.auth.login.Configuration.getConfiguration();
 		if (!(conf instanceof JaasConfiguration)) {
-			log.error("javax.security.auth.login.Configuration is not JaasConfiguration.");
+			logger.error("javax.security.auth.login.Configuration is not JaasConfiguration.");
 			throw new IOException("javax.security.auth.login.Configuration is not JaasConfiguration.");
 		}
 
 		AppConfigurationEntry[] entrys = conf.getAppConfigurationEntry(loginContextName);
 		if (entrys == null) {
-			log.error("javax.security.auth.login.Configuration has no AppConfigurationEntry named " + loginContextName + ".");
+			logger.error("javax.security.auth.login.Configuration has no AppConfigurationEntry named " + loginContextName + ".");
 			throw new IOException("javax.security.auth.login.Configuration has no AppConfigurationEntry named " + loginContextName + ".");
 		}
 
@@ -242,12 +240,12 @@ public class LoginUtil {
 		}
 
 		if (!checkPrincipal) {
-			log.error("AppConfigurationEntry named " + loginContextName + " does not have principal value of " + principal + ".");
+			logger.error("AppConfigurationEntry named " + loginContextName + " does not have principal value of " + principal + ".");
 			throw new IOException("AppConfigurationEntry named " + loginContextName + " does not have principal value of " + principal + ".");
 		}
 
 		if (!checkKeytab) {
-			log.error("AppConfigurationEntry named " + loginContextName + " does not have keyTab value of " + keytabFile + ".");
+			logger.error("AppConfigurationEntry named " + loginContextName + " does not have keyTab value of " + keytabFile + ".");
 			throw new IOException("AppConfigurationEntry named " + loginContextName + " does not have keyTab value of " + keytabFile + ".");
 		}
 
@@ -258,11 +256,11 @@ public class LoginUtil {
 		System.setProperty(zkServerPrincipalKey, zkServerPrincipal);
 		String ret = System.getProperty(zkServerPrincipalKey);
 		if (ret == null) {
-			log.error(zkServerPrincipalKey + " is null.");
+			logger.error(zkServerPrincipalKey + " is null.");
 			throw new IOException(zkServerPrincipalKey + " is null.");
 		}
 		if (!ret.equals(zkServerPrincipal)) {
-			log.error(zkServerPrincipalKey + " is " + ret + " is not " + zkServerPrincipal + ".");
+			logger.error(zkServerPrincipalKey + " is " + ret + " is not " + zkServerPrincipal + ".");
 			throw new IOException(zkServerPrincipalKey + " is " + ret + " is not " + zkServerPrincipal + ".");
 		}
 	}
@@ -272,12 +270,12 @@ public class LoginUtil {
 		try {
 			UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
 		} catch (IOException e) {
-			log.error("login failed with " + principal + " and " + keytabFile + ".");
-			log.error("perhaps cause 1 is " + LOGIN_FAILED_CAUSE_PASSWORD_WRONG + ".");
-			log.error("perhaps cause 2 is " + LOGIN_FAILED_CAUSE_TIME_WRONG + ".");
-			log.error("perhaps cause 3 is " + LOGIN_FAILED_CAUSE_AES256_WRONG + ".");
-			log.error("perhaps cause 4 is " + LOGIN_FAILED_CAUSE_PRINCIPAL_WRONG + ".");
-			log.error("perhaps cause 5 is " + LOGIN_FAILED_CAUSE_TIME_OUT + ".");
+			logger.error("login failed with " + principal + " and " + keytabFile + ".");
+			logger.error("perhaps cause 1 is " + LOGIN_FAILED_CAUSE_PASSWORD_WRONG + ".");
+			logger.error("perhaps cause 2 is " + LOGIN_FAILED_CAUSE_TIME_WRONG + ".");
+			logger.error("perhaps cause 3 is " + LOGIN_FAILED_CAUSE_AES256_WRONG + ".");
+			logger.error("perhaps cause 4 is " + LOGIN_FAILED_CAUSE_PRINCIPAL_WRONG + ".");
+			logger.error("perhaps cause 5 is " + LOGIN_FAILED_CAUSE_TIME_OUT + ".");
 
 			throw e;
 		}
@@ -346,7 +344,7 @@ public class LoginUtil {
 			this.principal = principal;
 
 			initKerberosOption();
-			log.info("JaasConfiguration loginContextName=" + loginContextName + " principal=" + principal + " useTicketCache=" + useTicketCache
+			logger.info("JaasConfiguration loginContextName=" + loginContextName + " principal=" + principal + " useTicketCache=" + useTicketCache
 				+ " keytabFile=" + keytabFile);
 		}
 
