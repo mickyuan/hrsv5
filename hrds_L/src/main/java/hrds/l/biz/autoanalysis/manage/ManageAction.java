@@ -412,7 +412,7 @@ public class ManageAction extends BaseAction {
 			SQLExpr testExpr = sqlBetweenExpr.testExpr;
 			setSqlPropertyExpr(condInfoMap, testExpr);
 			condInfoMap.put("con_relation", BETWEEN);
-			// fixme 有问题
+			// fixme 这个原来默认给64，不知道这个作用是什么
 			condInfoMap.put("value_size", 64);
 			SQLExpr beginExpr = sqlBetweenExpr.beginExpr;
 			String pre_value = beginExpr.toString() + "," + sqlBetweenExpr.endExpr.toString();
@@ -435,7 +435,6 @@ public class ManageAction extends BaseAction {
 			SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlExpr;
 			setSqlPropertyExpr(condInfoMap, sqlInListExpr.getExpr());
 			condInfoMap.put("con_relation", IN);
-			// fixme 有问题
 			condInfoMap.put("value_size", 64);
 			List<SQLExpr> targetList = sqlInListExpr.getTargetList();
 			StringBuilder sb = new StringBuilder();

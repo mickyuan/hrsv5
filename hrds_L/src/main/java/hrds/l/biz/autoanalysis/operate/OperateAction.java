@@ -1,7 +1,6 @@
 package hrds.l.biz.autoanalysis.operate;
 
 import com.alibaba.druid.sql.SQLUtils;
-import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -28,7 +27,6 @@ import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.DboExecute;
-import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
 import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
@@ -221,8 +219,7 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				accessResult.add(map);
 			}
-		}
-		.getPageDataLayer(fetch_sql, Dbo.db(), 1, 100);
+		}.getPageDataLayer(fetch_sql, Dbo.db(), 1, 100);
 		return accessResult;
 	}
 
@@ -345,10 +342,6 @@ public class OperateAction extends BaseAction {
 				condParam = auto_tp_cond_info.getCond_para_name() + Constant.SPACE
 						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
 						+ auto_tp_cond_info.getPre_value();
-				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(format_sql);
-				SQLExpr whereInfo = druidParseQuerySql.leftWhere;
-				List<String> whereList = StringUtil.split(whereInfo.toString(), "\n");
-
 				format_sql = StringUtil.replace(format_sql, condParam, "");
 			}
 		}
