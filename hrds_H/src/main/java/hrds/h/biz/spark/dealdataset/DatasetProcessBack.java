@@ -154,7 +154,8 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
     private static boolean needCreateTempView(List<LayerBean> layerByTable) {
         for (LayerBean layerBean : layerByTable) {
             if (Store_type.HIVE.getCode().equals(layerBean.getStore_type()) ||
-                    Store_type.HBASE.getCode().equals(layerBean.getStore_type())) {
+                    Store_type.HBASE.getCode().equals(layerBean.getStore_type())
+                    ||Store_type.CARBONDATA.getCode().equals(layerBean.getStore_type())) {
                 return false;
             }
         }
@@ -168,7 +169,8 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
         for (LayerBean layerBean : layerByTable) {
             if (Store_type.HIVE.getCode().equals(layerBean.getStore_type()) ||
                     Store_type.HBASE.getCode().equals(layerBean.getStore_type()) ||
-                    Store_type.DATABASE.getCode().equals(layerBean.getStore_type())) {
+                    Store_type.DATABASE.getCode().equals(layerBean.getStore_type())||
+                    Store_type.CARBONDATA.getCode().equals(layerBean.getStore_type())) {
                 return true;
             }
         }
