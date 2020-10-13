@@ -346,7 +346,7 @@ public class OperateAction extends BaseAction {
 						+ auto_tp_cond_info.getCon_relation() + Constant.SPACE
 						+ auto_tp_cond_info.getPre_value();
 				DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(format_sql);
-				SQLExpr whereInfo = druidParseQuerySql.whereInfo;
+				SQLExpr whereInfo = druidParseQuerySql.leftWhere;
 				List<String> whereList = StringUtil.split(whereInfo.toString(), "\n");
 
 				format_sql = StringUtil.replace(format_sql, condParam, "");
