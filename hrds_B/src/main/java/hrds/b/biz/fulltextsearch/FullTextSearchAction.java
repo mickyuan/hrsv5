@@ -26,7 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @DocClass(desc = "全文检索数据查询", author = "BY-HLL", createdate = "2019/10/8 0008 下午 03:10")
 public class FullTextSearchAction extends BaseAction {
@@ -165,23 +164,23 @@ public class FullTextSearchAction extends BaseAction {
 	@Return(desc = "通过查询结果查出更多关联信息的结果集", range = "无限制")
 	private Result getFinalResult(String queryConditions, int start, int pageSize, int currPage) {
 		//1.初始化待返回的结果集
-		Result resultSet = new Result();
-		Result resultProcessing = queryResultProcessing(queryConditions, start, pageSize, resultSet);
+		Result resultProcessing = queryResultProcessing(queryConditions, start, pageSize);
 		//2.查询结果的结果集为空直接返回
 		if (resultProcessing.isEmpty()) {
-			return resultSet;
+			return new Result();
 		}
 		//3.获取结果集中的 agent_id 和 file_id
-		List<String> agentIdList = new ArrayList<>();
+		List<Long> agentIdList = new ArrayList<>();
 		List<String> fileIdList = new ArrayList<>();
 		for (int i = 0; i < resultProcessing.getRowCount(); i++) {
-			String agentId = resultProcessing.getString(i, "agent_id");
+			long agentId = resultProcessing.getLong(i, "agent_id");
 			String fileId = resultProcessing.getString(i, "file_id");
 			agentIdList.add(agentId);
 			fileIdList.add(fileId);
 		}
 		//3-1.agentIdList去重
-		List<String> newAgentIdList = agentIdList.stream().distinct().collect(Collectors.toList());
+		Object[] newAgentIdArr = agentIdList.stream().distinct().toArray();
+		Object[] newFileIdArr = fileIdList.toArray();
 		//4.全文检索
 		Search_info searchInfo = new Search_info();
 		searchInfo.setWord_name(queryConditions);
@@ -199,12 +198,13 @@ public class FullTextSearchAction extends BaseAction {
 			" FROM " + Data_source.TableName + " ds" +
 			" JOIN " + Agent_info.TableName + " gi ON gi.SOURCE_ID = ds.SOURCE_ID" +
 			" JOIN " + File_collect_set.TableName + " fcs ON fcs.agent_id = gi.agent_id" +
-			" JOIN " + Source_file_attribute.TableName + " sfa ON sfa.SOURCE_ID = ds.SOURCE_ID and sfa.AGENT_ID = gi.AGENT_ID and sfa.COLLECT_SET_ID = fcs.FCS_ID" +
-			" LEFT JOIN " + Search_info.TableName + " si on sfa.file_id = si.file_id and word_name = ?" +
-			" LEFT JOIN " + User_fav.TableName + " uf ON sfa.file_id = uf.file_id where collect_type = ? ")
-			.addParam(searchInfo.getWord_name()).addParam(sourceFileAttribute.getCollect_type())
-			.addSql(" AND sfa.AGENT_ID in (").addSql(String.join(",", newAgentIdList)).addSql(")")
-			.addSql(" AND sfa.file_id in ('").addSql(String.join("','", fileIdList)).addSql("')");
+			" JOIN " + Source_file_attribute.TableName + " sfa ON sfa.SOURCE_ID = ds.SOURCE_ID and sfa.AGENT_ID = gi.AGENT_ID" +
+			" and sfa.COLLECT_SET_ID = fcs.FCS_ID");
+		asmSql.addSql(" LEFT JOIN " + Search_info.TableName + " si on word_name=?").addParam(searchInfo.getWord_name());
+		asmSql.addSql(" LEFT JOIN " + User_fav.TableName + " uf ON sfa.file_id=uf.file_id");
+		asmSql.addSql(" where collect_type=? ").addParam(sourceFileAttribute.getCollect_type());
+		asmSql.addORParam("sfa.AGENT_ID", newAgentIdArr);
+		asmSql.addORParam("sfa.file_id", newFileIdArr);
 		//查询数据库采集和DB文件采集的sql
 //		asmSql.addSql(" UNION");
 //		asmSql.addSql(" SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
@@ -224,12 +224,12 @@ public class FullTextSearchAction extends BaseAction {
 //		asmSql.addSql(")");
 		asmSql.addSql(" ORDER BY si_count asc");
 		//4-2.获取查询sql返回结果
-		resultSet = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
+		Result resultSet = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
 		//5.设置返回结果集内容
-		for (int i = 0; i < resultProcessing.getRowCount(); i++) {
+		for (int i = 0; i < resultSet.getRowCount(); i++) {
 			String fileId = resultSet.getString(i, "file_id");
-			for (int j = 0; j < resultSet.getRowCount(); j++) {
-				String fileIdSolr = resultSet.getString(j, "file_id");
+			for (int j = 0; j < resultProcessing.getRowCount(); j++) {
+				String fileIdSolr = resultProcessing.getString(j, "file_id");
 				if (fileId.equals(fileIdSolr)) {
 					resultSet.setObject(i, "summary_content", resultProcessing.getString(j, "summary_content"));
 					resultSet.setObject(i, "totalSize", resultProcessing.getString(j, "totalSize"));
@@ -277,10 +277,10 @@ public class FullTextSearchAction extends BaseAction {
 	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值,符合solr查询规则")
 	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "9")
 	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
-	@Param(name = "result", desc = "查询结果集", range = "result类型值,不为空", nullable = true)
 	@Param(name = "totalSize", desc = "查询结果行数统计", range = "long类型值,不为空", valueIfNull = "0")
 	@Return(desc = "solr分词关键字", range = "无限制")
-	private Result queryResultProcessing(String queryConditions, int start, int pageSize, Result result) {
+	private Result queryResultProcessing(String queryConditions, int start, int pageSize) {
+		Result result = new Result();
 		//数据可访问权限处理方式: source_file_attribute 暂不做数据校验处理（该表存储数据量多的情况下,数据查询效率问题）
 		//1.获取solr返回结果
 		List<Map<String, Object>> querySolrRs = getQueryFromSolr(queryConditions, start, pageSize);
@@ -331,12 +331,12 @@ public class FullTextSearchAction extends BaseAction {
 				queryResultByFileId.setObject(i, "summary_content", summary);
 				queryResultByFileId.setObject(i, "totalSize", totalSize);
 				queryResultByFileId.setObject(i, "csv", mapCsv);
-				//把结果集放入一个新的结果集
-				result.add(queryResultByFileId);
 			}
+			//把结果集放入一个新的结果集
+			result.add(queryResultByFileId);
 		}
 		//2-4.同样对表名进行处理,类似
-		Result queryResultByTableName = new Result();
+		Result queryResultByTableName;
 		if (tableNameList.size() != 0) {
 			asmSql.clean();
 			asmSql.addSql(" select * from source_file_attribute where ");
@@ -347,9 +347,9 @@ public class FullTextSearchAction extends BaseAction {
 				queryResultByTableName.setObject(i, "totalSize", totalSize);
 				queryResultByTableName.setObject(i, "csv", mapCsv);
 			}
+			//把结果集放入一个新的结果集,然后返回
+			result.add(queryResultByTableName);
 		}
-		//2-5.把结果集放入一个新的结果集,然后返回
-		result.add(queryResultByTableName);
 		return result;
 	}
 
