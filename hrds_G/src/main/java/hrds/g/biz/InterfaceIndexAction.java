@@ -24,7 +24,7 @@ public class InterfaceIndexAction extends BaseAction {
 						"interface_name,interface_use_id " +
 						" from " + Interface_use_log.TableName
 						+ " where request_state=? group by interface_name,interface_use_id",
-				StateType.NORMAL.getCode());
+				StateType.NORMAL.name());
 	}
 
 }
