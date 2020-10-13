@@ -97,7 +97,7 @@ public class InterfaceCommon {
 		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(db, user_id);
 		// 3.判断用户信息是否为空，为空返回错误响应信息
 		if (null == queryInterfaceInfo) {
-			return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST);
+			return StateType.getResponseInfo(StateType.NOT_REST_USER);
 		}
 		// 4.检查用户是否存在,密码是否正确
 		if (!user_password.equals(queryInterfaceInfo.getUser_password())) {
