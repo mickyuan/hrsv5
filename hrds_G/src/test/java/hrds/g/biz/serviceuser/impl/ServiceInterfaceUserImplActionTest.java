@@ -546,7 +546,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getDataForMap().get("message"), is(StateType.INTERFACE_STATE.getValue()));
+		assertThat(ar.getDataForMap().get("message"), is(StateType.INTERFACE_STATE_ERROR.getValue()));
 		// 5.错误的数据访问3，user_password错误
 		bodyString = new HttpClient().buildSession()
 				.addData("user_id", USER_ID)
@@ -578,7 +578,7 @@ public class ServiceInterfaceUserImplActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
 				-> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
-		assertThat(ar.getDataForMap().get("message"), is(StateType.NO_PERMISSIONS.getValue()));
+		assertThat(ar.getDataForMap().get("message"), is(StateType.NO_USR_PERMISSIONS.getValue()));
 		// 8.错误的数据访问6，url不存在
 		bodyString = new HttpClient().buildSession()
 				.addData("token", token)
