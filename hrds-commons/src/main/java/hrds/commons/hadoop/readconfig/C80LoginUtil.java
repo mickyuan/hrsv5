@@ -515,15 +515,4 @@ public class C80LoginUtil {
 			return (null);
 		}
 	}
-
-	public static void main(String[] args) {
-
-		//		ConfigReader.getConfiguration();
-		try {
-			C80LoginUtil.login(ConfigReader.getConfiguration(), "admin@HADOOP.COM");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 }

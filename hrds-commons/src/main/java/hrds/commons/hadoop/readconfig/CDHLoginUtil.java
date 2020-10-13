@@ -32,16 +32,6 @@ public class CDHLoginUtil {
 	public static String PATH_TO_KRB5_CONF;
 	public static String PATH_TO_JAAS;
 
-	public static void main(String[] args) {
-		try {
-			CDHLoginUtil.login(ConfigReader.getConfiguration(), "admin@HADOOP.COM");
-
-		} catch (IOException e) {
-			log.info("Auth failed");
-			e.printStackTrace();
-		}
-	}
-
 	/**
 	 * 读取配置文件并认证
 	 *

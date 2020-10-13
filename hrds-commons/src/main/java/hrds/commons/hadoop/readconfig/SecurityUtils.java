@@ -2,24 +2,24 @@ package hrds.commons.hadoop.readconfig;
 
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
+/**
+ * 安全认证工具
+ */
 public class SecurityUtils {
 
-	/**
-	 * log process object
-	 */
-	private static final Log log = LogFactory.getLog(SecurityUtils.class);
+	private static final Logger logger = LogManager.getLogger();
 	private static String PRINCIPAL = "username.client.kerberos.principal";
 	private static String KEYTAB = "username.client.keytab.file";
 
@@ -83,7 +83,7 @@ public class SecurityUtils {
 			throw new AppSystemException("初始化配置为空！");
 		}
 		if (User.isHBaseSecurityEnabled(conf)) {
-			log.info("Start to login HBase...");
+			logger.info("Start to login HBase...");
 			String confDirPath = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 			// jaas.conf file, it is included in the client pakcage file
 			System.setProperty("java.security.auth.login.config", confDirPath + "jaas.conf");
@@ -136,7 +136,6 @@ public class SecurityUtils {
 	 * Add configuration file
 	 */
 	public static Configuration confLoad() {
-
 		Configuration conf = new Configuration();
 		// conf file
 		conf.addResource(new Path(System.getProperty("user.dir") + File.separator + "conf" + File.separator + "hdfs-site.xml"));
@@ -148,12 +147,9 @@ public class SecurityUtils {
 
 		boolean flag = false;
 		UserGroupInformation.setConfiguration(conf);
-
 		try {
-			System.out.println(conf.get(KEYTAB));
 			UserGroupInformation.loginUserFromKeytab(conf.get(PRINCIPAL), conf.get(KEYTAB));
-			log.info("Login successfully.");
-
+			logger.info("Login successfully.");
 			flag = true;
 		} catch (IOException e) {
 			e.printStackTrace();
