@@ -68,7 +68,7 @@ public class MarketConfUtils {
 			marketConf.setDmDatatable(dmDatatable);
 			marketConf.setTableName(dmDatatable.getDatatable_en_name().toLowerCase());
 			marketConf.setMultipleInput(IsFlag.ofEnumByCode(dmDatatable.getRepeat_flag()) == IsFlag.Shi);
-			marketConf.setIncrement(StorageType.ZengLiang.getCode().equals(dmDatatable.getStorage_type()));
+			marketConf.setIncrement(StorageType.QuanLiang.getCode().equals(dmDatatable.getStorage_type()));
 
 			// TODO getorelse
             /*

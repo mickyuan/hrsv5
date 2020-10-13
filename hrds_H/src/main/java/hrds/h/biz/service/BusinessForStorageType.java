@@ -42,7 +42,7 @@ public final class BusinessForStorageType implements ILoadBussiness {
                 replace();
             } else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
                 append();
-            } else if (StorageType.ZengLiang.getCode().equals(storageType)) {
+            } else if (StorageType.QuanLiang.getCode().equals(storageType)) {
                 increment();
             } else {
                 throw new AppSystemException("无效的进数方式: " + storageType);

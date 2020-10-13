@@ -38,7 +38,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		getCreateDeltaSql(sqlList);
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除掉
-		restore(StorageType.ZengLiang.getCode());
+		restore(StorageType.QuanLiang.getCode());
 		//5.将比较之后的需要insert的结果插入到临时表中
 		getInsertDataSql(sqlList);
 		//6.将比较之后的需要delete(拉链中的闭链)的结果插入到临时表中
@@ -120,7 +120,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	@Override
 	public void restore(String storageType) {
 		ArrayList<String> sqlList = new ArrayList<>();
-		if (StorageType.ZengLiang.getCode().equals(storageType)) {
+		if (StorageType.ZengLiang.getCode().equals(storageType) || StorageType.QuanLiang.getCode().equals(storageType)) {
 			//增量恢复数据
 			sqlList.add("delete from " + yesterdayTableName + " where " + Constant.SDATENAME + "='" + sysDate + "'");
 			sqlList.add("update " + yesterdayTableName + " set " + Constant.EDATENAME + " = "

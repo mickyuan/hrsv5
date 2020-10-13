@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
+import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -20,6 +21,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.xlstoxml.util.ColumnMeta;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +36,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
-	                                   CollectTableBean collectTableBean) {
+									   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		//获取页面选择的需要采集的文件格式
 		Data_extraction_def sourceData_extraction_def = CollectTableBeanUtil.getSourceData_extraction_def(
@@ -52,6 +54,8 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		StringBuilder colTypeMetaInfo = new StringBuilder();//生成的元信息列类型
 		StringBuilder colLengthInfo = new StringBuilder();//生成的元信息列长度
 		StringBuilder primaryKeyInfo = new StringBuilder();//是否为主键
+		//字段是否为了拉链字段
+		Map<String, Boolean> isZipperFieldInfo = new HashMap<>();
 //		HashMap<String, Boolean> isCollectMap = new HashMap<>();//db文件采集，字段是否采集的映射,对新增列不做映射，默认采集
 		//3.获取数据字典下所有的表信息,找到当前线程对应需要采集表的数据字典，获取表结构(注数据字典中的是有序的)
 		List<String> cols = ColumnMeta.getColumnListByDictionary(collectTableBean.getTable_name(),
@@ -75,6 +79,18 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 					colTypeMetaInfo.append(colType).append(STRSPLIT);
 					colLengthInfo.append(TypeTransLength.getLength(colType)).append(STRSPLIT);
 					primaryKeyInfo.append(colList.get(2)).append(STRSPLIT);
+					//拼接是否为拉链字段
+					boolean zipper_flag = true;
+					for (CollectTableColumnBean columnBean : collectTableBean.getCollectTableColumnBeanList()) {
+						if (columnBean.getColumn_name().equals(col)) {
+							isZipperFieldInfo.put(col, IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
+							zipper_flag = false;
+							break;
+						}
+					}
+					if (zipper_flag) {
+						isZipperFieldInfo.put(col, false);
+					}
 				}
 			} else if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived())) {
 				//不转存，取所有字段
@@ -108,7 +124,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 			allColumns.delete(allColumns.length() - 1, allColumns.length());
 			colTypeMetaInfo.delete(colTypeMetaInfo.length() - 1, colTypeMetaInfo.length());
 			columnMetaInfo.delete(columnMetaInfo.length() - 1, columnMetaInfo.length());
-			primaryKeyInfo.delete(primaryKeyInfo.length()-1,primaryKeyInfo.length());
+			primaryKeyInfo.delete(primaryKeyInfo.length() - 1, primaryKeyInfo.length());
 		}
 		//根据清洗规则，进行表结构重组
 		//清洗配置
@@ -125,7 +141,8 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
 			colLengthInfo.append(STRSPLIT).append("8");
 			//增量进数方式
-			if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) {
+			if (StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())
+					|| StorageType.QuanLiang.getCode().equals(collectTableBean.getStorage_type())) {
 				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
 				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
 				colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
@@ -147,6 +164,7 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 		tableBean.setColumnMetaInfo(columnMetaInfo.toString());
 		tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
 		tableBean.setParseJson(parseJson);
+		tableBean.setIsZipperFieldInfo(isZipperFieldInfo);
 		//查找增量数据的新增的、删除的、和修改的列信息
 		List<String> incrementColumnList = ColumnMeta.getIncrementColumnListByDictionary(collectTableBean.getTable_name(),
 				sourceDataConfBean.getPlane_url());

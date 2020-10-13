@@ -31,7 +31,7 @@ public class WholeTest extends WebBaseTestCase {
         final long dslId = MarketConfig.getLong("oracle_dsl_id");
         final long marketADslId = MarketConfig.getLong("pgsql_dsl_id");
         final long marketBDslId = MarketConfig.getLong("oracle_dsl_id");
-        final StorageType storageType = StorageType.ZengLiang;
+        final StorageType storageType = StorageType.QuanLiang;
         final IsFlag isRepeat = IsFlag.Shi;
         final SqlEngine sqlEngine = SqlEngine.JDBC;
         processAll(dslId, marketADslId, marketBDslId, storageType, isRepeat, sqlEngine);
@@ -67,7 +67,7 @@ public class WholeTest extends WebBaseTestCase {
         final long dslId = MarketConfig.getLong("oracle_dsl_id");
         final long marketADslId = MarketConfig.getLong("pgsql_dsl_id");
         final long marketBDslId = MarketConfig.getLong("oracle_dsl_id");
-        final StorageType storageType = StorageType.ZengLiang;
+        final StorageType storageType = StorageType.QuanLiang;
         final IsFlag isRepeat = IsFlag.Fou;
         final SqlEngine sqlEngine = SqlEngine.JDBC;
         processAll(dslId, marketADslId, marketBDslId, storageType, isRepeat, sqlEngine);
@@ -103,7 +103,7 @@ public class WholeTest extends WebBaseTestCase {
         final long dslId = MarketConfig.getLong("pgsql_dsl_id");
         final long marketADslId = MarketConfig.getLong("pgsql_dsl_id");
         final long marketBDslId = MarketConfig.getLong("pgsql_dsl_id");
-        final StorageType storageType = StorageType.ZengLiang;
+        final StorageType storageType = StorageType.QuanLiang;
         final IsFlag isRepeat = IsFlag.Shi;
         final SqlEngine sqlEngine = SqlEngine.JDBC;
         processAll(dslId, marketADslId, marketBDslId, storageType, isRepeat, sqlEngine);
@@ -139,7 +139,7 @@ public class WholeTest extends WebBaseTestCase {
         final long dslId = MarketConfig.getLong("pgsql_dsl_id");
         final long marketADslId = MarketConfig.getLong("pgsql_dsl_id");
         final long marketBDslId = MarketConfig.getLong("pgsql_dsl_id");
-        final StorageType storageType = StorageType.ZengLiang;
+        final StorageType storageType = StorageType.QuanLiang;
         final IsFlag isRepeat = IsFlag.Fou;
         final SqlEngine sqlEngine = SqlEngine.JDBC;
         processAll(dslId, marketADslId, marketBDslId, storageType, isRepeat, sqlEngine);
@@ -347,7 +347,7 @@ public class WholeTest extends WebBaseTestCase {
                                 " where constant = 'constantValue' " +
                                 "and hyren_s_date = '20200703' " +
                                 "and hyren_e_date = '99991231'").size(), is(2));
-            } else if (StorageType.ZengLiang.equals(storageType)) {
+            } else if (StorageType.QuanLiang.equals(storageType)) {
                 String updateSourceTableContentSql = "update " + sourceTableNameB + " set name = '赵七' where id = '1003'";
                 DatabaseWrapper bDb = null;
                 try {

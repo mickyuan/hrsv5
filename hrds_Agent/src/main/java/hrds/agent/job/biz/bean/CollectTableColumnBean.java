@@ -38,6 +38,8 @@ public class CollectTableColumnBean implements Serializable {
 	private String tc_or;
 	@DocBean(name = "columnCleanBeanList", value = "列清洗参数信息:", dataType = List.class, required = false)
 	private List<ColumnCleanBean> columnCleanBeanList;
+	@DocBean(name ="is_zipper_field",value="是否为拉链字段(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_zipper_field;
 
 	public Long getColumn_id() {
 		return column_id;
@@ -141,5 +143,13 @@ public class CollectTableColumnBean implements Serializable {
 
 	public void setColumnCleanBeanList(List<ColumnCleanBean> columnCleanBeanList) {
 		this.columnCleanBeanList = columnCleanBeanList;
+	}
+
+	public String getIs_zipper_field() {
+		return is_zipper_field;
+	}
+
+	public void setIs_zipper_field(String is_zipper_field) {
+		this.is_zipper_field = is_zipper_field;
 	}
 }

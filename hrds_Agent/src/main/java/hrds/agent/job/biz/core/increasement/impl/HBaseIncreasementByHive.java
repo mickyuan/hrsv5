@@ -43,7 +43,7 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 		getCreateDeltaSql();
 		//5.把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//6.为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
-		restore(StorageType.ZengLiang.getCode());
+		restore(StorageType.QuanLiang.getCode());
 		//7.将比较之后的要insert的结果插入到增量表中
 		getInsertDataSql();
 		//8.将比较之后的要delete(拉链中的闭链)的结果插入到临时表中
@@ -200,7 +200,8 @@ public class HBaseIncreasementByHive extends HBaseIncreasement {
 	public void restore(String storageType) {
 		String join = Constant.HIVEMAPPINGROWKEY + "," + StringUtils.join(columns, ',').toLowerCase();
 		try {
-			if (StorageType.ZengLiang.getCode().equals(storageType)) {
+			if (StorageType.QuanLiang.getCode().equals(storageType)
+					|| StorageType.ZengLiang.getCode().equals(storageType)) {
 				//增量恢复数据
 				if (!haveTodayData(yesterdayTableName)) {
 					return;

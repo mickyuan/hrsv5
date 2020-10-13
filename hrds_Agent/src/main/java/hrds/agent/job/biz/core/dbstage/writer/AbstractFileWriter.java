@@ -29,10 +29,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
 public abstract class AbstractFileWriter implements FileWriterInterface {
@@ -367,4 +364,25 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		return integerList;
 	}
 
+	/**
+	 * 查询是否选择了拉链字段，如果有，则不做任何操作，没有，则全部key的值变为true
+	 */
+	protected Map<String, Boolean> transMd5ColMap(Map<String, Boolean> md5ColMap) {
+		Map<String, Boolean> map = new HashMap<>();
+		boolean flag = true;
+		for (String key : md5ColMap.keySet()) {
+			if (md5ColMap.get(key)) {
+				flag = false;
+				break;
+			}
+		}
+		if (flag) {
+			for (String key : md5ColMap.keySet()) {
+				map.put(key, true);
+			}
+		} else {
+			map = md5ColMap;
+		}
+		return map;
+	}
 }

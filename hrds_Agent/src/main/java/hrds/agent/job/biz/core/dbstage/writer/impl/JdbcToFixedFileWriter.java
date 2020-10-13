@@ -82,7 +82,11 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>)
 					parseJson.get("splitIng");
 			Clean cl = new Clean(parseJson, allclean);
-			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
+			//获取所有列的值用来做列合并
+			StringBuilder mergeStringTmp = new StringBuilder(1024 * 1024);
+			//获取页面选择列算拉链时算md5的列，当没有选择拉链字段，默认使用全字段算md5
+			Map<String, Boolean> md5Col = transMd5ColMap(tableBean.getIsZipperFieldInfo());
+			StringBuilder md5StringTmp = new StringBuilder(1024 * 1024);
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			List<String> typeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
@@ -93,21 +97,25 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			while (resultSet.next()) {
 				// Count it
 				counter++;
-				//获取所有列的值用来生成MD5值
-				midStringOther.delete(0, midStringOther.length());
+				md5StringTmp.delete(0, md5StringTmp.length());
+				mergeStringTmp.delete(0, mergeStringTmp.length());
 				// Write columns
 				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
-					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i]
+					mergeStringTmp.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i]
 							, sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(Constant.DATADELIMITER);
+						mergeStringTmp.append(Constant.DATADELIMITER);
+					}
+					currValue = sb_.toString();
+					//判断是否是算md5的列，算md5
+					if (md5Col.get(selectColumnList.get(i)) != null && md5Col.get(selectColumnList.get(i))) {
+						md5StringTmp.append(currValue);
 					}
 					//清洗操作
-					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
 							typeList.get(i), FileFormat.DingChang.getCode(), null,
 							database_code, database_separatorr);
@@ -121,7 +129,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 
 				}
 				if (!mergeIng.isEmpty()) {
-					List<String> arrColString = StringUtil.split(midStringOther.toString(),
+					List<String> arrColString = StringUtil.split(mergeStringTmp.toString(),
 							Constant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							selectColumnList.toArray(new String[0]), null, null,
@@ -131,7 +139,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				sb.append(eltDate);
 				//根据是否算MD5判断是否追加结束日期和MD5两个字段
 				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
-					String md5 = toMD5(midStringOther.toString());
+					String md5 = toMD5(md5StringTmp.toString());
 					sb.append(database_separatorr).append(Constant.MAXDATE).
 							append(database_separatorr).append(md5);
 				}

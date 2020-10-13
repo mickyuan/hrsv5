@@ -116,7 +116,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 						rightData.getString(i, "table_ch_name").equalsIgnoreCase("Agent信息表"), is(true));
 				assertThat("获取到表名为agent_info，做拉链存储", rightData.getString(i, "is_zipper"), is(IsFlag.Shi.getCode()));
 				assertThat("获取到表名为agent_info，存储方式为<增量>", rightData.getString(i, "storage_type"),
-						is(StorageType.ZengLiang.getCode()));
+						is(StorageType.QuanLiang.getCode()));
 				assertThat("获取到表名为agent_info，数据保存时间为<7天>", rightData.getLong(i, "storage_time"), is(7L));
 				assertThat("获取到表名为agent_info，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"),
 						is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
@@ -972,7 +972,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<文件格式>符合期望", storageInfo.getString(0, "file_format"),
 					is(FileFormat.ORC.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<进数方式>符合期望", storageInfo.getString(0, "storage_type"),
-					is(StorageType.ZengLiang.getCode()));
+					is(StorageType.QuanLiang.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", storageInfo.getString(0, "is_zipper"),
 					is(IsFlag.Shi.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", storageInfo.getLong(0, "storage_time"),
@@ -1088,7 +1088,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		Table_storage_info storageInfoTwo = new Table_storage_info();
 		storageInfoTwo.setTable_id(DATA_SOURCE_TABLE_ID);
-		storageInfoTwo.setStorage_type(StorageType.ZengLiang.getCode());
+		storageInfoTwo.setStorage_type(StorageType.QuanLiang.getCode());
 		storageInfoTwo.setStorage_time(7L);
 		storageInfoTwo.setIs_zipper(IsFlag.Shi.getCode());
 
@@ -1121,7 +1121,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<文件格式>符合期望",
 					beforeStorageInfo.getString(0, "file_format"), is(FileFormat.FeiDingChang.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<进数方式>符合期望",
-					beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZengLiang.getCode()));
+					beforeStorageInfo.getString(0, "storage_type"), is(StorageType.QuanLiang.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望",
 					beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<存储期限>符合期望",
@@ -1610,7 +1610,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		Table_storage_info storageInfoTwo = new Table_storage_info();
 		storageInfoTwo.setTable_id(DATA_SOURCE_TABLE_ID);
-		storageInfoTwo.setStorage_type(StorageType.ZengLiang.getCode());
+		storageInfoTwo.setStorage_type(StorageType.QuanLiang.getCode());
 		storageInfoTwo.setStorage_time(7L);
 		storageInfoTwo.setIs_zipper(IsFlag.Shi.getCode());
 
