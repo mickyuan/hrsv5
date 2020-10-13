@@ -521,6 +521,45 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
+
+	@Method(desc = "根据加工表主键查询当前存储层是否是关系性数据库", logicStep = "")
+	@Param(name = "datatable_id", desc = "加工表主键", range = "无限制")
+	public boolean getIfRelationDatabase2(String datatable_id) {
+		Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
+		dtab_relation_store.setTab_id(datatable_id);
+		Optional<Dm_operation_info> dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class, "select view_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dtab_relation_store.getTab_id());
+		if (dm_operation_info.isPresent()) {
+			String sql = dm_operation_info.get().getView_sql();
+			Optional<Data_store_layer> data_store_layer = Dbo.queryOneObject(Data_store_layer.class, "select t1.dsl_id,t1.store_type from " + Data_store_layer.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
+					" where t2.tab_id = ? and t2.data_source = ?", dtab_relation_store.getTab_id(), StoreLayerDataSource.DM.getCode());
+			if (data_store_layer.isPresent()) {
+				Data_store_layer data_store_layer1 = data_store_layer.get();
+				if (data_store_layer1.getStore_type().equals(Store_type.DATABASE.getCode())) {
+					List<String> tablenames = DruidParseQuerySql.parseSqlTableToList(sql);
+					for (String tablename : tablenames) {
+						List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tablename, Dbo.db());
+						if (layerByTable.size() == 0) {
+							return false;
+						} else {
+							if (data_store_layer1.getDsl_id().equals(layerByTable.get(0).getDsl_id())) {
+								continue;
+							}
+							return false;
+						}
+					}
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				throw new BusinessSystemException("查询表data_store_layer错误，根据datatable_id查找不到存储层");
+			}
+		} else {
+			return false;
+		}
+	}
+
+
 	@Method(desc = "获取所有子分类信息", logicStep = "1.根据加工ID与父分类ID查询加工分类信息" +
 			"2.获取所有子分类信息" +
 			"3.根据父分类ID查询加工分类信息不存在，查询当前分类信息并封装数据")
