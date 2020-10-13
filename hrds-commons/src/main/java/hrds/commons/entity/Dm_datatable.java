@@ -62,7 +62,7 @@ public class Dm_datatable extends ProjectTableEntity
 	private String etl_date;
 	@DocBean(name ="sql_engine",value="sql执行引擎(SqlEngine):1-JDBC<JDBC> 2-SPARK<SPARK> 3-默认<MOREN> ",dataType = String.class,required = false)
 	private String sql_engine;
-	@DocBean(name ="storage_type",value="进数方式(StorageType):1-增量<ZengLiang> 2-追加<ZhuiJia> 3-替换<TiHuan> ",dataType = String.class,required = true)
+	@DocBean(name ="storage_type",value="进数方式(StorageType):2-追加<ZhuiJia> 3-替换<TiHuan> 4-全量拉链<QuanLiang> 5-增量拉链<ZengLiang> ",dataType = String.class,required = true)
 	private String storage_type;
 	@DocBean(name ="data_mart_id",value="数据集市id:",dataType = Long.class,required = false)
 	private Long data_mart_id;
@@ -72,6 +72,8 @@ public class Dm_datatable extends ProjectTableEntity
 	private String table_storage;
 	@DocBean(name ="repeat_flag",value="集市表是否可以重复使用(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String repeat_flag;
+	@DocBean(name ="pre_partition",value="预分区:",dataType = String.class,required = false)
+	private String pre_partition;
 
 	/** 取得：数据表id */
 	public Long getDatatable_id(){
@@ -264,5 +266,13 @@ public class Dm_datatable extends ProjectTableEntity
 	/** 设置：集市表是否可以重复使用 */
 	public void setRepeat_flag(String repeat_flag){
 		this.repeat_flag=repeat_flag;
+	}
+	/** 取得：预分区 */
+	public String getPre_partition(){
+		return pre_partition;
+	}
+	/** 设置：预分区 */
+	public void setPre_partition(String pre_partition){
+		this.pre_partition=pre_partition;
 	}
 }
