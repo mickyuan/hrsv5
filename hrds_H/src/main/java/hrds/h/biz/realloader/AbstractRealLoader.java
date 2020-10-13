@@ -37,7 +37,11 @@ public abstract class AbstractRealLoader implements Loader {
      */
     protected final String datatableId;
     /**
-     * 用户需要执行的最终sql
+     * 前置作业sqlsql
+     */
+    protected final String preSql;
+    /**
+     * 后置作业sqlsql
      */
     protected final String finalSql;
     /**
@@ -51,6 +55,7 @@ public abstract class AbstractRealLoader implements Loader {
         etlDate = conf.getEtlDate();
         datatableId = conf.getDatatableId();
         finalSql = conf.getFinalSql();
+        preSql = conf.getPreSql();
         isMultipleInput = conf.isMultipleInput();
         initTableLayerProperties();
     }
@@ -68,6 +73,11 @@ public abstract class AbstractRealLoader implements Loader {
     public void restore() throws SQLException {
         throw new AppSystemException(this.getClass().getSimpleName() +
                 " 不支持恢复数据至上次跑批结果");
+    }
+
+    @Override
+    public void preWork() {
+        logDebug("该loader不兼容前置置作业");
     }
 
     @Override

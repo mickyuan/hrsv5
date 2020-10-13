@@ -110,6 +110,8 @@ public class HiveLoader extends AbstractRealLoader {
 
     @Override
     public void finalWork() {
-        Utils.finalWorkWithinTrans(finalSql,tableLayerAttrs);
+        try (DatabaseWrapper db = getHiveDb()) {
+            Utils.finalWorkWithoutTrans(finalSql, db);
+        }
     }
 }

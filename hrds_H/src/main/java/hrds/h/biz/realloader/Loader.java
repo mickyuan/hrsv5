@@ -69,6 +69,11 @@ public interface Loader extends Closeable {
     void restore() throws SQLException;
 
     /**
+     * 前置作业
+     */
+    void preWork();
+
+    /**
      * 后置作业
      */
     void finalWork();

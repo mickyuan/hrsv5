@@ -144,6 +144,7 @@ public class MarketConfUtils {
 			Optional<Dm_relevant_info> dmRelevantInfo = SqlOperator.queryOneObject(db, Dm_relevant_info.class,
 				"select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", datatableId);
 			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setFinalSql(dm_relevant_info.getPost_work()));
+			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setPreSql(dm_relevant_info.getPre_work()));
 
 			/*
 			 * 获取带有存储附加属性的列

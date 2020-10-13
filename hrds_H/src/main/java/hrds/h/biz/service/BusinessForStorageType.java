@@ -36,8 +36,17 @@ public final class BusinessForStorageType implements ILoadBussiness {
         logger.info("开始计算并导入数据，导入类型为：" + loaderName);
         loader.ensureRelation();
         try {
-            logger.info("======================= 主作业执行 =======================");
             String storageType = conf.getDmDatatable().getStorage_type();
+
+            //如果是非替换的情况下，要进行restore操作
+            if (!StorageType.TiHuan.getCode().equals(storageType)) {
+                restore();
+            }
+
+            logger.info("======================= 前置作业执行 =======================");
+            loader.preWork();
+
+            logger.info("======================= 主作业执行 =======================");
             if (StorageType.TiHuan.getCode().equals(storageType)) {
                 replace();
             } else if (StorageType.ZhuiJia.getCode().equals(storageType)) {
@@ -47,8 +56,10 @@ public final class BusinessForStorageType implements ILoadBussiness {
             } else {
                 throw new AppSystemException("无效的进数方式: " + storageType);
             }
+
             logger.info("======================= 后置作业执行 =======================");
             loader.finalWork();
+
         } catch (Exception e) {
             try {
                 logger.warn("作业执行失败，执行回滚操作。");
@@ -78,15 +89,11 @@ public final class BusinessForStorageType implements ILoadBussiness {
 
     private void append() throws SQLException {
         logger.info("======================= 追加 =======================");
-        // 支持追加重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
-        restore();
         loader.append();
     }
 
     private void increment() throws SQLException {
         logger.info("======================= 增量 =======================");
-        // 支持增量重跑，前提是该loader实现了{@link NonFirstLoad#restore()}
-        restore();
         loader.increment();
     }
 

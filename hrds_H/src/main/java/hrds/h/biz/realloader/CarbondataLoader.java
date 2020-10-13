@@ -104,9 +104,11 @@ public class CarbondataLoader extends AbstractRealLoader {
 
     @Override
     public void finalWork() {
-        Utils.finalWorkWithinTrans(finalSql, tableLayerAttrs);
 
         try (DatabaseWrapper db = new DatabaseWrapper(); DatabaseWrapper carbonDb = getCarbonDb()) {
+            //后置作业
+            Utils.finalWorkWithoutTrans(finalSql, carbonDb);
+            //预聚合sql处理
             List<Cb_preaggregate> cb_preaggregates = SqlOperator.queryList(db, Cb_preaggregate.class,
                     "select * from cb_preaggregate where datatable_id = " + datatableId);
             cb_preaggregates.forEach(a -> {

@@ -1,13 +1,9 @@
 package hrds.h.biz.config;
 
 
-import com.alibaba.fastjson.JSONObject;
-import fd.ng.core.utils.StringUtil;
-import hrds.commons.codes.ProcessType;
 import hrds.commons.entity.*;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +51,10 @@ public class MarketConf implements Serializable {
 	 * 是否是增量
 	 */
 	private boolean isIncrement;
+	/**
+	 * 前置作业sql 可为null 可以是多个sql用;;分割
+	 */
+	private String preSql;
 	/**
 	 * 后置作业sql 可为null 可以是多个sql用;;分割
 	 */
@@ -171,6 +171,14 @@ public class MarketConf implements Serializable {
 
 	void setCompleteSql(String completeSql) {
 		this.completeSql = completeSql;
+	}
+
+	public String getPreSql() {
+		return preSql;
+	}
+
+	public void setPreSql(String preSql) {
+		this.preSql = preSql;
 	}
 
 	public String getFinalSql() {

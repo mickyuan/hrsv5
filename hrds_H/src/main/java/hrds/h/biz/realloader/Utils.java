@@ -152,15 +152,13 @@ public class Utils {
 			}
 		} else {
 			ResultSet resultSet = db.queryPagedGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s'",
-					tableName, SDATENAME, etlDate), 0, 1, false);
+					tableName, SDATENAME, etlDate), 1, 2, false);
 			if (resultSet.next()) {
 				return true;
 			}
-			db.execute(String.format("SELECT * FROM %s WHERE %s = '%s'",
-					tableName, SDATENAME, etlDate));
 			if (isIncrement) {
 				resultSet = db.queryPagedGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s'",
-						tableName, EDATENAME, MAXDATE), 0, 1, false);
+						tableName, EDATENAME, MAXDATE), 1, 2, false);
 				if (resultSet.next()) {
 					return true;
 				}
@@ -258,9 +256,58 @@ public class Utils {
 		return Optional.of(sqlList);
 	}
 
+	static Optional<List<String>> getPreWorkSqls(String sqls) {
+		if (StringUtil.isBlank(sqls)) {
+			logger.info("无前置作业需要执行！");
+			return Optional.empty();
+		}
+		List<String> sqlList = Arrays.stream(sqls.split(";;"))
+				.filter(StringUtil::isNotBlank)
+				.collect(Collectors.toList());
+		if (sqlList.isEmpty()) {
+			logger.info("无前置作业需要执行！");
+			return Optional.empty();
+		}
+		return Optional.of(sqlList);
+	}
+
 	/**
 	 * 后置作业为多个sql
-	 * 确保这些sql之间的业务
+	 * 不支持数据库级别事务回滚
+	 *
+	 * @param sqlsJoined 多个sql，以 ;; 隔开
+	 * @param db     db对象
+	 */
+	static void finalWorkWithoutTrans(String sqlsJoined, DatabaseWrapper db) {
+		//把sql字符串转换成sql的list
+		Optional<List<String>> OptionSqls = getFinalWorkSqls(sqlsJoined);
+		if (OptionSqls.isPresent()) {
+				for (String sql : OptionSqls.get()) {
+					db.execute(sql);
+				}
+		}
+	}
+
+	/**
+	 * 后置作业为多个sql
+	 * 不支持数据库级别事务回滚
+	 *
+	 * @param sqlsJoined 多个sql，以 ;; 隔开
+	 * @param db     db对象
+	 */
+	static void preWorkWithoutTrans(String sqlsJoined, DatabaseWrapper db) {
+		//把sql字符串转换成sql的list
+		Optional<List<String>> OptionSqls = getPreWorkSqls(sqlsJoined);
+		if (OptionSqls.isPresent()) {
+			for (String sql : OptionSqls.get()) {
+				db.execute(sql);
+			}
+		}
+	}
+
+	/**
+	 * 后置作业为多个sql
+	 * 支持数据库级别事务回滚
 	 *
 	 * @param sqlsJoined 多个sql，以 ;; 隔开
 	 * @param dbConf     db配置map
