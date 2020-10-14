@@ -133,13 +133,13 @@ public class JdbcDirectCollectTableHandleParse extends AbstractCollectTableHandl
 				boolean zipper_flag = true;
 				for (CollectTableColumnBean columnBean : collectTableColumnBeanList) {
 					if (columnBean.getColumn_name().equals(col)) {
-						isZipperFieldInfo.put(col, IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
+						isZipperFieldInfo.put(col.toUpperCase(), IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
 						zipper_flag = false;
 						break;
 					}
 				}
 				if (zipper_flag) {
-					isZipperFieldInfo.put(col, false);
+					isZipperFieldInfo.put(col.toUpperCase(), false);
 				}
 			}
 			primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//主键

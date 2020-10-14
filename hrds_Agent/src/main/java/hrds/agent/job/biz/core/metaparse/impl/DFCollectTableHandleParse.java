@@ -82,14 +82,14 @@ public class DFCollectTableHandleParse extends AbstractCollectTableHandle {
 					//拼接是否为拉链字段
 					boolean zipper_flag = true;
 					for (CollectTableColumnBean columnBean : collectTableBean.getCollectTableColumnBeanList()) {
-						if (columnBean.getColumn_name().equals(col)) {
-							isZipperFieldInfo.put(col, IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
+						if (columnBean.getColumn_name().equals(colName)) {
+							isZipperFieldInfo.put(colName, IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
 							zipper_flag = false;
 							break;
 						}
 					}
 					if (zipper_flag) {
-						isZipperFieldInfo.put(col, false);
+						isZipperFieldInfo.put(colName, false);
 					}
 				}
 			} else if (IsFlag.Fou.getCode().equals(tableBean.getIs_archived())) {

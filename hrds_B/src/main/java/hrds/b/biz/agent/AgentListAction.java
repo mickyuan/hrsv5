@@ -794,7 +794,7 @@ public class AgentListAction extends BaseAction {
 				Dbo.queryResult(
 					"select tc.column_id, tc.is_primary_key, tc.column_name, tc.column_ch_name, "
 						+ " tc.valid_s_date, tc.valid_e_date, tc.is_get, tc.column_type, tc.tc_remark, tc.is_alive, "
-						+ " tc.is_new, tc.tc_or from "
+						+ " tc.is_new, tc.tc_or, tc.is_zipper_field from "
 						+ Table_column.TableName
 						+ " tc where tc.table_id = ? and tc.is_get = ?",
 					tableId,
@@ -1118,7 +1118,7 @@ public class AgentListAction extends BaseAction {
 				Dbo.queryResult(
 					"select tc.column_id, tc.is_primary_key, tc.column_name, tc.column_ch_name, "
 						+ " tc.valid_s_date, tc.valid_e_date, tc.is_get, tc.column_type, tc.tc_remark, tc.is_alive, "
-						+ " tc.is_new, tc.tc_or from "
+						+ " tc.is_new, tc.tc_or, tc.is_zipper_field from "
 						+ Table_column.TableName
 						+ " tc where tc.table_id = ? and tc.is_get = ?",
 					tableId,
