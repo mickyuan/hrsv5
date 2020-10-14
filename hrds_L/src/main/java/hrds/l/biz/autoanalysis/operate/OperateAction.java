@@ -30,6 +30,7 @@ import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
 import hrds.l.biz.autoanalysis.common.AutoOperateCommon;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,6 +42,11 @@ public class OperateAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 
+	private static final String COLUMNNAME = "COLUMN";
+	private static final String ZUIDANGE = "ZUIDANGE";
+	private static final String ZUIXIAONGE = "ZUIXIAONGE";
+	private static final String ZUIDAXIAOKEY = "ZUIDAXIAOKEY";
+	private static final String LIMITVALUE = "LIMITVALUE";
 	private static final String TempTableName = " TEMP_TABLE ";
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
 	// 图标类型
@@ -231,7 +237,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoTpCondInfos", desc = "自主取数模板条件对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
 	public Long saveAutoAccessInfoToQuery(Auto_fetch_sum auto_fetch_sum, Auto_tp_cond_info[] autoTpCondInfos,
-	                                      Auto_fetch_res[] autoFetchRes) {
+										  Auto_fetch_res[] autoFetchRes) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.判断模板信息是否已不存在
 		Validator.notNull(auto_fetch_sum.getTemplate_id(), "模板ID不能为空");
@@ -296,7 +302,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private String getWhereSql(long template_id, Auto_tp_cond_info[] autoTpCondInfos,
-	                           Auto_fetch_res[] autoFetchRes) {
+							   Auto_fetch_res[] autoFetchRes) {
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		StringBuilder resultSql = new StringBuilder("select ");
 		List<String> template_sql = Dbo.queryOneColumnList(
@@ -466,6 +472,10 @@ public class OperateAction extends BaseAction {
 		}.getDataLayer(auto_fetch_sum.getFetch_sql(), Dbo.db());
 		AutoOperateCommon.lineCounter = 0;
 	}
+
+
+//——————————————————————————————————————从这里开始是可视化的内容——————————————————————————
+
 
 	@Method(desc = "获取数据可视化组件信息", logicStep = "1.获取数据可视化组件信息")
 	@Return(desc = "返回获取数据可视化组件信息", range = "无限制")
@@ -703,7 +713,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "chart_type", desc = "图标类型", range = "无限制")
 	@Return(desc = "返回图标显示数据", range = "无限制")
 	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
-	                                        String chart_type) {
+											String chart_type) {
 		List<Map<String, Object>> componentList = new ArrayList<>();
 		// 1.获取组件数据
 		new ProcessingData() {
@@ -760,7 +770,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForBLSimple(List<Map<String, Object>> componentList, String[] x_columns,
-	                                String[] y_columns, Map<String, Object> resultMap) {
+									String[] y_columns, Map<String, Object> resultMap) {
 		if (x_columns.length < 1 || y_columns.length < 2) {
 			return;
 		}
@@ -780,7 +790,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForPolarbar(List<Map<String, Object>> componentList, String[] x_columns,
-	                                String[] y_columns, Map<String, Object> resultMap) {
+									String[] y_columns, Map<String, Object> resultMap) {
 		String x_column = x_columns[0];
 		String y_column = y_columns[0];
 		List<Object> radiusData = new ArrayList<>();
@@ -795,7 +805,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForBubble(List<Map<String, Object>> componentList, String[] x_columns,
-	                              String[] y_columns, Map<String, Object> resultMap) {
+								  String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> seriesData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
 			Map<String, Object> map = new HashMap<>();
@@ -807,7 +817,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDateForBarmd(List<Map<String, Object>> componentList, String[] x_columns,
-	                             String[] y_columns, Map<String, Object> resultMap) {
+								 String[] y_columns, Map<String, Object> resultMap) {
 		List<List<Object>> data = new ArrayList<>();
 		String y_column = y_columns[0];
 		for (Map<String, Object> stringObjectMap : componentList) {
@@ -824,7 +834,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForTreemap(List<Map<String, Object>> componentList, String[] x_columns,
-	                               String[] y_columns, Map<String, Object> resultMap) {
+								   String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> seriesData = new ArrayList<>();
 		Map<String, Map<String, Object>> map = new HashMap<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
@@ -863,7 +873,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForBoxplot(List<Map<String, Object>> componentList, String[] x_columns,
-	                               Map<String, Object> resultMap) {
+								   Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (x_columns != null && x_columns.length > 0) {
 			List<Object> legend_data = new ArrayList<>();
@@ -889,7 +899,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForScatter(List<Map<String, Object>> componentList, String[] x_columns,
-	                               String[] y_columns, Map<String, Object> resultMap) {
+								   String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> scatterData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
 			Map<String, Object> map = new HashMap<>();
@@ -901,7 +911,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForPie(List<Map<String, Object>> componentList, String[] x_columns,
-	                           String[] y_columns, String chart_type, Map<String, Object> resultMap) {
+							   String[] y_columns, String chart_type, Map<String, Object> resultMap) {
 
 		List<String> legendData = new ArrayList<>();
 		List<Map<String, Object>> seriesArray = new ArrayList<>();
@@ -944,8 +954,8 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForLine(List<Map<String, Object>> componentList, String[] x_columns,
-	                            String[] y_columns, String chart_type,
-	                            Map<String, Object> resultMap) {
+								String[] y_columns, String chart_type,
+								Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			List<Object> columns = new ArrayList<>();
@@ -1022,7 +1032,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Return(desc = "返回可视化创建组件过滤条件获取答案信息", range = "")
 	public String getSqlByCondition(ComponentBean componentBean, Auto_comp_cond[] autoCompConds,
-	                                Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
+									Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
 		Validator.notNull(componentBean.getFetch_name(), "取数名称不能为空");
 		Validator.notNull(componentBean.getData_source(), "数据来源不能为空");
 		String fetch_sql;
@@ -1042,79 +1052,153 @@ public class OperateAction extends BaseAction {
 			throw new BusinessException("暂不支持该种数据集" + componentBean.getData_source());
 		}
 		// 添加select 部分
-		StringBuilder result_sql = new StringBuilder();
-		result_sql.append("SELECT").append(Constant.SPACE);
+		String result_sql = new String();
+		result_sql += "SELECT" + Constant.SPACE;
 		for (Auto_comp_data_sum auto_comp_data_sum : autoCompDataSums) {
-			String column_name = auto_comp_data_sum.getColumn_name();
-			String summary_type = auto_comp_data_sum.getSummary_type();
-			if (AutoDataSumType.QiuHe == AutoDataSumType.ofEnumByCode(summary_type)) {
-				result_sql.append("sum(").append(column_name).append(") ,");
-			} else if (AutoDataSumType.QiuPingJun == AutoDataSumType.ofEnumByCode(summary_type)) {
-				result_sql.append("avg(").append(column_name).append(") ,");
-			} else if (AutoDataSumType.QiuZuiDaZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-				result_sql.append("max(").append(column_name).append(") ,");
-			} else if (AutoDataSumType.QiuZuiXiaoZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-				result_sql.append("min(").append(column_name).append(") ,");
-			} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
-				result_sql.append(column_name).append(" ,");
-			} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
-				result_sql.append(column_name).append(",");
-			} else {
-				result_sql.append("*,");
-			}
+			String selectSql = getSelectSql(auto_comp_data_sum);
+			result_sql += selectSql;
 		}
 		// 去除,
-		result_sql.deleteCharAt(result_sql.length() - 1);
+		result_sql = result_sql.substring(0, result_sql.length() - 1);
 		// 添加子查询
-		result_sql.append(Constant.SPACE).append("FROM (").append(fetch_sql).append(") ")
-				.append(Constant.SPACE).append(TempTableName);
+		result_sql += Constant.SPACE + "FROM (" + fetch_sql + ") " + Constant.SPACE + TempTableName;
 		// 对最大的N个做单独处理
-		ArrayList<String> upArray = new ArrayList<>();
-		// 对最小的N个做单独处理
-		ArrayList<String> lowArray = new ArrayList<>();
-		boolean flag = true;
+		ArrayList<Map<String, String>> upAndLowArray = new ArrayList<>();
+		//处理where
 		if (autoCompConds != null && autoCompConds.length > 0) {
-			// 添加 where部分
-			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
-				String cond_en_column = auto_comp_cond.getCond_en_column();
-				String operator = auto_comp_cond.getOperator();
-				String cond_value = auto_comp_cond.getCond_value();
-				if (AutoDataOperator.ZuiDaDeNGe == AutoDataOperator.ofEnumByCode(operator)) {
-					upArray.add(cond_en_column + Constant.SQLDELIMITER + cond_value);
-				} else if (AutoDataOperator.ZuiXiaoDeNGe == AutoDataOperator.ofEnumByCode(operator)) {
-					lowArray.add(cond_en_column + Constant.SQLDELIMITER + cond_value);
-				} else {
-					if (flag) {
-						result_sql.append(Constant.SPACE).append("WHERE").append(Constant.SPACE);
-						flag = false;
-					}
+			for (int i = 0; i < autoCompConds.length; i++) {
+				if (i == 0) {
+					result_sql += Constant.SPACE + "WHERE" + Constant.SPACE;
+				}
+				Auto_comp_cond auto_comp_cond = autoCompConds[i];
+				//根据条件拼接SQL
+				String condSql = getCondSql(auto_comp_cond, upAndLowArray);
+				//如果是处理upArray或者lowArray的话就会是null
+				if (condSql != null) {
+					result_sql += condSql + Constant.SPACE + "AND" + Constant.SPACE + Constant.SPACE;
 				}
 			}
-			if (StringUtil.isNotBlank(componentBean.getCondition_sql())) {
-				result_sql.append(componentBean.getCondition_sql()).append(Constant.SPACE);
-			}
+			//去除' AND '
+			String substring = result_sql.substring(0, result_sql.length() - 6);
 		}
+		//处理group by
 		if (autoCompGroups != null && autoCompGroups.length > 0) {
 			// 添加 group by
-			result_sql.append(Constant.SPACE).append("GROUP BY").append(Constant.SPACE);
+			result_sql += Constant.SPACE + "GROUP BY" + Constant.SPACE;
 			for (Auto_comp_group auto_comp_group : autoCompGroups) {
 				String column_name = auto_comp_group.getColumn_name();
-				result_sql.append(column_name).append("`,");
+				result_sql += column_name + ",";
 			}
-			// 去除,添加limit条件
-			result_sql.deleteCharAt(result_sql.length() - 1);
+			result_sql = result_sql.substring(0, result_sql.length() - 1);
 		}
-		if (!upArray.isEmpty()) {
-			result_sql.append(Constant.SPACE).append("ORDER BY").append(Constant.SPACE)
-					.append(upArray.get(0).split(Constant.SQLDELIMITER)[0]).append(Constant.SPACE).append("DESC LIMIT")
-					.append(Constant.SPACE).append(upArray.get(0).split(Constant.SQLDELIMITER)[1]);
-		}
-		if (!lowArray.isEmpty()) {
-			result_sql.append(Constant.SPACE).append("ORDER BY").append(Constant.SPACE)
-					.append(lowArray.get(0).split(Constant.SQLDELIMITER)[0]).append(Constant.SPACE).append("LIMIT")
-					.append(Constant.SPACE).append(lowArray.get(0).split(Constant.SQLDELIMITER)[1]);
+		if (!upAndLowArray.isEmpty()) {
+			int number[] = new int[upAndLowArray.size()];
+			result_sql += Constant.SPACE + "ORDER BY" + Constant.SPACE;
+			for (int i = 0; i < upAndLowArray.size(); i++) {
+				Map<String, String> map = upAndLowArray.get(i);
+				String limitvalue = map.get(LIMITVALUE);
+				if (!StringUtils.isNumeric(limitvalue)) {
+					throw new BusinessException("当前过滤条件:" + map.get(COLUMNNAME) + "的值不是数字");
+				}
+				number[i] = Integer.valueOf(map.get(LIMITVALUE));
+				result_sql += map.get(COLUMNNAME);
+				if (map.get(ZUIDAXIAOKEY).equals(ZUIDANGE)) {
+					result_sql += Constant.SPACE + "DESC" + Constant.SPACE;
+				}
+				result_sql += ",";
+			}
+			//去除，
+			result_sql = result_sql.substring(0, result_sql.length() - 1);
+			Arrays.sort(number);
+			result_sql += Constant.SPACE + "LIMIT" + number;
 		}
 		return result_sql.toString();
+	}
+
+	/**
+	 * 根据Auto_comp_data_sum拼接查询SQL
+	 *
+	 * @param auto_comp_data_sum
+	 * @return
+	 */
+	private String getSelectSql(Auto_comp_data_sum auto_comp_data_sum) {
+		String column_name = auto_comp_data_sum.getColumn_name();
+		String summary_type = auto_comp_data_sum.getSummary_type();
+		if (AutoDataSumType.QiuHe == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return "sum(" + column_name + ") ,";
+		} else if (AutoDataSumType.QiuPingJun == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return "avg(" + column_name + ") ,";
+		} else if (AutoDataSumType.QiuZuiDaZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return "max(" + column_name + ") ,";
+		} else if (AutoDataSumType.QiuZuiXiaoZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return "min(" + column_name + ") ,";
+		} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return "count(" + column_name + ") ,";
+		} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return column_name + ",";
+		} else if (AutoDataSumType.ChaKanQuanBu == AutoDataSumType.ofEnumByCode(summary_type)) {
+			return "*,";
+		} else {
+			throw new BusinessException("当前查询内容不存在于代码项中:" + summary_type);
+		}
+	}
+
+	/**
+	 * 根据Auto_comp_cond拼接条件SQL
+	 *
+	 * @param auto_comp_cond
+	 * @param upAndLowArray
+	 * @return
+	 */
+	private String getCondSql(Auto_comp_cond auto_comp_cond, ArrayList<Map<String, String>> upAndLowArray) {
+		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
+		String cond_en_column = auto_comp_cond.getCond_en_column();
+		String operator = auto_comp_cond.getOperator();
+		String cond_value = auto_comp_cond.getCond_value();
+		if (AutoDataOperator.JieYu == AutoDataOperator.ofEnumByCode(operator)) {
+			String[] split = cond_value.split(",");
+			if (split.length != 2) {
+				throw new BusinessException("处理" + AutoDataOperator.JieYu.getValue() + "方法出错，参数个数错误");
+			}
+			return cond_en_column + Constant.SPACE + "BETWEEN" + Constant.SPACE + split[0] + Constant.SPACE + "AND" + Constant.SPACE + split[1] + Constant.SPACE;
+		} else if (AutoDataOperator.BuJieYu == AutoDataOperator.ofEnumByCode(operator)) {
+			String[] split = cond_value.split(",");
+			if (split.length != 2) {
+				throw new BusinessException("处理" + AutoDataOperator.BuJieYu.getValue() + "方法出错，参数个数错误");
+			}
+			return cond_en_column + Constant.SPACE + "NOT BETWEEN" + Constant.SPACE + split[0] + Constant.SPACE + "AND" + Constant.SPACE + split[1] + Constant.SPACE;
+		} else if (AutoDataOperator.DengYu == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + "=" + Constant.SPACE + cond_value + Constant.SPACE;
+		} else if (AutoDataOperator.BuDengYu == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + "!=" + Constant.SPACE + cond_value + Constant.SPACE;
+		} else if (AutoDataOperator.DaYu == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + ">" + Constant.SPACE + cond_value + Constant.SPACE;
+		} else if (AutoDataOperator.XiaoYu == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + "<" + Constant.SPACE + cond_value + Constant.SPACE;
+		} else if (AutoDataOperator.DaYuDengYu == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + ">=" + Constant.SPACE + cond_value + Constant.SPACE;
+		} else if (AutoDataOperator.XiaoYuDengYu == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + "<=" + Constant.SPACE + cond_value + Constant.SPACE;
+		} else if (AutoDataOperator.ZuiDaDeNGe == AutoDataOperator.ofEnumByCode(operator)) {
+			Map<String, String> map = new HashMap<>();
+			map.put(COLUMNNAME, cond_en_column);
+			map.put(ZUIDAXIAOKEY, ZUIDANGE);
+			map.put(LIMITVALUE, cond_value);
+			upAndLowArray.add(map);
+		} else if (AutoDataOperator.ZuiXiaoDeNGe == AutoDataOperator.ofEnumByCode(operator)) {
+			Map<String, String> map = new HashMap<>();
+			map.put(COLUMNNAME, cond_en_column);
+			map.put(ZUIDAXIAOKEY, ZUIXIAONGE);
+			map.put(LIMITVALUE, cond_value);
+			upAndLowArray.add(map);
+		} else if (AutoDataOperator.WeiKong == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + "IS NULL" + Constant.SPACE;
+		} else if (AutoDataOperator.FeiKong == AutoDataOperator.ofEnumByCode(operator)) {
+			return cond_en_column + Constant.SPACE + "IS NOT NULL" + Constant.SPACE;
+		} else {
+			throw new BusinessException("当前操作属性的代码项:" + operator + ",不存在于过滤关系中");
+		}
+		return null;
 	}
 
 	@Method(desc = "获取条件逻辑", logicStep = "1.判断操作符是否为最大的N个或者最小的N个" +
@@ -1222,13 +1306,13 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
 	public void updateVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
-	                                      Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
-	                                      Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
-	                                      Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
-	                                      Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
-	                                      Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
-	                                      Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
-	                                      Auto_label auto_label, Auto_legend_info auto_legend_info) {
+										  Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+										  Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+										  Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+										  Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+										  Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+										  Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+										  Auto_label auto_label, Auto_legend_info auto_legend_info) {
 		// 1.校验组件汇总表字段合法性
 		Validator.notNull(auto_comp_sum.getComponent_id(), "更新时组件ID不能为空");
 		checkAutoCompSumFields(auto_comp_sum);
@@ -1355,13 +1439,13 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
 	public void addVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
-	                                   Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
-	                                   Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
-	                                   Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
-	                                   Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
-	                                   Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
-	                                   Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
-	                                   Auto_label auto_label, Auto_legend_info auto_legend_info) {
+									   Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+									   Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+									   Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+									   Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+									   Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+									   Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+									   Auto_label auto_label, Auto_legend_info auto_legend_info) {
 		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
 		// 1.校验组件汇总表字段合法性
 		checkAutoCompSumFields(auto_comp_sum);
@@ -1767,8 +1851,8 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	public void saveDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                                  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                                  Auto_frame_info[] autoFrameInfos, String layout) {
+									  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+									  Auto_frame_info[] autoFrameInfos, String layout) {
 		// 1.校验仪表盘表字段合法性
 		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
 		// 2.判断仪表板名称是否已存在
@@ -1797,8 +1881,8 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	public void updateDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                                    Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                                    Auto_frame_info[] autoFrameInfos, String layout) {
+										Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+										Auto_frame_info[] autoFrameInfos, String layout) {
 		// 1.校验仪表盘表字段合法性
 		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
 		Validator.notNull(auto_dashboard_info.getDashboard_id(), "更新时仪表盘ID不能为空");
@@ -1827,8 +1911,8 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                           Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                           Auto_frame_info[] autoFrameInfos, String layout) {
+							   Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+							   Auto_frame_info[] autoFrameInfos, String layout) {
 		// 1.解析仪表盘布局信息
 		JSONArray layoutArray = JSONArray.parseArray(layout);
 		for (int i = 0; i < layoutArray.size(); i++) {
