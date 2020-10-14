@@ -103,19 +103,22 @@ public class ManageAction extends BaseAction {
 	@Method(desc = "校验sql是否合法", logicStep = "1.判断sql是否以;结尾" +
 			"2.校验sql")
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
-	public void verifySqlIsLegal(String template_sql) {
+	public List<Map<String, Object>> verifySqlIsLegal(String template_sql) {
 		// 数据可访问权限处理方式：该方法不需要进行访问权限限制
 		try {
 			// 1.判断sql是否以;结尾
 			if (template_sql.endsWith(";")) {
 				throw new BusinessException("sql不要使用;结尾");
 			}
+			List<Map<String, Object>> resultList = new ArrayList<>();
 			// 2.校验sql
 			new ProcessingData() {
 				@Override
 				public void dealLine(Map<String, Object> map) {
+					resultList.add(map);
 				}
-			}.getDataLayer(template_sql, Dbo.db());
+			}.getPageDataLayer(template_sql, Dbo.db(),1,10);
+			return resultList;
 		} catch (Exception e) {
 			logger.error(e);
 			throw new BusinessException("sql错误：" + e.getMessage());
@@ -592,9 +595,7 @@ public class ManageAction extends BaseAction {
 			} else {
 				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
 			}
-			if (!autoTpResSets.contains(auto_tp_res_set)) {
-				autoTpResSets.add(auto_tp_res_set);
-			}
+			autoTpResSets.add(auto_tp_res_set);
 		}
 	}
 
