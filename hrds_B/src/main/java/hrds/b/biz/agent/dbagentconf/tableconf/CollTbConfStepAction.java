@@ -424,11 +424,11 @@ public class CollTbConfStepAction extends BaseAction {
 				Dbo.execute("UPDATE " + Table_column.TableName
 						+ " SET is_get = ?, is_primary_key = ?, column_name = ?, column_type = ?, column_ch_name = ?,"
 						+ "	table_id = ?, valid_s_date = ?, valid_e_date = ?, is_alive = ?, is_new = ?, tc_or = ?,"
-						+ " tc_remark = ? WHERE column_id = ?", table_column.getIs_get(), table_column.getIs_primary_key(),
+						+ " tc_remark = ?,is_zipper_field = ?  WHERE column_id = ?", table_column.getIs_get(), table_column.getIs_primary_key(),
 					table_column.getColumn_name(), table_column.getColumn_type(), table_column.getColumn_ch_name(),
 					tableInfo.getTable_id(), table_column.getValid_s_date(), table_column.getValid_e_date(),
 					table_column.getIs_alive(), table_column.getIs_new(), table_column.getTc_or(),
-					table_column.getTc_remark(),
+					table_column.getTc_remark(),table_column.getIs_zipper_field(),
 					table_column.getColumn_id());
 			} else {
 				table_column.setColumn_id(PrimayKeyGener.getNextId());
@@ -644,6 +644,7 @@ public class CollTbConfStepAction extends BaseAction {
 			// 2-1、根据colSetId去数据库中查出DB连接信息
 			// 2-2、和Agent交互，获取表中的列信息
 			List<Table_column> tableColumns = getColumnInfoByTableName(colSetId, getUserId(), tableName);
+			tableColumns.forEach(table_column -> table_column.setIs_zipper_field(IsFlag.Fou.getCode()));
 			returnMap.put("columnInfo", tableColumns);
 		}
 		// 3、如果要获取当前采集任务中存在的表的所有列，直接在table_column表中查询即可
