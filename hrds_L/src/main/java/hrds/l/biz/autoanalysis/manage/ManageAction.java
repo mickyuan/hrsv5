@@ -44,9 +44,6 @@ import java.util.*;
 public class ManageAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
-	// SQL关键字
-	private static final String BETWEEN = "BETWEEN";
-	private static final String IN = "IN";
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
 
 	static {
@@ -415,7 +412,7 @@ public class ManageAction extends BaseAction {
 			SQLBetweenExpr sqlBetweenExpr = (SQLBetweenExpr) sqlExpr;
 			SQLExpr testExpr = sqlBetweenExpr.testExpr;
 			setSqlPropertyExpr(condInfoMap, testExpr);
-			condInfoMap.put("con_relation", BETWEEN);
+			condInfoMap.put("con_relation", "BETWEEN");
 			// fixme 这个原来默认给64，不知道这个作用是什么
 			condInfoMap.put("value_size", 64);
 			SQLExpr beginExpr = sqlBetweenExpr.beginExpr;
@@ -438,7 +435,7 @@ public class ManageAction extends BaseAction {
 		} else if (sqlExpr instanceof SQLInListExpr) {
 			SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlExpr;
 			setSqlPropertyExpr(condInfoMap, sqlInListExpr.getExpr());
-			condInfoMap.put("con_relation", IN);
+			condInfoMap.put("con_relation", "IN");
 			condInfoMap.put("value_size", 64);
 			List<SQLExpr> targetList = sqlInListExpr.getTargetList();
 			StringBuilder sb = new StringBuilder();
@@ -629,88 +626,6 @@ public class ManageAction extends BaseAction {
 		}
 		return map;
 	}
-
-//	private String getCond(List<Map<String, Object>> autoTpCondInfoList, String cond,
-//	                       Map<String, Object> condInfoMap) {
-//		if (cond.startsWith(AND) && !cond.contains(BETWEEN)) {
-//			cond = cond.replace(AND, "");
-//		}
-//		if (cond.startsWith(OR)) {
-//			cond = cond.replace(OR, "");
-//		}
-//		if (cond.startsWith(WHERE)) {
-//			cond = cond.replace(WHERE, "");
-//		}
-//		if (cond.contains(BETWEEN)) {
-//			setAutoCondInfo(cond, condInfoMap, BETWEEN);
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains("!=")) {
-//			setAutoCondInfo(cond, condInfoMap, "!=");
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains("=") && !cond.contains("!=") && !cond.contains(">=") && !cond.contains("<=")) {
-//			setAutoCondInfo(cond, condInfoMap, "=");
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains(">=")) {
-//			setAutoCondInfo(cond, condInfoMap, ">=");
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains("<=")) {
-//			setAutoCondInfo(cond, condInfoMap, "<=");
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains(">") && !cond.contains(">=")) {
-//			setAutoCondInfo(cond, condInfoMap, ">");
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains("<") && !cond.contains("<=")) {
-//			setAutoCondInfo(cond, condInfoMap, "<");
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains(NOTIN)) {
-//			setAutoCondInfo(cond, condInfoMap, NOTIN);
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		if (cond.contains(IN) && !cond.contains(NOTIN)) {
-//			setAutoCondInfo(cond, condInfoMap, IN);
-//			autoTpCondInfoList.add(condInfoMap);
-//		}
-//		return cond;
-//	}
-
-//	private void setAutoCondInfo(String cond, Map<String, Object> condInfoMap, String s) {
-//		List<String> condList = StringUtil.split(cond, s);
-//		String cond_para_name = condList.get(0).trim();
-//		if (BETWEEN.equals(s)) {
-//			cond_para_name = cond_para_name.replace(AND, "").trim();
-//			condInfoMap.put("pre_value", condList.get(1).replace(AND, ",")
-//					.replace(Constant.SPACE, "").trim());
-//		} else if (NOTIN.equals(s) || IN.equals(s)) {
-//			if (StringUtil.isNotBlank(condList.get(1))) {
-//				condInfoMap.put("pre_value", condList.get(1).replace(Constant.LXKH, "")
-//						.replace(Constant.RXKH, "")
-//						.replace(Constant.SPACE, ""));
-//			}
-//		} else {
-//			condInfoMap.put("pre_value", condList.get(1).trim());
-//		}
-//		condInfoMap.put("value_size", 64);
-//		condInfoMap.put("cond_para_name", cond_para_name);
-//		if (cond_para_name.contains(".")) {
-//			String column = cond_para_name.substring(cond_para_name.indexOf(".") + 1);
-//			condInfoMap.put("cond_en_column", column);
-//			condInfoMap.put("cond_cn_column", column);
-//		} else {
-//			condInfoMap.put("cond_en_column", cond_para_name);
-//			condInfoMap.put("cond_cn_column", cond_para_name);
-//		}
-//		condInfoMap.put("con_relation", s);
-//		condInfoMap.put("value_type", AutoValueType.ZiFuChuan.getCode());
-//		condInfoMap.put("is_required", IsFlag.Shi.getCode());
-//		condInfoMap.put("checked", true);
-//	}
 
 	@Method(desc = "根据ID查询列信息", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			"2.根据不同数据源类型查询表的列信息并返回" +
