@@ -179,7 +179,7 @@ public class DictionaryTableAction extends BaseAction {
 				+ " t1 JOIN "
 				+ Table_info.TableName
 				+ " t2 ON t1.table_id = t2.table_id WHERE t2.database_id = ? AND t1.table_id = ?"
-				+ " AND t2.valid_e_date = ? AND t1.valid_e_date = ? ",
+				+ " AND t2.valid_e_date = ? AND t1.valid_e_date = ? ORDER BY t1.column_name",
 			colSetId,
 			table_id,
 			Constant.MAXDATE,
@@ -560,7 +560,7 @@ public class DictionaryTableAction extends BaseAction {
 		//    2: 获取表信息.
 		return Dbo.queryList(
 			Table_info.class,
-			"SELECT * FROM " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ?",
+			"SELECT * FROM " + Table_info.TableName + " WHERE database_id = ? AND valid_e_date = ? ORDER BY table_name",
 			colSetId,
 			Constant.MAXDATE);
 

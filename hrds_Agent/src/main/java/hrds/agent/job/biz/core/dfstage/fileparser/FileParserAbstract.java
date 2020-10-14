@@ -48,8 +48,8 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//获取所有列的值用来做列合并
 	private final StringBuilder mergeStringTmp;
 	//获取页面选择列算拉链时算md5的列，当没有选择拉链字段，默认使用全字段算md5
-	private Map<String, Boolean> md5Col;
-	private StringBuilder md5StringTmp;
+	private final Map<String, Boolean> md5Col;
+	private final StringBuilder md5StringTmp;
 	//拼接每一列的值
 	private final StringBuilder lineSb;
 	//清洗接口

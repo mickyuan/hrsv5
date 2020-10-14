@@ -284,6 +284,7 @@ public class ManageAction extends BaseAction {
 					objectMap.put("value_type", map.get("value_type"));
 					objectMap.put("value_size", map.get("value_size"));
 					objectMap.put("pre_value", map.get("pre_value"));
+					objectMap.put("is_required", map.get("is_required"));
 					objectMap.put("checked", true);
 				}
 			}

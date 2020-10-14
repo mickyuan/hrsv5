@@ -345,7 +345,7 @@ public abstract class ProcessingData {
 		try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, dsl_id)) {
 			return getSQLData(sql, dbDataConn, begin, end, isCountTotal);
 		} catch (Exception e) {
-			throw new AppSystemException("sql查询出错: " + e.getMessage());
+			throw new AppSystemException("sql查询出错: ", e);
 		}
 	}
 
@@ -354,7 +354,7 @@ public abstract class ProcessingData {
 		try (DatabaseWrapper db = new DatabaseWrapper.Builder().dbname("Hive").create()) {
 			return getSQLData(sql, db, begin, end, isCountTotal);
 		} catch (Exception e) {
-			throw new AppSystemException("sql查询出错: " + e.getMessage());
+			throw new AppSystemException("sql查询出错: ", e);
 		}
 	}
 
