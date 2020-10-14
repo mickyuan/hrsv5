@@ -96,17 +96,15 @@ public class RenameDataTable {
 			}
 			//执行sql
 			if (StringUtil.isBlank(alterTableNameSQL)) {
-				throw new BusinessException("修改数据表表名称的SQL为空!");
+				throw new BusinessException("修改数据表名称的SQL为空!");
 			}
 			//执行修改sql
 			int execute = SqlOperator.execute(dbDataConn, alterTableNameSQL);
 			//校验修改结果
 			if (execute != 0) {
-				throw new BusinessException("修改关系型数据库表失败!");
+				throw new BusinessException("修改数据表名称的SQL,执行失败!");
 			}
 			SqlOperator.commitTransaction(dbDataConn);
-		} catch (Exception e) {
-			throw new BusinessException("重命名表的sql执行失败!,请检查表名是否已经存在!");
 		}
 	}
 
@@ -148,14 +146,19 @@ public class RenameDataTable {
 			}
 		} else if (store_type == Store_type.HIVE) {
 			//TODO 重命名 HIVE 层表配置暂未实现!
+			throw new BusinessException("重命名 HIVE 类型表配置暂未实现!!");
 		} else if (store_type == Store_type.HBASE) {
 			//TODO 重命名 HBASE 层表配置暂未实现!
+			throw new BusinessException("重命名 HBASE 类型表配置暂未实现!!");
 		} else if (store_type == Store_type.SOLR) {
 			//TODO 重命名 SOLR 层表配置暂未实现!
+			throw new BusinessException("重命名 SOLR 类型表配置暂未实现!!");
 		} else if (store_type == Store_type.ElasticSearch) {
 			//TODO 重命名 ElasticSearch 层表配置暂未实现!
+			throw new BusinessException("重命名 ElasticSearch 类型表配置暂未实现!!");
 		} else if (store_type == Store_type.MONGODB) {
 			//TODO 重命名 MONGODB 层表配置暂未实现!
+			throw new BusinessException("重命名 MONGODB 类型表配置暂未实现!!");
 		} else {
 			throw new BusinessException("重命名为无效表时,未找到匹配的存储层类型!");
 		}
