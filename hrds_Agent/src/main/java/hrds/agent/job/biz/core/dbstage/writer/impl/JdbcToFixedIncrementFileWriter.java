@@ -60,6 +60,8 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 				+ File.separator + Constant.fileFormatMap.get(FileFormat.DingChang.getCode()) + File.separator;
 		try {
 			String database_code = data_extraction_def.getDatabase_code();
+			String database_separatorr = data_extraction_def.getDatabase_separatorr() == null ? ""
+					: data_extraction_def.getDatabase_separatorr();
 			midName = FileNameUtils.normalize(midName, true);
 			//卸数文件名为hbase_name加线程唯一标识加此线程创建文件下标
 			String fileName = midName + hbase_name + pageNum + index + "." + data_extraction_def.getFile_suffix();
@@ -67,7 +69,7 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getIncrementBufferedWriter(DataBaseCode.ofValueByCode(database_code));
 			//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
-			writeHeader(writer, tableBean.getColumnMetaInfo());
+			writeHeader(writer, tableBean.getColumnMetaInfo(), database_separatorr);
 			/* Get result set metadata */
 			List<String> queryColumnList = new ArrayList<>();
 			Map<String, Integer> typeValueMap = new HashMap<>();
@@ -87,7 +89,7 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 			String operate = tableBean.getOperate();
 			while (resultSet.next()) {
 				//最前面拼接操作方式
-				line.append(operate).append(data_extraction_def.getDatabase_separatorr());
+				line.append(operate).append(database_separatorr);
 				counter++;
 				for (int i = 0; i < allColumnList.size(); i++) {
 					if (queryColumnList.contains(allColumnList.get(i))) {
@@ -104,7 +106,7 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 					}
 					if (i != allColumnList.size() - 1) {
 						//定长可能有填写列分隔符
-						line.append(data_extraction_def.getDatabase_separatorr());
+						line.append(database_separatorr);
 					}
 				}
 				line.append(data_extraction_def.getRow_separator());
@@ -156,12 +158,12 @@ public class JdbcToFixedIncrementFileWriter extends AbstractFileWriter {
 	 * @param writer         定长的写文件的输出流
 	 * @param columnMetaInfo 所有字段的列
 	 */
-	private void writeHeader(BufferedWriter writer, String columnMetaInfo) throws Exception {
+	private void writeHeader(BufferedWriter writer, String columnMetaInfo, String database_separatorr) throws Exception {
 		if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header()) && writeHeaderFlag) {
-			if (!StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
+			if (!StringUtil.isEmpty(database_separatorr)) {
 				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT,
-						data_extraction_def.getDatabase_separatorr());
-				columnMetaInfo = "operate" + data_extraction_def.getDatabase_separatorr() + columnMetaInfo;
+						database_separatorr);
+				columnMetaInfo = "operate" + database_separatorr + columnMetaInfo;
 			} else {
 				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT, ",");
 				columnMetaInfo = "operate," + columnMetaInfo;
