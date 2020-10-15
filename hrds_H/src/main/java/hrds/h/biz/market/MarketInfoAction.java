@@ -23,105 +23,45 @@ import fd.ng.web.util.FileUploadUtil;
 import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.DataSourceType;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.JobExecuteState;
-import hrds.commons.codes.ProcessType;
-import hrds.commons.codes.SqlEngine;
-import hrds.commons.codes.StorageType;
-import hrds.commons.codes.StoreLayerAdded;
-import hrds.commons.codes.StoreLayerDataSource;
-import hrds.commons.codes.Store_type;
-import hrds.commons.codes.TableLifeCycle;
-import hrds.commons.codes.TableStorage;
+import hrds.commons.codes.*;
 import hrds.commons.codes.fdCode.WebCodesItem;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.collection.bean.LayerBean;
-import hrds.commons.entity.Cb_preaggregate;
-import hrds.commons.entity.Data_store_layer;
-import hrds.commons.entity.Data_store_layer_added;
-import hrds.commons.entity.Data_store_layer_attr;
-import hrds.commons.entity.Data_store_reg;
-import hrds.commons.entity.Datatable_field_info;
-import hrds.commons.entity.Dcol_relation_store;
-import hrds.commons.entity.Dm_category;
-import hrds.commons.entity.Dm_datatable;
-import hrds.commons.entity.Dm_datatable_source;
-import hrds.commons.entity.Dm_etlmap_info;
-import hrds.commons.entity.Dm_info;
-import hrds.commons.entity.Dm_operation_info;
-import hrds.commons.entity.Dm_relevant_info;
-import hrds.commons.entity.Dtab_relation_store;
-import hrds.commons.entity.Edw_sparksql_gram;
-import hrds.commons.entity.Etl_job_def;
-import hrds.commons.entity.Etl_sub_sys_list;
-import hrds.commons.entity.Etl_sys;
-import hrds.commons.entity.Own_source_field;
-import hrds.commons.entity.Sys_user;
-import hrds.commons.entity.Table_column;
-import hrds.commons.entity.Table_storage_info;
-import hrds.commons.entity.Type_contrast;
+import hrds.commons.entity.*;
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
 import hrds.commons.tree.commons.TreePageSource;
-import hrds.commons.utils.BeanUtils;
-import hrds.commons.utils.Constant;
-import hrds.commons.utils.DboExecute;
-import hrds.commons.utils.DruidParseQuerySql;
-import hrds.commons.utils.ExcelUtil;
+import hrds.commons.utils.*;
 import hrds.commons.utils.etl.EtlJobUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import hrds.h.biz.MainClass;
 import hrds.h.biz.bean.CategoryRelationBean;
-
-import java.awt.Color;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.DataValidation;
-import org.apache.poi.ss.usermodel.DataValidationConstraint;
-import org.apache.poi.ss.usermodel.DataValidationHelper;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.Color;
+import java.io.*;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 //import hrds.h.biz.SqlAnalysis.HyrenOracleTableVisitor;
 //import com.alibaba.druid.
@@ -318,7 +258,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
 	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
-								CategoryRelationBean categoryRelationBean) {
+	                            CategoryRelationBean categoryRelationBean) {
 		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
 		if (categoryRelationBean.getParent_category_id() == null) {
 			for (Map<String, Long> map : idNameList) {
@@ -473,7 +413,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
-																	  long category_id) {
+	                                                                  long category_id) {
 		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
@@ -567,7 +507,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
 	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
-											List<Map<String, Object>> categoryList) {
+	                                        List<Map<String, Object>> categoryList) {
 		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
 		if (!dmCategoryList.isEmpty()) {
@@ -658,7 +598,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
-												  String category_name, List<Map<String, Object>> categoryList) {
+	                                              String category_name, List<Map<String, Object>> categoryList) {
 		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
@@ -724,7 +664,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "dm_category", desc = "加工分类实体对象", range = "与数据库表字段规则一致", isBean = true)
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
-							   List<Map<String, Long>> idNameList) {
+	                           List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
 			// 1.新增选择新增的分类作为上级分类
 			for (Map<String, Long> map : idNameList) {
@@ -1636,8 +1576,11 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Param(name = "querysql", desc = "querysql", range = "String类型加工查询SQL")
 	@Param(name = "hbasesort", desc = "hbasesort", range = "hbaserowkey的排序")
-	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String
-			datatable_id, Dcol_relation_store[] dm_column_storage, String querysql, String hbasesort) {
+	@Param(name = "pre_partition", desc = "预分区,只有是存储层选择hbase时可能存在",
+			range = "预分区键，如 a,b,c 或者是预分区数，如 10", nullable = true)
+	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id,
+	                                     String pre_partition, Dcol_relation_store[] dm_column_storage,
+	                                     String querysql, String hbasesort) {
 		Map<String, Object> resultmap = new HashMap<>();
 		//循环 检查数据合法性
 		for (int i = 0; i < datatable_field_info.length; i++) {
@@ -1649,6 +1592,11 @@ public class MarketInfoAction extends BaseAction {
 		}
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
+		if (StringUtil.isNotBlank(pre_partition)) {
+			// 更新预分区键
+			Dbo.execute("update " + Dm_datatable.TableName + " set pre_partition=? where datatable_id=?",
+					pre_partition, dm_datatable.getDatatable_id());
+		}
 		//新增时判断SQL是否存在
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 				"select execute_sql,id,datatable_id,end_date,start_date from " + Dm_operation_info.TableName
@@ -2245,7 +2193,7 @@ public class MarketInfoAction extends BaseAction {
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
-			 XSSFWorkbook workbook = new XSSFWorkbook()) {
+		     XSSFWorkbook workbook = new XSSFWorkbook()) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -2924,7 +2872,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private Set<String> getDatatableDiff(List<Dm_datatable> dm_datatables,
-										 List<String> enNameList) {
+	                                     List<String> enNameList) {
 		Set<String> diffSet = new HashSet<>();
 		for (Dm_datatable dm_datatable : dm_datatables) {
 			Map<String, Object> datatableMap = Dbo.queryOneObject(
@@ -2997,7 +2945,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private List<String> getDatatableFieldDiff(List<Datatable_field_info> datatable_field_infos,
-											   long data_mart_id) {
+	                                           long data_mart_id) {
 		List<String> diffList = new ArrayList<>();
 		// 新版本有效数据表字段数据
 		List<Datatable_field_info> datatableFieldInfos = getDatatable_field_infos(data_mart_id);
@@ -3207,14 +3155,14 @@ public class MarketInfoAction extends BaseAction {
 			logicStep = "根据表主键查询表名")
 	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
 	@Return(desc = "查询返回结果集", range = "无限制")
-	public String getTableName(String datatable_id) {
+	public Dm_datatable getTableName(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		dm_datatable = Dbo.queryOneObject(Dm_datatable.class,
-				"select datatable_en_name from " + Dm_datatable.TableName + " where datatable_id = ?",
-				dm_datatable.getDatatable_id())
+				"select datatable_en_name,pre_partition from " + Dm_datatable.TableName
+						+ " where datatable_id = ?", dm_datatable.getDatatable_id())
 				.orElseThrow(() -> new BusinessException("查询" + Dm_datatable.TableName + "失败"));
-		return dm_datatable.getDatatable_en_name();
+		return dm_datatable;
 
 	}
 
@@ -3636,7 +3584,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private void setStoreAdd(Dcol_relation_store dcol_relation_store, Dtab_relation_store dm_relation_datatable,
-							 String key, String dsla_storelayer) {
+	                         String key, String dsla_storelayer) {
 		if (StringUtil.isNotBlank(key)) {
 			List<String> keyList = StringUtil.split(key, "|");
 			for (int k = 0; k < keyList.size(); k++) {
