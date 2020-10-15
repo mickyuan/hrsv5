@@ -28,8 +28,8 @@ public class LoadingData {
 	}
 
 	@Method(desc = "装载数据到存储层-装载到和查询表同一存储层",
-			logicStep = "装载数据到存储层-装载到和查询表同一存储层" +
-					"1.前提条件,查询的表所在的存储层在同一存储层下")
+		logicStep = "装载数据到存储层-装载到和查询表同一存储层" +
+			"1.前提条件,查询的表所在的存储层在同一存储层下")
 	@Param(name = "sql", desc = "查询数据的sql", range = "String类型")
 	@Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
 	@Return(desc = "存储层id", range = "存储层id")
@@ -38,7 +38,7 @@ public class LoadingData {
 	}
 
 	@Method(desc = "装载数据到存储层-装载到指定存储层",
-			logicStep = "装载数据到存储层-装载到指定存储层")
+		logicStep = "装载数据到存储层-装载到指定存储层")
 	@Param(name = "sql", desc = "查询数据的sql", range = "String类型")
 	@Param(name = "db", desc = "DatabaseWrapper对象", range = "DatabaseWrapper对象")
 	@Param(name = "intoLayerBean", desc = "LayerBean对象", range = "LayerBean对象")
@@ -46,34 +46,36 @@ public class LoadingData {
 	public long intoDataLayer(String sql, DatabaseWrapper db, LayerBean intoLayerBean) {
 		//初始化返回结果
 		long dsl_id = 0;
-		//获取sql中解析出来的表属于的存储实体Bean
-		LayerTypeBean allTableIsLayer = ProcessingData.getAllTableIsLayer(sql, db);
+		//获取解析出来的表属于的存储实体Bean
+		LayerTypeBean ltb = ProcessingData.getAllTableIsLayer(sql, db);
+		//获取当前操作存储层的实体Bean信息
+		LayerBean layerBean = ltb.getLayerBean();
+		//如果查询的表是贴源登记的表,则将表名处理成实际表名进行操作
+		String ofSql = ProcessingData.getdStoreReg(sql, db);
 		//获取存储类型
-		LayerTypeBean.ConnType connType = allTableIsLayer.getConnType();
+		LayerTypeBean.ConnType connType = ltb.getConnType();
 		//同一个存储层，且是jdbc
 		if (LayerTypeBean.ConnType.oneJdbc == connType) {
-			LayerBean layerBean = allTableIsLayer.getLayerBean();
-			Map<String, String> layerAttr = layerBean.getLayerAttr();
-			try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(layerAttr)) {
+			dsl_id = layerBean.getDsl_id();
+			try (DatabaseWrapper dbDataConn = ConnectionTool.getDBWrapper(db, dsl_id)) {
 				if (dbDataConn.getDbtype() == Dbtype.DB2V1 || dbDataConn.getDbtype() == Dbtype.DB2V2) {
 					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() +
-							" AS ( SELECT * FROM (" + sql + ") as hyren_dqc_temp ) definition only");
+						" AS ( SELECT * FROM (" + ofSql + ") as hyren_dqc_temp ) definition only");
 					SqlOperator.execute(dbDataConn, "insert into " + ldbbean.getTableName() +
-							" ( SELECT * FROM ( " + sql + ") as hyren_dqc_temp )");
+						" ( SELECT * FROM ( " + ofSql + ") as hyren_dqc_temp )");
 				} else if (dbDataConn.getDbtype() == Dbtype.TERADATA) {
 					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS (" +
-							sql + ") WITH DATA");
+						ofSql + ") WITH DATA");
+				} else if (dbDataConn.getDbtype() == Dbtype.HIVE) {
+					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS " + ofSql);
 				} else {
-					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS " + sql);
+					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS " + ofSql);
 				}
-				SqlOperator.commitTransaction(dbDataConn);
-				dsl_id = layerBean.getDsl_id();
+				//TODO 这里不做commit,因为管控的规则校验执行一次会生成一张表,并且执行结果有记录
 			}
 		}
 		//同一个存储层,非jdbc
 		else if (LayerTypeBean.ConnType.oneOther == connType) {
-			//获取当前操作存储层的实体Bean信息
-			LayerBean layerBean = allTableIsLayer.getLayerBean();
 			//根据当前存储层类型处理数据
 			new ProcessingData() {
 				@Override

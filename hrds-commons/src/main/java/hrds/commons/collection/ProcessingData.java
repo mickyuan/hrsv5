@@ -24,7 +24,7 @@ public abstract class ProcessingData {
 
 
 	@Method(desc = "根据sql存储层下的数据表数据",
-			logicStep = "根据sql存储层下的数据表数据")
+		logicStep = "根据sql存储层下的数据表数据")
 	@Param(name = "sql", desc = "查询sql", range = "查询sql")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	@Return(desc = "查询出来的rs", range = "数据")
@@ -33,7 +33,7 @@ public abstract class ProcessingData {
 	}
 
 	@Method(desc = "根据sql和指定存储层信息获取指定存储层下的数据表数据",
-			logicStep = "根据sql和指定存储层信息获取指定存储层下的数据表数据")
+		logicStep = "根据sql和指定存储层信息获取指定存储层下的数据表数据")
 	@Param(name = "sql", desc = "查询sql", range = "查询sql")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	@Param(name = "dsl_id", desc = "存储层配置id", range = "long类型")
@@ -44,7 +44,7 @@ public abstract class ProcessingData {
 	}
 
 	@Method(desc = "根据sql存储层下的数据表数据",
-			logicStep = "根据sql存储层下的数据表数据")
+		logicStep = "根据sql存储层下的数据表数据")
 	@Param(name = "sql", desc = "查询sql", range = "查询sql")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	@Param(name = "begin", desc = "开始条数", range = "int类型,大于等于1")
@@ -55,7 +55,7 @@ public abstract class ProcessingData {
 	}
 
 	@Method(desc = "根据sql和指定存储层信息获取指定存储层下的数据表数据",
-			logicStep = "根据sql和指定存储层信息获取指定存储层下的数据表数据")
+		logicStep = "根据sql和指定存储层信息获取指定存储层下的数据表数据")
 	@Param(name = "sql", desc = "查询sql", range = "查询sql")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	@Param(name = "begin", desc = "开始条数", range = "int类型,大于等于1")
@@ -67,7 +67,7 @@ public abstract class ProcessingData {
 	}
 
 	@Method(desc = "根据sql和指定存储层信息获取指定存储层下的数据表数据",
-			logicStep = "根据sql和指定存储层信息获取指定存储层下的数据表数据")
+		logicStep = "根据sql和指定存储层信息获取指定存储层下的数据表数据")
 	@Param(name = "sql", desc = "查询sql", range = "查询sql")
 	@Param(name = "db", desc = "数据库db操作对象", range = "不可为空")
 	@Param(name = "begin", desc = "开始条数", range = "int类型,大于等于1")
@@ -91,7 +91,7 @@ public abstract class ProcessingData {
 		//获取存储类型自定义Bean
 		LayerTypeBean ltb = getAllTableIsLayer(sql, db);
 		String ofSql = getdStoreReg(sql, db);
-		//只有一个存储，且是jdbc的方式
+		//只有一个存储，且是jdbc的方式 Hive和Carbondata都支持jdbc,所以Hive和Carbondata解析出来的是jdbc
 		if (ltb.getConnType() == LayerTypeBean.ConnType.oneJdbc) {
 			long dsl_id = ltb.getLayerBean().getDsl_id();
 			return getResultSet(ofSql, db, dsl_id, begin, end, isCountTotal);
@@ -117,7 +117,7 @@ public abstract class ProcessingData {
 		return null;
 	}
 
-	private static String getdStoreReg(String sql, DatabaseWrapper db) {
+	public static String getdStoreReg(String sql, DatabaseWrapper db) {
 		/*
 		 * 判斷存储方式是不是 贴源登记，如果是，需要将表名修改为原始表名 ******************************start
 		 */
@@ -125,11 +125,11 @@ public abstract class ProcessingData {
 		List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
 		for (String tableName : listTable) {
 			Map<String, Object> objectMap = SqlOperator.queryOneObject(db,
-					"select a.collect_type,a.table_name from " + Data_store_reg.TableName + " a join" +
-							" " + Database_set.TableName + " b on a.database_id = b.database_id " +
-							" where a.collect_type in (?,?) and lower(hyren_name) = ? and b.collect_type = ?",
-					AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase(),
-					CollectType.TieYuanDengJi.getCode());
+				"select a.collect_type,a.table_name from " + Data_store_reg.TableName + " a join" +
+					" " + Database_set.TableName + " b on a.database_id = b.database_id " +
+					" where a.collect_type in (?,?) and lower(hyren_name) = ? and b.collect_type = ?",
+				AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), tableName.toLowerCase(),
+				CollectType.TieYuanDengJi.getCode());
 			if (objectMap.size() != 0) {
 				Pattern p = Pattern.compile("([\\s*|\\t|\\r|\\n+])" + tableName.toUpperCase());
 				Matcher m = p.matcher(sql.toUpperCase());
@@ -151,29 +151,29 @@ public abstract class ProcessingData {
 		List<LayerBean> tableStorageLayerBeans = new ArrayList<>();
 		//查询贴元表信息，也就是通过数据采集过来的数据表
 		Optional<Data_store_reg> dsr_optional = SqlOperator.queryOneObject(db, Data_store_reg.class,
-				"select * from " + Data_store_reg.TableName + " where collect_type in (?,?,?)" +
-						" and lower(hyren_name) = ?",
-				AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), AgentType.DuiXiang.getCode(),
-				tableName.toLowerCase());
+			"select * from " + Data_store_reg.TableName + " where collect_type in (?,?,?)" +
+				" and lower(hyren_name) = ?",
+			AgentType.DBWenJian.getCode(), AgentType.ShuJuKu.getCode(), AgentType.DuiXiang.getCode(),
+			tableName.toLowerCase());
 		//如果登记表存在数据,则设置改表登记的存储层信息
 		if (dsr_optional.isPresent()) {
 			Data_store_reg dsr = dsr_optional.get();
 			List<LayerBean> dcl_layerBeans;
 			if (AgentType.DuiXiang == AgentType.ofEnumByCode(dsr.getCollect_type())) {
 				dcl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
-						"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst"
-								+ " from " + Dtab_relation_store.TableName + " dtrs"
-								+ " join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
-								" where dtrs.tab_id = ? and dtrs.data_source =?",
-						dsr.getTable_id(), StoreLayerDataSource.OBJ.getCode());
+					"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst"
+						+ " from " + Dtab_relation_store.TableName + " dtrs"
+						+ " join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+						" where dtrs.tab_id = ? and dtrs.data_source =?",
+					dsr.getTable_id(), StoreLayerDataSource.OBJ.getCode());
 			} else {
 				dcl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
-						"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst from "
-								+ Table_storage_info.TableName + " tsi" +
-								" join " + Dtab_relation_store.TableName + " dtrs on tsi.storage_id = dtrs.tab_id" +
-								" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
-								" where tsi.table_id = ? and dtrs.data_source in (?,?)",
-						dsr.getTable_id(), StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode());
+					"select dsl.*,'" + DataSourceType.DCL.getCode() + "' as dst from "
+						+ Table_storage_info.TableName + " tsi" +
+						" join " + Dtab_relation_store.TableName + " dtrs on tsi.storage_id = dtrs.tab_id" +
+						" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+						" where tsi.table_id = ? and dtrs.data_source in (?,?)",
+					dsr.getTable_id(), StoreLayerDataSource.DB.getCode(), StoreLayerDataSource.DBA.getCode());
 			}
 
 			//记录数据表所在存储层信息
@@ -181,28 +181,28 @@ public abstract class ProcessingData {
 		}
 		//查询集市表(DML)信息，通过数据集市产生的数表
 		List<LayerBean> dml_layerBeans = SqlOperator.queryList(db, LayerBean.class,
-				"select dsl.*,'" + DataSourceType.DML.getCode() + "' as dst from " + Dm_datatable.TableName + " dd" +
-						" join  " + Dtab_relation_store.TableName + " dtrs on dd.datatable_id = dtrs.tab_id" +
-						" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
-						" where lower(datatable_en_name) = ? and dtrs.data_source = ?",
-				tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
+			"select dsl.*,'" + DataSourceType.DML.getCode() + "' as dst from " + Dm_datatable.TableName + " dd" +
+				" join  " + Dtab_relation_store.TableName + " dtrs on dd.datatable_id = dtrs.tab_id" +
+				" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+				" where lower(datatable_en_name) = ? and dtrs.data_source = ?",
+			tableName.toLowerCase(), StoreLayerDataSource.DM.getCode());
 		//记录数据表所在存储层信息
 		tableStorageLayerBeans.addAll(dml_layerBeans);
 		//查询数据管控层(DQC)表信息, 通过规则校验保存结果3生成的数表
 		List<LayerBean> dqc_layerBeans = SqlOperator.queryList(db, LayerBean.class,
-				"select dsl.*,'" + DataSourceType.DQC.getCode() + "' as dst from " + Dq_index3record.TableName + " di3" +
-						" join " + Data_store_layer.TableName + " dsl on di3.dsl_id=dsl.dsl_id" +
-						" where lower(di3.table_name) = ?",
-				tableName.toLowerCase());
+			"select dsl.*,'" + DataSourceType.DQC.getCode() + "' as dst from " + Dq_index3record.TableName + " di3" +
+				" join " + Data_store_layer.TableName + " dsl on di3.dsl_id=dsl.dsl_id" +
+				" where lower(di3.table_name) = ?",
+			tableName.toLowerCase());
 		//记录数据表所在存储层信息
 		tableStorageLayerBeans.addAll(dqc_layerBeans);
 		//查询自定义层(UDL)表信息, 通过数据管控创建的数表
 		List<LayerBean> udl_layerBeans = SqlOperator.queryList(db, LayerBean.class,
-				"select dsl.*,'" + DataSourceType.UDL.getCode() + "' as dst from " + Dq_table_info.TableName + " dqti" +
-						" join  " + Dtab_relation_store.TableName + " dtrs on dqti.table_id = dtrs.tab_id" +
-						" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
-						" where lower(dqti.table_name) = ? and dtrs.data_source = ?",
-				tableName.toLowerCase(), StoreLayerDataSource.UD.getCode());
+			"select dsl.*,'" + DataSourceType.UDL.getCode() + "' as dst from " + Dq_table_info.TableName + " dqti" +
+				" join  " + Dtab_relation_store.TableName + " dtrs on dqti.table_id = dtrs.tab_id" +
+				" join " + Data_store_layer.TableName + " dsl on dtrs.dsl_id = dsl.dsl_id" +
+				" where lower(dqti.table_name) = ? and dtrs.data_source = ?",
+			tableName.toLowerCase(), StoreLayerDataSource.UD.getCode());
 		//记录数据表所在存储层信息
 		tableStorageLayerBeans.addAll(udl_layerBeans);
 		if (tableStorageLayerBeans.size() != 0) {
@@ -307,7 +307,9 @@ public abstract class ProcessingData {
 			 * 2、如果不一样，所有的都是jdbc
 			 */
 			if (tableNameList.size() == allTableList.size()) {
-				if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type) || Store_type.HIVE == Store_type.ofEnumByCode(store_type))
+				if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type)
+					|| Store_type.HIVE == Store_type.ofEnumByCode(store_type)
+					|| Store_type.CARBONDATA == Store_type.ofEnumByCode(store_type))
 					layerTypeBean.setConnType(LayerTypeBean.ConnType.oneJdbc);
 				else
 					layerTypeBean.setConnType(LayerTypeBean.ConnType.oneOther);
@@ -358,7 +360,7 @@ public abstract class ProcessingData {
 	}
 
 	private List<String> getSQLData(String sql, DatabaseWrapper db, int begin, int end, boolean isCountTotal) throws
-			Exception {
+		Exception {
 		List<String> colArray = new ArrayList<>();//获取数据的列信息，存放到list中
 		ResultSet rs;
 		if (begin == 0 && end == 0) {
