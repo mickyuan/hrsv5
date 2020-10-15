@@ -532,20 +532,20 @@ public class OperateAction extends BaseAction {
 							+ " AND t2.fetch_status = ? order by t1.show_num",
 					table_name, AutoFetchStatus.WanCheng.getCode());
 			for (Map<String, Object> map : columnList) {
-				if (numbersArray.contains(map.get("column_type").toString())) {
-					if (!numColumnList.contains(map)) {
-						numColumnList.add(map);
-					}
-				}
+//				if (numbersArray.contains(map.get("column_type").toString())) {
+//					if (!numColumnList.contains(map)) {
+//						numColumnList.add(map);
+//					}
+//				}
 				if (AutoValueType.ShuZhi == AutoValueType.ofEnumByCode(map.get("column_type").toString())) {
 					if (!numColumnList.contains(map)) {
-						measureColumnList.add(map);
+						numColumnList.add(map);
 					}
 				}
 			}
 			columnMap.put("columns", columnList);
 			columnMap.put("numColumns", JSONArray.parseArray(JSON.toJSONString(numColumnList)));
-			columnMap.put("measureColumns", JSONArray.parseArray(JSON.toJSONString(measureColumnList)));
+//			columnMap.put("measureColumns", JSONArray.parseArray(JSON.toJSONString(measureColumnList)));
 		} else if (AutoSourceObject.XiTongJiShuJuJi == AutoSourceObject.ofEnumByCode(data_source)) {
 			// 2.根据表名获取系统数据集字段信息
 			List<Map<String, Object>> columnList = DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
