@@ -84,7 +84,7 @@ public class ObjectUnloadDataStageImpl extends AbstractJobStage {
 				stageParamInfo.setFileNameArr(file_name_list);
 			} else {
 				throw new AppSystemException("半结构化对象" + objectTableBean.getEn_name()
-						+ "数据字典指定目录" + file_path + "下数据文件不存在");
+						+ "数据字典指定目录" + file_path + "下通过正则" + regex + "匹配不到对应的数据文件");
 			}
 			stageParamInfo.setTableBean(tableBean);
 			//不用转存，则跳过db文件卸数，直接进行upload

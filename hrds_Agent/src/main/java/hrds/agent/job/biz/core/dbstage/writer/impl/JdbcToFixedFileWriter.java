@@ -47,7 +47,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	@Override
 	public String writeFiles() {
 		//获取行分隔符
-		String database_separatorr = data_extraction_def.getDatabase_separatorr();
+		String database_separatorr = data_extraction_def.getDatabase_separatorr() == null ? ""
+				: data_extraction_def.getDatabase_separatorr();
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();

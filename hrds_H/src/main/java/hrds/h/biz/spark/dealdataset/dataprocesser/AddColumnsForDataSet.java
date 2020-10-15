@@ -90,9 +90,9 @@ public class AddColumnsForDataSet implements DataSetProcesser {
 			//改为定义的列名和类型
 			sqlColumn[i] = sqlColumn[i].name(columnName.toUpperCase());
 			//关系型数据库类型，不需要设置类型，插入时自动转型
-			if (!Store_type.DATABASE.getCode().equals(marketConf.getDataStoreLayer().getStore_type())) {
-				sqlColumn[i] = sqlColumn[i].cast(columnType);
-			}
+//			if (!Store_type.DATABASE.getCode().equals(marketConf.getDataStoreLayer().getStore_type())) {
+//				sqlColumn[i] = sqlColumn[i].cast(columnType);
+//			}
 		}
 
 		/**

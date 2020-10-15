@@ -135,7 +135,8 @@ public class DataTransferAction extends BaseAction {
 										extractionMap.put("plane_url", storageMap.get("plane_url"));
 										extractionMap.put("database_code", storageMap.get("database_code"));
 										extractionMap.put(
-											"row_separator", String.valueOf(storageMap.get("row_separator")));
+											"row_separator",
+												String.valueOf(storageMap.get("row_separator")));
 										iterator.remove();
 										break;
 									}
@@ -307,8 +308,7 @@ public class DataTransferAction extends BaseAction {
 
 			// 只有定长或者非定长才检查,数据分隔符和行分隔符
 			FileFormat fileFormat = FileFormat.ofEnumByCode(dataExtractionDef.getDbfile_format());
-			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang) {
+			if (fileFormat == FileFormat.FeiDingChang || fileFormat == FileFormat.DingChang) {
 				// 行分隔符转为Unicode编码
 				String row_separator = dataExtractionDef.getRow_separator();
 				if (StringUtil.isNotBlank(row_separator)) {
@@ -322,7 +322,9 @@ public class DataTransferAction extends BaseAction {
 				if (StringUtil.isNotBlank(database_separatorr)) {
 					dataExtractionDef.setDatabase_separatorr(StringUtil.string2Unicode(database_separatorr));
 				} else {
-					CheckParam.throwErrorMsg("第(%s)张表,列分割符不能为空", index);
+					if (fileFormat != FileFormat.DingChang) {
+						CheckParam.throwErrorMsg("第(%s)张表,列分割符不能为空", index);
+					}
 				}
 			}
 
