@@ -307,8 +307,7 @@ public class DataTransferAction extends BaseAction {
 
 			// 只有定长或者非定长才检查,数据分隔符和行分隔符
 			FileFormat fileFormat = FileFormat.ofEnumByCode(dataExtractionDef.getDbfile_format());
-			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang) {
+			if (fileFormat == FileFormat.FeiDingChang) {
 				// 行分隔符转为Unicode编码
 				String row_separator = dataExtractionDef.getRow_separator();
 				if (StringUtil.isNotBlank(row_separator)) {
