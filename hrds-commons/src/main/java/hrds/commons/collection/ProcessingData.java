@@ -11,7 +11,6 @@ import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.collection.bean.LayerTypeBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DruidParseQuerySql;
 
 import java.sql.ResultSet;
@@ -376,7 +375,7 @@ public abstract class ProcessingData {
 		while (rs.next()) {
 			Map<String, Object> result = new HashMap<>();
 			for (String col : colArray) {
-				result.put(col, rs.getObject(col));
+				result.put(col, rs.getObject(col) == null ? "NULL" : rs.getObject(col));
 			}
 			dealLine(result);
 		}
