@@ -13,6 +13,7 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
@@ -46,7 +47,7 @@ public class RuleConfigAction extends BaseAction {
 		treeConf.setShowFileCollection(Boolean.FALSE);
 		//根据源菜单信息获取节点数据列表
 		List<Map<String, Object>> dataList = TreeNodeInfo.getTreeNodeInfo(TreePageSource.DATA_MANAGEMENT, getUser(),
-				treeConf);
+			treeConf);
 		//转换节点数据列表为分叉树列表
 		return NodeDataConvertedTreeList.dataConversionTreeInfo(dataList);
 	}
@@ -91,7 +92,7 @@ public class RuleConfigAction extends BaseAction {
 		//检查数据
 		if (checkRegNumIsExist(reg_num)) {
 			DboExecute.deletesOrThrow("通过编号删除数据失败!", "delete from " + Dq_definition.TableName +
-					" where user_id=? and reg_num=?", getUserId(), reg_num);
+				" where user_id=? and reg_num=?", getUserId(), reg_num);
 		}
 	}
 
@@ -150,7 +151,7 @@ public class RuleConfigAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("select dql.*,? as job_status from " + Dq_definition.TableName + " dql where user_id=?")
-				.addParam(Job_Effective_Flag.NO.getCode()).addParam(getUserId());
+			.addParam(Job_Effective_Flag.NO.getCode()).addParam(getUserId());
 		List<Map<String, Object>> dqd_list = Dbo.queryList(asmSql.sql(), asmSql.params());
 		//处理查询结果
 		Dq_definition dq_definition = new Dq_definition();
@@ -177,7 +178,7 @@ public class RuleConfigAction extends BaseAction {
 		}
 		//获取规则信息
 		return Dbo.queryOneObject(Dq_definition.class, "select * from " + Dq_definition.TableName +
-				" where reg_num=?", reg_num).orElseThrow(() -> (new BusinessException("获取规则信息的SQL错误!")));
+			" where reg_num=?", reg_num).orElseThrow(() -> (new BusinessException("获取规则信息的SQL错误!")));
 	}
 
 	@Method(desc = "获取表字段信息列表", logicStep = "获取表字段信息列表")
@@ -187,6 +188,15 @@ public class RuleConfigAction extends BaseAction {
 		//数据层获取不同表结构
 		Validator.notBlank(table_name, "查询表名不能为空!");
 		return DataTableUtil.getColumnByTableName(Dbo.db(), table_name);
+	}
+
+	@Method(desc = "获取表对应的一个存储层信息,如果表进多个存储层则取第一个",
+		logicStep = "获取表对应的一个存储层信息,如果表进多个存储层则取第一个")
+	@Param(name = "table_name", desc = "登记表名", range = "String字符串,唯一")
+	@Return(desc = "存储层信息", range = "存储层信息")
+	public LayerBean getTableOneDSLInfo(String table_name) {
+		//获取表所在存储层信息列表(表有可能在存储在多个存储层,如果表进多个存储层则取第一个)
+		return ProcessingData.getLayerByTable(table_name, Dbo.db()).get(0);
 	}
 
 	@Method(desc = "获取规则类型数据", logicStep = "获取规则类型数据")
@@ -299,8 +309,8 @@ public class RuleConfigAction extends BaseAction {
 		Dq_definition dqd = new Dq_definition();
 		dqd.setReg_num(reg_num);
 		Dq_definition dq_definition = Dbo.queryOneObject(Dq_definition.class, "SELECT * FROM "
-				+ Dq_definition.TableName + " " + "WHERE reg_num=?", dqd.getReg_num()).orElseThrow(()
-				-> (new BusinessException("获取配置信息的SQL失败!")));
+			+ Dq_definition.TableName + " " + "WHERE reg_num=?", dqd.getReg_num()).orElseThrow(()
+			-> (new BusinessException("获取配置信息的SQL失败!")));
 		//系统变量对应结果
 		Set<SysVarCheckBean> beans = DqcExecution.getSysVarCheckBean(Dbo.db(), dq_definition);
 		//执行规则,返回执行的任务id
@@ -319,7 +329,7 @@ public class RuleConfigAction extends BaseAction {
 		//数据校验
 		Validator.notBlank(dq_result.getTask_id().toString(), "获取指标3结果时,传入的任务标号为空!");
 		dq_result = Dbo.queryOneObject(Dq_result.class, "select * from " + Dq_result.TableName +
-				" where task_id=?", dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("获取规则执行任务结果的SQL异常!")));
+			" where task_id=?", dq_result.getTask_id()).orElseThrow(() -> (new BusinessException("获取规则执行任务结果的SQL异常!")));
 		//如果本次任务保存了指标3的结果,则获取指标3的结果信息
 		IsFlag is_save_index3 = IsFlag.ofEnumByCode(dq_result.getIs_saveindex3());
 		if (is_save_index3 == IsFlag.Fou) {
@@ -335,8 +345,8 @@ public class RuleConfigAction extends BaseAction {
 			else if (dqcVerifyResult == DqcVerifyResult.YiChang || dqcVerifyResult == DqcVerifyResult.ZhengChang) {
 				//获取指标3存储记录信息
 				Dq_index3record dq_index3record = Dbo.queryOneObject(Dq_index3record.class, "select * from " + Dq_index3record.TableName +
-						" where task_id=?", dq_result.getTask_id()).orElseThrow(() ->
-						(new BusinessException("获取任务指标3存储记录的SQL异常!")));
+					" where task_id=?", dq_result.getTask_id()).orElseThrow(() ->
+					(new BusinessException("获取任务指标3存储记录的SQL异常!")));
 				//设置查询sql
 				String sql = "select * from " + dq_index3record.getTable_name();
 				//设置查询sql:问题数据明细sql,只取10条,根据指标3存储记录信息获取数据
@@ -372,7 +382,7 @@ public class RuleConfigAction extends BaseAction {
 	}
 
 	@Method(desc = "查看规则调度状态",
-			logicStep = "查看规则调度状态")
+		logicStep = "查看规则调度状态")
 	@Param(name = "reg_num", desc = "规则编号", range = "long类型")
 	@Return(desc = "规则调度信息列表", range = "规则调度信息列表")
 	public List<Map<String, Object>> viewRuleSchedulingStatus(long reg_num) {
@@ -383,13 +393,13 @@ public class RuleConfigAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_def.TableName +
-				" where").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
+			" where").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
 		asmSql.addSql("UNION");
 		asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_cur.TableName +
-				" WHERE").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
+			" WHERE").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
 		asmSql.addSql("UNION");
 		asmSql.addSql("SELECT etl_sys_cd,sub_sys_cd,etl_job,job_eff_flag,job_disp_status FROM " + Etl_job_disp_his.TableName +
-				" WHERE").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
+			" WHERE").addLikeParam("etl_job", '%' + dq_definition.getReg_num().toString() + '%', "");
 		List<Map<String, Object>> queryList = Dbo.queryList(asmSql.sql(), asmSql.params());
 		//处理查询结果
 		List<Map<String, Object>> ruleSchedulingStatusInfos = new ArrayList<>();
@@ -409,7 +419,7 @@ public class RuleConfigAction extends BaseAction {
 	}
 
 	@Method(desc = "指定SQL（校验SQL）检查，检查所有的系统变量是否合法以及sql是否能运行",
-			logicStep = "指定SQL（校验SQL）检查，检查所有的系统变量是否合法以及sql是否能运行")
+		logicStep = "指定SQL（校验SQL）检查，检查所有的系统变量是否合法以及sql是否能运行")
 	@Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象", isBean = true)
 	@Return(desc = "返回值说明", range = "返回值取值范围")
 	public Map<String, Object> specifySqlCheck(Dq_definition dq_definition) {
@@ -429,7 +439,7 @@ public class RuleConfigAction extends BaseAction {
 	}
 
 	@Method(desc = "异常数据sql检查，检查所有的系统变量是否合法以及sql是否能运行",
-			logicStep = "异常数据sql检查，检查所有的系统变量是否合法以及sql是否能运行")
+		logicStep = "异常数据sql检查，检查所有的系统变量是否合法以及sql是否能运行")
 	@Param(name = "dq_definition", desc = "Dq_definition的实体对象", range = "Dq_definition的实体对象", isBean = true)
 	@Return(desc = "返回值说明", range = "返回值取值范围")
 	public Map<String, Object> errDataSqlCheck(Dq_definition dq_definition) {
@@ -453,6 +463,6 @@ public class RuleConfigAction extends BaseAction {
 	@Return(desc = "规则否存在", range = "true：不存在，false：存在")
 	private boolean checkRegNumIsExist(long reg_num) {
 		return Dbo.queryNumber("SELECT COUNT(reg_num) FROM " + Dq_definition.TableName + " WHERE reg_num = ?",
-				reg_num).orElseThrow(() -> new BusinessException("检查规则reg_num否存在的SQL错误")) == 1;
+			reg_num).orElseThrow(() -> new BusinessException("检查规则reg_num否存在的SQL错误")) == 1;
 	}
 }
