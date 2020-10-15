@@ -63,15 +63,19 @@ public class LoadingData {
 						" AS ( SELECT * FROM (" + ofSql + ") as hyren_dqc_temp ) definition only");
 					SqlOperator.execute(dbDataConn, "insert into " + ldbbean.getTableName() +
 						" ( SELECT * FROM ( " + ofSql + ") as hyren_dqc_temp )");
+					dbDataConn.commit();
 				} else if (dbDataConn.getDbtype() == Dbtype.TERADATA) {
 					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS (" +
 						ofSql + ") WITH DATA");
+					dbDataConn.commit();
 				} else if (dbDataConn.getDbtype() == Dbtype.HIVE) {
 					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS " + ofSql);
-				} else {
+				} else if (dbDataConn.getDbtype() == Dbtype.POSTGRESQL) {
 					SqlOperator.execute(dbDataConn, "create table " + ldbbean.getTableName() + " AS " + ofSql);
+					dbDataConn.commit();
+				} else {
+					throw new BusinessException(dbDataConn.getDbtype() + " 类型数据库加载数据暂未实现!");
 				}
-				//TODO 这里不做commit,因为管控的规则校验执行一次会生成一张表,并且执行结果有记录
 			}
 		}
 		//同一个存储层,非jdbc
