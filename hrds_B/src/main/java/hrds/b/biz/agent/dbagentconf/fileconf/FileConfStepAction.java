@@ -139,8 +139,7 @@ public class FileConfStepAction extends BaseAction {
 			}
 
 			FileFormat fileFormat = FileFormat.ofEnumByCode(def.getDbfile_format());
-			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang) {
+			if (fileFormat == FileFormat.FeiDingChang || fileFormat == FileFormat.DingChang) {
 				// 检查行分隔符不能为空
 				String row_separator = def.getRow_separator();
 				if (StringUtil.isBlank(row_separator)) {
@@ -152,7 +151,9 @@ public class FileConfStepAction extends BaseAction {
 				// 检查数据分隔符不能为空
 				String database_separatorr = def.getDatabase_separatorr();
 				if (StringUtil.isBlank(database_separatorr)) {
-					throw new BusinessException("第 " + (i + 1) + " 条的数据分隔符不能为空!");
+					if (fileFormat != FileFormat.DingChang) {
+						throw new BusinessException("第 " + (i + 1) + " 条的数据分隔符不能为空!");
+					}
 				} else {
 					// 如果不为空则使用Unicode进行转码入库
 					def.setDatabase_separatorr(StringUtil.string2Unicode(database_separatorr));
@@ -328,7 +329,7 @@ public class FileConfStepAction extends BaseAction {
 	}
 
 	//SQL占位的分隔符
-	public String getSqlParamPlaceholder(){
+	public String getSqlParamPlaceholder() {
 
 		return Constant.SQLDELIMITER;
 	}
