@@ -59,7 +59,7 @@ public class CsvFileParserDeal extends FileParserAbstract {
 			}
 			writer.flush();
 		} catch (Exception e) {
-			throw new AppSystemException("解析非定长文件转存报错", e);
+			throw new AppSystemException("解析CSV文件转存报错", e);
 		}
 		return unloadFileAbsolutePath + Constant.METAINFOSPLIT + fileRowCount;
 	}
