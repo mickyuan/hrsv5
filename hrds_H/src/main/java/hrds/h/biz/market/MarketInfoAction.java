@@ -1592,11 +1592,9 @@ public class MarketInfoAction extends BaseAction {
 		}
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
-		if (StringUtil.isNotBlank(pre_partition)) {
-			// 更新预分区键
-			Dbo.execute("update " + Dm_datatable.TableName + " set pre_partition=? where datatable_id=?",
-					pre_partition, dm_datatable.getDatatable_id());
-		}
+		// 更新预分区键
+		Dbo.execute("update " + Dm_datatable.TableName + " set pre_partition=? where datatable_id=?",
+				pre_partition, dm_datatable.getDatatable_id());
 		//新增时判断SQL是否存在
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 				"select execute_sql,id,datatable_id,end_date,start_date from " + Dm_operation_info.TableName
