@@ -139,7 +139,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
             for (String tableName : listTable) {
                 List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tableName, db);
                 if (!validTableLayer(layerByTable)) {
-                    throw new AppSystemException("表 " + tableName + " 不属于Database,Hive,Hbase中的任意一层");
+                    throw new AppSystemException("表 " + tableName + " 不属于Database,Hive,Hbase,Carbondata中的任意一层");
                 }
                 if (needCreateTempView(layerByTable)) {
                     //如果表存在于多个关系型数据库，就随便读个表吧
