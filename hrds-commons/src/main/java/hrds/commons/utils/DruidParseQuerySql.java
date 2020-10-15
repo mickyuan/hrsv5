@@ -10,6 +10,8 @@ import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.*;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.postgresql.parser.PGSQLStatementParser;
+import com.alibaba.druid.sql.dialect.postgresql.visitor.PGSchemaStatVisitor;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
 import com.alibaba.druid.stat.TableStat;
 import com.alibaba.druid.stat.TableStat.Name;
@@ -149,13 +151,23 @@ public class DruidParseQuerySql {
 	 * <p>return:  </p>
 	 */
 	public static Set<Name> parseSqlTable(String sql) {
+		//FIXME 这里当oracle语法不支持时，改用pgsql的来解析。这是一个暂时解决方案，之后有待修改。
+		try {
+			SQLStatementParser parse = new OracleStatementParser(sql);
+			SQLStatement parseStatement = parse.parseStatement();
+			OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
+			parseStatement.accept(visitor);
+			Map<TableStat.Name, TableStat> tables = visitor.getTables();
+			return tables.keySet();
+		} catch (Exception e) {
+			SQLStatementParser parse = new PGSQLStatementParser(sql);
+			SQLStatement parseStatement = parse.parseStatement();
+			PGSchemaStatVisitor visitor = new PGSchemaStatVisitor();
+			parseStatement.accept(visitor);
+			Map<TableStat.Name, TableStat> tables = visitor.getTables();
+			return tables.keySet();
+		}
 
-		SQLStatementParser parse = new OracleStatementParser(sql);
-		SQLStatement parseStatement = parse.parseStatement();
-		OracleSchemaStatVisitor visitor = new OracleSchemaStatVisitor();
-		parseStatement.accept(visitor);
-		Map<TableStat.Name, TableStat> tables = visitor.getTables();
-		return tables.keySet();
 	}
 
 	/**
