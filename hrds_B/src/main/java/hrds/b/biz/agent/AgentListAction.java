@@ -20,6 +20,8 @@ import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CollectType;
+import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StoreLayerDataSource;
 import hrds.commons.entity.*;
@@ -1336,35 +1338,35 @@ public class AgentListAction extends BaseAction {
 	}
 
 	@Method(
-			desc = "根据对象采集id，向agent端发送任务信息",
-			logicStep = "根据对象采集id，向agent端发送任务信息")
+		desc = "根据对象采集id，向agent端发送任务信息",
+		logicStep = "根据对象采集id，向agent端发送任务信息")
 	@Param(name = "odc_id", desc = "源系统数据库设置表ID", range = "不为空")
 	@Param(name = "etl_date", desc = "立即执行的跑批日期", range = "如果是立即执行时,此参数不可为空", nullable = true, valueIfNull = "")
 	public void sendObjectCollectTaskById(long odc_id, String etl_date) {
 		// 1、根据数据库设置ID，在源系统数据库设置表中查询该任务是否存在
 		long count =
-				Dbo.queryNumber(
-						"select count(1) from " + Object_collect.TableName + " where odc_id = ?",
-						odc_id)
-						.orElseThrow(() -> new BusinessException("SQL查询错误"));
+			Dbo.queryNumber(
+				"select count(1) from " + Object_collect.TableName + " where odc_id = ?",
+				odc_id)
+				.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		if (count != 1) {
 			throw new BusinessException("未找到对象采集任务");
 		}
 		// 2、任务存在，则查询数据，开始拼接要发送到agent端的信息
 		// 2-1、首先根据数据库设置ID查询源系统数据库信息
 		Result ObjectCollectResult =
-				Dbo.queryResult(
-						"SELECT oc.*, ds.datasource_number FROM "
-								+ Data_source.TableName
-								+ " ds"
-								+ " JOIN "
-								+ Agent_info.TableName
-								+ " ai ON ds.source_id = ai.source_id"
-								+ " JOIN "
-								+ Object_collect.TableName
-								+ " oc ON ai.agent_id = oc.agent_id"
-								+ " where oc.odc_id = ?",
-						odc_id);
+			Dbo.queryResult(
+				"SELECT oc.*, ds.datasource_number FROM "
+					+ Data_source.TableName
+					+ " ds"
+					+ " JOIN "
+					+ Agent_info.TableName
+					+ " ai ON ds.source_id = ai.source_id"
+					+ " JOIN "
+					+ Object_collect.TableName
+					+ " oc ON ai.agent_id = oc.agent_id"
+					+ " where oc.odc_id = ?",
+				odc_id);
 
 		// 2-2、将结果集转换为JSONObject，方便往里面塞数据
 		if (ObjectCollectResult.getRowCount() != 1) {
@@ -1375,28 +1377,28 @@ public class AgentListAction extends BaseAction {
 
 		// 2-4、查询并组装采集表配置信息数组，除数据库中查询出的内容，还需要组装表采集字段集合、列合并参数信息、表存储配置信息
 		Result collectTableResult =
-				Dbo.queryResult(
-						"SELECT oc.odc_id,oct.ocs_id,oct.en_name,oct.zh_name,oct.collect_data_type,"
-								+ "oct.database_code,oct.updatetype, ds.datasource_name, "
-								+ "ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
-								+ "lower(ds.datasource_number || '_' || oc.obj_number || '_' ||  oct.en_name) "
-								+ "as hyren_name,dsr.storage_date FROM "
-								+ Data_source.TableName
-								+ " ds "
-								+ " JOIN "
-								+ Agent_info.TableName
-								+ " ai ON ds.source_id = ai.source_id"
-								+ " JOIN "
-								+ Object_collect.TableName
-								+ " oc ON ai.agent_id = oc.agent_id"
-								+ " LEFT JOIN "
-								+ Object_collect_task.TableName
-								+ " oct on oct.odc_id = oc.odc_id"
-								+ " LEFT JOIN "
-								+ Data_store_reg.TableName
-								+ " dsr on dsr.table_id = oct.ocs_id "
-								+ " WHERE oc.odc_id = ?",
-						odc_id);
+			Dbo.queryResult(
+				"SELECT oc.odc_id,oct.ocs_id,oct.en_name,oct.zh_name,oct.collect_data_type,"
+					+ "oct.database_code,oct.updatetype, ds.datasource_name, "
+					+ "ai.agent_name, ai.agent_id, ds.source_id, ai.user_id,"
+					+ "lower(ds.datasource_number || '_' || oc.obj_number || '_' ||  oct.en_name) "
+					+ "as hyren_name,dsr.storage_date FROM "
+					+ Data_source.TableName
+					+ " ds "
+					+ " JOIN "
+					+ Agent_info.TableName
+					+ " ai ON ds.source_id = ai.source_id"
+					+ " JOIN "
+					+ Object_collect.TableName
+					+ " oc ON ai.agent_id = oc.agent_id"
+					+ " LEFT JOIN "
+					+ Object_collect_task.TableName
+					+ " oct on oct.odc_id = oc.odc_id"
+					+ " LEFT JOIN "
+					+ Data_store_reg.TableName
+					+ " dsr on dsr.table_id = oct.ocs_id "
+					+ " WHERE oc.odc_id = ?",
+				odc_id);
 
 		// collectTables是从数据库中查询出的当前数据库采集任务要采集的表部分配置信息
 		JSONArray collectTables = JSONArray.parseArray(collectTableResult.toJSON());
@@ -1407,10 +1409,10 @@ public class AgentListAction extends BaseAction {
 			Long tableId = collectTable.getLong("ocs_id");
 			// 查询数据抽取定义，一张表对应多种数据抽取格式，放到对应的表的JSONObject中
 			List<Object_handle_type> Object_handle_types =
-					Dbo.queryList(
-							Object_handle_type.class,
-							"select * from " + Object_handle_type.TableName + " where ocs_id = ?",
-							tableId);
+				Dbo.queryList(
+					Object_handle_type.class,
+					"select * from " + Object_handle_type.TableName + " where ocs_id = ?",
+					tableId);
 			if (!Object_handle_types.isEmpty()) {
 				collectTable.put("object_handle_typeList", Object_handle_types);
 			} else {
@@ -1418,10 +1420,10 @@ public class AgentListAction extends BaseAction {
 			}
 			// 2-4-1、查询当前数据库采集任务下每张表的列合并信息，放入对应的表的JSONObject中
 			List<Object_collect_struct> Object_collect_structs =
-					Dbo.queryList(
-							Object_collect_struct.class,
-							"select * from " + Object_collect_struct.TableName + " where ocs_id = ?",
-							tableId);
+				Dbo.queryList(
+					Object_collect_struct.class,
+					"select * from " + Object_collect_struct.TableName + " where ocs_id = ?",
+					tableId);
 			if (!Object_collect_structs.isEmpty()) {
 				collectTable.put("object_collect_structList", Object_collect_structs);
 			} else {
@@ -1429,23 +1431,23 @@ public class AgentListAction extends BaseAction {
 			}
 			// 2-4-6、查询每张表的存储配置信息，一张表可以选择进入多个存储目的地
 			Result dataStoreResult =
-					Dbo.queryResult(
-							"select dsl.dsl_id, dsl.dsl_name, dsl.store_type, "
-									+ " dsl.is_hadoopclient, tcs.dtcs_name, lcs.dlcs_name "
-									+ " from "
-									+ Data_store_layer.TableName
-									+ " dsl"
-									+ " left join "
-									+ Type_contrast_sum.TableName
-									+ " tcs on dsl.dtcs_id = tcs.dtcs_id"
-									+ " left join "
-									+ Length_contrast_sum.TableName
-									+ " lcs on dsl.dlcs_id = lcs.dlcs_id"
-									+ " where dsl.dsl_id in (select drt.dsl_id from "
-									+ Dtab_relation_store.TableName
-									+ " drt where drt.tab_id = ?"
-									+ " AND drt.data_source = ?)",
-							tableId, StoreLayerDataSource.OBJ.getCode());
+				Dbo.queryResult(
+					"select dsl.dsl_id, dsl.dsl_name, dsl.store_type, "
+						+ " dsl.is_hadoopclient, tcs.dtcs_name, lcs.dlcs_name "
+						+ " from "
+						+ Data_store_layer.TableName
+						+ " dsl"
+						+ " left join "
+						+ Type_contrast_sum.TableName
+						+ " tcs on dsl.dtcs_id = tcs.dtcs_id"
+						+ " left join "
+						+ Length_contrast_sum.TableName
+						+ " lcs on dsl.dlcs_id = lcs.dlcs_id"
+						+ " where dsl.dsl_id in (select drt.dsl_id from "
+						+ Dtab_relation_store.TableName
+						+ " drt where drt.tab_id = ?"
+						+ " AND drt.data_source = ?)",
+					tableId, StoreLayerDataSource.OBJ.getCode());
 
 			JSONArray dataStoreArray = JSONArray.parseArray(dataStoreResult.toJSON());
 
@@ -1454,11 +1456,11 @@ public class AgentListAction extends BaseAction {
 				JSONObject dataStore = dataStoreArray.getJSONObject(m);
 				Long dslId = dataStore.getLong("dsl_id");
 				Result result =
-						Dbo.queryResult(
-								"select storage_property_key, storage_property_val, is_file from "
-										+ Data_store_layer_attr.TableName
-										+ " where dsl_id = ?",
-								dslId);
+					Dbo.queryResult(
+						"select storage_property_key, storage_property_val, is_file from "
+							+ Data_store_layer_attr.TableName
+							+ " where dsl_id = ?",
+						dslId);
 				if (result.isEmpty()) {
 					throw new BusinessException("根据存储层配置ID" + dslId + "未获取到存储层配置属性信息");
 				}
@@ -1468,12 +1470,12 @@ public class AgentListAction extends BaseAction {
 					IsFlag fileFlag = IsFlag.ofEnumByCode(result.getString(n, "is_file"));
 					if (fileFlag == IsFlag.Shi) {
 						dataStoreLayerFile.put(
-								result.getString(n, "storage_property_key"),
-								result.getString(n, "storage_property_val"));
+							result.getString(n, "storage_property_key"),
+							result.getString(n, "storage_property_val"));
 					} else {
 						dataStoreConnectAttr.put(
-								result.getString(n, "storage_property_key"),
-								result.getString(n, "storage_property_val"));
+							result.getString(n, "storage_property_key"),
+							result.getString(n, "storage_property_val"));
 					}
 				}
 				dataStore.put("data_store_connect_attr", dataStoreConnectAttr);
@@ -1481,41 +1483,41 @@ public class AgentListAction extends BaseAction {
 
 				// 2-4-8、遍历该表保存进入响应存储目的地的附加字段，组装附加字段信息
 				List<Object> storeLayers =
-						Dbo.queryOneColumnList(
-								"select dsla.dsla_storelayer from "
-										+ Dcol_relation_store.TableName
-										+ " csi"
-										+ " left join "
-										+ Data_store_layer_added.TableName
-										+ " dsla"
-										+ " on dsla.dslad_id = csi.dslad_id"
-										+ " where csi.col_id in"
-										+ " (select struct_id from "
-										+ Object_collect_struct.TableName
-										+ " where ocs_id = ?) "
-										+ " and dsla.dsl_id = ? AND csi.data_source = ?",
-								tableId,
-								dslId, StoreLayerDataSource.OBJ.getCode());
+					Dbo.queryOneColumnList(
+						"select dsla.dsla_storelayer from "
+							+ Dcol_relation_store.TableName
+							+ " csi"
+							+ " left join "
+							+ Data_store_layer_added.TableName
+							+ " dsla"
+							+ " on dsla.dslad_id = csi.dslad_id"
+							+ " where csi.col_id in"
+							+ " (select struct_id from "
+							+ Object_collect_struct.TableName
+							+ " where ocs_id = ?) "
+							+ " and dsla.dsl_id = ? AND csi.data_source = ?",
+						tableId,
+						dslId, StoreLayerDataSource.OBJ.getCode());
 
 				Result columnResult =
-						Dbo.queryResult(
-								"select dsla.dsla_storelayer, csi.csi_number, tc.column_name "
-										+ " from "
-										+ Dcol_relation_store.TableName
-										+ " csi"
-										+ " left join "
-										+ Data_store_layer_added.TableName
-										+ " dsla"
-										+ " on dsla.dslad_id = csi.dslad_id"
-										+ " join "
-										+ Object_collect_struct.TableName
-										+ " tc "
-										+ " on csi.col_id = tc.struct_id"
-										+ " where csi.col_id in (select struct_id from "
-										+ Object_collect_struct.TableName
-										+ " where ocs_id = ?) and dsla.dsl_id = ? AND csi.data_source = ?",
-								tableId,
-								dslId, StoreLayerDataSource.OBJ.getCode());
+					Dbo.queryResult(
+						"select dsla.dsla_storelayer, csi.csi_number, tc.column_name "
+							+ " from "
+							+ Dcol_relation_store.TableName
+							+ " csi"
+							+ " left join "
+							+ Data_store_layer_added.TableName
+							+ " dsla"
+							+ " on dsla.dslad_id = csi.dslad_id"
+							+ " join "
+							+ Object_collect_struct.TableName
+							+ " tc "
+							+ " on csi.col_id = tc.struct_id"
+							+ " where csi.col_id in (select struct_id from "
+							+ Object_collect_struct.TableName
+							+ " where ocs_id = ?) and dsla.dsl_id = ? AND csi.data_source = ?",
+						tableId,
+						dslId, StoreLayerDataSource.OBJ.getCode());
 
 				Map<String, Map<String, Integer>> additInfoFieldMap = new HashMap<>();
 				if (!columnResult.isEmpty() && !storeLayers.isEmpty()) {
@@ -1526,8 +1528,8 @@ public class AgentListAction extends BaseAction {
 							String dslaStoreLayer = columnResult.getString(h, "dsla_storelayer");
 							if (storeLayer.equals(dslaStoreLayer)) {
 								fieldMap.put(
-										columnResult.getString(h, "column_name"),
-										columnResult.getInteger(h, "csi_number"));
+									columnResult.getString(h, "column_name"),
+									columnResult.getInteger(h, "csi_number"));
 							}
 						}
 						additInfoFieldMap.put(storeLayer, fieldMap);
@@ -1548,12 +1550,12 @@ public class AgentListAction extends BaseAction {
 		}
 		// TODO 由于目前定义作业还没有原型，因此暂时手动将跑批日期设为当前日期
 		SendMsgUtil.sendObjectCollectTaskInfo(
-				sourceDBConfObj.getLong("odc_id"),
-				sourceDBConfObj.getLong("agent_id"),
-				getUserId(),
-				sourceDBConfObj.toJSONString(),
-				methodName,
-				etl_date);
+			sourceDBConfObj.getLong("odc_id"),
+			sourceDBConfObj.getLong("agent_id"),
+			getUserId(),
+			sourceDBConfObj.toJSONString(),
+			methodName,
+			etl_date);
 	}
 
 	@Method(
@@ -2147,5 +2149,26 @@ public class AgentListAction extends BaseAction {
 			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		//返回标识
 		return countNum == 0;
+	}
+
+	@Method(desc = "获取已存在的数据库采集连接信息", logicStep = "1: 根据当前登入的用户获取")
+	@Return(desc = "返回当前用户已配置过的数据库信息", range = "可为空,为空表示该用户为配置过数据库采集连接信息")
+	public List<Database_set> getDatabaseData() {
+		List<Database_set> databaseList = Dbo.queryList(Database_set.class,
+			"SELECT t1.database_name,t1.database_pad,t1.database_drive,t1.database_type,t1.user_name,t1.database_ip,"
+				+ "t1.database_port,t1.jdbc_url FROM "
+				+ Database_set.TableName
+				+ " t1 JOIN "
+				+ Agent_info.TableName
+				+ " t2 ON t1.agent_id = t2.agent_id WHERE t2.agent_type = ? AND t2.user_id = ? AND collect_type in (?,?)"
+				+ " GROUP BY "
+				+ "t1.database_name,t1.database_pad,t1.database_drive,t1.database_type,t1.user_name,t1.database_ip,"
+				+ "t1.database_port,t1.jdbc_url ORDER BY t1.database_name", AgentType.ShuJuKu.getCode(), getUserId(),
+			CollectType.ShuJuKuCaiJi.getCode(), CollectType.ShuJuKuChouShu.getCode());
+		databaseList.forEach(databaseSet -> {
+			DatabaseType databaseType = DatabaseType.ofEnumByCode(databaseSet.getDatabase_type());
+			databaseSet.setDatabase_type(databaseType.getValue());
+		});
+		return databaseList;
 	}
 }
