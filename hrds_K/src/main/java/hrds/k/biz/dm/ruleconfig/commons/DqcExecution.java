@@ -108,6 +108,11 @@ public class DqcExecution {
                         e.printStackTrace();
                         dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
                     }
+                    //处理sql1运行结果
+                    dq_result.setCheck_index1(map_result_1.get("index1").toString());
+                    if (dq_result.getCheck_index1().longValue() > 0) {
+                        dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
+                    }
                 }
                 //运行sql:检查总记录数
                 Map<String, Object> map_result_2 = new HashMap<>();
@@ -125,6 +130,8 @@ public class DqcExecution {
                         e.printStackTrace();
                         dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
                     }
+                    //处理sql2运行结果
+                    dq_result.setCheck_index2(map_result_2.get("index2").toString());
                 }
                 //设置运行结束日期,时间
                 dq_result.setEnd_date(DateUtil.getSysDate());
@@ -132,12 +139,6 @@ public class DqcExecution {
                 //设置耗时
                 long execution_end_time = System.currentTimeMillis();
                 dq_result.setElapsed_ms((int) (execution_end_time - execution_start_time));
-                //处理sql运行结果
-                dq_result.setCheck_index1(map_result_1.get("index1").toString());
-                if (dq_result.getCheck_index1().longValue() > 0) {
-                    dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
-                }
-                dq_result.setCheck_index2(map_result_2.get("index2").toString());
                 //执行到此处则代表程序指标1和指标2执行结束，开始记录指标3的数据
                 if (IsFlag.Shi.getCode().equals(dq_result.getIs_saveindex3()) && StringUtil.isNotBlank(dq_result.getErr_dtl_sql())) {
                     recordIndicator3Data(db, dq_result, beans);
