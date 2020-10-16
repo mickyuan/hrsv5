@@ -1264,7 +1264,7 @@ public class OperateAction extends BaseAction {
 		} else if (AutoDataOperator.XiaoYu == AutoDataOperator.ofEnumByCode(operator)) {
 			operator = "<";
 		} else if (AutoDataOperator.XiaoYuDengYu == AutoDataOperator.ofEnumByCode(operator)) {
-			operator = "<";
+			operator = "<=";
 		} else if (AutoDataOperator.FeiKong == AutoDataOperator.ofEnumByCode(operator)) {
 			operator = "IS NOT NULL";
 		} else {
