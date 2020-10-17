@@ -94,7 +94,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
 						StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) ||
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
-				StorageType.QuanLiang.getCode().equals(collectTableBean.getStorage_type()));
+						StorageType.QuanLiang.getCode().equals(collectTableBean.getStorage_type()));
 		this.etl_date = collectTableBean.getEtlDate();
 		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
@@ -132,9 +132,10 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					|| Constant.HYREN_OPER_PERSON.equalsIgnoreCase(columnName)) {
 				continue;
 			}
-			columnData = lineList.get(i);
-			if (null == columnData) {
+			if (null == lineList.get(i)) {
 				columnData = "";
+			} else {
+				columnData = lineList.get(i).trim();
 			}
 			//判断是否是算md5的列，算md5
 			if (md5Col.get(columnName) != null && md5Col.get(columnName)) {
