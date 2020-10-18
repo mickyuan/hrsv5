@@ -55,7 +55,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void mergeIncrement() {
 		List<String> sqlList = new ArrayList<>();
-		dropTableIfExists(yesterdayTableName, db, sqlList);
+		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		sqlList.add("alter table " + deltaTableName + " rename to " + yesterdayTableName);
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -81,7 +81,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		//将本次采集的数据存入临时表
 		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
 		//删除上次采集的数据表
-		dropTableIfExists(yesterdayTableName, db, sqlList);
+		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		//将临时表改名为进数之后的表
 		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
 		//执行sql
@@ -151,7 +151,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		//6.插入增量数据
 		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
 		//7.删除上次采集的数据表
-		dropTableIfExists(yesterdayTableName, db, sqlList);
+		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		//8.将临时表改名为进数之后的表
 		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
 		HSqlExecute.executeSql(sqlList, db);
@@ -393,7 +393,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	private void dropAllTmpTable() {
 		List<String> deleteInfo = new ArrayList<>();
 		//删除临时增量表
-		dropTableIfExists(deltaTableName, db, deleteInfo);
+		deleteInfo.add("DROP TABLE IF EXISTS " + deltaTableName);
 		//清空表数据
 		HSqlExecute.executeSql(deleteInfo, db);
 	}

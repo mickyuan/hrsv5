@@ -475,7 +475,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			str = StringUtil.isBlank(tmpValue) ? null : new BigDecimal(tmpValue.trim());
 		} else {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue;
+			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue.trim();
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
 		if (Dbtype.TERADATA == dbtype) {
