@@ -1,11 +1,18 @@
 package hrds.commons.hadoop.readconfig;
 
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.StorageTypeKey;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.util.Map;
 
 public class ConfigReader {
 
@@ -24,7 +31,7 @@ public class ConfigReader {
 	 * @return Configuration
 	 */
 	public static Configuration getConfiguration() {
-		return getConfiguration(null);
+		return getConfiguration((String) null);
 	}
 
 	/**
@@ -58,6 +65,26 @@ public class ConfigReader {
 	 */
 	public static Configuration getConfiguration(String configPath, String platform, String prncipal_name) {
 		return getConfiguration(configPath, platform, prncipal_name, null);
+	}
+
+	/**
+	 * load conf to Configuration, 根据存储层实体 layerBean 创建 Configuration
+	 *
+	 * @param layerBean 存储层实体
+	 * @return Configuration
+	 */
+	public static Configuration getConfiguration(LayerBean layerBean) {
+		//配置文件路径
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH + layerBean.getDsl_name() + File.separator, true);
+		//配置属性
+		Map<String, String> layerAttr = layerBean.getLayerAttr();
+		//平台版本
+		String platform = layerAttr.get(StorageTypeKey.platform);
+		//prncipal_name
+		String prncipal_name = layerAttr.get(StorageTypeKey.prncipal_name);
+		//操作hdfs的用户名
+		String hadoop_user_name = layerAttr.get(StorageTypeKey.hadoop_user_name);
+		return getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
 	}
 
 	/**
