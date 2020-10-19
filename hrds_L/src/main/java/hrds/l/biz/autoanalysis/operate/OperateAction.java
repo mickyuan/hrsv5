@@ -635,7 +635,7 @@ public class OperateAction extends BaseAction {
 		Map<String, Object> xFontInfoMap = Dbo.queryOneObject("SELECT * FROM " + Auto_font_info.TableName
 						+ " WHERE font_corr_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
-				component_id, IsFlag.Fou.getCode());
+				component_id, AxisType.XAxis.getCode());
 		resultMap.put("axisFontInfo", xFontInfoMap);
 		// 8.根据组件id查询x/y轴配置信息表
 		List<Map<String, Object>> xAxisInfoList = Dbo.queryList(
@@ -1560,6 +1560,10 @@ public class OperateAction extends BaseAction {
 			auto_axis_info.setAxis_id(PrimayKeyGener.getNextId());
 			auto_axis_info.setComponent_id(auto_comp_sum.getComponent_id());
 			auto_axis_info.add(Dbo.db());
+			axisStyleFont.setFont_id(PrimayKeyGener.getNextId());
+			axisStyleFont.setFont_corr_id(auto_axis_info.getAxis_id());
+			axisStyleFont.setFont_corr_tname(Auto_axis_info.TableName);
+			axisStyleFont.add(Dbo.db());
 			// 10.保存x/y轴线配置信息/轴标签配置信息表数据
 			if (AxisType.XAxis == AxisType.ofEnumByCode(auto_axis_info.getAxis_type())) {
 				// x轴线配置信息表数据
@@ -1571,10 +1575,6 @@ public class OperateAction extends BaseAction {
 				xAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
 				xAxisLabel.add(Dbo.db());
 				// 11.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）
-				axisStyleFont.setFont_id(PrimayKeyGener.getNextId());
-				axisStyleFont.setFont_corr_id(auto_axis_info.getAxis_id());
-				axisStyleFont.setFont_corr_tname(Auto_axis_info.TableName);
-				axisStyleFont.add(Dbo.db());
 			} else {
 				// y轴线配置信息表数据
 				yAxisLine.setAxis_id(auto_axis_info.getAxis_id());
@@ -1600,9 +1600,9 @@ public class OperateAction extends BaseAction {
 //		auto_label.setLabel_corr_id(auto_comp_sum.getComponent_id());
 //		auto_label.add(Dbo.db());
 //		// 15.保存图例信息表
-//		auto_legend_info.setLegend_id(PrimayKeyGener.getNextId());
-//		auto_legend_info.setComponent_id(auto_comp_sum.getComponent_id());
-//		auto_legend_info.add(Dbo.db());
+		auto_legend_info.setLegend_id(PrimayKeyGener.getNextId());
+		auto_legend_info.setComponent_id(auto_comp_sum.getComponent_id());
+		auto_legend_info.add(Dbo.db());
 	}
 
 	private void addAutoAxisColInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum) {
@@ -1615,7 +1615,7 @@ public class OperateAction extends BaseAction {
 				auto_axis_col_info.setSerial_number(i);
 				auto_axis_col_info.setColumn_name(x_columns[i]);
 				// x轴
-				auto_axis_col_info.setShow_type(IsFlag.Fou.getCode());
+				auto_axis_col_info.setShow_type(AxisType.XAxis.getCode());
 				auto_axis_col_info.setComponent_id(auto_comp_sum.getComponent_id());
 				auto_axis_col_info.add(Dbo.db());
 			}
@@ -1627,7 +1627,7 @@ public class OperateAction extends BaseAction {
 				auto_axis_col_info.setAxis_column_id(PrimayKeyGener.getNextId());
 				auto_axis_col_info.setSerial_number(i);
 				auto_axis_col_info.setColumn_name(y_columns[i]);
-				auto_axis_col_info.setShow_type(IsFlag.Shi.getCode());
+				auto_axis_col_info.setShow_type(AxisType.YAxis.getCode());
 				auto_axis_col_info.setComponent_id(auto_comp_sum.getComponent_id());
 				auto_axis_col_info.add(Dbo.db());
 			}
