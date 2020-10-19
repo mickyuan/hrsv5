@@ -611,12 +611,12 @@ public class OperateAction extends BaseAction {
 		List<Map<String, Object>> xAxisColList = Dbo.queryList(
 				"SELECT * FROM " + Auto_axis_col_info.TableName
 						+ " WHERE component_id = ? AND show_type = ?",
-				component_id, IsFlag.Fou.getCode());
+				component_id, AxisType.XAxis.getCode());
 		resultMap.put("xAxisCol", xAxisColList);
 		List<Map<String, Object>> yAxisColList = Dbo.queryList(
 				"SELECT * FROM " + Auto_axis_col_info.TableName
 						+ " WHERE component_id = ? AND show_type = ?",
-				component_id, IsFlag.Shi.getCode());
+				component_id, AxisType.YAxis.getCode());
 		resultMap.put("yAxisCol", yAxisColList);
 		String[] x_columns = new String[xAxisColList.size()];
 		for (int i = 0; i < xAxisColList.size(); i++) {
@@ -640,36 +640,36 @@ public class OperateAction extends BaseAction {
 		// 8.根据组件id查询x/y轴配置信息表
 		List<Map<String, Object>> xAxisInfoList = Dbo.queryList(
 				"SELECT * FROM " + Auto_axis_info.TableName + " WHERE component_id = ? AND axis_type = ?",
-				component_id, IsFlag.Fou.getCode());
+				component_id, AxisType.XAxis.getCode());
 		resultMap.put("xAxisInfo", xAxisInfoList);
 		List<Map<String, Object>> yAxisInfoList = Dbo.queryList(
 				"SELECT * FROM " + Auto_axis_info.TableName + " WHERE component_id = ? AND axis_type = ?",
-				component_id, IsFlag.Shi.getCode());
+				component_id, AxisType.YAxis.getCode());
 		resultMap.put("yAxisInfo", yAxisInfoList);
 		// 9.根据组件id查询x/y轴标签配置信息表
 		Map<String, Object> xAxislabelMap = Dbo.queryOneObject(
 				"SELECT * FROM " + Auto_axislabel_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
-				component_id, IsFlag.Fou.getCode());
+				component_id, AxisType.XAxis.getCode());
 		resultMap.put("xAxislabel", xAxislabelMap);
 		Map<String, Object> yAxislabelMap = Dbo.queryOneObject(
 				"SELECT * FROM " + Auto_axislabel_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
-				component_id, IsFlag.Shi.getCode());
+				component_id, AxisType.YAxis.getCode());
 		resultMap.put("yAxislabel", yAxislabelMap);
 		// 10.根据组件id查询x/y轴线配置信息表
 		Map<String, Object> xAxislineMap = Dbo.queryOneObject(
 				"SELECT * FROM " + Auto_axisline_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
-				component_id, IsFlag.Fou.getCode());
+				component_id, AxisType.XAxis.getCode());
 		resultMap.put("xAxisline", xAxislineMap);
 		Map<String, Object> yAxislineMap = Dbo.queryOneObject("SELECT * FROM " + Auto_axisline_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
-				component_id, IsFlag.Shi.getCode());
+				component_id, AxisType.YAxis.getCode());
 		resultMap.put("yAxisline", yAxislineMap);
 		// 11.根据组件id查询二维表样式信息表
 		Map<String, Object> tableInfoMap = Dbo.queryOneObject(
@@ -1080,7 +1080,7 @@ public class OperateAction extends BaseAction {
 				}
 			}
 			//去除' AND '
-			String substring = result_sql.substring(0, result_sql.length() - 6);
+			result_sql = result_sql.substring(0, result_sql.length() - 6);
 		}
 		//处理group by
 		if (autoCompGroups != null && autoCompGroups.length > 0) {
