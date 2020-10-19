@@ -33,11 +33,14 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @DocClass(desc = "定义表抽取属性", author = "WangZhengcheng")
 public class CollTbConfStepAction extends BaseAction {
 
 	private static final long DEFAULT_TABLE_ID = 999999L;
+	private static final Logger log = LogManager.getLogger();
 
 	@Method(
 		desc = "根据数据库采集设置表ID加载页面初始化数据",
@@ -424,11 +427,12 @@ public class CollTbConfStepAction extends BaseAction {
 				Dbo.execute("UPDATE " + Table_column.TableName
 						+ " SET is_get = ?, is_primary_key = ?, column_name = ?, column_type = ?, column_ch_name = ?,"
 						+ "	table_id = ?, valid_s_date = ?, valid_e_date = ?, is_alive = ?, is_new = ?, tc_or = ?,"
-						+ " tc_remark = ?,is_zipper_field = ?  WHERE column_id = ?", table_column.getIs_get(), table_column.getIs_primary_key(),
+						+ " tc_remark = ?,is_zipper_field = ?  WHERE column_id = ?", table_column.getIs_get(),
+					table_column.getIs_primary_key(),
 					table_column.getColumn_name(), table_column.getColumn_type(), table_column.getColumn_ch_name(),
 					tableInfo.getTable_id(), table_column.getValid_s_date(), table_column.getValid_e_date(),
 					table_column.getIs_alive(), table_column.getIs_new(), table_column.getTc_or(),
-					table_column.getTc_remark(),table_column.getIs_zipper_field(),
+					table_column.getTc_remark(), table_column.getIs_zipper_field(),
 					table_column.getColumn_id());
 			} else {
 				table_column.setColumn_id(PrimayKeyGener.getNextId());
@@ -1262,7 +1266,14 @@ public class CollTbConfStepAction extends BaseAction {
 		List<Map<String, Object>> results = new ArrayList<>();
 		// 2-1、根据String的自然顺序(字母a-z)对表名进行升序排序
 		Collections.sort(tableNames);
+		List<String> tableNameList = new ArrayList<>();
 		for (String tableName : tableNames) {
+			//如果表名已存在了,就跳过
+			if (tableNameList.contains(tableName)) {
+				log.info("跳过此次重复的表名: " + tableName);
+				continue;
+			}
+			tableNameList.add(tableName);
 			Map<String, Object> tableResult =
 				Dbo.queryOneObject(
 					" select *"
@@ -1641,7 +1652,7 @@ public class CollTbConfStepAction extends BaseAction {
 	@Param(name = "unloadType", desc = "卸数方式(代码项: UnloadType)", range = "不可为空")
 	@Param(name = "sql", desc = "获取列的SQL", range = "不可为空")
 	@Param(name = "tableId", desc = "表设置ID", range = "可为空,为空表示未设置过", nullable = true, valueIfNull = "0")
-	@Param(name = "tableName", desc = "表名称", range = "不可为空,为空表示未设置过",nullable = true)
+	@Param(name = "tableName", desc = "表名称", range = "不可为空,为空表示未设置过", nullable = true)
 	@Return(desc = "返回检查后的表数据信息", range = "不可为空")
 	public Set<Table_column> getSqlColumnData(long colSetId, String unloadType, String sql, long tableId,
 		String tableName) {
