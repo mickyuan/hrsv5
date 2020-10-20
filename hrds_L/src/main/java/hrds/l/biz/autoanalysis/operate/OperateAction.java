@@ -878,9 +878,7 @@ public class OperateAction extends BaseAction {
 								   Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (x_columns != null && x_columns.length > 0) {
-			List<Object> legend_data = new ArrayList<>();
-			Collections.addAll(legend_data, x_columns);
-			resultMap.put("legend_data", legend_data);
+			resultMap.put("legend_data", x_columns);
 			// 添加y轴的值
 			List<Map<String, List<Object>>> yList = new ArrayList<>();
 			for (int i = 0; i < componentList.size(); i++) {
@@ -960,9 +958,7 @@ public class OperateAction extends BaseAction {
 								Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
-			List<Object> columns = new ArrayList<>();
-			Collections.addAll(columns, y_columns);
-			resultMap.put("legend_data", columns);
+			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
 			for(int i=0;i<y_columns.length;i++){
