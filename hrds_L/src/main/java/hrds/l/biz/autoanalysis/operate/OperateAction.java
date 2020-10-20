@@ -238,7 +238,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoTpCondInfos", desc = "自主取数模板条件对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFetchRes", desc = "自主取数结果对象数组", range = "与数据库对应表规则一致", isBean = true)
 	public Long saveAutoAccessInfoToQuery(Auto_fetch_sum auto_fetch_sum, Auto_tp_cond_info[] autoTpCondInfos,
-	                                      Auto_fetch_res[] autoFetchRes) {
+										  Auto_fetch_res[] autoFetchRes) {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.判断模板信息是否已不存在
 		Validator.notNull(auto_fetch_sum.getTemplate_id(), "模板ID不能为空");
@@ -303,7 +303,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private String getWhereSql(long template_id, Auto_tp_cond_info[] autoTpCondInfos,
-	                           Auto_fetch_res[] autoFetchRes) {
+							   Auto_fetch_res[] autoFetchRes) {
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		StringBuilder resultSql = new StringBuilder("select ");
 		List<String> template_sql = Dbo.queryOneColumnList(
@@ -714,7 +714,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "chart_type", desc = "图标类型", range = "无限制")
 	@Return(desc = "返回图标显示数据", range = "无限制")
 	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
-	                                        String chart_type) {
+											String chart_type) {
 		List<Map<String, Object>> componentList = new ArrayList<>();
 		// 1.获取组件数据
 		new ProcessingData() {
@@ -772,7 +772,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForBLSimple(List<Map<String, Object>> componentList, String[] x_columns,
-	                                String[] y_columns, Map<String, Object> resultMap) {
+									String[] y_columns, Map<String, Object> resultMap) {
 		if (x_columns.length < 1 || y_columns.length < 2) {
 			return;
 		}
@@ -792,7 +792,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForPolarbar(List<Map<String, Object>> componentList, String[] x_columns,
-	                                String[] y_columns, Map<String, Object> resultMap) {
+									String[] y_columns, Map<String, Object> resultMap) {
 		String x_column = x_columns[0];
 		String y_column = y_columns[0];
 		List<Object> radiusData = new ArrayList<>();
@@ -807,7 +807,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForBubble(List<Map<String, Object>> componentList, String[] x_columns,
-	                              String[] y_columns, Map<String, Object> resultMap) {
+								  String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> seriesData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
 			Map<String, Object> map = new HashMap<>();
@@ -819,7 +819,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDateForBarmd(List<Map<String, Object>> componentList, String[] x_columns,
-	                             String[] y_columns, Map<String, Object> resultMap) {
+								 String[] y_columns, Map<String, Object> resultMap) {
 		List<List<Object>> data = new ArrayList<>();
 		String y_column = y_columns[0];
 		for (Map<String, Object> stringObjectMap : componentList) {
@@ -836,7 +836,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForTreemap(List<Map<String, Object>> componentList, String[] x_columns,
-	                               String[] y_columns, Map<String, Object> resultMap) {
+								   String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> seriesData = new ArrayList<>();
 		Map<String, Map<String, Object>> map = new HashMap<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
@@ -875,7 +875,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForBoxplot(List<Map<String, Object>> componentList, String[] x_columns,
-	                               Map<String, Object> resultMap) {
+								   Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (x_columns != null && x_columns.length > 0) {
 			List<Object> legend_data = new ArrayList<>();
@@ -901,7 +901,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForScatter(List<Map<String, Object>> componentList, String[] x_columns,
-	                               String[] y_columns, Map<String, Object> resultMap) {
+								   String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> scatterData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
 			Map<String, Object> map = new HashMap<>();
@@ -913,7 +913,7 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForPie(List<Map<String, Object>> componentList, String[] x_columns,
-	                           String[] y_columns, String chart_type, Map<String, Object> resultMap) {
+							   String[] y_columns, String chart_type, Map<String, Object> resultMap) {
 
 		List<String> legendData = new ArrayList<>();
 		List<Map<String, Object>> seriesArray = new ArrayList<>();
@@ -956,8 +956,8 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForLine(List<Map<String, Object>> componentList, String[] x_columns,
-	                            String[] y_columns, String chart_type,
-	                            Map<String, Object> resultMap) {
+								String[] y_columns, String chart_type,
+								Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			List<Object> columns = new ArrayList<>();
@@ -965,30 +965,19 @@ public class OperateAction extends BaseAction {
 			resultMap.put("legend_data", columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			Map<String, Object> map = new HashMap<>();
-			List<Object> data = new ArrayList<>();
-			for (int i = 0; i < componentList.size(); i++) {
-				for (int j = 0; j < y_columns.length; j++) {
-					data.add(componentList.get(i).get(y_columns[j].trim()));
-					if (i == 0) {
-						map.put("name", y_columns[j]);
-						if ("bl".equals(chart_type)) {
-							if (j < 2) {
-								map.put("type", "bar");
-								map.put("stack", "two");
-							} else {
-								map.put("type", "line");
-								map.put("yAxisIndex", "1");
-							}
-						} else {
-							map.put("type", chart_type);
-						}
-						map.put("data", data);
-						yList.add(map);
-					}
+			for(int i=0;i<y_columns.length;i++){
+				Map<String, Object> map = new HashMap<>();
+				List<Object> data = new ArrayList<>();
+				for(int j=0;j<componentList.size();j++){
+					data.add(componentList.get(j).get(y_columns[i].trim()));
 				}
+				map.put("name", y_columns[i]);
+				map.put("type", "line");
+				map.put("data", data);
+				yList.add(map);
 			}
 			resultMap.put("seriesArray", yList);
+			System.out.println(yList);
 		}
 		// 添加x轴的值，默认为一个取x_columns[0]
 		if (x_columns != null && x_columns.length > 0) {
@@ -998,6 +987,7 @@ public class OperateAction extends BaseAction {
 			}
 			resultMap.put("xArray", xList);
 		}
+
 	}
 
 	@Method(desc = "获取可视化组件结果（获取答案），执行前先调用getSqlByCondition方法",
@@ -1034,7 +1024,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致", isBean = true)
 	@Return(desc = "返回可视化创建组件过滤条件获取答案信息", range = "")
 	public String getSqlByCondition(ComponentBean componentBean, Auto_comp_cond[] autoCompConds,
-	                                Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
+									Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums) {
 		Validator.notNull(componentBean.getFetch_name(), "取数名称不能为空");
 		Validator.notNull(componentBean.getData_source(), "数据来源不能为空");
 		String fetch_sql;
@@ -1308,13 +1298,13 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致", isBean = true)
 	public void updateVisualComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
-	                                      Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
-	                                      Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
-	                                      Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
-	                                      Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
-	                                      Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
-	                                      Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
-	                                      Auto_label auto_label, Auto_legend_info auto_legend_info) {
+										  Auto_comp_cond[] autoCompConds, Auto_comp_group[] autoCompGroups,
+										  Auto_comp_data_sum[] autoCompDataSums, Auto_font_info titleFont,
+										  Auto_font_info axisStyleFont, Auto_axis_info[] autoAxisInfos,
+										  Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
+										  Auto_axisline_info xAxisLine, Auto_axisline_info yAxisLine,
+										  Auto_table_info auto_table_info, Auto_chartsconfig auto_chartsconfig,
+										  Auto_label auto_label, Auto_legend_info auto_legend_info) {
 		// 1.校验组件汇总表字段合法性
 		Validator.notNull(auto_comp_sum.getComponent_id(), "更新时组件ID不能为空");
 		checkAutoCompSumFields(auto_comp_sum);
@@ -1442,13 +1432,13 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致")
 	@UploadFile
 	public void addVisualComponentInfo(String componentBeanString, String auto_comp_sumString,
-	                                   String autoCompCondString, String autoCompGroupString,
-	                                   String autoCompDataSumString, String titleFontString,
-	                                   String axisStyleFontString, String autoAxisInfoString,
-	                                   String xAxisLabelString, String yAxisLabelString,
-	                                   String xAxisLineString, String yAxisLineString,
-	                                   String auto_table_infoString, String auto_chartsconfigString,
-	                                   String auto_labelString, String auto_legend_infoString) {
+									   String autoCompCondString, String autoCompGroupString,
+									   String autoCompDataSumString, String titleFontString,
+									   String axisStyleFontString, String autoAxisInfoString,
+									   String xAxisLabelString, String yAxisLabelString,
+									   String xAxisLineString, String yAxisLineString,
+									   String auto_table_infoString, String auto_chartsconfigString,
+									   String auto_labelString, String auto_legend_infoString) {
 		ComponentBean componentBean = JSONObject.parseObject(componentBeanString, new TypeReference<ComponentBean>() {
 		});
 		Auto_comp_sum auto_comp_sum = JSONObject.parseObject(auto_comp_sumString, new TypeReference<Auto_comp_sum>() {
@@ -1901,8 +1891,8 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	public void saveDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                                  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                                  Auto_frame_info[] autoFrameInfos, String layout) {
+									  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+									  Auto_frame_info[] autoFrameInfos, String layout) {
 		// 1.校验仪表盘表字段合法性
 		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
 		// 2.判断仪表板名称是否已存在
@@ -1931,8 +1921,8 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	public void updateDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                                    Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                                    Auto_frame_info[] autoFrameInfos, String layout) {
+										Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+										Auto_frame_info[] autoFrameInfos, String layout) {
 		// 1.校验仪表盘表字段合法性
 		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
 		Validator.notNull(auto_dashboard_info.getDashboard_id(), "更新时仪表盘ID不能为空");
@@ -1961,8 +1951,8 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                           Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                           Auto_frame_info[] autoFrameInfos, String layout) {
+							   Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
+							   Auto_frame_info[] autoFrameInfos, String layout) {
 		// 1.解析仪表盘布局信息
 		JSONArray layoutArray = JSONArray.parseArray(layout);
 		for (int i = 0; i < layoutArray.size(); i++) {
