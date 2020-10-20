@@ -1863,6 +1863,22 @@ public class OperateAction extends BaseAction {
 				map.put("i", autoCompSum.getComponent_id());
 				map.put("static", true);
 				map.put("type", autoCompSum.getComponent_id() + "");
+				// 主题字体
+				map.put("titleFontInfo", componentInfo.get("titleFontInfo"));
+				// 轴字体
+				map.put("axisFontInfo", componentInfo.get("axisFontInfo"));
+				map.put("xAxisInfo", componentInfo.get("xAxisInfo"));
+				map.put("xAxisLine", componentInfo.get("xAxisline"));
+				map.put("xAxisLabel", componentInfo.get("xAxislabel"));
+				map.put("yAxisInfo", componentInfo.get("yAxisInfo"));
+				map.put("yAxisLine", componentInfo.get("yAxisline"));
+				map.put("yAxisLabel", componentInfo.get("yAxislabel"));
+				// 二维码信息
+				map.put("twoDimensionalTable", componentInfo.get("twoDimensionalTable"));
+				// 图标信息
+				map.put("chartsconfig", componentInfo.get("chartsconfig"));
+				// 文本标签信息
+				map.put("textLabel", componentInfo.get("textLabel"));
 				componentOnDashBoard.put(String.valueOf(autoCompSum.getComponent_id()),
 						auto_comp_sum.getComponent_buffer());
 				componentList.add(map);
