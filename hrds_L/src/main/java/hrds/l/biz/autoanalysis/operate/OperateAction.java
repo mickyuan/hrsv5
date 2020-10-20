@@ -1751,7 +1751,7 @@ public class OperateAction extends BaseAction {
 				Map<String, Object> object = new HashMap<>();
 				Map<String, Object> componentMap = getVisualComponentInfoById(auto_asso_info.getComponent_id());
 				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
-						componentMap.get("compSum").toString(), Auto_comp_sum.class)
+						JsonUtil.toJson(componentMap.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
 				object.put("x", auto_asso_info.getX_axis_coord());
 				object.put("y", auto_asso_info.getY_axis_coord());
@@ -1881,7 +1881,7 @@ public class OperateAction extends BaseAction {
 			"4.新增仪表盘布局信息")
 	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象",
 			range = "与数据库对应表规则一致(仪表盘状态使用（IsFlag）代码项，0:未发布，1:已发布)", isBean = true)
-	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true,nullable = true)
 	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
@@ -2062,7 +2062,7 @@ public class OperateAction extends BaseAction {
 		}
 		// 2.删除仪表盘信息
 		DboExecute.deletesOrThrow("删除仪表盘信息失败：" + dashboard_id,
-				"DELETE FROM" + Auto_dashboard_info.TableName + "WHERE dashboard_id = ? ", dashboard_id);
+				"DELETE FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id = ? ", dashboard_id);
 		// 3.删除仪表盘相关表信息
 		deleteDashboardAssoTable(dashboard_id);
 	}
