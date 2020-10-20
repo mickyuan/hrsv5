@@ -91,7 +91,7 @@ public class DqcExecution {
 				}
 				//运行sql:不在范围内的记录数
 				Map<String, Object> map_result_1 = new HashMap<>();
-				if (StringUtil.isNotBlank(index1_sql) && IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex1())) {
+				if (StringUtil.isNotBlank(index1_sql)) {
 					try {
 						new ProcessingData() {
 
@@ -106,14 +106,24 @@ public class DqcExecution {
 						dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
 					}
 					//处理sql1运行结果
-					dq_result.setCheck_index1(map_result_1.get("index1").toString());
-					if (dq_result.getCheck_index1().longValue() > 0) {
-						dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
+					if (IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex1())) {
+						dq_result.setCheck_index1(map_result_1.get("index1").toString());
+					}
+					if ("TAB NAN".equals(dq_definition.getCase_type())) {
+						if (dq_result.getCheck_index1().longValue() > 0) {
+							dq_result.setVerify_result(DqcVerifyResult.ZhengChang.getCode());
+						} else {
+							dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
+						}
+					} else {
+						if (dq_result.getCheck_index1().longValue() > 0) {
+							dq_result.setVerify_result(DqcVerifyResult.YiChang.getCode());
+						}
 					}
 				}
 				//运行sql:检查总记录数
 				Map<String, Object> map_result_2 = new HashMap<>();
-				if (StringUtil.isNotBlank(index2_sql) && IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex2())) {
+				if (StringUtil.isNotBlank(index2_sql)) {
 					try {
 						new ProcessingData() {
 
@@ -128,7 +138,9 @@ public class DqcExecution {
 						dq_result.setVerify_result(DqcVerifyResult.ZhiXingShiBai.getCode());
 					}
 					//处理sql2运行结果
-					dq_result.setCheck_index2(map_result_2.get("index2").toString());
+					if (IsFlag.Shi.getCode().equals(dq_definition.getIs_saveindex2())) {
+						dq_result.setCheck_index2(map_result_2.get("index2").toString());
+					}
 				}
 				//设置运行结束日期,时间
 				dq_result.setEnd_date(DateUtil.getSysDate());
