@@ -66,6 +66,12 @@ public class Auto_comp_sum extends ProjectTableEntity
 	private Long create_user;
 	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
+	@DocBean(name ="show_label",value="是否显示(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String show_label;
+	@DocBean(name ="position",value="文本显示位置:",dataType = String.class,required = false)
+	private String position;
+	@DocBean(name ="formatter",value="文本格式化:",dataType = String.class,required = false)
+	private String formatter;
 
 	/** 取得：组件名称 */
 	public String getComponent_name(){
@@ -228,5 +234,29 @@ public class Auto_comp_sum extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(update_user)){
 			this.update_user=new Long(update_user);
 		}
+	}
+	/** 取得：是否显示 */
+	public String getShow_label(){
+		return show_label;
+	}
+	/** 设置：是否显示 */
+	public void setShow_label(String show_label){
+		this.show_label=show_label;
+	}
+	/** 取得：文本显示位置 */
+	public String getPosition(){
+		return position;
+	}
+	/** 设置：文本显示位置 */
+	public void setPosition(String position){
+		this.position=position;
+	}
+	/** 取得：文本格式化 */
+	public String getFormatter(){
+		return formatter;
+	}
+	/** 设置：文本格式化 */
+	public void setFormatter(String formatter){
+		this.formatter=formatter;
 	}
 }
