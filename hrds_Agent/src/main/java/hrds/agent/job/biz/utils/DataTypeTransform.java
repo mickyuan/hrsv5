@@ -4,6 +4,7 @@ import fd.ng.core.conf.ConfFileLoader;
 import fd.ng.core.yaml.YamlArray;
 import fd.ng.core.yaml.YamlFactory;
 import fd.ng.core.yaml.YamlMap;
+import hrds.commons.exception.AppSystemException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,7 +60,12 @@ public class DataTypeTransform {
 			//默认类型是规范的即一对括号
 			String length = type.substring(type.indexOf(LKH) + 1, type.length() - 1);
 			//获取要替换的值
-			String val = map.get(dsl_name).getString(key_2, key_2);
+			YamlMap yamlMap = map.get(dsl_name);
+			if (yamlMap == null) {
+				throw new AppSystemException("存储层" + dsl_name + "的配置信息在Agent的contrast.conf文件中没有，" +
+						"请重新部署agent或者手动更新配置文件再重启Agent");
+			}
+			String val = yamlMap.getString(key_2, key_2);
 			if (list.contains(val)) {
 				return val;
 			}
