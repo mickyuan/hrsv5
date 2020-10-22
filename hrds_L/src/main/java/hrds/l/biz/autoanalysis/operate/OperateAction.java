@@ -56,6 +56,8 @@ public class OperateAction extends BaseAction {
 	private static final String LINE = "line";
 	// 柱状图
 	private static final String BAR = "bar";
+	// 堆叠柱状图
+	private static final String STACKINGBAR = "stackingbar";
 	// 柱状折线混合图
 	private static final String BL = "bl";
 	// 柱状折线混合图-简单
@@ -646,9 +648,17 @@ public class OperateAction extends BaseAction {
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("chart_type", chart_type);
 		// 2.根据不同图标类型获取图表数据
-		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
+//		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
+//			// 折线图和柱状图
+//			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
+		if (LINE.equals(chart_type) || BAR.equals(chart_type)) {
 			// 折线图和柱状图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
+		} else if (STACKINGBAR.equals(chart_type)) {
+			putDataForStackingbar(componentList, x_columns, y_columns, chart_type, resultMap);
+		} else if (POLARBAR.equals(chart_type)) {
+			// 极坐标柱状图
+			putDataForPolarbar(componentList, x_columns, y_columns, resultMap);
 		} else if (PIE.equals(chart_type) || HUANPIE.equals(chart_type) || FASANPIE.equals(chart_type)) {
 			// 饼图
 			putDataForPie(componentList, x_columns, y_columns, chart_type, resultMap);
@@ -669,15 +679,13 @@ public class OperateAction extends BaseAction {
 		} else if (TREEMAP.equals(chart_type)) {
 			// 矩形树图
 			putDataForTreemap(componentList, x_columns, y_columns, resultMap);
-		} else if (BARMD.equals(chart_type)) {
-			// 混合图
-			putDateForBarmd(componentList, x_columns, y_columns, resultMap);
+//		} else if (BARMD.equals(chart_type)) {
+//			// 混合图
+//			putDateForBarmd(componentList, x_columns, y_columns, resultMap);
 		} else if (BUBBLE.equals(chart_type)) {
 			// 气泡图
 			putDataForBubble(componentList, x_columns, y_columns, resultMap);
-		} else if (POLARBAR.equals(chart_type)) {
-			// 极坐标柱状图
-			putDataForPolarbar(componentList, x_columns, y_columns, resultMap);
+
 		} else if (BLSIMPLE.equals(chart_type)) {
 			// 柱状折线混合图-简单
 			putDataForBLSimple(componentList, x_columns, y_columns, resultMap);
@@ -712,18 +720,37 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForPolarbar(List<Map<String, Object>> componentList, String[] x_columns,
-	                                String[] y_columns, Map<String, Object> resultMap) {
-		String x_column = x_columns[0];
-		String y_column = y_columns[0];
-		List<Object> radiusData = new ArrayList<>();
-		List<Object> seriesData = new ArrayList<>();
-		for (Map<String, Object> stringObjectMap : componentList) {
-			radiusData.add(stringObjectMap.get(x_column));
-			seriesData.add(stringObjectMap.get(y_column));
+									String[] y_columns, Map<String, Object> resultMap) {
+		// 添加legend的值
+		if (y_columns != null && y_columns.length > 0) {
+			resultMap.put("legend_data", y_columns);
+			// 添加y轴的值
+			List<Object> yList = new ArrayList<>();
+			Map<String,Object> labelmap = new HashMap<>();
+			for (int i = 0; i < y_columns.length; i++) {
+				Map<String, Object> map = new HashMap<>();
+				List<Object> data = new ArrayList<>();
+				for (int j = 0; j < componentList.size(); j++) {
+					String s = componentList.get(j).get(y_columns[i].trim()).toString();
+					checkIfNumeric(s,y_columns[i]);
+					data.add(s);
+				}
+				map.put("name", y_columns[i]);
+				map.put("type", "bar");
+				map.put("data", data);
+				map.put("coordinateSystem", "polar");
+				yList.add(map);
+			}
+			resultMap.put("seriesArray", yList);
 		}
-
-		resultMap.put("radiusData", radiusData);
-		resultMap.put("seriesData", seriesData);
+		// 添加x轴的值，默认为一个取x_columns[0]
+		if (x_columns != null && x_columns.length > 0) {
+			List<String> xList = new ArrayList<>();
+			for (Map<String, Object> stringObjectMap : componentList) {
+				xList.add(stringObjectMap.get(x_columns[0].trim()).toString());
+			}
+			resultMap.put("xArray", xList);
+		}
 	}
 
 	private void putDataForBubble(List<Map<String, Object>> componentList, String[] x_columns,
@@ -819,13 +846,18 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForScatter(List<Map<String, Object>> componentList, String[] x_columns,
-	                               String[] y_columns, Map<String, Object> resultMap) {
-		List<Map<String, Object>> scatterData = new ArrayList<>();
+								   String[] y_columns, Map<String, Object> resultMap) {
+		List<Object> scatterData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
-			Map<String, Object> map = new HashMap<>();
-			map.put(IsFlag.Fou.getCode(), stringObjectMap.get(x_columns[0]));
-			map.put(IsFlag.Shi.getCode(), stringObjectMap.get(y_columns[0]));
-			scatterData.add(map);
+//			Map<String, Object> map = new HashMap<>();
+			List<Object> list = new ArrayList<>();
+			String x = stringObjectMap.get(x_columns[0]).toString();
+			String y = stringObjectMap.get(y_columns[0]).toString();
+			checkIfNumeric(x,x_columns[0]);
+			checkIfNumeric(y,y_columns[0]);
+			list.add(x);
+			list.add(y);
+			scatterData.add(list);
 		}
 		resultMap.put("scatterData", scatterData);
 	}
@@ -842,6 +874,8 @@ public class OperateAction extends BaseAction {
 			legendData.add(stringObjectMap.get(x_columns[0]).toString());
 			map.put("name", stringObjectMap.get(x_columns[0]));
 			map.put("value", stringObjectMap.get(y_columns[0]));
+			String s = stringObjectMap.get(y_columns[0]).toString();
+			checkIfNumeric(s,y_columns[0]);
 			count = count + Integer.parseInt(stringObjectMap.get(y_columns[0]).toString());
 			seriesData.add(map);
 		}
@@ -874,8 +908,8 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForLine(List<Map<String, Object>> componentList, String[] x_columns,
-	                            String[] y_columns, String chart_type,
-	                            Map<String, Object> resultMap) {
+								String[] y_columns, String chart_type,
+								Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			resultMap.put("legend_data", y_columns);
@@ -885,15 +919,16 @@ public class OperateAction extends BaseAction {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
 				for (int j = 0; j < componentList.size(); j++) {
-					data.add(componentList.get(j).get(y_columns[i].trim()));
+					String s = componentList.get(j).get(y_columns[i].trim()).toString();
+					checkIfNumeric(s,y_columns[i]);
+					data.add(s);
 				}
 				map.put("name", y_columns[i]);
-				map.put("type", "line");
+				map.put("type", chart_type);
 				map.put("data", data);
 				yList.add(map);
 			}
 			resultMap.put("seriesArray", yList);
-			System.out.println(yList);
 		}
 		// 添加x轴的值，默认为一个取x_columns[0]
 		if (x_columns != null && x_columns.length > 0) {
@@ -904,6 +939,50 @@ public class OperateAction extends BaseAction {
 			resultMap.put("xArray", xList);
 		}
 
+	}
+
+	private void putDataForStackingbar(List<Map<String, Object>> componentList, String[] x_columns,
+									   String[] y_columns, String chart_type,
+									   Map<String, Object> resultMap) {
+		// 添加legend的值
+		if (y_columns != null && y_columns.length > 0) {
+			resultMap.put("legend_data", y_columns);
+			// 添加y轴的值
+			List<Object> yList = new ArrayList<>();
+			Map<String,Object> labelmap = new HashMap<>();
+			labelmap.put("show",true);
+			labelmap.put("position","inside");
+			for (int i = 0; i < y_columns.length; i++) {
+				Map<String, Object> map = new HashMap<>();
+				List<Object> data = new ArrayList<>();
+				for (int j = 0; j < componentList.size(); j++) {
+					String s = componentList.get(j).get(y_columns[i].trim()).toString();
+					checkIfNumeric(s,y_columns[i]);
+					data.add(s);
+				}
+				map.put("name", y_columns[i]);
+				map.put("type", "bar");
+				map.put("stack", "总量");
+				map.put("label", labelmap);
+				map.put("data", data);
+				yList.add(map);
+			}
+			resultMap.put("seriesArray", yList);
+		}
+		// 添加x轴的值，默认为一个取x_columns[0]
+		if (x_columns != null && x_columns.length > 0) {
+			List<String> xList = new ArrayList<>();
+			for (Map<String, Object> stringObjectMap : componentList) {
+				xList.add(stringObjectMap.get(x_columns[0].trim()).toString());
+			}
+			resultMap.put("xArray", xList);
+		}
+	}
+
+	private void checkIfNumeric(String s,String columnnname){
+		if(!s.matches("-[0-9]+(.[0-9]+)?|[0-9]+(.[0-9]+)?")){
+			throw new BusinessException(columnnname+"字段包含不是数值的值，无法构成图");
+		}
 	}
 
 	@Method(desc = "获取可视化组件结果（获取答案），执行前先调用getSqlByCondition方法",
