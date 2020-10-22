@@ -1728,41 +1728,22 @@ public class OperateAction extends BaseAction {
 			List<Map<String, Object>> componentList = new ArrayList<>();
 			for (int i = 0; i < autoCompSums.length; i++) {
 				Auto_comp_sum autoCompSum = autoCompSums[i];
-				Map<String, Object> map = new HashMap<>();
 				// 1.根据可视化组件ID查看可视化组件信息
 				Map<String, Object> componentInfo = getVisualComponentInfoById(autoCompSum.getComponent_id());
 				// 2.根据组件id查询组件缓存
 				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
 						JsonUtil.toJson(componentInfo.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
-				map.put("x", (i % 3) * 33);
-				map.put("y", (i / 3) * 30);
-				map.put("w", 33);
-				map.put("h", 30);
-				map.put("i", autoCompSum.getComponent_id());
-				map.put("static", true);
-				map.put("type", autoCompSum.getComponent_id() + "");
-				// 主题字体
-				map.put("titleFontInfo", componentInfo.get("titleFontInfo"));
-				// 轴字体
-				map.put("axisFontInfo", componentInfo.get("axisFontInfo"));
-				map.put("xAxisInfo", componentInfo.get("xAxisInfo"));
-				map.put("xAxisLine", componentInfo.get("xAxisline"));
-				map.put("xAxisLabel", componentInfo.get("xAxislabel"));
-				map.put("yAxisInfo", componentInfo.get("yAxisInfo"));
-				map.put("yAxisLine", componentInfo.get("yAxisline"));
-				map.put("yAxisLabel", componentInfo.get("yAxislabel"));
-				// 二维码信息
-				map.put("twoDimensionalTable", componentInfo.get("twoDimensionalTable"));
-				// 图标信息
-				map.put("chartsconfig", componentInfo.get("chartsconfig"));
-				// 文本标签信息
-				map.put("textLabel", componentInfo.get("textLabel"));
-				//图例信息
-				map.put("legendInfo", componentInfo.get("legendInfo"));
+				componentInfo.put("x", (i % 3) * 33);
+				componentInfo.put("y", (i / 3) * 30);
+				componentInfo.put("w", 33);
+				componentInfo.put("h", 30);
+				componentInfo.put("i", autoCompSum.getComponent_id());
+				componentInfo.put("static", true);
+				componentInfo.put("type", autoCompSum.getComponent_id() + "");
 				componentOnDashBoard.put(String.valueOf(autoCompSum.getComponent_id()),
 						auto_comp_sum.getComponent_buffer());
-				componentList.add(map);
+				componentList.add(componentInfo);
 			}
 			componentOnDashBoard.put("layout", componentList);
 		}

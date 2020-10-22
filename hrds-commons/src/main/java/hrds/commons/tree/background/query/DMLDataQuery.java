@@ -10,6 +10,7 @@ import hrds.commons.codes.JobExecuteState;
 import hrds.commons.codes.UserType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.User;
 
 import java.util.List;
@@ -88,7 +89,8 @@ public class DMLDataQuery {
 		//查询表字段信息
 		return Dbo.queryList("select datatable_field_id AS column_id,field_en_name as column_name," +
 						" field_cn_name as column_ch_name,concat(field_type,'(',field_length,')') AS column_type," +
-						" '0' AS is_primary_key FROM " + Datatable_field_info.TableName + " WHERE datatable_id= ?",
-				dm_datatable.getDatatable_id());
+						" '0' AS is_primary_key FROM " + Datatable_field_info.TableName
+						+ " WHERE datatable_id= ? and end_date=?",
+				dm_datatable.getDatatable_id(), Constant.MAXDATE);
 	}
 }

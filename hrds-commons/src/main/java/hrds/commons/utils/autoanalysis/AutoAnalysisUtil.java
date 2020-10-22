@@ -64,22 +64,21 @@ public class AutoAnalysisUtil {
 		List<Auto_comp_sum> autoCompSumList = new ArrayList<>();
 		if (!autoAssoInfoList.isEmpty()) {
 			for (Auto_asso_info auto_asso_info : autoAssoInfoList) {
-				Map<String, Object> object = new HashMap<>();
 				Map<String, Object> componentMap =
 						getVisualComponentInfoById(auto_asso_info.getComponent_id(), Dbo.db());
 				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
 						JsonUtil.toJson(componentMap.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
-				object.put("x", auto_asso_info.getX_axis_coord());
-				object.put("y", auto_asso_info.getY_axis_coord());
-				object.put("w", auto_asso_info.getLength());
-				object.put("h", auto_asso_info.getWidth());
-				object.put("i", auto_asso_info.getSerial_number());
-				object.put("type", auto_asso_info.getComponent_id());
-				object.put("static", true);
+				componentMap.put("x", auto_asso_info.getX_axis_coord());
+				componentMap.put("y", auto_asso_info.getY_axis_coord());
+				componentMap.put("w", auto_asso_info.getLength());
+				componentMap.put("h", auto_asso_info.getWidth());
+				componentMap.put("i", auto_asso_info.getSerial_number());
+				componentMap.put("type", auto_asso_info.getComponent_id());
+				componentMap.put("static", true);
 				autoCompSumList.add(auto_comp_sum);
 				dashboardInfo.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
-				dashboardList.add(object);
+				dashboardList.add(componentMap);
 			}
 			dashboardInfo.put("autoCompSum", autoCompSumList);
 		}
@@ -223,26 +222,26 @@ public class AutoAnalysisUtil {
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("xAxislabel", xAxislabelMap);
+		resultMap.put("xAxisLabel", xAxislabelMap);
 		Map<String, Object> yAxislabelMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axislabel_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.YAxis.getCode());
-		resultMap.put("yAxislabel", yAxislabelMap);
+		resultMap.put("yAxisLabel", yAxislabelMap);
 		// 10.根据组件id查询x/y轴线配置信息表
 		Map<String, Object> xAxislineMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axisline_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("xAxisline", xAxislineMap);
+		resultMap.put("xAxisLine", xAxislineMap);
 		Map<String, Object> yAxislineMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axisline_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.YAxis.getCode());
-		resultMap.put("yAxisline", yAxislineMap);
+		resultMap.put("yAxisLine", yAxislineMap);
 		// 11.根据组件id查询二维表样式信息表
 		Map<String, Object> tableInfoMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_table_info.TableName + " WHERE component_id = ?",
