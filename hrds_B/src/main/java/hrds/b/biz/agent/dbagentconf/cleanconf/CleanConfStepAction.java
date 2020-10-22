@@ -96,7 +96,7 @@ public class CleanConfStepAction extends BaseAction {
 				strSB.append(tableIds.get(i));
 				if (i != tableIds.size() - 1) strSB.append(",");
 			}
-			strSB.append(" ) AND t5.data_extract_type = ? AND  t5.is_archived = ? GROUP BY ti.table_id ");
+			strSB.append(" ) AND t5.data_extract_type = ? AND  t5.is_archived = ? GROUP BY ti.table_id ORDER BY ti.table_name ");
 
 			return Dbo.queryResult(
 					strSB.toString(),
@@ -124,7 +124,7 @@ public class CleanConfStepAction extends BaseAction {
 				strSB.append(tableIds.get(i));
 				if (i != tableIds.size() - 1) strSB.append(",");
 			}
-			strSB.append(" ) GROUP BY ti.table_id ");
+			strSB.append(" ) GROUP BY ti.table_id ORDER BY ti.table_name");
 
 			return Dbo.queryResult(
 					strSB.toString(),

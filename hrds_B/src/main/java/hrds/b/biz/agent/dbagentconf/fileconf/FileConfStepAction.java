@@ -35,7 +35,7 @@ public class FileConfStepAction extends BaseAction {
 			Dbo.queryList(
 				"SELECT table_id,table_name,table_ch_name FROM "
 					+ Table_info.TableName
-					+ " WHERE database_id = ?",
+					+ " WHERE database_id = ? ORDER BY table_name",
 				colSetId);
 
 		table_infos.forEach(

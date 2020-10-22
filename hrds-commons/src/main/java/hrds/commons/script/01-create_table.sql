@@ -892,6 +892,9 @@ EXE_SQL                                           VARCHAR(512) NULL, --执行sql
 CHART_TYPE                                        VARCHAR(100) NULL, --图表类型
 BACKGROUND                                        VARCHAR(16) NULL, --背景色
 COMPONENT_BUFFER                                  VARCHAR(512) NULL, --组件缓存
+SHOW_LABEL                                        CHAR(1) NOT NULL, --是否显示
+POSITION                                          VARCHAR(100) NULL, --文本显示位置
+FORMATTER                                         VARCHAR(100) NULL, --文本格式化
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
