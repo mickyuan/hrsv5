@@ -2153,8 +2153,8 @@ public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取已存在的数据库采集连接信息", logicStep = "1: 根据当前登入的用户获取")
 	@Return(desc = "返回当前用户已配置过的数据库信息", range = "可为空,为空表示该用户为配置过数据库采集连接信息")
-	public List<Database_set> getDatabaseData() {
-		List<Database_set> databaseList = Dbo.queryList(Database_set.class,
+	public List<Map<String, Object>> getDatabaseData() {
+		List<Map<String, Object>> databaseList = Dbo.queryList(
 			"SELECT t1.database_name,t1.database_pad,t1.database_drive,t1.database_type,t1.user_name,t1.database_ip,"
 				+ "t1.database_port,t1.jdbc_url FROM "
 				+ Database_set.TableName
@@ -2166,8 +2166,8 @@ public class AgentListAction extends BaseAction {
 				+ "t1.database_port,t1.jdbc_url ORDER BY t1.database_name", AgentType.ShuJuKu.getCode(), getUserId(),
 			CollectType.ShuJuKuCaiJi.getCode(), CollectType.ShuJuKuChouShu.getCode());
 		databaseList.forEach(databaseSet -> {
-			DatabaseType databaseType = DatabaseType.ofEnumByCode(databaseSet.getDatabase_type());
-			databaseSet.setDatabase_type(databaseType.getValue());
+			DatabaseType databaseType = DatabaseType.ofEnumByCode(databaseSet.get("database_type").toString());
+			databaseSet.put("databaseName",databaseType.getValue());
 		});
 		return databaseList;
 	}
