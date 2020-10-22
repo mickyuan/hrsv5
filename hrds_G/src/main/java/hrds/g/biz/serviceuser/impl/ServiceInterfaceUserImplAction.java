@@ -472,6 +472,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 					userByToken.getUser_id(), table);
 			columnList = StringUtil.split(userTableInfo.getTable_en_column().toLowerCase(), Constant.METAINFOSPLIT);
 		}
+		String sqlNew = sqlSearch.getSql().trim();
 		// 10.如果为某些特定的用户,则不做字段的检测
 		if (!CommonVariables.AUTHORITY.contains(String.valueOf(userByToken.getUser_id()))) {
 			// 11.使用sql解析获取列
@@ -489,15 +490,16 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 						}
 						// 14.判断列是否有权限
 						if (InterfaceCommon.columnIsExist(col, columnList)) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
-									"请求错误,查询列名" + col + "不存在");
+							return StateType.getResponseInfo(StateType.NO_COLUMN_USE_PERMISSIONS.name(),
+									"请求错误,查询列名" + col + "没有使用权限");
 						}
 					}
+				} else {
+					sqlNew = sqlNew.replace("*", String.join(",", columnList));
 				}
 			}
 		}
 		// 15.判断sql是否是以；结尾，如果是删除
-		String sqlNew = sqlSearch.getSql().trim();
 		if (sqlNew.endsWith(";")) {
 			sqlNew = sqlNew.substring(0, sqlNew.length() - 1);
 		}

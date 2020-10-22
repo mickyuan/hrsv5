@@ -140,8 +140,8 @@ public class QueryByRowkey {
 						// 5.判断当前列名称是否有权限,没有返回错误响应信息
 						List<String> columnList = StringUtil.split(userColumn, ":");
 						if (InterfaceCommon.columnIsExist(columnList.get(1).toLowerCase(), columns)) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
-									"列名" + columnList.get(1) + "不存在");
+							return StateType.getResponseInfo(StateType.NO_COLUMN_USE_PERMISSIONS.name(),
+									"列名" + columnList.get(1) + "没有使用权限");
 						}
 					}
 				}

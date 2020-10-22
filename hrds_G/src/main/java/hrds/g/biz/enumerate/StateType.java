@@ -35,9 +35,9 @@ public enum StateType {
 	 */
 	TABLE_NOT_EXISTENT("405", "表不存在或者为空"),
 	/**
-	 * 列不存在
+	 * 列没有使用权限
 	 */
-	COLUMN_DOES_NOT_EXIST("406", "列不存在"),
+	NO_COLUMN_USE_PERMISSIONS("406", "列没有使用权限"),
 	/**
 	 * 没有使用权限
 	 */
