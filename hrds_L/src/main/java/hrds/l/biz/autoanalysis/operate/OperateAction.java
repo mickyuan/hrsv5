@@ -1892,6 +1892,9 @@ public class OperateAction extends BaseAction {
 					new TypeReference<Auto_font_info[]>() {
 					}.getType());
 		}
+		int j=0;
+		int n=0;
+		int m=0;
 		for (int i = 0; i < layoutArray.size(); i++) {
 			String label = layoutArray.getJSONObject(i).getString("label");
 			Long primayKey = PrimayKeyGener.getNextId();
@@ -1910,7 +1913,7 @@ public class OperateAction extends BaseAction {
 				asso_info.add(Dbo.db());
 			} else if ("0".equals(label)) {
 				// 3.新增标题组件信息
-				Auto_label_info auto_label_info = autoLabelInfos[i];
+				Auto_label_info auto_label_info = autoLabelInfos[j];
 				auto_label_info.setLabel_id(primayKey);
 				auto_label_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
 				auto_label_info.setLength(layoutArray.getJSONObject(i).getIntValue("w"));
@@ -1924,9 +1927,10 @@ public class OperateAction extends BaseAction {
 				auto_font_info.setFont_corr_tname(Auto_label_info.TableName);
 				auto_font_info.setFont_corr_id(auto_label_info.getLabel_id());
 				auto_font_info.add(Dbo.db());
+				j++;
 			} else if ("1".equals(label)) {
 				// 4.新增分割线组件信息
-				Auto_line_info auto_line_info = autoLineInfos[i];
+				Auto_line_info auto_line_info = autoLineInfos[m];
 				auto_line_info.setLine_id(primayKey);
 				auto_line_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
 				auto_line_info.setLine_length(layoutArray.getJSONObject(i).getLongValue("w"));
@@ -1935,9 +1939,10 @@ public class OperateAction extends BaseAction {
 				auto_line_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
 				auto_line_info.setSerial_number(primayKey);
 				auto_line_info.add(Dbo.db());
+				m++;
 			} else if ("2".equals(label)) {
 				// 5.新增边框组件信息
-				Auto_frame_info auto_frame_info = autoFrameInfos[i];
+				Auto_frame_info auto_frame_info = autoFrameInfos[n];
 				auto_frame_info.setFrame_id(primayKey);
 				auto_frame_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
 				auto_frame_info.setLength(layoutArray.getJSONObject(i).getLongValue("w"));
@@ -1946,6 +1951,7 @@ public class OperateAction extends BaseAction {
 				auto_frame_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
 				auto_frame_info.setSerial_number(operId);
 				auto_frame_info.add(Dbo.db());
+				n++;
 			}
 		}
 	}
