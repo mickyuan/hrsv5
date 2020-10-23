@@ -291,6 +291,20 @@ public class StoDestStepConfAction extends BaseAction {
 		if (result.isEmpty()) {
 			throw new BusinessException("系统中未定义存储目的地信息，请联系管理员");
 		}
+		for (int i = 0; i < result.getRowCount(); i++) {
+			Store_type storeType = Store_type.ofEnumByCode(result.getString(i, "store_type"));
+			//如果是关系数据库,则获取每个数据库的类型名称
+			if (storeType == Store_type.DATABASE) {
+				Map<String, Object> map = Dbo.queryOneObject("SELECT storage_property_val FROM "
+						+ Data_store_layer_attr.TableName
+						+ " where storage_property_key = ? AND dsl_id = ?", StorageTypeKey.database_type,
+					result.getLong(i, "dsl_id"));
+				result.setValue(i, "store_name",
+					DatabaseType.ofEnumByCode(map.get("storage_property_val").toString()).getValue());
+			} else {
+				result.setValue(i, "store_name", storeType.getValue());
+			}
+		}
 		return result;
 	}
 
