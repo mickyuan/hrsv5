@@ -1124,15 +1124,15 @@ public class OperateAction extends BaseAction {
 		String column_name = auto_comp_data_sum.getColumn_name();
 		String summary_type = auto_comp_data_sum.getSummary_type();
 		if (AutoDataSumType.QiuHe == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "sum(" + column_name + ") ,";
+			return "sum(" + column_name + ") as 'sum("+column_name+")' ,";
 		} else if (AutoDataSumType.QiuPingJun == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "avg(" + column_name + ") ,";
+			return "avg(" + column_name + ") as 'avg("+column_name+")' ,";
 		} else if (AutoDataSumType.QiuZuiDaZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "max(" + column_name + ") ,";
+			return "max(" + column_name + ") as 'max("+column_name+")' ,";
 		} else if (AutoDataSumType.QiuZuiXiaoZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "min(" + column_name + ") ,";
+			return "min(" + column_name + ") as 'min("+column_name+")' ,";
 		} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "count(" + column_name + ") ,";
+			return "count(" + column_name + ") as 'count(*)' ,";
 		} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
 			return column_name + ",";
 		} else if (AutoDataSumType.ChaKanQuanBu == AutoDataSumType.ofEnumByCode(summary_type)) {
@@ -1675,6 +1675,10 @@ public class OperateAction extends BaseAction {
 			+ "2.删除组件关联表信息")
 	@Param(name = "component_id", desc = "组件ID", range = "创建组件时生成")
 	public void deleteVisualComponent(long component_id) {
+		List<Map<String, Object>> maps = Dbo.queryList("select * from " + Auto_asso_info.TableName + " where component_id = ?", component_id);
+		if(!maps.isEmpty()){
+			throw new BusinessException("改组件仪表盘已经使用，请先删除仪表盘");
+		}
 		// 1.删除可视化组件汇总信息
 		DboExecute.deletesOrThrow("删除可视化组件信息失败",
 				"DELETE FROM " + Auto_comp_sum.TableName + " WHERE component_id = ?", component_id);
