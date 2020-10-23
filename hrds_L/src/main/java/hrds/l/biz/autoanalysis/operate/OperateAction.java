@@ -732,19 +732,19 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForPolarbar(List<Map<String, Object>> componentList, String[] x_columns,
-									String[] y_columns, Map<String, Object> resultMap) {
+	                                String[] y_columns, Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			Map<String,Object> labelmap = new HashMap<>();
+			Map<String, Object> labelmap = new HashMap<>();
 			for (int i = 0; i < y_columns.length; i++) {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
 				for (int j = 0; j < componentList.size(); j++) {
 					String s = componentList.get(j).get(y_columns[i].trim()).toString();
-					checkIfNumeric(s,y_columns[i]);
+					checkIfNumeric(s, y_columns[i]);
 					data.add(s);
 				}
 				map.put("name", y_columns[i]);
@@ -858,15 +858,15 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForScatter(List<Map<String, Object>> componentList, String[] x_columns,
-								   String[] y_columns, Map<String, Object> resultMap) {
+	                               String[] y_columns, Map<String, Object> resultMap) {
 		List<Object> scatterData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
 //			Map<String, Object> map = new HashMap<>();
 			List<Object> list = new ArrayList<>();
 			String x = stringObjectMap.get(x_columns[0]).toString();
 			String y = stringObjectMap.get(y_columns[0]).toString();
-			checkIfNumeric(x,x_columns[0]);
-			checkIfNumeric(y,y_columns[0]);
+			checkIfNumeric(x, x_columns[0]);
+			checkIfNumeric(y, y_columns[0]);
 			list.add(x);
 			list.add(y);
 			scatterData.add(list);
@@ -887,7 +887,7 @@ public class OperateAction extends BaseAction {
 			map.put("name", stringObjectMap.get(x_columns[0]));
 			map.put("value", stringObjectMap.get(y_columns[0]));
 			String s = stringObjectMap.get(y_columns[0]).toString();
-			checkIfNumeric(s,y_columns[0]);
+			checkIfNumeric(s, y_columns[0]);
 			count = count + Integer.parseInt(stringObjectMap.get(y_columns[0]).toString());
 			seriesData.add(map);
 		}
@@ -920,8 +920,8 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForLine(List<Map<String, Object>> componentList, String[] x_columns,
-								String[] y_columns, String chart_type,
-								Map<String, Object> resultMap) {
+	                            String[] y_columns, String chart_type,
+	                            Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			resultMap.put("legend_data", y_columns);
@@ -932,7 +932,7 @@ public class OperateAction extends BaseAction {
 				List<Object> data = new ArrayList<>();
 				for (int j = 0; j < componentList.size(); j++) {
 					String s = componentList.get(j).get(y_columns[i].trim()).toString();
-					checkIfNumeric(s,y_columns[i]);
+					checkIfNumeric(s, y_columns[i]);
 					data.add(s);
 				}
 				map.put("name", y_columns[i]);
@@ -954,22 +954,22 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForStackingbar(List<Map<String, Object>> componentList, String[] x_columns,
-									   String[] y_columns, String chart_type,
-									   Map<String, Object> resultMap) {
+	                                   String[] y_columns, String chart_type,
+	                                   Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			Map<String,Object> labelmap = new HashMap<>();
-			labelmap.put("show",true);
-			labelmap.put("position","inside");
+			Map<String, Object> labelmap = new HashMap<>();
+			labelmap.put("show", true);
+			labelmap.put("position", "inside");
 			for (int i = 0; i < y_columns.length; i++) {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
 				for (int j = 0; j < componentList.size(); j++) {
 					String s = componentList.get(j).get(y_columns[i].trim()).toString();
-					checkIfNumeric(s,y_columns[i]);
+					checkIfNumeric(s, y_columns[i]);
 					data.add(s);
 				}
 				map.put("name", y_columns[i]);
@@ -991,9 +991,9 @@ public class OperateAction extends BaseAction {
 		}
 	}
 
-	private void checkIfNumeric(String s,String columnnname){
-		if(!s.matches("-[0-9]+(.[0-9]+)?|[0-9]+(.[0-9]+)?")){
-			throw new BusinessException(columnnname+"字段包含不是数值的值，无法构成图");
+	private void checkIfNumeric(String s, String columnnname) {
+		if (!s.matches("-[0-9]+(.[0-9]+)?|[0-9]+(.[0-9]+)?")) {
+			throw new BusinessException(columnnname + "字段包含不是数值的值，无法构成图");
 		}
 	}
 
@@ -1291,13 +1291,13 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致")
 	@UploadFile
 	public void updateVisualComponentInfo(String componentBeanString, String auto_comp_sumString,
-									   String autoCompCondString, String autoCompGroupString,
-									   String autoCompDataSumString, String titleFontString,
-									   String axisStyleFontString, String autoAxisInfoString,
-									   String xAxisLabelString, String yAxisLabelString,
-									   String xAxisLineString, String yAxisLineString,
-									   String auto_table_infoString, String auto_chartsconfigString,
-									   String auto_labelString, String auto_legend_infoString) {
+	                                      String autoCompCondString, String autoCompGroupString,
+	                                      String autoCompDataSumString, String titleFontString,
+	                                      String axisStyleFontString, String autoAxisInfoString,
+	                                      String xAxisLabelString, String yAxisLabelString,
+	                                      String xAxisLineString, String yAxisLineString,
+	                                      String auto_table_infoString, String auto_chartsconfigString,
+	                                      String auto_labelString, String auto_legend_infoString) {
 		ComponentBean componentBean = JSONObject.parseObject(componentBeanString, new TypeReference<ComponentBean>() {
 		});
 		Auto_comp_sum auto_comp_sum = JSONObject.parseObject(auto_comp_sumString, new TypeReference<Auto_comp_sum>() {
@@ -1750,14 +1750,18 @@ public class OperateAction extends BaseAction {
 	@Method(desc = "在仪表板上显示组件", logicStep = "1.根据可视化组件ID查看可视化组件信息" +
 			"2.根据组件id查询组件缓存" +
 			"3.返回在仪表盘上展示的组件信息")
-	@Param(name = "autoCompSums", desc = "组件汇总表实体对象数组", range = "与数据库对应规则一致", isBean = true)
+	@Param(name = "autoCompSums", desc = "组件汇总表实体对象", range = "与数据库对应规则一致")
 	@Return(desc = "返回在仪表盘上展示的组件信息", range = "无限制")
-	public Map<String, Object> showComponentOnDashboard(Auto_comp_sum[] autoCompSums) {
+	@UploadFile
+	public Map<String, Object> showComponentOnDashboard(String autoCompSums) {
+		List<Auto_comp_sum> autoCompSumList = JsonUtil.toObject(autoCompSums,
+				new TypeReference<List<Auto_comp_sum>>() {
+				}.getType());
 		Map<String, Object> componentOnDashBoard = new HashMap<>();
-		if (autoCompSums != null && autoCompSums.length > 0) {
+		if (!autoCompSumList.isEmpty()) {
 			List<Map<String, Object>> componentList = new ArrayList<>();
-			for (int i = 0; i < autoCompSums.length; i++) {
-				Auto_comp_sum autoCompSum = autoCompSums[i];
+			for (int i = 0; i < autoCompSumList.size(); i++) {
+				Auto_comp_sum autoCompSum = autoCompSumList.get(i);
 				// 1.根据可视化组件ID查看可视化组件信息
 				Map<String, Object> componentInfo = getVisualComponentInfoById(autoCompSum.getComponent_id());
 				// 2.根据组件id查询组件缓存
@@ -1785,16 +1789,19 @@ public class OperateAction extends BaseAction {
 			"2.判断仪表板名称是否已存在" +
 			"3.新增仪表盘" +
 			"4.新增仪表盘布局信息")
-	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象",
-			range = "与数据库对应表规则一致(仪表盘状态使用（IsFlag）代码项，0:未发布，1:已发布)", isBean = true)
-	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true, nullable = true)
-	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "autoDashboardInfo", desc = "仪表板信息表信息", range = "无限制")
+	@Param(name = "autoFontInfo", desc = "字体属性信息表信息", range = "无限制", nullable = true)
+	@Param(name = "autoLabelInfo", desc = "仪表板标题表信息", range = "无限制", nullable = true)
+	@Param(name = "autoLineInfo", desc = "仪表板分割线表信息", range = "无限制", nullable = true)
+	@Param(name = "autoFrameInfo", desc = "仪表板边框组件信息表信息", range = "无限制", nullable = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
-	public void saveDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                                  Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                                  Auto_frame_info[] autoFrameInfos, String layout) {
+	@UploadFile
+	public void saveDataDashboardInfo(String autoDashboardInfo, String autoFontInfo,
+	                                  String autoLabelInfo, String autoLineInfo, String autoFrameInfo,
+	                                  String layout) {
+		Auto_dashboard_info auto_dashboard_info = JsonUtil.toObjectSafety(autoDashboardInfo,
+				Auto_dashboard_info.class).orElseThrow(() ->
+				new BusinessException("转换" + Auto_dashboard_info.TableName + "实体失败"));
 		// 1.校验仪表盘表字段合法性
 		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
 		// 2.判断仪表板名称是否已存在
@@ -1808,37 +1815,38 @@ public class OperateAction extends BaseAction {
 		// 3.新增仪表盘
 		auto_dashboard_info.add(Dbo.db());
 		// 4.新增仪表盘布局信息
-		addLayoutInfo(auto_dashboard_info, autoFontInfos, autoLabelInfos, autoLineInfos, autoFrameInfos, layout);
+		addLayoutInfo(auto_dashboard_info, autoFontInfo, autoLabelInfo, autoLineInfo, autoFrameInfo, layout);
 	}
 
 	@Method(desc = "更新仪表盘信息", logicStep = "1.校验仪表盘表字段合法性" +
-			"2.判断仪表板名称是否已存在" +
-			"3.更新仪表盘信息" +
-			"4.删除仪表盘相关表信息" +
-			"5.新增仪表盘布局信息")
-	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+			"2.更新仪表盘信息" +
+			"3.删除仪表盘相关表信息" +
+			"4.新增仪表盘布局信息")
+	@Param(name = "autoDashboardInfo", desc = "仪表板信息表信息", range = "无限制")
+	@Param(name = "autoFontInfo", desc = "字体属性信息表信息", range = "无限制", nullable = true)
+	@Param(name = "autoLabelInfo", desc = "仪表板标题表信息", range = "无限制", nullable = true)
+	@Param(name = "autoLineInfo", desc = "仪表板分割线表信息", range = "无限制", nullable = true)
+	@Param(name = "autoFrameInfo", desc = "仪表板边框组件信息表信息", range = "无限制", nullable = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
-	public void updateDataDashboardInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                                    Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                                    Auto_frame_info[] autoFrameInfos, String layout) {
+	@UploadFile
+	public void updateDataDashboardInfo(String autoDashboardInfo, String autoFontInfo,
+	                                    String autoLabelInfo, String autoLineInfo, String autoFrameInfo,
+	                                    String layout) {
+		Auto_dashboard_info auto_dashboard_info = JsonUtil.toObjectSafety(autoDashboardInfo,
+				Auto_dashboard_info.class).orElseThrow(() ->
+				new BusinessException("转换" + Auto_dashboard_info.TableName + "实体失败"));
 		// 1.校验仪表盘表字段合法性
 		Validator.notBlank(auto_dashboard_info.getDashboard_name(), "仪表盘名称不能为空");
 		Validator.notNull(auto_dashboard_info.getDashboard_id(), "更新时仪表盘ID不能为空");
-		// 2.判断仪表板名称是否已存在
-		isDashboardNameExist(auto_dashboard_info);
 		auto_dashboard_info.setUpdate_user(getUserId());
 		auto_dashboard_info.setLast_update_date(DateUtil.getSysDate());
 		auto_dashboard_info.setLast_update_time(DateUtil.getSysTime());
-		// 3.更新仪表盘信息
+		// 2.更新仪表盘信息
 		auto_dashboard_info.update(Dbo.db());
-		// 4.删除仪表盘相关表信息
+		// 3.删除仪表盘相关表信息
 		deleteDashboardAssoTable(auto_dashboard_info.getDashboard_id());
-		// 5.新增仪表盘布局信息
-		addLayoutInfo(auto_dashboard_info, autoFontInfos, autoLabelInfos, autoLineInfos, autoFrameInfos, layout);
+		// 4.新增仪表盘布局信息
+		addLayoutInfo(auto_dashboard_info, autoFontInfo, autoLabelInfo, autoLineInfo, autoFrameInfo, layout);
 	}
 
 	@Method(desc = "新增仪表盘布局信息", logicStep = "1.解析仪表盘布局信息" +
@@ -1852,11 +1860,34 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
-	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, Auto_font_info[] autoFontInfos,
-	                           Auto_label_info[] autoLabelInfos, Auto_line_info[] autoLineInfos,
-	                           Auto_frame_info[] autoFrameInfos, String layout) {
+	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, String autoFontInfo,
+	                           String autoLabelInfo, String autoLineInfo, String autoFrameInfo, String layout) {
 		// 1.解析仪表盘布局信息
 		JSONArray layoutArray = JSONArray.parseArray(layout);
+		Auto_label_info[] autoLabelInfos = new Auto_label_info[]{};
+		if (StringUtil.isNotBlank(autoLabelInfo)) {
+			autoLabelInfos = JsonUtil.toObject(autoLabelInfo,
+					new TypeReference<Auto_label_info[]>() {
+					}.getType());
+		}
+		Auto_line_info[] autoLineInfos = new Auto_line_info[]{};
+		if (StringUtil.isNotBlank(autoLineInfo)) {
+			autoLineInfos = JsonUtil.toObject(autoLineInfo,
+					new TypeReference<Auto_line_info[]>() {
+					}.getType());
+		}
+		Auto_frame_info[] autoFrameInfos = new Auto_frame_info[]{};
+		if (StringUtil.isNotBlank(autoFrameInfo)) {
+			autoFrameInfos = JsonUtil.toObject(autoFrameInfo,
+					new TypeReference<Auto_frame_info[]>() {
+					}.getType());
+		}
+		Auto_font_info[] autoFontInfos = new Auto_font_info[]{};
+		if (StringUtil.isNotBlank(autoFontInfo)) {
+			autoFontInfos = JsonUtil.toObject(autoFontInfo,
+					new TypeReference<Auto_font_info[]>() {
+					}.getType());
+		}
 		for (int i = 0; i < layoutArray.size(); i++) {
 			String label = layoutArray.getJSONObject(i).getString("label");
 			Long primayKey = PrimayKeyGener.getNextId();

@@ -895,6 +895,7 @@ COMPONENT_BUFFER                                  VARCHAR(512) NULL, --组件缓
 SHOW_LABEL                                        CHAR(1) NOT NULL, --是否显示
 POSITION                                          VARCHAR(100) NULL, --文本显示位置
 FORMATTER                                         VARCHAR(100) NULL, --文本格式化
+TITLE_NAME                                        VARCHAR(100) NULL, --标题名称
 CREATE_DATE                                       CHAR(8) NOT NULL, --创建日期
 CREATE_TIME                                       CHAR(6) NOT NULL, --创建时间
 CREATE_USER                                       BIGINT default 0 NOT NULL, --用户ID
@@ -903,6 +904,8 @@ LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新�
 UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 CONDITION_SQL                                     VARCHAR(2048) NULL, --条件SQL
 CONSTRAINT AUTO_COMP_SUM_PK PRIMARY KEY(COMPONENT_ID)   );
+
+
 
 --角色信息表
 DROP TABLE IF EXISTS SYS_ROLE ;
