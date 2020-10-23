@@ -72,6 +72,8 @@ public class Auto_comp_sum extends ProjectTableEntity
 	private String position;
 	@DocBean(name ="formatter",value="文本格式化:",dataType = String.class,required = false)
 	private String formatter;
+	@DocBean(name ="title_name",value="标题名称:",dataType = String.class,required = false)
+	private String title_name;
 
 	/** 取得：组件名称 */
 	public String getComponent_name(){
@@ -258,5 +260,13 @@ public class Auto_comp_sum extends ProjectTableEntity
 	/** 设置：文本格式化 */
 	public void setFormatter(String formatter){
 		this.formatter=formatter;
+	}
+	/** 取得：标题名称 */
+	public String getTitle_name(){
+		return title_name;
+	}
+	/** 设置：标题名称 */
+	public void setTitle_name(String title_name){
+		this.title_name=title_name;
 	}
 }
