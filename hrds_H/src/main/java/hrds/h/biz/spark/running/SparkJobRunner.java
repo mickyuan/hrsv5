@@ -95,7 +95,8 @@ public class SparkJobRunner {
      * @return 合法参数字符串
      */
     static String obtainSatisfyShellString(String convertedShellArg) {
-        return convertedShellArg.replace("^", "\"");
+        return convertedShellArg.replace("\"", "")
+                .replace("^", "\"");
     }
 
 }
