@@ -85,14 +85,16 @@ public class AutoAnalysisUtil {
 		// 4.查询仪表板标题表与字体表信息
 		List<Map<String, Object>> labelAndFontList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_label_info.TableName + " T1 LEFT JOIN "
-						+ Auto_font_info.TableName + " T2 ON CAST(T1.label_id AS INT) = T2.font_corr_id" +
+						+ Auto_font_info.TableName + " T2 ON T1.label_id = T2.font_corr_id" +
 						" AND T2.font_corr_tname = ? WHERE dashboard_id = ?",
 				Auto_label_info.TableName, dashboard_id);
 		if (!labelAndFontList.isEmpty()) {
 			for (Map<String, Object> map : labelAndFontList) {
-				Auto_label_info auto_label_info = JsonUtil.toObjectSafety(map.toString(), Auto_label_info.class)
+				Auto_label_info auto_label_info = JsonUtil.toObjectSafety(
+						JsonUtil.toJson(map), Auto_label_info.class)
 						.orElseThrow(() -> new BusinessException("实体转换失败"));
-				Auto_font_info auto_font_info = JsonUtil.toObjectSafety(map.toString(), Auto_font_info.class)
+				Auto_font_info auto_font_info = JsonUtil.toObjectSafety(
+						JsonUtil.toJson(map), Auto_font_info.class)
 						.orElseThrow(() -> new BusinessException("实体转换失败"));
 				map.put("textStyle", auto_font_info);
 				Map<String, Object> labelMap = new HashMap<>();

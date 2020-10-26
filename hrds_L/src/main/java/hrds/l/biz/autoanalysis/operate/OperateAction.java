@@ -1124,13 +1124,13 @@ public class OperateAction extends BaseAction {
 		String column_name = auto_comp_data_sum.getColumn_name();
 		String summary_type = auto_comp_data_sum.getSummary_type();
 		if (AutoDataSumType.QiuHe == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "sum(" + column_name + ") as 'sum("+column_name+")' ,";
+			return "sum(" + column_name + ") as 'sum(" + column_name + ")' ,";
 		} else if (AutoDataSumType.QiuPingJun == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "avg(" + column_name + ") as 'avg("+column_name+")' ,";
+			return "avg(" + column_name + ") as 'avg(" + column_name + ")' ,";
 		} else if (AutoDataSumType.QiuZuiDaZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "max(" + column_name + ") as 'max("+column_name+")' ,";
+			return "max(" + column_name + ") as 'max(" + column_name + ")' ,";
 		} else if (AutoDataSumType.QiuZuiXiaoZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "min(" + column_name + ") as 'min("+column_name+")' ,";
+			return "min(" + column_name + ") as 'min(" + column_name + ")' ,";
 		} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
 			return "count(" + column_name + ") as 'count(*)' ,";
 		} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
@@ -1676,7 +1676,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "component_id", desc = "组件ID", range = "创建组件时生成")
 	public void deleteVisualComponent(long component_id) {
 		List<Map<String, Object>> maps = Dbo.queryList("select * from " + Auto_asso_info.TableName + " where component_id = ?", component_id);
-		if(!maps.isEmpty()){
+		if (!maps.isEmpty()) {
 			throw new BusinessException("改组件仪表盘已经使用，请先删除仪表盘");
 		}
 		// 1.删除可视化组件汇总信息
@@ -1868,33 +1868,27 @@ public class OperateAction extends BaseAction {
 	                           String autoLabelInfo, String autoLineInfo, String autoFrameInfo, String layout) {
 		// 1.解析仪表盘布局信息
 		JSONArray layoutArray = JSONArray.parseArray(layout);
-		Auto_label_info[] autoLabelInfos = new Auto_label_info[]{};
+		List<Map<String, Object>> autoLabelInfos = new ArrayList<>();
 		if (StringUtil.isNotBlank(autoLabelInfo)) {
 			autoLabelInfos = JsonUtil.toObject(autoLabelInfo,
-					new TypeReference<Auto_label_info[]>() {
+					new TypeReference<List<Map<String, Object>>>() {
 					}.getType());
 		}
-		Auto_line_info[] autoLineInfos = new Auto_line_info[]{};
+		List<Auto_line_info> autoLineInfos = new ArrayList<>();
 		if (StringUtil.isNotBlank(autoLineInfo)) {
 			autoLineInfos = JsonUtil.toObject(autoLineInfo,
-					new TypeReference<Auto_line_info[]>() {
+					new TypeReference<List<Auto_line_info>>() {
 					}.getType());
 		}
-		Auto_frame_info[] autoFrameInfos = new Auto_frame_info[]{};
+		List<Auto_frame_info> autoFrameInfos = new ArrayList<>();
 		if (StringUtil.isNotBlank(autoFrameInfo)) {
 			autoFrameInfos = JsonUtil.toObject(autoFrameInfo,
-					new TypeReference<Auto_frame_info[]>() {
+					new TypeReference<List<Auto_frame_info>>() {
 					}.getType());
 		}
-		Auto_font_info[] autoFontInfos = new Auto_font_info[]{};
-		if (StringUtil.isNotBlank(autoFontInfo)) {
-			autoFontInfos = JsonUtil.toObject(autoFontInfo,
-					new TypeReference<Auto_font_info[]>() {
-					}.getType());
-		}
-		int j=0;
-		int n=0;
-		int m=0;
+		int j = 0;
+		int n = 0;
+		int m = 0;
 		for (int i = 0; i < layoutArray.size(); i++) {
 			String label = layoutArray.getJSONObject(i).getString("label");
 			Long primayKey = PrimayKeyGener.getNextId();
@@ -1913,7 +1907,10 @@ public class OperateAction extends BaseAction {
 				asso_info.add(Dbo.db());
 			} else if ("0".equals(label)) {
 				// 3.新增标题组件信息
-				Auto_label_info auto_label_info = autoLabelInfos[j];
+				Map<String, Object> labelInfo = autoLabelInfos.get(j);
+				Auto_label_info auto_label_info = JsonUtil.toObjectSafety(JsonUtil.toJson(labelInfo),
+						Auto_label_info.class).orElseThrow(
+						() -> new BusinessException("转换" + Auto_label_info.TableName + "实体失败"));
 				auto_label_info.setLabel_id(primayKey);
 				auto_label_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
 				auto_label_info.setLength(layoutArray.getJSONObject(i).getIntValue("w"));
@@ -1922,7 +1919,8 @@ public class OperateAction extends BaseAction {
 				auto_label_info.setY_axis_coord(layoutArray.getJSONObject(i).getIntValue("y"));
 				auto_label_info.setSerial_number(operId);
 				auto_label_info.add(Dbo.db());
-				Auto_font_info auto_font_info = autoFontInfos[i];
+				Auto_font_info auto_font_info = JSONObject.parseObject(labelInfo.get("textStyle").toString(),
+						Auto_font_info.class);
 				auto_font_info.setFont_id(PrimayKeyGener.getNextId());
 				auto_font_info.setFont_corr_tname(Auto_label_info.TableName);
 				auto_font_info.setFont_corr_id(auto_label_info.getLabel_id());
@@ -1930,7 +1928,7 @@ public class OperateAction extends BaseAction {
 				j++;
 			} else if ("1".equals(label)) {
 				// 4.新增分割线组件信息
-				Auto_line_info auto_line_info = autoLineInfos[m];
+				Auto_line_info auto_line_info = autoLineInfos.get(m);
 				auto_line_info.setLine_id(primayKey);
 				auto_line_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
 				auto_line_info.setLine_length(layoutArray.getJSONObject(i).getLongValue("w"));
@@ -1942,7 +1940,7 @@ public class OperateAction extends BaseAction {
 				m++;
 			} else if ("2".equals(label)) {
 				// 5.新增边框组件信息
-				Auto_frame_info auto_frame_info = autoFrameInfos[n];
+				Auto_frame_info auto_frame_info = autoFrameInfos.get(n);
 				auto_frame_info.setFrame_id(primayKey);
 				auto_frame_info.setDashboard_id(auto_dashboard_info.getDashboard_id());
 				auto_frame_info.setLength(layoutArray.getJSONObject(i).getLongValue("w"));
