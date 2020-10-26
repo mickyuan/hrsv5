@@ -1794,15 +1794,13 @@ public class OperateAction extends BaseAction {
 			"3.新增仪表盘" +
 			"4.新增仪表盘布局信息")
 	@Param(name = "autoDashboardInfo", desc = "仪表板信息表信息", range = "无限制")
-	@Param(name = "autoFontInfo", desc = "字体属性信息表信息", range = "无限制", nullable = true)
 	@Param(name = "autoLabelInfo", desc = "仪表板标题表信息", range = "无限制", nullable = true)
 	@Param(name = "autoLineInfo", desc = "仪表板分割线表信息", range = "无限制", nullable = true)
 	@Param(name = "autoFrameInfo", desc = "仪表板边框组件信息表信息", range = "无限制", nullable = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	@UploadFile
-	public void saveDataDashboardInfo(String autoDashboardInfo, String autoFontInfo,
-	                                  String autoLabelInfo, String autoLineInfo, String autoFrameInfo,
-	                                  String layout) {
+	public void saveDataDashboardInfo(String autoDashboardInfo, String autoLabelInfo, String autoLineInfo,
+	                                  String autoFrameInfo, String layout) {
 		Auto_dashboard_info auto_dashboard_info = JsonUtil.toObjectSafety(autoDashboardInfo,
 				Auto_dashboard_info.class).orElseThrow(() ->
 				new BusinessException("转换" + Auto_dashboard_info.TableName + "实体失败"));
@@ -1819,7 +1817,7 @@ public class OperateAction extends BaseAction {
 		// 3.新增仪表盘
 		auto_dashboard_info.add(Dbo.db());
 		// 4.新增仪表盘布局信息
-		addLayoutInfo(auto_dashboard_info, autoFontInfo, autoLabelInfo, autoLineInfo, autoFrameInfo, layout);
+		addLayoutInfo(auto_dashboard_info, autoLabelInfo, autoLineInfo, autoFrameInfo, layout);
 	}
 
 	@Method(desc = "更新仪表盘信息", logicStep = "1.校验仪表盘表字段合法性" +
@@ -1827,15 +1825,13 @@ public class OperateAction extends BaseAction {
 			"3.删除仪表盘相关表信息" +
 			"4.新增仪表盘布局信息")
 	@Param(name = "autoDashboardInfo", desc = "仪表板信息表信息", range = "无限制")
-	@Param(name = "autoFontInfo", desc = "字体属性信息表信息", range = "无限制", nullable = true)
 	@Param(name = "autoLabelInfo", desc = "仪表板标题表信息", range = "无限制", nullable = true)
 	@Param(name = "autoLineInfo", desc = "仪表板分割线表信息", range = "无限制", nullable = true)
 	@Param(name = "autoFrameInfo", desc = "仪表板边框组件信息表信息", range = "无限制", nullable = true)
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
 	@UploadFile
-	public void updateDataDashboardInfo(String autoDashboardInfo, String autoFontInfo,
-	                                    String autoLabelInfo, String autoLineInfo, String autoFrameInfo,
-	                                    String layout) {
+	public void updateDataDashboardInfo(String autoDashboardInfo, String autoLabelInfo, String autoLineInfo,
+	                                    String autoFrameInfo, String layout) {
 		Auto_dashboard_info auto_dashboard_info = JsonUtil.toObjectSafety(autoDashboardInfo,
 				Auto_dashboard_info.class).orElseThrow(() ->
 				new BusinessException("转换" + Auto_dashboard_info.TableName + "实体失败"));
@@ -1850,7 +1846,7 @@ public class OperateAction extends BaseAction {
 		// 3.删除仪表盘相关表信息
 		deleteDashboardAssoTable(auto_dashboard_info.getDashboard_id());
 		// 4.新增仪表盘布局信息
-		addLayoutInfo(auto_dashboard_info, autoFontInfo, autoLabelInfo, autoLineInfo, autoFrameInfo, layout);
+		addLayoutInfo(auto_dashboard_info, autoLabelInfo, autoLineInfo, autoFrameInfo, layout);
 	}
 
 	@Method(desc = "新增仪表盘布局信息", logicStep = "1.解析仪表盘布局信息" +
@@ -1858,14 +1854,13 @@ public class OperateAction extends BaseAction {
 			"3.新增标题组件信息" +
 			"4.新增分割线组件信息" +
 			"5.新增边框组件信息")
-	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFontInfos", desc = "字体属性信息表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoLabelInfos", desc = "仪表板标题表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoLineInfos", desc = "仪表板分割线表对象数组", range = "与数据库对应表规则一致", isBean = true)
-	@Param(name = "autoFrameInfos", desc = "仪表板边框组件信息表数组", range = "与数据库对应表规则一致", isBean = true)
+	@Param(name = "auto_dashboard_info", desc = "仪表板信息表实体对象", range = "与数据库对应表规则一致")
+	@Param(name = "autoLabelInfo", desc = "仪表板标题表对象", range = "与数据库对应表规则一致")
+	@Param(name = "autoLineInfo", desc = "仪表板分割线表对象", range = "与数据库对应表规则一致")
+	@Param(name = "autoFrameInfo", desc = "仪表板边框组件信息表对象", range = "与数据库对应表规则一致")
 	@Param(name = "layout", desc = "仪表盘布局对象", range = "无限制")
-	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, String autoFontInfo,
-	                           String autoLabelInfo, String autoLineInfo, String autoFrameInfo, String layout) {
+	private void addLayoutInfo(Auto_dashboard_info auto_dashboard_info, String autoLabelInfo,
+	                           String autoLineInfo, String autoFrameInfo, String layout) {
 		// 1.解析仪表盘布局信息
 		JSONArray layoutArray = JSONArray.parseArray(layout);
 		List<Map<String, Object>> autoLabelInfos = new ArrayList<>();
