@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.annotation.JSONField;
+import com.sun.javafx.font.directwrite.DWFactory;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
@@ -15,6 +16,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
+import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.conf.WebinfoConf;
@@ -37,6 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.*;
 
 @DocClass(desc = "自主分析操作类", author = "dhw", createdate = "2020/8/24 11:29")
@@ -743,7 +746,7 @@ public class OperateAction extends BaseAction {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
 				for (int j = 0; j < componentList.size(); j++) {
-					String s = componentList.get(j).get(y_columns[i].trim()).toString();
+					String s = componentList.get(j).get(y_columns[i].trim()).toString().trim();
 					checkIfNumeric(s, y_columns[i]);
 					data.add(s);
 				}
@@ -880,7 +883,7 @@ public class OperateAction extends BaseAction {
 		List<String> legendData = new ArrayList<>();
 		List<Map<String, Object>> seriesArray = new ArrayList<>();
 		List<Map<String, Object>> seriesData = new ArrayList<>();
-		int count = 0;
+		BigDecimal count = new BigDecimal(0);
 		for (Map<String, Object> stringObjectMap : componentList) {
 			Map<String, Object> map = new HashMap<>();
 			legendData.add(stringObjectMap.get(x_columns[0]).toString());
@@ -888,7 +891,7 @@ public class OperateAction extends BaseAction {
 			map.put("value", stringObjectMap.get(y_columns[0]));
 			String s = stringObjectMap.get(y_columns[0]).toString();
 			checkIfNumeric(s, y_columns[0]);
-			count = count + Integer.parseInt(stringObjectMap.get(y_columns[0]).toString());
+			count = count.add(new BigDecimal(s));
 			seriesData.add(map);
 		}
 		resultMap.put("count", count);
@@ -2035,5 +2038,25 @@ public class OperateAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
 			throw new BusinessException("仪表板名称已存在");
 		}
+	}
+
+	public static void main(String args[]){
+		DatabaseWrapper db = null;
+		try {
+			SqlOperator.queryList(db,"select * from NEW_TABLE_RG2");
+
+		} catch (Exception e) {
+			if (db != null) {
+				db.rollback();
+			}
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
+
+
 	}
 }
