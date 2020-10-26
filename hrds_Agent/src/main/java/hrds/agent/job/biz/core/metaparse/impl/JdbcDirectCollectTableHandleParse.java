@@ -103,6 +103,7 @@ public class JdbcDirectCollectTableHandleParse extends AbstractCollectTableHandl
 			columnMetaInfo.append(STRSPLIT).append(Constant.SDATENAME);
 			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
 			colLengthInfo.append(STRSPLIT).append("8");
+			//判断算拉链，增加两个字段，结束日期和md5
 			//添加操作日期、操作时间、操作人
 			if (JobConstant.ISADDOPERATEINFO) {
 				columnMetaInfo.append(STRSPLIT).append(Constant.HYREN_OPER_DATE).append(STRSPLIT)

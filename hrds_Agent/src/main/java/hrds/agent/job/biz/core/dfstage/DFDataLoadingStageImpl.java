@@ -286,7 +286,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							dataStoreConfBean.getDsl_name(), data_store_connect_attr.get(StorageTypeKey.external_directory)));
 				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
-							+ "oracle数据库外部表进数目前只支持非定长文件进数");
+							+ "Oracle数据库外部表进数目前只支持非定长文件进数，请在页面选择转存" +
+							"或者使用非定长格式文件进行db文件采集直接加载进Oracle");
 				}
 				//如果表已存在则删除
 				IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
@@ -321,7 +322,8 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 							dataStoreConfBean.getDsl_name(), uploadServerPath, sqlList, db);
 				} else {//TODO 这里判断逻辑需要增加多种文件格式支持外部表形式
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
-							+ "oracle数据库外部表进数目前只支持Csv文件进数");
+							+ "Postgresql数据库外部表进数目前只支持Csv文件进数，请在页面选择转存" +
+							"或者使用csv格式文件进行db文件采集直接加载进Postgresql");
 				}
 				//4.执行sql语句
 				HSqlExecute.executeSql(sqlList, db);
@@ -559,7 +561,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			} else if (FileFormat.CSV.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoadCsv(todayTableName, tableBean));
 			} else {
-				throw new AppSystemException("暂不支持定长或者其他类型直接加载到hive表");
+				throw new AppSystemException("暂不支持定长或者其他特殊类型直接加载到hive表");
 			}
 			//3.加载数据
 			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);
