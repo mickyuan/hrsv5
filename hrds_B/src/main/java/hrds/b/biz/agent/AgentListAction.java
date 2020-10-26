@@ -21,6 +21,7 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.CollectType;
+import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.StoreLayerDataSource;
@@ -2153,8 +2154,8 @@ public class AgentListAction extends BaseAction {
 
 	@Method(desc = "获取已存在的数据库采集连接信息", logicStep = "1: 根据当前登入的用户获取")
 	@Return(desc = "返回当前用户已配置过的数据库信息", range = "可为空,为空表示该用户为配置过数据库采集连接信息")
-	public List<Database_set> getDatabaseData() {
-		List<Database_set> databaseList = Dbo.queryList(Database_set.class,
+	public List<Map<String, Object>> getDatabaseData() {
+		List<Map<String, Object>> databaseList = Dbo.queryList(
 			"SELECT t1.database_name,t1.database_pad,t1.database_drive,t1.database_type,t1.user_name,t1.database_ip,"
 				+ "t1.database_port,t1.jdbc_url FROM "
 				+ Database_set.TableName
@@ -2166,9 +2167,92 @@ public class AgentListAction extends BaseAction {
 				+ "t1.database_port,t1.jdbc_url ORDER BY t1.database_name", AgentType.ShuJuKu.getCode(), getUserId(),
 			CollectType.ShuJuKuCaiJi.getCode(), CollectType.ShuJuKuChouShu.getCode());
 		databaseList.forEach(databaseSet -> {
-			DatabaseType databaseType = DatabaseType.ofEnumByCode(databaseSet.getDatabase_type());
-			databaseSet.setDatabase_type(databaseType.getValue());
+			DatabaseType databaseType = DatabaseType.ofEnumByCode(databaseSet.get("database_type").toString());
+			databaseSet.put("databaseName", databaseType.getValue());
 		});
 		return databaseList;
+	}
+
+	@Method(desc = "获取任务下每个表对应的存储层信息配置", logicStep = ""
+		+ "1: 检查任务ID是否存在"
+		+ "2: 获取当前任务下的表存储配置信息"
+		+ "3: 组合关系型数据库的数据信息,因为一个表可以同时存储到多个存储层")
+	@Param(name = "colSetId", desc = "采集任务ID", range = "不可为空")
+	@Return(desc = "返回任务下每个表对应的储存层信息", range = "可以为空, 为空表示采集任务首次配置")
+	public Map<String, List<Object>> getStoreDataBase(long colSetId) {
+
+		//1: 检查任务ID是否存在
+		long countNum = Dbo
+			.queryNumber("SELECT COUNT(1) FROM " + Database_set.TableName + " WHERE database_id = ?", colSetId)
+			.orElseThrow(() -> new BusinessException("任务ID( " + colSetId + " )不存在)"));
+		if (countNum == 0) {
+			throw new BusinessException("任务ID( " + colSetId + " )不存在)");
+		}
+
+		//2; 获取当前任务下的表存储配置信息
+		List<Map<String, Object>> queryList = Dbo
+			.queryList("SELECT t1.table_id,t3.dsl_name FROM "
+					+ Table_storage_info.TableName
+					+ " t1 JOIN "
+					+ Dtab_relation_store.TableName
+					+ " t2 ON "
+					+ " t1.storage_id = t2.tab_id JOIN "
+					+ Data_store_layer.TableName
+					+ " t3 ON t2.dsl_id = t3.dsl_id "
+//					+ Data_store_layer_attr.TableName
+//					+ " t4 ON t3.dsl_id = t4.dsl_id "
+					+ "WHERE t1.table_id IN (SELECT ti.table_id FROM "
+					+ Table_info.TableName
+					+ " ti JOIN "
+					+ Data_extraction_def.TableName
+					+ " ded ON ti.table_id = ded.table_id WHERE ti.database_id = ? and ded.data_extract_type = ? "
+					+ "ORDER BY ti.table_name)", colSetId,
+				DataExtractType.YuanShuJuGeShi.getCode());
+
+		Map<String, List<Object>> map = new HashMap<>();
+		//根据每个表进行分组,然后在组装数据信息
+		queryList.forEach(itemMap -> {
+			String table_id = itemMap.get("table_id").toString();
+			if (map.containsKey(table_id)) {
+				map.get(table_id).add(itemMap.get("dsl_name"));
+			} else {
+				List<Object> list = new ArrayList<>();
+				list.add(itemMap.get("dsl_name"));
+				map.put(table_id, list);
+			}
+//			String store_type = itemMap.get("store_type").toString();
+//			Store_type storeType = Store_type.ofEnumByCode(store_type);
+//			String table_id = itemMap.get("table_id").toString();
+//			if (storeType == Store_type.DATABASE) {
+//				if (map.containsKey(table_id)) {
+//					if (itemMap.get("storage_property_key").equals(StorageTypeKey.database_type)) {
+//						DatabaseType storage_property_val = DatabaseType
+//							.ofEnumByCode(itemMap.get("storage_property_val").toString());
+//						map.get(table_id).add(storage_property_val.getValue());
+//					}
+//				} else {
+//					if (itemMap.get("storage_property_key").equals(StorageTypeKey.database_type)) {
+//						DatabaseType storage_property_val = DatabaseType
+//							.ofEnumByCode(itemMap.get("storage_property_val").toString());
+//						List<String> list = new ArrayList<>();
+//						list.add(storage_property_val.getValue());
+//						map.put(table_id, list);
+//					}
+//				}
+//			} else {
+//				if (map.containsKey(table_id)) {
+//					List<String> list = map.get(table_id);
+//					//重复的就不在添加了
+//					if (!list.contains(storeType.getValue())) {
+//						map.get(table_id).add(storeType.getValue());
+//					}
+//				} else {
+//					List<String> list = new ArrayList<>();
+//					list.add(storeType.getValue());
+//					map.put(table_id, list);
+//				}
+//			}
+		});
+		return map;
 	}
 }
