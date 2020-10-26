@@ -352,8 +352,8 @@ public class InterfaceCommon {
 					for (String userColumn : userColumns) {
 						// 5.判断当前列名称是否有权限,没有返回错误响应信息
 						if (columnIsExist(userColumn.toLowerCase(), columns)) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
-									"请求错误,查询列名" + userColumn + "不存在");
+							return StateType.getResponseInfo(StateType.NO_COLUMN_USE_PERMISSIONS.name(),
+									"请求错误,查询列名" + userColumn + "没有使用权限");
 						}
 					}
 				}
@@ -708,8 +708,8 @@ public class InterfaceCommon {
 				String colVal = col_name[1];
 				// 4.判断列名是否存在,不存在返回错误响应信息
 				if (columnIsExist(colName.toLowerCase(), columns)) {
-					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
-							"请求错误,条件列名" + colName + "不存在");
+					return StateType.getResponseInfo(StateType.NO_COLUMN_USE_PERMISSIONS.name(),
+							"请求错误,条件列名" + colName + "没有使用权限");
 				}
 				// 5.存在，拼接查询条件
 				whereSb.append(colName).append(symbol).append("'").append(colVal).append("'").append(" and ");
@@ -1027,7 +1027,8 @@ public class InterfaceCommon {
 						String colVal = col_name.get(1);
 						// 查看当前查询列是否为有效
 						if (!columns.contains(colName.toLowerCase())) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST);
+							return StateType.getResponseInfo(StateType.NO_COLUMN_USE_PERMISSIONS.name(),
+									"列" + colName + "没有使用权限");
 						}
 						for (String tableType : tableTypeList) {
 							JSONObject tableTypeJson = JSONObject.parseObject(tableType);
