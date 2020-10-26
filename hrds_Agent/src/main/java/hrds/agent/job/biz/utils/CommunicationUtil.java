@@ -13,22 +13,24 @@ import hrds.commons.entity.Collect_case;
 import hrds.commons.entity.Data_store_reg;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.AgentActionUtil;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.PackUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.List;
 
 @DocClass(desc = "解决agent跟服务端做数据，已经通信失败做信息登记", author = "zxz", createdate = "2019/11/22 10:04")
 public class CommunicationUtil {
-	//通信异常存储目录
-	private static final String FOLDER = System.getProperty("user.dir") + File.separator
-			+ "CommunicationError" + File.separator;
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 
 	static {
-		File file = new File(FOLDER);
+		File file = new File(Constant.COMMUNICATIONERRORFOLDER);
 		if (!file.exists()) {
 			if (!file.mkdir()) {
-				throw new AppSystemException("创建文件夹" + FOLDER + "失败");
+				throw new AppSystemException("创建文件夹" + Constant.COMMUNICATIONERRORFOLDER + "失败");
 			}
 		}
 	}
@@ -51,6 +53,8 @@ public class CommunicationUtil {
 				throw new AppSystemException("保存错误信息失败");
 			}
 		} catch (Exception e) {
+			//打印错误日志
+			logger.error(e);
 			JSONObject object = new JSONObject();
 			object.put("collect_case", JSONArray.toJSONString(collect_case));
 			object.put("msg", StringUtil.isBlank(loadMessage) ? "excption is null " : loadMessage);
@@ -96,7 +100,7 @@ public class CommunicationUtil {
 	 * @param job_rs_id     作业id
 	 */
 	public static void batchAddSourceFileAttribute(List<Object[]> addParamsPool, String addSql,
-	                                               String job_rs_id) {
+												   String job_rs_id) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHADDSOURCEFILEATTRIBUTE);
@@ -111,6 +115,8 @@ public class CommunicationUtil {
 				throw new AppSystemException("agent连接服务端批量添加source_file_attribute信息异常");
 			}
 		} catch (Exception e) {
+			//打印错误日志
+			logger.error(e);
 			JSONObject object = new JSONObject();
 			object.put("addSql", addSql);
 			object.put("addParamsPool", JSONArray.toJSONString(addParamsPool));
@@ -128,7 +134,7 @@ public class CommunicationUtil {
 	 * @param job_rs_id     作业id
 	 */
 	public static void batchAddFtpTransfer(List<Object[]> addParamsPool, String addSql,
-	                                       String job_rs_id) {
+										   String job_rs_id) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHADDFTPTRANSFER);
@@ -143,6 +149,8 @@ public class CommunicationUtil {
 				throw new AppSystemException("agent连接服务端批量添加ftp_transfered信息异常");
 			}
 		} catch (Exception e) {
+			//打印错误日志
+			logger.error(e);
 			JSONObject object = new JSONObject();
 			object.put("addSql", addSql);
 			object.put("addParamsPool", JSONArray.toJSONString(addParamsPool));
@@ -160,7 +168,7 @@ public class CommunicationUtil {
 	 * @param job_rs_id        作业id
 	 */
 	public static void batchUpdateSourceFileAttribute(List<Object[]> updateParamsPool, String updateSql,
-	                                                  String job_rs_id) {
+													  String job_rs_id) {
 		try {
 			HttpServerConfBean confBean = HttpServerConf.getHttpServer("hyren_main");
 			String url = AgentActionUtil.getServerUrl(confBean, AgentActionUtil.BATCHUPDATESOURCEFILEATTRIBUTE);
@@ -175,6 +183,8 @@ public class CommunicationUtil {
 				throw new AppSystemException("agent连接服务端批量更新source_file_attribute信息异常");
 			}
 		} catch (Exception e) {
+			//打印错误日志
+			logger.error(e);
 			JSONObject object = new JSONObject();
 			object.put("updateSql", updateSql);
 			object.put("updateParamsPool", JSONArray.toJSONString(updateParamsPool));
@@ -185,7 +195,7 @@ public class CommunicationUtil {
 	}
 
 	private static void writeCommunicationErrorFile(String methodName, String param, String errorMsg,
-	                                                String job_rs_id) {
+													String job_rs_id) {
 		JSONObject object = new JSONObject();
 		object.put("methodName", methodName);
 		object.put("param", param);
@@ -193,18 +203,20 @@ public class CommunicationUtil {
 		BufferedWriter out = null;
 		try {
 			out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(
-					FOLDER + job_rs_id + ".error"), true)));
+					Constant.COMMUNICATIONERRORFOLDER + job_rs_id + ".error"), true)));
 			out.write(object.toString());
 			out.newLine();
 		} catch (Exception e) {
-			e.printStackTrace();
+			//打印错误日志
+			logger.error(e);
 		} finally {
 			try {
 				if (out != null) {
 					out.close();
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				//打印错误日志
+				logger.error(e);
 			}
 		}
 	}

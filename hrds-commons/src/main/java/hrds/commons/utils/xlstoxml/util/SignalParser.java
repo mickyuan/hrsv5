@@ -113,7 +113,7 @@ public class SignalParser {
 	public String getStoragetype() {
 
 		if (StringUtil.isEmpty(storagetype)) {
-			return StorageType.ZengLiang.getCode();
+			return StorageType.QuanLiang.getCode();
 		}
 
 		return storagetype;

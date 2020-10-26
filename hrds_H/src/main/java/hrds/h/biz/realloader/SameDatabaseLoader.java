@@ -1,15 +1,20 @@
 package hrds.h.biz.realloader;
 
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.ProcessType;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ConnectionTool;
+import hrds.commons.entity.Datatable_field_info;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.h.biz.config.MarketConf;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static hrds.commons.utils.Constant.*;
@@ -22,7 +27,7 @@ import static hrds.commons.utils.Constant.*;
 public class SameDatabaseLoader extends AbstractRealLoader {
 
     // TODO 注释
-    boolean MARKET_INCREMENT_TMPTABLE_DELETE =
+    private final boolean MARKET_INCREMENT_TMPTABLE_DELETE =
             PropertyParaValue.getBoolean("market.increment.tmptable.delete", true);
     private final DatabaseWrapper db;
     private final String sql;
@@ -35,16 +40,17 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     SameDatabaseLoader(MarketConf conf) {
         super(conf);
-        db = ConnectionTool.getDBWrapper(tableLayerAttrs);
         sql = conf.getCompleteSql();
-
         columns = Utils.columns(conf.getDatatableFields());
-        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf,
-                true, isMultipleInput);
+        createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, true);
         databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
         currentTableName = "curr_" + tableName;
         validTableName = "valid_" + tableName;
         invalidTableName = "invalid_" + tableName;
+
+        db = ConnectionTool.getDBWrapper(tableLayerAttrs);
+        //开启事务，在 this.rollback() 中进行回滚,在 this.finalWork() 中 commit()
+        db.beginTrans();
     }
 
     @Override
@@ -131,13 +137,24 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     @Override
-    public void restore() {
-        Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(), conf.getDatatableId(), isMultipleInput);
+    public void restore() throws SQLException {
+        db.rollback();
+        if (Utils.hasTodayData(db, tableName, etlDate,
+                datatableId, isMultipleInput, conf.isIncrement())) {
+            Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(), conf.getDatatableId(),
+                    isMultipleInput, conf.isIncrement());
+        }
+    }
+
+    @Override
+    public void preWork() {
+        Utils.preWorkWithoutTrans(preSql, db);
     }
 
     @Override
     public void finalWork() {
-        Utils.finalWorkWithinTrans(finalSql, tableLayerAttrs);
+        Utils.finalWorkWithoutTrans(finalSql, db);
+        db.commit();
     }
 
     @Override
@@ -172,8 +189,18 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     }
 
     private String lineMd5Expr(String columnsJoin) {
-        return Utils.registerMd5Function(db, databaseType) +
-                "(" + columnsJoin.replace(",", "||") + ")";
+        List<String> columnList = StringUtil.split(columnsJoin, ",");
+        if (columnList == null || columnList.isEmpty()) {
+            throw new AppSystemException("采集作业信息不能为空");
+        }
+        //2、遍历list集合，获取每一个ColumnCleanResult对象的columnName
+        List<String> columnNames = new ArrayList<>();
+        for (String column : columnList) {
+            columnNames.add(column);
+        }
+        return ConnectionTool.getDbType(databaseType.getCode()).ofColMd5(db, columnNames);
+		/*return Utils.registerMd5Function(db, databaseType) +
+				"(''||" + columnsJoin.replace(",", "||") + ")";*/
     }
 
 
@@ -186,7 +213,6 @@ public class SameDatabaseLoader extends AbstractRealLoader {
      * 包括，字段名称，自增函数，定制，hyren自定义字段等
      */
     private String realSelectExpr() {
-        final List<String> colSeq = getColumnSequence();
         final StringBuilder selectExpr = new StringBuilder(120);
         //只有映射字段做MD5
         final StringBuilder md5Cols = new StringBuilder(120);
@@ -202,12 +228,15 @@ public class SameDatabaseLoader extends AbstractRealLoader {
                     String processCode = field.getField_process();
                     if (ProcessType.ZiZeng.getCode().equals(processCode)) {
                         selectExpr.append(autoIncreasingExpr());
-                    } else if (ProcessType.YingShe.getCode().equals(processCode)) {
-                        int mappingIndex = Integer.parseInt(field.getProcess_para());
-                        selectExpr.append(colSeq.get(mappingIndex));
+                    } else if (ProcessType.YingShe.getCode().equals(processCode)
+                            || ProcessType.FenZhuYingShe.getCode().equals(processCode)
+                            || ProcessType.HanShuYingShe.getCode().equals(processCode)
+                            || ProcessType.DingZhi.getCode().equals(processCode)) {
+//                        int mappingIndex = Integer.parseInt(field.getProcess_mapping());
+//                        selectExpr.append(colSeq.get(mappingIndex));
+//                        md5Cols.append(field.getField_en_name()).append(',');
+                        selectExpr.append(field.getField_en_name());
                         md5Cols.append(field.getField_en_name()).append(',');
-                    } else if (ProcessType.DingZhi.getCode().equals(processCode)) {
-                        selectExpr.append("'").append(field.getProcess_para()).append("'");
                     } else {
                         throw new AppSystemException("不支持处理方式码：" + processCode);
                     }
@@ -219,12 +248,12 @@ public class SameDatabaseLoader extends AbstractRealLoader {
                     .append(conf.getDatatableId())
                     .append(',');
         }
-        selectExpr
-                .append(conf.getEtlDate())
-                .append(',')
-                .append(MAXDATE)
-                .append(',')
-                .append(lineMd5Expr(md5Cols.deleteCharAt(md5Cols.length() - 1).toString()));
+        selectExpr.append(conf.getEtlDate());
+
+        if (conf.isIncrement()) {
+            selectExpr.append(',').append(MAXDATE).append(',')
+                    .append(lineMd5Expr(md5Cols.deleteCharAt(md5Cols.length() - 1).toString()));
+        }
         return selectExpr.toString();
     }
 
@@ -232,7 +261,26 @@ public class SameDatabaseLoader extends AbstractRealLoader {
      * 返回自增函数表达式
      */
     private String autoIncreasingExpr() {
-        //TODO 假装一下这里是返回了一个自增函数表达式
-        return "'increasing'";
+        //使用开窗函数 row_number() over ()做自增列
+        //如果选择了主键，使用主键做开窗排序列
+        List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
+        String orderByCol = "";
+        if (additionalAttrs != null) {
+            orderByCol = additionalAttrs.get(0);
+        } else {
+            //随机选择一个普通列作为排序列
+            List<Datatable_field_info> datatableCreateFields = conf.getDatatableFields();
+            for (Datatable_field_info field_info : datatableCreateFields) {
+                if (!field_info.getField_en_name().startsWith("hyren_") &&
+                        !ProcessType.ZiZeng.getCode().equals(field_info.getField_process())) {
+                    orderByCol = field_info.getField_en_name();
+                    break;
+                }
+            }
+        }
+        if (StringUtil.isBlank(orderByCol)) {
+            throw new AppSystemException("找不到自增函数的排序列");
+        }
+        return " row_number() over (order by " + orderByCol + ")";
     }
 }

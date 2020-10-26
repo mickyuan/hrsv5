@@ -29,69 +29,74 @@ public class ConnUtil {
 		DBConnectionProp template = new DBConnectionProp();
 		//2、判断数据库类型，根据数据库类型构建数据库连接信息填写模板并放入Map
 		DatabaseType databaseType = DatabaseType.ofEnumByCode(dbType);
-		if(DatabaseType.MYSQL == databaseType){
+		if (DatabaseType.MYSQL == databaseType) {
 			template.setUrlPrefix("jdbc:mysql://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull");
-		}else if(DatabaseType.Oracle9i == databaseType || DatabaseType.Oracle10g == databaseType){
+		} else if (DatabaseType.Oracle9i == databaseType || DatabaseType.Oracle10g == databaseType) {
 			template.setUrlPrefix("jdbc:oracle:thin:@");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder(":");
 			template.setUrlSuffix("");
-		}else if(DatabaseType.DB2 == databaseType){
+		} else if (DatabaseType.DB2 == databaseType) {
 			template.setUrlPrefix("jdbc:db2://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("");
-		}else if(DatabaseType.SqlServer2000 == databaseType || DatabaseType.SqlServer2005 == databaseType){
+		} else if (DatabaseType.SqlServer2000 == databaseType || DatabaseType.SqlServer2005 == databaseType) {
 			template.setUrlPrefix("jdbc:sqlserver://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder(";DatabaseName=");
 			template.setUrlSuffix("");
-		}else if(DatabaseType.Postgresql == databaseType){
+		} else if (DatabaseType.Postgresql == databaseType) {
 			template.setUrlPrefix("jdbc:postgresql://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("");
-		}else if(DatabaseType.SybaseASE125 == databaseType){
+		} else if (DatabaseType.SybaseASE125 == databaseType) {
 			template.setUrlPrefix("jdbc:sybase:Tds:");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("");
-		}else if(DatabaseType.ApacheDerby == databaseType){
+		} else if (DatabaseType.ApacheDerby == databaseType) {
 			template.setUrlPrefix("jdbc:derby://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix(";create=true");
-		}else if(DatabaseType.GBase == databaseType){
+		} else if (DatabaseType.GBase == databaseType) {
 			template.setUrlPrefix("jdbc:gbase://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("");
-		}else if(DatabaseType.TeraData == databaseType){
-			if(StringUtil.isBlank(port)){
+		} else if (DatabaseType.TeraData == databaseType) {
+			if (StringUtil.isBlank(port)) {
 				template.setUrlPrefix("jdbc:teradata://");
 				template.setIpPlaceholder("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
 				template.setPortPlaceholder("");
 				template.setUrlSuffix(",lob_support=off");
-			}else{
+			} else {
 				template.setUrlPrefix("jdbc:teradata://");
 				template.setIpPlaceholder("/TMODE=TERA,CHARSET=ASCII,CLIENT_CHARSET=cp936,DATABASE=");
 				template.setPortPlaceholder("");
 				template.setUrlSuffix(",lob_support=off,DBS_PORT=");
 			}
-		}else if(DatabaseType.Informatic == databaseType){
+		} else if (DatabaseType.Informatic == databaseType) {
 			template.setUrlPrefix("jdbc:informix-sqli://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix(":INFORMIXSERVER=myserver");
-		}else if(DatabaseType.H2 == databaseType){
+		} else if (DatabaseType.H2 == databaseType) {
 			template.setUrlPrefix("jdbc:h2:tcp://");
 			template.setIpPlaceholder(":");
 			template.setPortPlaceholder("/");
 			template.setUrlSuffix("");
-		}else{
+		} else if (DatabaseType.Hive == databaseType) {
+			template.setUrlPrefix("jdbc:hive2://");
+			template.setIpPlaceholder(":");
+			template.setPortPlaceholder("/");
+			template.setUrlSuffix("");
+		} else {
 			logger.error("目前不支持对该数据库类型进行采集，请联系管理员");
 			throw new AppSystemException("目前不支持对该数据库类型进行采集，请联系管理员");
 		}
@@ -103,33 +108,35 @@ public class ConnUtil {
 			"1、判断数据库类型，根据数据库类型返回数据库连接驱动")
 	@Param(name = "dbType", desc = "数据库类型", range = "不为空，DatabaseType代码项code值")
 	@Return(desc = "数据库连接驱动", range = "不为空")
-	public static String getJDBCDriver(String dbType){
+	public static String getJDBCDriver(String dbType) {
 		DatabaseType databaseType = DatabaseType.ofEnumByCode(dbType);
-		if(DatabaseType.MYSQL == databaseType){
+		if (DatabaseType.MYSQL == databaseType) {
 			return "com.mysql.jdbc.Driver";
-		}else if(DatabaseType.Oracle9i == databaseType){
+		} else if (DatabaseType.Oracle9i == databaseType) {
 			return "oracle.jdbc.driver.OracleDriver";
-		}else if(DatabaseType.Oracle10g == databaseType){
+		} else if (DatabaseType.Oracle10g == databaseType) {
 			return "oracle.jdbc.OracleDriver";
-		}else if(DatabaseType.DB2 == databaseType){
+		} else if (DatabaseType.DB2 == databaseType) {
 			return "com.ibm.db2.jcc.DB2Driver";
-		}else if(DatabaseType.SqlServer2000 == databaseType || DatabaseType.SqlServer2005 == databaseType){
+		} else if (DatabaseType.SqlServer2000 == databaseType || DatabaseType.SqlServer2005 == databaseType) {
 			return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-		}else if(DatabaseType.Postgresql == databaseType){
+		} else if (DatabaseType.Postgresql == databaseType) {
 			return "org.postgresql.Driver";
-		}else if(DatabaseType.SybaseASE125 == databaseType){
+		} else if (DatabaseType.SybaseASE125 == databaseType) {
 			return "com.sybase.jdbc2.jdbc.SybDriver";
-		}else if(DatabaseType.ApacheDerby == databaseType){
+		} else if (DatabaseType.ApacheDerby == databaseType) {
 			return "org.apache.derby.jdbc.EmbeddedDriver";
-		}else if(DatabaseType.GBase == databaseType){
+		} else if (DatabaseType.GBase == databaseType) {
 			return "com.gbase.jdbc.Driver";
-		}else if(DatabaseType.TeraData == databaseType){
-			return "com.teradata.jdbc.TeraDriver";
-		}else if(DatabaseType.Informatic == databaseType){
+		} else if (DatabaseType.TeraData == databaseType) {
+			return "com.ncr.teradata.TeraDriver";
+		} else if (DatabaseType.Informatic == databaseType) {
 			return "com.informix.jdbc.IfxDriver";
-		}else if(DatabaseType.H2 == databaseType){
+		} else if (DatabaseType.H2 == databaseType) {
 			return "org.h2.Driver";
-		}else{
+		} else if (DatabaseType.Hive == databaseType) {
+			return "org.apache.hive.jdbc.HiveDriver";
+		} else {
 			logger.error("目前不支持对该数据库类型进行采集，请联系管理员");
 			throw new AppSystemException("目前不支持对该数据库类型进行采集，请联系管理员");
 		}

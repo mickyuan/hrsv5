@@ -5,6 +5,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessAbstract;
+import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 
@@ -19,34 +20,39 @@ import java.util.Map;
  */
 public class MppTableProcessImpl extends TableProcessAbstract {
 	//存储全量插入信息的list
-	private List<Object[]> addParamsPool = new ArrayList<>();
+	private final List<Object[]> addParamsPool = new ArrayList<>();
 	// 存储update信息的list
-	private List<Object[]> updateParamsPool = new ArrayList<>();
+	private final List<Object[]> updateParamsPool = new ArrayList<>();
 	//批量删除的sql
-	private StringBuilder deleteSql = new StringBuilder();
+	private final StringBuilder deleteSql = new StringBuilder();
 	//数据库的连接
-	private DatabaseWrapper db;
+	private final DatabaseWrapper db;
 	//batch插入的sql
-	private String insertSql;
+	private final String insertSql;
 	//batch更新的sql
-	private String updateSql;
+	private final String updateSql;
 	//需要更新的列信息
-	private List<String> setColumnList;
+	private final List<String> setColumnList;
 	//更新的where条件列信息
-	private List<String> whereColumnList;
+	private final List<String> whereColumnList;
 	//delete Sql拼接的个数
-	private int deleteNum = 0;
+	private int deleteNum = 1;
+	//存储层名称
+	private final String dsl_name;
 
 	public MppTableProcessImpl(TableBean tableBean, CollectTableBean collectTableBean,
-	                           DataStoreConfBean dataStoreConfBean) {
+							   DataStoreConfBean dataStoreConfBean) {
 		super(tableBean, collectTableBean);
 		//获取batch插入的sql
 		this.insertSql = getBatchInsertSql();
 		//获取batch更新的sql
 		this.updateSql = getBatchUpdateSql();
+		this.dsl_name = dataStoreConfBean.getDsl_name();
 		//数据库的连接
 		this.db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
 		this.db.beginTrans();
+		//判断增量更新的表是否存在，不存在则创建表
+		createTableIfNotExist();
 		//获取需要更新的数据
 		this.setColumnList = getSetColumnList();
 		//获取需要跟新的数据的判断条件
@@ -56,6 +62,30 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 			deleteSql.append(column).append(",");
 		}
 		deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(") IN (");
+	}
+
+	/**
+	 * 判断增量表是否存在，不存在创建表
+	 */
+	private void createTableIfNotExist() {
+		if (!db.isExistTable(collectTableBean.getHbase_name())) {
+			StringBuilder create = new StringBuilder(1024);
+			create.append("CREATE TABLE ");
+			create.append(collectTableBean.getHbase_name());
+			create.append("(");
+			for (int i = 0; i < dictionaryColumnList.size(); i++) {
+				create.append(dictionaryColumnList.get(i)).append(" ").append(
+						DataTypeTransform.tansform(dictionaryTypeList.get(i), dsl_name));
+				if (isPrimaryKeyMap.get(dictionaryColumnList.get(i))) {
+					create.append(" primary key");
+				}
+				create.append(",");
+			}
+			//将最后的逗号删除
+			create.deleteCharAt(create.length() - 1);
+			create.append(")");
+			db.execute(create.toString());
+		}
 	}
 
 	@Override
@@ -70,7 +100,7 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 					}
 					addParamsPool.add(object);
 				} else if ("update".equals(operate)) {
-					Object[] object = new Object[updateColumnList.size()];
+					Object[] object = new Object[setColumnList.size() + whereColumnList.size()];
 					for (int i = 0; i < setColumnList.size(); i++) {
 						//加类型转换
 						object[i] = valueList.get(operate).get(setColumnList.get(i));
@@ -93,7 +123,7 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 				}
 			}
 			//先执行删除，再执行更新, 再执行新增
-			if (deleteNum % 900 == 0) {
+			if (deleteNum % 1000 == 0) {
 				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 				//每900条删除一次
 				db.execute(deleteSql.toString());
@@ -103,15 +133,15 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 					deleteSql.append(column).append(",");
 				}
 				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(") IN (");
-				deleteNum = 0;
+				deleteNum = 1;
 			}
 			if (updateParamsPool.size() != 0 && updateParamsPool.size() % 5000 == 0) {
 				//如果更新的有数据，说明delete的值全部读完，这时候判断如果deleteNum不等于0则立即执行剩余的删除操作
-				if (deleteNum > 0) {
+				if (deleteNum > 1) {
 					deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 					//每900条删除一次
 					db.execute(deleteSql.toString());
-					deleteNum = 0;
+					deleteNum = 1;
 				}
 				//每5000条batch提交一次
 				db.execBatch(updateSql, updateParamsPool);
@@ -138,11 +168,11 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 	public void excute() {
 		//最后执行一次提交,如果删除的没有过900，更新和新增的都没有过5000则第一次执行就到这里
 		try {
-			if (deleteNum > 0) {
+			if (deleteNum > 1) {
 				deleteSql.delete(deleteSql.length() - 1, deleteSql.length()).append(")");
 				//每900条删除一次
 				db.execute(deleteSql.toString());
-				deleteNum = 0;
+				deleteNum = 1;
 			}
 			if (updateParamsPool.size() > 0) {
 				db.execBatch(updateSql, updateParamsPool);
@@ -165,13 +195,13 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 		updateSql.append("UPDATE ").append(collectTableBean.getHbase_name()).append(" SET ");
 		StringBuilder sb = new StringBuilder();
 		sb.append(" WHERE ");
-		for (int i = 0; i < updateColumnList.size(); i++) {
-			if (!isPrimaryKeyList.get(i)) {
+		for (String updateColumn : updateColumnList) {
+			if (!isPrimaryKeyMap.get(updateColumn)) {
 				//不是主键
-				updateSql.append(updateColumnList.get(i)).append(" = ?,");
+				updateSql.append(updateColumn).append(" = ?,");
 			} else {
 				//是主键
-				sb.append(updateColumnList.get(i)).append(" = ? and ");
+				sb.append(updateColumn).append(" = ? and ");
 			}
 		}
 		updateSql.delete(updateSql.length() - 1, updateSql.length());
@@ -206,9 +236,9 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 
 	private List<String> getSetColumnList() {
 		List<String> setColumnList = new ArrayList<>();
-		for (int i = 0; i < updateColumnList.size(); i++) {
-			if (!isPrimaryKeyList.get(i)) {
-				setColumnList.add(updateColumnList.get(i));
+		for (String updateColumn : updateColumnList) {
+			if (!isPrimaryKeyMap.get(updateColumn)) {
+				setColumnList.add(updateColumn);
 			}
 		}
 		return setColumnList;
@@ -216,13 +246,15 @@ public class MppTableProcessImpl extends TableProcessAbstract {
 
 	private List<String> getWhereColumnList() {
 		List<String> whereColumnList = new ArrayList<>();
-		for (int i = 0; i < updateColumnList.size(); i++) {
-			if (isPrimaryKeyList.get(i)) {
-				whereColumnList.add(updateColumnList.get(i));
+		if(!updateColumnList.isEmpty()){
+			for (String updateColumn : updateColumnList) {
+				if (isPrimaryKeyMap.get(updateColumn)) {
+					whereColumnList.add(updateColumn);
+				}
 			}
-		}
-		if (whereColumnList.isEmpty()) {
-			throw new AppSystemException("DB文件采集，采集增量数据，直接更新，没有指定主键");
+			if (whereColumnList.isEmpty()) {
+				throw new AppSystemException("DB文件采集，采集增量数据，直接更新，没有指定主键");
+			}
 		}
 		return whereColumnList;
 	}

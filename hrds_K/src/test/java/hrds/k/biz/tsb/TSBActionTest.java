@@ -186,8 +186,6 @@ public class TSBActionTest extends WebBaseTestCase {
             Dbm_normbm_detect dbm_normbm_detect = new Dbm_normbm_detect();
             dbm_normbm_detect.setDetect_id(DETECT_ID);
             dbm_normbm_detect.setDetect_name("-1000L");
-            dbm_normbm_detect.setSource_type("DCL");
-            dbm_normbm_detect.setIs_import(IsFlag.Fou.getCode());
             dbm_normbm_detect.setDetect_status(IsFlag.Shi.getCode());
             dbm_normbm_detect.setDbm_mode(DbmMode.BiaoJieGouDuiBiao.getCode());
             dbm_normbm_detect.setCreate_user("-1000L");
@@ -205,9 +203,6 @@ public class TSBActionTest extends WebBaseTestCase {
             dbm_dtable_info.setTable_remark("-1000L");
             dbm_dtable_info.setDetect_id(DETECT_ID);
             dbm_dtable_info.setTable_id(TABLE_ID);
-            dbm_dtable_info.setSource_id(SOURCE_ID);
-            dbm_dtable_info.setAgent_id(AGENT_ID);
-            dbm_dtable_info.setDatabase_id(FCS_ID);
             dbm_dtable_info.add(db);
             //初始化检测表字段信息
             Dbm_dtcol_info dbm_dtcol_info = new Dbm_dtcol_info();
@@ -223,9 +218,6 @@ public class TSBActionTest extends WebBaseTestCase {
             dbm_dtcol_info.setDbm_tableid(DBM_TABLE_ID);
             dbm_dtcol_info.setDetect_id(DETECT_ID);
             dbm_dtcol_info.setColumn_id(COL_ID);
-            dbm_dtcol_info.setDatabase_id(FCS_ID);
-            dbm_dtcol_info.setAgent_id(AGENT_ID);
-            dbm_dtcol_info.setSource_id(SOURCE_ID);
             dbm_dtcol_info.add(db);
             //初始化检测结果信息
             Dbm_normbmd_result dbm_normbmd_result = new Dbm_normbmd_result();
@@ -250,10 +242,9 @@ public class TSBActionTest extends WebBaseTestCase {
         }
     }
 
-    @Method(desc = "测试案例执行完成后清理测试数据",
-            logicStep = "测试案例执行完成后清理测试数据")
-    @AfterClass
-    public static void after() {
+        @Method(desc = "测试案例执行完成后清理测试数据", logicStep = "测试案例执行完成后清理测试数据")
+        @AfterClass
+        public static void after() {
         try (DatabaseWrapper db = new DatabaseWrapper()) {
             long num;
             //删除 Sys_user 表测试数据

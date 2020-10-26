@@ -30,7 +30,6 @@ import java.util.Map;
  * @since JDK 1.7
  */
 public class DatasetProcessBack implements SparkDataset, Closeable {
-
     private SparkSession sparkSession;
     private Dataset<Row> dataset = null;
     private MarketConf conf;
@@ -140,7 +139,7 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
             for (String tableName : listTable) {
                 List<LayerBean> layerByTable = ProcessingData.getLayerByTable(tableName, db);
                 if (!validTableLayer(layerByTable)) {
-                    throw new AppSystemException("表 " + tableName + " 不属于Database,Hive,Hbase中的任意一层");
+                    throw new AppSystemException("表 " + tableName + " 不属于Database,Hive,Hbase,Carbondata中的任意一层");
                 }
                 if (needCreateTempView(layerByTable)) {
                     //如果表存在于多个关系型数据库，就随便读个表吧
@@ -155,7 +154,8 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
     private static boolean needCreateTempView(List<LayerBean> layerByTable) {
         for (LayerBean layerBean : layerByTable) {
             if (Store_type.HIVE.getCode().equals(layerBean.getStore_type()) ||
-                    Store_type.HBASE.getCode().equals(layerBean.getStore_type())) {
+                    Store_type.HBASE.getCode().equals(layerBean.getStore_type())
+                    ||Store_type.CARBONDATA.getCode().equals(layerBean.getStore_type())) {
                 return false;
             }
         }
@@ -169,7 +169,8 @@ public class DatasetProcessBack implements SparkDataset, Closeable {
         for (LayerBean layerBean : layerByTable) {
             if (Store_type.HIVE.getCode().equals(layerBean.getStore_type()) ||
                     Store_type.HBASE.getCode().equals(layerBean.getStore_type()) ||
-                    Store_type.DATABASE.getCode().equals(layerBean.getStore_type())) {
+                    Store_type.DATABASE.getCode().equals(layerBean.getStore_type())||
+                    Store_type.CARBONDATA.getCode().equals(layerBean.getStore_type())) {
                 return true;
             }
         }

@@ -13,8 +13,8 @@ import java.util.Map;
 
 public class StorageLayerConvertedNodeData {
 
-    @Method(desc = "数据管控-数据源列表转化DCL数据存储层信息为Node节点数据",
-            logicStep = "数据管控-数据源列表转化DCL数据存储层信息为Node节点数据")
+    @Method(desc = "数据管控-转化数据存储层信息为Node节点数据",
+            logicStep = "数据管控-转化数据存储层信息为Node节点数据")
     @Param(name = "dataStorageLayers", desc = "数据源列表下数据存储层信息List", range = "数据源列表下数据存储层信息List")
     @Param(name = "dataSourceType", desc = "DataSourceType对象", range = "DataSourceType对象")
     @Return(desc = "存储层信息的Node节点数据", range = "存储层信息的Node节点数据")
@@ -26,6 +26,8 @@ public class StorageLayerConvertedNodeData {
             Map<String, Object> map = new HashMap<>();
             map.put("id", dataSourceType.getCode() + "_" + data_store_layer.getDsl_id());
             map.put("label", data_store_layer.getDsl_name());
+            map.put("dsl_id", data_store_layer.getDsl_id());
+            map.put("dsl_store_type", data_store_layer.getStore_type());
             map.put("parent_id", dataSourceType.getCode());
             map.put("description", data_store_layer.getDsl_remark());
             map.put("data_layer", dataSourceType.getCode());

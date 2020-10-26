@@ -3,6 +3,7 @@ package hrds.h.biz.realloader;
 import hrds.commons.exception.AppSystemException;
 import hrds.h.biz.config.MarketConf;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +37,11 @@ public abstract class AbstractRealLoader implements Loader {
      */
     protected final String datatableId;
     /**
-     * 用户需要执行的最终sql
+     * 前置作业sqlsql
+     */
+    protected final String preSql;
+    /**
+     * 后置作业sqlsql
      */
     protected final String finalSql;
     /**
@@ -50,6 +55,7 @@ public abstract class AbstractRealLoader implements Loader {
         etlDate = conf.getEtlDate();
         datatableId = conf.getDatatableId();
         finalSql = conf.getFinalSql();
+        preSql = conf.getPreSql();
         isMultipleInput = conf.isMultipleInput();
         initTableLayerProperties();
     }
@@ -64,9 +70,14 @@ public abstract class AbstractRealLoader implements Loader {
      * 防止同一天重跑时出现数据错误问题
      */
     @Override
-    public void restore() {
+    public void restore() throws SQLException {
         throw new AppSystemException(this.getClass().getSimpleName() +
                 " 不支持恢复数据至上次跑批结果");
+    }
+
+    @Override
+    public void preWork() {
+        logDebug("该loader不兼容前置置作业");
     }
 
     @Override

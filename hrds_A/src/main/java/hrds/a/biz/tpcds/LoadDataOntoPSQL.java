@@ -48,15 +48,6 @@ public class LoadDataOntoPSQL {
     // 数据文件分隔符
     private static final String TPCDS_DATA_FILE_DELIMITER = "|";
 
-    static {
-        DbinfosConf.Dbinfo dbinfo = DbinfosConf.getDatabase("tpcds");
-        dbConfBean.setDatabase_drive(dbinfo.getDriver());
-        dbConfBean.setJdbc_url(dbinfo.getUrl());
-        dbConfBean.setUser_name(dbinfo.getUsername());
-        dbConfBean.setDatabase_pad(dbinfo.getPassword());
-        dbConfBean.setDatabase_type(DatabaseType.Postgresql.getCode());
-    }
-
     /**
      * main
      */
@@ -69,6 +60,13 @@ public class LoadDataOntoPSQL {
 
     @Method(desc = "初始化数据", logicStep = "初始化数据")
     public static void execute() {
+        //设置数据库连接配置信息Bean
+        DbinfosConf.Dbinfo dbinfo = DbinfosConf.getDatabase("tpcds");
+        dbConfBean.setDatabase_drive(dbinfo.getDriver());
+        dbConfBean.setJdbc_url(dbinfo.getUrl());
+        dbConfBean.setUser_name(dbinfo.getUsername());
+        dbConfBean.setDatabase_pad(dbinfo.getPassword());
+        dbConfBean.setDatabase_type(DatabaseType.Postgresql.getCode());
         //初始化db
         DatabaseWrapper db = ConnectionTool.getDBWrapper(dbConfBean);
         //执行加载数据

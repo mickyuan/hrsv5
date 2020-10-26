@@ -5,77 +5,118 @@ import fd.ng.core.annotation.DocClass;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.Serializable;
+import java.util.List;
 
 @DocClass(desc = "非结构化对象采集任务表和结构表的字段综合的实体", author = "zxz", createdate = "2019/10/24 10:07")
 public class ObjectCollectParamBean implements Serializable {
 	public static final byte[] FILE_HBASE = Bytes.toBytes("file_hbase");
-	@DocBean(name = "ocs_id", value = "对象采集任务编号", dataType = Long.class, required = true)
-	private Long ocs_id;
-	@DocBean(name = "en_name", value = "英文名称", dataType = String.class, required = true)
-	private String en_name;
-	@DocBean(name = "zh_name", value = "中文名称", dataType = String.class, required = true)
-	private String zh_name;
-	@DocBean(name = "collect_data_type", value = "对象采集文件类型", dataType = String.class, required = true)
-	private String collect_data_type;
-	@DocBean(name = "database_code", value = "对象采集编码", dataType = String.class, required = true)
+	@DocBean(name = "odc_id", value = "对象采集id:", dataType = Long.class, required = true)
+	private Long odc_id;
+	@DocBean(name = "obj_number", value = "对象采集设置编号:", dataType = String.class, required = true)
+	private String obj_number;
+	@DocBean(name = "obj_collect_name", value = "对象采集任务名称:", dataType = String.class, required = true)
+	private String obj_collect_name;
+	@DocBean(name = "system_name", value = "操作系统类型:", dataType = String.class, required = true)
+	private String system_name;
+	@DocBean(name = "host_name", value = "主机名称:", dataType = String.class, required = true)
+	private String host_name;
+	@DocBean(name = "local_time", value = "本地系统时间:", dataType = String.class, required = true)
+	private String local_time;
+	@DocBean(name = "server_date", value = "服务器日期:", dataType = String.class, required = true)
+	private String server_date;
+	@DocBean(name = "s_date", value = "开始日期:", dataType = String.class, required = true)
+	private String s_date;
+	@DocBean(name = "e_date", value = "结束日期:", dataType = String.class, required = true)
+	private String e_date;
+	@DocBean(name = "database_code", value = "采集编码(DataBaseCode):1-UTF-8<UTF_8> 2-GBK<GBK> 3-UTF-16<UTF_16> 4-GB2312<GB2312> 5-ISO-8859-1<ISO_8859_1> ", dataType = String.class, required = true)
 	private String database_code;
-	@DocBean(name = "coll_names", value = "采集字段结构名称，逗号分隔", dataType = String.class, required = true)
-	private String coll_names;
-	@DocBean(name = "struct_types", value = "对象数据类型，逗号分隔", dataType = String.class, required = true)
-	private String struct_types;
-	@DocBean(name = "data_desc", value = "中文描述信息", dataType = String.class, required = false)
-	private String data_desc;
-	@DocBean(name = "is_hbase", value = "是否进hbase", dataType = String.class, required = true)
-	private String is_hbase;
-	@DocBean(name = "is_hdfs", value = "是否进hdfs", dataType = String.class, required = true)
-	private String is_hdfs;
+	@DocBean(name = "file_path", value = "采集文件路径:", dataType = String.class, required = true)
+	private String file_path;
+	@DocBean(name = "object_collect_type", value = "对象采集方式(ObjectCollectType):1-行采集<HangCaiJi> 2-对象采集<DuiXiangCaiJi> ", dataType = String.class, required = true)
+	private String object_collect_type;
+	@DocBean(name = "is_dictionary", value = "是否存在数据字典(IsFlag):1-是<Shi> 0-否<Fou> ", dataType = String.class, required = true)
+	private String is_dictionary;
+	@DocBean(name = "data_date", value = "数据日期:", dataType = String.class, required = true)
+	private String data_date;
+	@DocBean(name = "file_suffix", value = "文件后缀名:", dataType = String.class, required = true)
+	private String file_suffix;
+	@DocBean(name = "agent_id", value = "Agent_id:", dataType = Long.class, required = true)
+	private Long agent_id;
+	@DocBean(name = "datasource_number", value = "数据源编号", dataType = String.class, required = true)
+	private String datasource_number;
+	@DocBean(name = "objectTableBeanList", value = "对象采集的表的集合:", dataType = List.class, required = true)
+	private List<ObjectTableBean> objectTableBeanList;
 
-	public String getIs_hbase() {
-		return is_hbase;
+	public Long getOdc_id() {
+		return odc_id;
 	}
 
-	public void setIs_hbase(String is_hbase) {
-		this.is_hbase = is_hbase;
+	public void setOdc_id(Long odc_id) {
+		this.odc_id = odc_id;
 	}
 
-	public String getIs_hdfs() {
-		return is_hdfs;
+	public String getObj_number() {
+		return obj_number;
 	}
 
-	public void setIs_hdfs(String is_hdfs) {
-		this.is_hdfs = is_hdfs;
+	public void setObj_number(String obj_number) {
+		this.obj_number = obj_number;
 	}
 
-	public Long getOcs_id() {
-		return ocs_id;
+	public String getObj_collect_name() {
+		return obj_collect_name;
 	}
 
-	public void setOcs_id(Long ocs_id) {
-		this.ocs_id = ocs_id;
+	public void setObj_collect_name(String obj_collect_name) {
+		this.obj_collect_name = obj_collect_name;
 	}
 
-	public String getEn_name() {
-		return en_name;
+	public String getSystem_name() {
+		return system_name;
 	}
 
-	public void setEn_name(String en_name) {
-		this.en_name = en_name;
+	public void setSystem_name(String system_name) {
+		this.system_name = system_name;
 	}
 
-	public String getZh_name() {
-		return zh_name;
+	public String getHost_name() {
+		return host_name;
 	}
 
-	public void setZh_name(String zh_name) {
-		this.zh_name = zh_name;
+	public void setHost_name(String host_name) {
+		this.host_name = host_name;
 	}
 
-	public String getCollect_data_type() {
-		return collect_data_type;
+	public String getLocal_time() {
+		return local_time;
 	}
 
-	public void setCollect_data_type(String collect_data_type) {
-		this.collect_data_type = collect_data_type;
+	public void setLocal_time(String local_time) {
+		this.local_time = local_time;
+	}
+
+	public String getServer_date() {
+		return server_date;
+	}
+
+	public void setServer_date(String server_date) {
+		this.server_date = server_date;
+	}
+
+	public String getS_date() {
+		return s_date;
+	}
+
+	public void setS_date(String s_date) {
+		this.s_date = s_date;
+	}
+
+	public String getE_date() {
+		return e_date;
+	}
+
+	public void setE_date(String e_date) {
+		this.e_date = e_date;
 	}
 
 	public String getDatabase_code() {
@@ -86,27 +127,67 @@ public class ObjectCollectParamBean implements Serializable {
 		this.database_code = database_code;
 	}
 
-	public String getColl_names() {
-		return coll_names;
+	public String getFile_path() {
+		return file_path;
 	}
 
-	public void setColl_names(String coll_names) {
-		this.coll_names = coll_names;
+	public void setFile_path(String file_path) {
+		this.file_path = file_path;
 	}
 
-	public String getStruct_types() {
-		return struct_types;
+	public String getObject_collect_type() {
+		return object_collect_type;
 	}
 
-	public void setStruct_types(String struct_types) {
-		this.struct_types = struct_types;
+	public void setObject_collect_type(String object_collect_type) {
+		this.object_collect_type = object_collect_type;
 	}
 
-	public String getData_desc() {
-		return data_desc;
+	public String getIs_dictionary() {
+		return is_dictionary;
 	}
 
-	public void setData_desc(String data_desc) {
-		this.data_desc = data_desc;
+	public void setIs_dictionary(String is_dictionary) {
+		this.is_dictionary = is_dictionary;
+	}
+
+	public String getData_date() {
+		return data_date;
+	}
+
+	public void setData_date(String data_date) {
+		this.data_date = data_date;
+	}
+
+	public String getFile_suffix() {
+		return file_suffix;
+	}
+
+	public void setFile_suffix(String file_suffix) {
+		this.file_suffix = file_suffix;
+	}
+
+	public Long getAgent_id() {
+		return agent_id;
+	}
+
+	public void setAgent_id(Long agent_id) {
+		this.agent_id = agent_id;
+	}
+
+	public List<ObjectTableBean> getObjectTableBeanList() {
+		return objectTableBeanList;
+	}
+
+	public void setObjectTableBeanList(List<ObjectTableBean> objectTableBeanList) {
+		this.objectTableBeanList = objectTableBeanList;
+	}
+
+	public String getDatasource_number() {
+		return datasource_number;
+	}
+
+	public void setDatasource_number(String datasource_number) {
+		this.datasource_number = datasource_number;
 	}
 }

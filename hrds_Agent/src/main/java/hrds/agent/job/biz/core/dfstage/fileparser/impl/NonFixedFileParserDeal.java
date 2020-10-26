@@ -6,10 +6,11 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,7 +24,8 @@ import java.util.List;
  * author: zxz
  */
 public class NonFixedFileParserDeal extends FileParserAbstract {
-	private final static Logger LOGGER = LoggerFactory.getLogger(NonFixedFileParserDeal.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	public NonFixedFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile)
 			throws Exception {
@@ -36,6 +38,13 @@ public class NonFixedFileParserDeal extends FileParserAbstract {
 		String lineValue;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(readFile)),
 				DataBaseCode.ofValueByCode(tableBean.getFile_code())))) {
+			if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+				//判断包含表头，先读取表头
+				lineValue = br.readLine();
+				if (lineValue != null) {
+					LOGGER.info("读取到表头为：" + lineValue);
+				}
+			}
 			List<String> valueList;
 			while ((lineValue = br.readLine()) != null) {
 				fileRowCount++;

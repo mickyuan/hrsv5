@@ -1,32 +1,56 @@
 package hrds.g.biz.serviceuser.common;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.util.Dbo;
 import hrds.commons.codes.InterfaceState;
+import hrds.commons.codes.Store_type;
+import hrds.commons.collection.ConnectionTool;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.Interface_file_info;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField;
+import hrds.commons.hadoop.hbaseindexer.type.TypeFieldNameMapper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
+import hrds.commons.hadoop.solr.ISolrOperator;
+import hrds.commons.hadoop.solr.SolrFactory;
+import hrds.commons.hadoop.solr.SolrParam;
+import hrds.commons.hadoop.solr.utils.CollectionUtil;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DruidParseQuerySql;
+import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.bean.CheckParam;
 import hrds.g.biz.bean.QueryInterfaceInfo;
 import hrds.g.biz.bean.SingleTable;
+import hrds.g.biz.bean.TableData;
 import hrds.g.biz.commons.LocalFile;
 import hrds.g.biz.enumerate.AsynType;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
 import hrds.g.biz.init.InterfaceManager;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -67,10 +91,10 @@ public class InterfaceCommon {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "user_password", desc = "密码", range = "新增用户时生成")
 	@Return(desc = "返回接口响应信息", range = "无限制")
-	public static Map<String, Object> getTokenById(Long user_id, String user_password) {
+	public static Map<String, Object> getTokenById(DatabaseWrapper db, Long user_id, String user_password) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		// 2.根据用户id获取用户信息
-		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(user_id);
+		QueryInterfaceInfo queryInterfaceInfo = InterfaceManager.getUserTokenInfo(db, user_id);
 		// 3.判断用户信息是否为空，为空返回错误响应信息
 		if (null == queryInterfaceInfo) {
 			return StateType.getResponseInfo(StateType.NOT_REST_USER);
@@ -81,11 +105,14 @@ public class InterfaceCommon {
 			return StateType.getResponseInfo(StateType.UNAUTHORIZED);
 		}
 		// 4.2密码正确，返回正确响应信息
-		Map<String, Object> responseInfo = StateType.getResponseInfo(StateType.NORMAL);
-		responseInfo.put("token", queryInterfaceInfo.getToken());
-		responseInfo.put("expires_in", 7200);
-		responseInfo.put("use_valid_date", queryInterfaceInfo.getUse_valid_date());
-		return responseInfo;
+		Map<String, Object> tokenMap = new HashMap<>();
+		tokenMap.put("token", queryInterfaceInfo.getToken());
+		tokenMap.put("expires_in", 7200);
+		tokenMap.put("use_valid_date", queryInterfaceInfo.getUse_valid_date());
+		Map<String, Object> responseMap = new HashMap<>();
+		responseMap.put("status", StateType.NORMAL.name());
+		responseMap.put("message", tokenMap);
+		return responseMap;
 	}
 
 	@Method(desc = "检查接口响应信息并返回",
@@ -107,26 +134,28 @@ public class InterfaceCommon {
 		if (StringUtil.isBlank(token)) {
 			// 2.token值为空时检查user_id与user_password是否也为空
 			if (checkParam.getUser_id() == null || StringUtil.isBlank(checkParam.getUser_password())) {
-				return StateType.getResponseInfo(StateType.ARGUMENT_ERROR.getCode(),
+				return StateType.getResponseInfo(StateType.ARGUMENT_ERROR.name(),
 						"token值为空时，user_id与user_password不能为空");
 			}
 			// 3.user_id与user_password不为空，获取token值
-			responseMap = getTokenById(checkParam.getUser_id(),
-					checkParam.getUser_password());
+			responseMap = getTokenById(db, checkParam.getUser_id(), checkParam.getUser_password());
 			// 4.判断获取token值是否成功
-			if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+			if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 				return responseMap;
 			}
 			// 5.获取token值
-			token = responseMap.get("token").toString();
+			Map<String, Object> message = JsonUtil.toObject(JsonUtil.toJson(responseMap.get("message")),
+					new TypeReference<Map<String, Object>>() {
+					}.getType());
+			token = message.get("token").toString();
 		}
 		// 6.判断token值是否存在
-		if (InterfaceManager.existsToken(token)) {
+		if (InterfaceManager.existsToken(db, token)) {
 			// 6.1 token值存在,检查接口状态,开始日期,结束日期的合法性
 			QueryInterfaceInfo userByToken = InterfaceManager.getUserByToken(token);
 			// 6.2判断接口是否有效
-			responseMap = interfaceInfoCheck(db, userByToken.getUser_id(),
-					checkParam.getUrl(), checkParam.getInterface_code());
+			responseMap = interfaceInfoCheck(db, userByToken.getUser_id(), checkParam.getUrl(),
+					checkParam.getInterface_code());
 			responseMap.put("token", token);
 			return responseMap;
 		}
@@ -139,8 +168,7 @@ public class InterfaceCommon {
 			"3.获取文件路径" +
 			"4.判断文件是否存在，不存在创建" +
 			"5.开始写文件" +
-			"6.关闭流" +
-			"7.返回响应状态信息")
+			"6.返回响应状态信息")
 	@Param(name = "responseMap", desc = "接口响应信息", range = "无限制")
 	@Param(name = "filepath", desc = "文件路径", range = "无限制")
 	@Param(name = "filename", desc = "文件名称", range = "无限制")
@@ -148,27 +176,21 @@ public class InterfaceCommon {
 	public static Map<String, Object> createFile(Map<String, Object> responseMap, String filepath, String
 			filename) {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
-		BufferedWriter writer;
+		BufferedWriter writer = null;
 		try {
 			File file = new File(filepath);
 			// 2.判断文件是否存在且是否是文件夹，不存在创建目录
-			if (!file.exists() && file.isDirectory()) {
+			if (!file.exists() && !file.isDirectory()) {
 				if (!file.mkdirs()) {
 					return StateType.getResponseInfo(StateType.CREATE_DIRECTOR_ERROR);
 				}
 			}
 			// 3.获取文件路径
-			if (!filepath.endsWith(File.separator)) {
-				// 文件的路径
-				filepath = filepath + File.separator + filename;
-			} else {
-				// 文件的路径
-				filepath = filepath + filename;
-			}
+			filepath = filepath + File.separator + filename;
 			// 4.判断文件是否存在，不存在创建
 			File writeFile = new File(filepath);
 			if (!writeFile.exists()) {
-				if (writeFile.createNewFile()) {
+				if (!writeFile.createNewFile()) {
 					return StateType.getResponseInfo(StateType.CREATE_FILE_ERROR);
 				}
 			}
@@ -176,13 +198,19 @@ public class InterfaceCommon {
 			writer = new BufferedWriter(new FileWriter(writeFile));
 			writer.write(responseMap.toString());
 			writer.flush();
-			// 6.关闭流
-			writer.close();
-			// 7.返回响应状态信息
+			// 6.返回响应状态信息
 			return responseMap;
 		} catch (IOException e) {
 			logger.error(e);
 			return StateType.getResponseInfo(StateType.SIGNAL_FILE_ERROR);
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					logger.info(e);
+				}
+			}
 		}
 	}
 
@@ -213,13 +241,13 @@ public class InterfaceCommon {
 			// 3.1这里只有报表类型的接口才会由此验证
 			if (StringUtil.isNotBlank(interface_code)) {
 				if (!InterfaceManager.existsReportGraphic(user_id, interface_code)) {
-					return StateType.getResponseInfo(StateType.REPORT_CODE_ERROR.getCode(),
+					return StateType.getResponseInfo(StateType.REPORT_CODE_ERROR.name(),
 							"报表( " + interface_code + " )编码不正确");
 				}
 			}
 			// 3.2检查接口状态
 			if (InterfaceState.JinYong == InterfaceState.ofEnumByCode(queryInterfaceInfo.getUse_state())) {
-				return StateType.getResponseInfo(StateType.INTERFACE_STATE);
+				return StateType.getResponseInfo(StateType.INTERFACE_STATE_ERROR);
 			}
 			// 3.3得到当前日期和有效日期做比较
 			int num = queryInterfaceInfo.getStart_use_date().compareTo(DateUtil.getSysDate());
@@ -235,7 +263,7 @@ public class InterfaceCommon {
 			return StateType.getResponseInfo(StateType.NORMAL);
 		}
 		// 4.不存在，返回接口无效错误信息
-		return StateType.getResponseInfo(StateType.NO_PERMISSIONS);
+		return StateType.getResponseInfo(StateType.NO_INTERFACE_USE_PERMISSIONS);
 	}
 
 	@Method(desc = "检查表", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
@@ -262,7 +290,7 @@ public class InterfaceCommon {
 				return StateType.getResponseInfo(StateType.NO_USR_PERMISSIONS);
 			}
 			// 5.从内存中获取当前表的字段信息
-			String table_en_column = InterfaceManager.getUserTableInfo(user_id,
+			String table_en_column = InterfaceManager.getUserTableInfo(Dbo.db(), user_id,
 					singleTable.getTableName()).getTable_en_column();
 			// 6.判断要查询列是否存在
 //			String selectColumn = singleTable.getSelectColumn();
@@ -294,7 +322,7 @@ public class InterfaceCommon {
 			return checkColumn(db, singleTable, table_en_column, user_id);
 		} catch (Exception e) {
 			if (e instanceof BusinessException) {
-				return StateType.getResponseInfo(StateType.EXCEPTION.getCode(), e.getMessage());
+				return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
 			}
 			return StateType.getResponseInfo(StateType.EXCEPTION);
 		}
@@ -324,7 +352,7 @@ public class InterfaceCommon {
 					for (String userColumn : userColumns) {
 						// 5.判断当前列名称是否有权限,没有返回错误响应信息
 						if (columnIsExist(userColumn.toLowerCase(), columns)) {
-							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
+							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
 									"请求错误,查询列名" + userColumn + "不存在");
 						}
 					}
@@ -397,27 +425,13 @@ public class InterfaceCommon {
 		if (StringUtil.isNotBlank(whereColumn)) {
 			// 7.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件
 			Map<String, Object> sqlSelectCondition = getSqlSelectCondition(columns, whereColumn);
-			if (StateType.NORMAL != StateType.ofEnumByCode(sqlSelectCondition.get("status").toString())) {
+			if (!StateType.NORMAL.name().equals(sqlSelectCondition.get("status").toString())) {
 				return sqlSelectCondition;
 			}
 			condition = sqlSelectCondition.get("condition").toString();
 		}
 		// 8.获取查询sql
 		String sqlSb = "SELECT " + selectColumn + " FROM " + singleTable.getTableName() + condition;
-//		List<LayerBean> layerByTable = ProcessingData.getLayerByTable(singleTable.getTableName(), db);
-//		if (layerByTable == null || layerByTable.isEmpty()) {
-//			return StateType.getResponseInfo(StateType.STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE.getCode(),
-//					"当前表对应的存储层信息不存在");
-//		}
-//		String database_type = layerByTable.get(0).getLayerAttr().get("database_type");
-//		if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle9i) {
-//			return StateType.getResponseInfo(StateType.ORACLE9I_NOT_SUPPORT.getCode(),
-//					"系统不支持Oracle9i及以下");
-//		} else if (DatabaseType.ofEnumByCode(database_type) == DatabaseType.Oracle10g) {
-//			sqlSb = sqlSb + " where rownum<=" + num;
-//		} else {
-//			sqlSb = sqlSb + " LIMIT " + num;
-//		}
 		// 9.获取新sql，判断视图
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sqlSb);
 		String newSql = druidParseQuerySql.GetNewSql(sqlSb);
@@ -452,15 +466,29 @@ public class InterfaceCommon {
 		String uuid = UUID.randomUUID().toString();
 		File createFile = LocalFile.createFile(uuid, dataType);
 		// 2.根据sql获取搜索引擎并根据输出数据类型处理数据
-		if (num != null) {
-			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
-					.getPageDataLayer(sqlSb, db, 1, num);
-		} else {
-			getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
-					.getDataLayer(sqlSb, db);
+		try {
+			if (OutType.STREAM == OutType.ofEnumByCode(outType)) {
+				// 输出数据形式为stream如果num不存在则默认查询100
+				if (num == null) {
+					num = 100;
+				}
+				getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+						.getPageDataLayer(sqlSb, db, 1, num);
+			} else {
+				// 输出数据形式为file如果num不存在则查询所有
+				if (num == null) {
+					getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+							.getDataLayer(sqlSb, db);
+				} else {
+					getProcessingData(outType, dataType, streamJson, streamCsv, streamCsvData, createFile)
+							.getPageDataLayer(sqlSb, db, 1, num);
+				}
+			}
+		} catch (Exception e) {
+			return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
 		}
 
-		if (StateType.NORMAL != StateType.ofEnumByCode(responseMap.get("status").toString())) {
+		if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			return responseMap;
 		}
 		// 7.输出类型为stream，如果输出数据类型为csv，第一行为列名，按csv格式处理数据并返回
@@ -469,21 +497,27 @@ public class InterfaceCommon {
 				Map<String, Object> map = new HashMap<>();
 				map.put("column", streamCsv);
 				map.put("data", streamCsvData);
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
 						JsonUtil.toJson(map));
 			} else {
+				Map<String, Object> jsonMap = new HashMap<>();
 				// 8.如果输出数据类型为json则直接返回数据
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						streamJson);
+				jsonMap.put("data", streamJson);
+				responseMap = StateType.getResponseInfo(StateType.NORMAL.name(),
+						jsonMap);
 			}
 		} else {
 			// 保存接口文件信息
 			if (InterfaceCommon.saveFileInfo(db, user_id, uuid, dataType,
 					outType, CommonVariables.RESTFILEPATH) != 1) {
-				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 						"保存接口文件信息失败");
 			}
-			responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(), uuid);
+			Map<String, Object> uuidMap = new HashMap<>();
+			uuidMap.put("dataType", dataType);
+			uuidMap.put("outType", outType);
+			uuidMap.put("uuid", uuid);
+			responseMap = StateType.getResponseInfo(StateType.NORMAL.name(), uuidMap);
 		}
 		lineCounter = 0;
 		// 9.输出数据形式不是stream返回处理后的响应数据
@@ -542,7 +576,7 @@ public class InterfaceCommon {
 				// 6.map的key为列名称，value为列名称对应的对象信息
 				map.forEach((k, v) -> {
 					sbCol.append(k).append(",");
-					sbVal.append(v.toString()).append(",");
+					sbVal.append(v).append(",");
 				});
 				// 7.如果文件是CSV则第一行为列信息
 				if (lineCounter == 1) {
@@ -563,19 +597,19 @@ public class InterfaceCommon {
 				if (lineCounter % 24608 == 0) {
 					writer.flush();
 				}
-				writer.write(map.toString());
+				writer.write(JsonUtil.toJson(map));
 				writer.newLine();
 				responseMap = StateType.getResponseInfo(StateType.NORMAL);
 			} else {
 				// 11.输出数据类型有误
-				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+				responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 						"不知道什么文件");
 			}
 			// 12.关闭连接
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
-			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),
+			responseMap = StateType.getResponseInfo(StateType.EXCEPTION.name(),
 					"写文件失败");
 		}
 	}
@@ -608,7 +642,7 @@ public class InterfaceCommon {
 				if (lineCounter == 1) {
 					streamCsv.add(k);
 				}
-				sbVal.append(v.toString()).append(",");
+				sbVal.append(v).append(",");
 			});
 			// 5.循环添加表对应列值信息
 			streamCsvData.add(sbVal.deleteCharAt(sbVal.length() - 1).toString());
@@ -663,7 +697,7 @@ public class InterfaceCommon {
 				col_name = col.split("=");
 				symbol = "=";
 			} else {
-				return StateType.getResponseInfo(StateType.CONDITION_ERROR.getCode(),
+				return StateType.getResponseInfo(StateType.CONDITION_ERROR.name(),
 						"请求错误,条件符号错误,暂不支持");
 			}
 			// 3.判断条件列长度是否为2，如果是获取列名、列值
@@ -674,7 +708,7 @@ public class InterfaceCommon {
 				String colVal = col_name[1];
 				// 4.判断列名是否存在,不存在返回错误响应信息
 				if (columnIsExist(colName.toLowerCase(), columns)) {
-					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.getCode(),
+					return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST.name(),
 							"请求错误,条件列名" + colName + "不存在");
 				}
 				// 5.存在，拼接查询条件
@@ -746,7 +780,7 @@ public class InterfaceCommon {
 	@Param(name = "filepath", desc = "文件路径", range = "asynType为2时必传", nullable = true)
 	@Return(desc = "返回响应状态信息", range = "无限制")
 	public static Map<String, Object> checkType(String dataType, String outType, String asynType,
-	                                            String backUrl, String fileName, String filepath) {
+	                                            String backUrl, String filepath, String fileName) {
 
 		// 1.数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 2.判断输出数据类型是否合法
@@ -782,7 +816,7 @@ public class InterfaceCommon {
 		return StateType.getResponseInfo(StateType.NORMAL);
 	}
 
-	@Method(desc = "按类型操作接口", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
+	@Method(desc = "按类型操作处理接口响应信息", logicStep = "1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制" +
 			"2.数据类型选择csv,输出数据类型选择stream" +
 			"3.数据类型选择json,输出数据类型选择stream" +
 			"4.输出数据类型选择file,asynType选择同步返回显示" +
@@ -804,20 +838,16 @@ public class InterfaceCommon {
 		// 2.数据类型选择csv,输出数据类型选择stream
 		if (DataType.csv == DataType.ofEnumByCode(dataType)
 				&& OutType.STREAM == OutType.ofEnumByCode(outType)
-				&& StateType.NORMAL == StateType.ofEnumByCode(responseMap.get("status").toString())) {
+				&& StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
 			try {
 				Map<String, Object> message = JsonUtil.toObject(responseMap.get("message").toString(),
 						mapType);
 				List<String> dataList = JsonUtil.toObject(message.get("data").toString(), type);
 				List<String> columnList = JsonUtil.toObject(message.get("column").toString(), type);
-				StringBuilder sb = new StringBuilder();
-				for (String data : dataList) {
-					sb.append(data).append(System.lineSeparator());
-				}
+				String data = String.join(System.lineSeparator(), dataList);
 				String column = String.join(",", columnList);
-				StringBuilder stringBuilder = new StringBuilder();
-				responseMap = StateType.getResponseInfo(StateType.NORMAL.getCode(),
-						stringBuilder.append(column).append(System.lineSeparator()).append(sb.toString()).toString());
+				return StateType.getResponseInfo(StateType.NORMAL.name(),
+						column + System.lineSeparator() + data);
 			} catch (Exception e) {
 				return StateType.getResponseInfo(StateType.JSONCONVERSION_EXCEPTION);
 			}
@@ -833,11 +863,11 @@ public class InterfaceCommon {
 			return responseMap;
 		}
 		// 5.输出数据类型选择file,asynType选择异步回调
-		if (AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)) {
+		if (AsynType.ASYNCALLBACK == AsynType.ofEnumByCode(asynType)) {
 			responseMap = checkBackUrl(responseMap, backUrl);
 		}
 		// 6.输出数据类型选择file,asynType选择异步轮询
-		if (AsynType.SYNCHRONIZE == AsynType.ofEnumByCode(asynType)) {
+		if (AsynType.ASYNPOLLING == AsynType.ofEnumByCode(asynType)) {
 			responseMap = createFile(responseMap, filePath, fileName);
 		}
 		// 7.返回接口响应信息
@@ -866,5 +896,227 @@ public class InterfaceCommon {
 		int num = file_info.add(db);
 		db.commit();
 		return num;
+	}
+
+	@Method(desc = "根据表名称删除表数据", logicStep = "1.根据表名获取存储层的信息" +
+			"2.判断当前表对应的存储层信息是否存在" +
+			"3.获取当前表对应存储层的db连接" +
+			"4.存储层类型为关系型数据库" +
+			"4.1从内存中获取当前表的字段信息" +
+			"4.2获取当前表对应数据库的列名称集合" +
+			"4.3.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件" +
+			"4.4 拼接删除数据表数据sql" +
+			"4.5 删除数据表数据" +
+			"5.删除hbase表数据")
+	@Param(name = "db", desc = "db连接对象", range = "无限制")
+	@Param(name = "tableData", desc = "表数据接口参数实体对象", range = "自定义实体")
+	@Param(name = "user_id", desc = "当前登录用户ID", range = "新增用户时生成")
+	@Param(name = "responseMap", desc = "接口响应信息", range = "无限制")
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	public static Map<String, Object> deleteTableDataByTableName(DatabaseWrapper db, TableData tableData,
+	                                                             Long user_id) {
+		// 1.根据表名获取存储层的信息
+		List<LayerBean> tableLayerList = ProcessingData.getLayerByTable(tableData.getTableName(), db);
+		// 2.判断当前表对应的存储层信息是否存在
+		if (tableLayerList.isEmpty()) {
+			return StateType.getResponseInfo(StateType.STORAGELAYER_NOT_EXIST_BY_TABLE);
+		}
+		for (LayerBean layerBean : tableLayerList) {
+			// 3.获取当前表对应存储层的db连接
+			try (DatabaseWrapper dbWrapper = ConnectionTool.getDBWrapper(db, layerBean.getDsl_id())) {
+				String store_type = layerBean.getStore_type();
+				if (Store_type.DATABASE == Store_type.ofEnumByCode(store_type)) {
+					// 4.存储层类型为关系型数据库
+					// 4.1从内存中获取当前表的字段信息
+					String table_en_column = InterfaceManager.getUserTableInfo(Dbo.db(), user_id,
+							tableData.getTableName()).getTable_en_column();
+					// 4.2获取当前表对应数据库的列名称集合
+					List<String> columns = StringUtil.split(table_en_column.toLowerCase(), Constant.METAINFOSPLIT);
+					String whereColumn = tableData.getWhereColumn();
+					String condition = "";
+					if (StringUtil.isNotBlank(whereColumn)) {
+						// 4.3.获取sql查询条件，如果响应状态不为normal返回错误响应信息，如果是获取查询条件
+						responseMap =
+								InterfaceCommon.getSqlSelectCondition(columns, whereColumn);
+						if (!StateType.NORMAL.name().equals(responseMap.get("status").toString())) {
+							return responseMap;
+						}
+						condition = responseMap.get("condition").toString();
+					}
+					// 4.4 拼接删除数据表数据sql
+					String deleteSql = "delete from " + tableData.getTableName() + condition;
+					// 4.5 删除数据表数据
+					SqlOperator.execute(dbWrapper, deleteSql);
+					SqlOperator.commitTransaction(dbWrapper);
+				} else if (Store_type.ofEnumByCode(store_type) == Store_type.HBASE) {
+					// 5.删除hbase表数据
+					return deleteHbaseData(tableData.getTableName(), tableData.getRowKeys());
+				} else {
+					return StateType.getResponseInfo(StateType.STORE_TYPE_NOT_EXIST);
+				}
+			} catch (Exception e) {
+				return StateType.getResponseInfo(StateType.DELETE_TABLE_DATA_FAILED);
+			}
+		}
+		return StateType.getResponseInfo(StateType.NORMAL);
+	}
+
+	@Method(desc = "删除hbase表数据", logicStep = "")
+	@Param(name = "tableName", desc = "表名称", range = "无限制")
+	@Param(name = "rowKeys", desc = "hbase rowkey数组", range = "无限制")
+	@Return(desc = "返回接口响应信息", range = "无限制")
+	private static Map<String, Object> deleteHbaseData(String tableName, String[] rowKeys) {
+		try (HBaseHelper helper = HBaseHelper.getHelper()) {
+			if (helper.existsTable(tableName)) {
+				try (Table table = helper.getTable(tableName)) {
+					List<Delete> deleteList = new ArrayList<>();
+					List<String> rowkeyList = new ArrayList<>();
+					for (String rowkey : rowKeys) {
+						Get get = new Get(rowkey.getBytes());
+						if (!table.get(get).isEmpty()) {
+							// 获取要删除的数据
+							Delete delete = new Delete(rowkey.getBytes());
+							deleteList.add(delete);
+						} else {
+							rowkeyList.add(rowkey);
+						}
+					}
+					// 判断根据rowkey要删除的表数据是否存在
+					if (rowkeyList.size() > 0) {
+						return StateType.getResponseInfo(StateType.TABLE_DATA_NOT_EXIST_BY_ROWKEY);
+					} else {
+						// 删除hbase数据
+						table.delete(deleteList);
+					}
+				}
+			} else {
+				return StateType.getResponseInfo(StateType.TABLE_NOT_EXISTENT);
+			}
+		} catch (Exception e) {
+			return StateType.getResponseInfo(StateType.EXCEPTION);
+		}
+		return StateType.getResponseInfo(StateType.NORMAL);
+	}
+
+	public static Map<String, Object> getHbaseSolrQuery(String table_name, String whereColumn,
+	                                                    String selectColumn, Integer start, Integer num,
+	                                                    String table_column_name, String tableTypeJsonStr,
+	                                                    String dsl_name, String platform, String prncipal_name,
+	                                                    String hadoop_user_name) {
+		try (HBaseHelper helper = HBaseHelper.getHelper(ConfigReader.getConfiguration(
+				FileNameUtils.normalize(
+						Constant.STORECONFIGPATH + dsl_name + File.separator, true),
+				platform, prncipal_name, hadoop_user_name))) {
+			// 当前表的有效全部列
+			List<String> columns = StringUtil.split(table_column_name.toLowerCase(), Constant.METAINFOSPLIT);
+			StringBuilder filter = new StringBuilder();
+//			filter.append(ConfigurationUtil.TABLE_NAME_FIELD).append(":").append(table_name).append(" AND ");
+			List<String> tableTypeList = StringUtil.split(tableTypeJsonStr, Constant.METAINFOSPLIT);
+			if (StringUtil.isNotBlank(whereColumn)) {
+				String[] cols = whereColumn.split(",");
+				for (String col : cols) {
+					// 将字段的列名称和value分开后,格式为 [name,XX]
+					List<String> col_name;
+					if (col.contains("=")) {
+						col_name = StringUtil.split(col, "=");
+					} else {
+						return StateType.getResponseInfo(StateType.CONDITION_ERROR);
+					}
+					if (col_name.size() == 2) {
+						String colName = col_name.get(0).trim();
+						String colVal = col_name.get(1);
+						// 查看当前查询列是否为有效
+						if (!columns.contains(colName.toLowerCase())) {
+							return StateType.getResponseInfo(StateType.COLUMN_DOES_NOT_EXIST);
+						}
+						for (String tableType : tableTypeList) {
+							JSONObject tableTypeJson = JSONObject.parseObject(tableType);
+							String column_name = tableTypeJson.getString("column_name");
+							if (colName.equals(column_name)) {
+								String solrFieldName = solrFieldName(colName,
+										tableTypeJson.getString("data_type"));
+								filter.append(solrFieldName).append(":").append(colVal).append(" AND ");
+							}
+						}
+					}
+				}
+			} else {
+				return StateType.getResponseInfo(StateType.CONDITION_ERROR);
+			}
+			// 去掉查询条件中最后一个AND
+			String query = filter.substring(0, filter.lastIndexOf(" AND "));
+			logger.info("query:" + query);
+			// 修改solr连接为长连接
+			Map<String, String> params = new HashMap<>();
+			params.put("q", query);
+			params.put("fl", "id");
+			//初始化solr连接
+			ISolrOperator iSolrOperator = getISolrOperator(table_name);
+			// 查询solr,只获取id的数据
+			List<Map<String, Object>> result = iSolrOperator.querySolrPlus(params, start == null ? 0 : start,
+					num == null ? 10 : num, false);
+			// solr中的id作为hbase的rowkey查询hbase数据
+			// 设置hbase表名对象
+			Table table = helper.getTable(table_name);
+			List<Get> getList = new ArrayList<>();
+			for (Map<String, Object> obj : result) {
+				// 设置rowkey数组
+				String rowkey = StringUtil.replace(obj.get("id").toString(),
+						table_name + "@", "");
+				logger.info("rowkey: " + rowkey);
+				Get get = new Get(rowkey.getBytes());
+				getList.add(get);
+			}
+			List<Map<String, Object>> js = new ArrayList<>();
+			// 根据rowkey查询
+			Result[] results = table.get(getList);
+			Map<String, Object> temp;
+			List<String> selectList = StringUtil.split(selectColumn.toLowerCase(), Constant.METAINFOSPLIT);
+			// 当前查询的全部列
+			for (Result hResult : results) {
+				if (hResult.isEmpty()) {
+					logger.info("rowkey查询结果为空");
+					continue;
+				}
+				temp = new HashMap<>();
+				List<Cell> cs = hResult.listCells();
+				for (Cell cell : cs) {
+					String column = Bytes.toString(CellUtil.cloneQualifier(cell));// 获取hbase列名
+					String value = Bytes.toString(CellUtil.cloneValue(cell));// 获取hbase列值
+					if (selectList.contains(column.toLowerCase())) {
+						temp.put(column.toLowerCase(), value);
+					}
+				}
+				js.add(temp);
+			}
+			return StateType.getResponseInfo(StateType.NORMAL.name(), js);
+		} catch (Exception e) {
+			logger.error(e);
+			if (e instanceof BusinessException) {
+				return StateType.getResponseInfo(StateType.EXCEPTION.name(), e.getMessage());
+			} else {
+				return StateType.getResponseInfo(StateType.EXCEPTION);
+			}
+		}
+	}
+
+	private static ISolrOperator getISolrOperator(String table_name) {
+		SolrParam param = new SolrParam();
+		String solrZkUrl = PropertyParaValue.getString("zkHost", "cdh063:2181,cdh064:2181,cdh065:2181/solr");
+		param.setCollection(CollectionUtil.getCollection(table_name));
+		param.setSolrZkUrl(solrZkUrl);
+		return SolrFactory.getInstance(param);
+	}
+
+	private static String solrFieldName(String hbaseFieldName, String type) {
+		if (type == null) {
+			logger.info("column " + hbaseFieldName + "'type is null, so using STRING");
+			type = "STRING";
+		}
+		HbaseSolrField hsf = new HbaseSolrField();
+		hsf.setHbaseColumnName(hbaseFieldName);
+		hsf.setType(type);
+		new TypeFieldNameMapper().map(hsf);
+		return hsf.getSolrColumnName();
 	}
 }

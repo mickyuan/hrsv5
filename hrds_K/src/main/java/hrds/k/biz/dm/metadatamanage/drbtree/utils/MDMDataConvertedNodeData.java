@@ -28,8 +28,12 @@ public class MDMDataConvertedNodeData {
             map.put("parent_id", DataSourceType.DCL.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
-                    "数据表名称：" + tableInfo.get("table_name"));
+                    "登记表名称：" + tableInfo.get("hyren_name") + "\n" +
+                    "表中文名称：" + tableInfo.get("original_name") + "\n" +
+                    "原始表名称：" + tableInfo.get("table_name"));
             map.put("data_layer", DataSourceType.DCL.getCode());
+            map.put("dsl_id", tableInfo.get("dsl_id"));
+            map.put("dsl_store_type", tableInfo.get("store_type"));
             map.put("table_name", tableInfo.get("table_name"));
             map.put("original_name", tableInfo.get("original_name"));
             map.put("hyren_name", tableInfo.get("hyren_name"));
@@ -50,17 +54,51 @@ public class MDMDataConvertedNodeData {
         tableInfos.forEach(tableInfo -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", DataSourceType.DML.getCode() + "_" + tableInfo.get("dsl_id") + "_" + tableInfo.get("datatable_id"));
-            map.put("label", tableInfo.get("datatable_cn_name"));
+            map.put("label", tableInfo.get("datatable_en_name"));
             map.put("parent_id", DataSourceType.DML.getCode() + "_" + tableInfo.get("dsl_id"));
             map.put("description", "" +
                     "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
-                    "数据表名称：" + tableInfo.get("datatable_en_name"));
+                    "登记表名称：" + tableInfo.get("datatable_en_name") + "\n" +
+                    "表中文名称：" + tableInfo.get("datatable_cn_name") + "\n" +
+                    "原始表名称：" + tableInfo.get("datatable_en_name"));
             map.put("data_layer", DataSourceType.DML.getCode());
+            map.put("dsl_id", tableInfo.get("dsl_id"));
+            map.put("dsl_store_type", tableInfo.get("store_type"));
             map.put("table_name", tableInfo.get("datatable_en_name"));
             map.put("original_name", tableInfo.get("datatable_cn_name"));
             map.put("hyren_name", tableInfo.get("datatable_en_name"));
             map.put("data_own_type", tableInfo.get("store_type"));
             map.put("file_id", tableInfo.get("datatable_id"));
+            storageLayerTableNodes.add(map);
+        });
+        return storageLayerTableNodes;
+    }
+
+    @Method(desc = "数据管控-数据源列表UDL层下的表信息转为Node节点数据",
+            logicStep = "数据管控-数据源列表UDL层下的表信息转为Node节点数据")
+    @Param(name = "tableInfos", desc = "存储层下数据表信息List", range = "存储层下数据表信息List")
+    @Return(desc = "存储层下数据表的Node节点数据", range = "存储层下数据表的Node节点数据")
+    public static List<Map<String, Object>> conversionUDLStorageLayerTableInfos(List<Map<String, Object>> tableInfos) {
+        //设置为树节点信息
+        List<Map<String, Object>> storageLayerTableNodes = new ArrayList<>();
+        tableInfos.forEach(tableInfo -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", DataSourceType.UDL.getCode() + "_" + tableInfo.get("dsl_id") + "_" + tableInfo.get("table_id"));
+            map.put("label", tableInfo.get("table_name"));
+            map.put("parent_id", DataSourceType.UDL.getCode() + "_" + tableInfo.get("dsl_id"));
+            map.put("description", "" +
+                    "存储层名称：" + tableInfo.get("dsl_name") + "\n" +
+                    "登记表名称：" + tableInfo.get("table_name") + "\n" +
+                    "表中文名称：" + tableInfo.get("ch_name") + "\n" +
+                    "原始表名称：" + tableInfo.get("table_name"));
+            map.put("data_layer", DataSourceType.UDL.getCode());
+            map.put("dsl_id", tableInfo.get("dsl_id"));
+            map.put("dsl_store_type", tableInfo.get("store_type"));
+            map.put("table_name", tableInfo.get("table_name"));
+            map.put("original_name", tableInfo.get("ch_name"));
+            map.put("hyren_name", tableInfo.get("table_name"));
+            map.put("data_own_type", tableInfo.get("store_type"));
+            map.put("file_id", tableInfo.get("table_id"));
             storageLayerTableNodes.add(map);
         });
         return storageLayerTableNodes;

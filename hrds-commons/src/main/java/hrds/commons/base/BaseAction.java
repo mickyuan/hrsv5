@@ -5,9 +5,7 @@ import fd.ng.web.action.AbstractWebappBaseAction;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.action.ActionResultHelper;
 import hrds.commons.systemlog.LoginOperationLogInfo;
-import hrds.commons.utils.ActionUtil;
-import hrds.commons.utils.Constant;
-import hrds.commons.utils.User;
+import hrds.commons.utils.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,6 +27,7 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
 
 	@Override
 	protected ActionResult _doPreProcess(HttpServletRequest request) {
+		String iSol = PropertyParaValue.getString("is_save_operation_log", "0");
 		//1、获取user是否存在，不存在抛异常
 		_userCookieName = request.getHeader(ActionUtil._userCookieName);
 		User user = getUser();
@@ -41,11 +40,12 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
 		//2、userid是否存在，不存在抛异常
 		String userId = String.valueOf(user.getUserId());
 		if (StringUtil.isEmpty(userId)) {
-			LoginOperationLogInfo.saveLoginLog(request, userId, user.getUserName(), Constant.INVALIDUSERINFO);
+			if ("1".equals(iSol))
+				LoginOperationLogInfo.saveLoginLog(request, userId, user.getUserName(), Constant.INVALIDUSERINFO);
 			return ActionResultHelper.bizError("no login");
 		}
 		// 3.保存用户操作日志信息
-		LoginOperationLogInfo.saveUserOperationLogInfo(request, userId, user.getUserName());
+		if ("1".equals(iSol)) LoginOperationLogInfo.saveUserOperationLogInfo(request, userId, user.getUserName());
 		return null; // 验证通过
 	}
 

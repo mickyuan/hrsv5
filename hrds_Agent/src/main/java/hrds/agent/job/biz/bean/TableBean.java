@@ -18,8 +18,11 @@ public class TableBean {
 	private String root_path;   //采集文件根路径
 	private String file_code;   //文件编码
 	private String primaryKeyInfo; //是否为主键
+	//字段是否为了拉链字段
+	private Map<String, Boolean> isZipperFieldInfo;
 	private String operate; //操作类型
 	private String is_archived; //是否转存
+	private String operate_column;  //操作字段
 	private String insertColumnInfo = ""; //获取新增数据的sql涉及的列
 	private String updateColumnInfo = ""; //获取更新数据的sql涉及的列
 	private String deleteColumnInfo = ""; //获取删除数据的sql涉及的列
@@ -208,5 +211,21 @@ public class TableBean {
 
 	public void setDeleteColumnInfo(String deleteColumnInfo) {
 		this.deleteColumnInfo = deleteColumnInfo;
+	}
+
+	public String getOperate_column() {
+		return operate_column;
+	}
+
+	public void setOperate_column(String operate_column) {
+		this.operate_column = operate_column;
+	}
+
+	public Map<String, Boolean> getIsZipperFieldInfo() {
+		return isZipperFieldInfo;
+	}
+
+	public void setIsZipperFieldInfo(Map<String, Boolean> isZipperFieldInfo) {
+		this.isZipperFieldInfo = isZipperFieldInfo;
 	}
 }

@@ -8,6 +8,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.SystemUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.*;
 import hrds.agent.job.biz.constant.JobConstant;
@@ -17,7 +18,7 @@ import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.TableProcessInterface;
 import hrds.agent.job.biz.core.dfstage.incrementfileprocess.impl.MppTableProcessImpl;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
-import hrds.agent.job.biz.core.increasement.impl.IncreasementByMpp;
+import hrds.agent.job.biz.core.dfstage.service.ReadFileToSolr;
 import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
@@ -25,7 +26,9 @@ import hrds.commons.codes.*;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
-import hrds.commons.hadoop.utils.HSqlExecute;
+import hrds.commons.hadoop.solr.ISolrOperator;
+import hrds.commons.hadoop.solr.SolrFactory;
+import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.StorageTypeKey;
 import hrds.commons.utils.jsch.FileProgressMonitor;
@@ -34,8 +37,9 @@ import hrds.commons.utils.jsch.SFTPDetails;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.solr.client.solrj.SolrClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -47,8 +51,9 @@ import java.util.concurrent.Future;
 
 @DocClass(desc = "数据文件采集，数据上传阶段实现", author = "WangZhengcheng")
 public class DFUploadStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(DFUploadStageImpl.class);
-	private CollectTableBean collectTableBean;
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
+	private final CollectTableBean collectTableBean;
 
 	/**
 	 * 数据文件采集，数据上传阶段实现
@@ -133,37 +138,45 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		try {
 			List<DataStoreConfBean> dataStoreConfBeanList = collectTableBean.getDataStoreConfBean();
 			for (DataStoreConfBean dataStoreConfBean : dataStoreConfBeanList) {
-				long count = 0;
 				//根据存储类型上传到目的地
 				if (Store_type.DATABASE.getCode().equals(dataStoreConfBean.getStore_type())) {
 					//数据库类型
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//支持外部表的方式
-						execSftpToDbServer(dataStoreConfBean, stageParamInfo.getFileArr());
+						execSftpToDbServer(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//不支持外部表的方式
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
-						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+						exeBatch(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
 								stageParamInfo.getTableBean());
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
 				} else if (Store_type.HIVE.getCode().equals(dataStoreConfBean.getStore_type())) {
+					//设置hive的默认类型
+					dataStoreConfBean.getData_store_connect_attr().put(StorageTypeKey.database_type,
+							DatabaseType.Hive.getCode());
 					if (IsFlag.Shi.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//有hadoop客户端，通过直接上传hdfs，映射外部表的方式进hive
-						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr());
+						execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
 					} else if (IsFlag.Fou.getCode().equals(dataStoreConfBean.getIs_hadoopclient())) {
 						//没有hadoop客户端
 						executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
-						exeBatch(dataStoreConfBean, executor, count, stageParamInfo.getFileArr(),
+						exeBatch(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
 								stageParamInfo.getTableBean());
 					} else {
 						throw new AppSystemException("错误的是否标识");
 					}
 				} else if (Store_type.HBASE.getCode().equals(dataStoreConfBean.getStore_type())) {
-					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
+//					LOGGER.warn("DB文件采集数据上传进HBASE没有实现");
+					//数据进hbase加载使用BulkLoad加载hdfs上的文件，所以这里必须有hdfs的操作权限，上传hdfs
+					execHDFSShell(dataStoreConfBean, stageParamInfo.getFileArr(), collectTableBean);
 				} else if (Store_type.SOLR.getCode().equals(dataStoreConfBean.getStore_type())) {
-					LOGGER.warn("DB文件采集数据上传进SOLR没有实现");
+					clearSolrData(dataStoreConfBean);
+					//数据进solr
+					executor = Executors.newFixedThreadPool(JobConstant.AVAILABLEPROCESSORS);
+					exeBatchSolr(dataStoreConfBean, executor, stageParamInfo.getFileArr(),
+							stageParamInfo.getTableBean());
 				} else if (Store_type.ElasticSearch.getCode().equals(dataStoreConfBean.getStore_type())) {
 					LOGGER.warn("DB文件采集数据上传进ElasticSearch没有实现");
 				} else if (Store_type.MONGODB.getCode().equals(dataStoreConfBean.getStore_type())) {
@@ -183,9 +196,74 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	}
 
 	/**
+	 * 追加或者替换清理solr中的数据
+	 *
+	 * @param dataStoreConfBean 存储层配置
+	 */
+	private void clearSolrData(DataStoreConfBean dataStoreConfBean) {
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH
+				+ dataStoreConfBean.getDsl_name() + File.separator, true);
+		//获取solr的配置
+		Map<String, String> data_store_connect_attr = dataStoreConfBean.getData_store_connect_attr();
+		SolrParam solrParam = new SolrParam();
+		solrParam.setSolrZkUrl(data_store_connect_attr.get(StorageTypeKey.solr_zk_url));
+		solrParam.setCollection(data_store_connect_attr.get(StorageTypeKey.collection));
+		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam, configPath);
+			 SolrClient server = os.getServer()) {
+			//判断是追加或者增量先清理表的数据
+			if (StorageType.ZhuiJia.getCode().equals(collectTableBean.getStorage_type())) {
+				String query = Constant.SDATENAME + ":" + collectTableBean.getEtlDate() +
+						" and table-name:" + collectTableBean.getHbase_name();
+				server.deleteByQuery(query);
+			} else if (StorageType.TiHuan.getCode().equals(collectTableBean.getStorage_type())) {
+				String query = "table-name:" + collectTableBean.getHbase_name();
+				server.deleteByQuery(query);
+			} else {
+				throw new AppSystemException("数据进solr不支持增量");
+			}
+		} catch (Exception e) {
+			throw new AppSystemException("清理solr无效数据失败", e);
+		}
+	}
+
+	/**
+	 * batch将数据导入到solr
+	 *
+	 * @param dataStoreConfBean 存储层配置信息
+	 * @param executor          线程池的执行器
+	 * @param fileArr           需要采集的DB文件的全路径的数组
+	 * @param tableBean         文件的结构化信息
+	 */
+	private void exeBatchSolr(DataStoreConfBean dataStoreConfBean, ExecutorService executor,
+							  String[] fileArr, TableBean tableBean) {
+		long count = 0;
+		List<Future<Long>> list = new ArrayList<>();
+		try {
+			//读取文件进solr
+			for (String fileAbsolutePath : fileArr) {
+				ReadFileToSolr readFileToSolr = new ReadFileToSolr(fileAbsolutePath, tableBean,
+						collectTableBean, dataStoreConfBean);
+				//TODO 这个状态是不是可以在这里
+				Future<Long> submit = executor.submit(readFileToSolr);
+				list.add(submit);
+			}
+			for (Future<Long> future : list) {
+				count += future.get();
+			}
+			if (count < 0) {
+				throw new AppSystemException("数据进" + dataStoreConfBean.getDsl_name() + "异常");
+			}
+			LOGGER.info("数据成功进" + dataStoreConfBean.getDsl_name() + ",总计进数" + count + "条");
+		} catch (Exception e) {
+			throw new AppSystemException("多线程读取文件batch进" + dataStoreConfBean.getDsl_name() + "异常", e);
+		}
+	}
+
+	/**
 	 * 上传卸数的文件到hdfs
 	 */
-	private void execHDFSShell(DataStoreConfBean dataStoreConfBean, String[] localFiles) throws Exception {
+	public static void execHDFSShell(DataStoreConfBean dataStoreConfBean, String[] localFiles,
+									 CollectTableBean collectTableBean) throws Exception {
 		//STORECONFIGPATH上传hdfs需要读取的配置文件顶层目录
 		String hdfsPath = getUploadHdfsPath(collectTableBean);
 		//TODO 需要加一个key为hadoop_user_name的键值对，作为普通属性
@@ -195,6 +273,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		try (HdfsOperator operator = new HdfsOperator(FileNameUtils.normalize(Constant.STORECONFIGPATH
 				+ dataStoreConfBean.getDsl_name() + File.separator, true)
 				, data_store_connect_attr.get(StorageTypeKey.platform),
+				data_store_connect_attr.get(StorageTypeKey.prncipal_name),
 				data_store_connect_attr.get(StorageTypeKey.hadoop_user_name))) {
 			//创建hdfs表的文件夹
 			if (!operator.exists(hdfsPath)) {
@@ -221,6 +300,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 			} else {
 				//这里只支持windows和linux，其他机器不支持，linux下使用命令上传hdfs
 				StringBuilder fsSql = new StringBuilder();
+				fsSql.append("source /etc/profile;source ~/.bashrc;");
 				//拼接认证
 				//TODO 有认证需要加认证文件key必须为keytab_file，需要加认证用户，key必须为keytab_user
 				if (!StringUtil.isEmpty(dataStoreConfBean.getData_store_layer_file().get(StorageTypeKey.keytab_file))) {
@@ -253,7 +333,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 执行sftp程序将文件上传到服务器所在机器
 	 */
-	private void execSftpToDbServer(DataStoreConfBean dataStoreConfBean, String[] localFiles) {
+	public static void execSftpToDbServer(DataStoreConfBean dataStoreConfBean, String[] localFiles,
+										  CollectTableBean collectTableBean) {
 		Session session = null;
 		ChannelSftp channel = null;
 		try {
@@ -318,8 +399,8 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		}
 	}
 
-	private void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
-	                                    String targetDir, String unload_hbase_name) throws Exception {
+	public static void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
+											  String targetDir, String unload_hbase_name) throws Exception {
 		File file = new File(absolutePath);
 		String LOBs = file.getParent() + File.separator + "LOBS" + File.separator;
 		String[] fileNames = new File(LOBs).list();
@@ -363,8 +444,9 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	/**
 	 * 使用batch方式进数
 	 */
-	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor, long count,
-	                      String[] localFiles, TableBean tableBean) {
+	private void exeBatch(DataStoreConfBean dataStoreConfBean, ExecutorService executor,
+						  String[] localFiles, TableBean tableBean) {
+		long count = 0;
 		List<Future<Long>> list = new ArrayList<>();
 		String todayTableName = collectTableBean.getHbase_name() + "_" + 1;
 		DatabaseWrapper db = null;
@@ -383,10 +465,10 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				list.add(submit);
 			}
 			for (Future<Long> future : list) {
+				if (future.get() < 0) {
+					throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
+				}
 				count += future.get();
-			}
-			if (count < 0) {
-				throw new AppSystemException("数据Batch提交到库" + dataStoreConfBean.getDsl_name() + "异常");
 			}
 			//根据表存储期限备份每张表存储期限内进数的数据
 			backupPastTable(collectTableBean, db);
@@ -414,15 +496,18 @@ public class DFUploadStageImpl extends AbstractJobStage {
 	 * @param dataStoreConfBean 存储目的地配置信息
 	 * @param db                数据库连接方式
 	 */
-	private void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
-	                              DatabaseWrapper db) {
+	public static void createTodayTable(TableBean tableBean, String todayTableName, DataStoreConfBean dataStoreConfBean,
+										DatabaseWrapper db) {
 		List<String> columns = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
 		List<String> types = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
 				Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
-		List<String> sqlList = new ArrayList<>();
 		//拼接建表语句
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-		sql.append("CREATE TABLE ");
+		if (db.getDbtype() == Dbtype.TERADATA) {
+			sql.append("CREATE MULTISET TABLE ");
+		} else {
+			sql.append("CREATE TABLE ");
+		}
 		sql.append(todayTableName);
 		sql.append("(");
 		for (int i = 0; i < columns.size(); i++) {
@@ -431,16 +516,14 @@ public class DFUploadStageImpl extends AbstractJobStage {
 		//将最后的逗号删除
 		sql.deleteCharAt(sql.length() - 1);
 		sql.append(")");
-		IncreasementByMpp.dropTableIfExists(todayTableName, db, sqlList);
-		sqlList.add(sql.toString());
 		//执行建表语句
-		HSqlExecute.executeSql(sqlList, db);
+		db.execute(sql.toString());
 	}
 
 	/**
 	 * 获取上传到hdfs的文件夹路径
 	 */
-	static String getUploadHdfsPath(CollectTableBean collectTableBean) {
+	public static String getUploadHdfsPath(CollectTableBean collectTableBean) {
 		return FileNameUtils.normalize(JobConstant.PREFIX + File.separator + collectTableBean.getDatabase_id()
 				+ File.separator + collectTableBean.getHbase_name() + File.separator, true);
 	}

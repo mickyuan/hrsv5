@@ -2,8 +2,6 @@ package hrds.agent.job.biz.bean;
 
 import fd.ng.core.annotation.DocBean;
 import fd.ng.core.annotation.DocClass;
-import fd.ng.core.utils.StringUtil;
-import hrds.commons.codes.DataExtractType;
 import hrds.commons.entity.Column_merge;
 import hrds.commons.entity.Data_extraction_def;
 
@@ -92,6 +90,10 @@ public class CollectTableBean implements Serializable {
 	private String storage_date;
 	@DocBean(name = "selectFileFormat", value = "作业调度传参的卸数文件格式", dataType = String.class)
 	private String selectFileFormat;
+	@DocBean(name = "interval_time", value = "频率间隔时间（秒）", dataType = Integer.class, required = false)
+	private Integer interval_time;
+	@DocBean(name = "over_date", value = "按照频率采集结束日期", dataType = String.class, required = false)
+	private String over_date;
 
 	public List<Column_merge> getColumn_merge_list() {
 		return column_merge_list;
@@ -225,51 +227,7 @@ public class CollectTableBean implements Serializable {
 		return data_extraction_def_list;
 	}
 
-	public Data_extraction_def getSourceData_extraction_def() {
-		List<Data_extraction_def> data_extraction_def_list = getData_extraction_def_list();
-		//遍历，获取需要读取的db文件的文件格式
-		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-			if (DataExtractType.YuanShuJuGeShi.getCode().equals(data_extraction_def.getData_extract_type())) {
-				//此对象需要读取的db文件的文件格式
-				return data_extraction_def;
-			}
-		}
-		return null;
-	}
-
-	public Data_extraction_def getTargetData_extraction_def() {
-		List<Data_extraction_def> data_extraction_def_list = getData_extraction_def_list();
-		//遍历，获取转存文件格式
-		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-			if (DataExtractType.ShuJuJiaZaiGeShi.getCode().equals(data_extraction_def.getData_extract_type())) {
-				//此对象为转存之后的文件格式对象。
-				return data_extraction_def;
-			}
-		}
-		return null;
-	}
-
 	public void setData_extraction_def_list(List<Data_extraction_def> data_extraction_def_list) {
-		//一开始对文件卸数分割符做转码，页面传过来时应该是Unicode编码格式
-		for (Data_extraction_def data_extraction_def : data_extraction_def_list) {
-			String row_sp = StringUtil.unicode2String(data_extraction_def.getRow_separator());
-			//对于转义的换行符做处理
-			switch (row_sp) {
-				case "\\r\\n":
-					data_extraction_def.setRow_separator("\r\n");
-					break;
-				case "\\r":
-					data_extraction_def.setRow_separator("\r");
-					break;
-				case "\\n":
-					data_extraction_def.setRow_separator("\n");
-					break;
-//				default: //可选
-//					data_extraction_def.setRow_separator("\n");
-			}
-			data_extraction_def.setDatabase_separatorr(StringUtil.
-					unicode2String(data_extraction_def.getDatabase_separatorr()));
-		}
 		this.data_extraction_def_list = data_extraction_def_list;
 	}
 
@@ -431,5 +389,21 @@ public class CollectTableBean implements Serializable {
 
 	public void setSelectFileFormat(String selectFileFormat) {
 		this.selectFileFormat = selectFileFormat;
+	}
+
+	public Integer getInterval_time() {
+		return interval_time;
+	}
+
+	public void setInterval_time(Integer interval_time) {
+		this.interval_time = interval_time;
+	}
+
+	public String getOver_date() {
+		return over_date;
+	}
+
+	public void setOver_date(String over_date) {
+		this.over_date = over_date;
 	}
 }

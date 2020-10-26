@@ -1,15 +1,15 @@
 package hrds.testbase;
 
-import fd.ng.core.conf.ConfFileLoader;
+import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.core.yaml.YamlFactory;
-import fd.ng.core.yaml.YamlMap;
+import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.test.junit.FdBaseTestCase;
+import fd.ng.web.action.ActionResult;
+import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 
 public class WebBaseTestCase extends FdBaseTestCase {
-	//读取测试用例初始化数据
-	protected static final YamlMap agentInitConfig = YamlFactory.load(ConfFileLoader.getConfFile("testinfo")).asMap();
 
 	protected String getHost() {
 		return (StringUtil.isBlank(HttpServerConf.confBean.getHost()) ? "localhost" : HttpServerConf.confBean.getHost());
@@ -21,7 +21,9 @@ public class WebBaseTestCase extends FdBaseTestCase {
 
 	protected String getHostPort() {
 		String ActionPattern = HttpServerConf.confBean.getActionPattern();
-		if (ActionPattern.endsWith("/*")) ActionPattern = ActionPattern.substring(0, ActionPattern.length() - 2);
+		if (ActionPattern.endsWith("/*")) {
+			ActionPattern = ActionPattern.substring(0, ActionPattern.length() - 2);
+		}
 		return "http://" + getHost() + ":" + getPort();
 	}
 
@@ -31,7 +33,9 @@ public class WebBaseTestCase extends FdBaseTestCase {
 
 	protected String getUrlActionPattern() {
 		String ActionPattern = HttpServerConf.confBean.getActionPattern();
-		if (ActionPattern.endsWith("/*")) ActionPattern = ActionPattern.substring(0, ActionPattern.length() - 2);
+		if (ActionPattern.endsWith("/*")) {
+			ActionPattern = ActionPattern.substring(0, ActionPattern.length() - 2);
+		}
 		return getUrlCtx() + ActionPattern;
 	}
 
@@ -45,4 +49,12 @@ public class WebBaseTestCase extends FdBaseTestCase {
 	}
 
 
+	public static ActionResult login() {
+		String responseValue = new HttpClient().buildSession()
+				.addData("user_id", ParallerTestUtil.TESTINITCONFIG.getString("user_id", "2001"))
+				.addData("password", ParallerTestUtil.TESTINITCONFIG.getString("password", "1"))
+				.post(ParallerTestUtil.TESTINITCONFIG.getString("login_url", "http://127.0.0.1:8888/A/action/hrds/a/biz/login/login"))
+				.getBodyString();
+		return JsonUtil.toObjectSafety(responseValue, ActionResult.class).orElseThrow(() -> new BusinessException("连接失败"));
+	}
 }

@@ -1,6 +1,9 @@
 package hrds.commons.utils;
 
+import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.FileUtil;
+import hrds.commons.codes.CleanType;
 import hrds.commons.codes.FileFormat;
 
 import java.io.File;
@@ -46,11 +49,6 @@ public class Constant {
 	 * job运行程序信息存储文件名称
 	 */
 	public static final String JOBFILENAME = "jobInfo.json";
-	//TODO 数据库采集数据字典存放的顶层目录
-	/**
-	 * 数据库采集数据字典存放的顶层目录
-	 */
-	public static final String DICTIONARY = USER_DIR + File.separator + "dictionary" + File.separator;
 	/**
 	 * mapDB文件存放的顶层目录
 	 */
@@ -75,11 +73,9 @@ public class Constant {
 	 * 存储文件上传脚本的顶层目录
 	 */
 	public static final String HDFSSHELLFILE = USER_DIR + File.separator + "hdfsShellFile" + File.separator;
-	//TODO 存放采集页面配置的数据文件
-	/**
-	 * 存放采集页面配置的数据文件
-	 */
-	public static final String MESSAGEFILE = USER_DIR + File.separator + "messageFile" + File.separator;
+	//通信异常存储目录
+	public static final String COMMUNICATIONERRORFOLDER = USER_DIR + File.separator
+			+ "CommunicationError" + File.separator;
 	//定义并行抽取SQL开始条数占位符
 	/**
 	 * 定义并行抽取SQL开始条数占位符
@@ -151,6 +147,10 @@ public class Constant {
 	 * DB文件转存默认的行分隔符
 	 */
 	public static final String DEFAULTLINESEPARATOR = "\n";
+	/**
+	 * DB文件转存默认的行分隔符的字符串形式
+	 */
+	public static final String DEFAULTLINESEPARATORSTR = "\\n";
 	//拼接sql字段的分隔符
 //	public static final String COLUMN_SEPARATOR = ",";
 	/**
@@ -200,9 +200,26 @@ public class Constant {
 	// 作业名称/描述之间的分割符
 	public static final String SPLITTER = "_";
 
+	/**
+	 * Agent启动脚本名称
+	 */
+	public static final String START_AGENT = "agent_operation.sh";
+	/**
+	 * 表默认清洗顺序
+	 */
+	public static final JSONObject DEFAULT_TABLE_CLEAN_ORDER = new JSONObject(true);
+	/**
+	 * 列默认清洗顺序
+	 */
+	public static final JSONObject DEFAULT_COLUMN_CLEAN_ORDER = new JSONObject(true);
+	/**
+	 * 列默认清洗顺序
+	 */
+	public static final JSONObject DATABASE_CLEAN = new JSONObject(true);
 	/*
 	 * 数据库抽取卸数下来文件格式对应路径的关系
 	 */
+
 	static {
 		fileFormatMap.put(FileFormat.FeiDingChang.getCode(), "NONFIXEDFILE");
 		fileFormatMap.put(FileFormat.DingChang.getCode(), "FIXEDFILE");
@@ -210,7 +227,65 @@ public class Constant {
 		fileFormatMap.put(FileFormat.PARQUET.getCode(), FileFormat.PARQUET.getValue());
 		fileFormatMap.put(FileFormat.ORC.getCode(), FileFormat.ORC.getValue());
 		fileFormatMap.put(FileFormat.SEQUENCEFILE.getCode(), FileFormat.SEQUENCEFILE.getValue());
+
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuHeBing.getCode(), 3);
+		DEFAULT_TABLE_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 4);
+
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuBuQi.getCode(), 1);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuChaiFen.getCode(), 5);
+		DEFAULT_COLUMN_CLEAN_ORDER.put(CleanType.ZiFuTrim.getCode(), 6);
+
+		DATABASE_CLEAN.put(CleanType.ZiFuBuQi.getCode(), 1);
+		DATABASE_CLEAN.put(CleanType.ZiFuTiHuan.getCode(), 2);
+		DATABASE_CLEAN.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
+		DATABASE_CLEAN.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
+		DATABASE_CLEAN.put(CleanType.ZiFuHeBing.getCode(), 5);
+		DATABASE_CLEAN.put(CleanType.ZiFuChaiFen.getCode(), 6);
+		DATABASE_CLEAN.put(CleanType.ZiFuTrim.getCode(), 7);
 	}
+
 	// 项目bin目录路径 E:\hrsv5\bin
 	public static final String PROJECT_BIN_DIR = System.getProperty("user.dir") + File.separator + "bin";
+	/**
+	 * 数据管控创建表的默认表空间
+	 */
+	public static final String DEFAULT_TABLE_SPACE = "hyshf";
+	/**
+	 * 空格字符
+	 */
+	public static final String SPACE = " ";
+	/**
+	 * 左小括号
+	 */
+	public static final String LXKH = "(";
+	/**
+	 * 右小括号
+	 */
+	public static final String RXKH = ")";
+
+	public static final String COLLECTOKFILE = "hyren_collect_flag.ok";
+
+	// 集市分类分隔符
+	public static final String MARKETDELIMITER = "-->";
+
+	//hive映射HBase的rowkey的列名
+	public static final String HIVEMAPPINGROWKEY = "rowkey_hyren";
+
+	//自定义静态常量
+	public static final String CUSTOMIZE = "customize";
+	// 仪表盘发布接口名称
+	public static final String DASHBOARDINTERFACENAME = "dashboardRelease";
+	/**
+	 * 数据对标配置类实体序列化路径前缀
+	 */
+	public static final String ALGORITHMS_CONF_SERIALIZE_PATH = FileUtil.TEMP_DIR_NAME +
+			"algorithms-conf-serialize" + FileUtil.PATH_SEPARATOR_CHAR;
+	public static final String HYUCC_RESULT_PATH_NAME = "HyUccOut";
+	public static final String HYFD_RESULT_PATH_NAME = "HyFdOut";
+
 }

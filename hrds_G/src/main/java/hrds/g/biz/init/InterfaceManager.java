@@ -100,9 +100,12 @@ public class InterfaceManager {
 					"2.根据用户id获取用户信息")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Return(desc = "返回根据用户id获取用户信息", range = "无限制")
-	public static QueryInterfaceInfo getUserTokenInfo(Long user_id) {
+	public static QueryInterfaceInfo getUserTokenInfo(DatabaseWrapper db, Long user_id) {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		// 2.根据用户id获取用户信息
+		if (!userMap.containsKey(user_id)) {
+			initUser(db);
+		}
 		return userMap.get(user_id);
 	}
 
@@ -135,10 +138,14 @@ public class InterfaceManager {
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成")
 	@Param(name = "tableName", desc = "表名称", range = "无限制")
 	@Return(desc = "返回接口表的使用权限信息", range = "无限制")
-	public static QueryInterfaceInfo getUserTableInfo(Long user_id, String tableName) {
+	public static QueryInterfaceInfo getUserTableInfo(DatabaseWrapper db, Long user_id, String tableName) {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		// 2.根据用户ID表名称获取表使用信息
-		return tableMap.get(String.valueOf(user_id).concat(tableName.toUpperCase()));
+		String key = String.valueOf(user_id).concat(tableName.toUpperCase());
+		if (!tableMap.containsKey(key)) {
+			initTable(db);
+		}
+		return tableMap.get(key);
 	}
 
 	@Method(desc = "根据token获取获取用户信息",
@@ -206,11 +213,11 @@ public class InterfaceManager {
 					"3.返回用户的Token是否存在标志")
 	@Param(name = "toKen", desc = "访问接口令牌", range = "通过获取token接口获得")
 	@Return(desc = "返回用户的Token是否存在标志", range = "无限制")
-	public static boolean existsToken(String toKen) {
+	public static boolean existsToken(DatabaseWrapper db, String toKen) {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		// 2.判断用户的Token是否存在，如果不存在,将加载一次内存..加载完后再检查一次用户权限
 		if (!toKenMap.containsKey(toKen)) {
-			initUser(new DatabaseWrapper());
+			initUser(db);
 		}
 		// 3.返回用户的Token是否存在标志
 		return toKenMap.containsKey(toKen);
@@ -240,6 +247,7 @@ public class InterfaceManager {
 		// 2.判断表使用信息是否存在，如果不存在,将加载一次内存..加载完后再检查一次确定是否有表的使用权限
 		String tableKey = String.valueOf(user_id).concat(tableName.toUpperCase());
 		if (!tableMap.containsKey(tableKey)) {
+			initUser(db);
 			initTable(db);
 		}
 		// 3.返回表使用信息是否存在标志
@@ -258,6 +266,7 @@ public class InterfaceManager {
 		// 2.判断接口信息是否存在，如果不存在,将加载一次内存..加载完后再检查一次确定是否有接口的使用权限
 		String interfaceKey = String.valueOf(user_id).concat(url);
 		if (!interfaceMap.containsKey(interfaceKey)) {
+			initUser(db);
 			initInterface(db);
 		}
 		// 3.返回接口是否存在标志
@@ -279,7 +288,8 @@ public class InterfaceManager {
 	private static void userInfo(DatabaseWrapper db) {
 		// 1.数据可访问权限处理方式：该方法通过不需要进行访问权限限制
 		// 2.查询接口用户信息
-		Result userResult = SqlOperator.queryResult(db, "SELECT user_id,user_password,user_name FROM "
+		Result userResult = SqlOperator.queryResult(db,
+				"SELECT user_id,user_password,user_name,valid_time FROM "
 						+ Sys_user.TableName + " WHERE user_type = ? OR usertype_group LIKE ?",
 				UserType.RESTYongHu.getCode(), "%" + UserType.RESTYongHu.getCode() + "%");
 		// 3.判断接口用户信息是否为空
@@ -298,8 +308,8 @@ public class InterfaceManager {
 				queryInterfaceInfo.setUser_id(user_id);
 				queryInterfaceInfo.setUser_name(userResult.getString(i, "user_name"));
 				String user_password = userResult.getString(i, "user_password");
-				queryInterfaceInfo.setUser_password(Base64.getEncoder().encodeToString(user_password.getBytes()));
-				// 7.判断密码是否加密
+				queryInterfaceInfo.setUse_valid_date(userResult.getString(i, "valid_time"));
+				// 7.判断密码是否加密 fixme 这个国密是不是应该去掉
 				if (user_password.endsWith("==")) {
 					// 7.1国密
 					queryInterfaceInfo.setUser_password(new String(Base64.getDecoder().decode(user_password)));
@@ -424,28 +434,29 @@ public class InterfaceManager {
 				queryInterfaceInfo.setSysreg_name(sysreg_name);
 				List<Sysreg_parameter_info> parameterInfos = SqlOperator.queryList(db,
 						Sysreg_parameter_info.class,
-						"select table_ch_column,table_en_column from " + Sysreg_parameter_info.TableName
+						"select * from " + Sysreg_parameter_info.TableName
 								+ " where use_id=? and user_id=?", use_id, user_id);
 				StringBuilder chColumns = new StringBuilder();
 				StringBuilder enColumns = new StringBuilder();
+				StringBuilder remarks = new StringBuilder();
 				if (parameterInfos != null && parameterInfos.size() > 0) {
 					for (Sysreg_parameter_info parameterInfo : parameterInfos) {
 						chColumns.append(parameterInfo.getTable_ch_column()).append(Constant.METAINFOSPLIT);
 						enColumns.append(parameterInfo.getTable_en_column()).append(Constant.METAINFOSPLIT);
+						remarks.append(parameterInfo.getRemark()).append(Constant.METAINFOSPLIT);
 					}
 					queryInterfaceInfo.setTable_ch_column(chColumns.deleteCharAt(chColumns.length() - 1).toString());
 					queryInterfaceInfo.setTable_en_column(enColumns.deleteCharAt(enColumns.length() - 1).toString());
+					// 表remark列(其实存的是字段类型对应的json字符串)
+					queryInterfaceInfo.setTable_type_name(remarks.deleteCharAt(remarks.length() - 1).toString());
 				} else {
 					queryInterfaceInfo.setTable_ch_column("");
 					queryInterfaceInfo.setTable_en_column("");
 				}
-				// 表字段列
-				// 表remark列(其实存的是字段类型对应的json字符串)
-				queryInterfaceInfo.setTable_type_name(tableResult.getString(i, "remark"));
 				// 表中文名
 				queryInterfaceInfo.setOriginal_name(tableResult.getString(i, "original_name"));
 				// 表来源
-				queryInterfaceInfo.setTable_blsystem(tableResult.getString(i, "table_blsystem"));
+				queryInterfaceInfo.setTable_blsystem(tableResult.getString(i, "table_blsystem").trim());
 				// 表使用ID
 				queryInterfaceInfo.setUse_id(tableResult.getString(i, "use_id"));
 				// 3.3新增表使用信息

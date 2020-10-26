@@ -56,7 +56,7 @@ public class InterfaceUserManageAction extends BaseAction {
 	@Param(name = "sys_user", desc = "用户信息表对象", range = "与数据库表定义规则一致", isBean = true)
 	public void addUser(Sys_user sys_user) {
 		// 1.数据可访问权限处理方式：该方法不需要进行权限限制
-		// 2.检查系统用户字段合法性 fixme 应该使用一个公共的校验类进行校验
+		// 2.检查系统用户字段合法性
 		checkFieldsForSysUser(sys_user.getUser_name(), sys_user.getUser_email(), sys_user.getUser_password());
 		// 3.封装接口用户一些默认参数
 		sys_user.setUser_id(PrimayKeyGener.getOperId());

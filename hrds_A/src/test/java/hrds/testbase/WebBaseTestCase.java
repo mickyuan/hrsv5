@@ -1,9 +1,12 @@
 package hrds.testbase;
 
+import fd.ng.core.conf.ConfFileLoader;
 import fd.ng.core.exception.internal.RawlayerRuntimeException;
 import fd.ng.core.utils.ArrayUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.yaml.YamlFactory;
+import fd.ng.core.yaml.YamlMap;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.netserver.conf.HttpServerConf;
 import fd.ng.test.junit.FdBaseTestCase;
@@ -17,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class WebBaseTestCase extends FdBaseTestCase {
+	//读取测试用例初始化数据
+	protected static final YamlMap testInfoConfig = YamlFactory.load(ConfFileLoader.getConfFile("testinfo")).asMap();
 	protected String getHost() {
 		return (StringUtil.isBlank(HttpServerConf.confBean.getHost()) ? "localhost" : HttpServerConf.confBean.getHost());
 	}

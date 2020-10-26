@@ -29,10 +29,10 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDCLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
         //设置DCL层下节点数据
-        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getDCLExistTableDataStorageLayers();
+        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getExistTableDataStorageLayers(DataSourceType.DCL);
         dataList.addAll(StorageLayerConvertedNodeData.conversionStorageLayers(dataStorageLayers, DataSourceType.DCL));
         //获取并设置回收站DCL层下表信息
-        List<Map<String, Object>> tableInfos = DRBDataQuery.getDCLStorageLayerTableInfos();
+        List<Map<String, Object>> tableInfos = DRBDataQuery.getStorageLayerTableInfos(DataSourceType.DCL);
         if (!tableInfos.isEmpty()) {
             dataList.addAll(DRBDataConvertedNodeData.conversionStorageLayerTableInfos(tableInfos, DataSourceType.DCL));
         }
@@ -52,10 +52,10 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDMLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
         //设置DML层下节点数据
-        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getDMLExistTableDataStorageLayers();
+        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getExistTableDataStorageLayers(DataSourceType.DML);
         dataList.addAll(StorageLayerConvertedNodeData.conversionStorageLayers(dataStorageLayers, DataSourceType.DML));
         //获取并设置回收站DML层下表信息
-        List<Map<String, Object>> tableInfos = DRBDataQuery.getDMLStorageLayerTableInfos();
+        List<Map<String, Object>> tableInfos = DRBDataQuery.getStorageLayerTableInfos(DataSourceType.DML);
         if (!tableInfos.isEmpty()) {
             dataList.addAll(DRBDataConvertedNodeData.conversionStorageLayerTableInfos(tableInfos, DataSourceType.DML));
         }
@@ -82,7 +82,14 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getDQCDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        //TODO 暂未配置该存储层
+        //设置DQC层下节点数据
+        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getExistTableDataStorageLayers(DataSourceType.DQC);
+        dataList.addAll(StorageLayerConvertedNodeData.conversionStorageLayers(dataStorageLayers, DataSourceType.DQC));
+        //获取并设置回收站DQC数据层下存储层的表信息
+        List<Map<String, Object>> tableInfos = DRBDataQuery.getStorageLayerTableInfos(DataSourceType.DQC);
+        if (!tableInfos.isEmpty()) {
+            dataList.addAll(DRBDataConvertedNodeData.conversionStorageLayerTableInfos(tableInfos, DataSourceType.DQC));
+        }
     }
 
     @Method(desc = "获取UDL数据层的节点数据", logicStep = "获取UDL数据层的节点数据")
@@ -90,6 +97,13 @@ public class DRBTreeNodeDataQuery {
     @Param(name = "dataList", desc = "节点数据List", range = "节点数据List")
     @Param(name = "treeConf", desc = "TreeConf树配置信息", range = "TreeConf树配置信息")
     public static void getUDLDataList(User user, List<Map<String, Object>> dataList, TreeConf treeConf) {
-        //TODO 暂未配置该存储层
+        //设置UDL层下节点数据
+        List<Data_store_layer> dataStorageLayers = DRBDataQuery.getExistTableDataStorageLayers(DataSourceType.UDL);
+        dataList.addAll(StorageLayerConvertedNodeData.conversionStorageLayers(dataStorageLayers, DataSourceType.UDL));
+        //获取并设置回收站UDL数据层下存储层的表信息
+        List<Map<String, Object>> tableInfos = DRBDataQuery.getStorageLayerTableInfos(DataSourceType.UDL);
+        if (!tableInfos.isEmpty()) {
+            dataList.addAll(DRBDataConvertedNodeData.conversionStorageLayerTableInfos(tableInfos, DataSourceType.UDL));
+        }
     }
 }

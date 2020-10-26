@@ -27,8 +27,8 @@ import java.util.Map;
  */
 public class CleanFactory {
 
-	private static Map<String, String> mpTypeClass = new HashMap<>();
-	private static CleanFactory CF = new CleanFactory();//静态私有对象
+	private static final Map<String, String> mpTypeClass = new HashMap<>();
+	private static final CleanFactory CF = new CleanFactory();//静态私有对象
 
 	/**
 	 * 构造函数，加载配置参数
@@ -52,8 +52,6 @@ public class CleanFactory {
 
 	/**
 	 * 返回静态的工厂类
-	 *
-	 * @return
 	 */
 	public static CleanFactory getInstance() {
 
@@ -65,7 +63,6 @@ public class CleanFactory {
 	 *
 	 * @param type {@link String} 针对每一类使用的id信息
 	 * @return {@link DataCleanInterface} 接口实现类
-	 * @throws Exception
 	 */
 	public DataCleanInterface getObjectClean(String type) throws Exception {
 
@@ -84,9 +81,8 @@ public class CleanFactory {
 	/**
 	 * 获取配置信息
 	 *
-	 * @param is
-	 * @param file
-	 * @throws Exception
+	 * @param is   流
+	 * @param file 文件
 	 */
 	private static void loadCfgInfo(InputStream is, File file) throws Exception {
 
@@ -99,7 +95,7 @@ public class CleanFactory {
 			} catch (ParserConfigurationException e) {
 				throw new Exception("创建文档管理器失败", e);
 			}
-			Document doc = null;
+			Document doc;
 			if (null != file) {
 				doc = db.parse(file);
 			} else {
@@ -107,8 +103,8 @@ public class CleanFactory {
 			}
 			Element root = (Element) doc.getElementsByTagName("beans").item(0);
 			List<?> beanList = XMLUtil.getChildElements(root, "bean");
-			for (int b = 0; b < beanList.size(); b++) {
-				Element bean = (Element) beanList.get(b);
+			for (Object b : beanList) {
+				Element bean = (Element) b;
 				String typeid = bean.getAttribute("id");
 				String InfoClass = bean.getAttribute("class");
 				mpTypeClass.put(typeid, InfoClass);

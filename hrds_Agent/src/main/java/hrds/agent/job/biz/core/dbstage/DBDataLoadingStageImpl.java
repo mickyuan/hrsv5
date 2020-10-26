@@ -11,14 +11,15 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @DocClass(desc = "数据库抽数加载阶段", author = "WangZhengcheng")
 public class DBDataLoadingStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DBDataLoadingStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;

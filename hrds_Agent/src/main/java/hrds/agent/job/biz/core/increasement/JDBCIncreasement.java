@@ -2,17 +2,12 @@ package hrds.agent.job.biz.core.increasement;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.utils.DataTypeTransform;
-import hrds.commons.exception.AppSystemException;
-import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 
 import java.io.Closeable;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 @DocClass(desc = "通过jdbc使用sql算增量", author = "zxz", createdate = "2019/12/24 09:41")
@@ -52,12 +47,12 @@ public abstract class JDBCIncreasement implements Closeable, Increasement {
 		//拼接查找增量并插入增量表
 		insertDataSql.append("INSERT INTO ");
 		insertDataSql.append(targetTableName);
-		insertDataSql.append("(");
-		for (String col : columns) {
-			insertDataSql.append(col).append(",");
-		}
-		insertDataSql.deleteCharAt(insertDataSql.length() - 1); //将最后的逗号删除
-		insertDataSql.append(" ) ");
+//		insertDataSql.append("(");
+//		for (String col : columns) {
+//			insertDataSql.append(col).append(",");
+//		}
+//		insertDataSql.deleteCharAt(insertDataSql.length() - 1); //将最后的逗号删除
+//		insertDataSql.append(" ) ");
 		insertDataSql.append(" select ");
 		for (String col : columns) {
 			insertDataSql.append(sourceTableName).append(".").append(col).append(",");
@@ -66,5 +61,15 @@ public abstract class JDBCIncreasement implements Closeable, Increasement {
 		insertDataSql.append(" from ");
 		insertDataSql.append(sourceTableName);
 		return insertDataSql.toString();
+	}
+
+	/**
+	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
+	 */
+	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
+		//如果有数据则表明该表存在，创建表
+		if (db.isExistTable(tableName)) {
+			sqlList.add("DROP TABLE " + tableName);
+		}
 	}
 }

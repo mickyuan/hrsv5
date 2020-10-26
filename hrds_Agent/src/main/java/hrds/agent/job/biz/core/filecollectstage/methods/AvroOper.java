@@ -9,13 +9,12 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.utils.PropertyParaUtil;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
-import hrds.commons.utils.PathUtil;
-import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.ReadFileUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -26,10 +25,10 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -44,7 +43,7 @@ import java.util.regex.Pattern;
 @DocClass(desc = "卸数生成Avro文件到本地目录的程序", author = "zxz", createdate = "2019/11/14 15:32")
 public class AvroOper {
 	//打印日志
-	private static final Log logger = LogFactory.getLog(AvroOper.class);
+	private static final Logger logger = LogManager.getLogger();
 	//写Avro文件的结构
 	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"SmallFilesTest\", " + "\"fields\": [" + "{\"name\":\""
 			+ "file_name" + "\",\"type\":\"string\"}," + "{\"name\":\"" + "file_scr_path" + "\", \"type\":\"string\"}," + "{\"name\":\""
@@ -56,26 +55,20 @@ public class AvroOper {
 			+ "is_increasement" + "\",\"type\":\"string\"}," + "{\"name\":\"" + "is_cache" + "\",\"type\":\"string\"}" + "]}";
 	//Avro文件的SCHEMA
 	private static final Schema SCHEMA = new Schema.Parser().parse(SCHEMA_JSON);
-	//大文件的阈值，超过此大小则认为是大文件，默认为25M
-	private static final long THRESHOLD_FILE_SIZE = Long.valueOf(PropertyParaUtil.getString("thresholdFileSize", "26214400"));
-	//设定单个Avro文件带下的阈值 默认为128M
-	private static final long SINGLE_AVRO_SIZE = Long.valueOf(PropertyParaUtil.getString("singleAvroSize", "134217728"));
-	//solr中摘要获取行数，默认获取前3行
-	private static final int SUMVOL = Integer.valueOf(PropertyParaUtil.getString("summary_volumn", "3"));
 	//文件采集传递参数的实体
-	private FileCollectParamBean fileCollectParamBean;
+	private final FileCollectParamBean fileCollectParamBean;
 	//文件采集的监听器
-	private CollectionWatcher collectionWatcher;
+	private final CollectionWatcher collectionWatcher;
 	//大文件文件夹路径
 	private static final String BIGFILENAME = "bigFiles";
 	//文件上传到hdfs文件的路径
-	private String fileCollectHdfsPath;
+	private final String fileCollectHdfsPath;
 	//大文件上传到hdfs上的路径
-	private String bigFileCollectHdfsPath;
+	private final String bigFileCollectHdfsPath;
 	//当前线程的消费队列
-	private ArrayBlockingQueue<String> queue;
+	private final ArrayBlockingQueue<String> queue;
 	//mapDB对象
-	private ConcurrentMap<String, String> fileNameHTreeMap;
+	private final ConcurrentMap<String, String> fileNameHTreeMap;
 	//最后一个卸数文件的标识
 	public static final long LASTELEMENT = 0L;
 
@@ -84,9 +77,8 @@ public class AvroOper {
 		this.fileNameHTreeMap = fileNameHTreeMap;
 		//XXX 下面这个方法改造，不能直接对数据库进行操作
 		collectionWatcher = new CollectionWatcher(fileCollectParamBean);
-		fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
-				"/hrds") + File.separator + DataSourceType.DCL.getCode() + File.separator +
-				fileCollectParamBean.getFcs_id() + File.separator
+		fileCollectHdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator +
+				DataSourceType.DCL.getCode() + File.separator + fileCollectParamBean.getFcs_id() + File.separator
 				+ fileCollectParamBean.getFile_source_id() + File.separator, true);
 		bigFileCollectHdfsPath = FileNameUtils.normalize(fileCollectHdfsPath +
 				File.separator + BIGFILENAME + File.separator, true);
@@ -105,7 +97,7 @@ public class AvroOper {
 	 * @param isSelect     是否增量
 	 */
 	private long putOneFile2Avro(String filePath, long avroFileTotalSize, String avroHdfsPath,
-	                             DataFileWriter<Object> writer, boolean isSelect) throws IOException {
+								 DataFileWriter<Object> writer, boolean isSelect) throws IOException {
 		GenericRecord record = new GenericData.Record(SCHEMA);
 		try {
 			long syncBlock = writer.sync();
@@ -133,7 +125,7 @@ public class AvroOper {
 			}
 			//记录该文件在Avro中的块号，为今后方便查找该文件
 			record.put("file_avro_block", syncBlock);
-			if (file.length() > THRESHOLD_FILE_SIZE) {
+			if (file.length() > JobConstant.THRESHOLD_FILE_SIZE) {
 				String bigFileHdfs = bigFileCollectHdfsPath + fileName;
 				//如果是大文件，就是大文件所在的路径加文件名称
 				record.put("file_avro_path", bigFileHdfs);
@@ -156,7 +148,7 @@ public class AvroOper {
 				String text = ReadFileUtil.file2String(file);
 				try {
 					record.put("file_summary", normalizeSummary(TextRankSentence.
-							getTopSentenceList(text, SUMVOL).toString()));
+							getTopSentenceList(text, JobConstant.SUMMARY_VOLUMN).toString()));
 				} catch (OutOfMemoryError e) {
 					record.put("file_summary", file.getName());
 				}
@@ -238,7 +230,7 @@ public class AvroOper {
 			if (files.size() > 0) {
 				for (String filePath : files) {
 					//控制avro文件大小第一次运行或者avro文件大小已经达到阈值会进入此条件
-					if (avroFileTotalSize > SINGLE_AVRO_SIZE || avroFileTotalSize == 0L) {
+					if (avroFileTotalSize > JobConstant.SINGLE_AVRO_SIZE || avroFileTotalSize == 0L) {
 						avroFileTotalSize = 0L;
 					/*关闭writer和outputStream，每写一个SINGLE_AVRO_SIZE大小的avro
 					文件需要重新创建一个writer和outputStream对象。*/
@@ -265,12 +257,8 @@ public class AvroOper {
 							writer, isSelect);
 				}
 				//是最后一批文件，则给结束标识
-				if (isLast) {
-					//avro文件写完之后就立刻将该条avro文件信息放入队列，交于消费线程处理
-					putIntoQueue(avroFileAbsolutionPath, fileCollectParamBean, true, false);
-				} else {
-					putIntoQueue(avroFileAbsolutionPath, fileCollectParamBean, false, false);
-				}
+				//avro文件写完之后就立刻将该条avro文件信息放入队列，交于消费线程处理
+				putIntoQueue(avroFileAbsolutionPath, fileCollectParamBean, isLast, false);
 			}
 		} catch (IOException e) {
 			logger.error("Failed to create Avro File...", e);
@@ -340,7 +328,13 @@ public class AvroOper {
 		DataFileStream<Object> reader = null;
 		try {
 			if (JobConstant.HAS_HADOOP_ENV) {
-				fs = FileSystem.get(ConfigReader.getConfiguration());
+				//TODO
+				fs = FileSystem.get(ConfigReader.getConfiguration(
+						System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+						PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+						PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+						PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf")
+				));
 				is = fs.open(avroFilePath);
 			} else {
 				is = new FileInputStream(avroFilePath.toString());

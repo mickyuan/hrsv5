@@ -16,11 +16,11 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile.Writer;
 import org.apache.hadoop.io.Text;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,10 +35,10 @@ import java.util.Map;
  */
 public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToSequenceFileWriter.class);
+	private static final Logger log = LogManager.getLogger();
 
 	public JdbcToSequenceFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                                TableBean tableBean, Data_extraction_def data_extraction_def) {
+									TableBean tableBean, Data_extraction_def data_extraction_def) {
 		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
 	}
 
@@ -76,7 +76,11 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			Map<String, Object> parseJson = tableBean.getParseJson();
 			Map<String, String> mergeIng = (Map<String, String>) parseJson.get("mergeIng");//字符合并
 			Clean cl = new Clean(parseJson, allclean);
-			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
+			//获取所有列的值用来做列合并
+			StringBuilder mergeStringTmp = new StringBuilder(1024 * 1024);
+			//获取页面选择列算拉链时算md5的列，当没有选择拉链字段，默认使用全字段算md5
+			Map<String, Boolean> md5Col = transMd5ColMap(tableBean.getIsZipperFieldInfo());
+			StringBuilder md5StringTmp = new StringBuilder(1024 * 1024);
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 
@@ -87,21 +91,25 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 			while (resultSet.next()) {
 				// Count it
 				counter++;
-				//获取所有列的值用来生成MD5值
-				midStringOther.delete(0, midStringOther.length());
+				md5StringTmp.delete(0, md5StringTmp.length());
+				mergeStringTmp.delete(0, mergeStringTmp.length());
 				// Write columns
 				value = new Text();
 				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
-					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
+					mergeStringTmp.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet,
 							typeArray[i], sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(Constant.DATADELIMITER);
+						mergeStringTmp.append(Constant.DATADELIMITER);
+					}
+					currValue = sb_.toString();
+					//判断是否是算md5的列，算md5
+					if (md5Col.get(selectColumnList.get(i)) != null && md5Col.get(selectColumnList.get(i))) {
+						md5StringTmp.append(currValue);
 					}
 					//清洗操作
-					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
 							type.get(i), FileFormat.SEQUENCEFILE.getCode(), null,
 							data_extraction_def.getDatabase_code(), dataDelimiter);
@@ -109,7 +117,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				}
 				//如果有列合并处理合并信息
 				if (!mergeIng.isEmpty()) {
-					List<String> arrColString = StringUtil.split(midStringOther.toString(), Constant.DATADELIMITER);
+					List<String> arrColString = StringUtil.split(mergeStringTmp.toString(), Constant.DATADELIMITER);
 					String mer = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							selectColumnList.toArray(new String[0]), null, null,
 							FileFormat.SEQUENCEFILE.getCode(), data_extraction_def.getDatabase_code(), dataDelimiter);
@@ -119,7 +127,7 @@ public class JdbcToSequenceFileWriter extends AbstractFileWriter {
 				sb.append(eltDate);
 				//根据是否算MD5判断是否追加结束日期和MD5两个字段
 				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
-					String md5 = toMD5(midStringOther.toString());
+					String md5 = toMD5(md5StringTmp.toString());
 					sb.append(dataDelimiter).append(Constant.MAXDATE).
 							append(dataDelimiter).append(md5);
 				}

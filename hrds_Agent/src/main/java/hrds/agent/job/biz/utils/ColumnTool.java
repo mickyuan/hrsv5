@@ -15,7 +15,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.orc.TypeDescription;
 import org.apache.parquet.example.data.Group;
 
 import java.math.BigDecimal;
@@ -157,44 +156,43 @@ public class ColumnTool {
 		return ObjectInspectorFactory.getStandardStructObjectInspector(listColumn, listType);
 	}
 
-	public static TypeDescription getTypeDescription(String columns, String types) {
-		TypeDescription readSchema = TypeDescription.createStruct();
-		List<String> columnAll = StringUtil.split(columns, Constant.METAINFOSPLIT);
-		List<String> typeList = StringUtil.split(types, Constant.METAINFOSPLIT);//字段类型
-		for (int i = 0; i < columnAll.size(); i++) {
-			//TODO 类型转换这个类是否需要修改
-//			String columns_type = DataTypeTransformHive.tansform(split.get(i).toUpperCase());
-			String columns_type = typeList.get(i).toLowerCase();
-			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createBoolean());
-			} else if (columns_type.contains(DataTypeConstant.INT8.getMessage())
-					|| columns_type.equals(DataTypeConstant.BIGINT.getMessage())
-					|| columns_type.equals(DataTypeConstant.LONG.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createLong());
-			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createInt());
-			} else if (columns_type.contains(DataTypeConstant.CHAR.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createChar());
-			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())
-					|| columns_type.contains(DataTypeConstant.NUMERIC.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createDecimal());
-			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createFloat());
-			} else if (columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createDouble());
-			} else if (columns_type.contains(DataTypeConstant.BYTE.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createByte());
-			} else if (columns_type.contains(DataTypeConstant.TIMESTAMP.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createTimestamp());
-			} else if (columns_type.contains(DataTypeConstant.DATE.getMessage())) {
-				readSchema.addField(columnAll.get(i), TypeDescription.createDate());
-			} else {
-				readSchema.addField(columnAll.get(i), TypeDescription.createString());
-			}
-		}
-		//Orc文件的列信息
-		return readSchema;
-	}
+//	public static TypeDescription getTypeDescription(String columns, String types) {
+//		TypeDescription readSchema = TypeDescription.createStruct();
+//		List<String> columnAll = StringUtil.split(columns, Constant.METAINFOSPLIT);
+//		List<String> typeList = StringUtil.split(types, Constant.METAINFOSPLIT);//字段类型
+//		for (int i = 0; i < columnAll.size(); i++) {
+//			//TODO 类型转换这个类是否需要修改
+//			String columns_type = typeList.get(i).toLowerCase();
+//			if (columns_type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createBoolean());
+//			} else if (columns_type.contains(DataTypeConstant.INT8.getMessage())
+//					|| columns_type.equals(DataTypeConstant.BIGINT.getMessage())
+//					|| columns_type.equals(DataTypeConstant.LONG.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createLong());
+//			} else if (columns_type.contains(DataTypeConstant.INT.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createInt());
+//			} else if (columns_type.contains(DataTypeConstant.CHAR.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createChar());
+//			} else if (columns_type.contains(DataTypeConstant.DECIMAL.getMessage())
+//					|| columns_type.contains(DataTypeConstant.NUMERIC.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createDecimal());
+//			} else if (columns_type.contains(DataTypeConstant.FLOAT.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createFloat());
+//			} else if (columns_type.contains(DataTypeConstant.DOUBLE.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createDouble());
+//			} else if (columns_type.contains(DataTypeConstant.BYTE.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createByte());
+//			} else if (columns_type.contains(DataTypeConstant.TIMESTAMP.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createTimestamp());
+//			} else if (columns_type.contains(DataTypeConstant.DATE.getMessage())) {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createDate());
+//			} else {
+//				readSchema.addField(columnAll.get(i), TypeDescription.createString());
+//			}
+//		}
+//		//Orc文件的列信息
+//		return readSchema;
+//	}
 
 	/**
 	 * @param group      parquet文件group
@@ -203,54 +201,53 @@ public class ColumnTool {
 	 * @param data       数据
 	 */
 	public static void addData2Group(Group group, String columnType, String columname, String data) {
-		//TODO 字段类型转换，这里要设计表
+		//XXX 这里基本类型给了默认值0 因为给空会报错 ：not found 10(CC_CLOSED_DATE_SK) element number 0 in group
 		columnType = columnType.toLowerCase();
 		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-			boolean dataResult = StringUtil.isEmpty(data) ? null : Boolean.valueOf(data.trim());
+			boolean dataResult = !StringUtil.isEmpty(data) && Boolean.parseBoolean(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
 				|| columnType.equals(DataTypeConstant.BIGINT.getMessage())
 				|| columnType.equals(DataTypeConstant.LONG.getMessage())) {
-			long dataResult = StringUtil.isEmpty(data) ? null : Long.valueOf(data.trim());
+			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.parseLong(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			int dataResult = StringUtil.isEmpty(data) ? null : Integer.valueOf(data.trim());
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.parseInt(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
-			float dataResult = StringUtil.isEmpty(data) ? null : Float.valueOf(data.trim());
+			float dataResult = StringUtil.isEmpty(data) ? Float.valueOf("0") : Float.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage())
 				|| columnType.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| columnType.contains(DataTypeConstant.NUMERIC.getMessage())) {
-			double dataResult = StringUtil.isEmpty(data) ? null : Double.valueOf(data.trim());
+			double dataResult = StringUtil.isEmpty(data) ? Double.valueOf("0") : Double.valueOf(data.trim());
 			group.add(columname, dataResult);
 		} else {
 			//char与varchar都为string
 			data = StringUtil.isEmpty(data) ? "" : data;
 			group.add(columname, data);
 		}
+
 	}
 
 	public static void addData2Inspector(List<Object> lineData, String columnType, String data) {
-		//TODO 字段类型转换，这里要设计表
-//		columnType = DataTypeTransformHive.tansform(columnType.toUpperCase());
 		columnType = columnType.toLowerCase();
 		if (columnType.contains(DataTypeConstant.BOOLEAN.getMessage())) {
-			boolean dataResult = Boolean.valueOf(data.trim());
+			boolean dataResult = !StringUtil.isEmpty(data) && Boolean.parseBoolean(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT8.getMessage())
 				|| columnType.equals(DataTypeConstant.BIGINT.getMessage())
 				|| columnType.equals(DataTypeConstant.LONG.getMessage())) {
-			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.valueOf(data.trim());
+			long dataResult = StringUtil.isEmpty(data) ? 0L : Long.parseLong(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.INT.getMessage())) {
-			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.valueOf(data.trim());
+			int dataResult = StringUtil.isEmpty(data) ? 0 : Integer.parseInt(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.FLOAT.getMessage())) {
-			float dataResult = StringUtil.isEmpty(data) ? 0 : Float.valueOf(data.trim());
+			float dataResult = StringUtil.isEmpty(data) ? Float.valueOf("0") : Float.valueOf(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.DOUBLE.getMessage())) {
-			double dataResult = StringUtil.isEmpty(data) ? 0 : Double.valueOf(data.trim());
+			double dataResult = StringUtil.isEmpty(data) ? Double.valueOf("0") : Double.valueOf(data.trim());
 			lineData.add(dataResult);
 		} else if (columnType.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| columnType.contains(DataTypeConstant.NUMERIC.getMessage())) {

@@ -1,118 +1,164 @@
 package hrds.commons.hadoop.readconfig;
 
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.exception.BusinessException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hrds.commons.collection.bean.LayerBean;
+import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.Constant;
+import hrds.commons.utils.PropertyParaValue;
+import hrds.commons.utils.StorageTypeKey;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.util.Map;
 
 public class ConfigReader {
 
+	private static final Logger logger = LogManager.getLogger();
+
+	/**
+	 * 支持的平台类型
+	 */
 	public enum PlatformType {
 		normal, fic50, fic60, fic80, cdh5_13
 	}
 
-	private static final Log log = LogFactory.getLog(ConfigReader.class);
-
-	private static Configuration conf;
-
-	private static LoginUtil lg;
-
-	private ConfigReader() {
-
-	}
-
 	/**
-	 * load HDFS_properties to HadoopConstant
+	 * load conf to Configuration
+	 *
+	 * @return Configuration
 	 */
 	public static Configuration getConfiguration() {
-		//平台验证
-		return getConfiguration(null);
+		return getConfiguration((String) null);
 	}
 
 	/**
-	 * load HDFS_properties to HadoopConstant
+	 * load conf to Configuration
+	 *
+	 * @param configPath 配置文件目录
+	 * @return Configuration
 	 */
 	public static Configuration getConfiguration(String configPath) {
-		return getConfiguration(configPath, PlatformType.normal.toString());
+		return getConfiguration(configPath, null);
 	}
 
 	/**
-	 * load HDFS_properties to HadoopConstant
+	 * load conf to Configuration
+	 *
+	 * @param configPath 配置文件目录
+	 * @param platform   平台类型
+	 * @return Configuration
 	 */
 	public static Configuration getConfiguration(String configPath, String platform) {
+		return getConfiguration(configPath, platform, null);
+	}
 
+	/**
+	 * load conf to Configuration
+	 *
+	 * @param configPath    配置文件目录
+	 * @param platform      平台类型
+	 * @param prncipal_name 认证名称
+	 * @return Configuration
+	 */
+	public static Configuration getConfiguration(String configPath, String platform, String prncipal_name) {
+		return getConfiguration(configPath, platform, prncipal_name, null);
+	}
+
+	/**
+	 * load conf to Configuration, 根据存储层实体 layerBean 创建 Configuration
+	 *
+	 * @param layerBean 存储层实体
+	 * @return Configuration
+	 */
+	public static Configuration getConfiguration(LayerBean layerBean) {
+		//配置文件路径
+		String configPath = FileNameUtils.normalize(Constant.STORECONFIGPATH + layerBean.getDsl_name() + File.separator, true);
+		//配置属性
+		Map<String, String> layerAttr = layerBean.getLayerAttr();
+		//平台版本
+		String platform = layerAttr.get(StorageTypeKey.platform);
+		//prncipal_name
+		String prncipal_name = layerAttr.get(StorageTypeKey.prncipal_name);
+		//操作hdfs的用户名
+		String hadoop_user_name = layerAttr.get(StorageTypeKey.hadoop_user_name);
+		return getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+	}
+
+	/**
+	 * load conf to Configuration
+	 *
+	 * @param configPath       配置文件目录
+	 * @param platform         平台类型
+	 * @param prncipal_name    认证名称
+	 * @param hadoop_user_name 用户
+	 * @return Configuration
+	 */
+	public static Configuration getConfiguration(String configPath, String platform, String prncipal_name, String hadoop_user_name) {
 		try {
-			log.info("configReader  " + configPath);
+			logger.info("configReader  " + configPath);
+			LoginUtil loginUtil;
 			if (StringUtil.isEmpty(configPath)) {
-				lg = new LoginUtil();
+				loginUtil = new LoginUtil();
 			} else {
-				lg = new LoginUtil(configPath);
+				loginUtil = new LoginUtil(configPath);
 			}
-			conf = lg.confLoad(conf);
+			Configuration conf = loginUtil.confLoad();
+			if (platform == null) {
+				platform = PropertyParaValue.getString("platform", PlatformType.normal.toString());
+			}
+			if (prncipal_name == null) {
+				prncipal_name = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
+			}
+			if (hadoop_user_name == null) {
+				hadoop_user_name = PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf");
+			}
 			//平台验证
-			return initAuth(conf, platform);
+			return initAuth(conf, platform, prncipal_name, hadoop_user_name, loginUtil);
 		} catch (Exception e) {
-			log.error("Failed to verify the platform...", e);
-			return null;
+			logger.error("Failed to verify the platform...", e);
+			throw new AppSystemException("认证获取conf失败", e);
 		}
 	}
 
-//	public static Configuration initAuthExternal(Configuration conf, String platform) {
-//
-//		log.info("initAuth external_cluster: " + external_cluster);
-//
-//		try {
-//			if (external_cluster.equals(PlatformType.normal.toString())) {
-//
-//			} else if (external_cluster.equals(PlatformType.fic50.toString())) {
-//				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
-//				if (!SecurityUtils.Maplogin(conf)) {// Security login
-//					log.error("Login system failed");
-//				}
-//			} else if (external_cluster.equals(PlatformType.fic60.toString())) {
-//				conf = lg.hbaseLogin(conf);
-//			} else {
-//				throw new BusinessException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
-//			}
-//			return conf;
-//		} catch (Exception e) {
-//			log.error("external_cluster Failed to initAuth...", e);
-//			return null;
-//		}
-//	}
-
-	private static Configuration initAuth(Configuration conf, String platform) {
-		log.info("initAuth platform: " + platform);
-		if (null == lg) {
-			lg = new LoginUtil();
-		}
+	/**
+	 * initial authentication
+	 *
+	 * @param conf             Configuration
+	 * @param platform         平台类型
+	 * @param prncipal_name    认证名称
+	 * @param hadoop_user_name 用户
+	 * @param lg               LoginUtil
+	 * @return Configuration
+	 */
+	private static Configuration initAuth(Configuration conf, String platform, String prncipal_name, String hadoop_user_name, LoginUtil lg) {
+		logger.info("initAuth platform: " + platform);
 		try {
 			if (PlatformType.normal.toString().equals(platform)) {
-				log.info("Do nothing");
+				logger.info("Do nothing");
 			} else if (PlatformType.cdh5_13.toString().equals(platform)) {
-				conf = CDHLoginUtil.login(conf);
+				conf = CDHLoginUtil.login(conf, prncipal_name);
 			} else if (PlatformType.fic50.toString().equals(platform)) {
 				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
-				if (!SecurityUtils.Maplogin(conf)) {// Security login
-					log.error("Login system failed");
+				// Security login
+				if (!SecurityUtils.Maplogin(conf)) {
+					logger.error("Login system failed");
 				}
 			} else if (PlatformType.fic60.toString().equals(platform)) {
-				conf = lg.hbaseLogin(conf);
+				conf = lg.hbaseLogin(conf, prncipal_name);
 			} else if (PlatformType.fic80.toString().equals(platform)) {
-				conf = C80LoginUtil.login(conf);
+				conf = C80LoginUtil.login(conf, prncipal_name);
 			} else {
-				throw new BusinessException("The platform is a wrong type ,please check <platform>...");
+				throw new AppSystemException("The platform is a wrong type ,please check <platform>...");
 			}
+			//设置hadoop_user_name
+			conf.set("HADOOP_USER_NAME", hadoop_user_name);
 			return conf;
 		} catch (Exception e) {
-			log.error("Failed to initAuth...", e);
-			return null;
+			logger.error("Failed to initAuth...", e);
+			throw new AppSystemException("认证获取conf失败", e);
 		}
-	}
-
-	public static void main(String[] args) {
-
-		ConfigReader.getConfiguration();
 	}
 }

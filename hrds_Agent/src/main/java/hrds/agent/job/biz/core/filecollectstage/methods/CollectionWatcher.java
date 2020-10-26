@@ -14,8 +14,8 @@ import java.util.UUID;
 
 @DocClass(desc = "检测文件采集是否完成", author = "zxz", createdate = "2019/11/4 17:20")
 public class CollectionWatcher {
-	private FileCollectParamBean fileCollectParamBean;
-	private Collect_case collectCase = new Collect_case();
+	private final FileCollectParamBean fileCollectParamBean;
+	private final Collect_case collectCase = new Collect_case();
 
 	private String job_rs_id;
 	private String excuteLength;

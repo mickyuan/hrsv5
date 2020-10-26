@@ -56,7 +56,7 @@ public class Database_set extends ProjectTableEntity
 	private String system_type;
 	@DocBean(name ="is_sendok",value="是否设置完成并发送成功(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_sendok;
-	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = true)
+	@DocBean(name ="database_number",value="数据库设置编号:",dataType = String.class,required = false)
 	private String database_number;
 	@DocBean(name ="db_agent",value="是否DB文件数据采集(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String db_agent;
@@ -72,6 +72,10 @@ public class Database_set extends ProjectTableEntity
 	private String cp_or;
 	@DocBean(name ="jdbc_url",value="数据库连接地址:",dataType = String.class,required = false)
 	private String jdbc_url;
+	@DocBean(name ="collect_type",value="数据库采集方式(CollectType):1-贴元登记<TieYuanDengJi> 2-数据库抽数<ShuJuKuChouShu> 3-数据库采集<ShuJuKuCaiJi> ",dataType = String.class,required = true)
+	private String collect_type;
+	@DocBean(name ="dsl_id",value="存储层配置ID:",dataType = Long.class,required = false)
+	private Long dsl_id;
 
 	/** 取得：Agent_id */
 	public Long getAgent_id(){
@@ -258,5 +262,27 @@ public class Database_set extends ProjectTableEntity
 	/** 设置：数据库连接地址 */
 	public void setJdbc_url(String jdbc_url){
 		this.jdbc_url=jdbc_url;
+	}
+	/** 取得：数据库采集方式 */
+	public String getCollect_type(){
+		return collect_type;
+	}
+	/** 设置：数据库采集方式 */
+	public void setCollect_type(String collect_type){
+		this.collect_type=collect_type;
+	}
+	/** 取得：存储层配置ID */
+	public Long getDsl_id(){
+		return dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(Long dsl_id){
+		this.dsl_id=dsl_id;
+	}
+	/** 设置：存储层配置ID */
+	public void setDsl_id(String dsl_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(dsl_id)){
+			this.dsl_id=new Long(dsl_id);
+		}
 	}
 }

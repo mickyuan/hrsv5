@@ -4,30 +4,40 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.meta.MetaOperator;
+import fd.ng.db.meta.TableMeta;
+import fd.ng.web.conf.WebinfoConf;
 import fd.ng.web.util.Dbo;
-import fd.ng.web.util.RequestUtil;
-import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.DataBaseCode;
 import hrds.commons.entity.Login_operation_info;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ExcelUtil;
+import hrds.commons.utils.FileDownloadUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Base64;
-import java.util.HashMap;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @DocClass(desc = "日志审查类", author = "dhw", createdate = "2020/4/24 13:46")
 public class SystemLogReview extends BaseAction {
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "查询系统日志信息",
 			logicStep = "1.数据可访问权限处理方式，该方法不需要进行权限控制" +
@@ -96,57 +106,127 @@ public class SystemLogReview extends BaseAction {
 	}
 
 	@Method(desc = "下载系统日志",
-			logicStep = "1.数据可访问权限处理方式，该方法不需要权限验证" +
-					"2.获取本地文件路径" +
-					"3.设置响应头，控制浏览器下载该文件" +
-					"3.1firefox浏览器" +
-					"3.2其它浏览器" +
-					"4.创建输出流" +
-					"5.获取要下载日志信息" +
-					"6.判断日志信息是否为空，不为空下载" +
-					"7.关闭流")
+			logicStep = "1.生成日志审查excel文件" +
+					"2.下载excel文件" +
+					"3.下载完删除下载文件")
 	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成", nullable = true)
 	@Param(name = "request_date", desc = "请求日期", range = "新增日志信息时生成", nullable = true)
 	public void downloadSystemLog(Long user_id, String request_date) {
-		// 1.数据可访问权限处理方式，该方法不需要权限验证
-		OutputStream outputStream;
-		// 2.获取下载文件的文件名
-		String fileName = "SystemOperation.doc";
+		// 数据可访问权限处理方式，该方法不需要权限验证
+		// 1.生成日志审查excel文件
+		String file_path = generateExcel(user_id, request_date);
+		// 2.下载excel文件
+		FileDownloadUtil.downloadFile("logReview." + ExcelUtil.XLSX);
+		// 3.下载完删除下载文件
 		try {
-			// 3.设置响应头，控制浏览器下载该文件
-			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
-				// 3.1firefox浏览器
-				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
-						+ new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
-			} else {
-				// 3.2其它浏览器
-				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
-						+ Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
-			}
-			ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
-			// 4.创建输出流
-			outputStream = ResponseUtil.getResponse().getOutputStream();
-			// 5.获取要下载日志信息
-			List<Map<String, Object>> logInfoList = searchSystemLogInfo(user_id, request_date,
-					null, null);
-			// 6.判断日志信息是否为空，不为空下载
-			if (!logInfoList.isEmpty()) {
-				for (int i = 0; i < logInfoList.size(); i++) {
-					if (i % 50000 == 0) {
-						outputStream.flush();
-					}
-					outputStream.write(logInfoList.get(i).toString().getBytes());
-				}
-				outputStream.flush();
-			}
-			// 7.关闭流
-			outputStream.close();
-		} catch (UnsupportedEncodingException e) {
-			throw new BusinessException("不支持的编码异常");
-		} catch (FileNotFoundException e) {
-			throw new BusinessException("文件不存在，可能目录不存在！");
+			Files.delete(new File(file_path).toPath());
 		} catch (IOException e) {
-			throw new BusinessException("下载文件失败！");
+			throw new BusinessException("删除文件失败" + e.getMessage());
+		}
+	}
+
+	@Method(desc = "生成日志审查excel文件", logicStep = "1.数据可访问权限处理方式，通过user_id进行权限控制" +
+			"2.验证当前用户下的工程是否存在" +
+			"3.创建工作簿对象" +
+			"4.创建工作表对象" +
+			"5.创建单元格对象,批注插入到一行" +
+			"6.得到上传文件的保存目录" +
+			"7.判断文件是否存在" +
+			"8.获取Excel的头列信息" +
+			"9.遍历列名设置头信息" +
+			"10.表对应所有列的值信息" +
+			"11.获取对应表数据" +
+			"12.存放表每列信息" +
+			"13.设置每列信息" +
+			"14.封装每列信息" +
+			"15.循环出需要的数据,并添加到excel头下方" +
+			"16.写进Excel表格")
+	@Param(name = "user_id", desc = "用户ID", range = "新增用户时生成", nullable = true)
+	@Param(name = "request_date", desc = "请求日期", range = "新增日志信息时生成", nullable = true)
+	private String generateExcel(Long user_id, String request_date) {
+		// 1.数据可访问权限处理方式，通过user_id进行权限控制
+		FileOutputStream out = null;
+		XSSFWorkbook workbook = null;
+		try {
+			// 2.创建工作簿对象
+			workbook = new XSSFWorkbook();
+			// 3.创建工作表对象
+			XSSFSheet sheet = workbook.createSheet("sheet1");
+			// 4.创建单元格对象,批注插入到一行
+			XSSFRow headRow = sheet.createRow(0);
+			// 5.得到上传文件的保存目录
+			String savePath =
+					WebinfoConf.FileUpload_SavedDirName + File.separator + "logReview." + ExcelUtil.XLSX;
+			File file = new File(savePath);
+			// 6.判断文件是否存在不存在创建
+			if (!file.exists()) {
+				if (!file.createNewFile()) {
+					throw new BusinessException("创建文件失败，文件目录可能不存在！");
+				}
+			}
+			// 7.创建输出流
+			out = new FileOutputStream(file);
+			// 8.获取Excel的头列信息
+			List<TableMeta> tableMetas = MetaOperator.getTablesWithColumns(Dbo.db(), Login_operation_info.TableName);
+			Set<String> columnNames = tableMetas.get(0).getColumnNames();
+			int cellNum = 0;
+			// 9.遍历列名设置头信息
+			for (String columnName : columnNames) {
+				XSSFCell createCell = headRow.createCell(cellNum);
+				createCell.setCellValue(columnName);
+				cellNum++;
+			}
+			// 10.表对应所有列的值信息
+			List<List<String>> columnValList = new ArrayList<>();
+			// 11.获取对应表数据
+			List<Map<String, Object>> systemLogInfoList = searchSystemLogInfo(user_id, request_date,
+					null, null);
+			if (!systemLogInfoList.isEmpty()) {
+				for (Map<String, Object> systemLogInfo : systemLogInfoList) {
+					// 12.存放表每列信息
+					List<String> columnInfoList = new ArrayList<>();
+					for (String columnName : columnNames) {
+						// 13.设置每列信息
+						if (systemLogInfo.get(columnName) != null) {
+							columnInfoList.add(systemLogInfo.get(columnName).toString());
+						} else {
+							columnInfoList.add("");
+						}
+					}
+					// 14.封装每列信息
+					columnValList.add(columnInfoList);
+				}
+			}
+			// 15.循环出需要的数据,并添加到excel头下方
+			if (!columnValList.isEmpty()) {
+				for (int i = 0; i < columnValList.size(); i++) {
+					headRow = sheet.createRow(i + 1);
+					List<String> valueList = columnValList.get(i);
+					for (int j = 0; j < valueList.size(); j++) {
+						headRow.createCell(j).setCellValue(valueList.get(j));
+					}
+				}
+			}
+			// 16.写进Excel表格
+			workbook.write(out);
+			return savePath;
+		} catch (FileNotFoundException e) {
+			logger.error(e);
+			throw new BusinessException("文件不存在！");
+		} catch (IOException e) {
+			logger.error(e);
+			throw new BusinessException("生成excel文件失败！");
+		} catch (Exception e) {
+			throw new AppSystemException(e);
+		} finally {
+			try {
+				if (out != null) {
+					out.close();
+				}
+			} catch (IOException e) {
+				logger.error("关闭输出流失败", e);
+			}
+			ExcelUtil.close(workbook);
 		}
 	}
 }

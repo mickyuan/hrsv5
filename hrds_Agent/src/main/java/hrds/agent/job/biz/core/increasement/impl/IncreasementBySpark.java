@@ -8,8 +8,8 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -19,10 +19,11 @@ import java.util.List;
  * Description: 通过spark sql跑增量
  */
 public class IncreasementBySpark extends JDBCIncreasement {
-	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 
 	public IncreasementBySpark(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
-	                           String dsl_name) {
+							   String dsl_name) {
 		super(tableBean, hbase_name, sysDate, db, dsl_name);
 	}
 
@@ -38,13 +39,13 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		getCreateDeltaSql(sqlList);
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除
-		restore(StorageType.ZengLiang.getCode());
+		restore(StorageType.QuanLiang.getCode());
 		//5、将比较之后的要insert的结果插入到临时表中
 		getInsertDataSql(sqlList);
 		//6、将比较之后的要delete(拉链中的闭链)的结果插入到临时表中
 		getDeleteDataSql(sqlList);
 		//7、把全量数据中的除了有效数据且关链的数据以外的所有数据插入到临时表中
-		getdeltaDataSql(sqlList);
+		getDeltaDataSql(sqlList);
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
@@ -54,7 +55,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void mergeIncrement() {
 		List<String> sqlList = new ArrayList<>();
-		dropTableIfExists(yesterdayTableName, sqlList);
+		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		sqlList.add("alter table " + deltaTableName + " rename to " + yesterdayTableName);
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -80,7 +81,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		//将本次采集的数据存入临时表
 		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
 		//删除上次采集的数据表
-		dropTableIfExists(yesterdayTableName, sqlList);
+		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		//将临时表改名为进数之后的表
 		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
 		//执行sql
@@ -95,7 +96,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	@Override
 	public void restore(String storageType) {
 		ArrayList<String> sqlList = new ArrayList<>();
-		if (StorageType.ZengLiang.getCode().equals(storageType)) {
+		if (StorageType.QuanLiang.getCode().equals(storageType) || StorageType.ZengLiang.getCode().equals(storageType)) {
 			//增量恢复数据
 			if (!haveTodayData(yesterdayTableName)) {
 				return;
@@ -129,6 +130,89 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		}
 		//执行数据恢复
 		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 采集增量数据算拉链
+	 */
+	@Override
+	public void incrementalDataZipper() {
+		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName), db);
+		ArrayList<String> sqlList = new ArrayList<>();
+		//2.创建增量临时表
+		sqlList.add(db.getDbtype().ofCopyTableSchemasSql(yesterdayTableName, deltaTableName));
+		//3.防止重跑恢复今天入库的数据
+		restore(StorageType.ZengLiang.getCode());
+		//4.找出需要关链的数据，插入临时表
+		insertInvalidDataSql(sqlList);
+		//5.插入有效数据
+		insertValidDataSql(sqlList);
+		//6.插入增量数据
+		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
+		//7.删除上次采集的数据表
+		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
+		//8.将临时表改名为进数之后的表
+		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	private void insertValidDataSql(ArrayList<String> sqlList) {
+		// 拼接查找增量并插入增量表
+		String deleteDatasql = "INSERT INTO " +
+				this.deltaTableName +
+				" select " +
+				"*" +
+				" from " +
+				this.yesterdayTableName +
+				" WHERE NOT EXISTS " +
+				" ( select " + Constant.MD5NAME + " from " +
+				this.todayTableName +
+				" where " +
+				this.yesterdayTableName + "." + Constant.MD5NAME +
+				" = " +
+				this.todayTableName + "." + Constant.MD5NAME +
+				") AND " + this.yesterdayTableName + "." + Constant.EDATENAME +
+				" = '" + Constant.MAXDATE + "'";
+		sqlList.add(deleteDatasql);
+		// 拼接查找增量并插入增量表
+		String deleteDatasql2 = "INSERT INTO " +
+				this.deltaTableName +
+				" select " +
+				"*" +
+				" from " +
+				this.yesterdayTableName +
+				" WHERE " + this.yesterdayTableName + "." + Constant.EDATENAME +
+				" <> '" + Constant.MAXDATE + "'";
+		sqlList.add(deleteDatasql2);
+	}
+
+	private void insertInvalidDataSql(ArrayList<String> sqlList) {
+		StringBuilder deleteDatasql = new StringBuilder(120);
+		StringBuilder join = new StringBuilder(120);
+		for (String column : columns) {
+			join.append(this.yesterdayTableName).append(".").append(column).append(",");
+		}
+		join.delete(join.length() - 1, join.length());
+		String select_sql = StringUtils.replace(join.toString(), this.yesterdayTableName + "."
+				+ Constant.EDATENAME, "'" + sysDate + "'");
+		// 拼接查找增量并插入增量表
+		deleteDatasql.append("INSERT INTO ");
+		deleteDatasql.append(this.deltaTableName);
+		deleteDatasql.append(" select ");
+		deleteDatasql.append(select_sql);
+		deleteDatasql.append(" from ");
+		deleteDatasql.append(this.yesterdayTableName);
+		deleteDatasql.append(" WHERE EXISTS ");
+		deleteDatasql.append(" ( select ").append(Constant.MD5NAME).append(" from ");
+		deleteDatasql.append(this.todayTableName);
+		deleteDatasql.append(" where ");
+		deleteDatasql.append(this.yesterdayTableName).append(".").append(Constant.MD5NAME);
+		deleteDatasql.append(" = ");
+		deleteDatasql.append(this.todayTableName).append(".").append(Constant.MD5NAME);
+		deleteDatasql.append(") AND ").append(this.yesterdayTableName).append(".").append(Constant.EDATENAME);
+		deleteDatasql.append(" = '").append(Constant.MAXDATE).append("'");
+		sqlList.add(deleteDatasql.toString());
 	}
 
 	/**
@@ -170,23 +254,32 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		return sql.toString();
 	}
 
-	/**
-	 * 删除表如果表存在
-	 *
-	 * @param tableName 表名
-	 * @param sqlList   删除表语句存放list
-	 */
-	private void dropTableIfExists(String tableName, List<String> sqlList) {
-		sqlList.add("DROP TABLE IF EXISTS " + tableName);
-	}
-
-	private void getdeltaDataSql(ArrayList<String> sqlList) {
+	private void getDeltaDataSql(ArrayList<String> sqlList) {
+//		String deltaDatasql = "insert into " + deltaTableName;
+//		deltaDatasql += " select * from " + yesterdayTableName;
+//		deltaDatasql += " where ";
+//		deltaDatasql += yesterdayTableName + "." + Constant.EDATENAME + " <> '" + Constant.MAXDATE + "'";
+//		deltaDatasql += " or ";
+//		deltaDatasql += "( ";
+//		deltaDatasql += " not exists ";
+//		deltaDatasql += "(";
+//		deltaDatasql += " select " + deltaTableName + "." + Constant.MD5NAME + " from " + deltaTableName + " where "
+//				+ deltaTableName + "." + Constant.EDATENAME + " <> '" + Constant.MAXDATE + "'";
+//		deltaDatasql += " and " + yesterdayTableName + "." + Constant.MD5NAME + "=" + deltaTableName + "."
+//				+ Constant.MD5NAME + ")";
+//		deltaDatasql += " and " + yesterdayTableName + "." + Constant.EDATENAME + " = '" + Constant.MAXDATE + "'";
+//		deltaDatasql += ")";
+//		sqlList.add(deltaDatasql);
+		//TODO 上面的sql只能在spark-sql上跑，hive的要拆成下面的两个sql
 		String deltaDatasql = "insert into " + deltaTableName;
 		deltaDatasql += " select * from " + yesterdayTableName;
 		deltaDatasql += " where ";
 		deltaDatasql += yesterdayTableName + "." + Constant.EDATENAME + " <> '" + Constant.MAXDATE + "'";
-		deltaDatasql += " or ";
-		deltaDatasql += "( ";
+		sqlList.add(deltaDatasql);
+
+		deltaDatasql = "insert into " + deltaTableName;
+		deltaDatasql += " select * from " + yesterdayTableName;
+		deltaDatasql += " where ( ";
 		deltaDatasql += " not exists ";
 		deltaDatasql += "(";
 		deltaDatasql += " select " + deltaTableName + "." + Constant.MD5NAME + " from " + deltaTableName + " where "
@@ -196,7 +289,6 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		deltaDatasql += " and " + yesterdayTableName + "." + Constant.EDATENAME + " = '" + Constant.MAXDATE + "'";
 		deltaDatasql += ")";
 		sqlList.add(deltaDatasql);
-
 	}
 
 	/*
@@ -237,14 +329,18 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	private void getDeleteDataSql(ArrayList<String> sqlList) {
 
 		StringBuilder deleteDatasql = new StringBuilder(120);
-
-		String join = StringUtils.join(columns, ',');
-		join = StringUtils.replace(join, Constant.EDATENAME, "'" + sysDate + "'");
+		StringBuilder join = new StringBuilder(120);
+		for (String column : columns) {
+			join.append(this.yesterdayTableName).append(".").append(column).append(",");
+		}
+		join.delete(join.length() - 1, join.length());
+		String select_sql = StringUtils.replace(join.toString(), this.yesterdayTableName + "."
+				+ Constant.EDATENAME, "'" + sysDate + "'");
 		// 拼接查找增量并插入增量表
 		deleteDatasql.append("INSERT INTO ");
 		deleteDatasql.append(this.deltaTableName);
 		deleteDatasql.append(" select ");
-		deleteDatasql.append(join);
+		deleteDatasql.append(select_sql);
 		deleteDatasql.append(" from ");
 		deleteDatasql.append(this.yesterdayTableName);
 		deleteDatasql.append(" WHERE NOT EXISTS ");
@@ -297,9 +393,21 @@ public class IncreasementBySpark extends JDBCIncreasement {
 	private void dropAllTmpTable() {
 		List<String> deleteInfo = new ArrayList<>();
 		//删除临时增量表
-		dropTableIfExists(deltaTableName, deleteInfo);
+		deleteInfo.add("DROP TABLE IF EXISTS " + deltaTableName);
 		//清空表数据
 		HSqlExecute.executeSql(deleteInfo, db);
 	}
 
+	/**
+	 * 对象采集，没有数据保留天数，删除当天卸数下来的数据
+	 */
+	@Override
+	public void dropTodayTable() {
+		//删除映射表
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		JDBCIncreasement.dropTableIfExists(todayTableName, db, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
+	}
 }

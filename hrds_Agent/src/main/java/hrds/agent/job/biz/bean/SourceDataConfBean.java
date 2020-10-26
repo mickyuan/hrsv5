@@ -81,6 +81,8 @@ public class SourceDataConfBean implements Serializable {
 	private List<CollectTableBean> collectTableBeanArray;
 	@DocBean(name = "signal_file_list", value = "信号文件入库信息集合", dataType = List.class, required = false)
 	private List<Signal_file> signal_file_list;
+	@DocBean(name ="collect_type",value="数据库采集方式(CollectType):1-贴元登记<TieYuanDengJi> 2-数据库抽数<ShuJuKuChouShu> 3-数据库采集<ShuJuKuCaiJi> ",dataType = String.class,required = true)
+	private String collect_type;
 
 	public Long getAgent_id() {
 		return agent_id;
@@ -320,5 +322,13 @@ public class SourceDataConfBean implements Serializable {
 
 	public void setSignal_file_list(List<Signal_file> signal_file_list) {
 		this.signal_file_list = signal_file_list;
+	}
+
+	public String getCollect_type() {
+		return collect_type;
+	}
+
+	public void setCollect_type(String collect_type) {
+		this.collect_type = collect_type;
 	}
 }

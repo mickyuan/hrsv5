@@ -33,6 +33,14 @@ public class Node {
      */
     private String data_own_type;
     /**
+     * 数据表所属存储层id
+     */
+    private String dsl_id;
+    /**
+     * 存储层类型
+     */
+    private String dsl_store_type;
+    /**
      * 数据源id
      */
     private String data_source_id;
@@ -61,6 +69,10 @@ public class Node {
      */
     private String hyren_name;
     /**
+     * 树页面来源
+     */
+    private String tree_page_source;
+    /**
      * 孩子节点列表
      */
     private List<Node> children = new ArrayList<>();
@@ -73,6 +85,7 @@ public class Node {
                 + ", parent_id : '" + parent_id + "'"
                 + ", description : '" + description + "'"
                 + ", data_layer : '" + data_layer + "'"
+                + ", dsl_id : '" + dsl_id + "'"
                 + ", data_own_type : '" + data_own_type + "'"
                 + ", data_source_id : '" + data_source_id + "'"
                 + ", agent_id : '" + agent_id + "'"
@@ -80,7 +93,8 @@ public class Node {
                 + ", file_id : '" + file_id + "'"
                 + ", table_name : '" + table_name + "'"
                 + ", original_name : '" + original_name + "'"
-                + ", hyren_name : '" + hyren_name + "'";
+                + ", hyren_name : '" + hyren_name + "'"
+                + ", tree_page_source : '" + tree_page_source + "'";
         if (children != null && children.size() != 0) {
             str += ", children : " + children.toString();
         } else {
@@ -145,6 +159,22 @@ public class Node {
         this.data_layer = data_layer;
     }
 
+    public String getDsl_id() {
+        return dsl_id;
+    }
+
+    public void setDsl_id(String dsl_id) {
+        this.dsl_id = dsl_id;
+    }
+
+    public String getDsl_store_type() {
+        return dsl_store_type;
+    }
+
+    public void setDsl_store_type(String dsl_store_type) {
+        this.dsl_store_type = dsl_store_type;
+    }
+
     public String getData_own_type() {
         return data_own_type;
     }
@@ -207,6 +237,14 @@ public class Node {
 
     public void setHyren_name(String hyren_name) {
         this.hyren_name = hyren_name;
+    }
+
+    public String getTree_page_source() {
+        return tree_page_source;
+    }
+
+    public void setTree_page_source(String tree_page_source) {
+        this.tree_page_source = tree_page_source;
     }
 
     public List<Node> getChildren() {

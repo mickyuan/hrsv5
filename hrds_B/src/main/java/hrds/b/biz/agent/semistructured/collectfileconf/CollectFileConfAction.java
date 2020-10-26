@@ -11,19 +11,19 @@ import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
+import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
-import hrds.commons.codes.CollectDataType;
-import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.IsFlag;
-import hrds.commons.codes.OperationType;
+import hrds.commons.codes.*;
 import hrds.commons.entity.Object_collect;
 import hrds.commons.entity.Object_collect_struct;
 import hrds.commons.entity.Object_collect_task;
 import hrds.commons.entity.Object_handle_type;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
@@ -50,7 +50,7 @@ public class CollectFileConfAction extends BaseAction {
 	public Map<String, Object> searchObjectCollectTask(long odc_id) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
 		// 2.判断当前半结构化采集任务是否已存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.获取解析数据字典向agent发送请求所需参数
 		Object_collect object_collect = getObjectCollect(odc_id);
 		object_collect.setOdc_id(odc_id);
@@ -76,11 +76,13 @@ public class CollectFileConfAction extends BaseAction {
 			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
 					"2.与agent交互获取agent解析数据字典获取数据字典表数据" +
 					"3.获取数据库当前任务下的表集合" +
-					"4.获取数据字典与数据库表集合" +
-					"5.如果数据库为空则说明是第一次直接返回数据字典表数据" +
+					"4.如果数据库为空则说明是第一次直接返回数据字典表数据" +
+					"5.获取数据字典与数据库表集合" +
 					"6.数据字典没有，数据库有的移除" +
 					"7.数据字典有，数据库没有（新增）" +
-					"8.获取数据库与数据字典并集并返回")
+					"8.删除数据库中多余的表数据" +
+					"9.保存数据字典新增的的对象采集对应信息" +
+					"10.获取数据库与数据字典并集并返回")
 	@Param(name = "object_collect", desc = "半结构化采集设置实体对象", range = "与数据库对应字段规则一致",
 			isBean = true)
 	private List<Object_collect_task> getTableInfo(Object_collect object_collect) {
@@ -88,27 +90,61 @@ public class CollectFileConfAction extends BaseAction {
 		// 2.与agent交互获取agent解析数据字典获取数据字典表数据
 		List<Object_collect_task> dicTableList = getDictionaryTableInfo(object_collect);
 		// 3.获取数据库当前任务下的表集合
-		List<Object_collect_task> objCollectTaskList = getObjectCollectTaskList(object_collect.getOdc_id());
-		// 4.获取数据字典与数据库表集合
-		List<String> dicTableNameList = getTableName(dicTableList);
-		List<String> tableNameList = getTableName(objCollectTaskList);
-		// 5.如果数据库为空则说明是第一次直接返回数据字典表数据
-		if (tableNameList.isEmpty()) {
+		List<Object_collect_task> dataBaseList = getObjectCollectTaskList(object_collect.getOdc_id());
+		// 4.如果数据库为空则说明是第一次直接返回数据字典表数据
+		if (dataBaseList.isEmpty()) {
+			// 新增对象采集对应信息
+			addDicTable(object_collect.getOdc_id(), object_collect.getAgent_id(), dicTableList);
 			return dicTableList;
 		}
-		// 6.数据字典没有，数据库有的移除
+		// 5.保存对象采集对应信息表数据
+		addObjectCollectTask(object_collect.getOdc_id(), object_collect.getAgent_id(), dicTableList);
+		// 6.返回数据库与数据字典并集的对象采集对应信息数据集合
+
+		dicTableList.addAll(dataBaseList);
+		return dicTableList;
+	}
+
+	@Method(desc = "保存对象采集对应信息表数据", logicStep = "1.获取数据库当前半结构化采集任务对应的对象采集对应信息" +
+			"2.获取数据字典与数据库表集合" +
+			"3.数据字典没有，数据库有的移除" +
+			"4.删除数据库中多余的表数据" +
+			"5.数据字典有，数据库没有（新增）" +
+			"6.保存数据字典新增的的对象采集对应信息")
+	@Param(name = "odc_id", desc = "对象采集id", range = "新增半结构化采集任务时通过主键生成")
+	@Param(name = "agent_id", desc = "agent id", range = "新增agent时通过主键生成")
+	@Param(name = "dicTableList", desc = "数据字典中的所有表信息", range = "无限制")
+	@Return(desc = "", range = "")
+	private void addObjectCollectTask(long odc_id, long agent_id, List<Object_collect_task> dicTableList) {
+
+		//1.获取数据库当前半结构化采集任务对应的对象采集对应信息
+		List<Object_collect_task> objCollectTaskList = getObjectCollectTaskList(odc_id);
+		// 2.获取数据字典与数据库表集合
+		List<String> dicTableNameList = getTableName(dicTableList);
+		List<String> tableNameList = getTableName(objCollectTaskList);
+		// 3.数据字典没有，数据库有的移除
 		List<String> deleteList =
 				tableNameList.stream().filter(item -> !dicTableNameList.contains(item))
 						.collect(Collectors.toList());
-		objCollectTaskList.removeIf(object_collect_task -> deleteList.contains(object_collect_task.getEn_name()));
-		// 7.数据字典有，数据库没有（新增）
+//		objCollectTaskList.removeIf(object_collect_task -> deleteList.contains(object_collect_task.getEn_name()));
+		// 4.删除数据库中多余的表数据
+		deleteTable(odc_id, deleteList);
+		//如果都存在就更新
+		for (Object_collect_task object_collect_task : objCollectTaskList) {
+			for(Object_collect_task object_collect_task2 : dicTableList){
+				if(object_collect_task.getEn_name().equals(object_collect_task2.getEn_name())){
+					object_collect_task.setFirstline(object_collect_task2.getFirstline());
+					object_collect_task.update(Dbo.db());
+				}
+			}
+		}
+		// 5.数据字典有，数据库没有（新增）
 		List<String> addList =
 				dicTableNameList.stream().filter(item -> !tableNameList.contains(item))
 						.collect(Collectors.toList());
 		dicTableList.removeIf(object_collect_task -> !addList.contains(object_collect_task.getEn_name()));
-		// 8.获取数据库与数据字典并集并返回
-		dicTableList.addAll(objCollectTaskList);
-		return dicTableList;
+		//6. 保存数据字典新增的的对象采集对应信息
+		addDicTable(odc_id, agent_id, dicTableList);
 	}
 
 	@Method(desc = "获取数据库半结构化采集对应表数据", logicStep = "1.获取数据库半结构化采集对应表数据")
@@ -127,10 +163,14 @@ public class CollectFileConfAction extends BaseAction {
 	@Return(desc = "返回获取数据字典半结构化采集对应表数据", range = "无限制")
 	private List<Object_collect_task> getDictionaryTableInfo(Object_collect object_collect) {
 		// 1.获取数据字典半结构化采集对应表数据
-		return SendMsgUtil.getDictionaryTableInfo(
-				object_collect.getAgent_id(), object_collect.getFile_path(),
-				object_collect.getIs_dictionary(), object_collect.getData_date(),
-				object_collect.getFile_suffix(), getUserId());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
+			return SendMsgUtil.getDictionaryTableInfo(
+					object_collect.getAgent_id(), object_collect.getFile_path(), getUserId());
+		} else {
+			return SendMsgUtil.getFirstLineData(
+					object_collect.getAgent_id(), object_collect.getFile_path(),
+					object_collect.getData_date(), object_collect.getFile_suffix(), getUserId());
+		}
 	}
 
 	@Method(desc = "获取集合Bean中的表名称", logicStep = "获取表名称")
@@ -143,28 +183,32 @@ public class CollectFileConfAction extends BaseAction {
 		return tableNameList;
 	}
 
-	@Method(desc = "获取集合Bean中的表名称", logicStep = "获取表名称")
-	@Param(name = "tableBeanList", desc = "集合Object_collect_struct数据集合", range = "可以为空")
-	@Return(desc = "返回处理后的数据信息集合,只要表的名称", range = "可以为空")
-	private List<String> getColumnName(List<Object_collect_struct> tableBeanList) {
-		List<String> tableNameList = new ArrayList<>();
-		tableBeanList.forEach(
-				Object_collect_struct -> tableNameList.add(Object_collect_struct.getColumn_name()));
-		return tableNameList;
+	@Method(desc = "获取集合Bean中的列名称", logicStep = "获取表名称")
+	@Param(name = "columnBeanList", desc = "集合Object_collect_struct数据集合", range = "可以为空")
+	@Return(desc = "返回处理后的数据信息集合,只要列的名称", range = "可以为空")
+	private List<String> getColumnName(List<Object_collect_struct> columnBeanList) {
+		List<String> columnNameList = new ArrayList<>();
+		columnBeanList.forEach(
+				object_collect_struct -> columnNameList.add(object_collect_struct.getColumn_name()));
+		return columnNameList;
 	}
 
 	@Method(desc = "数据字典表新增入库", logicStep = "1.object_collect_task表信息循环入库")
 	@Param(name = "object_collect", desc = "对象采集配置表实体对象", range = "不为空", isBean = true)
 	@Param(name = "dicTableList", desc = "数据字典表集合", range = "不为空")
-	private void addDicTable(Object_collect object_collect, List<Object_collect_task> dicTableList) {
+	private void addDicTable(long odc_id, long agent_id, List<Object_collect_task> dicTableList) {
 		// 1.object_collect_task表信息循环入库
-		for (Object_collect_task object_collect_task : dicTableList) {
-			object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
-			object_collect_task.setDatabase_code(DataBaseCode.UTF_8.getCode());
-			object_collect_task.setOdc_id(object_collect.getOdc_id());
-			object_collect_task.setAgent_id(object_collect.getAgent_id());
-			object_collect_task.setCollect_data_type(CollectDataType.JSON.getCode());
-			object_collect_task.add(Dbo.db());
+		if (!dicTableList.isEmpty()) {
+			for (Object_collect_task object_collect_task : dicTableList) {
+				object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
+				object_collect_task.setDatabase_code(DataBaseCode.UTF_8.getCode());
+				object_collect_task.setUpdatetype(StringUtil.isBlank(object_collect_task.getUpdatetype()) ?
+						UpdateType.DirectUpdate.getCode() : object_collect_task.getUpdatetype());
+				object_collect_task.setOdc_id(odc_id);
+				object_collect_task.setAgent_id(agent_id);
+				object_collect_task.setCollect_data_type(CollectDataType.JSON.getCode());
+				object_collect_task.add(Dbo.db());
+			}
 		}
 	}
 
@@ -174,126 +218,142 @@ public class CollectFileConfAction extends BaseAction {
 	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
 	@Param(name = "deleteNameList", desc = "数据库有数据字典没有的表集合", range = "可以为空")
 	private void deleteTable(long odc_id, List<String> deleteNameList) {
-		if (deleteNameList != null && deleteNameList.size() != 0) {
+		if (!deleteNameList.isEmpty()) {
 			SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 			assembler.addSql(
 					"select ocs_id from " + Object_collect_task.TableName
-							+ " oct join " + Object_collect.TableName + " oc on oct.odc_id=oc.odc_id" +
-							" where odc_id=? ").addParam(odc_id)
-					.addORParam("en_name", deleteNameList.toArray());
-			// 获取表名称对应对象采集任务编号集合
+							+ " t1 join " + Object_collect.TableName + " t2 on t1.odc_id=t2.odc_id" +
+							" where t2.odc_id=? ").addParam(odc_id)
+					.addORParam("t1.en_name", deleteNameList.toArray());
+			// 1.获取表名称对应对象采集任务编号集合
 			List<Long> ocsIdList = Dbo.queryOneColumnList(assembler.sql(), assembler.params());
 			for (Long ocs_id : ocsIdList) {
-				// 1.删除对象采集对应信息
-				DboExecute.deletesOrThrow("删除表失败",
-						"delete from " + Object_collect_task.TableName + " where ocs_id=?",
-						ocs_id);
 				// 2.删除对象采集结构信息
 				Dbo.execute("delete from " + Object_collect_struct.TableName + " where ocs_id=?",
 						ocs_id);
 				// 3.删除采集数据处理类型对应表
 				Dbo.execute("delete from " + Object_handle_type.TableName + " where ocs_id =?",
 						ocs_id);
+				// 4.删除对象采集对应信息
+				DboExecute.deletesOrThrow("删除表失败",
+						"delete from " + Object_collect_task.TableName + " where ocs_id=?",
+						ocs_id);
 			}
 		}
 	}
 
-	@Method(desc = "根据表名查询半结构化采集列结构信息(有数据字典）",
+	@Method(desc = "有数据字典时获取半结构化采集列结构信息",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.判断当前半结构化采集任务是否还存在" +
-					"3.获取当前对象采集任务配置信息" +
-					"4.判断数据字典是否存在，不存在就抛异常" +
-					"5.获取数据字典所有表对应列信息并判断表对应列信息是否存在")
-	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
-	@Param(name = "en_name", desc = "表名称", range = "无限制")
-	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
-	public List<Object_collect_struct> getObjectCollectStructByTableName(long odc_id, String en_name) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
-		// 3.获取当前对象采集任务配置信息
-		Object_collect object_collect = getObjectCollect(odc_id);
-		// 4.判断数据字典是否存在，不存在就抛异常
-		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
-			throw new BusinessException("该采集任务的是否数据字典应为是,实际为否，请检查");
-		}
-		// 5.获取数据字典所有表对应列信息并判断表对应列信息是否存在
-		return getDicColumnsByTableName(object_collect, en_name);
-	}
-
-	@Method(desc = "根据对象采集任务编号查询半结构化采集列结构信息(有数据字典)",
-			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.判断当前半结构化采集任务是否还存在" +
-					"3.获取当前对象采集任务配置信息" +
-					"4.判断数据字典是否存在，不存在就抛异常" +
-					"5.获取数据字典所有表对应列信息并判断表对应列信息是否存在" +
-					"6.如果列结构信息ID为空说明是数据字典新增的表，这时候直接返回数据字典对应列信息即可" +
+					"3.判断对象采集对应信息是否存在" +
+					"4.获取当前对象采集任务配置信息" +
+					"5.判断数据字典是否存在" +
+					"6.获取当前表对应列信息并判断是否存在" +
 					"7.查询数据库表对应列信息" +
-					"8.获取数据字典以及数据库表对应列名称" +
-					"9.数据字典没有，数据库有的移除" +
-					"10.数据字典有，数据库没有（新增）" +
-					"11.获取数据库与数据字典并集并返回")
+					"8.判断数据库对应表列信息是否为空，为空代表是新增直接将数据字典数据入库并返回" +
+					"9.新增或删除数据字典变化的表到数据库" +
+					"10.获取数据库与数据字典并集并返回")
 	@Param(name = "odc_id", desc = "对象采集id", range = "不能为空")
-	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成",
-			nullable = true)
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Param(name = "en_name", desc = "表名称", range = "无限制")
 	@Return(desc = "返回半结构化采集列结构信息", range = "无限制")
-	public List<Object_collect_struct> getObjectCollectStructById(long odc_id, long ocs_id, String en_name) {
+	public List<Object_collect_struct> getObjectCollectStruct(long odc_id, long ocs_id, String en_name) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
-		// 3.获取当前对象采集任务配置信息
+		CommonUtils.isObjectCollectExist(odc_id);
+		// 3.判断对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 4.获取当前对象采集任务配置信息
 		Object_collect object_collect = getObjectCollect(odc_id);
-		// 4.判断数据字典是否存在，不存在就抛异常
+		// 5.判断数据字典是否存在
 		if (IsFlag.Fou == IsFlag.ofEnumByCode(object_collect.getIs_dictionary())) {
 			throw new BusinessException("该采集任务的是否数据字典应为是,实际为否，请检查");
 		}
-		// 5.获取数据字典所有表对应列信息并判断表对应列信息是否存在
+		// 6.获取当前表对应列信息并判断是否存在
 		List<Object_collect_struct> dicColumnByTable = getDicColumnsByTableName(object_collect, en_name);
 		// 7.查询数据库表对应列信息
-		List<Object_collect_struct> objectCollectStructList = getObjectCollectStructList(ocs_id);
-		// 8.获取数据字典以及数据库表对应列名称
+		List<Object_collect_struct> objectCollectStructList = getObjectCollectStructById(ocs_id);
+		// 8.判断数据库对应表列信息是否为空，为空代表是新增直接将数据字典数据入库并返回
+		if (objectCollectStructList.isEmpty()) {
+			addColumns(ocs_id, dicColumnByTable);
+			return dicColumnByTable;
+		}
+		// 9.新增或删除数据字典变化的表到数据库
+		addOrDeleteColumns(ocs_id, dicColumnByTable, objectCollectStructList);
+		// 10.获取数据库与数据字典并集并返回
+		dicColumnByTable.addAll(objectCollectStructList);
+		return dicColumnByTable;
+	}
+
+	@Method(desc = "新增或删除数据字典变化的表到数据库", logicStep = "1.获取数据字典以及数据库表对应列名称" +
+			"2.数据字典没有，数据库有的移除" +
+			"3.数据字典有，数据库没有（新增）" +
+			"4.删除数据库多余的，数据字典少了的" +
+			"5.新增数据字典多于数据库的")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
+	@Param(name = "dicColumnByTable", desc = "数据字典对应表对应列信息", range = "无限制")
+	@Param(name = "objectCollectStructList", desc = "数据库对应表对应列信息", range = "无限制")
+	private void addOrDeleteColumns(long ocs_id, List<Object_collect_struct> dicColumnByTable,
+									List<Object_collect_struct> objectCollectStructList) {
+		// 1.获取数据字典以及数据库表对应列名称
 		List<String> dicColumnNameList = getColumnName(dicColumnByTable);
 		List<String> columnNameList = getColumnName(objectCollectStructList);
-		// 9.数据字典没有，数据库有的移除
+		// 2.数据字典没有，数据库有的移除
 		List<String> deleteList =
 				columnNameList.stream().filter(item -> !dicColumnNameList.contains(item))
 						.collect(Collectors.toList());
 		objectCollectStructList.removeIf(
 				object_collect_struct -> deleteList.contains(object_collect_struct.getColumn_name()));
-		// 10.数据字典有，数据库没有（新增）
+		// 3.数据字典有，数据库没有（新增）
 		List<String> addList =
 				dicColumnNameList.stream().filter(item -> !columnNameList.contains(item))
 						.collect(Collectors.toList());
 		dicColumnByTable.removeIf(
 				object_collect_struct -> !addList.contains(object_collect_struct.getColumn_name()));
-		// 11.获取数据库与数据字典并集并返回
-		dicColumnByTable.addAll(objectCollectStructList);
-		return dicColumnByTable;
+		// 4.删除数据库多余的，数据字典少了的
+		deleteColumns(ocs_id, deleteList);
+		// 5.新增数据字典多于数据库的
+		addColumns(ocs_id, dicColumnByTable);
 	}
 
-	@Method(desc = "没有数据字典时获取采集列结构", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.判断当前半结构化采集任务是否还存在" +
-			"3.获取当前任务表对应第一行数据" +
-			"4.返回没有数据字典解析后的第一行数据的采集列信息")
+	@Method(desc = "没有数据字典时获取采集列结构(树展示)",
+			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
+					"2.判断当前半结构化采集任务是否还存在" +
+					"3.根据对象采集任务编号获取当前表的第一行数据" +
+					"4.返回没有数据字典解析后的第一行数据的采集列信息")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对应采集配置信息时生成")
 	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Return(desc = "返回没有数据字典解析后的第一行数据的采集列信息", range = "无限制")
-	public JSONArray getFirstLineInfo(long odc_id, long ocs_id) {
+	public JSONArray getFirstLineTreeInfo(long odc_id, long ocs_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
-		// 3.获取当前任务表对应第一行数据
-		String firstLine = getFirstLineInfo(ocs_id);
+		CommonUtils.isObjectCollectExist(odc_id);
+		// 3.根据对象采集任务编号获取当前表的第一行数据
+		String firstLine = getFirstLineData(ocs_id);
+		Validator.notBlank(firstLine, "数据字典不存在时第一行数据不能为空");
 		// 4.返回没有数据字典解析后的第一行数据的采集列信息
 		return parseFirstLine(firstLine, "");
+
 	}
 
-	@Method(desc = "查询对象采集结构表信息(采集列结构与getFirstLineInfo一起调用）",
+	@Method(desc = "根据对象采集任务编号获取当前表的第一行数据",
+			logicStep = "1.根据对象采集任务编号获取当前表的第一行数据并返回")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
+	@Return(desc = "返回根据对象采集任务编号获取当前表的第一行数据", range = "无限制")
+	private String getFirstLineData(long ocs_id) {
+		// 1.根据对象采集任务编号获取当前表的第一行数据并返回
+		Object_collect_task object_collect_task = Dbo.queryOneObject(Object_collect_task.class,
+				"select firstline from " + Object_collect_task.TableName + " where ocs_id=?",
+				ocs_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
+		return object_collect_task.getFirstline();
+	}
+
+	@Method(desc = "无数据字典时查询采集列结构信息(与getFirstLineTreeInfo一起使用)",
 			logicStep = "1.查询对象采集结构表信息")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Return(desc = "返回象采集结构表信息", range = "无限制")
-	public List<Object_collect_struct> getObjectCollectStructList(long ocs_id) {
+	public List<Object_collect_struct> getObjectCollectStructById(long ocs_id) {
 		// 1.查询对象采集结构表信息
 		return Dbo.queryList(Object_collect_struct.class,
 				"select * from " + Object_collect_struct.TableName + " where ocs_id=?",
@@ -302,12 +362,13 @@ public class CollectFileConfAction extends BaseAction {
 
 	@Method(desc = "获取对象采集结构信息", logicStep = "1.获取数据字典所有表对应列信息" +
 			"2.判断表对应列信息是否存在" +
-			"3.根据表名获取表对应列信息并返回")
+			"3.判断当前表对应的列信息是否存在" +
+			"4.根据表名获取表对应列信息并返回")
 	@Param(name = "object_collect", desc = "对象采集设置表实体对象", range = "与数据库对应字段规则一致", isBean = true)
 	@Param(name = "en_name", desc = "表英文名称", range = "无限制")
 	@Return(desc = "根据表名获取表对应列信息并返回", range = "无限制")
 	private List<Object_collect_struct> getDicColumnsByTableName(Object_collect object_collect,
-	                                                             String en_name) {
+																 String en_name) {
 		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
 		// 1.获取数据字典所有表对应列信息
 		Map<String, List<Object_collect_struct>> allDicColumns = SendMsgUtil.getAllDicColumns(
@@ -316,7 +377,11 @@ public class CollectFileConfAction extends BaseAction {
 		if (allDicColumns == null || allDicColumns.isEmpty()) {
 			throw new BusinessException("数据字典中未找到表对应列信息");
 		}
-		// 3.根据表名获取表对应列信息并返回
+		// 3.判断当前表对应的列信息是否存在
+		if (!allDicColumns.containsKey(en_name)) {
+			throw new BusinessException("当前表名" + en_name + "对应的列信息不存在，请检查表名是否正确");
+		}
+		// 4.根据表名获取表对应列信息并返回
 		return allDicColumns.get(en_name);
 	}
 
@@ -330,27 +395,22 @@ public class CollectFileConfAction extends BaseAction {
 				.orElseThrow(() -> new BusinessException("sql查询错误或者映射实体失败"));
 	}
 
-	@Method(desc = "判断当前半结构化采集任务是否还存在", logicStep = "1.判断当前半结构化采集任务是否还存在")
-	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集配置信息时生成")
-	private void isObjectCollectExist(long odc_id) {
-		// 1.判断当前半结构化采集任务是否还存在
-		if (Dbo.queryNumber(
-				"select count(*) from " + Object_collect.TableName + " where odc_id=?",
-				odc_id).orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
-			throw new BusinessException("任务" + odc_id + "已不存在，请检查");
-		}
-	}
-
 	@Method(desc = "新增数据字典多了的列数据入半结构化采集列结构表",
 			logicStep = "1.新增数据字典多了的列数据入半结构化采集列结构表")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Param(name = "addList", desc = "数据字典多了的列信息集合", range = "无限制")
 	private void addColumns(long ocs_id, List<Object_collect_struct> addList) {
 		// 1.新增数据字典多了的列数据入半结构化采集列结构表
-		addList.forEach(object_collect_struct -> {
-			object_collect_struct.setOcs_id(ocs_id);
-			object_collect_struct.add(Dbo.db());
-		});
+		if (!addList.isEmpty()) {
+			addList.forEach(object_collect_struct -> {
+				object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
+				if (StringUtil.isBlank(object_collect_struct.getData_desc())) {
+					object_collect_struct.setData_desc(object_collect_struct.getColumn_name());
+				}
+				object_collect_struct.setOcs_id(ocs_id);
+				object_collect_struct.add(Dbo.db());
+			});
+		}
 	}
 
 	@Method(desc = "获取有数据字典时操作码表（采集数据处理类型对应表）信息）",
@@ -382,7 +442,7 @@ public class CollectFileConfAction extends BaseAction {
 	@Param(name = "en_name", desc = "表英文名称", range = "无限制")
 	@Return(desc = "返回对象采集数据处理类型对应表信息", range = "无限制")
 	private List<Object_handle_type> getObjectHandleTypeList(Object_collect object_collect,
-	                                                         String en_name) {
+															 String en_name) {
 		// 1.获取数据字典对象采集数据处理类型对应表信息
 		Validator.notBlank(object_collect.getFile_path(), "采集文件路径不能为空");
 		Validator.notNull(object_collect.getAgent_id(), "agent ID不能为空");
@@ -392,22 +452,34 @@ public class CollectFileConfAction extends BaseAction {
 		if (allHandleType == null || allHandleType.isEmpty()) {
 			throw new BusinessException("数据字典存在时，处理方式不能为空，请检查数据字典");
 		}
+		if (!allHandleType.containsKey(en_name)) {
+			throw new BusinessException("当前表" + en_name + "对应处理方式不存在，请检查表名是否正确");
+		}
 		return allHandleType.get(en_name);
 	}
 
 	@Method(desc = "保存操作码表（采集数据处理类型对应表）信息",
 			logicStep = "1.数据可访问权限处理方式：该方法没有用户访问权限限制" +
-					"2.循环保存半结构化数据处理类型表信息")
+					"2.判断当前对象采集对应信息是否存在" +
+					"3.循环保存半结构化数据处理类型表信息")
 	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Param(name = "objectHandleTypes", desc = "采集数据处理类型对应表实体对象数组", range = "新增对象采集任务时生成"
 			, isBean = true)
-	private void saveObjectHandleType(long ocs_id, Object_handle_type[] objectHandleTypes) {
+	public void saveObjectHandleType(long ocs_id, Object_handle_type[] objectHandleTypes) {
 		// 1.数据可访问权限处理方式：该方法没有用户访问权限限制
-		// 2.循环保存半结构化数据处理类型表信息
+		// 2.判断当前对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 3.循环保存半结构化数据处理类型表信息
 		for (Object_handle_type objectHandleType : objectHandleTypes) {
 			if (objectHandleType.getObject_handle_id() != null) {
 				// 更新
-				objectHandleType.update(Dbo.db());
+				try {
+					objectHandleType.update(Dbo.db());
+				} catch (Exception e) {
+					if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+						throw new BusinessException(e.getMessage());
+					}
+				}
 			} else {
 				// 新增
 				objectHandleType.setObject_handle_id(PrimayKeyGener.getNextId());
@@ -417,21 +489,15 @@ public class CollectFileConfAction extends BaseAction {
 		}
 	}
 
-	@Method(desc = "无数据字典时查询第一行数据",
-			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.返回无数据字典时查询第一行数据")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
-	@Return(desc = "返回无数据字典时查询第一行数据", range = "无限制")
-	private String getFirstLineInfo(long ocs_id) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		// 2.返回无数据字典时查询第一行数据
-		List<String> firstLine = Dbo.queryOneColumnList(
-				"select firstline from " + Object_collect.TableName + " t1 left join "
-						+ Object_collect_task.TableName + " t2 on t1.odc_id = t2.odc_id" +
-						" where t2.ocs_id = ? and t1.is_dictionary = ?",
-				ocs_id, IsFlag.Fou.getCode());
-		Validator.notEmpty(firstLine, "没有数据字典时第一行数据不能为空");
-		return firstLine.get(0);
+	@Method(desc = "无数据字典时查询返回对象采集数据处理类型对应表信息(数据回显)", logicStep = "1.判断当前对象采集对应信息是否存在" +
+			"2.查询返回对象采集数据处理类型对应表信息")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
+	@Return(desc = "2.查询返回对象采集数据处理类型对应表信息", range = "无限制")
+	public Result getObjectHandleType(long ocs_id) {
+		// 1.判断当前对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 2.查询返回对象采集数据处理类型对应表信息
+		return Dbo.queryResult("select * from " + Object_handle_type.TableName + " where ocs_id=?", ocs_id);
 	}
 
 	@Method(desc = "解析没有数据字典的第一行数据",
@@ -467,7 +533,10 @@ public class CollectFileConfAction extends BaseAction {
 				JSONObject jsonobject = (JSONObject) everyObject;
 				// 5.1如果location不为空，则通过当前树节点去查询当前节点下的信息
 				if (StringUtil.isNotBlank(location)) {
-					jsonobject = makeJsonFileToJsonObj(jsonobject, treeId.get(treeId.size() - 1));
+					for (int i = 0; i < treeId.size(); i++) {
+						jsonobject = makeJsonFileToJsonObj(jsonobject, treeId.get(i));
+					}
+//					jsonobject = makeJsonFileToJsonObj(jsonobject, treeId.get(treeId.size() - 1));
 				}
 				// 5.2根据树节点获取当前树节点信息
 				treeInfo = getTree(jsonobject, location);
@@ -480,7 +549,10 @@ public class CollectFileConfAction extends BaseAction {
 				JSONObject parseObject = JSONObject.parseObject(firstLine);
 				// 6.1如果location不为空，则通过当前树节点去查询当前节点下的信息
 				if (StringUtil.isNotBlank(location)) {
-					parseObject = makeJsonFileToJsonObj(parseObject, treeId.get(treeId.size() - 1));
+//					parseObject = makeJsonFileToJsonObj(parseObject, treeId.get(treeId.size() - 1));
+					for (int i = 0; i < treeId.size(); i++) {
+						parseObject = makeJsonFileToJsonObj(parseObject, treeId.get(i));
+					}
 				}
 				// 6.2根据树节点获取当前树节点信息
 				treeInfo = getTree(parseObject, location);
@@ -520,18 +592,25 @@ public class CollectFileConfAction extends BaseAction {
 	}
 
 	@Method(desc = "获取对象采集树节点信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-			"2.解析json获取树结构信息并返回" +
-			"3.获取树信息失败")
-	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+			"2.判断当前任务是否存在" +
+			"3.判断当前对象采集对应信息是否存在" +
+			"4.根据对象采集任务编号获取当前表的第一行数据" +
+			"5.解析json获取树结构信息并返回")
+	@Param(name = "odc_id", desc = "对象采集id", range = "新增对应采集配置信息时生成")
+	@Param(name = "ocs_id", desc = "对象采集任务编号(对象采集对应信息表ID）", range = "新增对象采集任务时生成")
 	@Param(name = "location", desc = "树节点位置，不是根节点则格式如（columns,column_id）", range = "无限制")
 	@Return(desc = "获取对象采集树节点信息", range = "无限制")
-	public JSONArray getObjectCollectTreeInfo(long ocs_id, String location) {
+	public JSONArray getObjectCollectTreeInfo(long odc_id, long ocs_id, String location) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
-		String firstLine = getFirstLineInfo(ocs_id);
-		// 2.解析json获取树结构信息并返回
+		// 2.判断当前任务是否存在
+		CommonUtils.isObjectCollectExist(odc_id);
+		// 3.判断当前对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		// 4.根据对象采集任务编号获取当前表的第一行数据
+		String firstLine = getFirstLineData(ocs_id);
+		// 5.解析json获取树结构信息并返回
 		return parseFirstLine(firstLine, location);
 	}
-
 
 	@Method(desc = "获取当前节点树信息", logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 			"2.判断树节点是否为空" +
@@ -576,23 +655,39 @@ public class CollectFileConfAction extends BaseAction {
 	@Method(desc = "保存对象采集结构信息（采集列结构）",
 			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
 					"2.判断当前半结构化采集任务是否还存在" +
-					"3.先删除原来的列结构信息" +
-					"4.循环保存对象采集结构信息入库")
-	@Param(name = "objectCollectStructs", desc = "半结构化采集结构表实体对象数组", range = "与数据库对象字段规则一致",
-			isBean = true)
+					"3.判断对象采集对应信息是否存在" +
+					"4.过滤是否操作字段为是的字段" +
+					"5.判断操作字段是否为一个" +
+					"6.删除原来的列信息,不关心删除几条" +
+					"8.循环保存对象采集结构信息入库")
 	@Param(name = "odc_id", desc = "对象采集id", range = "新增对象采集配置信息时生成")
 	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
-	private void saveObjectCollectStruct(long odc_id, long ocs_id, Object_collect_struct[] objectCollectStructs) {
+	@Param(name = "objectCollectStructs", desc = "半结构化采集结构表实体对象数组", range = "不为空", isBean = true)
+	public void saveObjectCollectStruct(long odc_id, long ocs_id, Object_collect_struct[] objectCollectStructs) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
-		// 3.先删除原来的列结构信息
-		// 因为没有数据字典时数据文件如果少了字段，回显时无法确定删了哪个字段，agent执行时就会因找不到字段而报错
+		CommonUtils.isObjectCollectExist(odc_id);
+		// 3.判断对象采集对应信息是否存在
+		CommonUtils.isObjectCollectTaskExist(ocs_id);
+		List<Object_collect_struct> objectCollectStructList = new ArrayList<>(objectCollectStructs.length);
+		Collections.addAll(objectCollectStructList, objectCollectStructs);
+		// 4.过滤是否操作字段为是的字段
+		objectCollectStructList = objectCollectStructList.stream()
+				.filter(object_collect_struct ->
+						IsFlag.Shi == IsFlag.ofEnumByCode(object_collect_struct.getIs_operate()))
+				.collect(Collectors.toList());
+		// 5.判断操作字段是否为一个
+		if (objectCollectStructList.size() != 1) {
+			throw new BusinessException("操作字段只能为1个，请检查");
+		}
+		// 6.删除原来的列信息,不关心删除几条
 		Dbo.execute("delete from " + Object_collect_struct.TableName + " where ocs_id=?", ocs_id);
-		// 4.循环保存对象采集结构信息入库
+		// 7.循环保存对象采集结构信息入库
 		for (Object_collect_struct object_collect_struct : objectCollectStructs) {
-			object_collect_struct.setOcs_id(ocs_id);
 			object_collect_struct.setStruct_id(PrimayKeyGener.getNextId());
+			object_collect_struct.setData_desc(StringUtil.isBlank(object_collect_struct.getData_desc()) ?
+					object_collect_struct.getColumn_name() : object_collect_struct.getData_desc());
+			object_collect_struct.setOcs_id(ocs_id);
 			object_collect_struct.add(Dbo.db());
 		}
 	}
@@ -608,68 +703,77 @@ public class CollectFileConfAction extends BaseAction {
 	}
 
 	@Method(desc = "删除数据字典少了的列信息", logicStep = "1.判断要删除的列信息集合是否为空，不为空删除" +
-			"2.获取所有要删除的结构信息id" +
-			"3.删除说有数据库多余的表对应列信息")
+			"2.删除说有数据库多余的表对应列信息")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
 	@Param(name = "deleteNameList", desc = "数据字典少了的列信息集合", range = "无限制")
 	private void deleteColumns(long ocs_id, List<String> deleteNameList) {
 		// 1.判断要删除的列信息集合是否为空，不为空删除
-		if (deleteNameList != null && deleteNameList.size() != 0) {
+		if (!deleteNameList.isEmpty()) {
 			SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 			assembler.addSql(
-					"select struct_id from " + Object_collect_struct.TableName
-							+ " ocs join " + Object_collect_task.TableName + " oct on ocs.ocs_id=oct.ocs_id" +
-							" where ocs_id=? ").addParam(ocs_id)
-					.addORParam("oct.en_name", deleteNameList.toArray());
-			// 2.获取所有要删除的结构信息id
-			List<Long> structIdList = Dbo.queryOneColumnList(assembler.sql(), assembler.params());
-			assembler.clean();
-			assembler.addSql("delete from " + Object_collect_struct.TableName + " where ocs_id=?")
+					"delete from " + Object_collect_struct.TableName + " where ocs_id=? ")
 					.addParam(ocs_id)
-					.addORParam("struct_id", structIdList.toArray());
-			// 3.删除说有数据库多余的表对应列信息
-			Dbo.execute(assembler.sql(), assembler.params());
+					.addORParam("column_name", deleteNameList.toArray());
+			// 2.删除说有数据库多余的表对应列信息
+			DboExecute.deletesOrThrow(deleteNameList.size(), "删除对象采集结构信息失败", assembler.sql(),
+					assembler.params());
 		}
 	}
 
-	@Method(desc = "保存对象文件配置信息时检查字段(采集文件设置)",
-			logicStep = "1.数据可访问权限处理方式：该方法没有访问权限限制" +
-					"2.循环检查英文名是否为空" +
-					"3.循环检查中文名是否为空" +
-					"4.循环检查采集列结构是否为空" +
-					"5.循环检查操作码表是否为空" +
-					"6.循环检查操作字段是否为1个")
+	@Method(desc = "保存对象文件配置信息时检查字段",
+			logicStep = "1.检查英文名是否为空" +
+					"2.检查中文名是否为空" +
+					"3.检查更新方式是否合法" +
+					"4.检查采集编码是否合法" +
+					"5.检查数据类型是否合法" +
+					"6.检查采集列结构是否为空" +
+					"7.检查操作码表是否为空")
 	@Param(name = "objectCollectTasks", desc = "半结构化采集表实体对象数组", range = "与数组库表字段规则一致",
 			isBean = true)
-	public void checkFieldsForSaveObjectCollectTask(Object_collect_task[] objectCollectTasks) {
-		// 1.数据可访问权限处理方式：该方法没有访问权限限制
+	private void checkFieldsForSaveObjectCollectTask(Object_collect_task[] objectCollectTasks) {
 		for (int i = 0; i < objectCollectTasks.length; i++) {
-			// 2.循环检查英文名是否为空
+			// 1.循环检查英文名是否为空
 			Validator.notBlank(objectCollectTasks[i].getEn_name(),
 					"第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() + "英文名为空，请检查");
-			// 3.循环检查中文名是否为空
+			// 2.检查中文名是否为空
 			Validator.notBlank(objectCollectTasks[i].getZh_name(),
 					"第" + (i + 1) + "行表" + objectCollectTasks[i].getZh_name() + "中文名为空，请检查");
-
-			// 4.循环检查采集列结构是否为空
-			if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
-					" where ocs_id=?", objectCollectTasks[i].getOcs_id())
-					.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
+			// 3.检查更新方式是否合法
+			try {
+				UpdateType.ofEnumByCode(objectCollectTasks[i].getUpdatetype());
+			} catch (Exception e) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
-						"采集列结构为空，请检查");
+						"更新方式不合法，" + e.getMessage());
 			}
-			// 5.循环检查操作码表是否为空
-			if (Dbo.queryNumber("select count(*) from " + Object_handle_type.TableName +
-					" where ocs_id=?", objectCollectTasks[i].getOcs_id())
-					.orElseThrow(() -> new BusinessException("sql查询错误！")) == 0) {
+			// 4.检查采集编码是否合法
+			try {
+				DataBaseCode.ofEnumByCode(objectCollectTasks[i].getDatabase_code());
+			} catch (Exception e) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
-						"操作码表为空，请检查");
+						"采集编码不合法，" + e.getMessage());
 			}
-			// 6.循环检查操作字段是否为1个
-			if (Dbo.queryNumber("select count(*) from " + Object_collect_struct.TableName +
-							" where ocs_id=? and is_operate=?", objectCollectTasks[i].getOcs_id(),
-					IsFlag.Shi.getCode()).orElseThrow(() -> new BusinessException("sql查询错误！")) != 1) {
+			// 5.检查数据类型是否合法
+			try {
+				CollectDataType.ofEnumByCode(objectCollectTasks[i].getCollect_data_type());
+			} catch (Exception e) {
 				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
-						"操作字段不为1个，请检查");
+						"数据类型不合法，" + e.getMessage());
+			}
+			// 6.检查采集列结构是否为空
+			if (Dbo.queryNumber(
+					"select count(1) from " + Object_collect_struct.TableName + " where ocs_id=?",
+					objectCollectTasks[i].getOcs_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
+						"采集列结构信息不存在");
+			}
+			// 7.检查操作码表是否为空
+			if (Dbo.queryNumber(
+					"select count(1) from " + Object_handle_type.TableName + " where ocs_id=?",
+					objectCollectTasks[i].getOcs_id())
+					.orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+				throw new BusinessException("第" + (i + 1) + "行表" + objectCollectTasks[i].getEn_name() +
+						"操作码表信息不存在");
 			}
 		}
 	}
@@ -692,7 +796,7 @@ public class CollectFileConfAction extends BaseAction {
 	private void rewriteDataDictionary(long odc_id) {
 		// 1.数据可访问权限处理方式：该方法没有访问权限限制
 		// 2.判断当前采集任务是否存在
-		isObjectCollectExist(odc_id);
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 重写数据字典集合
 		List<Object> dictionaryList = new ArrayList<>();
 		// 3.根据对象采集ID当前半结构化采集任务是否存在数据字典
@@ -714,7 +818,7 @@ public class CollectFileConfAction extends BaseAction {
 					tableMap.put("updatetype", objectCollectTask.getUpdatetype());
 					// 7.查询半结构化采集结构信息
 					List<Object_collect_struct> objCollStructList =
-							getObjectCollectStructList(objectCollectTask.getOcs_id());
+							getObjectCollectStructById(objectCollectTask.getOcs_id());
 					List<Map<String, Object>> columnList = new ArrayList<>();
 					for (Object_collect_struct object_collect_struct : objCollStructList) {
 						Map<String, Object> columnMap = new HashMap<>();
@@ -764,74 +868,49 @@ public class CollectFileConfAction extends BaseAction {
 
 	}
 
-	@Method(desc = "保存采集文件设置信息（需先调保存对象文件配置信息时检查字段方法成功后在调此方法）",
-			logicStep = "1.获取json数组转成对象采集对应信息表的集合" +
-					"2.判断当前半结构化采集任务是否还存在" +
-					"3.获取对象采集对应信息表list进行遍历" +
-					"4.根据对象采集对应信息表id判断是新增还是编辑" +
-					"4.1根据en_name查询对象采集对应信息表的英文名称是否重复，不重复新增表数据" +
-					"4.2.更新对象采集对应信息表数据" +
-					"4.3保存半结构化采集结构表信息" +
-					"4.4保存采集数据处理类型对应表信息" +
-					"5.获取任务下的表信息" +
-					"6.获取当前任务配置信息" +
-					"7.获取数据字典的表信息" +
-					"8.获取数据字典没有而数据字典有的表数据" +
-					"9.删除数据库中多余的表数据")
+	@Method(desc = "保存采集文件设置信息",
+			logicStep = "1.数据可访问权限处理方式：该表没有对应的用户访问权限限制" +
+					"2.判断agent是否存在" +
+					"3.判断当前半结构化采集任务是否还存在" +
+					"4.检查对象采集信息的合法性" +
+					"5.更新对象采集对应信息表数据")
 	@Param(name = "objectCollectTasks", desc = "对象采集结构实体对象数组", range = "与数据库对象字段规则一致",
 			isBean = true)
-	@Param(name = "objectCollectStructs", desc = "半结构化采集结构表实体对象数组", range = "与数据库对象字段规则一致",
-			isBean = true)
-	@Param(name = "objectHandleTypes", desc = "采集数据处理类型对应表实体对象数组", range = "新增对象采集任务时生成"
-			, isBean = true)
 	@Param(name = "agent_id", desc = "agent ID", range = "新增agent时生成")
 	@Param(name = "odc_id", desc = "对象采集设置表主键ID", range = "新增对象采集设置时生成")
-	public void saveObjectCollectTask(long agent_id, long odc_id, Object_collect_task[] objectCollectTasks,
-	                                  Object_collect_struct[] objectCollectStructs,
-	                                  Object_handle_type[] objectHandleTypes) {
+	public void saveObjectCollectTask(long agent_id, long odc_id, Object_collect_task[] objectCollectTasks) {
 		// 1.数据可访问权限处理方式：该表没有对应的用户访问权限限制
-		// 2.判断当前半结构化采集任务是否还存在
-		isObjectCollectExist(odc_id);
-		// 3.获取对象采集对应信息表list进行遍历
+		// 2.判断agent是否存在
+		CommonUtils.isAgentExist(agent_id, getUserId());
+		// 3.判断当前半结构化采集任务是否还存在
+		CommonUtils.isObjectCollectExist(odc_id);
+		// 4.保存对象采集对应信息时做其前置条件检查，字段合法性验证
+		checkFieldsForSaveObjectCollectTask(objectCollectTasks);
 		for (Object_collect_task object_collect_task : objectCollectTasks) {
-			/*
-				这里新增和编辑是放在一起的，因为这里面是保存一个列表的数据，可能为一条或者多条，
-				这一条或者多条数据会有新增也会有编辑，所以对应在一个方法里面了
-			*/
-			// 4.根据对象采集对应信息表id判断是新增还是编辑
-			if (object_collect_task.getOcs_id() == null) {
-				//新增
-				// 4.1根据en_name查询对象采集对应信息表的英文名称是否重复，不重复新增表数据
-				if (Dbo.queryNumber("SELECT count(1) FROM " + Object_collect_task.TableName
-						+ " WHERE en_name = ?", object_collect_task.getEn_name()).orElseThrow(()
-						-> new BusinessException("sql查询错误")) > 0) {
-					throw new BusinessException("对象采集对应信息表的英文名称重复");
-				}
-				object_collect_task.setOcs_id(PrimayKeyGener.getNextId());
-				object_collect_task.setAgent_id(agent_id);
-				object_collect_task.setOdc_id(odc_id);
-				object_collect_task.add(Dbo.db());
-			} else {
-				// 4.2.更新对象采集对应信息表数据
+			// 5.更新对象采集对应信息表数据
+			try {
 				object_collect_task.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+					throw new BusinessException(e.getMessage());
+				}
 			}
-			// 4.3保存半结构化采集结构表信息
-			saveObjectCollectStruct(odc_id, object_collect_task.getOcs_id(), objectCollectStructs);
-			// 4.4保存采集数据处理类型对应表信息
-			saveObjectHandleType(object_collect_task.getOcs_id(), objectHandleTypes);
 		}
-		// 5.获取任务下的表信息
-		List<String> databaseTableList = getObjectCollectTaskList(odc_id)
-				.stream().map(Object_collect_task::getEn_name).collect(Collectors.toList());
-		// 6.获取当前任务配置信息
-		Object_collect objectCollect = getObjectCollect(odc_id);
-		// 7.获取数据字典的表信息
-		List<String> dicTableList = getDictionaryTableInfo(objectCollect)
-				.stream().map(Object_collect_task::getEn_name).collect(Collectors.toList());
-		// 8.获取数据字典没有而数据字典有的表数据
-		List<String> deleteNameList = dicTableList.stream().filter(item -> !databaseTableList.contains(item))
-				.collect(Collectors.toList());
-		// 9.删除数据库中多余的表数据
-		deleteTable(odc_id, deleteNameList);
 	}
+
+	@Method(desc = "根据en_name查询对象采集对应信息表的英文名称是否重复", logicStep = "" +
+			"1.根据en_name查询对象采集对应信息表的英文名称是否重复")
+	@Param(name = "en_name", desc = "表名称", range = "无限制")
+	@Param(name = "ocs_id", desc = "对象采集任务编号", range = "新增对象采集任务时生成")
+	private void objectCollectTaskIsExist(String en_name, long ocs_id) {
+		// 1.根据en_name查询对象采集对应信息表的英文名称是否重复
+		if (Dbo.queryNumber(
+				"SELECT count(1) FROM " + Object_collect_task.TableName + " WHERE en_name=? and ocs_id=?",
+				en_name, ocs_id)
+				.orElseThrow(() -> new BusinessException("sql查询错误")) > 0) {
+			throw new BusinessException("对象采集对应信息表的英文名称重复");
+		}
+	}
+
+
 }

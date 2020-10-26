@@ -6,9 +6,9 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.CollectTableColumnBean;
 import hrds.agent.job.biz.bean.ColumnCleanBean;
-import hrds.agent.job.biz.core.metaparse.impl.JdbcCollectTableHandleParse;
 import hrds.agent.job.biz.utils.ColumnTool;
 import hrds.agent.job.biz.utils.TypeTransLength;
+import hrds.commons.codes.CharSplitType;
 import hrds.commons.codes.CleanType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Column_merge;
@@ -16,8 +16,8 @@ import hrds.commons.entity.Column_split;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.Platform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -29,7 +29,8 @@ import java.util.*;
  * author: zxz
  */
 public abstract class AbstractCollectTableHandle implements CollectTableHandle {
-	protected final static Logger LOGGER = LoggerFactory.getLogger(JdbcCollectTableHandleParse.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	protected static final String STRSPLIT = Constant.METAINFOSPLIT;
 
 	protected ResultSet getResultSet(String collectSQL, DatabaseWrapper db) {
@@ -44,7 +45,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	}
 
 	protected String getCollectSQL(CollectTableBean collectTableBean,
-	                               DatabaseWrapper db, String database_name) {
+								   DatabaseWrapper db, String database_name) {
 		//获取自定义sql，如果自定义sql的sql语句
 		String collectSQL;
 		//如果是自定义sql,则使用自定义sql
@@ -94,28 +95,6 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		//根据列名和表名获得采集SQL
 		String collectSql = db.getDbtype().ofKeyLableSql(tableName, collectColumnNames, database_name);
 		return getCollectSqlAddWhere(collectSql, collectTableBean.getSql());
-		//获取系统的所有日期参数格式定义
-//		if (!StringUtil.isEmpty(selfSql)) {
-//			SimpleDateFormat sysDateFormat = new SimpleDateFormat(JobConstant.SYS_DATEFORMAT);
-//			String eltDate = collectTableBean.getEtlDate();
-//			//输入的日期肯定是yyyyMMdd格式
-//			if (selfSql.contains("#{txdate}")) {
-//				Date dateByString = getDateByString(eltDate);
-//				selfSql = selfSql.replace("#{txdate}",
-//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
-//			}
-//			if (selfSql.contains("#{txdate_pre}")) {
-//				Date dateByString = getDateByString(getNextDateByNum(eltDate, -1));
-//				selfSql = selfSql.replace("#{txdate_pre}",
-//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
-//			}
-//			if (selfSql.contains("#{txdate_next}")) {
-//				Date dateByString = getDateByString(getNextDateByNum(eltDate, 1));
-//				selfSql = selfSql.replace("#{txdate_next}",
-//						SINGLEQUOTE + sysDateFormat.format(dateByString) + SINGLEQUOTE);
-//			}
-//			collectSQL = collectSQL + " where " + selfSql;
-//		}
 	}
 
 	/**
@@ -128,7 +107,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 		//抽取的sql最后可能需要有过滤条件，需要拼接到collectSQL后面
 		if (!StringUtil.isEmpty(filter)) {
 			for (String sql : StringUtil.split(collectSql, Constant.SQLDELIMITER)) {
-				addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" as hyren_tmp_where ")
+				addWhereSql.append("SELECT * FROM (").append(sql).append(")").append(" hyren_tmp_where ")
 						.append(" WHERE ").append(filter).append(Constant.SQLDELIMITER);
 			}
 			//去掉最后一个分隔符
@@ -153,7 +132,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 			for (String splitParam : splitParamList) {
 				//遍历，分割出需要替换的key和值
 				List<String> key_value = StringUtil.split(splitParam, "=");
-				String key = "#{" + key_value.get(0) + "}";
+				String key = "#\\{" + key_value.get(0) + "\\}";
 				String value = key_value.get(1);
 				collectSql = collectSql.replaceAll(key, value);
 			}
@@ -208,7 +187,8 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 			// Write header
 			for (int i = 1; i <= numberOfColumns; i++) {
 				String colType = Platform.getColType(rsMetaData.getColumnType(i),
-						rsMetaData.getColumnTypeName(i), rsMetaData.getPrecision(i), rsMetaData.getScale(i));
+						rsMetaData.getColumnTypeName(i), rsMetaData.getPrecision(i),
+						rsMetaData.getScale(i), rsMetaData.getColumnDisplaySize(i));
 				map.put(rsMetaData.getColumnName(i).toLowerCase(),
 						colType + "::" + TypeTransLength.getLength(colType));
 			}
@@ -269,7 +249,9 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 							Map<String, Column_split> map = new HashMap<>();
 							List<Column_split> column_split_list = columnCleanBean.getColumn_split_list();
 							for (Column_split column_split : column_split_list) {
-								column_split.setSplit_sep(StringUtil.unicode2String(column_split.getSplit_sep()));
+								if (CharSplitType.ZhiDingFuHao.getCode().equals(column_split.getSplit_type())) {
+									column_split.setSplit_sep(StringUtil.unicode2String(column_split.getSplit_sep()));
+								}
 								map.put(column_split.getCol_name(), column_split);
 							}
 							splitIng.put(column_name_up, map);
@@ -324,7 +306,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 * @return 更新后的信息
 	 */
 	protected String updateColumn(Map<String, String> mergeIng, Map<String, Map<String, Column_split>> splitIng,
-	                              StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
+								  StringBuilder columns, StringBuilder colType, StringBuilder lengths) {
 		if (!mergeIng.isEmpty()) {
 			for (String key : mergeIng.keySet()) {
 				//获取表名和类型
@@ -383,5 +365,11 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 			}
 		}
 		return columnMate;
+	}
+
+	public static void main(String[] args) {
+		String aaa = "select aaa,bbb,ccc,#{ccc} from item where aaa='ccc' and   i_rec_start_date   =   #{i_rec_start_date}";
+		String aa = aaa.replaceAll("\\s+?((?!\\s).)+?\\s+?=\\s+?#\\{.*\\}", " 1=2");
+		System.out.println(aa);
 	}
 }

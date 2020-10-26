@@ -9,7 +9,6 @@ import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.utils.CommonVariables;
-import hrds.commons.utils.PropertyParaValue;
 import hrds.g.biz.enumerate.DataType;
 import hrds.g.biz.enumerate.OutType;
 import hrds.g.biz.enumerate.StateType;
@@ -62,7 +61,7 @@ public class LocalFile {
 				// 4.输出数据形式为stream,输出数据类型为json，直接返回数据
 				if (DataType.json == DataType.ofEnumByCode(dataType)) {
 					feedback.put("dataType", dataType);
-					feedback.put("outType", OutType.STREAM.getValue());
+					feedback.put("outType", outType);
 				} else {
 					// 5.输出数据形式为stream,输出数据类型为csv,处理为csv数据返回
 					csvData(feedback);
@@ -81,7 +80,7 @@ public class LocalFile {
 						JSONObject obj = new JSONObject();
 						obj.put("uuid", uuid);
 						obj.put("dataType", dataType);
-						obj.put("outType", OutType.FILE.getValue());
+						obj.put("outType", outType);
 						feedback.put("message", obj);
 					} else {
 						feedback = StateType.getResponseInfo(StateType.EXCEPTION.getCode(),

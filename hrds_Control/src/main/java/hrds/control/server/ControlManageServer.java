@@ -1,13 +1,12 @@
 package hrds.control.server;
 
+import hrds.control.task.TaskManager;
+import hrds.control.task.helper.HazelcastHelper;
 import hrds.control.task.helper.TaskSqlHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import hrds.control.task.TaskManager;
-
 /**
- *
  * ClassName: ControlManageServer <br/>
  * Function: 用于控制及管理任务，该类决定具体任务以及任务的执行及执行时间间隔。<br/>
  * Date: 2019/7/30 16:58 <br/>
@@ -24,23 +23,20 @@ public class ControlManageServer {
 	/**
 	 * ControlManageServer类构造器。<br>
 	 * 1.初始化TaskManager对象。
+	 *
+	 * @param strSystemCode 含义：调度系统代码。
+	 *                      取值范围：不能为null。
+	 * @param bathDate      含义：跑批批次日期 。
+	 *                      取值范围：yyyyMMdd格式的日期字符串，不能为null。
+	 * @param isResumeRun   含义：是否续跑。
+	 *                      取值范围：不能为null。
+	 * @param isAutoShift   含义：是否自动日切。
+	 *                      取值范围：不能为null。
 	 * @author Tiger.Wang
 	 * @date 2019/10/8
-	 * @param strSystemCode
-	 *          含义：调度系统代码。
-	 *          取值范围：不能为null。
-	 * @param bathDate
-	 *          含义：跑批批次日期 。
-	 *          取值范围：yyyyMMdd格式的日期字符串，不能为null。
-	 * @param isResumeRun
-	 *          含义：是否续跑。
-	 *          取值范围：不能为null。
-	 * @param isAutoShift
-	 *          含义：是否自动日切。
-	 *          取值范围：不能为null。
 	 */
 	public ControlManageServer(String strSystemCode, String bathDate,
-	                           boolean isResumeRun, boolean isAutoShift) {
+							   boolean isResumeRun, boolean isAutoShift) {
 		//1.初始化TaskManager对象。
 		taskManager = new TaskManager(strSystemCode, bathDate, isResumeRun, isAutoShift);
 	}
@@ -48,6 +44,7 @@ public class ControlManageServer {
 	/**
 	 * 初始化CM服务。<br>
 	 * 1.初始化调度系统。
+	 *
 	 * @author Tiger.Wang
 	 * @date 2019/10/8
 	 */
@@ -60,6 +57,7 @@ public class ControlManageServer {
 	 * 线程方式启动服务。<br>
 	 * 1.以线程的方式启动CM服务；
 	 * 2.以线程的方式启动监测信息文件的服务。
+	 *
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
 	 */
@@ -75,6 +73,7 @@ public class ControlManageServer {
 	 * 停止服务，最终会停止线程。<br>
 	 * 1.停止监测信息文件的服务；
 	 * 2.停止CM服务.
+	 *
 	 * @author Tiger.Wang
 	 * @date 2019/8/30
 	 */
@@ -87,7 +86,6 @@ public class ControlManageServer {
 	}
 
 	/**
-	 *
 	 * ClassName: CMServerThread <br/>
 	 * Function: 用于以线程方式启动CM服务。<br/>
 	 * Date: 2019/7/30 16:58 <br/>
@@ -102,6 +100,7 @@ public class ControlManageServer {
 		/**
 		 * 停止CM服务。<br>
 		 * 1.线程持续运行标识置为[停止]。
+		 *
 		 * @author Tiger.Wang
 		 * @date 2019/10/8
 		 */
@@ -115,28 +114,33 @@ public class ControlManageServer {
 		 * 1、加载各种作业的资源到内存中（包括MAP等成员变量）；<br>
 		 * 2、死循环方式处理当前批次的所有作业（目的是写入 redis）；<br>
 		 * 3、日切处理（继续还是整个程序退出） 。
+		 *
 		 * @author Tiger.Wang
 		 * @date 2019/10/8
 		 */
 		@Override
 		public void run() {
 			try {
-				while(run) {
+				while (run) {
 					//1、加载各种作业的资源到内存中（包括MAP等成员变量）；
 					taskManager.loadReadyJob();
 					//2、死循环方式处理当前批次的所有作业（目的是写入 redis）；
 					taskManager.publishReadyJob();
 					//3、日切处理（继续还是整个程序退出） 。
-					if(!taskManager.needDailyShift()){
+					if (!taskManager.needDailyShift()) {
 						logger.info("------ 系统无日切信号，系统退出 ------");
 						break;
 						//FIXME 作业能配置成：每天某个时刻执行，但是不日切吗？或者等待信号文件到达就执行，执行完继续等待，且没有日切的概念
 					}
 				}
-			}catch(Exception ex) {
+			} catch (Exception ex) {
 				logger.error("Exception happened!", ex);
-			}finally {
+			} finally {
 				TaskSqlHelper.closeDbConnector();   //关闭数据库连接
+				//关闭分布式缓存
+				HazelcastHelper.getInstance().close();
+				//停止监测信息文件的服务
+				taskManager.stopCheckWaitFileThread();
 			}
 		}
 	}

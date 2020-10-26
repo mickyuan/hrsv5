@@ -2,7 +2,6 @@ package hrds.g.biz.enumerate;
 
 
 import fd.ng.core.annotation.DocClass;
-import hrds.commons.exception.AppSystemException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,9 +15,9 @@ public enum StateType {
 	NORMAL("200", "正常"),
 
 	/**
-	 * 账号或密钥错误
+	 * 该用户非接口用户或者用户不存在
 	 */
-	NOT_REST_USER("400", "该用户非接口用户"),
+	NOT_REST_USER("400", "该用户非接口用户或者用户不存在"),
 	/**
 	 * 账号或密钥错误
 	 */
@@ -26,11 +25,11 @@ public enum StateType {
 	/**
 	 * 接口状态禁用错误
 	 */
-	INTERFACE_STATE("403", "接口状态错误,为禁用状态"),
+	INTERFACE_STATE_ERROR("403", "接口状态错误,为禁用状态"),
 	/**
 	 * 使用有效期错误
 	 */
-	EFFECTIVE_DATE_ERROR("404", "使用有效期错误"),
+	EFFECTIVE_DATE_ERROR("404", "接口使用有效期已过期"),
 	/**
 	 * 表不存在或者为空
 	 */
@@ -42,11 +41,11 @@ public enum StateType {
 	/**
 	 * 没有使用权限
 	 */
-	NO_USR_PERMISSIONS("407", "没有表使用权限或者该表不存在"),
+	NO_USR_PERMISSIONS("407", "没有表使用权限"),
 	/**
 	 * 没有接口使用权限
 	 */
-	NO_PERMISSIONS("408", "没有接口使用权限"),
+	NO_INTERFACE_USE_PERMISSIONS("408", "没有接口使用权限"),
 	/**
 	 * 接口开始使用日期未到
 	 */
@@ -172,9 +171,9 @@ public enum StateType {
 	 */
 	JSONCONVERSION_EXCEPTION("439", "json转换对象失败"),
 	/**
-	 * 要删除的表不存在
+	 * 根据rowkey要删除的表数据不存在
 	 */
-	TABLE_NON_EXISTENT("440", "要删除的表不存在"),
+	TABLE_DATA_NOT_EXIST_BY_ROWKEY("440", "根据rowkey要删除的表数据不存在"),
 	/**
 	 * uuid不能为空或uuid错误
 	 */
@@ -182,7 +181,7 @@ public enum StateType {
 	/**
 	 * 当前表对应的存储层信息不存在
 	 */
-	STORAGE_LAYER_INFO_NOT_EXIST_WITH_TABLE("442", "当前表对应的存储层信息不存在"),
+	STORAGELAYER_NOT_EXIST_BY_TABLE("442", "当前表对应的存储层信息不存在"),
 	/**
 	 * 当前表对应的存储层信息不存在
 	 */
@@ -199,6 +198,22 @@ public enum StateType {
 	 * url未填或填写错误
 	 */
 	URL_NOT_EXIST("446", "url未填或填写错误"),
+	/**
+	 * 不支持的存储层类型
+	 */
+	STORE_TYPE_NOT_EXIST("447", "不支持的存储层类型"),
+	/**
+	 * 删除表数据失败
+	 */
+	DELETE_TABLE_DATA_FAILED("448", "删除表数据失败"),
+	/**
+	 * 表不在hbase存储层中
+	 */
+	TABLE_NOT_EXIST_ON_HBASE_STOREAGE("449", "表不在任何hbase存储层中"),
+	/**
+	 * rowkey查询列名格式有误
+	 */
+	ROWKEY_COLUMN_FORMAT_ERROR("449", "rowkey查询列名格式有误，格式为：（列族名:列英文名）"),
 	/**
 	 * 系统错误
 	 */
@@ -259,7 +274,7 @@ public enum StateType {
 	 */
 	public static Map<String, Object> getResponseInfo(StateType stateType) {
 		Map<String, Object> stateTypeMap = new HashMap<>();
-		stateTypeMap.put("status", stateType.getCode());
+		stateTypeMap.put("status", stateType.name());
 		stateTypeMap.put("message", stateType.getValue());
 		return stateTypeMap;
 	}

@@ -8,18 +8,19 @@ import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroBeanProcess;
 import hrds.agent.job.biz.core.filecollectstage.methods.AvroOper;
+import hrds.agent.job.biz.utils.BatchShell;
+import hrds.agent.job.biz.utils.PropertyParaUtil;
 import hrds.agent.trans.biz.unstructuredfilecollect.FileCollectJob;
 import hrds.commons.codes.DataSourceType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
-import hrds.commons.hadoop.utils.BatchShell;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.MapDBHelper;
-import hrds.commons.utils.PropertyParaUtil;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -30,31 +31,37 @@ import java.util.concurrent.ConcurrentMap;
 @DocClass(desc = "将avro文件读取出来存到大数据平台上", author = "zxz", createdate = "2019/11/5 10:12")
 public class FileCollectLoadingDataStageImpl implements Callable<String> {
 
-	private static final Log log = LogFactory.getLog(FileCollectLoadingDataStageImpl.class);
-	private FileCollectParamBean fileCollectParamBean;
+	private static final Logger logger = LogManager.getLogger();
+	private final FileCollectParamBean fileCollectParamBean;
 	//大文件文件夹路径
 	private static final String BIGFILENAME = "bigFiles";
-	private ConcurrentMap<String, String> fileNameHTreeMap;
+	private final ConcurrentMap<String, String> fileNameHTreeMap;
 	//mapDB操作对象
-	private MapDBHelper mapDBHelper;
+	private final MapDBHelper mapDBHelper;
 
-	FileCollectLoadingDataStageImpl(FileCollectParamBean paramBean,
-	                                ConcurrentMap<String, String> fileNameHTreeMap, MapDBHelper mapDBHelper) {
+	FileCollectLoadingDataStageImpl(FileCollectParamBean paramBean, ConcurrentMap<String, String> fileNameHTreeMap,
+	                                MapDBHelper mapDBHelper) {
 		this.mapDBHelper = mapDBHelper;
 		this.fileNameHTreeMap = fileNameHTreeMap;
 		this.fileCollectParamBean = paramBean;
-		String fileCollectHdfsPath = FileNameUtils.normalize(PropertyParaUtil.getString("pathprefix",
-				"/hrds") + File.separator + DataSourceType.DCL.getCode() + File.separator + paramBean.getFcs_id()
-				+ File.separator + paramBean.getFile_source_id() + File.separator + BIGFILENAME, true);
+		String fileCollectHdfsPath = FileNameUtils.normalize(JobConstant.PREFIX + File.separator
+			+ DataSourceType.DCL.getCode() + File.separator + paramBean.getFcs_id() + File.separator
+			+ paramBean.getFile_source_id() + File.separator + BIGFILENAME, true);
+		//如果有Hadoop环境,则创建HDFS文件目录
 		if (JobConstant.HAS_HADOOP_ENV) {
-			//创建hdfs文件夹
-			try (HdfsOperator operator = new HdfsOperator()) {
+			//TODO 创建hdfs文件夹,这里agent需要制定参数，选择目的地的话应该从目的地取配置
+			try (HdfsOperator operator = new HdfsOperator(
+				System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+				PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+				PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+				PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf")
+			)) {
 				Path path = new Path(fileCollectHdfsPath);
 				if (!operator.exists(path)) {
 					operator.mkdir(path);
 				}
 			} catch (Exception e) {
-				log.error("检查当前环境是否配置集群客户端", e);
+				logger.error("检查当前环境是否配置集群客户端", e);
 				throw new AppSystemException("初始化文件采集数据加载类失败");
 			}
 		}
@@ -63,13 +70,13 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 	@Override
 	public String call() {
 		String message = "";
-		log.info("Start FileCollectLoadingDataStageImpl Thread ...");
+		logger.info("Start FileCollectLoadingDataStageImpl Thread ...");
 		ArrayBlockingQueue<String> queue = FileCollectJob.mapQueue.get(fileCollectParamBean.getFile_source_id());
 		try {
 			while (true) {
 				//从队列中拿出信息，当队列中无信息时，该线程阻塞
 				String queueMeta = queue.take();
-				log.info("queue.size: " + queue.size() + " ; queueMeta: " + queueMeta);
+				logger.info("queue.size: " + queue.size() + " ; queueMeta: " + queueMeta);
 				JSONObject queueJb = JSONObject.parseObject(queueMeta);
 				String sysDate = queueJb.getString("sys_date");
 				//文件采集的id
@@ -77,20 +84,16 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				String fileCollectHdfsPath = queueJb.getString("fileCollectHdfsPath");
 				String jobRsId = queueJb.getString("job_rs_id");
 				long watcherId = queueJb.getLong("watcher_id");
-				/*
-				 * 对其做处理（上传hdfs，删除本地，入mysql，solr，hbase）
-				 */
-				BatchShell.execStationaryHDFSShell(avroFileAbsolutionPath, fileCollectHdfsPath,
-						JobConstant.HAS_HADOOP_ENV);
+				//对其做处理（有Hadoop环境上传hdfs,没有Hadoop环境传输到服务器本地硬盘下）
+				BatchShell.execStationaryHDFSShell(avroFileAbsolutionPath, fileCollectHdfsPath, JobConstant.HAS_HADOOP_ENV);
 				//判断如果是大文件，则只做文件上传处理，大文件的信息记录在其他队列中，这里直接取下一个队列的数据
 				if (IsFlag.Shi.getCode().equals(queueJb.getString("isBigFile"))) {
 					continue;
 				}
 				//获取hdfs上的avro文件路径
-				Path avroPath = new Path(fileCollectHdfsPath +
-						FileNameUtils.getName(avroFileAbsolutionPath));
+				Path avroPath = new Path(fileCollectHdfsPath + FileNameUtils.getName(avroFileAbsolutionPath));
 				//传输文件并入库，入hbase
-				log.info("处理  -->" + avroPath.getName());
+				logger.info("处理  -->" + avroPath.getName());
 				//不是hadoop版获取本地的卸数的Avro文件
 				if (!JobConstant.HAS_HADOOP_ENV) {
 					avroPath = new Path(avroFileAbsolutionPath);
@@ -102,29 +105,30 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 				if (IsFlag.Shi.getCode().equals(fileCollectParamBean.getIs_solr())) {
 					abp.saveInSolr(avroBeans);
 				}
-				//存入Mysql
+				//保存采集文件的源信息
 				List<String[]> hbaseList = abp.saveMetaData(avroBeans, fileNameHTreeMap);
-				if (!JobConstant.HAS_HADOOP_ENV) {
-					abp.saveInPostgreSupersedeHbase(hbaseList);
-				} else {
-					//存入HBase
-					abp.saveInHbase(hbaseList);
-				}
+				//如果有Hadoop环境,则存入HBase,否则存Psql TODO 目前只保存到solr和 Source_file_attribute
+//				if (JobConstant.HAS_HADOOP_ENV) {
+//					//存入HBase
+//					abp.saveInHbase(hbaseList);
+//				} else {
+//					abp.saveInPostgreSupersedeHbase(hbaseList);
+//				}
 				//保存到mapDB
 				saveInMapDB(avroBeans);
 				//处理完后 删除本地文件
 				boolean delete = FileUtils.getFile(avroFileAbsolutionPath).delete();
 				if (!delete) {
-					log.error("删除本地文件" + avroFileAbsolutionPath + "失败！");
+					logger.error("删除本地文件" + avroFileAbsolutionPath + "失败！");
 				}
 				//值为0代表当前拿到的值是队列最后一个,退出循环
 				if (watcherId == AvroOper.LASTELEMENT) {
-					log.info("End FileCollectLoadingDataStageImpl Thread ...");
+					logger.info("End FileCollectLoadingDataStageImpl Thread ...");
 					break;
 				}
 			}
 		} catch (Exception e) {
-			log.error("Failed to process Avro file in hdfs FileSystem...", e);
+			logger.error("Failed to process Avro file in hdfs FileSystem...", e);
 			message = e.getMessage();
 		}
 		return message;
@@ -141,6 +145,6 @@ public class FileCollectLoadingDataStageImpl implements Callable<String> {
 			fileNameHTreeMap.put(bean.getFile_scr_path(), object.toJSONString());
 		}
 		mapDBHelper.commit();
-		log.info("提交到mapDB");
+		logger.info("提交到mapDB");
 	}
 }

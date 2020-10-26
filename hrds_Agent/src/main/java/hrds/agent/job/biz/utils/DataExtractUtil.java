@@ -7,52 +7,75 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DataExtractUtil {
 
-	private static final Log log = LogFactory.getLog(DataExtractUtil.class);
-	private static final String DATADICTIONARY = "dd_data.json";
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
+	private static final String DATADICTIONARY_SUFFIX = ".json";
 
 	/**
 	 * 生成数据字典
 	 */
-	public static synchronized void writeDataDictionary(String dictionaryPath, String tableName, String allColumns
+	public static void writeDataDictionary(String dictionaryPath, String tableName, String allColumns
 			, String allType, List<Data_extraction_def> ext_defList, String unload_type, String primaryKeyInfo
-			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo, String hbase_name) {
-		BufferedWriter bufferOutputWriter = null;
-		OutputStreamWriter outputFileWriter = null;
-		String dataDictionaryFile = dictionaryPath + DATADICTIONARY;
+			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo, String hbase_name,
+										   String task_name) {
+		RandomAccessFile randomAccessFile = null;
+		FileChannel fileChannel = null;
+		FileLock fileLock = null;
 		try {
-			File file = new File(dataDictionaryFile);
-			String dd_data = "";
-			if (file.exists()) {
-				dd_data = FileUtil.readFile2String(file);
+			//给该文件加锁
+			randomAccessFile = new RandomAccessFile(new File(dictionaryPath + task_name +
+					DATADICTIONARY_SUFFIX), "rw");
+			fileChannel = randomAccessFile.getChannel();
+			while (true) {
+				try {
+					//tryLock()是非阻塞式的，它设法获取锁，但如果不能获得，
+					// 例如因为其他一些进程已经持有相同的锁，而且不共享时，它将直接从方法调用返回。
+					fileLock = fileChannel.tryLock();
+					break;
+				} catch (Exception e) {
+					logger.info("有其他线程正在操作该文件，当前线程休眠1秒");
+					TimeUnit.SECONDS.sleep(1);
+				}
 			}
-			dd_data = parseJsonDictionary(dd_data, tableName, allColumns, allType, ext_defList,
+			String line;
+			StringBuilder sb = new StringBuilder();
+			while ((line = randomAccessFile.readLine()) != null) {
+				//数据字典的编码默认直接使用utf-8
+				sb.append(new String(line.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
+			}
+			String dd_data = parseJsonDictionary(sb.toString().trim(), tableName, allColumns, allType, ext_defList,
 					unload_type, primaryKeyInfo, insertColumnInfo, updateColumnInfo, deleteColumnInfo, hbase_name);
+			//覆盖文件内容
+			randomAccessFile.setLength(0);
 			//数据字典的编码默认直接使用utf-8
-			outputFileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
-			bufferOutputWriter = new BufferedWriter(outputFileWriter, 4096);
-			bufferOutputWriter.write(dd_data);
-			bufferOutputWriter.flush();
+			randomAccessFile.write(dd_data.getBytes(StandardCharsets.ISO_8859_1));
 		} catch (Exception e) {
-			log.error("写数据字典失败", e);
+			throw new AppSystemException("使用独占锁读取数据字典失败", e);
 		} finally {
 			try {
-				if (bufferOutputWriter != null)
-					bufferOutputWriter.close();
-				if (outputFileWriter != null)
-					outputFileWriter.close();
+				if (fileLock != null)
+					fileLock.release();
+				if (fileChannel != null)
+					fileChannel.close();
+				if (randomAccessFile != null)
+					randomAccessFile.close();
 			} catch (IOException e) {
-				log.error("关闭流失败", e);
+				logger.error("读取数据字典关闭流失败", e);
 			}
 		}
 	}
@@ -62,8 +85,8 @@ public class DataExtractUtil {
 	 */
 	public static synchronized void writeSignalFile(String midName, String tableName, String sqlQuery, StringBuilder
 			allColumns, StringBuilder allType, StringBuilder lengths, String is_fixed_extract, String fixed_separator,
-	                                                long lineCounter, long collect_database_size,
-	                                                String eltDate, String charset) {
+													long lineCounter, long collect_database_size,
+													String eltDate, String charset) {
 		BufferedWriter bufferOutputWriter = null;
 		OutputStreamWriter outputFileWriter = null;
 		String create_date = DateUtil.getSysDate();
@@ -119,7 +142,7 @@ public class DataExtractUtil {
 			bufferOutputWriter.write(sb.toString() + "\n");
 			bufferOutputWriter.flush();
 		} catch (Exception e) {
-			log.error("写信号文件失败", e);
+			logger.error("写信号文件失败", e);
 		} finally {
 			try {
 				if (bufferOutputWriter != null)
@@ -127,7 +150,7 @@ public class DataExtractUtil {
 				if (outputFileWriter != null)
 					outputFileWriter.close();
 			} catch (IOException e) {
-				log.error("关闭流失败", e);
+				logger.error("关闭流失败", e);
 			}
 		}
 	}
@@ -164,10 +187,18 @@ public class DataExtractUtil {
 			}
 			///home/hyshf/xccccccccccc/#{date}/#{table}/#{文件格式}/.*
 			object.put("plane_url", data_extraction_def.getPlane_url() + File.separator + "#{date}" +
-					File.separator + "#{table}" + File.separator + "#{文件格式}" + File.separator
+					File.separator + "#{table}" + File.separator + "#{file_format}" + File.separator
 					+ hbase_name + ".*." + data_extraction_def.getFile_suffix());
-			object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
-			object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+			if (StringUtil.isEmpty(data_extraction_def.getRow_separator())) {
+				object.put("row_separator", "");
+			} else {
+				object.put("row_separator", StringUtil.string2Unicode(data_extraction_def.getRow_separator()));
+			}
+			if (StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
+				object.put("database_separatorr", "");
+			} else {
+				object.put("database_separatorr", StringUtil.string2Unicode(data_extraction_def.getDatabase_separatorr()));
+			}
 			storageArray.add(object);
 		}
 		jsonObject.put("storage", storageArray);

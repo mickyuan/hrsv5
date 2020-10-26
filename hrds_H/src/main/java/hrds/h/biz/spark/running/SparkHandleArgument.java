@@ -3,13 +3,17 @@ package hrds.h.biz.spark.running;
 import fd.ng.core.utils.JsonUtil;
 import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.hbaseindexer.bean.HbaseSolrField;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Author: Mick Yuan
  * @Date:
  * @Since jdk1.8
  */
-public class SparkHandleArgument {
+public class SparkHandleArgument implements Serializable {
     /**
      * 处理类型，如 database,hive,hbase,solr.etc
      */
@@ -102,6 +106,7 @@ public class SparkHandleArgument {
         String user;
         String password;
         String databaseType;
+        String database;
 
         public String getDriver() {
             return driver;
@@ -141,6 +146,104 @@ public class SparkHandleArgument {
 
         public void setDatabaseType(String databaseType) {
             this.databaseType = databaseType;
+        }
+
+        public String getDatabase() {
+            return database;
+        }
+
+        public void setDatabase(String database) {
+            this.database = database;
+        }
+    }
+
+    /**
+     * hive 相关参数实体
+     */
+    public static class HiveArgs extends SparkHandleArgument {
+
+        String columns;
+        String database;
+
+        public String getDatabase() {
+            return database;
+        }
+
+        public void setDatabase(String database) {
+            this.database = database;
+        }
+
+        public String getColumns() {
+            return columns;
+        }
+
+        public void setColumns(String columns) {
+            this.columns = columns;
+        }
+
+    }
+
+    /**
+     * hbase solr 相关参数实体
+     */
+    public static class HbaseSolrArgs extends SparkHandleArgument {
+
+        List<String> columns;
+        List<String> rowkeys;
+        List<String> solrCols;
+        List<HbaseSolrField> hbaseSolrFields;
+
+        public List<String> getColumns() {
+            return columns;
+        }
+
+        public void setColumns(List<String> columns) {
+            this.columns = columns;
+        }
+
+        public List<String> getRowkeys() {
+            return rowkeys;
+        }
+
+        public void setRowkeys(List<String> rowkeys) {
+            this.rowkeys = rowkeys;
+        }
+
+        public List<String> getSolrCols() {
+            return solrCols;
+        }
+
+        public void setSolrCols(List<String> solrCols) {
+            this.solrCols = solrCols;
+        }
+
+        public List<HbaseSolrField> getHbaseSolrFields() {
+            return hbaseSolrFields;
+        }
+
+        public void setHbaseSolrFields(List<HbaseSolrField> hbaseSolrFields) {
+            this.hbaseSolrFields = hbaseSolrFields;
+        }
+    }
+
+    public static class CarbonArgs extends SparkHandleArgument {
+        String columns;
+        String database;
+
+        public String getDatabase() {
+            return database;
+        }
+
+        public void setDatabase(String database) {
+            this.database = database;
+        }
+
+        public String getColumns() {
+            return columns;
+        }
+
+        public void setColumns(String columns) {
+            this.columns = columns;
         }
     }
 }

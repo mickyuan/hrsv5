@@ -8,18 +8,19 @@ import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.core.dfstage.*;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.utils.Constant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
 
 @DocClass(desc = "完成数据文件采集的作业实现")
 public class DataFileJobImpl implements JobInterface {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DataFileJobImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
-	private CollectTableBean collectTableBean;
-	private SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
+	private final SourceDataConfBean sourceDataConfBean;
 
 	public DataFileJobImpl(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean) {
 		this.sourceDataConfBean = sourceDataConfBean;
@@ -32,7 +33,7 @@ public class DataFileJobImpl implements JobInterface {
 				+ File.separator + collectTableBean.getTable_id() + File.separator + Constant.JOBFILENAME;
 		//JobStatusInfo对象，表示一个作业的状态
 		JobStatusInfo jobStatusInfo = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
-				collectTableBean.getTable_id());
+				collectTableBean.getTable_id(), collectTableBean.getTable_name());
 		//2、构建每个阶段具体的实现类，目前先按照完整顺序执行(卸数,上传,数据加载,计算增量,数据登记)，
 		// 后期可改造为按照配置构建采集阶段
 		JobStageInterface unloadData = new DFUnloadDataStageImpl(sourceDataConfBean, collectTableBean);

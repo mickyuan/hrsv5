@@ -6,7 +6,6 @@ import java.util.List;
 
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
-import hrds.commons.utils.PropertyParaUtil;
 import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;

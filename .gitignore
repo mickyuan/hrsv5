@@ -6,7 +6,6 @@ gen
 
 
 # Gradle
-.gradle
 /gradle
 build/
 /gradlew
@@ -37,3 +36,5 @@ TODO
 # office 缓存文件
 ~$*.*
 resources
+log
+hyrenv5

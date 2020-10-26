@@ -21,6 +21,7 @@ import hrds.commons.utils.Constant;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//采集db文件的文件信息
 	protected TableBean tableBean;
 	//采集的db文件定义的表信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 	//读文件的全路径
 	protected String readFile;
 	//写文件的流
@@ -37,31 +38,34 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	//解析db文件的所有列
 	protected List<String> dictionaryColumnList;
 	//进目标库的所有列，包括列合并、列拆分、HYREN_S_DATE、HYREN_E_DATE、HYREN_MD5_VAL三列
-	private List<String> allColumnList;
+	private final List<String> allColumnList;
 	//数据字典定义的所有的列类型
 	protected List<String> dictionaryTypeList;
 	//列合并的map
-	private Map<String, String> mergeIng;
+	private final Map<String, String> mergeIng;
 	//列清洗拆分合并的处理类
-	private Clean cl;
-	//拼接每一列的MD5值
-	private StringBuilder midStringOther;
+	private final Clean cl;
+	//获取所有列的值用来做列合并
+	private final StringBuilder mergeStringTmp;
+	//获取页面选择列算拉链时算md5的列，当没有选择拉链字段，默认使用全字段算md5
+	private final Map<String, Boolean> md5Col;
+	private final StringBuilder md5StringTmp;
 	//拼接每一列的值
-	private StringBuilder lineSb;
+	private final StringBuilder lineSb;
 	//清洗接口
-	private DataCleanInterface allClean;
+	private final DataCleanInterface allClean;
 	//判断是否追加结束日期和MD5字段
-	private boolean isMd5;
+	private final boolean isMd5;
 	//转存落地的文件路径
 	protected String unloadFileAbsolutePath;
 	//跑批日期
-	private String etl_date;
+	private final String etl_date;
 	//操作日期
-	private String operateDate;
+	private final String operateDate;
 	//操作时间
-	private String operateTime;
+	private final String operateTime;
 	//操作人
-	private long user_id;
+	private final long user_id;
 
 	@SuppressWarnings("unchecked")
 	protected FileParserAbstract(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
@@ -82,17 +86,21 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		this.dictionaryColumnList = StringUtil.split(tableBean.getAllColumns(), Constant.METAINFOSPLIT);
 		this.mergeIng = (Map<String, String>) tableBean.getParseJson().get("mergeIng");//字符合并
 		this.cl = new Clean(tableBean.getParseJson(), allClean);
-		this.midStringOther = new StringBuilder();
+		this.mergeStringTmp = new StringBuilder();
 		this.lineSb = new StringBuilder();
 		this.dictionaryTypeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
 		//根据(是否拉链存储且增量进数)和是否算md5判断是否要追加MD5和结束日期两个字段
 		this.isMd5 = IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5()) ||
 				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
-						StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type()));
+						StorageType.ZengLiang.getCode().equals(collectTableBean.getStorage_type())) ||
+				(IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper()) &&
+						StorageType.QuanLiang.getCode().equals(collectTableBean.getStorage_type()));
 		this.etl_date = collectTableBean.getEtlDate();
 		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
 		this.user_id = collectTableBean.getUser_id();
+		this.md5Col = transMd5ColMap(tableBean.getIsZipperFieldInfo());
+		this.md5StringTmp = new StringBuilder(1024 * 1024);
 	}
 
 	@Override
@@ -109,8 +117,8 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	public void dealLine(List<String> lineList) throws IOException {
 		String columnName;
 		String columnData;
-		//处理每一行之前先清空MD5的值
-		midStringOther.delete(0, midStringOther.length());
+		md5StringTmp.delete(0, md5StringTmp.length());
+		mergeStringTmp.delete(0, mergeStringTmp.length());
 		lineSb.delete(0, lineSb.length());
 		//遍历每一列数据
 		for (int i = 0; i < lineList.size(); i++) {
@@ -124,9 +132,14 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					|| Constant.HYREN_OPER_PERSON.equalsIgnoreCase(columnName)) {
 				continue;
 			}
-			columnData = lineList.get(i);
-			if (null == columnData) {
+			if (null == lineList.get(i)) {
 				columnData = "";
+			} else {
+				columnData = lineList.get(i).trim();
+			}
+			//判断是否是算md5的列，算md5
+			if (md5Col.get(columnName) != null && md5Col.get(columnName)) {
+				md5StringTmp.append(columnData);
 			}
 			//列清洗
 			columnData = cl.cleanColumn(columnData, columnName, null,
@@ -134,17 +147,17 @@ public abstract class FileParserAbstract implements FileParserInterface {
 					null, Constant.DATADELIMITER);
 			//清理不规则的数据
 			columnData = AbstractFileWriter.clearIrregularData(columnData);
-			midStringOther.append(columnData).append(Constant.DATADELIMITER);
+			mergeStringTmp.append(columnData).append(Constant.DATADELIMITER);
 			lineSb.append(columnData).append(Constant.DATADELIMITER);
 		}
 		//如果有列合并处理合并信息
 		if (!mergeIng.isEmpty()) {
-			List<String> arrColString = StringUtil.split(midStringOther.toString(),
+			List<String> arrColString = StringUtil.split(mergeStringTmp.toString(),
 					Constant.DATADELIMITER);
 			String merge = allClean.merge(mergeIng, arrColString.toArray(new String[0]), allColumnList.toArray
 							(new String[0]), null, null, FileFormat.FeiDingChang.getCode(),
 					null, Constant.DATADELIMITER);
-			midStringOther.append(merge);
+			mergeStringTmp.append(merge);
 			lineSb.append(merge).append(Constant.DATADELIMITER);
 		}
 		//追加开始日期
@@ -152,7 +165,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 		if (isMd5) {
 			//根据(是否拉链存储且增量进数)和是否算md5判断是否要追加MD5和结束日期两个字段 追加结束日期和MD5
 			lineSb.append(Constant.DATADELIMITER).append(Constant.MAXDATE);
-			lineSb.append(Constant.DATADELIMITER).append(MD5Util.md5String(midStringOther.toString()));
+			lineSb.append(Constant.DATADELIMITER).append(MD5Util.md5String(md5StringTmp.toString()));
 		}
 		//拼接操作时间、操作日期、操作人
 		appendOperateInfo(lineSb);
@@ -178,5 +191,27 @@ public abstract class FileParserAbstract implements FileParserInterface {
 			sb.append(Constant.DATADELIMITER).append(operateDate).append(Constant.DATADELIMITER)
 					.append(operateTime).append(Constant.DATADELIMITER).append(user_id);
 		}
+	}
+
+	/**
+	 * 查询是否选择了拉链字段，如果有，则不做任何操作，没有，则全部key的值变为true
+	 */
+	protected Map<String, Boolean> transMd5ColMap(Map<String, Boolean> md5ColMap) {
+		Map<String, Boolean> map = new HashMap<>();
+		boolean flag = true;
+		for (String key : md5ColMap.keySet()) {
+			if (md5ColMap.get(key)) {
+				flag = false;
+				break;
+			}
+		}
+		if (flag) {
+			for (String key : md5ColMap.keySet()) {
+				map.put(key, true);
+			}
+		} else {
+			map = md5ColMap;
+		}
+		return map;
 	}
 }

@@ -13,7 +13,9 @@ public enum StoreLayerDataSource {
 	/**数据集市<DM>  */
 	DM("4","数据集市","93","存储层关系-数据来源"),
 	/**数据管控<DQ>  */
-	DQ("5","数据管控","93","存储层关系-数据来源");
+	DQ("5","数据管控","93","存储层关系-数据来源"),
+	/**自定义<UD>  */
+	UD("6","自定义","93","存储层关系-数据来源");
 
 	private final String code;
 	private final String value;

@@ -8,8 +8,12 @@ public enum ProcessType {
 	DingZhi("1","定值","91","数据处理方式"),
 	/**自增<ZiZeng>  */
 	ZiZeng("2","自增","91","数据处理方式"),
-	/**映射<YingShe>  */
-	YingShe("3","映射","91","数据处理方式");
+	/**映射赋值<YingShe>  */
+	YingShe("3","映射赋值","91","数据处理方式"),
+	/**函数映射<HanShuYingShe>  */
+	HanShuYingShe("4","函数映射","91","数据处理方式"),
+	/**分组映射<FenZhuYingShe>  */
+	FenZhuYingShe("5","分组映射","91","数据处理方式");
 
 	private final String code;
 	private final String value;

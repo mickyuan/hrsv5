@@ -1,9 +1,11 @@
 package hrds.trigger.hadoop.readConfig;
 
 import java.io.File;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.jar.JarFile;
 
 import hrds.commons.exception.AppSystemException;
 
@@ -16,8 +18,13 @@ import hrds.commons.exception.AppSystemException;
 public class ClassPathResLoader {
 
 	private static final Method addURL = initAddMethod();
-	private static final URLClassLoader classloader =
-			(URLClassLoader)ClassLoader.getSystemClassLoader();
+	private static Instrumentation inst = null;
+
+	// The JRE will call method before launching your main()
+	public static void agentmain(final String a, final Instrumentation inst) {
+		ClassPathResLoader.inst = inst;
+	}
+
 
 	/**
 	 * 通过反射方式加载URLClassLoader类的addURL方法。
@@ -89,12 +96,17 @@ public class ClassPathResLoader {
 	 *          含义：表示一个待加载配置文件的目录对象。 <br>
 	 *          取值范围：不能为null。
 	 */
-	private static void addURL(final File file) {
-
-		//1.执行反射调用。
+	private static void addURL(File file) {
+		//执行反射调用
+		ClassLoader classloader = ClassLoader.getSystemClassLoader();
 		try {
+			// If Java 9 or higher use Instrumentation
+			if (!(classloader instanceof URLClassLoader)) {
+				inst.appendToSystemClassLoaderSearch(new JarFile(file));
+				return;
+			}
 			addURL.invoke(classloader, file.toURI().toURL());
-		}catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

@@ -42,8 +42,8 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 	private Long basic_id;
 	@DocBean(name ="is_artificial",value="是否人工(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_artificial;
-	@DocBean(name ="detect_id",value="检测主键:",dataType = String.class,required = true)
-	private String detect_id;
+	@DocBean(name ="detect_id",value="检测主键:",dataType = Long.class,required = true)
+	private Long detect_id;
 	@DocBean(name ="is_tag",value="是否标记为最终结果(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_tag;
 
@@ -120,12 +120,18 @@ public class Dbm_normbmd_result extends ProjectTableEntity
 		this.is_artificial=is_artificial;
 	}
 	/** 取得：检测主键 */
-	public String getDetect_id(){
+	public Long getDetect_id(){
 		return detect_id;
 	}
 	/** 设置：检测主键 */
-	public void setDetect_id(String detect_id){
+	public void setDetect_id(Long detect_id){
 		this.detect_id=detect_id;
+	}
+	/** 设置：检测主键 */
+	public void setDetect_id(String detect_id){
+		if(!fd.ng.core.utils.StringUtil.isEmpty(detect_id)){
+			this.detect_id=new Long(detect_id);
+		}
 	}
 	/** 取得：是否标记为最终结果 */
 	public String getIs_tag(){

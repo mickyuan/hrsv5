@@ -9,14 +9,14 @@ import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.orc.OrcFile;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
 import org.apache.orc.TypeDescription;
 import org.apache.orc.mapred.OrcMapredRecordReader;
 import org.apache.orc.mapred.OrcStruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +28,9 @@ import java.util.List;
  * author: zxz
  */
 public class OrcFileParserDeal extends FileParserAbstract {
-	private final static Logger LOGGER = LoggerFactory.getLogger(OrcFileParserDeal.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
+
 	public OrcFileParserDeal(TableBean tableBean, CollectTableBean collectTableBean, String readFile) throws Exception {
 		super(tableBean, collectTableBean, readFile);
 	}
@@ -58,7 +60,7 @@ public class OrcFileParserDeal extends FileParserAbstract {
 					fileRowCount++;
 					for (int i = 0; i < result.getNumFields(); i++) {
 						valueList.add(ReadFileToDataBase.getValue(dictionaryTypeList.get(i),
-								result.getFieldValue(i)).toString());
+								result.getFieldValue(i), null).toString());
 					}
 					//校验数据是否正确
 					checkData(valueList, fileRowCount);

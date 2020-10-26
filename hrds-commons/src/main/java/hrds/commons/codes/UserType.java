@@ -32,8 +32,8 @@ public enum UserType {
 	RESTYongHu("12","服务接口用户","17","用户类型"),
 	/**分词器管理<FenCiQiGuanLiYuan>  */
 	FenCiQiGuanLiYuan("13","分词器管理","17","用户类型"),
-	/**数据集市<JiShiGuanLiYuan>  */
-	JiShiGuanLiYuan("14","数据集市","17","用户类型"),
+	/**数据加工<JiShiGuanLiYuan>  */
+	JiShiGuanLiYuan("14","数据加工","17","用户类型"),
 	/**数据加工<JiShiJiaGongGuanLiYuan>  */
 	JiShiJiaGongGuanLiYuan("15","数据加工","17","用户类型"),
 	/**机器学习工作台<JiQiXueXiGuanLiYuan>  */
@@ -60,10 +60,14 @@ public enum UserType {
 	ZiYuanGuanLi("27","资源管理","17","用户类型"),
 	/**自主分析操作<ZiZhuFenXiCaoZuo>  */
 	ZiZhuFenXiCaoZuo("26","自主分析操作","17","用户类型"),
-	/**数据对标操作<ShuJuDuiBiaoCaoZuo>  */
-	ShuJuDuiBiaoCaoZuo("37","数据对标操作","17","用户类型"),
-	/**数据对标管理<ShuJuDuiBiaoGuanLi>  */
-	ShuJuDuiBiaoGuanLi("55","数据对标管理","17","用户类型"),
+	/**标准元管理<BiaoZhunYuanGuanLi>  */
+	BiaoZhunYuanGuanLi("37","标准元管理","17","用户类型"),
+	/**表结构对标<BiaoJieGouDuiBiao>  */
+	BiaoJieGouDuiBiao("38","表结构对标","17","用户类型"),
+	/**表数据对标<BiaoShuJuDuiBiao>  */
+	BiaoShuJuDuiBiao("39","表数据对标","17","用户类型"),
+	/**标准元查看<BiaoZhunYuanChaKan>  */
+	BiaoZhunYuanChaKan("55","标准元查看","17","用户类型"),
 	/**用户管理<YongHuGuanLi>  */
 	YongHuGuanLi("99","用户管理","17","用户类型"),
 	/**部门管理<BuMenGuanLi>  */
@@ -73,7 +77,9 @@ public enum UserType {
 	/**数据整理<ShuJuZhengLi>  */
 	ShuJuZhengLi("96","数据整理","17","用户类型"),
 	/**数据存储层定义<ShuJunCunChuCengDingYi>  */
-	ShuJunCunChuCengDingYi("95","数据存储层定义","17","用户类型");
+	ShuJunCunChuCengDingYi("95","数据存储层定义","17","用户类型"),
+	/**版本管理<BanBenGuanLi>  */
+	BanBenGuanLi("94","版本管理","17","用户类型");
 
 	private final String code;
 	private final String value;

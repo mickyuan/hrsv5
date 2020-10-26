@@ -28,7 +28,6 @@ public class TreeDataQuery {
             map.put("label", dataSourceType.getValue());
             map.put("parent_id", "0");
             map.put("description", dataSourceType.getValue());
-            map.put("data_layer", "0");
             sourceTreeMenuInfos.add(map);
         }
         return sourceTreeMenuInfos;

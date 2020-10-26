@@ -11,15 +11,16 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-@DocClass(desc = "数据库直连采集数据上传阶段", author = "WangZhengcheng")
+@DocClass(desc = "数据库抽数数据上传阶段", author = "WangZhengcheng")
 public class DBUploadStageImpl extends AbstractJobStage {
-	private final static Logger LOGGER = LoggerFactory.getLogger(DBUploadStageImpl.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//卸数到本地的文件绝对路径
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 
 	public DBUploadStageImpl(CollectTableBean collectTableBean) {
 		this.collectTableBean = collectTableBean;

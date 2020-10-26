@@ -26,6 +26,9 @@ public class RuleResultSearchBean extends ProjectTableEntity {
     private String[] exec_mode; //执行方式
     @DocBean(name = "verify_result", value = "检查结果", dataType = String.class, required = false)
     private String[] verify_result; //检查结果
+    @DocBean(name = "case_type", value = "规则类型", dataType = String.class, required = false)
+    private String[] case_type; //规则类型
+
 
     public String getVerify_date() {
         return verify_date;
@@ -89,5 +92,13 @@ public class RuleResultSearchBean extends ProjectTableEntity {
 
     public void setVerify_result(String[] verify_result) {
         this.verify_result = verify_result;
+    }
+
+    public String[] getCase_type() {
+        return case_type;
+    }
+
+    public void setCase_type(String[] case_type) {
+        this.case_type = case_type;
     }
 }

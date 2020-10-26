@@ -10,13 +10,15 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.tools.CommonUtils;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ObjectCollectType;
+import hrds.commons.entity.Agent_info;
 import hrds.commons.entity.Object_collect;
 import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
@@ -34,7 +36,7 @@ public class CollectConfAction extends BaseAction {
 					"3.返回新增半结构化采集配置信息")
 	@Param(name = "agent_id", desc = "采集agent主键ID", range = "不为空")
 	@Return(desc = "返回新增半结构化采集配置信息", range = "不会为空")
-	public Map<String, Object> getAddObjectCollectConf(long agent_id) {
+	public Map<String, Object> getInitObjectCollectConf(long agent_id) {
 		// 1.根据agent_id获取调用Agent服务的接口
 		String url = AgentActionUtil.getUrl(agent_id, getUserId(), AgentActionUtil.GETSERVERINFO);
 		//2.根据url远程调用Agent的后端代码获取采集服务器上的日期、时间、操作系统类型和主机名等基本信息
@@ -51,6 +53,18 @@ public class CollectConfAction extends BaseAction {
 		return map;
 	}
 
+	@Method(desc = "获取新增时未发送的采集任务", logicStep = "1.获取新增时未发送的采集任务")
+	@Param(name = "agent_id", desc = "采集agent主键ID", range = "新增agent时生成")
+	@Return(desc = "返回新增时未发送的采集任务信息", range = "无限制")
+	public Map<String, Object> getAddObjectCollectConf(long agent_id) {
+		// 1.获取新增时未发送的采集任务
+		return Dbo.queryOneObject(
+				"SELECT t1.*" + " FROM " + Object_collect.TableName + " t1 "
+						+ " LEFT JOIN " + Agent_info.TableName + " t2 ON t1.Agent_id = t2.Agent_id "
+						+ " WHERE t1.Agent_id = ? AND t1.is_sendok = ?",
+				agent_id, IsFlag.Fou.getCode());
+	}
+
 	@Method(desc = "根据对象采集id获取半结构化采集配置信息（编辑任务时数据回显）",
 			logicStep = "1.数据可访问权限处理方式：通过agent_id进行访问权限限制" +
 					"2.检查当前任务是否存在" +
@@ -60,12 +74,7 @@ public class CollectConfAction extends BaseAction {
 	public Map<String, Object> getObjectCollectConfById(long odc_id) {
 		// 1.数据可访问权限处理方式：通过agent_id进行访问权限限制
 		// 2.检查当前任务是否存在
-		long countNum = Dbo.queryNumber(
-				"SELECT COUNT(1) FROM  " + Object_collect.TableName + " WHERE odc_id = ?",
-				odc_id).orElseThrow(() -> new BusinessException("SQL查询错误"));
-		if (countNum == 0) {
-			CheckParam.throwErrorMsg("任务( %s )不存在!!!", odc_id);
-		}
+		CommonUtils.isObjectCollectExist(odc_id);
 		// 3.根据对象采集id查询半结构化采集配置首页数据
 		return Dbo.queryOneObject(
 				"SELECT * FROM " + Object_collect.TableName + " WHERE odc_id = ?", odc_id);
@@ -90,8 +99,11 @@ public class CollectConfAction extends BaseAction {
 			throw new BusinessException("当是否存在数据字典选择否，数据日期不能为空");
 		}
 		// 3.获取解析与agent服务交互返回响应表数据
-		return SendMsgUtil.getDictionaryTableInfo(agent_id, file_path, is_dictionary, data_date, file_suffix,
-				getUserId());
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(is_dictionary)) {
+			return SendMsgUtil.getDictionaryTableInfo(agent_id, file_path, getUserId());
+		} else {
+			return SendMsgUtil.getFirstLineData(agent_id, file_path, data_date, file_suffix, getUserId());
+		}
 	}
 
 	@Method(desc = "保存半结构化文件采集页面信息到对象采集设置表对象，同时返回对象采集id",
@@ -124,10 +136,17 @@ public class CollectConfAction extends BaseAction {
 			isObjNumberExist(object_collect.getObj_number());
 			// 新增
 			object_collect.setOdc_id(PrimayKeyGener.getNextId());
+			object_collect.setIs_sendok(IsFlag.Fou.getCode());
 			object_collect.add(Dbo.db());
 		} else {
 			// 4.2 更新
-			object_collect.update(Dbo.db());
+			try {
+				object_collect.update(Dbo.db());
+			} catch (Exception e) {
+				if (!(e instanceof ProjectTableEntity.EntityDealZeroException)) {
+					throw new BusinessException(e.getMessage());
+				}
+			}
 		}
 		// 5.返回对象采集ID
 		return object_collect.getOdc_id();

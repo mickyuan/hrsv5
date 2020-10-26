@@ -22,10 +22,10 @@ public class DbmDataQuery {
         SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
         asmSql.clean();
         asmSql.addSql("select * from " + Dbm_sort_info.TableName + " where ");
-        if (user.getUserTypeGroup().contains(UserType.ShuJuDuiBiaoGuanLi.getCode())) {
+        if (user.getUserTypeGroup().contains(UserType.BiaoZhunYuanGuanLi.getCode())) {
             asmSql.addSql("create_user=?").addParam(user.getUserId().toString());
         }
-        else if (user.getUserTypeGroup().contains(UserType.ShuJuDuiBiaoCaoZuo.getCode())) {
+        else if (user.getUserTypeGroup().contains(UserType.BiaoZhunYuanChaKan.getCode())) {
             asmSql.addSql("sort_status=?").addParam(IsFlag.Shi.getCode());
         } else {
             throw new BusinessException("登录用户没有查询对标-分类数据权限!");

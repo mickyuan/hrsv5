@@ -9,6 +9,7 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.SourceDataConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.utils.CollectTableBeanUtil;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
@@ -23,17 +24,16 @@ import java.util.concurrent.Callable;
 @DocClass(desc = "多线程采集线程类，子线程向主线程返回的有生成的文件路径，当前线程采集到的ResultSet，" +
 		"当前线程采集到的数据量", author = "WangZhengcheng")
 public class CollectPage implements Callable<Map<String, Object>> {
-	//	private final static Logger LOGGER = LoggerFactory.getLogger(CollectPage.class);
-	private SourceDataConfBean sourceDataConfBean;
-	private CollectTableBean collectTableBean;
-	private TableBean tableBean;
-	private String sql;
-	private int start;
-	private int end;
-	private int pageNum;
+	private final SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
+	private final TableBean tableBean;
+	private final String sql;
+	private final int start;
+	private final int end;
+	private final int pageNum;
 
 	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
-	                   TableBean tableBean, int start, int end, int pageNum) {
+					   TableBean tableBean, int start, int end, int pageNum) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
 		this.tableBean = tableBean;
@@ -44,7 +44,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 	}
 
 	public CollectPage(SourceDataConfBean sourceDataConfBean, CollectTableBean collectTableBean,
-	                   TableBean tableBean, int start, int end, int pageNum, String sql) {
+					   TableBean tableBean, int start, int end, int pageNum, String sql) {
 		this.sourceDataConfBean = sourceDataConfBean;
 		this.collectTableBean = collectTableBean;
 		this.tableBean = tableBean;
@@ -67,9 +67,10 @@ public class CollectPage implements Callable<Map<String, Object>> {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
 				sourceDataConfBean.getJdbc_url(), sourceDataConfBean.getUser_name(),
 				sourceDataConfBean.getDatabase_pad(), sourceDataConfBean.getDatabase_type(),
-				sourceDataConfBean.getDatabase_name(), 4000)) {
+				sourceDataConfBean.getDatabase_name(), 50)) {
 			//获得数据抽取文件格式
-			List<Data_extraction_def> data_extraction_def_list = collectTableBean.getData_extraction_def_list();
+			List<Data_extraction_def> data_extraction_def_list = CollectTableBeanUtil.getTransSeparatorExtractionList(
+					collectTableBean.getData_extraction_def_list());
 			//抽取这里可以同时抽成多种文件格式，遍历，执行卸数。
 			//TODO 这里有一个优化的方式，就是在一个resultSet里面根据逻辑写多个文件，暂时直接遍历，复用以前的方法
 			//TODO 抽取这里其实不用返回文件路径，待删除
@@ -86,7 +87,7 @@ public class CollectPage implements Callable<Map<String, Object>> {
 					ResultSetParser parser = new ResultSetParser();
 					//返回值为卸数文件全路径拼接卸数文件的条数
 					String unLoadInfo = parser.parseResultSet(resultSet, collectTableBean, pageNum,
-							tableBean, data_extraction_def);
+							tableBean, data_extraction_def, true);
 					if (!StringUtil.isEmpty(unLoadInfo) && unLoadInfo.contains(Constant.METAINFOSPLIT)) {
 						List<String> unLoadInfoList = StringUtil.split(unLoadInfo, Constant.METAINFOSPLIT);
 						map.put("pageCount", unLoadInfoList.get(unLoadInfoList.size() - 1));

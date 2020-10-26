@@ -14,14 +14,13 @@ import hrds.commons.entity.Interface_use;
 import hrds.commons.entity.Interface_use_log;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
+import hrds.g.biz.enumerate.StateType;
 import hrds.g.biz.init.InterfaceManager;
 
 import java.util.Map;
 
 @DocClass(desc = "查询接口监控信息类接口（接口使用信息）", author = "dhw", createdate = "2020/3/30 9:20")
 public class InterfaceUseInfoAction extends BaseAction {
-
-	private static final String REQUEST_STATE = "NORMAL";
 
 	@Method(desc = "查询接口监控信息（接口使用监控）", logicStep = "1.数据可访问权限处理方式：该方法不需要进行访问权限限制" +
 			"2.判断用户是否为空，不为空加条件查询" +
@@ -54,7 +53,7 @@ public class InterfaceUseInfoAction extends BaseAction {
 		for (int i = 0; i < infoResult.getRowCount(); i++) {
 			Result response = Dbo.queryResult("SELECT round(avg(response_time)) avg,MIN(response_time) min,"
 							+ "MAX(response_time) max FROM " + Interface_use_log.TableName +
-							" WHERE request_state = ? AND interface_use_id=?", REQUEST_STATE,
+							" WHERE request_state = ? AND interface_use_id=?", StateType.NORMAL.getCode(),
 					infoResult.getLong(i, "interface_use_id"));
 			String avg = response.getString(0, "avg");
 			String min = response.getString(0, "min");

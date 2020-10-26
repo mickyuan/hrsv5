@@ -23,12 +23,15 @@ AGENT_OPERATE="${4}"
 ## 参数3  Agent 程序运行绑定端口  34561
 ## 参数4  Agent 服务操作类型 start 或者 stop 或者 restart
 ## 使用方式 sh agent_operation.sh hrds_Agent-5.0.jar ./log/log.out 34561 restart
+## 返回状态码说明 {0: 启动成功; 1: 程序包不存在; 2: 不支持的操作类型; 3: 服务已经启动; 4: Jre文件不存在; -1: 启动失败}
 main(){
     # if no parameter is passed to script then show how to use.
     if [[ $# -eq 0 ]]; then usage; fi
     if [[ $# -ne 4 ]]; then usage; fi
+    # file add execute permission
+    if [[ -d ${AGENT_DEPLOYMENT_DIR} ]]; then chmod -R 755 ${AGENT_DEPLOYMENT_DIR}; fi
     # Check the legality of the file
-    if [[ ! -f ${AGENT_JAR_NAME} ]]; then echo "Agent service package file does not exist, please check !" ; fi
+    if [[ ! -f ${AGENT_JAR_NAME} ]]; then echo "Agent service package file does not exist, please check !" && exit 1; fi
     # Log directory initialization
     ## Create the directory where the log configuration is located
     AGENT_LOG_DIR=${AGENT_LOG_FILE%/*}
@@ -54,6 +57,7 @@ function agent_main() {
         restart_agent
     else
         echo "Unsupported operation type. see start or stop or restart."
+        exit 2
     fi
 }
 
@@ -87,25 +91,22 @@ function start_agent(){
         | awk '{print $2}'| xargs -n 1)
     if [[ -n "${AGENT_PID}" ]]; then
         echo "The agent service is already startup on ${AGENT_DEPLOYMENT_DIR}, its port is ${AGENT_PORT}."
+        exit 3
     else
         # The agent service is not running, start it.
         ## Load user operating environment
         #source ~/.bash_profile; source ~/.bashrc;
         ## Enter the script directory
         cd ${SH_EXEC_DIR}
-        ## When the log parameter value is a directory, specify the log file name
-        if [[ "VAR_${AGENT_LOG_FILE}" == "VAR_${AGENT_LOG_DIR}/" ]]; then
-            AGENT_LOG_FILE="${AGENT_LOG_DIR}/${AGENT_PORT}.out"
-        fi
         ## Check jre environment
-        if [[ ! -d "${SH_EXEC_DIR}/jre" ]]; then echo "jre does not exist, please check the jre env." ; exit 1; fi
+        if [[ ! -d "${SH_EXEC_DIR}/jre" ]]; then echo "jre does not exist, please check the jre env." ; exit 4; fi
         ## Start the agent service
         nohup ${SH_EXEC_DIR}/jre/linux/${OS_BIT}/jre/bin/java \
             -Dorg.eclipse.jetty.server.Request.maxFormContentSize=${MAX_FORM_CONTENT_SIZE} \
             -Dport=${AGENT_PORT} \
             -Dproject.dir=${AGENT_DEPLOYMENT_DIR} \
             -Dproject.name=${AGENT_TAG} \
-            -jar ${AGENT_JAR_NAME} > ${AGENT_LOG_FILE} 2>&1 &
+            -jar ${AGENT_JAR_NAME} &
         # After the startup is executed, check agent service startup status
         ## Wait for the port to start
         waiting_proc_status ${AGENT_PORT} "start" 0
@@ -120,8 +121,10 @@ function start_agent(){
             | awk '{print $2}'| xargs -n 1)
         if [[ -n "${AGENT_PID}" ]]; then
             echo "The agent service is Successful start."
+            exit 0;
         else
             echo "The agent service did not start successfully, please contact the administrator."
+            exit -1;
         fi
     fi
 }

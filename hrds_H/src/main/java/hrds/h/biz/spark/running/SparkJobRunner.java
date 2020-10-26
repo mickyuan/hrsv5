@@ -13,12 +13,11 @@ public class SparkJobRunner {
 
     private static final String SPARK_MAIN_CLASS =
             "hrds.h.biz.spark.running.MarketSparkMain";
-//        private static final String SPARK_CLASSPATH =
-//            ".:hrds_H/build/libs/hrds_H-5.0.jar:hrds_H/src/main/resources/:" +
-//                    "../spark/jars/*:lib/fd-*:lib/hrds-commons-5.0.jar";
+    //	private static final String SPARK_CLASSPATH =
+//			".:hrds_H/build/libs/hrds_H-5.0.jar:../spark/jars/*:hyrenv5/hrsapp/dist/java/GlobalShared/jdklibs/*:conf/:hrds_H/src/main/resources/";
     private static final String SPARK_CLASSPATH =
-            ".:hrds_H-5.0.jar:resources/:" +
-                    "../spark/jars/*:../lib/fd-*:../lib/hrds-commons-5.0.jar";
+            PropertyParaValue.getString("market.spark.classpath",
+                    ".:hrds_H-5.0.jar:resources_spark/:conf/:upfiles/jars/*:../lib/*");
 
     private static final long SPARK_JOB_TIMEOUT_SECONDS =
             PropertyParaValue.getLong("spark.job.timeout.seconds", 2L * 60 * 60);
@@ -33,15 +32,15 @@ public class SparkJobRunner {
         }
     }
 
-    public static void runJob(String dataTableId, SparkHandleArgument handleArgument) {
+    public static void runJob(SparkHandleArgument handleArgument) {
 
         long start = System.currentTimeMillis();
 
-        String command = String.format("java %s -cp %s %s %s %s",
+        String command = String.format(System.getProperty("java.home") + "/bin/java %s -cp %s %s %s %s",
                 SPARK_DRIVER_EXTRAJAVAOPTIONS,
                 SPARK_CLASSPATH,
                 SPARK_MAIN_CLASS,
-                dataTableId,
+                handleArgument.getDatatableId(),
                 convertStringSatisfyShell(handleArgument.toString()));
 
         logger.info(String.format("开始执行spark作业调度:[%s]", command));
@@ -96,7 +95,8 @@ public class SparkJobRunner {
      * @return 合法参数字符串
      */
     static String obtainSatisfyShellString(String convertedShellArg) {
-        return convertedShellArg.replace("^", "\"");
+        return convertedShellArg.replace("\"", "")
+                .replace("^", "\"");
     }
 
 }

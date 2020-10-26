@@ -207,7 +207,7 @@ public class ConnUtilTest {
 		//正确的使用场景10、构建GBase数据库访问场景，断言得到的数据是否正确
 		assertThat(ConnUtil.getJDBCDriver(DatabaseType.GBase.getCode()),is("com.gbase.jdbc.Driver"));
 		//正确的使用场景11、构建TeraData数据库访问场景，断言得到的数据是否正确
-		assertThat(ConnUtil.getJDBCDriver(DatabaseType.TeraData.getCode()),is("com.teradata.jdbc.TeraDriver"));
+		assertThat(ConnUtil.getJDBCDriver(DatabaseType.TeraData.getCode()),is("com.ncr.teradata.TeraDriver"));
 		//正确的使用场景12、构建Informatic数据库访问场景，断言得到的数据是否正确
 		assertThat(ConnUtil.getJDBCDriver(DatabaseType.Informatic.getCode()),is("com.informix.jdbc.IfxDriver"));
 		//正确的使用场景13、构建H2数据库访问场景，断言得到的数据是否正确

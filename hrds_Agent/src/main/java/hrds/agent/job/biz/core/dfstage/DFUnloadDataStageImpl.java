@@ -12,21 +12,23 @@ import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
 import hrds.agent.job.biz.core.dbstage.DBUnloadDataStageImpl;
 import hrds.agent.job.biz.core.dfstage.service.FileConversionThread;
+import hrds.agent.job.biz.core.jdbcdirectstage.JdbcDirectUnloadDataStageImpl;
 import hrds.agent.job.biz.core.metaparse.CollectTableHandleFactory;
 import hrds.agent.job.biz.utils.FileUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
-import hrds.commons.codes.*;
+import hrds.commons.codes.AgentType;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
+import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
-import hrds.commons.utils.StorageTypeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -35,9 +37,10 @@ import java.util.regex.Pattern;
 @DocClass(desc = "数据文件采集，数据卸数阶段实现", author = "WangZhengcheng")
 public class DFUnloadDataStageImpl extends AbstractJobStage {
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(DFUnloadDataStageImpl.class);
-	private SourceDataConfBean sourceDataConfBean;
-	private CollectTableBean collectTableBean;
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
+	private final SourceDataConfBean sourceDataConfBean;
+	private final CollectTableBean collectTableBean;
 
 	/**
 	 * 数据文件采集，数据卸数阶段实现.
@@ -77,7 +80,7 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 			//拿到匹配文件的规则
 			String regex = FileNameUtils.getName(filePathPattern);
 			String[] file_name_list = new File(file_path).list(new FilenameFilter() {
-				private Pattern pattern = Pattern.compile(regex);
+				private final Pattern pattern = Pattern.compile(regex);
 
 				@Override
 				public boolean accept(File dir, String name) {
@@ -112,15 +115,16 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 					stageParamInfo.setFileNameArr(file_name_list);
 				} else {
 					throw new AppSystemException("表" + collectTableBean.getHbase_name()
-							+ "数据字典指定目录" + file_path + "下数据文件不存在");
+							+ "数据字典指定目录" + file_path + "下通过正则" + regex + "匹配不到对应的数据文件");
 				}
 				//不用转存，则跳过db文件卸数，直接进行upload
 				LOGGER.info("表" + collectTableBean.getHbase_name()
 						+ "Db文件采集，不需要转存或者增量采集，卸数跳过");
 			} else if (IsFlag.Shi.getCode().equals(tableBean.getIs_archived())) {
 				//获取db文件采集转存的文件编码，
-				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题
-				tableBean.setDbFileArchivedCode(getDbFileArchivedCode(collectTableBean, tableBean.getFile_code()));
+				// XXX 主要涉及到oracle数据库如果用外部表进数，字符集必须跟文件字符集一致的问题   存储层不指定默认使用要采集的db文件编码
+				tableBean.setDbFileArchivedCode(JdbcDirectUnloadDataStageImpl.getStoreDataBaseCode(
+						collectTableBean.getTable_name(), collectTableBean.getDataStoreConfBean(), tableBean.getFile_code()));
 				//Data_extraction_def targetData_extraction_def = collectTableBean.getTargetData_extraction_def();
 				//TODO 需要转存，根据文件采集的定义，读取文件，卸数文件到指定的目录
 				//根据源定义读取文件，将读取到的文件统一转为List<List>每5000行统一处理一次
@@ -213,34 +217,8 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 		//替换表名
 		root_path = root_path.replace("#{table}", table_name);
 		//替换文件格式
-		root_path = root_path.replace("#{文件格式}", Constant.fileFormatMap.get(file_format));
+		root_path = root_path.replace("#{file_format}", Constant.fileFormatMap.get(file_format));
 		return root_path;
-	}
-
-	/**
-	 * 获取文件转存的默认编码，目的地有oracle数据库时，会主动去取oracle数据库键值对下配置的编码，
-	 * 没有设置，取读文件的编码为写文件的编码
-	 *
-	 * @param collectTableBean 采集的表属性实体
-	 * @param fileCode         db文件编码
-	 */
-	private String getDbFileArchivedCode(CollectTableBean collectTableBean, String fileCode) {
-		List<DataStoreConfBean> dataStoreConfBean = collectTableBean.getDataStoreConfBean();
-		for (DataStoreConfBean bean : dataStoreConfBean) {
-			if (Store_type.DATABASE.getCode().equals(bean.getStore_type())) {
-				Map<String, String> data_store_connect_attr = bean.getData_store_connect_attr();
-//				if(DatabaseType.Oracle10g.getCode().equals(data_store_connect_attr.get(StorageTypeKey.database_type)))
-				if (!StringUtil.isEmpty(data_store_connect_attr.get(StorageTypeKey.database_code))) {
-					for (DataBaseCode typeCode : DataBaseCode.values()) {
-						if (typeCode.getValue().equalsIgnoreCase(data_store_connect_attr.
-								get(StorageTypeKey.database_code))) {
-							return typeCode.getCode();
-						}
-					}
-				}
-			}
-		}
-		return fileCode;
 	}
 
 	@Override

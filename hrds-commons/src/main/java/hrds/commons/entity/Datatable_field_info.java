@@ -46,12 +46,18 @@ public class Datatable_field_info extends ProjectTableEntity
 	private String remark;
 	@DocBean(name ="field_length",value="字段长度:",dataType = String.class,required = false)
 	private String field_length;
-	@DocBean(name ="field_process",value="处理方式(ProcessType):1-定值<DingZhi> 2-自增<ZiZeng> 3-映射<YingShe> ",dataType = String.class,required = true)
+	@DocBean(name ="field_process",value="处理方式(ProcessType):1-定值<DingZhi> 2-自增<ZiZeng> 3-映射赋值<YingShe> 4-函数映射<HanShuYingShe> 5-分组映射<FenZhuYingShe> ",dataType = String.class,required = true)
 	private String field_process;
-	@DocBean(name ="process_para",value="处理方式对应参数:",dataType = String.class,required = false)
-	private String process_para;
+	@DocBean(name ="process_mapping",value="映射规则mapping:",dataType = String.class,required = false)
+	private String process_mapping;
 	@DocBean(name ="datatable_id",value="数据表id:",dataType = Long.class,required = true)
 	private Long datatable_id;
+	@DocBean(name ="group_mapping",value="分组映射对应规则:",dataType = String.class,required = false)
+	private String group_mapping;
+	@DocBean(name ="start_date",value="开始日期:",dataType = String.class,required = true)
+	private String start_date;
+	@DocBean(name ="end_date",value="结束日期:",dataType = String.class,required = true)
+	private String end_date;
 
 	/** 取得：数据表字段id */
 	public Long getDatatable_field_id(){
@@ -137,13 +143,13 @@ public class Datatable_field_info extends ProjectTableEntity
 	public void setField_process(String field_process){
 		this.field_process=field_process;
 	}
-	/** 取得：处理方式对应参数 */
-	public String getProcess_para(){
-		return process_para;
+	/** 取得：映射规则mapping */
+	public String getProcess_mapping(){
+		return process_mapping;
 	}
-	/** 设置：处理方式对应参数 */
-	public void setProcess_para(String process_para){
-		this.process_para=process_para;
+	/** 设置：映射规则mapping */
+	public void setProcess_mapping(String process_mapping){
+		this.process_mapping=process_mapping;
 	}
 	/** 取得：数据表id */
 	public Long getDatatable_id(){
@@ -158,5 +164,29 @@ public class Datatable_field_info extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(datatable_id)){
 			this.datatable_id=new Long(datatable_id);
 		}
+	}
+	/** 取得：分组映射对应规则 */
+	public String getGroup_mapping(){
+		return group_mapping;
+	}
+	/** 设置：分组映射对应规则 */
+	public void setGroup_mapping(String group_mapping){
+		this.group_mapping=group_mapping;
+	}
+	/** 取得：开始日期 */
+	public String getStart_date(){
+		return start_date;
+	}
+	/** 设置：开始日期 */
+	public void setStart_date(String start_date){
+		this.start_date=start_date;
+	}
+	/** 取得：结束日期 */
+	public String getEnd_date(){
+		return end_date;
+	}
+	/** 设置：结束日期 */
+	public void setEnd_date(String end_date){
+		this.end_date=end_date;
 	}
 }

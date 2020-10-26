@@ -32,7 +32,7 @@ public class Dq_failure_column extends ProjectTableEntity
 	}
 	@DocBean(name ="failure_column_id",value="列id:",dataType = Long.class,required = true)
 	private Long failure_column_id;
-	@DocBean(name ="column_source",value="字段来源(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层<DPL> DML-集市层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
+	@DocBean(name ="column_source",value="字段来源(DataSourceType):ISL-贴源层_01<ISL> DCL-贴源层<DCL> DPL-加工层-废弃<DPL> DML-加工层<DML> SFL-系统层<SFL> AML-AI模型层<AML> DQC-管控层<DQC> UDL-自定义层<UDL> ",dataType = String.class,required = true)
 	private String column_source;
 	@DocBean(name ="column_meta_info",value="字段元信息:",dataType = String.class,required = true)
 	private String column_meta_info;

@@ -3,13 +3,13 @@ package hrds.agent.job.biz.core.dfstage.service;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
-import hrds.agent.job.biz.utils.DataTypeTransform;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.FileFormat;
@@ -25,6 +25,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.orc.OrcFile;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
@@ -34,8 +36,6 @@ import org.apache.orc.mapred.OrcStruct;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
@@ -50,15 +50,16 @@ import java.util.concurrent.Callable;
 
 @DocClass(desc = "读取卸数文件到数据库", author = "zxz", createdate = "2019/12/17 15:43")
 public class ReadFileToDataBase implements Callable<Long> {
-	private final static Logger LOGGER = LoggerFactory.getLogger(ReadFileToDataBase.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	//卸数到本地的文件绝对路径
-	private String fileAbsolutePath;
+	private final String fileAbsolutePath;
 	//数据采集表对应的存储的所有信息
-	private CollectTableBean collectTableBean;
+	private final CollectTableBean collectTableBean;
 	//数据库采集表对应的meta信息
-	private TableBean tableBean;
+	private final TableBean tableBean;
 	//文件对应存储的目的地信息
-	private DataStoreConfBean dataStoreConfBean;
+	private final DataStoreConfBean dataStoreConfBean;
 
 	/**
 	 * 读取文件到数据库构造方法
@@ -73,7 +74,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	 *                          含义：文件需要上传到表对应的存储信息
 	 */
 	public ReadFileToDataBase(String fileAbsolutePath, TableBean tableBean, CollectTableBean collectTableBean,
-	                          DataStoreConfBean dataStoreConfBean) {
+							  DataStoreConfBean dataStoreConfBean) {
 		this.fileAbsolutePath = fileAbsolutePath;
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
@@ -84,15 +85,14 @@ public class ReadFileToDataBase implements Callable<Long> {
 	@Override
 	public Long call() {
 		long count;
-		DatabaseWrapper db = null;
-		try {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr())) {
 			//1.获取数据库的连接
-			db = ConnectionTool.getDBWrapper(dataStoreConfBean.getData_store_connect_attr());
-			//2.开启事务
-			db.beginTrans();
 			List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
-			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
-					Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
+			//2.取值的应该根据原来的类型来
+			List<String> sourceTypeList = StringUtil.split(tableBean.getColTypeMetaInfo(), Constant.METAINFOSPLIT);
+			//转换之后的类型用于建表语句
+//			List<String> typeList = DataTypeTransform.tansform(StringUtil.split(tableBean.getColTypeMetaInfo(),
+//					Constant.METAINFOSPLIT), dataStoreConfBean.getDsl_name());
 			//3.拼接batch插入数据库的sql
 			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
 					+ 1);
@@ -107,60 +107,61 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//是否包含表头
 			String is_header = tableBean.getIs_header();
 			if (FileFormat.CSV.getCode().equals(file_format)) {
-				count = readCsvToDataBase(db, columnList, typeList, batchSql, file_code, is_header);
+				count = readCsvToDataBase(db, columnList, sourceTypeList, batchSql, file_code, is_header);
 			} else if (FileFormat.PARQUET.getCode().equals(file_format)) {
-				count = readParquetToDataBase(db, columnList, typeList, batchSql);
+				count = readParquetToDataBase(db, columnList, sourceTypeList, batchSql);
 			} else if (FileFormat.ORC.getCode().equals(file_format)) {
-				count = readOrcToDataBase(db, typeList, batchSql);
+				count = readOrcToDataBase(db, sourceTypeList, batchSql);
 			} else if (FileFormat.SEQUENCEFILE.getCode().equals(file_format)) {
-				count = readSequenceToDataBase(db, columnList, typeList, batchSql);
+				count = readSequenceToDataBase(db, columnList, sourceTypeList, batchSql);
 			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
 				//分隔符为空
 				if (StringUtil.isEmpty(column_separator)) {
-					count = readDingChangToDataBase(db, columnList, typeList, batchSql,
-							file_code);
+					count = readDingChangToDataBase(db, columnList, sourceTypeList, batchSql, file_code, is_header);
 				} else {
-					count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql,
-							column_separator,
-							file_code);
+					count = readFeiDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
+							column_separator, file_code, is_header);
 				}
 			} else if (FileFormat.FeiDingChang.getCode().equals(file_format)) {
-				count = readFeiDingChangToDataBase(db, columnList, typeList, batchSql,
-						column_separator,
-						file_code);
+				count = readFeiDingChangToDataBase(db, columnList, sourceTypeList, batchSql,
+						column_separator, file_code, is_header);
 			} else {
 				throw new AppSystemException("不支持的卸数文件格式");
 			}
-			//5.提交事务
-			db.commit();
 		} catch (Exception e) {
 			count = -1L;
-			if (db != null)
-				db.rollback();
 			LOGGER.error("数据库采集读文件上传到数据库异常", e);
-		} finally {
-			if (db != null)
-				db.close();
 		}
 		//6.返回batch插入数据库的数据量
 		return count;
 	}
 
 	private long readFeiDingChangToDataBase(DatabaseWrapper db, List<String> columnList,
-	                                        List<String> typeList, String batchSql, String dataDelimiter,
-	                                        String database_code) {
+											List<String> typeList, String batchSql, String dataDelimiter,
+											String database_code, String is_header) {
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)))) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			String line;
+			if (IsFlag.Shi.getCode().equals(is_header)) {
+				//判断包含表头，先读取表头
+				line = reader.readLine();
+				if (line != null) {
+					LOGGER.info("读取到表头为：" + line);
+				}
+			}
 			Object[] objs;
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
-				List<String> valueList = StringUtil.split(line, String.valueOf(dataDelimiter));
+				List<String> valueList = StringUtil.split(line, dataDelimiter);
+				if (valueList.size() != columnList.size()) {
+					throw new AppSystemException("取到数据的列的数量跟数据字典定义的列的长度不一致，请检查数据是否有问题：========"
+							+ valueList.toString());
+				}
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), valueList.get(j));
+					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
 				pool.add(objs);
 				if (num % JobConstant.BUFFER_ROW == 0) {
@@ -171,7 +172,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 				doBatch(batchSql, pool, num, db);
 			}
 		} catch (Exception e) {
-			throw new AppSystemException("bash插入数据库失败", e);
+			throw new AppSystemException("bash插入数据库失败:", e);
 		}
 		return num;
 	}
@@ -191,7 +192,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readDingChangToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                     String batchSql, String database_code) {
+										 String batchSql, String database_code, String is_header) {
 		database_code = DataBaseCode.ofValueByCode(database_code);
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
@@ -205,12 +206,23 @@ public class ReadFileToDataBase implements Callable<Long> {
 			for (String lengthStr : lengthStrList) {
 				lengthList.add(Integer.parseInt(lengthStr));
 			}
+			if (IsFlag.Shi.getCode().equals(is_header)) {
+				//判断包含表头，先读取表头
+				line = reader.readLine();
+				if (line != null) {
+					LOGGER.info("读取到表头为：" + line);
+				}
+			}
 			while ((line = reader.readLine()) != null) {
 				num++;
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				List<String> valueList = getDingChangValueList(line, lengthList, database_code);
+				if (valueList.size() != columnList.size()) {
+					throw new AppSystemException("取到数据的列的数量跟数据字典定义的列的长度不一致，请检查数据是否有问题：========"
+							+ valueList.toString());
+				}
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), valueList.get(j));
+					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
 				pool.add(objs);
 				if (num % JobConstant.BUFFER_ROW == 0) {
@@ -227,7 +239,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readSequenceToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                    String batchSql) throws Exception {
+										String batchSql) throws Exception {
 		//TODO 这里是不是修改？？
 		Configuration conf = ConfigReader.getConfiguration();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
@@ -248,9 +260,13 @@ public class ReadFileToDataBase implements Callable<Long> {
 				//XXX SequenceFile不指定分隔符，页面也不允许其指定分隔符，使用hive默认的\001隐藏字符做分隔符
 				//XXX 这样只要创建hive映射外部表时使用store as sequencefile hive会自动解析。batch方式使用默认的去解析
 				List<String> valueList = StringUtil.split(str, Constant.SEQUENCEDELIMITER);
+				if (valueList.size() != columnList.size()) {
+					throw new AppSystemException("取到数据的列的数量跟数据字典定义的列的长度不一致，请检查数据是否有问题：========"
+							+ valueList.toString());
+				}
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), valueList.get(j));
+					objs[j] = getValue(typeList.get(j), valueList.get(j), db.getDbtype());
 				}
 				num++;
 				pool.add(objs);
@@ -269,7 +285,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readOrcToDataBase(DatabaseWrapper db, List<String> typeList,
-	                               String batchSql) throws Exception {
+								   String batchSql) throws Exception {
 		RecordReader rows = null;
 		long num = 0L;
 		try {
@@ -294,7 +310,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 					num++;
 					objs = new Object[result.getNumFields()];// 存储全量插入信息的list
 					for (int i = 0; i < result.getNumFields(); i++) {
-						objs[i] = getValue(typeList.get(i), result.getFieldValue(i));
+						objs[i] = getValue(typeList.get(i), result.getFieldValue(i), db.getDbtype());
 					}
 					pool.add(objs);
 //					LOGGER.info(objs.toString());
@@ -313,7 +329,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readParquetToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                                   String batchSql) {
+									   String batchSql) {
 		ParquetReader<Group> build = null;
 		try {
 			long num = 0;
@@ -379,13 +395,13 @@ public class ReadFileToDataBase implements Callable<Long> {
 	}
 
 	private long readCsvToDataBase(DatabaseWrapper db, List<String> columnList, List<String> typeList,
-	                               String batchSql, String database_code, String is_header) {
+								   String batchSql, String database_code, String is_header) {
 		//TODO 分隔符应该使用传进来的，懒得找了，测试的时候一起改吧
 		long num = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileAbsolutePath),
 				DataBaseCode.ofValueByCode(database_code)));
-		     CsvListReader csvReader = new CsvListReader(reader,
-				     CsvPreference.EXCEL_PREFERENCE)) {
+			 CsvListReader csvReader = new CsvListReader(reader,
+					 CsvPreference.EXCEL_PREFERENCE)) {
 			List<Object[]> pool = new ArrayList<>();// 存储全量插入信息的list
 			List<String> lineList;
 			Object[] objs;
@@ -399,7 +415,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 			while ((lineList = csvReader.read()) != null) {
 				objs = new Object[columnList.size()];// 存储全量插入信息的list
 				for (int j = 0; j < columnList.size(); j++) {
-					objs[j] = getValue(typeList.get(j), lineList.get(j));
+					objs[j] = getValue(typeList.get(j), lineList.get(j), db.getDbtype());
 				}
 				num++;
 				pool.add(objs);
@@ -416,7 +432,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	public static Object getValue(String type, WritableComparable tmpValue) {
+	public static Object getValue(String type, WritableComparable tmpValue, Dbtype dbtype) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -435,15 +451,20 @@ public class ReadFileToDataBase implements Callable<Long> {
 			str = tmpValue == null ? "" : tmpValue.toString();
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
 		}
+		if (Dbtype.TERADATA == dbtype) {
+			if (str != null) {
+				str = String.valueOf(str);
+			}
+		}
 		return str;
 	}
 
-	private static Object getValue(String type, String tmpValue) {
+	static Object getValue(String type, String tmpValue, Dbtype dbtype) {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isEmpty(tmpValue) ? null : Boolean.parseBoolean(tmpValue.trim());
+			str = StringUtil.isBlank(tmpValue) ? null : Boolean.parseBoolean(tmpValue.trim());
 		} else if (type.contains(DataTypeConstant.LONG.getMessage())
 				|| type.contains(DataTypeConstant.INT.getMessage())
 				|| type.contains(DataTypeConstant.FLOAT.getMessage())
@@ -451,12 +472,16 @@ public class ReadFileToDataBase implements Callable<Long> {
 				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isEmpty(tmpValue) ? null : new BigDecimal(tmpValue.trim());
-
+			str = StringUtil.isBlank(tmpValue) ? null : new BigDecimal(tmpValue.trim());
 		} else {
 			// 如果取出的值为null则给空字符串
-			str = StringUtil.isEmpty(tmpValue) ? "" : tmpValue;
+			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue.trim();
 			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		if (Dbtype.TERADATA == dbtype) {
+			if (str != null) {
+				str = String.valueOf(str);
+			}
 		}
 		return str;
 	}
@@ -464,18 +489,18 @@ public class ReadFileToDataBase implements Callable<Long> {
 	private void doBatch(String batchSql, List<Object[]> pool, long num, DatabaseWrapper db) {
 		int[] ints = db.execBatch(batchSql, pool);
 //		for (int i : ints) {
-		//XXX Oracle数据库batch插入，这边返回值是-2
+//		XXX Oracle数据库batch插入，这边返回值是-2
 //			if (i != 1) {
 //				throw new AppSystemException("批量插入数据出现错误,退出");
 //			}
-//		LOGGER.info("batch插入的返回值为" + i);
+//			LOGGER.info("batch插入的返回值为" + i);
 //		}
 		LOGGER.info("本次batch插入" + ints.length);
 		LOGGER.info("数据库已插入" + num + "条！");
 		pool.clear();// 插入成功，清空集合
 	}
 
-	private String getBatchSql(List<String> columns, String todayTableName) {
+	public static String getBatchSql(List<String> columns, String todayTableName) {
 		//拼接插入的sql
 		StringBuilder sbAdd = new StringBuilder();
 		sbAdd.append("insert into ").append(todayTableName).append("(");

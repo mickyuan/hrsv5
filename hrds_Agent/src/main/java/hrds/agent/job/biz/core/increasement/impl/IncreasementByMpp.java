@@ -8,8 +8,8 @@ import hrds.commons.codes.StorageType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.utils.HSqlExecute;
 import hrds.commons.utils.Constant;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +18,11 @@ import java.util.List;
  * Mpp数据库通过sql方式来处理增量问题
  */
 public class IncreasementByMpp extends JDBCIncreasement {
-	private static final Log logger = LogFactory.getLog(IncreasementByMpp.class);
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
 
 	public IncreasementByMpp(TableBean tableBean, String hbase_name, String sysDate, DatabaseWrapper db,
-	                         String dsl_name) {
+							 String dsl_name) {
 		super(tableBean, hbase_name, sysDate, db, dsl_name);
 	}
 
@@ -37,7 +38,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		getCreateDeltaSql(sqlList);
 		//3、把今天的卸载数据映射成一个表，这里在上传数据的时候加载到了todayTableName这张表。
 		//4、为了可以重跑，这边需要把今天（如果今天有进数的话）的数据清除掉
-		restore(StorageType.ZengLiang.getCode());
+		restore(StorageType.QuanLiang.getCode());
 		//5.将比较之后的需要insert的结果插入到临时表中
 		getInsertDataSql(sqlList);
 		//6.将比较之后的需要delete(拉链中的闭链)的结果插入到临时表中
@@ -64,7 +65,8 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			//删除原始表
 			dropTableIfExists(tableNameInHBase, db, list);
 			//重命名
-			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
+			list.add(db.getDbtype().ofRenameSql(tmpDelTa, tableNameInHBase));
+//			list.add("ALTER TABLE  " + tmpDelTa + " RENAME TO  " + tableNameInHBase);
 			HSqlExecute.executeSql(list, db);
 		} catch (Exception e) {
 			logger.error("根据临时表对mpp表做增量操作时发生错误！！", e);
@@ -97,11 +99,15 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		//临时表存在删除临时表
 		dropTableIfExists(deltaTableName, db, sqlList);
 		//将本次采集的数据复制到临时表
-		sqlList.add("CREATE TABLE " + deltaTableName + " AS SELECT * FROM " + todayTableName);
+		//复制表和数据
+		sqlList.add(db.getDbtype().ofCopyTableSchemasSql(todayTableName, deltaTableName));
+		sqlList.add(db.getDbtype().ofCopyTableDataSql(todayTableName, deltaTableName));
+//		sqlList.add("CREATE TABLE " + deltaTableName + " AS SELECT * FROM " + todayTableName);
 		//删除上次采集的数据表
 		dropTableIfExists(yesterdayTableName, db, sqlList);
 		//将临时表改名为进数之后的表
-		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
+		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
+//		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
 		//执行sql
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -114,7 +120,7 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	@Override
 	public void restore(String storageType) {
 		ArrayList<String> sqlList = new ArrayList<>();
-		if (StorageType.ZengLiang.getCode().equals(storageType)) {
+		if (StorageType.ZengLiang.getCode().equals(storageType) || StorageType.QuanLiang.getCode().equals(storageType)) {
 			//增量恢复数据
 			sqlList.add("delete from " + yesterdayTableName + " where " + Constant.SDATENAME + "='" + sysDate + "'");
 			sqlList.add("update " + yesterdayTableName + " set " + Constant.EDATENAME + " = "
@@ -128,6 +134,51 @@ public class IncreasementByMpp extends JDBCIncreasement {
 			throw new AppSystemException("错误的增量拉链参数代码项");
 		}
 		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 采集增量数据算拉链
+	 */
+	@Override
+	public void incrementalDataZipper() {
+		//1.为了防止第一次执行，yesterdayTableName表不存在，创建空表
+		HSqlExecute.executeSql(createTableIfNotExists(yesterdayTableName, db, columns, types), db);
+		ArrayList<String> sqlList = new ArrayList<>();
+		//1.复制表的数据到增量临时表
+		sqlList.add(db.getDbtype().ofCopyTableSchemasSql(yesterdayTableName, deltaTableName));
+		sqlList.add(db.getDbtype().ofCopyTableDataSql(yesterdayTableName, deltaTableName));
+		//2.防止重跑恢复今天入库的数据
+		restore(StorageType.ZengLiang.getCode());
+		//3.找出需要关链的数据，进行关链
+		updateInvalidDataSql(sqlList);
+		//4.插入增量数据
+		sqlList.add(insertDeltaDataSql(deltaTableName, todayTableName));
+		//5.删除上次采集的数据表
+		dropTableIfExists(yesterdayTableName, db, sqlList);
+		//6.将临时表改名为进数之后的表
+		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
+		HSqlExecute.executeSql(sqlList, db);
+	}
+
+	/**
+	 * 找出需要关链的数据，进行关链
+	 */
+	private void updateInvalidDataSql(ArrayList<String> sqlList) {
+		//拼接查找增量并插入增量表
+		String updateDataSql = "UPDATE " +
+				deltaTableName +
+				" SET " + Constant.EDATENAME +
+				"='" + sysDate + "'" +
+				" WHERE EXISTS " +
+				" ( select " + Constant.MD5NAME + " from " +
+				todayTableName +
+				" where " +
+				deltaTableName + "." + Constant.MD5NAME +
+				" = " +
+				todayTableName + "." + Constant.MD5NAME + ")" +
+				" AND " + deltaTableName + "." + Constant.EDATENAME +
+				" = '" + Constant.MAXDATE + "'";
+		sqlList.add(updateDataSql);
 	}
 
 	/**
@@ -147,7 +198,11 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	private void getCreateDeltaSql(ArrayList<String> sqlList) {
 		//1  创建增量表
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-		sql.append("CREATE TABLE ");
+		if (db.getDbtype() == Dbtype.TERADATA) {
+			sql.append("CREATE MULTISET TABLE ");
+		} else {
+			sql.append("CREATE TABLE ");
+		}
 		sql.append(deltaTableName);
 		sql.append("(");
 		for (int i = 0; i < columns.size(); i++) {
@@ -303,7 +358,11 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	private String createInvalidDataSql(String tmpDelTa) {
 		//1  创建临时表
 		StringBuilder sql = new StringBuilder(120); //拼接创表sql语句
-		sql.append("CREATE TABLE ");
+		if (db.getDbtype() == Dbtype.TERADATA) {
+			sql.append("CREATE MULTISET TABLE ");
+		} else {
+			sql.append("CREATE TABLE ");
+		}
 		sql.append(tmpDelTa);
 		sql.append("(");
 		for (int i = 0; i < columns.size(); i++) {
@@ -315,34 +374,17 @@ public class IncreasementByMpp extends JDBCIncreasement {
 	}
 
 	/**
-	 * 表存在先删除该表，这里因为Oracle不支持DROP TABLE IF EXISTS
-	 */
-	public static void dropTableIfExists(String tableName, DatabaseWrapper db, List<String> sqlList) {
-		if (Dbtype.ORACLE.equals(db.getDbtype())) {
-			//如果有数据则表明该表存在，创建表
-			if (db.isExistTable(tableName)) {
-				sqlList.add("DROP TABLE " + tableName);
-			}
-		} else {
-			sqlList.add("DROP TABLE IF EXISTS " + tableName);
-		}
-	}
-
-	/**
 	 * 创建表，如果表不存在
 	 */
 	private String createTableIfNotExists(String tableName, DatabaseWrapper db, List<String> columns, List<String> types) {
 		StringBuilder create = new StringBuilder(1024);
-		if (Dbtype.ORACLE.equals(db.getDbtype())) {
-			//如果有数据则表明该表存在，创建表
-			if (!db.isExistTable(tableName)) {
+		//如果有数据则表明该表存在，创建表
+		if (!db.isExistTable(tableName)) {
+			if (db.getDbtype() == Dbtype.TERADATA) {
+				create.append("CREATE MULTISET TABLE ");
+			} else {
 				create.append("CREATE TABLE ");
 			}
-		} else {
-			create.append("CREATE TABLE IF NOT EXISTS ");
-		}
-		//当StringBuilder中有值
-		if (create.length() > 10) {
 			create.append(tableName);
 			create.append("(");
 			for (int i = 0; i < columns.size(); i++) {
@@ -364,6 +406,19 @@ public class IncreasementByMpp extends JDBCIncreasement {
 		List<String> deleteInfo = new ArrayList<>();
 		//删除临时增量表
 		dropTableIfExists(deltaTableName, db, deleteInfo);
+		//清空表数据
+		HSqlExecute.executeSql(deleteInfo, db);
+	}
+
+	/**
+	 * 对象采集，没有数据保留天数，删除当天卸数下来的数据
+	 */
+	@Override
+	public void dropTodayTable() {
+		//删除映射表
+		List<String> deleteInfo = new ArrayList<>();
+		//删除临时增量表
+		JDBCIncreasement.dropTableIfExists(todayTableName, db, deleteInfo);
 		//清空表数据
 		HSqlExecute.executeSql(deleteInfo, db);
 	}

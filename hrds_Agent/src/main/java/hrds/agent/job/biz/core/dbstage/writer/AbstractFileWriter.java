@@ -19,8 +19,8 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -29,14 +29,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @DocClass(desc = "数据库直连采集以指定的格式将数据卸到指定的数据文件，接口适配器，抽象类", author = "WangZhengcheng")
 public abstract class AbstractFileWriter implements FileWriterInterface {
-	private final static Logger LOGGER = LoggerFactory.getLogger(AbstractFileWriter.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 	private static final String SCHEMA_JSON = "{\"type\": \"record\",\"name\": \"BigFilesTest\", " + "\"fields\": [" + "{\"name\":\"" + "currValue"
 			+ "\",\"type\":\"string\"}," + "{\"name\":\"" + "readerToByte" + "\", \"type\":\"bytes\"}" + "]}";//avro schema
 
@@ -52,10 +50,10 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	//操作时间
 	protected String operateTime;
 	//操作人
-	protected long user_id;
+	protected String user_id;
 
 	public AbstractFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                          TableBean tableBean, Data_extraction_def data_extraction_def) {
+							  TableBean tableBean, Data_extraction_def data_extraction_def) {
 		this.resultSet = resultSet;
 		this.collectTableBean = collectTableBean;
 		this.pageNum = pageNum;
@@ -63,7 +61,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		this.data_extraction_def = data_extraction_def;
 		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
-		this.user_id = collectTableBean.getUser_id();
+		this.user_id = String.valueOf(collectTableBean.getUser_id());
 	}
 
 	@Method(desc = "把Blob类型转换为byte字节数组, 用于写Avro，在抽象类中实现，请子类不要覆盖这个方法"
@@ -105,7 +103,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * 解析result一行的值
 	 */
 	protected String getOneColumnValue(DataFileWriter<Object> avroWriter, long lineCounter, int pageNum, ResultSet resultSet,
-	                                   int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
+									   int type, StringBuilder sb_, String column_name, String hbase_name, String midName)
 			throws SQLException, IOException {
 		String lobs_file_name = "";
 		String reader2String = "";
@@ -114,7 +112,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			Blob blob = resultSet.getBlob(column_name);
 			if (null != blob) {
 				readerToByte = blobToBytes(blob);
-				if (readerToByte != null && readerToByte.length > 0) {
+				if (readerToByte.length > 0) {
 					lobs_file_name = "LOBs_" + hbase_name + "_" + column_name + "_" + pageNum + "_"
 							+ lineCounter + "_BLOB_" + avroWriter.sync();
 					sb_.append(lobs_file_name);
@@ -144,8 +142,14 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		} else {
 			Object oj = resultSet.getObject(column_name);
 			if (null != oj) {
-				if (type == java.sql.Types.TIMESTAMP || type == java.sql.Types.DATE || type == java.sql.Types.TIME) {
+				if (type == java.sql.Types.TIMESTAMP) {
 					Date date = resultSet.getTimestamp(column_name);
+					reader2String = date.toString();
+				} else if (type == java.sql.Types.DATE) {
+					Date date = resultSet.getDate(column_name);
+					reader2String = date.toString();
+				} else if (type == java.sql.Types.TIME) {
+					Date date = resultSet.getTime(column_name);
 					reader2String = date.toString();
 				} else if (type == java.sql.Types.CHAR || type == java.sql.Types.VARCHAR
 						|| type == java.sql.Types.NVARCHAR || type == java.sql.Types.BINARY
@@ -248,7 +252,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @throws IOException 获取avro文件输出流异常
 	 */
 	protected DataFileWriter<Object> getAvroWriter(int[] typeArray, String hbase_name,
-	                                               String midName, long pageNum) throws IOException {
+												   String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (int type : typeArray) {
 			//TODO 哪些是大字段这里要支持配置
@@ -297,7 +301,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	 * @throws IOException 获取avro文件输出流异常
 	 */
 	protected DataFileWriter<Object> getAvroWriter(Map<String, Integer> typeMap, String hbase_name,
-	                                               String midName, long pageNum) throws IOException {
+												   String midName, long pageNum) throws IOException {
 		DataFileWriter<Object> avroWriter = null;
 		for (String key : typeMap.keySet()) {
 			Integer type = typeMap.get(key);
@@ -328,7 +332,7 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 	/**
 	 * 字段变为定长
 	 */
-	public static String columnToFixed(String columnValue, int length, String database_code) {
+	public static String columnToFixed(String columnValue, int length, String database_code, String column_name) {
 		StringBuilder sb;
 		try {
 			byte[] bytes = columnValue.getBytes(DataBaseCode.ofValueByCode(database_code));
@@ -340,7 +344,8 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 					sb.append(' ');
 				}
 			} else {
-				throw new AppSystemException("定长指定的长度小于源数据长度");
+				throw new AppSystemException(column_name + "字段定长指定的长度小于源数据长度；字段自定长度为：" + length
+						+ ",实际值长度为：" + columnValueLength);
 			}
 			return sb.toString();
 		} catch (UnsupportedEncodingException e) {
@@ -359,4 +364,25 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 		return integerList;
 	}
 
+	/**
+	 * 查询是否选择了拉链字段，如果有，则不做任何操作，没有，则全部key的值变为true
+	 */
+	protected Map<String, Boolean> transMd5ColMap(Map<String, Boolean> md5ColMap) {
+		Map<String, Boolean> map = new HashMap<>();
+		boolean flag = true;
+		for (String key : md5ColMap.keySet()) {
+			if (md5ColMap.get(key)) {
+				flag = false;
+				break;
+			}
+		}
+		if (flag) {
+			for (String key : md5ColMap.keySet()) {
+				map.put(key, true);
+			}
+		} else {
+			map = md5ColMap;
+		}
+		return map;
+	}
 }

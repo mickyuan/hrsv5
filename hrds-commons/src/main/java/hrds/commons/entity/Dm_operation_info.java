@@ -32,14 +32,20 @@ public class Dm_operation_info extends ProjectTableEntity
 	}
 	@DocBean(name ="id",value="信息表id:",dataType = Long.class,required = true)
 	private Long id;
-	@DocBean(name ="execute_sql",value="执行的sql语句:",dataType = String.class,required = true)
-	private String execute_sql;
+	@DocBean(name ="view_sql",value="预览sql语句:",dataType = String.class,required = true)
+	private String view_sql;
 	@DocBean(name ="search_name",value="join类型:",dataType = String.class,required = false)
 	private String search_name;
 	@DocBean(name ="remark",value="备注:",dataType = String.class,required = false)
 	private String remark;
 	@DocBean(name ="datatable_id",value="数据表id:",dataType = Long.class,required = true)
 	private Long datatable_id;
+	@DocBean(name ="execute_sql",value="执行sql语句:",dataType = String.class,required = false)
+	private String execute_sql;
+	@DocBean(name ="start_date",value="开始日期:",dataType = String.class,required = true)
+	private String start_date;
+	@DocBean(name ="end_date",value="结束日期:",dataType = String.class,required = true)
+	private String end_date;
 
 	/** 取得：信息表id */
 	public Long getId(){
@@ -55,13 +61,13 @@ public class Dm_operation_info extends ProjectTableEntity
 			this.id=new Long(id);
 		}
 	}
-	/** 取得：执行的sql语句 */
-	public String getExecute_sql(){
-		return execute_sql;
+	/** 取得：预览sql语句 */
+	public String getView_sql(){
+		return view_sql;
 	}
-	/** 设置：执行的sql语句 */
-	public void setExecute_sql(String execute_sql){
-		this.execute_sql=execute_sql;
+	/** 设置：预览sql语句 */
+	public void setView_sql(String view_sql){
+		this.view_sql=view_sql;
 	}
 	/** 取得：join类型 */
 	public String getSearch_name(){
@@ -92,5 +98,29 @@ public class Dm_operation_info extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(datatable_id)){
 			this.datatable_id=new Long(datatable_id);
 		}
+	}
+	/** 取得：执行sql语句 */
+	public String getExecute_sql(){
+		return execute_sql;
+	}
+	/** 设置：执行sql语句 */
+	public void setExecute_sql(String execute_sql){
+		this.execute_sql=execute_sql;
+	}
+	/** 取得：开始日期 */
+	public String getStart_date(){
+		return start_date;
+	}
+	/** 设置：开始日期 */
+	public void setStart_date(String start_date){
+		this.start_date=start_date;
+	}
+	/** 取得：结束日期 */
+	public String getEnd_date(){
+		return end_date;
+	}
+	/** 设置：结束日期 */
+	public void setEnd_date(String end_date){
+		this.end_date=end_date;
 	}
 }

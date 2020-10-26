@@ -10,6 +10,7 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
 import hrds.testbase.WebBaseTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -17,85 +18,57 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SysLevelInterventionActionTest extends WebBaseTestCase {
 
-	// 初始化登录用户ID
-	private static final long UserId = 6666L;
-	// 初始化创建用户ID
-	private static final long CreateId = 1000L;
-	// 测试部门ID dep_id,测试作业调度部门
-	private static final long DepId = 1000011L;
+	//请填写测试用户需要做登录验证的A项目的登录验证的接口
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
+	// 已经存在的用户ID,用于模拟登录
+	private static final long USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
+	//当前线程的id
+	private long THREAD_ID = Thread.currentThread().getId();
 	// 初始化工程编号
-	private static final String EtlSysCd = "zygyglcs";
-	private static final String EtlSysCd2 = "zygyglcs2";
-	private static final String EtlSysCd3 = "zygyglcs3";
+	private final String EtlSysCd = "xtgyglcs" + THREAD_ID;
+	private final String EtlSysCd2 = "xtgyglcs2" + THREAD_ID;
+	private final String EtlSysCd3 = "xtgyglcs3" + THREAD_ID;
 	// 初始化任务编号
-	private static final String SubSysCd = "zygyrwcs";
-	private static final String EventId = "2019-17-04 17:04:03";
-	private static final String HisEventId = "2019-17-04 17:04:04";
-	private static final String HisEventId2 = "2019-17-04 17:04:05";
+	private final String EventId = "time1" + THREAD_ID;
+	private final String HisEventId = "time2" + THREAD_ID;
+	private final String HisEventId2 = "time3" + THREAD_ID;
 
 	@Before
 	public void before() {
 		// 初始化作业干预测试数据
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
-			// 1.构造sys_user表测试数据
-			Sys_user sysUser = new Sys_user();
-			sysUser.setUser_id(UserId);
-			sysUser.setCreate_id(CreateId);
-			sysUser.setDep_id(DepId);
-			sysUser.setCreate_date(DateUtil.getSysDate());
-			sysUser.setCreate_time(DateUtil.getSysTime());
-			sysUser.setRole_id("1001");
-			sysUser.setUser_name("作业干预功能测试");
-			sysUser.setUser_password("1");
-			sysUser.setUser_type(UserType.CaiJiYongHu.getCode());
-			sysUser.setUseris_admin("1");
-			sysUser.setUsertype_group("02,03,04,08");
-			sysUser.setUser_state(IsFlag.Shi.getCode());
-			int num = sysUser.add(db);
-			assertThat("测试数据sys_user数据初始化", num, is(1));
-			// 2.构造department_info部门表测试数据
-			Department_info department_info = new Department_info();
-			department_info.setDep_id(DepId);
-			department_info.setDep_name("测试作业调度部门");
-			department_info.setCreate_date(DateUtil.getSysDate());
-			department_info.setCreate_time(DateUtil.getSysTime());
-			department_info.setDep_remark("测试");
-			num = department_info.add(db);
-			assertThat("测试数据department_info初始化", num, is(1));
-			// 3.构造etl_sys表测试数据
+			// 构造etl_sys表测试数据
 			Etl_sys etl_sys = new Etl_sys();
 			for (int i = 0; i < 3; i++) {
 				if (i == 0) {
 					etl_sys.setEtl_sys_cd(EtlSysCd);
-					etl_sys.setEtl_sys_name("dhwcs");
+					etl_sys.setEtl_sys_name("dhwcs" + THREAD_ID);
 				} else if (i == 1) {
 					etl_sys.setEtl_sys_cd(EtlSysCd2);
-					etl_sys.setEtl_sys_name("dhwcs2");
+					etl_sys.setEtl_sys_name("dhwcs2" + THREAD_ID);
 				} else {
 					etl_sys.setEtl_sys_cd(EtlSysCd3);
-					etl_sys.setEtl_sys_name("dhwcs3");
+					etl_sys.setEtl_sys_name("dhwcs3" + THREAD_ID);
 				}
-				etl_sys.setUser_id(UserId);
+				etl_sys.setUser_id(USER_ID);
 				etl_sys.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
-				num = etl_sys.add(db);
-				assertThat("测试数据etl_sys初始化", num, is(1));
+				assertThat("测试数据etl_sys初始化", etl_sys.add(db), is(1));
 			}
-			// 4.构造etl_sub_sys_list表测试数据
+			// 构造etl_sub_sys_list表测试数据
 			Etl_sub_sys_list etl_sub_sys_list = new Etl_sub_sys_list();
-			etl_sub_sys_list.setSub_sys_cd(SubSysCd);
+			etl_sub_sys_list.setSub_sys_cd("xtgyrwcs");
 			etl_sub_sys_list.setEtl_sys_cd(EtlSysCd);
 			etl_sub_sys_list.setSub_sys_desc("任务测试");
 			etl_sub_sys_list.setComments("测试");
-			num = etl_sub_sys_list.add(db);
-			assertThat("测试数据data_source初始化", num, is(1));
-			// 5.构造etl_job_curr表测试数据
+			assertThat("测试数据data_source初始化", etl_sub_sys_list.add(db), is(1));
+			// 构造etl_job_curr表测试数据
 			Etl_job_cur etl_job_cur = new Etl_job_cur();
 			etl_job_cur.setEtl_sys_cd(EtlSysCd);
 			etl_job_cur.setEtl_job("[NOTHING]");
@@ -107,7 +80,7 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 			etl_job_cur.setCurr_bath_date(DateUtil.parseStr2DateWith8Char(DateUtil.getSysDate()).toString());
 			etl_job_cur.setPro_name("zy.shell");
 			etl_job_cur.setPro_type(Pro_Type.SHELL.getCode());
-			etl_job_cur.setSub_sys_cd(SubSysCd);
+			etl_job_cur.setSub_sys_cd("xtgyrwcs");
 			etl_job_cur.setDisp_type(Dispatch_Type.TPLUS0.getCode());
 			etl_job_cur.setDisp_freq(Dispatch_Frequency.PinLv.getCode());
 			etl_job_cur.setExe_frequency(1L);
@@ -116,9 +89,8 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 					+ " " + DateUtil.parseStr2TimeWith6Char(DateUtil.getSysTime()));
 			etl_job_cur.setEnd_time("2020-12-31 10:30:30");
 			etl_job_cur.setJob_disp_status(Job_Status.ERROR.getCode());
-			num = etl_job_cur.add(db);
-			assertThat("测试数据etl_job_cur初始化", num, is(1));
-			// 6.构造etl_job_hand表测试数据
+			assertThat("测试数据etl_job_cur初始化", etl_job_cur.add(db), is(1));
+			// 构造etl_job_hand表测试数据
 			Etl_job_hand etl_job_hand = new Etl_job_hand();
 			etl_job_hand.setEtl_sys_cd(EtlSysCd);
 			etl_job_hand.setEtl_job("[NOTHING]");
@@ -126,14 +98,13 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 			etl_job_hand.setHand_status(Meddle_status.FALSE.getCode());
 			etl_job_hand.setEvent_id(EventId);
 			etl_job_hand.setEtl_hand_type(Meddle_type.SYS_ORIGINAL.getCode());
-			num = etl_job_hand.add(db);
-			assertThat("测试数据etl_job_hand初始化", num, is(1));
-			// 7.构造etl_job_hand_his表测试数据
+			assertThat("测试数据etl_job_hand初始化", etl_job_hand.add(db), is(1));
+			// 构造etl_job_hand_his表测试数据
 			Etl_job_hand_his etl_job_hand_his = new Etl_job_hand_his();
 			for (int i = 0; i < 2; i++) {
+				etl_job_hand_his.setEtl_sys_cd(EtlSysCd);
+				etl_job_hand_his.setEtl_job("[NOTHING]");
 				if (i == 0) {
-					etl_job_hand_his.setEtl_sys_cd(EtlSysCd);
-					etl_job_hand_his.setEtl_job("[NOTHING]");
 					etl_job_hand_his.setMain_serv_sync(Main_Server_Sync.YES.getCode());
 					etl_job_hand_his.setHand_status(Meddle_status.ERROR.getCode());
 					etl_job_hand_his.setEvent_id(HisEventId);
@@ -146,114 +117,76 @@ public class SysLevelInterventionActionTest extends WebBaseTestCase {
 					etl_job_hand_his.setEvent_id(HisEventId2);
 					etl_job_hand_his.setEtl_hand_type(Meddle_type.SYS_SHIFT.getCode());
 				}
-				num = etl_job_hand_his.add(db);
-				assertThat("测试数据etl_job_hand_his初始化", num, is(1));
+				assertThat("测试数据etl_job_hand_his初始化", etl_job_hand_his.add(db), is(1));
 			}
 			SqlOperator.commitTransaction(db);
 		}
-		// 13.模拟用户登录
-		String responseValue = new HttpClient()
+		// 模拟用户登录
+		String bodyString = new HttpClient()
 				.buildSession()
-				.addData("user_id", UserId)
-				.addData("password", "1")
-				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
+				.addData("user_id", USER_ID)
+				.addData("password", PASSWORD)
+				.post(LOGIN_URL)
 				.getBodyString();
-		Optional<ActionResult> ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class);
-		assertThat("用户登录", ar.get().isSuccess(), is(true));
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat("用户登录", ar.isSuccess(), is(true));
 	}
 
 	@After
 	public void after() {
-		DatabaseWrapper db = new DatabaseWrapper();
-		try {
-			// 1.测试完成后删除sys_user表测试数据
-			SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", UserId);
-			// 判断sys_user数据是否被删除
-			long num = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName +
-					"  where user_id=?", UserId).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 2.测试完成后删除Etl_sub_sys表测试数据
-			SqlOperator.execute(db, "delete from " + Etl_sub_sys_list.TableName + " where etl_sys_cd=?",
-					EtlSysCd);
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			// 测试完成后删除Etl_sub_sys表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Etl_sub_sys_list.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3);
 			// 判断Etl_sub_sys数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sub_sys_list.TableName +
-					"  where etl_sys_cd=?", EtlSysCd).orElseThrow(() ->
-					new RuntimeException("count fail!"));
+			long num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_sub_sys_list.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 3.测试完成后删除etl_sys表测试数据
-			SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?", EtlSysCd);
+			// 测试完成后删除etl_sys表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Etl_sys.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3);
 			// 判断etl_sys数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
-					"  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_sys.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?", EtlSysCd2);
-			// 判断etl_sys数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
-					"  where etl_sys_cd=?", EtlSysCd2).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_sys.TableName + " where etl_sys_cd=?", EtlSysCd3);
-			// 判断etl_sys数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_sys.TableName +
-					"  where etl_sys_cd=?", EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 4.测试完删除department_info表测试数据
-			SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?",
-					DepId);
-			// 判断department_info数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName +
-					"  where dep_id=?", DepId).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 5.测试完删除Etl_job_hand表测试数据
-			SqlOperator.execute(db, "delete from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
-					EtlSysCd);
+			// 测试完删除Etl_job_hand表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Etl_job_hand.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3);
 			// 判断Etl_job_hand数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand.TableName +
-					"  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_hand.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
-					EtlSysCd2);
-			// 判断Etl_job_hand数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand.TableName +
-					"  where etl_sys_cd=?", EtlSysCd2).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_job_hand.TableName + " where etl_sys_cd=?",
-					EtlSysCd3);
-			// 判断Etl_job_hand数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand.TableName +
-					"  where etl_sys_cd=?", EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 6.测试完删除Etl_job_hand_his表测试数据
-			SqlOperator.execute(db, "delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?",
-					EtlSysCd);
+			// 测试完删除Etl_job_hand_his表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3);
 			// 判断Etl_job_hand_his数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand_his.TableName +
-					"  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_hand_his.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?",
-					EtlSysCd2);
-			// 判断Etl_job_hand_his数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand_his.TableName +
-					"  where etl_sys_cd=?", EtlSysCd2).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			SqlOperator.execute(db, "delete from " + Etl_job_hand_his.TableName + " where etl_sys_cd=?",
-					EtlSysCd3);
-			// 判断Etl_job_hand_his数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_hand_his.TableName +
-					"  where etl_sys_cd=?", EtlSysCd3).orElseThrow(() -> new RuntimeException("count fail!"));
-			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 7.测试完删除Etl_job_cur表测试数据
-			SqlOperator.execute(db, "delete from " + Etl_job_cur.TableName + " where etl_sys_cd=?",
-					EtlSysCd);
+			// 测试完删除Etl_job_cur表测试数据
+			SqlOperator.execute(db,
+					"delete from " + Etl_job_cur.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3);
 			// 判断Etl_job_cur数据是否被删除
-			num = SqlOperator.queryNumber(db, "select count(1) from " + Etl_job_cur.TableName +
-					"  where etl_sys_cd=?", EtlSysCd).orElseThrow(() -> new RuntimeException("count fail!"));
+			num = SqlOperator.queryNumber(db,
+					"select count(1) from " + Etl_job_cur.TableName + " where etl_sys_cd in(?,?,?)",
+					EtlSysCd, EtlSysCd2, EtlSysCd3)
+					.orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", num, is(0L));
-			// 8.提交事务
+			// 提交事务
 			SqlOperator.commitTransaction(db);
-		} catch (Exception e) {
-			db.rollback();
-		} finally {
-			db.close();
 		}
 	}
 

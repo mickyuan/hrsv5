@@ -1,21 +1,19 @@
 package hrds.commons.hadoop.readconfig;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
-
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.utils.PropertyParaValue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
+
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class C80LoginUtil {
 
@@ -24,7 +22,7 @@ public class C80LoginUtil {
 
 		private String name;
 
-		private Module(String name) {
+		Module(String name) {
 
 			this.name = name;
 		}
@@ -78,28 +76,21 @@ public class C80LoginUtil {
 
 	private static final boolean IS_IBM_JDK = System.getProperty("java.vendor").contains("IBM");
 
-	private static final String PRNCIPAL_NAME = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
-
 	private static final String ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL = "zookeeper/hadoop.hadoop.com";
 
-	private static String PRINCIPAL = "username.client.kerberos.principal";
-	private static String KEYTAB = "username.client.keytab.file";
-
-	private static String confDir;
 	public static String PATH_TO_KEYTAB;
 	public static String PATH_TO_KRB5_CONF;
 	public static String PATH_TO_JAAS;
 
-	public synchronized static Configuration login(Configuration conf) throws IOException {
+	public synchronized static Configuration login(Configuration conf, String prncipal_name) throws IOException {
 		if (conf == null) {
 			throw new AppSystemException("初始化配置为空！");
 		}
-		confDir = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
+		String confDir = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 		PATH_TO_KEYTAB = confDir + "user.keytab";
 		PATH_TO_KRB5_CONF = confDir + "krb5.conf";
 		PATH_TO_JAAS = confDir + "jaas.conf";
 
-		String userPrincipal = PRNCIPAL_NAME;
 		String userKeytabPath = PATH_TO_KEYTAB;
 		String krb5ConfPath = PATH_TO_KRB5_CONF;
 
@@ -109,19 +100,9 @@ public class C80LoginUtil {
 		//		}
 
 		// 1.check input parameters
-		if ((userPrincipal == null) || (userPrincipal.length() <= 0)) {
+		if ((prncipal_name == null) || (prncipal_name.length() <= 0)) {
 			log.error("input userPrincipal is invalid.");
 			throw new IOException("input userPrincipal is invalid.");
-		}
-
-		if (userKeytabPath.length() <= 0) {
-			log.error("input userKeytabPath is invalid.");
-			throw new IOException("input userKeytabPath is invalid.");
-		}
-
-		if (krb5ConfPath.length() <= 0) {
-			log.error("input krb5ConfPath is invalid.");
-			throw new IOException("input krb5ConfPath is invalid.");
 		}
 
 		// 2.check file exsits
@@ -147,9 +128,11 @@ public class C80LoginUtil {
 
 		System.setProperty("java.security.krb5.conf", PATH_TO_KRB5_CONF);
 
+		String KEYTAB = "username.client.keytab.file";
 		conf.set(KEYTAB, PATH_TO_KEYTAB);
-		conf.set(PRINCIPAL, PRNCIPAL_NAME);
-		setJaasConf("Client", PRNCIPAL_NAME, PATH_TO_KEYTAB);
+		String PRINCIPAL = "username.client.kerberos.principal";
+		conf.set(PRINCIPAL, prncipal_name);
+		setJaasConf("Client", prncipal_name, PATH_TO_KEYTAB);
 		setZookeeperServerPrincipal(ZOOKEEPER_SERVER_PRINCIPAL_KEY, ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
 
 		// 3.set and check krb5config
@@ -157,12 +140,12 @@ public class C80LoginUtil {
 		setConfiguration(conf);
 
 		// 4.login and check for hadoop
-		loginHadoop(userPrincipal, userKeytabFile.getAbsolutePath());
+		loginHadoop(prncipal_name, userKeytabFile.getAbsolutePath());
 		log.info("Login success!!!!!!!!!!!!!!");
 		return conf;
 	}
 
-	private static void setConfiguration(Configuration conf) throws IOException {
+	private static void setConfiguration(Configuration conf) {
 
 		UserGroupInformation.setConfiguration(conf);
 	}
@@ -222,14 +205,11 @@ public class C80LoginUtil {
 
 	private static void writeJaasFile(String jaasPath, String principal, String keytabPath) throws IOException {
 
-		FileWriter writer = new FileWriter(new File(jaasPath));
-		try {
+		try (FileWriter writer = new FileWriter(new File(jaasPath))) {
 			writer.write(getJaasConfContext(principal, keytabPath));
 			writer.flush();
 		} catch (IOException e) {
 			throw new IOException("Failed to create jaas.conf File");
-		} finally {
-			writer.close();
 		}
 	}
 
@@ -260,16 +240,16 @@ public class C80LoginUtil {
 			builder.append(module.getName()).append(" {").append(LINE_SEPARATOR);
 			builder.append(IBM_LOGIN_MODULE).append(LINE_SEPARATOR);
 			builder.append("credsType=both").append(LINE_SEPARATOR);
-			builder.append("principal=\"" + userPrincipal + "\"").append(LINE_SEPARATOR);
-			builder.append("useKeytab=\"" + keyTabPath + "\"").append(LINE_SEPARATOR);
+			builder.append("principal=\"").append(userPrincipal).append("\"").append(LINE_SEPARATOR);
+			builder.append("useKeytab=\"").append(keyTabPath).append("\"").append(LINE_SEPARATOR);
 			builder.append("debug=true;").append(LINE_SEPARATOR);
 			builder.append("};").append(LINE_SEPARATOR);
 		} else {
 			builder.append(module.getName()).append(" {").append(LINE_SEPARATOR);
 			builder.append(SUN_LOGIN_MODULE).append(LINE_SEPARATOR);
 			builder.append("useKeyTab=true").append(LINE_SEPARATOR);
-			builder.append("keyTab=\"" + keyTabPath + "\"").append(LINE_SEPARATOR);
-			builder.append("principal=\"" + userPrincipal + "\"").append(LINE_SEPARATOR);
+			builder.append("keyTab=\"").append(keyTabPath).append("\"").append(LINE_SEPARATOR);
+			builder.append("principal=\"").append(userPrincipal).append("\"").append(LINE_SEPARATOR);
 			builder.append("useTicketCache=false").append(LINE_SEPARATOR);
 			builder.append("storeKey=true").append(LINE_SEPARATOR);
 			builder.append("debug=true;").append(LINE_SEPARATOR);
@@ -303,7 +283,7 @@ public class C80LoginUtil {
 		}
 
 		javax.security.auth.login.Configuration
-				.setConfiguration(new JaasConfiguration(loginContextName, principal, userKeytabFile.getAbsolutePath()));
+			.setConfiguration(new JaasConfiguration(loginContextName, principal, userKeytabFile.getAbsolutePath()));
 
 		javax.security.auth.login.Configuration conf = javax.security.auth.login.Configuration.getConfiguration();
 		if (!(conf instanceof JaasConfiguration)) {
@@ -319,17 +299,17 @@ public class C80LoginUtil {
 
 		boolean checkPrincipal = false;
 		boolean checkKeytab = false;
-		for (int i = 0; i < entrys.length; i++) {
-			if (entrys[i].getOptions().get("principal").equals(principal)) {
+		for (AppConfigurationEntry entry : entrys) {
+			if (entry.getOptions().get("principal").equals(principal)) {
 				checkPrincipal = true;
 			}
 
 			if (IS_IBM_JDK) {
-				if (entrys[i].getOptions().get("useKeytab").equals(keytabFile)) {
+				if (entry.getOptions().get("useKeytab").equals(keytabFile)) {
 					checkKeytab = true;
 				}
 			} else {
-				if (entrys[i].getOptions().get("keyTab").equals(keytabFile)) {
+				if (entry.getOptions().get("keyTab").equals(keytabFile)) {
 					checkKeytab = true;
 				}
 			}
@@ -362,7 +342,6 @@ public class C80LoginUtil {
 		}
 	}
 
-	@Deprecated
 	public static void setZookeeperServerPrincipal(String zkServerPrincipalKey, String zkServerPrincipal) throws IOException {
 
 		System.setProperty(zkServerPrincipalKey, zkServerPrincipal);
@@ -451,16 +430,16 @@ public class C80LoginUtil {
 	 */
 	private static class JaasConfiguration extends javax.security.auth.login.Configuration {
 
-		private static final Map<String, String> BASIC_JAAS_OPTIONS = new HashMap<String, String>();
+		private static final Map<String, String> BASIC_JAAS_OPTIONS = new HashMap<>();
 
 		static {
 			String jaasEnvVar = System.getenv("HBASE_JAAS_DEBUG");
-			if (jaasEnvVar != null && "true".equalsIgnoreCase(jaasEnvVar)) {
+			if ("true".equalsIgnoreCase(jaasEnvVar)) {
 				BASIC_JAAS_OPTIONS.put("debug", "true");
 			}
 		}
 
-		private static final Map<String, String> KEYTAB_KERBEROS_OPTIONS = new HashMap<String, String>();
+		private static final Map<String, String> KEYTAB_KERBEROS_OPTIONS = new HashMap<>();
 
 		static {
 			if (IS_IBM_JDK) {
@@ -476,7 +455,7 @@ public class C80LoginUtil {
 		}
 
 		private static final AppConfigurationEntry KEYTAB_KERBEROS_LOGIN = new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
-				LoginModuleControlFlag.REQUIRED, KEYTAB_KERBEROS_OPTIONS);
+			LoginModuleControlFlag.REQUIRED, KEYTAB_KERBEROS_OPTIONS);
 
 		private static final AppConfigurationEntry[] KEYTAB_KERBEROS_CONF = new AppConfigurationEntry[]{KEYTAB_KERBEROS_LOGIN};
 
@@ -490,12 +469,12 @@ public class C80LoginUtil {
 
 		private final String principal;
 
-		public JaasConfiguration(String loginContextName, String principal, String keytabFile) throws IOException {
+		public JaasConfiguration(String loginContextName, String principal, String keytabFile) {
 
 			this(loginContextName, principal, keytabFile, keytabFile == null || keytabFile.length() == 0);
 		}
 
-		private JaasConfiguration(String loginContextName, String principal, String keytabFile, boolean useTicketCache) throws IOException {
+		private JaasConfiguration(String loginContextName, String principal, String keytabFile, boolean useTicketCache) {
 
 			try {
 				this.baseConfig = javax.security.auth.login.Configuration.getConfiguration();
@@ -509,10 +488,10 @@ public class C80LoginUtil {
 
 			initKerberosOption();
 			log.info("JaasConfiguration loginContextName=" + loginContextName + " principal=" + principal + " useTicketCache=" + useTicketCache
-					+ " keytabFile=" + keytabFile);
+				+ " keytabFile=" + keytabFile);
 		}
 
-		private void initKerberosOption() throws IOException {
+		private void initKerberosOption() {
 
 			if (!useTicketCache) {
 				if (IS_IBM_JDK) {
@@ -520,7 +499,7 @@ public class C80LoginUtil {
 				} else {
 					KEYTAB_KERBEROS_OPTIONS.put("keyTab", keytabFile);
 					KEYTAB_KERBEROS_OPTIONS.put("useKeyTab", "true");
-					KEYTAB_KERBEROS_OPTIONS.put("useTicketCache", useTicketCache ? "true" : "false");
+					KEYTAB_KERBEROS_OPTIONS.put("useTicketCache", "false");
 				}
 			}
 			KEYTAB_KERBEROS_OPTIONS.put("principal", principal);
@@ -534,17 +513,6 @@ public class C80LoginUtil {
 			if (baseConfig != null)
 				return baseConfig.getAppConfigurationEntry(appName);
 			return (null);
-		}
-	}
-
-	public static void main(String[] args) {
-
-		//		ConfigReader.getConfiguration();
-		try {
-			C80LoginUtil.login(ConfigReader.getConfiguration());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 }

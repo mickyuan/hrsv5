@@ -15,13 +15,18 @@ import fd.ng.web.action.ActionResult;
 import hrds.commons.codes.*;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ParallerTestUtil;
+import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -34,77 +39,82 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @date 2019-09-18 10:48:14
  */
 public class DataSourceActionTest extends WebBaseTestCase {
-	// 测试登录用户ID
-	private static final long UserId = 6666L;
+	//获取当前线程ID
+	private final long THREAD_ID = Thread.currentThread().getId();
+	//请填写测试用户需要做登录验证的A项目的登录验证的接口
+	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
+	// 已经存在的用户ID,用于模拟登录
+	private static final long SYS_USER_ID = ParallerTestUtil.TESTINITCONFIG.getLong("user_id");
+	// 已经存在的用户密码,用于模拟登录
+	private static final String PASSWORD = ParallerTestUtil.TESTINITCONFIG.getString("password");
 	// 测试数据采集用户
-	private static final long CollectUserId = 1234L;
-	// 初始化创建用户ID
-	private static final long CreateId = 1000L;
+	private final long CollectUSER_ID = 1234L + THREAD_ID;
+	// 测试数据采集用户
+	private final long USER_ID = SYS_USER_ID + THREAD_ID;
 	// 测试数据源 SourceId
-	private static final long SourceId = 10000001L;
+	private final long SourceId = 10000001L + THREAD_ID;
 	// 测试数据源 SourceId,新建数据源，下面没有agent
-	private static final long SourceId2 = 10000003L;
-	// 测试数据库 agent_id
-	private static final long DBAgentId = 20000011L;
-	// 测试数据文件 agent_id
-	private static final long DFAgentId = 20000012L;
+	private final long SourceId2 = 10000003L + THREAD_ID;
+	// 测试数据库 agent_id+ THREAD_ID
+	private final long DBAgentId = 20000011L + THREAD_ID;
+	// 测试数据文件 agent_id+ THREAD_ID
+	private final long DFAgentId = 20000012L + THREAD_ID;
 	// 测试非结构化 agent_id
-	private static final long UnsAgentId = 20000013L;
+	private final long UnsAgentId = 20000013L + THREAD_ID;
 	// 测试半结构化 agent_id
-	private static final long SemiAgentId = 20000014L;
+	private final long SemiAgentId = 20000014L + THREAD_ID;
 	// 测试FTP agent_id
-	private static final long FTPAgentId = 20000015L;
+	private final long FTPAgentId = 20000015L + THREAD_ID;
 	// 测试部门ID dep_id,测试第一部门
-	private static final long DepId1 = 30000011L;
+	private final long DepId1 = 30000011L + THREAD_ID;
 	// 测试部门ID dep_id 测试第二部门
-	private static final long DepId2 = 30000012L;
+	private final long DepId2 = 30000012L + THREAD_ID;
 	// 测试agent_down_info down_id
-	private static final long DownId = 30000001L;
+	private final long DownId = 30000001L + THREAD_ID;
 	// 测试 分类ID，classify_id
-	private static final long ClassifyId = 40000001L;
+	private final long ClassifyId = 40000001L + THREAD_ID;
 	// 测试 数据库设置ID，DatabaseId
-	private static final long DatabaseId = 50000001L;
+	private final long DatabaseId = 50000001L + THREAD_ID;
 	// 测试 ftp_collect表ID，ftp_id
-	private static final long FtpId = 50000011L;
+	private final long FtpId = 50000011L + THREAD_ID;
 	// 测试 ftp_collect表ID，ftp_transfered_id
-	private static final String FtpTransferedId = UUID.randomUUID().toString()
-			.replaceAll("-", "");
+	private final String FtpTransferedId = String.valueOf(PrimayKeyGener.getNextId());
 	// 测试 ftp_folder表ID，ftp_folder_id
-	private static final long FtpFolderId = 50000091L;
+	private final long FtpFolderId = 50000091L + THREAD_ID;
 	// 测试 object_collect表ID，odc_id
-	private static final long OdcId = 50000101L;
+	private final long OdcId = 50000101L + THREAD_ID;
 	// 测试 object_collect_task表ID，ocs_id
-	private static final long OcsId = 50000102L;
+	private final long OcsId = 50000102L + THREAD_ID;
 	// 测试 object_storage表ID，obj_stid
-	private static final long ObjStid = 50000103L;
+	private final long ObjStid = 50000103L + THREAD_ID;
 	// 测试 object_collect_struct表ID，struct_id
-	private static final long StructId = 50000104L;
+	private final long StructId = 50000104L + THREAD_ID;
 	// 测试 file_collect_set表ID，fcs_id
-	private static final long FcsId = 50000105L;
+	private final long FcsId = 50000105L + THREAD_ID;
 	// 测试 file_source表ID，file_source_id
-	private static final long FileSourceId = 50000106L;
+	private final long FileSourceId = 50000106L + THREAD_ID;
 	// 测试 signal_file表ID，signal_id
-	private static final long SignalId = 50000107L;
+	private final long SignalId = 50000107L + THREAD_ID;
 	// 测试 table_info表ID，table_id
-	private static final long TableId = 50000108L;
+	private final long TableId = 50000108L + THREAD_ID;
 	// 测试 column_merge表ID，col_merge_id
-	private static final long ColumnMergeId = 50000109L;
+	private final long ColumnMergeId = 50000109L + THREAD_ID;
 	// 测试 table_storage_info表ID，storage_id
-	private static final long StorageId = 50000110L;
+	private final long StorageId = 50000110L + THREAD_ID;
 	// 测试 table_clean表ID，table_clean_id
-	private static final long TableCleanId = 50000111L;
+	private final long TableCleanId = 50000111L + THREAD_ID;
 	// 测试 table_column表ID，column_id
-	private static final long ColumnId = 50000112L;
+	private final long ColumnId = 50000112L + THREAD_ID;
 	// 测试 column_clean表ID，col_clean_id
-	private static final long ColumnCleanId = 50000113L;
+	private final long ColumnCleanId = 50000113L + THREAD_ID;
 	// 测试 column_split表ID，col_split_id
-	private static final long ColSplitId = 50000114L;
+	private final long ColSplitId = 50000114L + THREAD_ID;
 	// 测试 source_file_attribute表ID，file_id
-	private static final String FileId = "200000000000";
+	private final String FileId = "200000000000" + THREAD_ID;
 	// 测试 data_auth表ID，da_id
-	private static final long DaId = 50000115L;
-	private static final String SysDate = DateUtil.getSysDate();
-	private static final String SysTime = DateUtil.getSysTime();
+	private final long DaId = 50000115L + THREAD_ID;
+	private final String SysDate = DateUtil.getSysDate();
+	private final String SysTime = DateUtil.getSysTime();
 
 	@Method(desc = "初始化测试用例数据", logicStep = "1.构建数据源data_source表测试数据" +
 			"2.构造department_info部门表测试数据" +
@@ -161,11 +171,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			"22.table_column表，有1条数据，column_id为ColumnId" +
 			"23.column_clean表，有1条数据，col_clean_id为ColumnCleanId" +
 			"24.column_split表，有1条数据，col_split_id为ColSplitId" +
-			"25.sys_user表，有2条数据，user_id为UserId,CollectUserId" +
+			"25.sys_user表，有2条数据，user_id为USER_ID,CollectUSER_ID" +
 			"26.source_file_attribute表，有一条数据,file_id为FileId" +
 			"27.data_auth表，有一条数据，da_id为DaId")
-	@BeforeClass
-	public static void before() {
+	@Before
+	public void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.构建数据源data_source表测试数据
 			// 创建data_source表实体对象
@@ -174,15 +184,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
 					data_source.setSource_id(SourceId);
-					data_source.setDatasource_number("ds01");
+					data_source.setDatasource_number("ds01" + THREAD_ID);
 				} else {
 					data_source.setSource_id(SourceId2);
-					data_source.setDatasource_number("ds02");
+					data_source.setDatasource_number("ds02" + THREAD_ID);
 				}
-				data_source.setDatasource_name("dsName" + i);
+				data_source.setDatasource_name("dsName" + i + THREAD_ID);
 				data_source.setCreate_date(SysDate);
 				data_source.setCreate_time(SysTime);
-				data_source.setCreate_user_id(UserId);
+				data_source.setCreate_user_id(USER_ID);
 				data_source.setSource_remark("数据源详细描述" + i);
 				data_source.setDatasource_remark("备注" + i);
 				// 初始化data_source表信息
@@ -195,11 +205,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
 					department_info.setDep_id(DepId1);
-					department_info.setDep_name("测试第" + (i + 1) + "部门");
 				} else {
 					department_info.setDep_id(DepId2);
-					department_info.setDep_name("测试第" + (i + 1) + "部门");
 				}
+				department_info.setDep_name("测试第" + (i + 1) + "部门" + THREAD_ID);
 				department_info.setCreate_date(SysDate);
 				department_info.setCreate_time(SysTime);
 				department_info.setDep_remark("测试");
@@ -239,7 +248,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				agent_info.setSource_id(SourceId);
 				agent_info.setCreate_date(SysDate);
 				agent_info.setCreate_time(SysTime);
-				agent_info.setUser_id(UserId);
+				agent_info.setUser_id(USER_ID);
 				// 初始化不同类型的agent
 				if (i == 1) {
 					// 数据库 agent
@@ -247,14 +256,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					agent_info.setAgent_port("4561");
 					agent_info.setAgent_id(DBAgentId);
 					agent_info.setAgent_type(AgentType.ShuJuKu.getCode());
-					agent_info.setAgent_name("sjkAgent");
+					agent_info.setAgent_name("sjkAgent" + THREAD_ID);
 				} else if (i == 2) {
 					// 数据文件 Agent
 					agent_info.setAgent_ip("10.71.4.52");
 					agent_info.setAgent_port("4562");
 					agent_info.setAgent_id(DFAgentId);
 					agent_info.setAgent_type(AgentType.DBWenJian.getCode());
-					agent_info.setAgent_name("DFAgent");
+					agent_info.setAgent_name("DFAgent" + THREAD_ID);
 
 				} else if (i == 3) {
 					// 非结构化 Agent
@@ -262,21 +271,21 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					agent_info.setAgent_port("4563");
 					agent_info.setAgent_id(UnsAgentId);
 					agent_info.setAgent_type(AgentType.WenJianXiTong.getCode());
-					agent_info.setAgent_name("UnsAgent");
+					agent_info.setAgent_name("UnsAgent" + THREAD_ID);
 				} else if (i == 4) {
 					// 半结构化 Agent
 					agent_info.setAgent_ip("10.71.4.54");
 					agent_info.setAgent_port("4564");
 					agent_info.setAgent_id(SemiAgentId);
 					agent_info.setAgent_type(AgentType.DuiXiang.getCode());
-					agent_info.setAgent_name("SemiAgent");
+					agent_info.setAgent_name("SemiAgent" + THREAD_ID);
 				} else {
 					// FTP Agent
 					agent_info.setAgent_ip("10.71.4.55");
 					agent_info.setAgent_port("4565");
 					agent_info.setAgent_id(FTPAgentId);
 					agent_info.setAgent_type(AgentType.FTP.getCode());
-					agent_info.setAgent_name("FTPAgent");
+					agent_info.setAgent_name("FTPAgent" + THREAD_ID);
 				}
 				// 初始化agent不同的连接状态
 				if (i < 2) {
@@ -297,15 +306,15 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Sys_user sysUser = new Sys_user();
 			for (int i = 0; i < 2; i++) {
 				if (i == 0) {
-					sysUser.setUser_id(UserId);
+					sysUser.setUser_id(USER_ID);
 					sysUser.setDep_id(DepId1);
-					sysUser.setUser_name("数据源功能测试");
+					sysUser.setUser_name("数据源功能测试" + THREAD_ID);
 				} else {
-					sysUser.setUser_id(CollectUserId);
+					sysUser.setUser_id(CollectUSER_ID);
 					sysUser.setDep_id(DepId2);
-					sysUser.setUser_name("采集用户功能测试");
+					sysUser.setUser_name("采集用户功能测试" + THREAD_ID);
 				}
-				sysUser.setCreate_id(CreateId);
+				sysUser.setCreate_id("1000");
 				sysUser.setCreate_date(SysDate);
 				sysUser.setCreate_time(SysTime);
 				sysUser.setRole_id("1001");
@@ -322,15 +331,13 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			databaseSet.setDatabase_id(DatabaseId);
 			databaseSet.setAgent_id(DBAgentId);
 			databaseSet.setClassify_id(ClassifyId);
-//            databaseSet.setDatabase_code(DataBaseCode.UTF_8.getCode());
 			databaseSet.setDatabase_drive("org.postgresql.Driver");
 			databaseSet.setDatabase_ip("10.71.4.51");
-			databaseSet.setDatabase_name("数据库采集测试");
-			databaseSet.setDatabase_number("dhw001");
+			databaseSet.setDatabase_name("数据库采集测试" + THREAD_ID);
+			databaseSet.setDatabase_number("dhw001" + THREAD_ID);
 			databaseSet.setDatabase_pad("hrsdxg");
 			databaseSet.setUser_name("hrsdxg");
 			databaseSet.setDatabase_port("34567");
-//            databaseSet.setDbfile_format(FileFormat.CSV.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
 			databaseSet.setDatabase_type(DatabaseType.Postgresql.getCode());
 			databaseSet.setTask_name("数据库测试");
@@ -341,14 +348,14 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Agent_down_info agent_down_info = new Agent_down_info();
 			agent_down_info.setDown_id(DownId);
 			agent_down_info.setAgent_id(DFAgentId);
-			agent_down_info.setAgent_name("DFAgent");
+			agent_down_info.setAgent_name("DFAgent" + THREAD_ID);
 			agent_down_info.setAgent_ip("10.71.4.51");
 			agent_down_info.setAgent_port("34567");
 			agent_down_info.setAgent_type(AgentType.DBWenJian.getCode());
 			agent_down_info.setDeploy(IsFlag.Fou.getCode());
 			agent_down_info.setLog_dir("/home/hyshf/sjkAgent_34567/log/");
 			agent_down_info.setPasswd("hyshf");
-			agent_down_info.setUser_id(UserId);
+			agent_down_info.setUser_id(USER_ID);
 			agent_down_info.setAi_desc("agent部署");
 			agent_down_info.setRemark("备注");
 			agent_down_info.setUser_name("hyshf");
@@ -360,17 +367,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 8.构造collect_job_classify表测试数据
 			Collect_job_classify collectJobClassify = new Collect_job_classify();
 			collectJobClassify.setClassify_id(ClassifyId);
-			collectJobClassify.setUser_id(UserId);
+			collectJobClassify.setUser_id(USER_ID);
 			collectJobClassify.setAgent_id(DBAgentId);
-			collectJobClassify.setClassify_name("数据库采集测试");
+			collectJobClassify.setClassify_name("数据库采集测试" + THREAD_ID);
 			collectJobClassify.setRemark("测试");
 			collectJobClassify.setClassify_num("sjkCs01");
 			collectJobClassify.add(db);
 			// 9.构造ftp_collect表测试数据
 			Ftp_collect ftpCollect = new Ftp_collect();
 			ftpCollect.setFtp_id(FtpId);
-			ftpCollect.setFtp_number("ftpcj01");
-			ftpCollect.setFtp_name("ftp采集");
+			ftpCollect.setFtp_number("ftpcj01" + THREAD_ID);
+			ftpCollect.setFtp_name("ftp采集" + THREAD_ID);
 			ftpCollect.setStart_date(SysDate);
 			ftpCollect.setEnd_date("99991231");
 			ftpCollect.setFtp_ip("10.71.4.52");
@@ -394,7 +401,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			ftpTransfered.setFtp_id(FtpId);
 			ftpTransfered.setFtp_date(SysDate);
 			ftpTransfered.setFtp_time(SysTime);
-			ftpTransfered.setTransfered_name("ftp传输测试");
+			ftpTransfered.setTransfered_name("ftp传输测试" + THREAD_ID);
 			ftpTransfered.setFile_path("/home/hyshf/ftp");
 			ftpTransfered.add(db);
 			// 11.构造object_collect表测试数据
@@ -410,7 +417,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			objectCollect.setData_date(DateUtil.getSysDate());
 			objectCollect.setLocal_time(DateUtil.parseStr2DateWith8Char(SysDate) + " "
 					+ DateUtil.parseStr2TimeWith6Char(SysTime));
-			objectCollect.setObj_collect_name("对象采集测试");
+			objectCollect.setObj_collect_name("对象采集测试" + THREAD_ID);
 			objectCollect.setObj_number("dxcj01");
 			objectCollect.setS_date(SysDate);
 			objectCollect.setServer_date(DateUtil.parseStr2DateWith8Char(SysDate) + " "
@@ -425,7 +432,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Object_collect_task objectCollectTask = new Object_collect_task();
 			objectCollectTask.setOcs_id(OcsId);
 			objectCollectTask.setAgent_id(DBAgentId);
-			objectCollectTask.setEn_name("dxcjrwmc");
+			objectCollectTask.setEn_name("dxcjrwmc" + THREAD_ID);
 			objectCollectTask.setZh_name("对象采集任务名称");
 			objectCollectTask.setCollect_data_type(CollectDataType.JSON.getCode());
 			objectCollectTask.setDatabase_code(DataBaseCode.UTF_8.getCode());
@@ -436,7 +443,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Object_collect_struct objectCollectStruct = new Object_collect_struct();
 			objectCollectStruct.setStruct_id(StructId);
 			objectCollectStruct.setOcs_id(OcsId);
-			objectCollectStruct.setColumn_name("对象采集结构");
+			objectCollectStruct.setColumn_name("aaa" + THREAD_ID);
 			objectCollectStruct.setColumn_type(ObjectDataType.ZiFuChuan.getCode());
 			objectCollectStruct.setData_desc("测试");
 			objectCollectStruct.setIs_operate(IsFlag.Fou.getCode());
@@ -447,7 +454,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			File_collect_set fileCollectSet = new File_collect_set();
 			fileCollectSet.setFcs_id(FcsId);
 			fileCollectSet.setAgent_id(DBAgentId);
-			fileCollectSet.setFcs_name("文件系统设置");
+			fileCollectSet.setFcs_name("文件系统设置" + THREAD_ID);
 			fileCollectSet.setIs_sendok(IsFlag.Shi.getCode());
 			fileCollectSet.setIs_solr(IsFlag.Fou.getCode());
 			fileCollectSet.setHost_name(SystemUtil.getHostName());
@@ -489,7 +496,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			tableInfo.setIs_md5(IsFlag.Shi.getCode());
 			tableInfo.setIs_register(IsFlag.Fou.getCode());
 			tableInfo.setIs_user_defined(IsFlag.Fou.getCode());
-			tableInfo.setTable_ch_name("agent_info");
+			tableInfo.setTable_ch_name("agent_info" + THREAD_ID);
 			tableInfo.setTable_name("agent_info");
 			tableInfo.setValid_s_date(SysDate);
 			tableInfo.setValid_e_date("99991231");
@@ -501,7 +508,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Column_merge columnMerge = new Column_merge();
 			columnMerge.setCol_merge_id(ColumnMergeId);
 			columnMerge.setTable_id(TableId);
-			columnMerge.setCol_name("agentAddress");
+			columnMerge.setCol_name("agentAddress" + THREAD_ID);
 			columnMerge.setCol_type("1");
 			columnMerge.setCol_zhname("agent地址");
 			columnMerge.setOld_name("agent_ip");
@@ -516,6 +523,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			tableStorageInfo.setFile_format(FileFormat.CSV.getCode());
 			tableStorageInfo.setIs_zipper(IsFlag.Fou.getCode());
 			tableStorageInfo.setStorage_type(StorageType.TiHuan.getCode());
+			tableStorageInfo.setHyren_name("aaa" + THREAD_ID);
 			tableStorageInfo.add(db);
 			// 21.构造table_clean表测试数据
 			Table_clean tableClean = new Table_clean();
@@ -532,7 +540,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			Table_column tableColumn = new Table_column();
 			tableColumn.setColumn_id(ColumnId);
 			tableColumn.setTable_id(TableId);
-			tableColumn.setColumn_name("create_date");
+			tableColumn.setColumn_name("create_date" + THREAD_ID);
 			tableColumn.setColumn_ch_name("create_date");
 			tableColumn.setIs_primary_key(IsFlag.Fou.getCode());
 			tableColumn.setValid_s_date(SysDate);
@@ -553,7 +561,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			// 24.构造column_split表测试数据
 			Column_split columnSplit = new Column_split();
 			columnSplit.setCol_split_id(ColSplitId);
-			columnSplit.setCol_name("agent_ip");
+			columnSplit.setCol_name("agent_ip" + THREAD_ID);
 			columnSplit.setCol_clean_id(ColumnCleanId);
 			columnSplit.setCol_type("1");
 			columnSplit.setSplit_type(CharSplitType.ZhiDingFuHao.getCode());
@@ -596,9 +604,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			sourceFileAttribute.setCollect_type(AgentType.ShuJuKu.getCode());
 			sourceFileAttribute.setOriginal_update_date(SysDate);
 			sourceFileAttribute.setOriginal_update_time(SysTime);
-			sourceFileAttribute.setTable_name("agentInfo");
-			sourceFileAttribute.setHbase_name("agent_info");
-			sourceFileAttribute.setMeta_info("init-dhw");
+			sourceFileAttribute.setTable_name("agentInfo" + THREAD_ID);
+			sourceFileAttribute.setHbase_name("agent_info" + THREAD_ID);
+			sourceFileAttribute.setMeta_info("init-dhw" + THREAD_ID);
 			sourceFileAttribute.setStorage_date(SysDate);
 			sourceFileAttribute.setStorage_time(SysTime);
 			sourceFileAttribute.setFile_size(1024L);
@@ -638,7 +646,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				dataAuth.setApply_date(SysDate);
 				dataAuth.setApply_time(SysTime);
 				dataAuth.setFile_id(FileId);
-				dataAuth.setUser_id(UserId);
+				dataAuth.setUser_id(USER_ID);
 				dataAuth.setDep_id(DepId1);
 				dataAuth.setAgent_id(DBAgentId);
 				dataAuth.setSource_id(SourceId);
@@ -652,9 +660,9 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// 28.模拟用户登录
 		String responseValue = new HttpClient()
 				.buildSession()
-				.addData("user_id", UserId)
-				.addData("password", "1")
-				.post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login")
+				.addData("user_id", USER_ID)
+				.addData("password", PASSWORD)
+				.post(LOGIN_URL)
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("json对象转换成实体对象失败！"));
@@ -691,8 +699,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					"27.测试完成后删除data_auth表测试数据" +
 					"28.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除" +
 					"29.提交事务")
-	@AfterClass
-	public static void after() {
+	@After
+	public void after() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.测试完成后删除data_source表测试数据
 			SqlOperator.execute(db, "delete from data_source where source_id=?", SourceId);
@@ -731,8 +739,8 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", UnsAgentId);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", SemiAgentId);
 			SqlOperator.execute(db, "delete from agent_info where agent_id=?", FTPAgentId);
-			SqlOperator.execute(db, "delete from agent_info where user_id=?", UserId);
-			SqlOperator.execute(db, "delete from agent_info where user_id=?", CollectUserId);
+			SqlOperator.execute(db, "delete from agent_info where user_id=?", USER_ID);
+			SqlOperator.execute(db, "delete from agent_info where user_id=?", CollectUSER_ID);
 			// 判断agent_info表数据是否被删除
 			long DBNum = SqlOperator.queryNumber(db, "select count(1) from  agent_info where agent_id=?",
 					DBAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
@@ -750,7 +758,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 					FTPAgentId).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", FTPNum, is(0L));
 			long aiNum = SqlOperator.queryNumber(db, "select count(1) from agent_info where user_id=?",
-					UserId).orElseThrow(() -> new RuntimeException("count fail!"));
+					USER_ID).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", aiNum, is(0L));
 			// 4.测试完成后删除department_info表测试数据
 			SqlOperator.execute(db, "delete from department_info where dep_id=?", DepId1);
@@ -773,20 +781,20 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat("此条数据删除后，记录数应该为0", diNum3, is(0L));
 			assertThat("此条数据删除后，记录数应该为0", diNum4, is(0L));
 			// 5.测试完成后删除sys_user表测试数据
-			SqlOperator.execute(db, "delete from sys_user where user_id=?", UserId);
+			SqlOperator.execute(db, "delete from sys_user where user_id=?", USER_ID);
 			// 判断sys_user表数据是否被删除
 			long userNum = SqlOperator.queryNumber(db, "select count(1) from sys_user where user_id=?",
-					UserId).orElseThrow(() -> new RuntimeException("count fail!"));
+					USER_ID).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", userNum, is(0L));
-			SqlOperator.execute(db, "delete from sys_user where user_id=?", CollectUserId);
+			SqlOperator.execute(db, "delete from sys_user where user_id=?", CollectUSER_ID);
 			// 判断sys_user表数据是否被删除
 			long userNum2 = SqlOperator.queryNumber(db, "select count(1) from sys_user where user_id=?",
-					CollectUserId).orElseThrow(() -> new RuntimeException("count fail!"));
+					CollectUSER_ID).orElseThrow(() -> new RuntimeException("count fail!"));
 			assertThat("此条数据删除后，记录数应该为0", userNum2, is(0L));
 			// 6.测试完成后删除agent_down_info表测试数据
 			SqlOperator.execute(db, "delete from agent_down_info where down_id=?", DownId);
-			SqlOperator.execute(db, "delete from agent_down_info where user_id=?", UserId);
-			SqlOperator.execute(db, "delete from agent_down_info where user_id=?", CollectUserId);
+			SqlOperator.execute(db, "delete from agent_down_info where user_id=?", USER_ID);
+			SqlOperator.execute(db, "delete from agent_down_info where user_id=?", CollectUSER_ID);
 			// 判断agent_down_info表数据是否被删除
 			long adiNum = SqlOperator.queryNumber(db, "select count(1) from agent_down_info where" +
 					" down_id=?", DownId).orElseThrow(() -> new RuntimeException("count fail!"));
@@ -995,7 +1003,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			}
 			// 28.单独删除新增数据，因为新增数据主键是自动生成的，所以要通过其他方式删除
 			SqlOperator.execute(db, "delete from data_source where create_user_id=?",
-					UserId);
+					USER_ID);
 			SqlOperator.execute(db, "delete from database_set where database_number=?",
 					"dhw01");
 			// 29.提交事务
@@ -1277,11 +1285,11 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			Optional<Data_auth> dataAuth = SqlOperator.queryOneObject(db, Data_auth.class,
 					"select * from " + Data_auth.TableName + " where da_id=? and user_id=?",
-					DaId + 2, UserId);
+					DaId + 2, USER_ID);
 			assertThat(dataAuth.get().getAuth_type(), is(AuthType.YiCi.getCode()));
 			assertThat(dataAuth.get().getDa_id(), is(DaId + 2));
-			assertThat(dataAuth.get().getUser_id(), is(UserId));
-			assertThat(dataAuth.get().getAudit_name(), is("数据源功能测试"));
+			assertThat(dataAuth.get().getUser_id(), is(USER_ID));
+			assertThat(dataAuth.get().getAudit_name(), is("数据源功能测试" + THREAD_ID));
 		}
 		// 2.错误的数据访问1，数据申请审批，daId不存在
 		bodyString = new HttpClient()
@@ -1345,10 +1353,10 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		// TODO 不能确定原表是否有数据，目前只能测试自己造的数据
 		for (Department_info departmentInfo : departmentInfoList) {
 			if (departmentInfo.getDep_id() == DepId1) {
-				assertThat("测试第1部门", is(departmentInfo.getDep_name()));
+				assertThat("测试第1部门" + THREAD_ID, is(departmentInfo.getDep_name()));
 			}
 			if (departmentInfo.getDep_id() == DepId2) {
-				assertThat("测试第2部门", is(departmentInfo.getDep_name()));
+				assertThat("测试第2部门" + THREAD_ID, is(departmentInfo.getDep_name()));
 			}
 		}
 	}
@@ -1505,17 +1513,17 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		Map<String, Object> dataResource = ar.getDataForMap();
 		// 验证查询结果的正确性
 		assertThat(String.valueOf(SourceId), is(dataResource.get("source_id").toString()));
-		assertThat(String.valueOf(UserId), is(dataResource.get("create_user_id").toString()));
-		assertThat("dsName0", is(dataResource.get("datasource_name").toString()));
-		assertThat("ds01", is(dataResource.get("datasource_number").toString()));
+		assertThat(String.valueOf(USER_ID), is(dataResource.get("create_user_id").toString()));
+		assertThat("dsName0" + THREAD_ID, is(dataResource.get("datasource_name").toString()));
+		assertThat("ds01" + THREAD_ID, is(dataResource.get("datasource_number").toString()));
 		assertThat("数据源详细描述0", is(dataResource.get("source_remark")));
 		List<Map<String, Object>> depNameAndId = (List<Map<String, Object>>) dataResource.get("depNameAndId");
 		for (Map<String, Object> map : depNameAndId) {
 			String dep_id = map.get("dep_id").toString();
 			if (dep_id.equals(String.valueOf(DepId1))) {
-				assertThat("测试第1部门", is(map.get("dep_name")));
+				assertThat("测试第1部门" + THREAD_ID, is(map.get("dep_name")));
 			} else if (dep_id.equals(String.valueOf(DepId2))) {
-				assertThat("测试第2部门", is(map.get("dep_name")));
+				assertThat("测试第2部门" + THREAD_ID, is(map.get("dep_name")));
 			}
 		}
 		// 2.错误的数据访问1，查询数据源信息，此数据源下没有数据
@@ -1677,7 +1685,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		if (sysUserList.isEmpty()) {
 			for (Sys_user sys_user : sysUserList) {
 				// TODO 不能确定原表数据为空，所以只能测试自己造的数据
-				if (sys_user.getUser_id() == UserId) {
+				if (sys_user.getUser_id() == USER_ID) {
 					assertThat(sys_user.getUser_name(), is("数据源功能测试"));
 				}
 			}
@@ -1766,7 +1774,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				.reset(SubmitMediaType.MULTIPART)
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "4321")
-				.addData("user_id", CollectUserId)
+				.addData("user_id", CollectUSER_ID)
 				.addFile("file", new File(filePath))
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -1783,7 +1791,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(dataSource.getDatasource_number(), is("ds01_dhw"));
 			assertThat(dataSource.getSource_remark(), is("数据源详细描述0"));
 			assertThat(dataSource.getDatasource_remark(), is("备注0"));
-			assertThat(dataSource.getCreate_user_id(), is(UserId));
+			assertThat(dataSource.getCreate_user_id(), is(USER_ID));
 			List<Agent_info> agentInfoList = SqlOperator.queryList(db, Agent_info.class, "select * from "
 					+ Agent_info.TableName + " where source_id=?", dataSource.getSource_id());
 			long dfAgentId = 0;
@@ -1809,7 +1817,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 				}
 				assertThat(agentInfo.getAgent_ip(), is("10.71.4.51"));
 				assertThat(agentInfo.getAgent_port(), is("4321"));
-				assertThat(agentInfo.getUser_id(), is(CollectUserId));
+				assertThat(agentInfo.getUser_id(), is(CollectUSER_ID));
 				assertThat(agentInfo.getSource_id(), is(dataSource.getSource_id()));
 			}
 			Agent_down_info agentDownInfo = SqlOperator.queryOneObject(db, Agent_down_info.class,
@@ -1828,7 +1836,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(agentDownInfo.getAgent_type(), is(AgentType.DBWenJian.getCode()));
 			assertThat(agentDownInfo.getDeploy(), is(IsFlag.Fou.getCode()));
 			assertThat(agentDownInfo.getSave_dir(), is("/home/hyshf/sjkAgent_34567/"));
-			assertThat(agentDownInfo.getUser_id(), is(CollectUserId));
+			assertThat(agentDownInfo.getUser_id(), is(CollectUSER_ID));
 			assertThat(agentDownInfo.getRemark(), is("备注"));
 			Collect_job_classify jobClassify = SqlOperator.queryOneObject(db, Collect_job_classify.class,
 					"select * from " + Collect_job_classify.TableName + " where agent_id=?", dbAgentId)
@@ -1836,7 +1844,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 			assertThat(jobClassify.getClassify_name(), is("数据库采集测试"));
 			assertThat(jobClassify.getClassify_num(), is("sjkCs01"));
 			assertThat(jobClassify.getRemark(), is("测试"));
-			assertThat(jobClassify.getUser_id(), is(UserId));
+			assertThat(jobClassify.getUser_id(), is(USER_ID));
 			Database_set databaseSet = SqlOperator.queryOneObject(db, Database_set.class,
 					"select * from " + Database_set.TableName + " where agent_id=?", dbAgentId)
 					.orElseThrow(() -> new RuntimeException("sql执行错误!"));
@@ -1990,7 +1998,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_ip", "10.71.4.666")
 				.addData("agent_port", "4321")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.addData("file", filePath)
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -2002,7 +2010,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "666666")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.addData("file", filePath)
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();
@@ -2024,7 +2032,7 @@ public class DataSourceActionTest extends WebBaseTestCase {
 		bodyString = new HttpClient()
 				.addData("agent_ip", "10.71.4.51")
 				.addData("agent_port", "4321")
-				.addData("user_id", UserId)
+				.addData("user_id", USER_ID)
 				.addData("file", "")
 				.post(getActionUrl("uploadFile"))
 				.getBodyString();

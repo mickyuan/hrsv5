@@ -1,12 +1,12 @@
 package hrds.b.biz.agent.dbagentconf.dbconf;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.db.resultset.Result;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
@@ -15,7 +15,7 @@ import hrds.b.biz.agent.bean.DBConnectionProp;
 import hrds.b.biz.agent.tools.ConnUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
-import hrds.commons.codes.CleanType;
+import hrds.commons.codes.CollectType;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Agent_down_info;
@@ -35,19 +35,6 @@ import java.util.List;
 @DocClass(desc = "配置源DB属性", author = "WangZhengcheng")
 public class DBConfStepAction extends BaseAction {
 
-	private static final JSONObject CLEANOBJ;
-
-	static {
-		CLEANOBJ = new JSONObject(true);
-		CLEANOBJ.put(CleanType.ZiFuBuQi.getCode(), 1);
-		CLEANOBJ.put(CleanType.ZiFuTiHuan.getCode(), 2);
-		CLEANOBJ.put(CleanType.ShiJianZhuanHuan.getCode(), 3);
-		CLEANOBJ.put(CleanType.MaZhiZhuanHuan.getCode(), 4);
-		CLEANOBJ.put(CleanType.ZiFuHeBing.getCode(), 5);
-		CLEANOBJ.put(CleanType.ZiFuChaiFen.getCode(), 6);
-		CLEANOBJ.put(CleanType.ZiFuTrim.getCode(), 7);
-	}
-
 	@Method(
 		desc = "根据数据库采集任务ID进行查询并在页面上回显数据源配置信息",
 		logicStep =
@@ -59,20 +46,20 @@ public class DBConfStepAction extends BaseAction {
 	@Return(desc = "数据源信息查询结果集", range = "不会为null")
 	public Result getDBConfInfo(long databaseId) {
 		// 1、在数据库设置表(database_set)中，根据databaseId判断是否查询到数据，如果查询不到，抛异常给前端
-		Database_set dbSet =
-			Dbo.queryOneObject(
-				Database_set.class,
-				"SELECT das.* "
-					+ " FROM "
-					+ Database_set.TableName
-					+ " das "
-					+ " JOIN "
-					+ Agent_info.TableName
-					+ " ai ON ai.agent_id = das.agent_id "
-					+ " WHERE das.database_id=? AND ai.user_id = ? ",
-				databaseId,
-				getUserId())
-				.orElseThrow(() -> new BusinessException("未能找到该任务"));
+//		Database_set dbSet =
+//			Dbo.queryOneObject(
+//				Database_set.class,
+//				"SELECT das.* "
+//					+ " FROM "
+//					+ Database_set.TableName
+//					+ " das "
+//					+ " JOIN "
+//					+ Agent_info.TableName
+//					+ " ai ON ai.agent_id = das.agent_id "
+//					+ " WHERE das.database_id=? AND ai.user_id = ? AND das.is_reg = ? ",
+//				databaseId,
+//				getUserId(), IsFlag.Fou.getCode())
+//				.orElseThrow(() -> new BusinessException("未能找到该任务"));
 		// 数据可访问权限处理方式
 		// 以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 
@@ -81,19 +68,13 @@ public class DBConfStepAction extends BaseAction {
 		//			throw new BusinessException("该任务已经设置完成并发送成功，不允许编辑");
 		//		}
 		// 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
-		return Dbo.queryResult(
-			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name, "
-				+ " t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, "
-				+ " t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, "
-				+ " t2.classify_name, t2.remark "
-				+ " from "
-				+ Database_set.TableName
-				+ " t1 "
-				+ " left join "
-				+ Collect_job_classify.TableName
-				+ " t2 on "
-				+ " t1.classify_id = t2.classify_id  where database_id = ?",
-			databaseId);
+		return Dbo.queryResult("select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.collect_type, " +
+			" t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, " +
+			" t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, " +
+			" t2.classify_name, t2.remark " +
+			" from " + Database_set.TableName + " t1 " +
+			" left join " + Collect_job_classify.TableName + " t2 on t1.classify_id = t2.classify_id" +
+			" where database_id = ? AND t1.collect_type = ? ", databaseId, CollectType.ShuJuKuChouShu.getCode());
 	}
 
 	@Method(desc = "新增时获取数据库采集的数据", logicStep = "使用是否发生完成的标识来获取上次为配置文采的任务")
@@ -104,7 +85,7 @@ public class DBConfStepAction extends BaseAction {
 
 		// 3、在数据库设置表表中，关联采集作业分类表(collect_job_classify)，查询出当前database_id的所有信息并返回
 		return Dbo.queryResult(
-			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name, "
+			"select t1.database_id, t1.agent_id, t1.database_number, t1.task_name,t1.collect_type, "
 				+ " t1.database_name, t1.database_drive, t1.database_type, t1.user_name, t1.database_pad, t1.database_ip, "
 				+ " t1.database_port, t1.db_agent, t1.is_sendok, t1.jdbc_url, t2.classify_id, t2.classify_num, "
 				+ " t2.classify_name, t2.remark "
@@ -117,12 +98,13 @@ public class DBConfStepAction extends BaseAction {
 				+ " t1.classify_id = t2.classify_id  join "
 				+ Agent_info.TableName
 				+ " ai on t1.agent_id = ai.agent_id "
-				+ "where  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? AND ai.source_id = ? AND ai.agent_id = ? ",
+				+ "where  t1.is_sendok = ? AND ai.agent_type = ? AND ai.user_id = ? "
+				+ "AND ai.source_id = ? AND ai.agent_id = ? AND t1.collect_type = ?",
 			IsFlag.Fou.getCode(),
 			AgentType.ShuJuKu.getCode(),
 			getUserId(),
 			databaseId,
-			agent_id);
+			agent_id, CollectType.ShuJuKuChouShu.getCode());
 	}
 
 	@Method(desc = "根据数据库类型获得数据库连接url等信息", logicStep = "" + "1、调用工具类方法直接获取数据并返回")
@@ -236,42 +218,26 @@ public class DBConfStepAction extends BaseAction {
 		// 以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 	}
 
-	@Method(
-		desc = "保存采集任务分类信息",
-		logicStep =
-			""
-				+ "1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息"
-				+ "2、在数据库或中对新增数据进行校验"
-				+ "3、分类编号重复抛异常给前台"
-				+ "4、分类编号不重复可以新增"
-				+ "5、给新增数据设置ID"
-				+ "6、完成新增")
-	@Param(
-		name = "classify",
-		desc = "Collect_job_classify类对象",
-		range = "Collect_job_classify类对象",
-		isBean = true)
+	@Method(desc = "保存采集任务分类信息",
+		logicStep = "1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息"
+			+ "2、在数据库或中对新增数据进行校验"
+			+ "3、分类编号重复抛异常给前台"
+			+ "4、分类编号不重复可以新增"
+			+ "5、给新增数据设置ID"
+			+ "6、完成新增")
+	@Param(name = "classify", desc = "Collect_job_classify类对象", range = "Collect_job_classify类对象", isBean = true)
 	@Param(name = "sourceId", desc = "数据源表ID", range = "不可为空")
 	public void saveClassifyInfo(Collect_job_classify classify, long sourceId) {
 		// 1、对传入的数据进行判断，对不能为空的字段进行校验，如果不合法，提供明确的提示信息
 		verifyClassifyEntity(classify, true);
 		// 2、在数据库或中对新增数据进行校验
-		long val =
-			Dbo.queryNumber(
-				"SELECT count(1) FROM "
-					+ Collect_job_classify.TableName
-					+ " cjc "
-					+ " LEFT JOIN "
-					+ Agent_info.TableName
-					+ " ai ON cjc.agent_id=ai.agent_id"
-					+ " LEFT JOIN "
-					+ Data_source.TableName
-					+ " ds ON ds.source_id=ai.source_id"
-					+ " WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
-				classify.getClassify_num(),
-				sourceId,
-				getUserId())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+		long val = Dbo.queryNumber(
+			"SELECT count(1) FROM " + Collect_job_classify.TableName + " cjc "
+				+ " LEFT JOIN " + Agent_info.TableName + " ai ON cjc.agent_id=ai.agent_id"
+				+ " LEFT JOIN " + Data_source.TableName + " ds ON ds.source_id=ai.source_id"
+				+ " WHERE cjc.classify_num=? AND ds.source_id=? AND ds.create_user_id = ? ",
+			classify.getClassify_num(), sourceId, getUserId())
+			.orElseThrow(() -> new BusinessException("SQL查询错误"));
 		// 数据可访问权限处理方式
 		// 以上SQL中，通过当前用户ID进行关联查询，达到了数据权限的限制
 		// 3、分类编号重复抛异常给前台
@@ -395,6 +361,21 @@ public class DBConfStepAction extends BaseAction {
 	public long saveDbConf(Database_set databaseSet) {
 		// 1、调用方法对传入数据的合法性进行校验
 		verifyDatabaseSetEntity(databaseSet);
+
+		// 校验作业编号是否唯一
+		if (StringUtil.isNotBlank(databaseSet.getDatabase_number())) {
+			String sql = "select count(1) from " + Database_set.TableName + " where database_number = ?";
+			Assembler assembler = Assembler.newInstance().addSql(sql).addParam(databaseSet.getDatabase_number());
+			if (databaseSet.getDatabase_id() != null) {
+				assembler.addSql(" AND database_id != ?").addParam(databaseSet.getDatabase_id());
+			}
+			long val =
+				Dbo.queryNumber(assembler.sql(), assembler.params()).orElseThrow(() -> new BusinessException("SQL查询错误"));
+			if (val != 0) {
+				throw new BusinessException("作业编号重复，请重新定义作业编号");
+			}
+		}
+
 		// 2、获取实体中的database_id
 		if (databaseSet.getDatabase_id() != null) {
 			// 3、如果存在，则更新信息
@@ -409,27 +390,17 @@ public class DBConfStepAction extends BaseAction {
 
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			//			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
-			databaseSet.setCp_or(CLEANOBJ.toJSONString());
-
+			databaseSet.setCp_or(Constant.DATABASE_CLEAN.toJSONString());
 			databaseSet.update(Dbo.db());
 		} else {
 			// 4、如果不存在，则新增信息
-			// 校验作业编号是否唯一
-			long val =
-				Dbo.queryNumber(
-					"select count(1) from " + Database_set.TableName + " where database_number = ?",
-					databaseSet.getDatabase_number())
-					.orElseThrow(() -> new BusinessException("SQL查询错误"));
-			if (val != 0) {
-				throw new BusinessException("任务编号重复，请重新定义作业编号");
-			}
-
 			long id = PrimayKeyGener.getNextId();
 			databaseSet.setDatabase_id(id);
 			databaseSet.setDb_agent(IsFlag.Fou.getCode());
 			databaseSet.setIs_sendok(IsFlag.Fou.getCode());
+			databaseSet.setCollect_type(CollectType.ShuJuKuChouShu.getCode());
 			// 任务级别的清洗规则，在这里新增时定义一个默认顺序，后面的页面可能改动这个顺序,
-			databaseSet.setCp_or(CLEANOBJ.toJSONString());
+			databaseSet.setCp_or(Constant.DATABASE_CLEAN.toJSONString());
 
 			databaseSet.add(Dbo.db());
 		}
@@ -437,38 +408,26 @@ public class DBConfStepAction extends BaseAction {
 		return databaseSet.getDatabase_id();
 	}
 
-	@Method(
-		desc = "测试连接",
-		logicStep =
-			""
-				+ "1、调用工具类获取本次访问的agentserver端url"
-				+ "2、给agent发消息，并获取agent响应"
-				+ "3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理")
-	@Param(
-		name = "databaseSet",
-		desc = "Database_set实体类对象",
-		range = "不为空，只传database_drive，jdbc_url，user_name，database_pad，database_type这些字段即可",
-		isBean = true)
+	@Method(desc = "测试连接",
+		logicStep = "1、调用工具类获取本次访问的agentserver端url"
+			+ "2、给agent发消息，并获取agent响应"
+			+ "3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理")
+	@Param(name = "databaseSet", desc = "Database_set实体类对象",
+		range = "不为空，只传database_drive，jdbc_url，user_name，database_pad，database_type这些字段即可", isBean = true)
 	public void testConnection(Database_set databaseSet) {
 		// 1、调用工具类获取本次访问的agentserver端url
-		String url =
-			AgentActionUtil.getUrl(
-				databaseSet.getAgent_id(), getUserId(), AgentActionUtil.TESTCONNECTION);
-
+		String url = AgentActionUtil.getUrl(databaseSet.getAgent_id(), getUserId(), AgentActionUtil.TESTCONNECTION);
 		// 2、给agent发消息，并获取agent响应
-		HttpClient.ResponseValue resVal =
-			new HttpClient()
-				.addData("database_drive", databaseSet.getDatabase_drive())
-				.addData("jdbc_url", databaseSet.getJdbc_url())
-				.addData("user_name", databaseSet.getUser_name())
-				.addData("database_pad", databaseSet.getDatabase_pad())
-				.addData("database_type", databaseSet.getDatabase_type())
-				.post(url);
-
+		HttpClient.ResponseValue resVal = new HttpClient()
+			.addData("database_drive", databaseSet.getDatabase_drive())
+			.addData("jdbc_url", databaseSet.getJdbc_url())
+			.addData("user_name", databaseSet.getUser_name())
+			.addData("database_pad", databaseSet.getDatabase_pad())
+			.addData("database_type", databaseSet.getDatabase_type())
+			.post(url);
 		// 3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
-		ActionResult actionResult =
-			JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-				.orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
+		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+			.orElseThrow(() -> new BusinessException("应用管理端与" + url + "服务交互异常"));
 		if (!actionResult.isSuccess()) {
 			throw new BusinessException("连接失败");
 		}
@@ -592,10 +551,10 @@ public class DBConfStepAction extends BaseAction {
 			throw new BusinessException("保存数据库配置信息时分类信息不能为空");
 		}
 		// 3、校验作业编号不为能空，并且长度不能超过10
-		if (StringUtil.isBlank(databaseSet.getDatabase_number())
-			|| databaseSet.getDatabase_number().length() > 10) {
-			throw new BusinessException("保存数据库配置信息时作业编号不为能空，并且长度不能超过10");
-		}
+//		if (StringUtil.isBlank(databaseSet.getDatabase_number())
+//			|| databaseSet.getDatabase_number().length() > 10) {
+//			throw new BusinessException("保存数据库配置信息时作业编号不为能空，并且长度不能超过10");
+//		}
 		// 4、校验数据库驱动不能为空
 		if (StringUtil.isBlank(databaseSet.getDatabase_drive())) {
 			throw new BusinessException("保存数据库配置信息时数据库驱动不能为空");

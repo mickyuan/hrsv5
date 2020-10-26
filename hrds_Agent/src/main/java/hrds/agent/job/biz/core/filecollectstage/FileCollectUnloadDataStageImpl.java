@@ -16,6 +16,8 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.MapDBHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -27,17 +29,17 @@ import java.util.concurrent.Future;
 @DocClass(desc = "文件采集卸数程序主类", author = "zxz", createdate = "2019/10/30 16:38")
 public class FileCollectUnloadDataStageImpl extends AbstractJobStage {
 	//打印日志
-	private static final Log log = LogFactory.getLog(FileCollectUnloadDataStageImpl.class);
+	private static final Logger log = LogManager.getLogger();
 	//新增的需要做文件采集的文件
-	private List<String> newFile;
+	private final List<String> newFile;
 	//变化的文件
-	private List<String> changeFileList;
+	private final List<String> changeFileList;
 	//文件采集设置表主键
-	private FileCollectParamBean fileCollectParamBean;
+	private final FileCollectParamBean fileCollectParamBean;
 	//mapDB表对象
-	private ConcurrentMap<String, String> fileNameHTreeMap;
+	private final ConcurrentMap<String, String> fileNameHTreeMap;
 	//mapDB操作对象
-	private MapDBHelper mapDBHelper;
+	private final MapDBHelper mapDBHelper;
 
 	/**
 	 * 非结构化文件采集的作业实现类构造方法.

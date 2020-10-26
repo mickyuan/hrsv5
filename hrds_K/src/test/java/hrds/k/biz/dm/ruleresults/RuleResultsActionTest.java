@@ -7,154 +7,126 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.entity.Department_info;
+import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Dq_definition;
+import hrds.commons.entity.Dq_index3record;
 import hrds.commons.entity.Dq_result;
-import hrds.commons.entity.Sys_user;
 import hrds.commons.exception.BusinessException;
+import hrds.k.biz.commons.StorageLayerOperationTools;
+import hrds.testbase.LoadGeneralTestData;
 import hrds.testbase.WebBaseTestCase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RuleResultsActionTest extends WebBaseTestCase {
 
-    //测试数据的用户ID
-    private static final long USER_ID = -1000L;
-    //测试数据的部门ID
-    private static final long DEP_ID = -1000L;
-    //测试规则配置ID
-    private static final long REG_NUM = -1000L;
+    //当前线程的id
+    private static long THREAD_ID = Thread.currentThread().getId() * 1000000;
+    //获取模拟登陆的URL
+    private static final String LOGIN_URL = agentInitConfig.getString("login_url");
+    //登录用户id
+    private static final long USER_ID = agentInitConfig.getLong("general_oper_user_id");
+    //登录用户密码
+    private static final long PASSWORD = agentInitConfig.getLong("general_password");
+    //初始化加载通用测试数据
+    private static final LoadGeneralTestData loadGeneralTestData = new LoadGeneralTestData();
+    //获取配置的通用存储层id
+    private static final long DSL_ID = loadGeneralTestData.getData_store_layers().get(0).getDsl_id();
 
     @Method(desc = "初始化测试用例依赖表数据", logicStep = "初始化测试用例依赖表数据")
-    @BeforeClass
-    public static void before() {
-        DatabaseWrapper db = new DatabaseWrapper();
-        try {
-            //初始化 Sys_user 数据
-            Sys_user sysUser = new Sys_user();
-            sysUser.setUser_id(USER_ID);
-            sysUser.setCreate_id(1000L);
-            sysUser.setDep_id(DEP_ID);
-            sysUser.setRole_id(1001L);
-            sysUser.setUser_name("hll");
-            sysUser.setUser_password("111111");
-            sysUser.setUseris_admin("0");
-            sysUser.setUser_type("02");
-            sysUser.setUsertype_group("37");
-            sysUser.setUser_state("0");
-            sysUser.setCreate_date(DateUtil.getSysDate());
-            sysUser.setToken("0");
-            sysUser.setValid_time(DateUtil.getSysTime());
-            sysUser.add(db);
-            //初始化 Department_info 数据
-            Department_info departmentInfo = new Department_info();
-            departmentInfo.setDep_id(DEP_ID);
-            departmentInfo.setDep_name("hll");
-            departmentInfo.setCreate_date(DateUtil.getSysDate());
-            departmentInfo.setCreate_time(DateUtil.getSysTime());
-            departmentInfo.add(db);
+    @Before
+    public void before() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
             //初始化 Dq_definition
             Dq_definition dq_definition = new Dq_definition();
-            dq_definition.setReg_num(REG_NUM);
-            dq_definition.setReg_name("hll_测试规则配置信息");
+            dq_definition.setReg_num(-1000L + THREAD_ID);
+            dq_definition.setReg_name("hll_测试规则配置信息" + THREAD_ID);
             dq_definition.setApp_updt_dt(DateUtil.getSysDate());
             dq_definition.setApp_updt_ti(DateUtil.getSysTime());
             dq_definition.setIs_saveindex1("1");
             dq_definition.setIs_saveindex2("1");
             dq_definition.setIs_saveindex3("1");
-            dq_definition.setCase_type("SQL");
+            dq_definition.setCase_type("SQL" + THREAD_ID);
             dq_definition.setUser_id(USER_ID);
             dq_definition.add(db);
-            dq_definition.setReg_num(-1001L);
-            dq_definition.setReg_name("hll_测试检索规则名称");
+            dq_definition.setReg_num(-1001L + THREAD_ID);
+            dq_definition.setReg_name("hll_测试检索规则名称" + THREAD_ID);
             dq_definition.setApp_updt_dt(DateUtil.getSysDate());
             dq_definition.setApp_updt_ti(DateUtil.getSysTime());
-            dq_definition.setRule_src("hll_测试检索规则来源");
-            dq_definition.setTarget_tab("hll_测试检索规则标签");
+            dq_definition.setRule_src("hll_测试检索规则来源" + THREAD_ID);
+            dq_definition.setRule_tag("hll_测试检索规则标签" + THREAD_ID);
             dq_definition.setIs_saveindex1("1");
             dq_definition.setIs_saveindex2("1");
             dq_definition.setIs_saveindex3("1");
-            dq_definition.setCase_type("SQL");
+            dq_definition.setCase_type("SQL" + THREAD_ID);
             dq_definition.setUser_id(USER_ID);
             dq_definition.add(db);
             //初始化 Dq_result
             Dq_result dq_result = new Dq_result();
-            dq_result.setTask_id(-1001L);
+            dq_result.setTask_id(-1001L + THREAD_ID);
             dq_result.setIs_saveindex1("1");
             dq_result.setIs_saveindex2("1");
             dq_result.setIs_saveindex3("1");
-            dq_result.setCase_type("SQL");
-            dq_result.setReg_num(REG_NUM);
+            dq_result.setCase_type("SQL" + THREAD_ID);
+            dq_result.setVerify_date("20200101");
+            dq_result.setStart_date("20200101");
+            dq_result.setExec_mode("MAN");
+            dq_result.setReg_num(-1001L + THREAD_ID);
             dq_result.add(db);
-            dq_result.setTask_id(-1002L);
+            dq_result.setTask_id(-1002L + THREAD_ID);
             dq_result.setIs_saveindex1("1");
             dq_result.setIs_saveindex2("1");
             dq_result.setIs_saveindex3("1");
-            dq_result.setCase_type("SQL");
+            dq_result.setCase_type("SQL" + THREAD_ID);
             dq_result.setVerify_date("20200202");
             dq_result.setStart_date("20200202");
             dq_result.setExec_mode("MAN");
             dq_result.setVerify_result("0");
+            dq_result.setReg_num(-1001L + THREAD_ID);
             dq_result.add(db);
             //提交所有数据库执行操作
             SqlOperator.commitTransaction(db);
             //根据初始化的 Sys_user 用户模拟登陆
             String bodyString = new HttpClient()
                     .addData("user_id", USER_ID)
-                    .addData("password", "111111")
-                    .post("http://127.0.0.1:8888/A/action/hrds/a/biz/login/login").getBodyString();
-            JsonUtil.toObjectSafety(bodyString, ActionResult.class).ifPresent(ar ->
-                    assertThat(ar.isSuccess(), is(true)));
-        } catch (Exception e) {
-            db.rollback();
-        } finally {
-            db.close();
+                    .addData("password", PASSWORD)
+                    .post(LOGIN_URL).getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(()
+                    -> new BusinessException("模拟登陆失败!"));
+            assertThat(ar.isSuccess(), is(true));
         }
     }
 
     @Method(desc = "测试案例执行完成后清理测试数据", logicStep = "测试案例执行完成后清理测试数据")
-    @AfterClass
-    public static void after() {
-        DatabaseWrapper db = new DatabaseWrapper();
-        try {
+    @After
+    public void after() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
             long num;
-            //删除 Sys_user 表测试数据
-            SqlOperator.execute(db, "delete from " + Sys_user.TableName + " where user_id=?", USER_ID);
-            SqlOperator.commitTransaction(db);
-            num = SqlOperator.queryNumber(db, "select count(1) from " + Sys_user.TableName +
-                    " where user_id =?", USER_ID).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("sys_user 表此条数据删除后,记录数应该为0", num, is(0L));
-            //删除 Department_info 表测试数据
-            SqlOperator.execute(db, "delete from " + Department_info.TableName + " where dep_id=?", DEP_ID);
-            SqlOperator.commitTransaction(db);
-            num = SqlOperator.queryNumber(db, "select count(1) from " + Department_info.TableName +
-                    " where dep_id =?", DEP_ID).orElseThrow(() -> new RuntimeException("count fail!"));
-            assertThat("department_info 表此条数据删除后,记录数应该为0", num, is(0L));
             //删除 Dq_definition 表测试数据
-            SqlOperator.execute(db, "delete from " + Dq_definition.TableName + " where user_id=?", USER_ID);
-            SqlOperator.commitTransaction(db);
+            SqlOperator.execute(db, "delete from " + Dq_definition.TableName + " where reg_num=?", -1000L + THREAD_ID);
             num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_definition.TableName +
-                    " where user_id =?", USER_ID).orElseThrow(() -> new RuntimeException("count fail!"));
+                    " where reg_num=?", -1000L + THREAD_ID).orElseThrow(() -> new RuntimeException("count fail!"));
+            assertThat("Dq_definition 表此条数据删除后,记录数应该为0", num, is(0L));
+            SqlOperator.execute(db, "delete from " + Dq_definition.TableName + " where reg_num=?", -1001L + THREAD_ID);
+            num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_definition.TableName +
+                    " where reg_num=?", -1001L + THREAD_ID).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("Dq_definition 表此条数据删除后,记录数应该为0", num, is(0L));
             //删除 Dq_result 表测试数据
-            SqlOperator.execute(db, "delete from " + Dq_result.TableName + " where task_id=?", -1001L);
-            SqlOperator.commitTransaction(db);
+            SqlOperator.execute(db, "delete from " + Dq_result.TableName + " where task_id=?", -1001L + THREAD_ID);
             num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_result.TableName +
-                    " where task_id=?", -1001L).orElseThrow(() -> new RuntimeException("count fail!"));
+                    " where task_id=?", -1001L + THREAD_ID).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("Dq_result 表此条数据删除后,记录数应该为0", num, is(0L));
-            SqlOperator.execute(db, "delete from " + Dq_result.TableName + " where task_id=?", -1002L);
-            SqlOperator.commitTransaction(db);
+            SqlOperator.execute(db, "delete from " + Dq_result.TableName + " where task_id=?", -1002L + THREAD_ID);
             num = SqlOperator.queryNumber(db, "select count(1) from " + Dq_result.TableName +
-                    " where task_id=?", -1002L).orElseThrow(() -> new RuntimeException("count fail!"));
+                    " where task_id=?", -1002L + THREAD_ID).orElseThrow(() -> new RuntimeException("count fail!"));
             assertThat("Dq_result 表此条数据删除后,记录数应该为0", num, is(0L));
-        } catch (Exception e) {
-            db.rollback();
-        } finally {
-            db.close();
+            //提交数据库操作
+            SqlOperator.commitTransaction(db);
         }
     }
 
@@ -168,7 +140,7 @@ public class RuleResultsActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
                 "获取返回的ActionResult信息失败!"));
         assertThat(ar.isSuccess(), is(true));
-        assertThat(ar.getDataForMap().get("totalSize"), is(2));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 2, is(true));
     }
 
     @Method(desc = "检索规则结果信息", logicStep = "检索规则结果信息")
@@ -176,7 +148,7 @@ public class RuleResultsActionTest extends WebBaseTestCase {
     public void searchRuleResultInfos() {
         String bodyString;
         ActionResult ar;
-        //任务id
+        //条件为空
         bodyString = new HttpClient()
                 .post(getActionUrl("searchRuleResultInfos")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
@@ -189,8 +161,47 @@ public class RuleResultsActionTest extends WebBaseTestCase {
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
                 "获取返回的ActionResult信息失败!"));
         assertThat(ar.isSuccess(), is(true));
-        //TODO 根据其他条件搜索
-
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 1, is(true));
+        //开始日期
+        bodyString = new HttpClient()
+                .addData("start_date", "20200202")
+                .post(getActionUrl("searchRuleResultInfos")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 1, is(true));
+        //规则来源rule_src
+        bodyString = new HttpClient()
+                .addData("rule_src", "测试检索规则来源")
+                .post(getActionUrl("searchRuleResultInfos")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 2, is(true));
+        //规则标签
+        bodyString = new HttpClient()
+                .addData("rule_tag", "测试检索规则标签")
+                .post(getActionUrl("searchRuleResultInfos")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 2, is(true));
+        //规则名称
+        bodyString = new HttpClient()
+                .addData("reg_name", "测试检索规则名称")
+                .post(getActionUrl("searchRuleResultInfos")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 2, is(true));
+        //规则编号
+        bodyString = new HttpClient()
+                .addData("reg_num", -1001L + THREAD_ID)
+                .post(getActionUrl("searchRuleResultInfos")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 2, is(true));
     }
 
     @Method(desc = "规则执行详细信息", logicStep = "规则执行详细信息")
@@ -198,17 +209,98 @@ public class RuleResultsActionTest extends WebBaseTestCase {
     public void getRuleDetectDetail() {
         String bodyString;
         ActionResult ar;
+        //任务id存在
         bodyString = new HttpClient()
-                .addData("task_id", -1001L)
+                .addData("task_id", -1001L + THREAD_ID)
                 .post(getActionUrl("getRuleDetectDetail")).getBodyString();
         ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
                 "获取返回的ActionResult信息失败!"));
         assertThat(ar.isSuccess(), is(true));
-        assertThat(ar.getDataForMap().get("reg_num"), is(-1000));
-        assertThat(ar.getDataForMap().get("case_type"), is("SQL"));
+        assertThat(ar.getDataForMap().get("case_type"), is("SQL" + THREAD_ID));
+        //任务id不存在
+        bodyString = new HttpClient()
+                .addData("task_id", -9001L + THREAD_ID)
+                .post(getActionUrl("getRuleDetectDetail")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(false));
     }
 
+    @Method(desc = "规则执行详细历史信息", logicStep = "规则执行详细历史信息")
     @Test
     public void getRuleExecuteHistoryInfo() {
+        String bodyString;
+        ActionResult ar;
+        //规则编号存在
+        bodyString = new HttpClient()
+                .addData("reg_num", -1001L + THREAD_ID)
+                .post(getActionUrl("getRuleExecuteHistoryInfo")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+        assertThat(Long.parseLong(ar.getDataForMap().get("totalSize").toString()) >= 2, is(true));
+        //规则编号不存在
+        bodyString = new HttpClient()
+                .addData("reg_num", -9001L + THREAD_ID)
+                .post(getActionUrl("getRuleExecuteHistoryInfo")).getBodyString();
+        ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                "获取返回的ActionResult信息失败!"));
+        assertThat(ar.isSuccess(), is(true));
+    }
+
+    @Method(desc = "规则执行详细历史信息", logicStep = "规则执行详细历史信息")
+    @Test
+    public void exportIndicator3Results() {
+        try (DatabaseWrapper db = new DatabaseWrapper()) {
+            //获取DbConfBean
+            DbConfBean dbConfBean = StorageLayerOperationTools.getDbConfBean(db, DSL_ID);
+            //设置表名
+            String dqc_table_name = "dqc_" + THREAD_ID;
+            //初始化存储层下的数表
+            StorageLayerOperationTools.createDataTable(db, dbConfBean, dqc_table_name);
+            //初始化 Dq_result
+            Dq_result dq_result = new Dq_result();
+            dq_result.setTask_id(THREAD_ID);
+            dq_result.setTarget_tab(String.valueOf(THREAD_ID));
+            dq_result.setIs_saveindex1("1");
+            dq_result.setIs_saveindex2("1");
+            dq_result.setIs_saveindex3("1");
+            dq_result.setCase_type("SQL" + THREAD_ID);
+            dq_result.setVerify_date("20200101");
+            dq_result.setStart_date("20200101");
+            dq_result.setExec_mode("MAN");
+            dq_result.setReg_num(THREAD_ID);
+            dq_result.add(db);
+            //初始化 Dq_index3record
+            Dq_index3record di3 = new Dq_index3record();
+            di3.setRecord_id(THREAD_ID);
+            di3.setTable_name(dqc_table_name);
+            di3.setRecord_date(DateUtil.getSysDate());
+            di3.setRecord_time(DateUtil.getSysTime());
+            di3.setTask_id(THREAD_ID);
+            di3.setDsl_id(DSL_ID);
+            di3.add(db);
+            //提交db操作
+            db.commit();
+            //条件正确
+            String bodyString = new HttpClient()
+                    .addData("task_id", THREAD_ID)
+                    .post(getActionUrl("exportIndicator3Results")).getBodyString();
+            assertThat(bodyString, is(notNullValue()));
+            //条件为空
+            bodyString = new HttpClient()
+                    .post(getActionUrl("exportIndicator3Results")).getBodyString();
+            ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class).orElseThrow(() -> new BusinessException(
+                    "获取返回的ActionResult信息失败!"));
+            assertThat(ar.isSuccess(), is(false));
+            //清理存储层数表
+            StorageLayerOperationTools.dropDataTable(db, dbConfBean, dqc_table_name);
+            //清理 Dq_result
+            dq_result.delete(db);
+            //清理 Dq_index3record
+            di3.delete(db);
+            //提交db操作
+            db.commit();
+        }
     }
 }

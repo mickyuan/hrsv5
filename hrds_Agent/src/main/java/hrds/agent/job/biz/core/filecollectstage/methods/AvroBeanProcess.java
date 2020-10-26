@@ -5,27 +5,32 @@ import fd.ng.core.utils.DateUtil;
 import hrds.agent.job.biz.bean.AvroBean;
 import hrds.agent.job.biz.bean.FileCollectParamBean;
 import hrds.agent.job.biz.bean.ObjectCollectParamBean;
+import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.increasement.HBaseIncreasement;
 import hrds.agent.job.biz.utils.CommunicationUtil;
+import hrds.agent.job.biz.utils.PropertyParaUtil;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.Source_file_attribute;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.hadoop.solr.SolrParam;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.FileTypeUtil;
-import hrds.commons.utils.PropertyParaUtil;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.SolrInputDocument;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,57 +43,23 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class AvroBeanProcess {
 
-	private static final Log logger = LogFactory.getLog(AvroBeanProcess.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	private static final byte[] FAP = "file_avro_path".getBytes();
 	private static final byte[] FAB = "file_avro_block".getBytes();
 	private static final byte[] CF = Constant.HBASE_COLUMN_FAMILY;
 	//插入的sql
-	private static final String addSql = "INSERT " +
-			"INTO " +
-			"    Source_file_attribute " +
-			"    (" +
-			"        agent_id," +
-			"        collect_set_id," +
-			"        collect_type," +
-			"        file_avro_block," +
-			"        file_avro_path," +
-			"        file_id," +
-			"        file_md5," +
-			"        file_size," +
-			"        file_suffix," +
-			"        file_type," +
-			"        hbase_name," +
-			"        is_big_file," +
-			"        is_in_hbase," +
-			"        meta_info," +
-			"        original_name," +
-			"        original_update_date," +
-			"        original_update_time," +
-			"        source_id," +
-			"        source_path," +
-			"        storage_date," +
-			"        storage_time," +
-			"        table_name" +
-			"    ) " +
-			"    VALUES " +
-			"    ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )";
+	private static final String addSql = "INSERT INTO " + Source_file_attribute.TableName + "" +
+		" (agent_id,collect_set_id,collect_type,file_avro_block,file_avro_path,file_id,file_md5,file_size,file_suffix," +
+		" file_type,hbase_name,is_big_file,is_in_hbase,meta_info,original_name,original_update_date,original_update_time," +
+		" source_id,source_path,storage_date,storage_time,table_name) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-	private static final String updateSql = "UPDATE " +
-			"    source_file_attribute " +
-			"SET " +
-			"    storage_date = ?," +
-			"    storage_time = ?," +
-			"    original_update_date = ?," +
-			"    Original_update_time = ?," +
-			"    file_md5 = ?," +
-			"    file_avro_path = ?," +
-			"    file_avro_block = ? " +
-			"WHERE " +
-			"    file_id = ?";
-	private FileCollectParamBean fileCollectParamBean;
-	private String sysDate;
-	private String job_rs_id;
+	private static final String updateSql = "UPDATE " + Source_file_attribute.TableName + "SET" +
+		" storage_date = ?,storage_time = ?,original_update_date = ?,Original_update_time = ?,file_md5 = ?,file_avro_path = ?," +
+		" file_avro_block = ? WHERE file_id = ?";
+	private final FileCollectParamBean fileCollectParamBean;
+	private final String sysDate;
+	private final String job_rs_id;
 
 	public AvroBeanProcess(FileCollectParamBean fileCollectParamBean, String sysDate, String job_rs_id) {
 		this.fileCollectParamBean = fileCollectParamBean;
@@ -166,7 +137,7 @@ public class AvroBeanProcess {
 					addFileAttributeList[19] = attribute.getStorage_date();
 					addFileAttributeList[20] = attribute.getStorage_time();
 					addFileAttributeList[21] = attribute.getTable_name();
-					logger.info(addFileAttributeList);
+//					logger.info(addFileAttributeList);
 					addParamsPool.add(addFileAttributeList);
 					//插入到Hbase该行的rowKey为：file_id+md5
 					rowKey = fileId + "_" + avroBean.getFile_md5();
@@ -193,7 +164,7 @@ public class AvroBeanProcess {
 					updateParamsPool.add(updateFileAttributeList);
 					/* Hbase数据处理 这是上次文件的MD5，作为Hbase主键的一部分 */
 					String md5 = JSONObject.parseObject(fileNameHTreeMap.get(avroBean.getFile_scr_path())).
-							getString("file_md5");
+						getString("file_md5");
 //					需要关链的行 rowkey为： ${file_id}_${上次插入的文件的md5}
 					String[] guanlian = new String[]{fileId + "_" + md5};
 					hbaseList.add(guanlian);
@@ -229,7 +200,6 @@ public class AvroBeanProcess {
 	 */
 	public void saveInPostgreSupersedeHbase(List<String[]> hbaseList) {
 		//TODO 根据存储目的地，将值存到对应的地方
-		System.out.println(hbaseList);
 //		logger.info("Start to saveInPostgre...");
 ////		SQLExecutor db = null;
 //		if (hbaseList == null) {
@@ -303,7 +273,7 @@ public class AvroBeanProcess {
 	/**
 	 * 在Hbase中存入信息和拉链
 	 */
-	public void saveInHbase(List<String[]> hbaseList) {
+	public void saveInHbase(List<String[]> hbaseList) throws IOException {
 
 		logger.info("Start to saveInHbase...");
 		if (hbaseList == null) {
@@ -332,12 +302,25 @@ public class AvroBeanProcess {
 			}
 			putList.add(put);
 		}
-		try (HBaseHelper helper = HBaseHelper.getHelper(); Table table = helper.getTable(Bytes.toString(FileCollectParamBean.FILE_HBASE))) {
+		Table table = null;
+		try (HBaseHelper helper = HBaseHelper.getHelper(ConfigReader.getConfiguration(
+				System.getProperty("user.dir") + File.separator + "conf" + File.separator,
+				PropertyParaUtil.getString("platform", ConfigReader.PlatformType.normal.toString()),
+				PropertyParaUtil.getString("principle.name", "admin@HADOOP.COM"),
+				PropertyParaUtil.getString("HADOOP_USER_NAME", "hyshf")))) {
+			if (!helper.existsTable(FileCollectParamBean.FILE_HBASE_NAME)) {
+				HBaseIncreasement.createDefaultPrePartTable(helper, FileCollectParamBean.FILE_HBASE_NAME,
+						true);
+			}
+			table = helper.getTable(Bytes.toString(FileCollectParamBean.FILE_HBASE));
 			//数据插入到HBase
 			table.put(putList);
 		} catch (Exception e) {
 			logger.error("Failed to putInHbase", e);
 			throw new AppSystemException("Failed to putInHbase..." + e.getMessage());
+		} finally {
+			if (table != null)
+				table.close();
 		}
 	}
 
@@ -349,10 +332,11 @@ public class AvroBeanProcess {
 		int count = 0;
 		int commitNumber = 500;
 		SolrParam solrParam = new SolrParam();
-		solrParam.setSolrUrl(PropertyParaUtil.getString("zkHost",""));
-		solrParam.setCollection(PropertyParaUtil.getString("collection",""));
-		try (ISolrOperator os = SolrFactory.getInstance(PropertyParaUtil.
-				getString("solrclassname", ""),solrParam)) {
+		solrParam.setSolrZkUrl(JobConstant.SOLRZKHOST);
+		solrParam.setCollection(JobConstant.SOLRCOLLECTION);
+		// TODO
+		try (ISolrOperator os = SolrFactory.getInstance(JobConstant.SOLRCLASSNAME, solrParam,
+			System.getProperty("user.dir") + File.separator + "conf" + File.separator)) {
 			SolrClient server = os.getServer();
 			List<SolrInputDocument> docs = new ArrayList<>();
 			SolrInputDocument doc;
@@ -432,7 +416,7 @@ public class AvroBeanProcess {
 	 * @param format 时间字符串格式如： yyyy-MM-dd HH:mm:ss
 	 */
 	private String stringToDate(String lo, String format) {
-		long time = Long.valueOf(lo);
+		long time = Long.parseLong(lo);
 		Date date = new Date(time);
 		SimpleDateFormat sd = new SimpleDateFormat(format);
 		return sd.format(date);

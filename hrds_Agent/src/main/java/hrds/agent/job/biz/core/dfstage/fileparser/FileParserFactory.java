@@ -5,6 +5,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dfstage.fileparser.impl.*;
+import hrds.agent.job.biz.utils.CollectTableBeanUtil;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.exception.AppSystemException;
 
@@ -22,7 +23,8 @@ public class FileParserFactory {
 
 	public static FileParserInterface getFileParserImpl(TableBean tableBean, CollectTableBean
 			collectTableBean, String readFile) throws Exception {
-		String format = collectTableBean.getSourceData_extraction_def().getDbfile_format();
+		String format = CollectTableBeanUtil.getSourceData_extraction_def(collectTableBean
+				.getData_extraction_def_list()).getDbfile_format();
 		FileParserInterface fileParserInterface;
 		if (FileFormat.CSV.getCode().equals(format)) {
 			//写CSV文件实现类

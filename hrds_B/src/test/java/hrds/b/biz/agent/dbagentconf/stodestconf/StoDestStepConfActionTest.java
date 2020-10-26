@@ -29,14 +29,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @DocClass(desc = "定义存储目的地配置测试类", author = "WangZhengcheng")
 public class StoDestStepConfActionTest extends WebBaseTestCase {
 
-	private static final long FIRST_DATABASESET_ID = 1001L;
-	private static final long SECOND_DATABASESET_ID = 1002L;
-	private static final long SYS_USER_TABLE_ID = 7001L;
-	private static final long AGENT_INFO_TABLE_ID = 7003L;
-	private static final long DATA_SOURCE_TABLE_ID = 7004L;
-	private static final long TABLE_INFO_TABLE_ID = 7009L;
-	private static final long CODE_INFO_TABLE_ID = 7002L;
-	private static final long TABLE_COLUMN_TABLE_ID = 7100L;
+	private static final BaseInitData baseInitData = InitAndDestDataForStoDest.baseInitData;
+	private static final long threadId = baseInitData.threadId;
+	private static final long FIRST_DATABASESET_ID = baseInitData.FIRST_DATABASE_SET_ID;
+	private static final long SECOND_DATABASESET_ID = baseInitData.SECOND_DATABASE_SET_ID;
+	private static final long SYS_USER_TABLE_ID = baseInitData.SYS_USER_TABLE_ID;
+	private static final long AGENT_INFO_TABLE_ID = baseInitData.AGENT_INFO_TABLE_ID;
+	private static final long DATA_SOURCE_TABLE_ID = baseInitData.DATA_SOURCE_TABLE_ID;
+	private static final long TABLE_INFO_TABLE_ID = 7009L + threadId;
+	private static final long CODE_INFO_TABLE_ID = baseInitData.CODE_INFO_TABLE_ID;
+	private static final long TABLE_COLUMN_TABLE_ID = 7100L + threadId;
 	private static final long UNEXPECTED_ID = 999999999L;
 
 	/**
@@ -84,7 +86,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void before() {
 		InitAndDestDataForStoDest.before();
 		//模拟登陆
-		ActionResult actionResult = BaseInitData.simulatedLogin();
+		ActionResult actionResult = login();
 		assertThat("模拟登陆", actionResult.isSuccess(), is(true));
 	}
 
@@ -101,47 +103,46 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getInitInfo() {
 		//正确数据访问1：使用正确的colSetId访问，应该可以拿到4条数据，表名分别是agent_info、data_source、sys_user、code_info
 		String rightString = new HttpClient()
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.post(getActionUrl("getInitInfo")).getBodyString();
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getInitInfo")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
-
-		Result rightData = rightResult.getDataForResult();
+		Result rightData = (Result) rightResult.getDataForMap().get("storageTableData");
 		assertThat("获取到的数据有四条", rightData.getRowCount(), is(4));
 		for (int i = 0; i < rightData.getRowCount(); i++) {
 			if (rightData.getString(i, "table_name").equalsIgnoreCase("agent_info")) {
 				assertThat("获取到表名为agent_info，表中文名为<Agent信息表>",
-					rightData.getString(i, "table_ch_name").equalsIgnoreCase("Agent信息表"), is(true));
+						rightData.getString(i, "table_ch_name").equalsIgnoreCase("Agent信息表"), is(true));
 				assertThat("获取到表名为agent_info，做拉链存储", rightData.getString(i, "is_zipper"), is(IsFlag.Shi.getCode()));
 				assertThat("获取到表名为agent_info，存储方式为<增量>", rightData.getString(i, "storage_type"),
-					is(StorageType.ZengLiang.getCode()));
+						is(StorageType.QuanLiang.getCode()));
 				assertThat("获取到表名为agent_info，数据保存时间为<7天>", rightData.getLong(i, "storage_time"), is(7L));
 				assertThat("获取到表名为agent_info，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"),
-					is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
+						is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为agent_info，destflag标识位为<是>", rightData.getString(i, "destflag"), is(IsFlag.Shi.getCode()));
 			} else if (rightData.getString(i, "table_name").equalsIgnoreCase("data_source")) {
 				assertThat("获取到表名为data_source，表中文名为<数据源表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("数据源表"),
-					is(true));
+						is(true));
 				assertThat("获取到表名为data_source，不做拉链存储", rightData.getString(i, "is_zipper"), is(IsFlag.Fou.getCode()));
 				assertThat("获取到表名为data_source，存储方式为<追加>", rightData.getString(i, "storage_type"),
-					is(StorageType.ZhuiJia.getCode()));
+						is(StorageType.ZhuiJia.getCode()));
 				assertThat("获取到表名为data_source，数据保存时间为<1天>", rightData.getLong(i, "storage_time"), is(1L));
 				assertThat("获取到表名为data_source，数据抽取方式为<抽取并入库>", rightData.getString(i, "data_extract_type"),
-					is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
+						is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为data_source，destflag标识位为<是>", rightData.getString(i, "destflag"),
-					is(IsFlag.Shi.getCode()));
+						is(IsFlag.Shi.getCode()));
 			} else if (rightData.getString(i, "table_name").equalsIgnoreCase("sys_user")) {
 				assertThat("获取到表名为sys_user，表中文名为<用户表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("用户表"),
-					is(true));
+						is(true));
 				assertThat("获取到表名为sys_user，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"),
-					is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
+						is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为sys_user，destflag标识位为<否>", rightData.getString(i, "destflag"), is(IsFlag.Fou.getCode()));
 			} else if (rightData.getString(i, "table_name").equalsIgnoreCase("code_info")) {
 				assertThat("获取到表名为code_info，表中文名为<代码信息表>", rightData.getString(i, "table_ch_name").equalsIgnoreCase("代码信息表"),
-					is(true));
+						is(true));
 				assertThat("获取到表名为code_info，数据抽取方式为<仅抽取>", rightData.getString(i, "data_extract_type"),
-					is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
+						is(DataExtractType.ShuJuKuChouQuLuoDi.getCode()));
 				assertThat("获取到表名为code_info，destflag标识位为<否>", rightData.getString(i, "destflag"), is(IsFlag.Fou.getCode()));
 			} else {
 				assertThat("获取到了不符合期望的结果，表名为：" + rightData.getString(i, "table_name"), false, is(true));
@@ -150,10 +151,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//错误的数据访问1：使用错误的colSetId访问，访问会失败
 		String wrongString = new HttpClient()
-			.addData("colSetId", SECOND_DATABASESET_ID)
-			.post(getActionUrl("getInitInfo")).getBodyString();
+				.addData("colSetId", SECOND_DATABASESET_ID)
+				.post(getActionUrl("getInitInfo")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
@@ -170,10 +171,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getTbStoDestByColSetId() {
 		//正确数据访问1：使用正确的colSetId访问，应该可以拿到2条数据，表ID分别是agent_info、data_source两张表的ID
 		String rightString = new HttpClient()
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.post(getActionUrl("getTbStoDestByColSetId")).getBodyString();
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.post(getActionUrl("getTbStoDestByColSetId")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		/*
@@ -210,10 +211,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//错误的数据访问1：使用错误的colSetId访问，访问会失败
 		String wrongString = new HttpClient()
-			.addData("colSetId", UNEXPECTED_ID)
-			.post(getActionUrl("getTbStoDestByColSetId")).getBodyString();
+				.addData("colSetId", UNEXPECTED_ID)
+				.post(getActionUrl("getTbStoDestByColSetId")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
@@ -230,39 +231,39 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getStoDestDetail() {
 		//正确数据访问1：尝试获取存储目的地为关系型数据库的详细信息
 		String rightString = new HttpClient()
-			.addData("dslId", 4400L)
-			.post(getActionUrl("getStoDestDetail")).getBodyString();
+				.addData("dslId", 4400L)
+				.post(getActionUrl("getStoDestDetail")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 		Result rightDataOne = rightResult.getDataForResult();
 		assertThat("保存目的地为关系型数据库，获取到的key-value键值对有7对", rightDataOne.getRowCount(), is(7));
 		for (int i = 0; i < rightDataOne.getRowCount(); i++) {
 			if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("database_name")) {
 				assertThat("保存目的地是关系型数据库, database_name为<coll_sto_dest_test_dbname>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_dbname"),
-					is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_dbname"),
+						is(true));
 			} else if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("database_pwd")) {
 				assertThat("保存目的地是关系型数据库, database_pwd为<coll_sto_dest_test_pwd>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_pwd"), is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_pwd"), is(true));
 			} else if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("database_drive")) {
 				assertThat("保存目的地是关系型数据库, database_drive为<coll_sto_dest_test_driver>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_driver"),
-					is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_driver"),
+						is(true));
 			} else if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("user_name")) {
 				assertThat("保存目的地是关系型数据库, user_name为<coll_sto_dest_test_username>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_username"),
-					is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_username"),
+						is(true));
 			} else if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("database_ip")) {
 				assertThat("保存目的地是关系型数据库, database_ip为<coll_sto_dest_test_ip>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_ip"), is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_ip"), is(true));
 			} else if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("database_port")) {
 				assertThat("保存目的地是关系型数据库, database_port为<coll_sto_dest_test_port>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_port"), is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_port"), is(true));
 			} else if (rightDataOne.getString(i, "storage_property_key").equalsIgnoreCase("jdbc_url")) {
 				assertThat("保存目的地是关系型数据库, jdbc_url为<coll_sto_dest_test_jdbc_url>",
-					rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_jdbc_url"),
-					is(true));
+						rightDataOne.getString(i, "storage_property_val").equalsIgnoreCase("coll_sto_dest_test_jdbc_url"),
+						is(true));
 			} else {
 				assertThat("保存目的地是关系型数据库，获取到了不符合期望的key为" + rightDataOne.getString(i, "storage_property_key"), is(true));
 			}
@@ -270,23 +271,23 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//正确数据访问2：尝试获取存储目的地为solr的详细信息
 		String rightStringTwo = new HttpClient()
-			.addData("dslId", 4399L)
-			.post(getActionUrl("getStoDestDetail")).getBodyString();
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getStoDestDetail")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 		Result rightDataTwo = rightResultTwo.getDataForResult();
 		assertThat("获取存储目的地为solr的详细信息有1条", rightDataTwo.getRowCount(), is(1));
 		assertThat("获取存储目的地为solr的详细信息，key为<SolarUrl>", rightDataTwo.getString(0, "storage_property_key"), is("SolarUrl"));
 		assertThat("获取存储目的地为solr的详细信息，value为<https://SolarUrl>", rightDataTwo.getString(0, "storage_property_val"),
-			is("https://SolarUrl"));
+				is("https://SolarUrl"));
 
 		//正确数据访问3：尝试获取存储目的地为hbase的详细信息
 		String rightStringThree = new HttpClient()
-			.addData("dslId", 4402L)
-			.post(getActionUrl("getStoDestDetail")).getBodyString();
+				.addData("dslId", 4402L)
+				.post(getActionUrl("getStoDestDetail")).getBodyString();
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
 
 		Result rightDataThree = rightResultThree.getDataForResult();
@@ -294,25 +295,25 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		for (int i = 0; i < rightDataThree.getRowCount(); i++) {
 			if (rightDataThree.getString(i, "storage_property_key").equalsIgnoreCase("Hbase-site-path")) {
 				assertThat("获取存储目的地为hbase的详细信息，key为<Hbase-site-path>, value为<Hbase-site.xml>",
-					rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Hbase-site.xml"), is(true));
+						rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Hbase-site.xml"), is(true));
 			} else if (rightDataThree.getString(i, "storage_property_key").equalsIgnoreCase("Core-site-path")) {
 				assertThat("获取存储目的地为hbase的详细信息，key为<Core-site-path>, value为<Core-site.xml>",
-					rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Core-site.xml"), is(true));
+						rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Core-site.xml"), is(true));
 			} else if (rightDataThree.getString(i, "storage_property_key").equalsIgnoreCase("Hdfs-site-path")) {
 				assertThat("获取存储目的地为hbase的详细信息，key为<Hdfs-site-path>, value为<Hdfs-site.xml>",
-					rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Hdfs-site.xml"), is(true));
+						rightDataThree.getString(i, "storage_property_val").equalsIgnoreCase("Hdfs-site.xml"), is(true));
 			} else {
 				assertThat("获取存储目的地为hbase的详细信息出现了不符合期望的情况，key: " + rightDataThree.getString(i, "storage_property_key"), true,
-					is(false));
+						is(false));
 			}
 		}
 
 		//错误的数据访问1：尝试获取存储目的地为ES的详细信息，因为系统里没有进行配置，所以获取不到数据
 		String wrongStringOne = new HttpClient()
-			.addData("dslId", 4401L)
-			.post(getActionUrl("getStoDestDetail")).getBodyString();
+				.addData("dslId", 4401L)
+				.post(getActionUrl("getStoDestDetail")).getBodyString();
 		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultOne.isSuccess(), is(true));
 		Result wrongData = wrongResultOne.getDataForResult();
 		assertThat("尝试获取存储目的地为ES的详细信息，因为系统里没有进行配置，所以获取不到数据", wrongData.isEmpty(), is(true));
@@ -331,10 +332,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getStoDestForOnlyExtract() {
 		//正确数据访问1：对sys_user表的采集仅做抽取，存储目的地为/root目录
 		String rightString = new HttpClient()
-			.addData("tableId", SYS_USER_TABLE_ID)
-			.post(getActionUrl("getStoDestForOnlyExtract")).getBodyString();
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.post(getActionUrl("getStoDestForOnlyExtract")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 		Result rightData = rightResult.getDataForResult();
 		assertThat("访问方法获取到的数据有一条", rightData.getRowCount(), is(1));
@@ -342,10 +343,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//错误的数据访问1：传入错误的表ID，访问失败
 		String wrongString = new HttpClient()
-			.addData("tableId", UNEXPECTED_ID)
-			.post(getActionUrl("getStoDestForOnlyExtract")).getBodyString();
+				.addData("tableId", UNEXPECTED_ID)
+				.post(getActionUrl("getStoDestForOnlyExtract")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
@@ -364,35 +365,35 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在进行修改之前，查询数据库，确认修改前数据库的情况符合预期
 			Result result = SqlOperator.queryResult(db,
-				" select plane_url from " + Data_extraction_def.TableName + " where table_id = ? and data_extract_type = ?"
-				, SYS_USER_TABLE_ID, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+					" select plane_url from " + Data_extraction_def.TableName + " where table_id = ? and data_extract_type = ?"
+					, SYS_USER_TABLE_ID, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			assertThat("查询到的数据有一条", result.getRowCount(), is(1));
 			assertThat("得到的sys_user表的存储目的地为/root", result.getString(0, "plane_url"), is("/root"));
 		}
 		String rightString = new HttpClient()
-			.addData("tableId", SYS_USER_TABLE_ID)
-			.addData("stoDest", "/root/test")
-			.post(getActionUrl("saveStoDestForOnlyExtract")).getBodyString();
+				.addData("tableId", SYS_USER_TABLE_ID)
+				.addData("stoDest", "/root/test")
+				.post(getActionUrl("saveStoDestForOnlyExtract")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 		//判断修改后数据库中的结果是否符合期望
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在进行修改之后，查询数据库，确认修改前数据库的情况符合预期
 			Result result = SqlOperator.queryResult(db,
-				" select plane_url from " + Data_extraction_def.TableName + " where table_id = ? and data_extract_type = ?"
-				, SYS_USER_TABLE_ID, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
+					" select plane_url from " + Data_extraction_def.TableName + " where table_id = ? and data_extract_type = ?"
+					, SYS_USER_TABLE_ID, DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			assertThat("查询到的数据有一条", result.getRowCount(), is(1));
 			assertThat("得到的sys_user表的存储目的地为/root/test", result.getString(0, "plane_url"), is("/root/test"));
 		}
 
 		//错误的数据访问1：传入错误的表ID，访问失败
 		String wrongString = new HttpClient()
-			.addData("tableId", UNEXPECTED_ID)
-			.addData("stoDest", "/root/test")
-			.post(getActionUrl("saveStoDestForOnlyExtract")).getBodyString();
+				.addData("tableId", UNEXPECTED_ID)
+				.addData("stoDest", "/root/test")
+				.post(getActionUrl("saveStoDestForOnlyExtract")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
@@ -410,10 +411,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getStoDestByTableId() {
 		//正确数据访问1：data_source表保存进入solr，所以使用data_source表的table_id访问方法，判断在得到的solr记录上的usedflag是否为"1",而其他的记录上usedflag为"0"
 		String rightString = new HttpClient()
-			.addData("tableId", DATA_SOURCE_TABLE_ID)
-			.post(getActionUrl("getStoDestByTableId")).getBodyString();
+				.addData("tableId", DATA_SOURCE_TABLE_ID)
+				.post(getActionUrl("getStoDestByTableId")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		Result rightDataOne = rightResult.getDataForResult();
@@ -421,41 +422,41 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		for (int i = 0; i < rightDataOne.getRowCount(); i++) {
 			if (rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("SOLR")) {
 				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataOne.getString(i, "store_type"),
-					is(Store_type.SOLR.getCode()));
+						is(Store_type.SOLR.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<SOLR>, usedflag标识位为<1>", rightDataOne.getString(i, "usedflag"),
-					is(IsFlag.Shi.getCode()));
+						is(IsFlag.Shi.getCode()));
 			} else if (rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("Oralce")) {
 				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataOne.getString(i, "store_type"),
-					is(Store_type.DATABASE.getCode()));
+						is(Store_type.DATABASE.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<Oralce>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"),
-					is(IsFlag.Fou.getCode()));
+						is(IsFlag.Fou.getCode()));
 			} else if (rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("ElasticSearch")) {
 				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>",
-					rightDataOne.getString(i, "store_type"), is(Store_type.ElasticSearch.getCode()));
+						rightDataOne.getString(i, "store_type"), is(Store_type.ElasticSearch.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<0>",
-					rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
+						rightDataOne.getString(i, "usedflag"), is(IsFlag.Fou.getCode()));
 			} else if (rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("HBASE")) {
 				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataOne.getString(i, "store_type"),
-					is(Store_type.HBASE.getCode()));
+						is(Store_type.HBASE.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<HBASE>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"),
-					is(IsFlag.Fou.getCode()));
+						is(IsFlag.Fou.getCode()));
 			} else if (rightDataOne.getString(i, "dsl_name").equalsIgnoreCase("MONGODB")) {
 				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataOne.getString(i, "store_type"),
-					is(Store_type.MONGODB.getCode()));
+						is(Store_type.MONGODB.getCode()));
 				assertThat("<data_source>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<0>", rightDataOne.getString(i, "usedflag"),
-					is(IsFlag.Fou.getCode()));
+						is(IsFlag.Fou.getCode()));
 			} else {
 				assertThat("<data_source>获取数据存储层配置出现了不符合期望的情况，数据存储层配置属性名称为：" + rightDataOne.getString(i, "dsl_name"), true,
-					is(false));
+						is(false));
 			}
 		}
 
 		//正确数据访问2：agent_info表保存进入hbase和关系型数据库，所以使用agent_info表的table_id访问方法，判断在得到的hbase和关系型数据库记录上的usedflag是否为true,而其他的记录上usedflag为false
 		String rightStringTwo = new HttpClient()
-			.addData("tableId", AGENT_INFO_TABLE_ID)
-			.post(getActionUrl("getStoDestByTableId")).getBodyString();
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.post(getActionUrl("getStoDestByTableId")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		Result rightDataTwo = rightResultTwo.getDataForResult();
@@ -463,32 +464,32 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		for (int i = 0; i < rightDataTwo.getRowCount(); i++) {
 			if (rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("SOLR")) {
 				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, 存储类型为<SOLR>", rightDataTwo.getString(i, "store_type"),
-					is(Store_type.SOLR.getCode()));
+						is(Store_type.SOLR.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<SOLR>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"),
-					is(IsFlag.Fou.getCode()));
+						is(IsFlag.Fou.getCode()));
 			} else if (rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("Oralce")) {
 				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, 存储类型为<关系型数据库>", rightDataTwo.getString(i, "store_type"),
-					is(Store_type.DATABASE.getCode()));
+						is(Store_type.DATABASE.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<Oralce>, usedflag标识位为<1>", rightDataTwo.getString(i, "usedflag"),
-					is(IsFlag.Shi.getCode()));
+						is(IsFlag.Shi.getCode()));
 			} else if (rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("ElasticSearch")) {
 				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, 存储类型为<ElasticSearch>",
-					rightDataTwo.getString(i, "store_type"), is(Store_type.ElasticSearch.getCode()));
+						rightDataTwo.getString(i, "store_type"), is(Store_type.ElasticSearch.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<ElasticSearch>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"),
-					is(IsFlag.Fou.getCode()));
+						is(IsFlag.Fou.getCode()));
 			} else if (rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("HBASE")) {
 				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, 存储类型为<HBASE>", rightDataTwo.getString(i, "store_type"),
-					is(Store_type.HBASE.getCode()));
+						is(Store_type.HBASE.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<HBASE>, usedflag标识位为<1>", rightDataTwo.getString(i, "usedflag"),
-					is(IsFlag.Shi.getCode()));
+						is(IsFlag.Shi.getCode()));
 			} else if (rightDataTwo.getString(i, "dsl_name").equalsIgnoreCase("MONGODB")) {
 				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, 存储类型为<MONGODB>", rightDataTwo.getString(i, "store_type"),
-					is(Store_type.MONGODB.getCode()));
+						is(Store_type.MONGODB.getCode()));
 				assertThat("<agent_info>数据存储层配置属性名称为<MONGODB>, usedflag标识位为<0>", rightDataTwo.getString(i, "usedflag"),
-					is(IsFlag.Fou.getCode()));
+						is(IsFlag.Fou.getCode()));
 			} else {
 				assertThat("<agent_info>获取数据存储层配置出现了不符合期望的情况，数据存储层配置属性名称为：" + rightDataTwo.getString(i, "dsl_name"), true,
-					is(false));
+						is(false));
 			}
 		}
 	}
@@ -507,11 +508,11 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getColumnStoInfo() {
 		//正确数据访问1：agent_info表保存进入关系型数据库，所以构造获取agent_info表的三个采集列的选择列信息情况
 		String rightStringOne = new HttpClient()
-			.addData("tableId", AGENT_INFO_TABLE_ID)
-			.addData("dslId", 4400L)
-			.post(getActionUrl("getColumnStoInfo")).getBodyString();
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.addData("dslId", 4400L)
+				.post(getActionUrl("getColumnStoInfo")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		Result rightDataOne = rightResultOne.getDataForResult();
@@ -533,11 +534,11 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//正确数据访问2：agent_info表保存进入HBASE，所以构造获取agent_info表的三个采集列的选择列信息情况
 		String rightStringTwo = new HttpClient()
-			.addData("tableId", AGENT_INFO_TABLE_ID)
-			.addData("dslId", 4402L)
-			.post(getActionUrl("getColumnStoInfo")).getBodyString();
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.addData("dslId", 4402L)
+				.post(getActionUrl("getColumnStoInfo")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		Result rightDataTwo = rightResultTwo.getDataForResult();
@@ -559,11 +560,11 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//正确数据访问3：data_source表保存进入SOLR，所以构造获取data_source表的三个采集列的选择列信息情况
 		String rightStringThree = new HttpClient()
-			.addData("tableId", DATA_SOURCE_TABLE_ID)
-			.addData("dslId", 4399L)
-			.post(getActionUrl("getColumnStoInfo")).getBodyString();
+				.addData("tableId", DATA_SOURCE_TABLE_ID)
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getColumnStoInfo")).getBodyString();
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
 
 		Result rightDataThree = rightResultThree.getDataForResult();
@@ -585,11 +586,11 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//正确数据访问4：agent_info没有进入SOLR，所以构造获取当用户将agent_info表保存进入SOLR时的结果集情况
 		String rightStringFour = new HttpClient()
-			.addData("tableId", AGENT_INFO_TABLE_ID)
-			.addData("dslId", 4399L)
-			.post(getActionUrl("getColumnStoInfo")).getBodyString();
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getColumnStoInfo")).getBodyString();
 		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultFour.isSuccess(), is(true));
 
 		Result rightDataFour = rightResultFour.getDataForResult();
@@ -627,33 +628,33 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，先检查数据库中的数据是否符合期望
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
-				Store_type.DATABASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
+					Store_type.DATABASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段保存进入到关系型数据库做主键", countOne, is(1L));
 
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L,
-				Store_type.DATABASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L,
+					Store_type.DATABASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_name字段没有保存进入到关系型数据库做主键", countTwo, is(0L));
 		}
 
 		ColStoParam primayKeyParam = new ColStoParam();
 		primayKeyParam.setColumnId(3113L);
-		long[] dsladIds = {439999L};
+		Long[] dsladIds = {439999L};
 		primayKeyParam.setDsladIds(dsladIds);
 
 		//这样做的目的是继续保证agent_id列在hbase中做rowkey,维持构造的测试数据的原有的状态，保证能够顺利执行saveColStoInfo<正确的数据访问2>测试用例
 		ColStoParam rowKeyParam = new ColStoParam();
 		rowKeyParam.setColumnId(3112L);
-		long[] dsladIdsTwo = {440001L};
+		Long[] dsladIdsTwo = {440001L};
 		rowKeyParam.setDsladIds(dsladIdsTwo);
 		rowKeyParam.setCsiNumber(1L);
 
@@ -661,46 +662,46 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		columnStorageInfos.add(rowKeyParam);
 
 		String rightStringOne = new HttpClient()
-			.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
-			.addData("tableId", AGENT_INFO_TABLE_ID)
-			.post(getActionUrl("saveColStoInfo")).getBodyString();
+				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.post(getActionUrl("saveColStoInfo")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存后，检查数据库中的数据是否符合期望
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
-				Store_type.DATABASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
+					Store_type.DATABASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到关系型数据库做主键", countOne, is(0L));
 
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L,
-				Store_type.DATABASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3113L,
+					Store_type.DATABASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_name字段保存进入到关系型数据库做主键", countTwo, is(1L));
 
 			Result result = SqlOperator
-				.queryResult(db, "select csi.csi_number from " + Dtab_relation_store.TableName + " csi" +
-						" left join " + Data_store_layer_added.TableName + " dsld" +
-						" on dsld.dslad_id = csi.dslad_id" +
-						" left join " + Data_store_layer.TableName + " dsl" +
-						" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
-					Store_type.HBASE.getCode());
+					.queryResult(db, "select csi.csi_number from " + Dtab_relation_store.TableName + " csi" +
+									" left join " + Data_store_layer_added.TableName + " dsld" +
+									" on dsld.dslad_id = csi.dslad_id" +
+									" left join " + Data_store_layer.TableName + " dsl" +
+									" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
+							Store_type.HBASE.getCode());
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做主键rowkey", result.getRowCount(), is(1));
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做主键rowkey，序号为1", result.getLong(0, "csi_number"), is(1L));
 
 			//删除因执行测试用例而新增的数据
 			int count = SqlOperator
-				.execute(db, "delete from " + Dtab_relation_store.TableName + " where column_id = ?", 3113L);
+					.execute(db, "delete from " + Dtab_relation_store.TableName + " where column_id = ?", 3113L);
 			assertThat("删除因执行saveColStoInfo<正确的数据访问2>测试用例而新增的数据", count, is(1));
 
 			SqlOperator.commitTransaction(db);
@@ -712,32 +713,32 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，先检查数据库中的数据是否符合期望
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
-				Store_type.HBASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
+					Store_type.HBASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段保存进入到HBASE做rowkey", countOne, is(1L));
 		}
 
 		String rightStringTwo = new HttpClient()
-			.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
-			.addData("tableId", AGENT_INFO_TABLE_ID)
-			.post(getActionUrl("saveColStoInfo")).getBodyString();
+				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
+				.addData("tableId", AGENT_INFO_TABLE_ID)
+				.post(getActionUrl("saveColStoInfo")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存后，检查数据库中的数据是否符合期望
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
-				Store_type.HBASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 3112L,
+					Store_type.HBASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("agent_info表中的agent_id字段没有保存进入到HBASE做rowkey", countOne, is(0L));
 		}
 
@@ -747,64 +748,64 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，先检查数据库中的数据是否符合期望
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
-				Store_type.SOLR.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
+					Store_type.SOLR.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("data_source表中的source_id字段保存进入到solr做索引列", countOne, is(1L));
 		}
 		ColStoParam sourceIdParam = new ColStoParam();
 		sourceIdParam.setColumnId(5112L);
-		long[] dsladIdsThree = {439999L, 440001L};
+		Long[] dsladIdsThree = {439999L, 440001L};
 		sourceIdParam.setDsladIds(dsladIdsThree);
 		sourceIdParam.setCsiNumber(3L);
 
 		columnStorageInfos.add(sourceIdParam);
 
 		String rightStringThree = new HttpClient()
-			.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
-			.addData("tableId", DATA_SOURCE_TABLE_ID)
-			.post(getActionUrl("saveColStoInfo")).getBodyString();
+				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
+				.addData("tableId", DATA_SOURCE_TABLE_ID)
+				.post(getActionUrl("saveColStoInfo")).getBodyString();
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，先检查数据库中的数据是否符合期望
 			long countOne = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
-				Store_type.SOLR.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
+					Store_type.SOLR.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段不再进入到solr做索引列", countOne, is(0L));
 
 			long countTwo = SqlOperator.queryNumber(db, "select count(1) from " + Dtab_relation_store.TableName + " csi" +
-					" left join " + Data_store_layer_added.TableName + " dsld" +
-					" on dsld.dslad_id = csi.dslad_id" +
-					" left join " + Data_store_layer.TableName + " dsl" +
-					" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
-				Store_type.DATABASE.getCode())
-				.orElseThrow(() -> new BusinessException("SQL查询错误"));
+							" left join " + Data_store_layer_added.TableName + " dsld" +
+							" on dsld.dslad_id = csi.dslad_id" +
+							" left join " + Data_store_layer.TableName + " dsl" +
+							" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
+					Store_type.DATABASE.getCode())
+					.orElseThrow(() -> new BusinessException("SQL查询错误"));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到关系型数据库做主键", countTwo, is(1L));
 
 			Result result = SqlOperator
-				.queryResult(db, "select csi.csi_number from " + Dtab_relation_store.TableName + " csi" +
-						" left join " + Data_store_layer_added.TableName + " dsld" +
-						" on dsld.dslad_id = csi.dslad_id" +
-						" left join " + Data_store_layer.TableName + " dsl" +
-						" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
-					Store_type.HBASE.getCode());
+					.queryResult(db, "select csi.csi_number from " + Dtab_relation_store.TableName + " csi" +
+									" left join " + Data_store_layer_added.TableName + " dsld" +
+									" on dsld.dslad_id = csi.dslad_id" +
+									" left join " + Data_store_layer.TableName + " dsl" +
+									" on dsl.dsl_id = dsld.dsl_id where csi.column_id = ? and dsl.store_type = ?", 5112L,
+							Store_type.HBASE.getCode());
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到Hbase做rowkey", result.getRowCount(), is(1));
 			assertThat("<正确的数据访问3>执行成功后，data_source表中的source_id字段保存进入到Hbase做rowkey，序号为3", result.getLong(0, "csi_number"),
-				is(3L));
+					is(3L));
 
 			//执行成功后，删除新增的数据
 			int count = SqlOperator
-				.execute(db, "delete from " + Dtab_relation_store.TableName + " where column_id = ?", 5112L);
+					.execute(db, "delete from " + Dtab_relation_store.TableName + " where column_id = ?", 5112L);
 			assertThat("删除因执行saveColStoInfo<正确的数据访问3>测试用例而新增的数据", count, is(2));
 
 			SqlOperator.commitTransaction(db);
@@ -820,11 +821,11 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		columnStorageInfos.add(wrongParam);
 
 		String wrongString = new HttpClient()
-			.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
-			.addData("tableId", DATA_SOURCE_TABLE_ID)
-			.post(getActionUrl("saveColStoInfo")).getBodyString();
+				.addData("colStoInfoString", JSON.toJSONString(columnStorageInfos))
+				.addData("tableId", DATA_SOURCE_TABLE_ID)
+				.post(getActionUrl("saveColStoInfo")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 	}
 
@@ -869,16 +870,16 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		}
 
 		String rightString = new HttpClient()
-			.addData("columnString", JSON.toJSONString(dataSources))
-			.post(getActionUrl("updateColumnZhName")).getBodyString();
+				.addData("columnString", JSON.toJSONString(dataSources))
+				.post(getActionUrl("updateColumnZhName")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			List<Object> list = SqlOperator
-				.queryOneColumnList(db, "select column_ch_name from " + Table_column.TableName + " where table_id = ?",
-					DATA_SOURCE_TABLE_ID);
+					.queryOneColumnList(db, "select column_ch_name from " + Table_column.TableName + " where table_id = ?",
+							DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的数据有3条", list.size(), is(3));
 			for (Object obj : list) {
 				String str = (String) obj;
@@ -925,10 +926,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		}
 
 		String wrongString = new HttpClient()
-			.addData("columnString", JSON.toJSONString(agentInfos))
-			.post(getActionUrl("updateColumnZhName")).getBodyString();
+				.addData("columnString", JSON.toJSONString(agentInfos))
+				.post(getActionUrl("updateColumnZhName")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 
 		agentInfos.clear();
@@ -939,10 +940,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		agentInfos.add(wrongTableColumn);
 
 		String wrongStringTwo = new HttpClient()
-			.addData("columnString", JSON.toJSONString(agentInfos))
-			.post(getActionUrl("updateColumnZhName")).getBodyString();
+				.addData("columnString", JSON.toJSONString(agentInfos))
+				.post(getActionUrl("updateColumnZhName")).getBodyString();
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultTwo.isSuccess(), is(false));
 	}
 
@@ -965,21 +966,21 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，确认Table_storage_info表中的数据符合期望
 			Result storageInfo = SqlOperator
-				.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
-					AGENT_INFO_TABLE_ID);
+					.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
+							AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，符合期望", storageInfo.getRowCount(), is(1));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<文件格式>符合期望", storageInfo.getString(0, "file_format"),
-				is(FileFormat.ORC.getCode()));
+					is(FileFormat.ORC.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<进数方式>符合期望", storageInfo.getString(0, "storage_type"),
-				is(StorageType.ZengLiang.getCode()));
+					is(StorageType.QuanLiang.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望", storageInfo.getString(0, "is_zipper"),
-				is(IsFlag.Shi.getCode()));
+					is(IsFlag.Shi.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", storageInfo.getLong(0, "storage_time"),
-				is(7L));
+					is(7L));
 			//在保存前，确认Dtab_relation_store表中的数据符合期望
 			Result relationTable = SqlOperator.queryResult(db,
-				"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
-					+ Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
+					"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
+							+ Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在Dtab_relation_store中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
 			for (int i = 0; i < relationTable.getRowCount(); i++) {
 				if (relationTable.getLong(i, "dsl_id") == 4400L) {
@@ -992,11 +993,11 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 			}
 			//在保存前，确认Data_extraction_def表中的数据符合期望
 			Result result = SqlOperator
-				.queryResult(db, "select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
-					AGENT_INFO_TABLE_ID);
+					.queryResult(db, "select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
+							AGENT_INFO_TABLE_ID);
 			assertThat("查询到agent_info在data_extraction_def表中的数据符合有一条，符合期望", result.getRowCount(), is(1));
 			assertThat("查询到agent_info在data_extraction_def表中的数据符合有一条，符合期望", result.getString(0, "dbfile_format"),
-				is(FileFormat.ORC.getCode()));
+					is(FileFormat.ORC.getCode()));
 		}
 
 		//构造访问被测方法的参数
@@ -1013,18 +1014,18 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramOne = new DataStoRelaParam();
 		paramOne.setTableId(AGENT_INFO_TABLE_ID);
-		long[] dslIds = {4400L};
+		Long[] dslIds = {4400L};
 		paramOne.setDslIds(dslIds);
 
 		dataStoRelaParams.add(paramOne);
 
 		String rightStringOne = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 		Integer returnValue = (Integer) rightResultOne.getData();
 		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
@@ -1032,24 +1033,24 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存后，确认Table_storage_info表中的数据符合期望
 			Result afterStorageInfo = SqlOperator
-				.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
-					AGENT_INFO_TABLE_ID);
+					.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
+							AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，符合期望", afterStorageInfo.getRowCount(), is(1));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<文件格式>符合期望",
-				afterStorageInfo.getString(0, "file_format"), is(FileFormat.ORC.getCode()));
+					afterStorageInfo.getString(0, "file_format"), is(FileFormat.ORC.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<进数方式>符合期望",
-				afterStorageInfo.getString(0, "storage_type"), is(StorageType.TiHuan.getCode()));
+					afterStorageInfo.getString(0, "storage_type"), is(StorageType.TiHuan.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望",
-				afterStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
+					afterStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
 			assertThat("查询到的agent_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望", afterStorageInfo.getLong(0, "storage_time"),
-				is(1L));
+					is(1L));
 			//在保存后，确认Dtab_relation_store表中的数据符合期望
 			Result afterRelationTable = SqlOperator.queryResult(db,
-				"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
-					+ Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
+					"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
+							+ Table_storage_info.TableName + " where table_id = ?)", AGENT_INFO_TABLE_ID);
 			assertThat("查询到的agent_info表在Dtab_relation_store中的数据有一条，符合期望", afterRelationTable.getRowCount(), is(1));
 			assertThat("查询到的agent_info表在Dtab_relation_store中的数据有一条，存储目的地为关系型数据库", afterRelationTable.getLong(0, "dsl_id"),
-				is(4400L));
+					is(4400L));
 		}
 
 		tableStorageInfos.clear();
@@ -1059,35 +1060,35 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存前，确认Table_storage_info表中的数据符合期望
 			Result beforeStorageInfo = SqlOperator
-				.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
-					DATA_SOURCE_TABLE_ID);
+					.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
+							DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，符合期望", beforeStorageInfo.getRowCount(), is(1));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<文件格式>符合期望",
-				beforeStorageInfo.getString(0, "file_format"), is(FileFormat.FeiDingChang.getCode()));
+					beforeStorageInfo.getString(0, "file_format"), is(FileFormat.FeiDingChang.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<进数方式>符合期望",
-				beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
+					beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望",
-				beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
+					beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<存储期限>符合期望",
-				beforeStorageInfo.getLong(0, "storage_time"), is(1L));
+					beforeStorageInfo.getLong(0, "storage_time"), is(1L));
 			//在保存前，确认Dtab_relation_store表中的数据符合期望
 			Result relationTable = SqlOperator.queryResult(db,
-				"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
-					+ Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
+					"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
+							+ Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的data_source表在Dtab_relation_store中的数据有1条，符合期望", relationTable.getRowCount(), is(1));
 			assertThat("查询到的data_source表在Dtab_relation_store中的数据有1条，符合期望", relationTable.getLong(0, "dsl_id"), is(4399L));
 			//在保存前，确认Data_extraction_def表中的数据符合期望
 			Result result = SqlOperator
-				.queryResult(db, "select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
-					DATA_SOURCE_TABLE_ID);
+					.queryResult(db, "select dbfile_format from " + Data_extraction_def.TableName + " where table_id = ?",
+							DATA_SOURCE_TABLE_ID);
 			assertThat("查询到data_source在data_extraction_def表中的数据符合有一条，符合期望", result.getRowCount(), is(1));
 			assertThat("查询到data_source在data_extraction_def表中的数据符合有一条，符合期望", result.getString(0, "dbfile_format"),
-				is(FileFormat.FeiDingChang.getCode()));
+					is(FileFormat.FeiDingChang.getCode()));
 		}
 
 		Table_storage_info storageInfoTwo = new Table_storage_info();
 		storageInfoTwo.setTable_id(DATA_SOURCE_TABLE_ID);
-		storageInfoTwo.setStorage_type(StorageType.ZengLiang.getCode());
+		storageInfoTwo.setStorage_type(StorageType.QuanLiang.getCode());
 		storageInfoTwo.setStorage_time(7L);
 		storageInfoTwo.setIs_zipper(IsFlag.Shi.getCode());
 
@@ -1095,18 +1096,18 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramTwo = new DataStoRelaParam();
 		paramTwo.setTableId(DATA_SOURCE_TABLE_ID);
-		long[] dslIdsTwo = {4400L, 4403L};
+		Long[] dslIdsTwo = {4400L, 4403L};
 		paramTwo.setDslIds(dslIdsTwo);
 
 		dataStoRelaParams.add(paramTwo);
 
 		String rightStringTwo = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 		Integer returnValueTwo = (Integer) rightResultTwo.getData();
 		assertThat(returnValueTwo == FIRST_DATABASESET_ID, is(true));
@@ -1114,21 +1115,21 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存后，确认Table_storage_info表中的数据符合期望
 			Result beforeStorageInfo = SqlOperator
-				.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
-					DATA_SOURCE_TABLE_ID);
+					.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
+							DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，符合期望", beforeStorageInfo.getRowCount(), is(1));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<文件格式>符合期望",
-				beforeStorageInfo.getString(0, "file_format"), is(FileFormat.FeiDingChang.getCode()));
+					beforeStorageInfo.getString(0, "file_format"), is(FileFormat.FeiDingChang.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<进数方式>符合期望",
-				beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZengLiang.getCode()));
+					beforeStorageInfo.getString(0, "storage_type"), is(StorageType.QuanLiang.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望",
-				beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
+					beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的data_source表在table_storage_info中的数据有一条，并且<存储期限>符合期望",
-				beforeStorageInfo.getLong(0, "storage_time"), is(7L));
+					beforeStorageInfo.getLong(0, "storage_time"), is(7L));
 			//在保存后，确认Dtab_relation_store表中的数据符合期望
 			Result relationTable = SqlOperator.queryResult(db,
-				"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
-					+ Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
+					"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
+							+ Table_storage_info.TableName + " where table_id = ?)", DATA_SOURCE_TABLE_ID);
 			assertThat("查询到的data_source表在Dtab_relation_store中的数据有2条，符合期望", relationTable.getRowCount(), is(2));
 			for (int i = 0; i < relationTable.getRowCount(); i++) {
 				if (relationTable.getLong(i, "dsl_id") == 4400L) {
@@ -1176,18 +1177,18 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramThree = new DataStoRelaParam();
 		paramThree.setTableId(TABLE_INFO_TABLE_ID);
-		long[] dslIdsThree = {4400L, 4399L};
+		Long[] dslIdsThree = {4400L, 4399L};
 		paramThree.setDslIds(dslIdsThree);
 
 		dataStoRelaParams.add(paramThree);
 
 		String rightStringThree = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult rightResultThree = JsonUtil.toObjectSafety(rightStringThree, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultThree.isSuccess(), is(true));
 		Integer returnValueThree = (Integer) rightResultThree.getData();
 		assertThat(returnValueThree == FIRST_DATABASESET_ID, is(true));
@@ -1195,21 +1196,21 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存后，确认Table_storage_info表中的数据符合期望
 			Result beforeStorageInfo = SqlOperator
-				.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
-					TABLE_INFO_TABLE_ID);
+					.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
+							TABLE_INFO_TABLE_ID);
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，符合期望", beforeStorageInfo.getRowCount(), is(1));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<文件格式>符合期望",
-				beforeStorageInfo.getString(0, "file_format"), is(FileFormat.PARQUET.getCode()));
+					beforeStorageInfo.getString(0, "file_format"), is(FileFormat.PARQUET.getCode()));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<进数方式>符合期望",
-				beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
+					beforeStorageInfo.getString(0, "storage_type"), is(StorageType.ZhuiJia.getCode()));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望",
-				beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
+					beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Shi.getCode()));
 			assertThat("查询到的table_info表在table_storage_info中的数据有一条，并且<存储期限>符合期望",
-				beforeStorageInfo.getLong(0, "storage_time"), is(14L));
+					beforeStorageInfo.getLong(0, "storage_time"), is(14L));
 			//在保存后，确认Dtab_relation_store表中的数据符合期望
 			Result relationTable = SqlOperator.queryResult(db,
-				"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
-					+ Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
+					"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
+							+ Table_storage_info.TableName + " where table_id = ?)", TABLE_INFO_TABLE_ID);
 			assertThat("查询到的table_info表在Dtab_relation_store中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
 			for (int i = 0; i < relationTable.getRowCount(); i++) {
 				if (relationTable.getLong(i, "dsl_id") == 4400L) {
@@ -1223,12 +1224,12 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 			//删除新增的测试数据
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
 			int countTwo = SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName +
-					" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)",
-				TABLE_INFO_TABLE_ID);
+							" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)",
+					TABLE_INFO_TABLE_ID);
 			int countThree = SqlOperator
-				.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
+					.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
 
 			assertThat("saveTbStoInfo<正确的数据访问3>执行完毕后，删除新增的数据成功", countOne, is(1));
 			assertThat("saveTbStoInfo<正确的数据访问3>执行完毕后，删除新增的数据成功", countTwo, is(2));
@@ -1264,18 +1265,18 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramFour = new DataStoRelaParam();
 		paramFour.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsFour = {4400L, 4399L};
+		Long[] dslIdsFour = {4400L, 4399L};
 		paramFour.setDslIds(dslIdsFour);
 
 		dataStoRelaParams.add(paramFour);
 
 		String rightStringFour = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult rightResultFour = JsonUtil.toObjectSafety(rightStringFour, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultFour.isSuccess(), is(true));
 		Integer returnValueFour = (Integer) rightResultFour.getData();
 		assertThat(returnValueFour == FIRST_DATABASESET_ID, is(true));
@@ -1283,21 +1284,21 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//在保存后，确认Table_storage_info表中的数据符合期望
 			Result beforeStorageInfo = SqlOperator
-				.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
-					TABLE_COLUMN_TABLE_ID);
+					.queryResult(db, "select * from " + Table_storage_info.TableName + " where table_id = ?",
+							TABLE_COLUMN_TABLE_ID);
 			assertThat("查询到的table_column表在table_storage_info中的数据有一条，符合期望", beforeStorageInfo.getRowCount(), is(1));
 			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<文件格式>符合期望",
-				beforeStorageInfo.getString(0, "file_format"), is(FileFormat.PARQUET.getCode()));
+					beforeStorageInfo.getString(0, "file_format"), is(FileFormat.PARQUET.getCode()));
 			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<进数方式>符合期望",
-				beforeStorageInfo.getString(0, "storage_type"), is(StorageType.TiHuan.getCode()));
+					beforeStorageInfo.getString(0, "storage_type"), is(StorageType.TiHuan.getCode()));
 			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<是否拉链存储>符合期望",
-				beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
+					beforeStorageInfo.getString(0, "is_zipper"), is(IsFlag.Fou.getCode()));
 			assertThat("查询到的table_column表在table_storage_info中的数据有一条，并且<存储期限>符合期望",
-				beforeStorageInfo.getLong(0, "storage_time"), is(14L));
+					beforeStorageInfo.getLong(0, "storage_time"), is(14L));
 			//在保存后，确认Dtab_relation_store表中的数据符合期望
 			Result relationTable = SqlOperator.queryResult(db,
-				"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
-					+ Table_storage_info.TableName + " where table_id = ?)", TABLE_COLUMN_TABLE_ID);
+					"select dsl_id from " + Dtab_relation_store.TableName + " where storage_id in ( select storage_id from "
+							+ Table_storage_info.TableName + " where table_id = ?)", TABLE_COLUMN_TABLE_ID);
 			assertThat("查询到的table_info表在Dtab_relation_store中的数据有两条，符合期望", relationTable.getRowCount(), is(2));
 			for (int i = 0; i < relationTable.getRowCount(); i++) {
 				if (relationTable.getLong(i, "dsl_id") == 4400L) {
@@ -1311,12 +1312,12 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 			//删除新增的测试数据
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			int countTwo = SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName +
-					" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)",
-				TABLE_COLUMN_TABLE_ID);
+							" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)",
+					TABLE_COLUMN_TABLE_ID);
 			int countThree = SqlOperator
-				.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 
 			assertThat("saveTbStoInfo<正确的数据访问4>执行完毕后，删除新增的数据成功", countOne, is(1));
 			assertThat("saveTbStoInfo<正确的数据访问4>执行完毕后，删除新增的数据成功", countTwo, is(2));
@@ -1353,23 +1354,23 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramSeven = new DataStoRelaParam();
 		paramSeven.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsSeven = {};
+		Long[] dslIdsSeven = {};
 		paramSeven.setDslIds(dslIdsSeven);
 
 		dataStoRelaParams.add(paramSeven);
 
 		String wrongStringOne = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult wrongResultOne = JsonUtil.toObjectSafety(wrongStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultOne.isSuccess(), is(false));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问1>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
 		}
@@ -1379,18 +1380,18 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		//错误的数据访问2：新增采集table_column表的存储目的地，但是在数据抽取定义表中没有构造table_column表的抽取信息
 		DataStoRelaParam param = new DataStoRelaParam();
 		param.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdes = {4399L, 4400L};
+		Long[] dslIdes = {4399L, 4400L};
 		param.setDslIds(dslIdes);
 
 		dataStoRelaParams.add(param);
 
 		String wrongStringTwo = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultTwo.isSuccess(), is(false));
 
 		tableStorageInfos.clear();
@@ -1421,23 +1422,23 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramFive = new DataStoRelaParam();
 		paramFive.setTableId(TABLE_COLUMN_TABLE_ID);
-		long[] dslIdsFive = {4399};
+		Long[] dslIdsFive = {4399L};
 		paramFive.setDslIds(dslIdsFive);
 
 		dataStoRelaParams.add(paramFive);
 
 		String wrongStringThree = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultThree.isSuccess(), is(false));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问3>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
 		}
@@ -1468,17 +1469,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		tableStorageInfos.add(storageInfoSenven);
 
 		String wrongStringFive = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult wrongResultFive = JsonUtil.toObjectSafety(wrongStringFive, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultFive.isSuccess(), is(false));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问4>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
 		}
@@ -1509,17 +1510,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		tableStorageInfos.add(storageInfoEight);
 
 		String wrongStringSix = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult wrongResultSix = JsonUtil.toObjectSafety(wrongStringSix, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultSix.isSuccess(), is(false));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问5>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
 		}
@@ -1548,17 +1549,17 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		tableStorageInfos.add(storageInfoNine);
 
 		String wrongStringEight = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult wrongResultEight = JsonUtil.toObjectSafety(wrongStringEight, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultEight.isSuccess(), is(false));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_COLUMN_TABLE_ID);
 			assertThat("saveTbStoInfo<错误的数据访问6>执行完毕后，删除新增的数据成功", countOne, is(1));
 			SqlOperator.commitTransaction(db);
 		}
@@ -1602,14 +1603,14 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramOne = new DataStoRelaParam();
 		paramOne.setTableId(AGENT_INFO_TABLE_ID);
-		long[] dslIds = {4400L};
+		Long[] dslIds = {4400L};
 		paramOne.setDslIds(dslIds);
 
 		dataStoRelaParams.add(paramOne);
 
 		Table_storage_info storageInfoTwo = new Table_storage_info();
 		storageInfoTwo.setTable_id(DATA_SOURCE_TABLE_ID);
-		storageInfoTwo.setStorage_type(StorageType.ZengLiang.getCode());
+		storageInfoTwo.setStorage_type(StorageType.QuanLiang.getCode());
 		storageInfoTwo.setStorage_time(7L);
 		storageInfoTwo.setIs_zipper(IsFlag.Shi.getCode());
 
@@ -1617,7 +1618,7 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramTwo = new DataStoRelaParam();
 		paramTwo.setTableId(DATA_SOURCE_TABLE_ID);
-		long[] dslIdsTwo = {4400L, 4403L};
+		Long[] dslIdsTwo = {4400L, 4403L};
 		paramTwo.setDslIds(dslIdsTwo);
 
 		dataStoRelaParams.add(paramTwo);
@@ -1632,18 +1633,18 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		DataStoRelaParam paramThree = new DataStoRelaParam();
 		paramThree.setTableId(TABLE_INFO_TABLE_ID);
-		long[] dslIdsThree = {4400L, 4399L};
+		Long[] dslIdsThree = {4400L, 4399L};
 		paramThree.setDslIds(dslIdsThree);
 
 		dataStoRelaParams.add(paramThree);
 
 		String rightStringOne = new HttpClient()
-			.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
-			.addData("colSetId", FIRST_DATABASESET_ID)
-			.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
-			.post(getActionUrl("saveTbStoInfo")).getBodyString();
+				.addData("tbStoInfoString", JSON.toJSONString(tableStorageInfos))
+				.addData("colSetId", FIRST_DATABASESET_ID)
+				.addData("dslIdString", JSON.toJSONString(dataStoRelaParams))
+				.post(getActionUrl("saveTbStoInfo")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 		Integer returnValue = (Integer) rightResultOne.getData();
 		assertThat(returnValue == FIRST_DATABASESET_ID, is(true));
@@ -1653,12 +1654,12 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 			assertThat("将因执行saveTbStoInfoTwo新增的测试数据删除掉", count, is(1));
 
 			int countOne = SqlOperator
-				.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
+					.execute(db, "delete from " + Data_extraction_def.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
 			int countTwo = SqlOperator.execute(db, "delete from " + Dtab_relation_store.TableName +
-					" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)",
-				TABLE_INFO_TABLE_ID);
+							" where storage_id in (select storage_id from " + Table_storage_info.TableName + " where table_id = ?)",
+					TABLE_INFO_TABLE_ID);
 			int countThree = SqlOperator
-				.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
+					.execute(db, "delete from " + Table_storage_info.TableName + " where table_id = ?", TABLE_INFO_TABLE_ID);
 
 			assertThat("saveTbStoInfoTwo执行完毕后，删除新增的数据成功", countOne, is(1));
 			assertThat("saveTbStoInfoTwo执行完毕后，删除新增的数据成功", countTwo, is(2));
@@ -1681,10 +1682,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getColumnHeader() {
 		//正确数据访问1：测试存储目的地为<关系型数据库>的表头信息
 		String rightStringOne = new HttpClient()
-			.addData("dslId", 4400L)
-			.post(getActionUrl("getColumnHeader")).getBodyString();
+				.addData("dslId", 4400L)
+				.post(getActionUrl("getColumnHeader")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		Map<String, String> oracleMap = rightResultOne.getDataForMap(String.class, String.class);
@@ -1702,10 +1703,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//正确数据访问2：测试存储目的地为<SOLR>的表头信息
 		String rightStringTwo = new HttpClient()
-			.addData("dslId", 4399L)
-			.post(getActionUrl("getColumnHeader")).getBodyString();
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getColumnHeader")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		Map<String, String> solrMap = rightResultTwo.getDataForMap(String.class, String.class);
@@ -1723,10 +1724,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//错误的数据访问1：测试存储目的地为<MONGODB>的表头信息
 		String wrongString = new HttpClient()
-			.addData("dslId", 4403L)
-			.post(getActionUrl("getColumnHeader")).getBodyString();
+				.addData("dslId", 4403L)
+				.post(getActionUrl("getColumnHeader")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
 
 		Map<String, String> mongoMap = wrongResult.getDataForMap(String.class, String.class);
@@ -1754,10 +1755,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 	public void getDataStoreLayerAddedId() {
 		//正确数据访问1：测试获取存储目的地为<关系型数据库>的附加属性信息ID
 		String rightStringOne = new HttpClient()
-			.addData("dslId", 4400L)
-			.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
+				.addData("dslId", 4400L)
+				.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
 		ActionResult rightResultOne = JsonUtil.toObjectSafety(rightStringOne, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultOne.isSuccess(), is(true));
 
 		Map<String, Long> oracleMap = rightResultOne.getDataForMap(String.class, Long.class);
@@ -1765,10 +1766,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//正确数据访问2：测试存储目的地为<SOLR>的附加属性信息ID
 		String rightStringTwo = new HttpClient()
-			.addData("dslId", 4399L)
-			.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
+				.addData("dslId", 4399L)
+				.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
 		ActionResult rightResultTwo = JsonUtil.toObjectSafety(rightStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResultTwo.isSuccess(), is(true));
 
 		Map<String, Long> solrMap = rightResultTwo.getDataForMap(String.class, Long.class);
@@ -1776,10 +1777,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 
 		//错误的数据访问1：测试存储目的地为<MONGODB>的附加属性信息ID
 		String wrongString = new HttpClient()
-			.addData("dslId", 4403L)
-			.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
+				.addData("dslId", 4403L)
+				.post(getActionUrl("getDataStoreLayerAddedId")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(true));
 
 		Map<String, Long> mongoMap = wrongResult.getDataForMap(String.class, Long.class);
@@ -1814,30 +1815,30 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		}
 
 		String rightString = new HttpClient()
-			.addData("tableString", JSON.toJSONString(tableInfos))
-			.post(getActionUrl("updateTableName")).getBodyString();
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
 		ActionResult rightResult = JsonUtil.toObjectSafety(rightString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(rightResult.isSuccess(), is(true));
 
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			Result result = SqlOperator
-				.queryResult(db, "select table_name, table_ch_name from " + Table_info.TableName + " where database_id = ?",
-					FIRST_DATABASESET_ID);
+					.queryResult(db, "select table_name, table_ch_name from " + Table_info.TableName + " where database_id = ?",
+							FIRST_DATABASESET_ID);
 			assertThat("查询获得的结果一共有四条", result.getRowCount(), is(4));
 			for (int i = 0; i < result.getRowCount(); i++) {
 				if (result.getString(i, "table_name").equalsIgnoreCase("sys_user_update")) {
 					assertThat("表名被更新为<sys_user_update>，表中文名被更新为<用户表_update>",
-						result.getString(i, "table_ch_name").equalsIgnoreCase("用户表_update"), is(true));
+							result.getString(i, "table_ch_name").equalsIgnoreCase("用户表_update"), is(true));
 				} else if (result.getString(i, "table_name").equalsIgnoreCase("code_info_update")) {
 					assertThat("表名被更新为<code_info_update>，表中文名被更新为<代码信息表_update>",
-						result.getString(i, "table_ch_name").equalsIgnoreCase("代码信息表_update"), is(true));
+							result.getString(i, "table_ch_name").equalsIgnoreCase("代码信息表_update"), is(true));
 				} else if (result.getString(i, "table_name").equalsIgnoreCase("agent_info")) {
 					assertThat("agent_info表和data_source表不受影响",
-						result.getString(i, "table_ch_name").equalsIgnoreCase("Agent信息表"), is(true));
+							result.getString(i, "table_ch_name").equalsIgnoreCase("Agent信息表"), is(true));
 				} else if (result.getString(i, "table_name").equalsIgnoreCase("data_source")) {
 					assertThat("agent_info表和data_source表不受影响", result.getString(i, "table_ch_name").equalsIgnoreCase("数据源表"),
-						is(true));
+							is(true));
 				} else {
 					assertThat("更新表的中文名和表名，出现了不符合预期的情况", true, is(false));
 				}
@@ -1862,10 +1863,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		}
 
 		String wrongString = new HttpClient()
-			.addData("tableString", JSON.toJSONString(tableInfos))
-			.post(getActionUrl("updateTableName")).getBodyString();
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
 		ActionResult wrongResult = JsonUtil.toObjectSafety(wrongString, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResult.isSuccess(), is(false));
 
 		tableInfos.clear();
@@ -1884,10 +1885,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		tableInfos.add(tableInfoTwo);
 
 		String wrongStringTwo = new HttpClient()
-			.addData("tableString", JSON.toJSONString(tableInfos))
-			.post(getActionUrl("updateTableName")).getBodyString();
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
 		ActionResult wrongResultTwo = JsonUtil.toObjectSafety(wrongStringTwo, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultTwo.isSuccess(), is(false));
 
 		tableInfos.clear();
@@ -1907,10 +1908,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		}
 
 		String wrongStringThree = new HttpClient()
-			.addData("tableString", JSON.toJSONString(tableInfos))
-			.post(getActionUrl("updateTableName")).getBodyString();
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
 		ActionResult wrongResultThree = JsonUtil.toObjectSafety(wrongStringThree, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultThree.isSuccess(), is(false));
 
 		tableInfos.clear();
@@ -1930,10 +1931,10 @@ public class StoDestStepConfActionTest extends WebBaseTestCase {
 		}
 
 		String wrongStringFour = new HttpClient()
-			.addData("tableString", JSON.toJSONString(tableInfos))
-			.post(getActionUrl("updateTableName")).getBodyString();
+				.addData("tableString", JSON.toJSONString(tableInfos))
+				.post(getActionUrl("updateTableName")).getBodyString();
 		ActionResult wrongResultFour = JsonUtil.toObjectSafety(wrongStringFour, ActionResult.class).orElseThrow(()
-			-> new BusinessException("连接失败!"));
+				-> new BusinessException("连接失败!"));
 		assertThat(wrongResultFour.isSuccess(), is(false));
 	}
 

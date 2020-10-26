@@ -38,8 +38,10 @@ public class AgentActionUtil {
 	public static final String GETALLTABLESTORAGE = "/hrds/agent/trans/biz/database/getAllTableStorage";
 	//agent调用海云服务端保存采集情况信息表
 	public static final String SAVECOLLECTCASE = "/hrds/server/saveCollectCase";
-	//调用agent端执行文件采集
+	//向agent端发送一个文件采集任务
 	public static final String EXECUTEFILECOLLECT = "/hrds/agent/trans/biz/unstructuredfilecollect/execute";
+	//向agent端发送一个文件采集立即执行的任务
+	public static final String EXECUTEFILECOLLECTIMMEDIATELY = "/hrds/agent/trans/biz/unstructuredfilecollect/executeImmediately";
 	//测试并行抽取SQL
 	public static final String TESTPARALLELSQL = "/hrds/agent/trans/biz/testParallelSQL";
 	//获取单表数据总量
@@ -52,10 +54,18 @@ public class AgentActionUtil {
 	public static final String ADDDATASTOREREG = "/hrds/server/addDataStoreReg";
 	//向agent端发送一个数据库采集抽取任务
 	public static final String SENDJDBCCOLLECTTASKINFO = "/hrds/agent/trans/biz/jdbccollect/execute";
-	//向agent端发送页面配置，生成数据库抽取的数据字典
-	public static final String GETDICTIONARYJSON = "/hrds/agent/trans/biz/jdbccollect/getDictionaryJson";
 	//向agent端发送一个db文件采集任务
 	public static final String SENDDBCOLLECTTASKINFO = "/hrds/agent/trans/biz/dbfilecollect/execute";
+	//向agent端发送一个数据库直连采集任务
+	public static final String SENDJDBCDIRECTTASKINFO = "/hrds/agent/trans/biz/jdbcdirectcollect/execute";
+	//向agent端发送一个数据库采集抽取立即执行的任务
+	public static final String JDBCCOLLECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/jdbccollect/executeImmediately";
+	//向agent端发送一个db文件采集立即执行的任务
+	public static final String DBCOLLECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/dbfilecollect/executeImmediately";
+	//向agent端发送一个数据库直连采集立即执行的任务
+	public static final String JDBCDIRECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/jdbcdirectcollect/executeImmediately";
+	//向agent端发送页面配置，生成数据库抽取的数据字典
+	public static final String GETDICTIONARYJSON = "/hrds/agent/trans/biz/jdbccollect/getDictionaryJson";
 	//agent连接服务端批量添加ftp_transfered(ftp已传输表)
 	public static final String BATCHADDFTPTRANSFER = "/hrds/server/batchAddFtpTransfer";
 	//向agent端发送一个ftp采集的任务
@@ -66,8 +76,14 @@ public class AgentActionUtil {
 	public static final String GETALLDICCOLUMNS = "/hrds/agent/trans/biz/semistructured/getAllDicColumns";
 	//向agent发送一个半结构化直连解析数据字典获取所有表对应所有数据处理方式信息
 	public static final String GETALLHANDLETYPE = "/hrds/agent/trans/biz/semistructured/getAllHandleType";
+	//向agent发送一个半结构化直连获取没有数据字典时的第一行数据
+	public static final String GETFIRSTLINEDATA = "/hrds/agent/trans/biz/semistructured/getFirstLineData";
 	//向agent发送一个半结构化直连重写数据字典任务
 	public static final String WRITEDICTIONARY = "/hrds/agent/trans/biz/semistructured/writeDictionary";
+	//向agent端发送一个对象采集任务
+	public static final String OBJECTCOLLECTEXECUTE = "/hrds/agent/trans/biz/semistructured/execute";
+	//向agent端发送一个对象立即执行的任务
+	public static final String OBJECTCOLLECTEXECUTEIMMEDIATELY = "/hrds/agent/trans/biz/semistructured/executeImmediately";
 
 	static {
 		list = new ArrayList<>();
@@ -97,6 +113,14 @@ public class AgentActionUtil {
 		list.add(GETAlLLTABLECOLUMN);
 		list.add(GETALLTABLESTORAGE);
 		list.add(GETDICTIONARYJSON);
+		list.add(GETFIRSTLINEDATA);
+		list.add(DBCOLLECTEXECUTEIMMEDIATELY);
+		list.add(JDBCCOLLECTEXECUTEIMMEDIATELY);
+		list.add(JDBCDIRECTEXECUTEIMMEDIATELY);
+		list.add(SENDJDBCDIRECTTASKINFO);
+		list.add(EXECUTEFILECOLLECTIMMEDIATELY);
+		list.add(OBJECTCOLLECTEXECUTE);
+		list.add(OBJECTCOLLECTEXECUTEIMMEDIATELY);
 	}
 
 	private AgentActionUtil() {
@@ -127,7 +151,7 @@ public class AgentActionUtil {
 		Agent_down_info agent_down_info = Dbo.queryOneObject(Agent_down_info.class, "SELECT * FROM " +
 				"agent_down_info t1 join agent_info t2 on t1.agent_ip = t2.agent_ip and t1.agent_port=" +
 				"t2.agent_port where  t2.agent_id= ? and t2.user_id = ?", agent_id, user_id).orElseThrow(() ->
-				new BusinessException("根据Agent_id:" + agent_id + "查询不到agent_down_info表信息"));
+				new BusinessException("根据Agent_id:" + agent_id + "查询不到部署信息"));
 		//XXX 这里无法判断页面是规定按照配置文件里面一样填/action/*还是/action/还是/action
 		//XXX 因此这里就判断如果是/*或者/结尾的就将结尾的那个字符去掉，保证拼接的url没有多余的字符
 		if (agent_down_info.getAgent_pattern().endsWith("/*")) {

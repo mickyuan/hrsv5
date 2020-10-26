@@ -6,7 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.FileFormat;
@@ -18,8 +18,8 @@ import hrds.commons.entity.Etl_job_resource_rela;
 import hrds.commons.entity.Table_info;
 import hrds.commons.entity.Take_relation_etl;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.Constant;
 import hrds.commons.utils.key.PrimayKeyGener;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +50,7 @@ public class FileConfStepAction extends BaseAction {
 							+ " ded "
 							+ " on ti.table_id = ded.table_id where ti.database_id = ? AND ti.table_id = ? ",
 						colSetId,
-						(long) tableInfo.get("table_id"));
+						tableInfo.get("table_id"));
 				list.forEach(
 					item -> {
                 /*
@@ -122,7 +122,7 @@ public class FileConfStepAction extends BaseAction {
 
 		//    3: 循环卸数配置信息并进行保存
 //	    verifySeqConf(extractionDefString);
-			for (int i = 0; i < extractionDefString.length; i++) {
+		for (int i = 0; i < extractionDefString.length; i++) {
 
 			Data_extraction_def def = extractionDefString[i];
 
@@ -139,8 +139,7 @@ public class FileConfStepAction extends BaseAction {
 			}
 
 			FileFormat fileFormat = FileFormat.ofEnumByCode(def.getDbfile_format());
-			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang) {
+			if (fileFormat == FileFormat.FeiDingChang || fileFormat == FileFormat.DingChang) {
 				// 检查行分隔符不能为空
 				String row_separator = def.getRow_separator();
 				if (StringUtil.isBlank(row_separator)) {
@@ -152,7 +151,9 @@ public class FileConfStepAction extends BaseAction {
 				// 检查数据分隔符不能为空
 				String database_separatorr = def.getDatabase_separatorr();
 				if (StringUtil.isBlank(database_separatorr)) {
-					throw new BusinessException("第 " + (i + 1) + " 条的数据分隔符不能为空!");
+					if (fileFormat != FileFormat.DingChang) {
+						throw new BusinessException("第 " + (i + 1) + " 条的数据分隔符不能为空!");
+					}
 				} else {
 					// 如果不为空则使用Unicode进行转码入库
 					def.setDatabase_separatorr(StringUtil.string2Unicode(database_separatorr));
@@ -162,11 +163,10 @@ public class FileConfStepAction extends BaseAction {
 			else if (fileFormat == FileFormat.ORC
 				|| fileFormat == FileFormat.SEQUENCEFILE
 				|| fileFormat == FileFormat.PARQUET
-				|| fileFormat == FileFormat.CSV) {
+			) {
 				def.setDatabase_separatorr("");
 				def.setRow_separator("");
-			} else {
-				throw new BusinessException("传递的数据文件格式不存在在代码项中,此次获取的数据文件格式是: " + def.getDbfile_format());
+				def.setIs_header(IsFlag.Fou.getCode());
 			}
 
 			if (StringUtil.isBlank(def.getDatabase_code())) {
@@ -178,7 +178,7 @@ public class FileConfStepAction extends BaseAction {
 			}
 
 			// TODO data_extraction_def表is_header字段设置默认值为"否"，后期可能会修改
-			def.setIs_header(IsFlag.Fou.getCode());
+//			def.setIs_header(IsFlag.Fou.getCode());
 			def.setData_extract_type(DataExtractType.ShuJuKuChouQuLuoDi.getCode());
 			def.add(Dbo.db());
 		}
@@ -276,8 +276,8 @@ public class FileConfStepAction extends BaseAction {
 	@Param(name = "dedId", desc = "抽取定义表的主键信息", range = "不可为空")
 	private void deleteDataExtractionDef(List<String> dedId) {
 
-		for (int i = 0; i < dedId.size(); i++) {
-			long ded_id = Long.parseLong(dedId.get(i));
+		for (String s : dedId) {
+			long ded_id = Long.parseLong(s);
 			long countNum = Dbo
 				.queryNumber("SELECT COUNT(1) FROM " + Data_extraction_def.TableName + " WHERE ded_id = ?",
 					ded_id)
@@ -326,5 +326,11 @@ public class FileConfStepAction extends BaseAction {
 				ded_id);
 		}
 
+	}
+
+	//SQL占位的分隔符
+	public String getSqlParamPlaceholder() {
+
+		return Constant.SQLDELIMITER;
 	}
 }

@@ -24,8 +24,8 @@ import hrds.commons.utils.Constant;
 import hrds.commons.utils.DeCompressionUtil;
 import hrds.commons.utils.MapDBHelper;
 import hrds.commons.utils.jsch.SftpOperate;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -38,13 +38,13 @@ import java.util.concurrent.TimeUnit;
 @DocClass(desc = "执行ftp采集的作业", author = "zxz", createdate = "2019/10/12 10:29")
 public class FtpCollectJobImpl implements JobInterface {
 	//打印日志
-	private static final Log log = LogFactory.getLog(FtpCollectJobImpl.class);
+	private static final Logger log = LogManager.getLogger();
 	//存放每次启动任务时候的线程的集合
-	private static ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
+	private final static ConcurrentMap<String, Thread> mapJob = new ConcurrentHashMap<>();
 	//是否实时读取，默认为true，保证程序最少进一次循环
 	private volatile boolean is_real_time = true;
 	//Ftp采集设置表对象
-	private Ftp_collect ftp_collect;
+	private final Ftp_collect ftp_collect;
 
 	/**
 	 * ftp采集的作业实现类构造方法.
@@ -80,7 +80,8 @@ public class FtpCollectJobImpl implements JobInterface {
 		}
 		String statusFilePath = Constant.JOBINFOPATH + ftpId + File.separator + Constant.JOBFILENAME;
 		//JobStatusInfo对象，表示一个作业的状态
-		JobStatusInfo jobStatus = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath, ftpId);
+		JobStatusInfo jobStatus = JobStatusInfoUtil.getStartJobStatusInfo(statusFilePath,
+				ftpId, "ftp_collect");
 		String is_read_realtime = ftp_collect.getIs_read_realtime();
 		Long realtime_interval = ftp_collect.getRealtime_interval();
 		String ftpDir = ftp_collect.getFtp_dir();
@@ -111,7 +112,7 @@ public class FtpCollectJobImpl implements JobInterface {
 				//为了防止
 				try (SftpOperate sftp = new SftpOperate(ftp_collect.getFtp_ip(), ftp_collect.getFtp_username(),
 						StringUtil.unicode2String(ftp_collect.getFtp_password()),
-						Integer.valueOf(ftp_collect.getFtp_port()))) {
+						Integer.parseInt(ftp_collect.getFtp_port()))) {
 					//4.根据ftp表的信息初始化sftp对象
 					//5.根据下级目录类型定义ftp拉取或者推送的下级目录
 					String ftpFolderName;
@@ -184,7 +185,7 @@ public class FtpCollectJobImpl implements JobInterface {
 			object.put("end", true);
 			FtpConsumerThread.queueMap.get(ftpId).put(object.toJSONString());
 		} catch (InterruptedException e) {
-			log.info("告诉同步程序，当前任务结束被重新发送过来的任务打断",e);
+			log.info("告诉同步程序，当前任务结束被重新发送过来的任务打断", e);
 		}
 		//记录作业的状态
 		ProductFileUtil.createStatusFile(statusFilePath, JSONObject.toJSONString(jobStatus));
@@ -253,7 +254,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Param(name = "mapDBHelper", desc = "mapDB数据库操作类", range = "不可为空")
 	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
 	private void transferGet(String ftpDir, String destDir, SftpOperate sftp, String isUnzip, String deCompressWay,
-	                         String fileSuffix, MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
+							 String fileSuffix, MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
 		JSONObject object = new JSONObject();
 		//1.验证本地需要传输的目录文件是否存在，不存在则创建
 		boolean flag = validateDirectory(destDir);
@@ -318,7 +319,7 @@ public class FtpCollectJobImpl implements JobInterface {
 							object.put("md5", lsEntry.getAttrs().getMtimeString());
 							object.put("ftpDate", DateUtil.getSysDate());
 							object.put("ftpTime", DateUtil.getSysTime());
-							object.put("end",false);
+							object.put("end", false);
 							FtpConsumerThread.queueMap.get(ftp_collect.getFtp_id()
 									.toString()).put(object.toJSONString());
 							object.clear();
@@ -347,7 +348,7 @@ public class FtpCollectJobImpl implements JobInterface {
 	@Param(name = "mapDBHelper", desc = "mapDB数据库操作类", range = "不可为空")
 	@Param(name = "fileNameHTreeMap", desc = "mapDB数据库表的操作类", range = "不可为空")
 	private void transferPut(String ftpDir, String localPath, SftpOperate sftp, String fileSuffix,
-	                         MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
+							 MapDBHelper mapDBHelper, ConcurrentMap<String, String> fileNameHTreeMap) {
 		JSONObject object = new JSONObject();
 		//数据可访问权限处理方式：此方法不需要对数据可访问权限处理
 		try {
@@ -402,7 +403,7 @@ public class FtpCollectJobImpl implements JobInterface {
 							object.put("absolutePath", absolutePath);
 							object.put("ftpDate", DateUtil.getSysDate());
 							object.put("ftpTime", DateUtil.getSysTime());
-							object.put("end",false);
+							object.put("end", false);
 							FtpConsumerThread.queueMap.get(ftp_collect.getFtp_id()
 									.toString()).put(object.toJSONString());
 							object.clear();

@@ -9,7 +9,6 @@ import fd.ng.core.utils.FileUtil;
 import hrds.c.biz.util.conf.ETLConfParam;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
-import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.jsch.SCPFileSender;
 import hrds.commons.utils.jsch.SFTPChannel;
 import hrds.commons.utils.jsch.SFTPDetails;
@@ -18,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 @DocClass(desc = "ETL部署类", author = "dhw", createdate = "2019/12/19 14:57")
@@ -29,17 +29,16 @@ public class ETLAgentDeployment {
 	public static final String SEPARATOR = File.separator;
 
 	@Method(desc = "ETL部署", logicStep = "1.数据可访问权限处理方式，该方法不需要权限控制"
-			+ "2.获取ETL下载地址"
-			+ "3.根据文件路径获取文件信息"
-			+ "4.获取数据库连接配置信息"
-			+ "5.获取redis连接配置信息"
-			+ "6.生成trigger.conf配置文件"
-			+ "7.获得程序当前路径"
-			+ "8.根据程序当前路径获取文件"
-			+ "9.集群conf配置文件目录"
-			+ "10.创建存放部署ETL连接信息的集合并封装属性"
-			+ "11.ETL部署"
-			+ "12.部署完成后删除db与redis配置文件")
+			+ "2.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建"
+			+ "3.生成control.conf配置文件"
+			+ "4.生成trigger.conf配置文件"
+			+ "5.生成control appinfo.conf配置文件"
+			+ "6.生成trigger appinfo.conf配置文件"
+			+ "7.集群conf配置文件目录"
+			+ "8.创建存放部署ETL连接信息的集合并封装属性"
+			+ "9.设置部署所需参数"
+			+ "10.开始部署ETL工程"
+			+ "11.部署完成后删除本地临时配置文件")
 	@Param(name = "etl_sys_cd", desc = "工程编号", range = "新建工程时生成")
 	@Param(name = "etl_serv_ip", desc = "ETL部署agent的IP地址", range = "如：127.0.0.1")
 	@Param(name = "etl_serv_port", desc = "ETL部署agent的端口", range = "默认22")
@@ -48,17 +47,14 @@ public class ETLAgentDeployment {
 	@Param(name = "userName", desc = "ETL部署agent机器的用户名", range = "服务器用户名")
 	@Param(name = "password", desc = "ETL部署agent机器的密码", range = "服务器密码")
 	@Param(name = "targetDir", desc = "ETL部署服务器目录地址", range = "无限制")
+	@Param(name = "old_deploy_path", desc = "上次ETL部署服务器目录地址", range = "无限制")
 	public static void scpETLAgent(String etl_sys_cd, String etl_serv_ip, String etl_serv_port, String userName,
-	                               String password, String targetDir) {
+	                               String password, String targetDir, String old_deploy_path) {
 		try {
 			// 1.数据可访问权限处理方式，该方法不需要权限控制
-			// 2.获取ETL下载地址
-			String agentPath = PropertyParaValue.getString("ETLpath", "");
-			// 3.根据文件路径获取文件信息
-			File sourceFile = new File(agentPath);
-			// 4.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
-			String tmp_conf_path = System.getProperty("user.dir") + SEPARATOR + "etlTempResources"
-					+ SEPARATOR + "fdconfig" + SEPARATOR;
+			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
+			// 2.配置文件的临时存放路径,判断文件目录是否存在，如果不存在创建
+			String tmp_conf_path = userDirFile + SEPARATOR + "etlTempResources" + SEPARATOR + "fdconfig" + SEPARATOR;
 			File file = new File(tmp_conf_path);
 			if (!file.exists()) {
 				if (!file.mkdirs()) {
@@ -66,34 +62,38 @@ public class ETLAgentDeployment {
 				}
 			}
 			logger.info("==========配置文件的临时存放路径===========" + tmp_conf_path);
-			// 5.生成control.conf配置文件
-			Yaml.dump(ETLConfParam.getControlConfParam(), new File(tmp_conf_path
-					+ ETLConfParam.CONTROL_FILE_NAME));
-			// 6.生成trigger.conf配置文件
-			Yaml.dump(ETLConfParam.getTriggerConfParam(), new File(tmp_conf_path
-					+ ETLConfParam.Trigger_FILE_NAME));
-			// 7.根据程序当前路径获取文件
-			File userDirFile = FileUtil.getFile(System.getProperty("user.dir"));
-			// 8.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
+			// 3.生成control.conf配置文件
+			Yaml.dump(ETLConfParam.getControlConfParam(etl_serv_ip), new File(tmp_conf_path
+					+ ETLConfParam.CONTROL_CONF_NAME));
+			// 4.生成trigger.conf配置文件
+			Yaml.dump(ETLConfParam.getTriggerConfParam(etl_serv_ip), new File(tmp_conf_path
+					+ ETLConfParam.Trigger_CONF_NAME));
+			// 5.生成control appinfo.conf配置文件
+			Yaml.dump(ETLConfParam.getControlAppInfoConfParam(), new File(tmp_conf_path
+					+ ETLConfParam.CONTROL_APPINFO));
+			// 6.生成trigger appinfo.conf配置文件
+			Yaml.dump(ETLConfParam.getTriggerAppInfoConfParam(), new File(tmp_conf_path
+					+ ETLConfParam.TRIGGER_APPINFO));
+			// 7.集群conf配置文件目录 fixme  集群配置文件暂时不知如何获取
 			String hadoopConf = userDirFile + SEPARATOR + "conf" + SEPARATOR;
-			// 9.创建存放部署ETL连接信息的集合并封装属性
+			// 8.创建存放部署ETL连接信息的集合并封装属性
 			SFTPDetails sftpDetails = new SFTPDetails();
-			// 10.设置部署所需参数
+			// 9.设置部署所需参数
 			setSFTPDetails(etl_sys_cd, etl_serv_ip, etl_serv_port, userName, password, targetDir,
-					sourceFile.getName(), sourceFile.getParent(), hadoopConf, tmp_conf_path, sftpDetails);
-			// 11.ETL部署
+					hadoopConf, tmp_conf_path, old_deploy_path, sftpDetails);
+			// 10.开始部署ETL工程
 			SCPFileSender.etlScpToFrom(sftpDetails);
-			// 12.部署完成后删除本地临时配置文件
+			// 11.部署完成后删除本地临时配置文件
 			FileUtil.deleteDirectoryFiles(tmp_conf_path);
-		} catch (Exception e) {
-			throw new AppSystemException(e);
+		} catch (FileNotFoundException e) {
+			logger.error(e);
+			throw new BusinessException(e.getMessage());
 		}
 	}
 
 	private static void setSFTPDetails(String etl_sys_cd, String etl_serv_ip, String etl_serv_port,
-	                                   String userName, String password, String targetDir,
-	                                   String sourceFileName, String source_path, String hadoopConf,
-	                                   String tmp_conf_path, SFTPDetails sftpDetails) {
+	                                   String userName, String password, String targetDir, String hadoopConf,
+	                                   String tmp_conf_path, String old_deploy_path, SFTPDetails sftpDetails) {
 		sftpDetails.setHost(etl_serv_ip);
 		// 部署agent服务器用户名
 		sftpDetails.setUser_name(userName);
@@ -101,16 +101,14 @@ public class ETLAgentDeployment {
 		sftpDetails.setPwd(password);
 		// 部署agent服务器端口
 		sftpDetails.setPort(Integer.parseInt(etl_serv_port));
-		// 本地文件路径
-		sftpDetails.setSource_path(source_path + SEPARATOR);
-		// 本地文件名称
-		sftpDetails.setAgent_gz(sourceFileName);
 		// 集群conf配置文件
 		sftpDetails.setHADOOP_CONF(hadoopConf);
 		// 目标路径
 		sftpDetails.setTarget＿dir(targetDir + SEPARATOR + etl_sys_cd + SEPARATOR);
 		// 临时存放配置文件路径
 		sftpDetails.setTmp_conf_path(tmp_conf_path);
+		// 旧的部署目录
+		sftpDetails.setOld_deploy_dir(old_deploy_path + SEPARATOR + etl_sys_cd);
 	}
 
 	@Method(desc = "启动Control",
@@ -149,7 +147,7 @@ public class ETLAgentDeployment {
 							+ "/"
 							+ etl_sys_cd
 							+ "/control/ ;"
-							+ "sh startEngineBatchControl.sh"
+							+ "bash startEngineBatchControl.sh"
 							+ " "
 							+ batch_date
 							+ " "
@@ -214,7 +212,7 @@ public class ETLAgentDeployment {
 							+ "/"
 							+ etl_sys_cd
 							+ "/trigger/ ;"
-							+ "sh startEngineBatchTrigger.sh"
+							+ "bash startEngineBatchTrigger.sh"
 							+ " "
 							+ etl_sys_cd;
 			logger.info("##############" + startAgent);

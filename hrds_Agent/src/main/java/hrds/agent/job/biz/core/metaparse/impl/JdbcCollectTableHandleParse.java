@@ -24,10 +24,11 @@ import hrds.commons.utils.Constant;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@DocClass(desc = "根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
+@DocClass(desc = "数据库采集根据页面所选的表和字段对jdbc所返回的meta信息进行解析", author = "zxz", createdate = "2019/12/4 11:17")
 public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 
 
@@ -38,7 +39,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	public TableBean generateTableInfo(SourceDataConfBean sourceDataConfBean,
-	                                   CollectTableBean collectTableBean) {
+									   CollectTableBean collectTableBean) {
 		if (UnloadType.QuanLiangXieShu.getCode().equals(collectTableBean.getUnload_type())) {
 			//全量卸数，根据采集的sql获取meta信息。
 			return getFullAmountExtractTableBean(sourceDataConfBean, collectTableBean);
@@ -56,7 +57,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Param(name = "collectTableBean", desc = "数据库采集表配置信息", range = "不为空")
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	private TableBean getIncrementExtractTableBean(SourceDataConfBean sourceDataConfBean,
-	                                               CollectTableBean collectTableBean) {
+												   CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		//-----------------------------------获取所有列的数据字典信息----------------------------------
 		StringBuilder columnMetaInfo = new StringBuilder();//生成的元信息列名
@@ -80,6 +81,12 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 		colTypeMetaInfo.deleteCharAt(colTypeMetaInfo.length() - 1);//列类型
 		allType.deleteCharAt(allType.length() - 1);//列类型
 		primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//是否主键
+		//判断，如果增量写了更新sql，则必须要指定那个字段为主键，如果没有指定则报错
+		if (!StringUtil.isEmpty(JSONObject.parseObject(collectTableBean.getSql()).getString("update"))) {
+			if (!primaryKeyInfo.toString().contains(IsFlag.Shi.getCode())) {
+				throw new AppSystemException("数据库增量卸数更新sql不为空，则必须要指定主键");
+			}
+		}
 		// 页面定义的清洗格式进行卸数
 		tableBean.setAllColumns(allColumns.toString());
 		tableBean.setAllType(allType.toString());
@@ -94,7 +101,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	}
 
 	private void getSqlSearchColumn(SourceDataConfBean sourceDataConfBean,
-	                                CollectTableBean collectTableBean, TableBean tableBean) {
+									CollectTableBean collectTableBean, TableBean tableBean) {
 		//根据实际sql获取新增、删除、更新查询的列
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
@@ -153,7 +160,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 	@Return(desc = "卸数阶段元信息", range = "不为空")
 	@SuppressWarnings("unchecked")
 	private TableBean getFullAmountExtractTableBean(SourceDataConfBean sourceDataConfBean,
-	                                                CollectTableBean collectTableBean) {
+													CollectTableBean collectTableBean) {
 		TableBean tableBean = new TableBean();
 		ResultSet resultSet = null;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(sourceDataConfBean.getDatabase_drive(),
@@ -181,6 +188,8 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			// Write header
 			for (int i = 1; i <= numberOfColumns; i++) {
 				String columnTmp = rsMetaData.getColumnName(i);
+				String[] names = columnTmp.split("\\.");
+				columnTmp = names[names.length - 1];
 				int columnType = rsMetaData.getColumnType(i);
 				//TODO 下一行未知
 				if (!columnTmp.equalsIgnoreCase("hyren_rn")) {
@@ -231,19 +240,34 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			}
 			//根据字段名称和页面选择的信息，判断是否为主键
 			StringBuilder primaryKeyInfo = new StringBuilder();//字段是否为主键
+			//字段是否为了拉链字段
+			Map<String, Boolean> isZipperFieldInfo = new HashMap<>();
 			List<String> column_list = StringUtil.split(columnMetaInfo.toString(), STRSPLIT);
 			List<CollectTableColumnBean> collectTableColumnBeanList = collectTableBean.getCollectTableColumnBeanList();
 			for (String col : column_list) {
-				boolean flag = true;
+				//拼接是否为主键
+				boolean pk_flag = true;
 				for (CollectTableColumnBean columnBean : collectTableColumnBeanList) {
 					if (columnBean.getColumn_name().equals(col)) {
 						primaryKeyInfo.append(columnBean.getIs_primary_key()).append(STRSPLIT);
-						flag = false;
+						pk_flag = false;
 						break;
 					}
 				}
-				if (flag) {
+				if (pk_flag) {
 					primaryKeyInfo.append(IsFlag.Fou.getCode()).append(STRSPLIT);
+				}
+				//拼接是否为拉链字段
+				boolean zipper_flag = true;
+				for (CollectTableColumnBean columnBean : collectTableColumnBeanList) {
+					if (columnBean.getColumn_name().equals(col)) {
+						isZipperFieldInfo.put(col.toUpperCase(), IsFlag.Shi.getCode().equals(columnBean.getIs_zipper_field()));
+						zipper_flag = false;
+						break;
+					}
+				}
+				if (zipper_flag) {
+					isZipperFieldInfo.put(col.toUpperCase(), false);
 				}
 			}
 			primaryKeyInfo.deleteCharAt(primaryKeyInfo.length() - 1);//主键
@@ -256,6 +280,7 @@ public class JdbcCollectTableHandleParse extends AbstractCollectTableHandle {
 			tableBean.setTypeArray(typeArray);
 			tableBean.setParseJson(parseJson);
 			tableBean.setPrimaryKeyInfo(primaryKeyInfo.toString());
+			tableBean.setIsZipperFieldInfo(isZipperFieldInfo);
 		} catch (Exception e) {
 			throw new AppSystemException("根据数据源信息和采集表信息得到卸数元信息失败！", e);
 		} finally {

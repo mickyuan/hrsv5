@@ -19,8 +19,8 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,10 +36,10 @@ import java.util.Map;
  */
 public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	//打印日志
-	private static final Log log = LogFactory.getLog(JdbcToFixedFileWriter.class);
+	private static final Logger log = LogManager.getLogger();
 
 	public JdbcToFixedFileWriter(ResultSet resultSet, CollectTableBean collectTableBean, int pageNum,
-	                             TableBean tableBean, Data_extraction_def data_extraction_def) {
+								 TableBean tableBean, Data_extraction_def data_extraction_def) {
 		super(resultSet, collectTableBean, pageNum, tableBean, data_extraction_def);
 	}
 
@@ -47,7 +47,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	@Override
 	public String writeFiles() {
 		//获取行分隔符
-		String database_separatorr = data_extraction_def.getDatabase_separatorr();
+		String database_separatorr = data_extraction_def.getDatabase_separatorr() == null ? ""
+				: data_extraction_def.getDatabase_separatorr();
 		String eltDate = collectTableBean.getEtlDate();
 		StringBuilder fileInfo = new StringBuilder(1024);
 		String hbase_name = collectTableBean.getHbase_name();
@@ -70,6 +71,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 			writerFile = new WriterFile(fileName);
 			writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(database_code));
+			//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
+			writeHeader(writer, tableBean.getColumnMetaInfo());
 			//清洗配置
 			final DataCleanInterface allclean = CleanFactory.getInstance().getObjectClean("clean_database");
 			//获取所有查询的字段的名称，不包括列分割和列合并出来的字段名称
@@ -80,7 +83,11 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			Map<String, Map<String, Column_split>> splitIng = (Map<String, Map<String, Column_split>>)
 					parseJson.get("splitIng");
 			Clean cl = new Clean(parseJson, allclean);
-			StringBuilder midStringOther = new StringBuilder(1024 * 1024);//获取所有列的值用来生成MD5值
+			//获取所有列的值用来做列合并
+			StringBuilder mergeStringTmp = new StringBuilder(1024 * 1024);
+			//获取页面选择列算拉链时算md5的列，当没有选择拉链字段，默认使用全字段算md5
+			Map<String, Boolean> md5Col = transMd5ColMap(tableBean.getIsZipperFieldInfo());
+			StringBuilder md5StringTmp = new StringBuilder(1024 * 1024);
 			StringBuilder sb = new StringBuilder();//用来写一行数据
 			StringBuilder sb_ = new StringBuilder();//用来写临时数据
 			List<String> typeList = StringUtil.split(tableBean.getAllType(), Constant.METAINFOSPLIT);
@@ -91,35 +98,39 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 			while (resultSet.next()) {
 				// Count it
 				counter++;
-				//获取所有列的值用来生成MD5值
-				midStringOther.delete(0, midStringOther.length());
+				md5StringTmp.delete(0, md5StringTmp.length());
+				mergeStringTmp.delete(0, mergeStringTmp.length());
 				// Write columns
 				for (int i = 0; i < numberOfColumns; i++) {
 					//获取原始值来计算 MD5
 					sb_.delete(0, sb_.length());
 					//定长的分隔符可能为空，为了列合并取值，这里MD5值默认拼接commons里面的常量
-					midStringOther.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i]
+					mergeStringTmp.append(getOneColumnValue(avroWriter, counter, pageNum, resultSet, typeArray[i]
 							, sb_, selectColumnList.get(i), hbase_name, midName));
 					// Add DELIMITER if not last value
 					if (i < numberOfColumns - 1) {
-						midStringOther.append(Constant.DATADELIMITER);
+						mergeStringTmp.append(Constant.DATADELIMITER);
+					}
+					currValue = sb_.toString();
+					//判断是否是算md5的列，算md5
+					if (md5Col.get(selectColumnList.get(i)) != null && md5Col.get(selectColumnList.get(i))) {
+						md5StringTmp.append(currValue);
 					}
 					//清洗操作
-					currValue = sb_.toString();
 					currValue = cl.cleanColumn(currValue, selectColumnList.get(i).toUpperCase(), null,
 							typeList.get(i), FileFormat.DingChang.getCode(), null,
 							database_code, database_separatorr);
 					if (splitIng.get(selectColumnList.get(i).toUpperCase()) == null
 							|| splitIng.get(selectColumnList.get(i).toUpperCase()).size() == 0) {
 						sb.append(columnToFixed(currValue, TypeTransLength.getLength(
-								typeList.get(i)), database_code)).append(database_separatorr);
+								typeList.get(i)), database_code, selectColumnList.get(i))).append(database_separatorr);
 					} else {
 						sb.append(currValue).append(database_separatorr);
 					}
 
 				}
 				if (!mergeIng.isEmpty()) {
-					List<String> arrColString = StringUtil.split(midStringOther.toString(),
+					List<String> arrColString = StringUtil.split(mergeStringTmp.toString(),
 							Constant.DATADELIMITER);
 					String merge = allclean.merge(mergeIng, arrColString.toArray(new String[0]),
 							selectColumnList.toArray(new String[0]), null, null,
@@ -129,7 +140,7 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 				sb.append(eltDate);
 				//根据是否算MD5判断是否追加结束日期和MD5两个字段
 				if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_md5())) {
-					String md5 = toMD5(midStringOther.toString());
+					String md5 = toMD5(md5StringTmp.toString());
 					sb.append(database_separatorr).append(Constant.MAXDATE).
 							append(database_separatorr).append(md5);
 				}
@@ -147,6 +158,8 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 						writerFile = new WriterFile(fileName);
 						writer = writerFile.getBufferedWriter(DataBaseCode.ofValueByCode(
 								database_code));
+						//获取所有字段的名称，包括列分割和列合并出来的字段名称 写表头
+						writeHeader(writer, tableBean.getColumnMetaInfo());
 						fileInfo.append(fileName).append(Constant.METAINFOSPLIT);
 					}
 				}
@@ -177,6 +190,25 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 	}
 
 	/**
+	 * 根据页面传过来的参数，决定是否写表头
+	 *
+	 * @param writer         定长的写文件的输出流
+	 * @param columnMetaInfo 所有字段的列
+	 */
+	private void writeHeader(BufferedWriter writer, String columnMetaInfo) throws Exception {
+		if (IsFlag.Shi.getCode().equals(data_extraction_def.getIs_header())) {
+			if (!StringUtil.isEmpty(data_extraction_def.getDatabase_separatorr())) {
+				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT,
+						data_extraction_def.getDatabase_separatorr());
+			} else {
+				columnMetaInfo = StringUtil.replace(columnMetaInfo, Constant.METAINFOSPLIT, ",");
+			}
+			writer.write(columnMetaInfo);
+			writer.write(data_extraction_def.getRow_separator());
+		}
+	}
+
+	/**
 	 * 添加操作日期、操作时间、操作人
 	 */
 	private void appendOperateInfo(StringBuilder sb, String database_separatorr) {
@@ -185,4 +217,5 @@ public class JdbcToFixedFileWriter extends AbstractFileWriter {
 					.append(operateTime).append(database_separatorr).append(user_id);
 		}
 	}
+
 }

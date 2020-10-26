@@ -49,7 +49,7 @@ public class JobLevelInterventionAction extends BaseAction {
 	public Map<String, Object> searchJobLevelIntervention(String etl_sys_cd, String etl_job, String sub_sys_desc,
 	                                                      String job_status, int currPage, int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -62,16 +62,15 @@ public class JobLevelInterventionAction extends BaseAction {
 		asmSql.addParam(etl_sys_cd);
 		// 2.判断作业名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(etl_job)) {
-			asmSql.addLikeParam("t1.etl_job", "%" + etl_job + "%");
+			asmSql.addLikeParam("lower(t1.etl_job)", "%" + etl_job.toLowerCase() + "%");
 		}
 		// 3.判断任务名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(sub_sys_desc)) {
-			asmSql.addLikeParam("t2.sub_sys_desc", "%" + sub_sys_desc + "%");
+			asmSql.addLikeParam("lower(t2.sub_sys_desc)", "%" + sub_sys_desc.toLowerCase() + "%");
 		}
 		// 4.判断作业调度状态是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(job_status)) {
-			asmSql.addSql(" AND t1.job_disp_status=?");
-			asmSql.addParam(job_status);
+			asmSql.addSql(" AND t1.job_disp_status=?").addParam(job_status);
 		}
 		asmSql.addSql(" order by etl_job");
 		// 5.分页查询作业级干预作业情况
@@ -95,7 +94,7 @@ public class JobLevelInterventionAction extends BaseAction {
 	public Map<String, Object> searchJobLevelCurrInterventionByPage(String etl_sys_cd, int currPage,
 	                                                                int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.分页查询查询作业级当前干预情况
@@ -127,7 +126,7 @@ public class JobLevelInterventionAction extends BaseAction {
 	public Map<String, Object> searchJobLeverHisInterventionByPage(String etl_sys_cd, int currPage,
 	                                                               int pageSize) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.分页查询系统级历史干预情况
@@ -164,7 +163,7 @@ public class JobLevelInterventionAction extends BaseAction {
 	public void jobLevelInterventionOperate(String etl_sys_cd, String etl_job, String etl_hand_type,
 	                                        String curr_bath_date, Integer job_priority) {
 		// 1.数据可访问权限处理方式，通过user_id进行权限控制
-		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId())) {
+		if (!ETLJobUtil.isEtlSysExistById(etl_sys_cd, getUserId(), Dbo.db())) {
 			throw new BusinessException("当前工程已不存在");
 		}
 		// 2.封装作业干预实体属性
@@ -183,7 +182,7 @@ public class JobLevelInterventionAction extends BaseAction {
 		}
 		etl_job_hand.setPro_para(etl_sys_cd + "," + etl_job + "," + curr_bath_date);
 		// 3.判断工程下是否有作业正在干预
-		if (ETLJobUtil.isEtlJobHandExistByJob(etl_sys_cd, etl_job)) {
+		if (ETLJobUtil.isEtlJobHandExistByJob(etl_sys_cd, etl_job, Dbo.db())) {
 			throw new BusinessException("工程下有作业" + etl_job + "正在干预！");
 		}
 		// 4.根据不同的干预类型处理不同情况

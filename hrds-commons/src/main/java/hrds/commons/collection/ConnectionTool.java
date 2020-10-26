@@ -9,8 +9,12 @@ import fd.ng.db.conf.ConnWay;
 import fd.ng.db.conf.DbinfosConf;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.DatabaseType;
+import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.DbConfBean;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.StorageTypeKey;
@@ -31,27 +35,27 @@ public class ConnectionTool {
 	@Return(desc = "项目中常用的DatabaseWrapper对象", range = "DatabaseWrapper类型对象")
 	public static DatabaseWrapper getDBWrapper(DbConfBean dbConfBean) {
 		return getDBWrapper(dbConfBean.getDatabase_drive(), dbConfBean.getJdbc_url(), dbConfBean.getUser_name(),
-				dbConfBean.getDatabase_pad(), dbConfBean.getDatabase_type());
+				dbConfBean.getDatabase_pad(), dbConfBean.getDatabase_type(), dbConfBean.getDatabase_name());
 	}
 
 	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
-	                                           String database_pad, String database_type) {
+											   String database_pad, String database_type) {
 		return getDBWrapper(database_drive, jdbc_url, user_name, database_pad, database_type, 0);
 	}
 
 	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
-	                                           String database_pad, String database_type, String database_name) {
+											   String database_pad, String database_type, String database_name) {
 		return getDBWrapper(database_drive, jdbc_url, user_name, database_pad, database_type, database_name, 0);
 	}
 
 	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
-	                                           String database_pad, String database_type, int fetch_size) {
+											   String database_pad, String database_type, int fetch_size) {
 		return getDBWrapper(database_drive, jdbc_url, user_name, database_pad, database_type,
 				"", fetch_size);
 	}
 
 	public static DatabaseWrapper getDBWrapper(String database_drive, String jdbc_url, String user_name,
-	                                           String database_pad, String database_type, String database_name, int fetch_size) {
+											   String database_pad, String database_type, String database_name, int fetch_size) {
 		Map<String, String> dbConfig = new HashMap<>();
 		dbConfig.put(StorageTypeKey.database_driver, database_drive);
 		dbConfig.put(StorageTypeKey.jdbc_url, jdbc_url);
@@ -69,17 +73,33 @@ public class ConnectionTool {
 		return getDBWrapper(getLayerMap(dbConfig));
 	}
 
-	/**
-	 * 使用数据库吃信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val
-	 */
-	public static Map<String, String> getLayerMap(List<Map<String, Object>> dbConfig) {
-		Map<String, String> dbConfigMap = new HashMap<>();
-		for (Map<String, Object> dbMap : dbConfig) {
-			String key = dbMap.get("storage_property_key").toString();
-			String val = dbMap.get("storage_property_val").toString();
-			dbConfigMap.put(key, val);
+	@Method(desc = "根据存储层配置Map信息获取DbConfBean", logicStep = "根据存储层配置Map信息获取DbConfBean")
+	public static DbConfBean getDbConfBean(DatabaseWrapper db, long dsl_id) {
+		//获取存储层配置Map信息
+		Map<String, String> dbConfigMap = getLayerMap(getLayerList(db, dsl_id));
+		//根据存储层配置Map信息设置 DbConfBean
+		DbConfBean dbConfBean = new DbConfBean();
+		dbConfBean.setDatabase_drive(dbConfigMap.get(StorageTypeKey.database_driver));
+		dbConfBean.setJdbc_url(dbConfigMap.get(StorageTypeKey.jdbc_url));
+		dbConfBean.setUser_name(dbConfigMap.get(StorageTypeKey.user_name));
+		dbConfBean.setDatabase_pad(dbConfigMap.get(StorageTypeKey.database_pwd));
+		if (Store_type.HIVE.getCode().equals(dbConfigMap.get("store_type"))
+				|| Store_type.CARBONDATA.getCode().equals(dbConfigMap.get("store_type"))) {
+			dbConfBean.setDatabase_type(DatabaseType.Hive.getCode());
+		} else if (Store_type.HBASE.getCode().equals(dbConfigMap.get("store_type"))) {
+			if ("hive".equals(dbConfigMap.get(StorageTypeKey.increment_engine))) {
+				dbConfBean.setDatabase_type(DatabaseType.Hive.getCode());
+			} else if ("phoenix".equals(dbConfigMap.get(StorageTypeKey.increment_engine))) {
+				//TODO
+				throw new AppSystemException("暂时没支持");
+			} else {
+				throw new AppSystemException("hbase的增量引擎不能为空");
+			}
+		} else {
+			dbConfBean.setDatabase_type(dbConfigMap.get(StorageTypeKey.database_type));
 		}
-		return dbConfigMap;
+		dbConfBean.setDatabase_name(dbConfigMap.get(StorageTypeKey.database_name));
+		return dbConfBean;
 	}
 
 	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig) {
@@ -113,7 +133,14 @@ public class ConnectionTool {
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
 		//3、根据数据库类型获取对应数据库的数据库连接
-		return new DatabaseWrapper.Builder().dbconf(dbInfo).create();
+		DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbInfo).create();
+		if (db.getDbtype() == Dbtype.TERADATA && db.getDatabaseName() != null) {
+			db.execute("DATABASE " + db.getDatabaseName().toUpperCase());
+		}
+		if (db.getDbtype() == Dbtype.HIVE && db.getDatabaseName() != null) {
+			db.execute("USE " + db.getDatabaseName().toUpperCase());
+		}
+		return db;
 	}
 
 	@Method(desc = "根据数据库配置信息获取数据库连接", logicStep = "" +
@@ -128,7 +155,46 @@ public class ConnectionTool {
 				database_set.getDatabase_pad(), database_set.getDatabase_type(), database_set.getDatabase_name());
 	}
 
-	private static Dbtype getDbType(String database_type) {
+	@Method(desc = "根据定义的存储层id返回存储层连接", logicStep = "根据定义的存储层id返回存储层连接")
+	public static DatabaseWrapper getDBWrapper(DatabaseWrapper db, long dsl_id) {
+		//根据数据层获取存储层配置信息
+		DbConfBean dbConfBean = getDbConfBean(db, dsl_id);
+		//返回DBWrapper
+		return getDBWrapper(dbConfBean.getDatabase_drive(), dbConfBean.getJdbc_url(), dbConfBean.getUser_name(),
+				dbConfBean.getDatabase_pad(), dbConfBean.getDatabase_type(), dbConfBean.getDatabase_name());
+	}
+
+	@Method(desc = "使用数据库信息，返回一个存储层的信息，以list的方式返回存储层配置信息",
+			logicStep = "返回一个存储层的信息")
+	public static List<Map<String, Object>> getLayerList(DatabaseWrapper db, long dsl_id) {
+		//根据存储层id获取存储层配置信息列表
+
+		return SqlOperator.queryList(db, "select t1.*,store_type from " + Data_store_layer_attr.TableName + " t1 " +
+				"left join " + Data_store_layer.TableName + " t2 on t1.dsl_id = t2.dsl_id where t1.dsl_id = ?", dsl_id);
+	}
+
+	@Method(desc = "使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val",
+			logicStep = "返回一个存储层的信息")
+	public static Map<String, String> getLayerMap(DatabaseWrapper db, long dsl_id) {
+		//根据存储层id获取存储层配置信息列表,处理配置信息,以map的方式返回，key为用户输入的key，val为val
+		return getLayerMap(getLayerList(db, dsl_id));
+	}
+
+	@Method(desc = "使用数据库信息，返回一个存储层的信息，以map的方式返回，key为用户输入的key，val为val",
+			logicStep = "返回一个存储层的信息")
+	private static Map<String, String> getLayerMap(List<Map<String, Object>> dbConfig) {
+		//处理配置信息,以map的方式返回，key为用户输入的key，val为val
+		Map<String, String> dbConfigMap = new HashMap<>();
+		for (Map<String, Object> dbMap : dbConfig) {
+			String key = dbMap.get("storage_property_key").toString();
+			String val = dbMap.get("storage_property_val").toString();
+			dbConfigMap.put(key, val);
+		}
+		dbConfigMap.put("store_type", dbConfig.get(0).get("store_type").toString());
+		return dbConfigMap;
+	}
+
+	public static Dbtype getDbType(String database_type) {
 		//获取数据库类型
 		DatabaseType typeConstant = DatabaseType.ofEnumByCode(database_type);
 		if (typeConstant == DatabaseType.MYSQL) {

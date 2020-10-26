@@ -11,9 +11,9 @@ import java.util.concurrent.Callable;
 @DocClass(desc = "按照指定格式读取文件，根据页面配置进行清洗，算增量，最后写成既定格式的文件",
 		author = "zxz", createdate = "2020/04/21 16:19")
 public class FileConversionThread implements Callable<String> {
-	private TableBean tableBean;
-	private CollectTableBean collectTableBean;
-	private String readFile;
+	private final TableBean tableBean;
+	private final CollectTableBean collectTableBean;
+	private final String readFile;
 
 	public FileConversionThread(TableBean tableBean, CollectTableBean collectTableBean, String readFile) {
 		this.tableBean = tableBean;

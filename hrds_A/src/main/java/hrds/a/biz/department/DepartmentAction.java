@@ -67,8 +67,13 @@ public class DepartmentAction extends BaseAction {
 		if (StringUtil.isBlank(departmentInfo.getDep_name())) {
 			throw new BusinessException("部门名称不能为空!" + departmentInfo.getDep_name());
 		}
-		if (checkDepNameIsRepeat(departmentInfo.getDep_name())) {
-			throw new BusinessException("部门名称重复!" + departmentInfo.getDep_name());
+		//2.获取当前修改的部门信息
+		Department_info di = Dbo.queryOneObject(Department_info.class, "select * from " + Department_info.TableName + "" +
+				" where dep_id=?", departmentInfo.getDep_id()).orElseThrow(() -> (new BusinessException("查询部门信息的SQL失败!")));
+		if (!di.getDep_name().equals(departmentInfo.getDep_name())) {
+			if (checkDepNameIsRepeat(departmentInfo.getDep_name())) {
+				throw new BusinessException("部门名称重复!" + departmentInfo.getDep_name());
+			}
 		}
 		departmentInfo.update(Dbo.db());
 	}

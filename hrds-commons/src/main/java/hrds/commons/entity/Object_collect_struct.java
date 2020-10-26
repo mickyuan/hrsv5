@@ -46,6 +46,8 @@ public class Object_collect_struct extends ProjectTableEntity
 	private String is_operate;
 	@DocBean(name ="ocs_id",value="对象采集任务编号:",dataType = Long.class,required = true)
 	private Long ocs_id;
+	@DocBean(name ="is_zipper_field",value="是否为拉链字段(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_zipper_field;
 
 	/** 取得：结构信息id */
 	public Long getStruct_id(){
@@ -122,5 +124,13 @@ public class Object_collect_struct extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(ocs_id)){
 			this.ocs_id=new Long(ocs_id);
 		}
+	}
+	/** 取得：是否为拉链字段 */
+	public String getIs_zipper_field(){
+		return is_zipper_field;
+	}
+	/** 设置：是否为拉链字段 */
+	public void setIs_zipper_field(String is_zipper_field){
+		this.is_zipper_field=is_zipper_field;
 	}
 }

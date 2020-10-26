@@ -6,8 +6,8 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,7 +16,8 @@ import java.io.InputStreamReader;
 
 @DocClass(desc = "脚本执行工具,用于在java中执行各种类型的脚本", author = "WangZhengcheng")
 public class ScriptExecutor {
-	private final static Logger LOGGER = LoggerFactory.getLogger(ScriptExecutor.class);
+	//打印日志
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final static String SCRIPTS_DIR = "scripts";
 	private final static String SHELL_COMMAND = "sh";
@@ -30,10 +31,10 @@ public class ScriptExecutor {
 	public void executeUpload2Hdfs(String localFile, String remoteDir)
 			throws InterruptedException, IllegalStateException {
 		//1、对入参进行合法性校验，校验不通过，抛异常
-		if(StringUtil.isBlank(localFile)){
+		if (StringUtil.isBlank(localFile)) {
 			throw new AppSystemException("本地文件地址不能为空");
 		}
-		if(StringUtil.isBlank(remoteDir)){
+		if (StringUtil.isBlank(remoteDir)) {
 			throw new AppSystemException("hdfs目录地址不能为空");
 		}
 		//2、调用本类中的service方法完成处理逻辑
@@ -48,10 +49,10 @@ public class ScriptExecutor {
 	public void executeUpload2Hdfs(String[] localFiles, String remoteDir)
 			throws InterruptedException, IllegalStateException {
 		//1、对入参进行合法性校验，校验不通过，抛异常
-		if(localFiles.length == 0){
+		if (localFiles.length == 0) {
 			throw new AppSystemException("本地文件地址不能为空");
 		}
-		if(StringUtil.isBlank(remoteDir)){
+		if (StringUtil.isBlank(remoteDir)) {
 			throw new AppSystemException("hdfs目录地址不能为空");
 		}
 		//2、调用本类中的service方法完成处理逻辑
@@ -61,7 +62,7 @@ public class ScriptExecutor {
 	/**
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * */
+	 */
 	@Method(desc = "用于寻找脚本路径，单文件上传使用", logicStep = "" +
 			"1、获取脚本所在的目录" +
 			"2、构建命令并执行")
@@ -80,7 +81,7 @@ public class ScriptExecutor {
 	/**
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * */
+	 */
 	@Method(desc = "用于寻找脚本路径，多文件上传使用", logicStep = "" +
 			"1、获取脚本所在的目录" +
 			"2、构建命令并执行")
@@ -100,7 +101,7 @@ public class ScriptExecutor {
 	/**
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * */
+	 */
 	@Method(desc = "用于构建命令并执行，单文件上传使用", logicStep = "" +
 			"1、拼接最终执行的linux命令" +
 			"2、调用本类的callScript()方法执行命令")
@@ -117,7 +118,7 @@ public class ScriptExecutor {
 	/**
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * */
+	 */
 	@Method(desc = "用于构建命令并执行，多文件上传使用", logicStep = "" +
 			"1、拼接最终执行的linux命令" +
 			"2、调用本类的callScript()方法执行命令")
@@ -135,7 +136,7 @@ public class ScriptExecutor {
 	/**
 	 * @throws InterruptedException  当执行脚本的进程无法启动时抛出该异常
 	 * @throws IllegalStateException 当脚本执行错误时抛出该异常
-	 * */
+	 */
 	@Method(desc = "用于构造脚本执行命令，并且执行", logicStep = "" +
 			"1、启动独立线程等待process执行完成" +
 			"2、检查脚本执行结果状态码")

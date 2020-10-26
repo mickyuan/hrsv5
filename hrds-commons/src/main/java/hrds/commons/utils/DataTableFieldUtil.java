@@ -61,7 +61,7 @@ public class DataTableFieldUtil {
             map.put("column_ch_name", table_column.get("column_ch_name").toString());
             //解析字段类型
             String column_type = table_column.get("column_type").toString();
-            map.put("data_type", parsingFiledType(column_type).get("data_type"));
+            map.put("data_type", parsingFiledType(column_type).get("data_type").toLowerCase());
             map.put("data_len", parsingFiledType(column_type).get("data_len"));
             map.put("decimal_point", parsingFiledType(column_type).get("decimal_point"));
             //校验字段是否为主键信息,如果为空,默认设置为0:否

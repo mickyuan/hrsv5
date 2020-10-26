@@ -23,7 +23,7 @@ import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.trigger.beans.EtlJobParaAnaly;
-import hrds.trigger.task.helper.RedisHelper;
+import hrds.trigger.task.helper.HazelcastHelper;
 import hrds.trigger.task.helper.TaskSqlHelper;
 
 public class TaskManagerTest {
@@ -43,7 +43,7 @@ public class TaskManagerTest {
 	private static final String SLEEP1M_SHELL_PATH = PRO_DIR + SLEEP1M_SHELL;
 	private static final String FAUIL_SHELL_PATH = PRO_DIR + FAUIL_SHELL;
 
-	private static final RedisHelper REDIS = RedisHelper.getInstance();
+	private static final HazelcastHelper REDIS = HazelcastHelper.getInstance();
 
 	private static final String strRunningJob = etlSysCode + "RunningJob";//存入redis中的键值（标识需要马上执行的作业）
 	private static final String strFinishedJob = etlSysCode + "FinishedJob";//存入redis中的键值（标识已经停止的作业）

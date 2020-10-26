@@ -1,11 +1,9 @@
 package hrds.agent.job.biz.utils;
 
-import hrds.commons.hadoop.readconfig.ConfigReader;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -15,6 +13,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
@@ -22,18 +22,19 @@ import java.io.*;
 
 public class WriterFile implements Closeable {
 
-	private static final Log logger = LogFactory.getLog(WriterFile.class);
-	private String filePath;
+	//打印日志
+	private static final Logger logger = LogManager.getLogger();
+	private final String filePath;
 	private RecordWriter orcWriter = null;
 	private FileSystem fs = null;
-	private Configuration conf;
+	private final Configuration conf;
 	private Writer sequenceWriter = null;
 	private BufferedWriter bufferedWriter = null;
 	private BufferedWriter incrementBufferedWriter = null;
 	private CsvListWriter csvWriter = null;
 
 	public WriterFile(String filePath) {
-		this.conf = ConfigReader.getConfiguration();
+		this.conf = HBaseConfiguration.create();
 		conf.setBoolean("fs.hdfs.impl.disable.cache", true);
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
 		conf.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true");
@@ -85,6 +86,16 @@ public class WriterFile implements Closeable {
 	public CsvListWriter getCsvWriter(String charset) {
 		try {
 			csvWriter = new CsvListWriter(new OutputStreamWriter(new FileOutputStream(filePath), charset)
+					, CsvPreference.EXCEL_PREFERENCE);
+		} catch (IOException e) {
+			logger.error(e);
+		}
+		return csvWriter;
+	}
+
+	public CsvListWriter getIncrementCsvWriter(String charset) {
+		try {
+			csvWriter = new CsvListWriter(new OutputStreamWriter(new FileOutputStream(filePath, true), charset)
 					, CsvPreference.EXCEL_PREFERENCE);
 		} catch (IOException e) {
 			logger.error(e);

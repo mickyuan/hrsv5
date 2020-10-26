@@ -56,6 +56,8 @@ public class Table_column extends ProjectTableEntity
 	private String is_new;
 	@DocBean(name ="tc_or",value="清洗顺序:",dataType = String.class,required = false)
 	private String tc_or;
+	@DocBean(name ="is_zipper_field",value="是否为拉链字段:",dataType = String.class,required = true)
+	private String is_zipper_field;
 
 	/** 取得：字段ID */
 	public Long getColumn_id(){
@@ -172,5 +174,13 @@ public class Table_column extends ProjectTableEntity
 	/** 设置：清洗顺序 */
 	public void setTc_or(String tc_or){
 		this.tc_or=tc_or;
+	}
+	/** 取得：是否为拉链字段 */
+	public String getIs_zipper_field(){
+		return is_zipper_field;
+	}
+	/** 设置：是否为拉链字段 */
+	public void setIs_zipper_field(String is_zipper_field){
+		this.is_zipper_field=is_zipper_field;
 	}
 }

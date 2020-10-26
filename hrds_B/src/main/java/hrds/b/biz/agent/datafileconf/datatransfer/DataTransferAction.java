@@ -8,9 +8,10 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.Dbo;
-import hrds.b.biz.agent.datafileconf.CheckParam;
+import hrds.b.biz.agent.CheckParam;
 import hrds.b.biz.agent.tools.SendMsgUtil;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.AgentType;
 import hrds.commons.codes.DataExtractType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
@@ -67,7 +68,7 @@ public class DataTransferAction extends BaseAction {
 		// 2: 获取每张表的转存配置信息
 		List<Map<String, Object>> dataBaseTransDataList =
 			Dbo.queryList(
-				"  SELECT t1.database_id,t1.table_id,t1.table_name,t1.table_ch_name, is_archived FROM "
+				"  SELECT t1.database_id,t1.table_id,t1.table_name,t1.table_ch_name,t2.is_archived,t1.unload_type FROM "
 					+ Table_info.TableName
 					+ " t1 "
 					+ " LEFT JOIN "
@@ -134,7 +135,8 @@ public class DataTransferAction extends BaseAction {
 										extractionMap.put("plane_url", storageMap.get("plane_url"));
 										extractionMap.put("database_code", storageMap.get("database_code"));
 										extractionMap.put(
-											"row_separator", String.valueOf(storageMap.get("row_separator")));
+											"row_separator",
+												String.valueOf(storageMap.get("row_separator")));
 										iterator.remove();
 										break;
 									}
@@ -150,6 +152,7 @@ public class DataTransferAction extends BaseAction {
 							itemMap.put("ded_id", extractionMap.get("ded_id"));
 							itemMap.put("table_ch_name", databaseItemMap.get("table_ch_name"));
 							itemMap.put("table_id", databaseItemMap.get("table_id"));
+							itemMap.put("unload_type", databaseItemMap.get("unload_type"));
 							//这里的是否转存以数据库查询的为标准
 							itemMap.put("is_archived", databaseItemMap.get("is_archived"));
 						}
@@ -231,12 +234,12 @@ public class DataTransferAction extends BaseAction {
 				+ " FROM "
 				+ Database_set.TableName
 				+ " t1"
-				+ " LEFT JOIN "
+				+ " JOIN "
 				+ Agent_info.TableName
 				+ " ai ON ai.agent_id = t1.agent_id"
-				+ " WHERE t1.database_id = ? and ai.user_id = ? ",
+				+ " WHERE t1.database_id = ? and ai.user_id = ? AND ai.agent_type = ?",
 			colSetId,
-			getUserId());
+			getUserId(), AgentType.DBWenJian.getCode());
 	}
 
 	@Method(
@@ -301,11 +304,11 @@ public class DataTransferAction extends BaseAction {
 			CheckParam.checkData("第(%s)张表,数据抽取落地编码不能为空", dataExtractionDef.getDatabase_code(), index);
 			CheckParam.checkData("第(%s)张表,数据落地格式不能为空", dataExtractionDef.getDbfile_format(), index);
 			CheckParam.checkData("第(%s)张表,数据是否转存不能为空", dataExtractionDef.getIs_archived(), index);
+			CheckParam.checkData("第(%s)张表,是否有表头不能为空", dataExtractionDef.getIs_header(), index);
 
 			// 只有定长或者非定长才检查,数据分隔符和行分隔符
 			FileFormat fileFormat = FileFormat.ofEnumByCode(dataExtractionDef.getDbfile_format());
-			if (fileFormat == FileFormat.DingChang
-				|| fileFormat == FileFormat.FeiDingChang) {
+			if (fileFormat == FileFormat.FeiDingChang || fileFormat == FileFormat.DingChang) {
 				// 行分隔符转为Unicode编码
 				String row_separator = dataExtractionDef.getRow_separator();
 				if (StringUtil.isNotBlank(row_separator)) {
@@ -319,7 +322,9 @@ public class DataTransferAction extends BaseAction {
 				if (StringUtil.isNotBlank(database_separatorr)) {
 					dataExtractionDef.setDatabase_separatorr(StringUtil.string2Unicode(database_separatorr));
 				} else {
-					CheckParam.throwErrorMsg("第(%s)张表,列分割符不能为空", index);
+					if (fileFormat != FileFormat.DingChang) {
+						CheckParam.throwErrorMsg("第(%s)张表,列分割符不能为空", index);
+					}
 				}
 			}
 
@@ -330,8 +335,8 @@ public class DataTransferAction extends BaseAction {
 			dataExtractionDef.setData_extract_type(DataExtractType.YuanShuJuGeShi.getCode());
 			//      }
 
-			// FIXME 这里设置抽取的方式 是否需要表头设置为 否
-			dataExtractionDef.setIs_header(IsFlag.Fou.getCode());
+			// FIXME 这里设置抽取的方式 是否需要表头设置为否
+//			dataExtractionDef.setIs_header(IsFlag.Fou.getCode());
 
 			//      2-2: 没有ID信息存在则视为新增,并将数据文件源头设置为源数据加载格式
 			if (dataExtractionDef.getDed_id() == null) {

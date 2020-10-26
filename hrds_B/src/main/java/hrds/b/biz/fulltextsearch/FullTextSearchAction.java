@@ -6,6 +6,7 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.db.resultset.Result;
@@ -16,24 +17,25 @@ import hrds.b.biz.fulltextsearch.tools.PictureSearch;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AgentType;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.Agent_info;
-import hrds.commons.entity.Search_info;
-import hrds.commons.entity.Source_file_attribute;
-import hrds.commons.entity.User_fav;
+import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.hadoop.solr.SolrFactory;
 import hrds.commons.utils.PathUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 @DocClass(desc = "全文检索数据查询", author = "BY-HLL", createdate = "2019/10/8 0008 下午 03:10")
 public class FullTextSearchAction extends BaseAction {
 
+	private static final Logger logger = LogManager.getLogger();
+
 	@Method(desc = "获取用户收藏的文件列表,返回结果默认显示最近9条收藏",
-			logicStep = "数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验" +
-					"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
-					"2.返回当前登录的用户已经收藏的文件列表的List结果集"
+		logicStep = "数据可访问权限处理方式: 根据 User_fav 表的 user_id做权限校验" +
+			"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
+			"2.返回当前登录的用户已经收藏的文件列表的List结果集"
 	)
 	@Param(name = "queryNum", desc = "查询显示条数", range = "int类型值,1-99,默认为9", valueIfNull = "9")
 	@Return(desc = "用户收藏文件列表的结果集List", range = "无限制")
@@ -44,26 +46,27 @@ public class FullTextSearchAction extends BaseAction {
 		queryNum = Math.min(queryNum, 99);
 		//2.获取当前用户已经收藏的文件列表
 		//数据可访问权限处理方式: 根据 User_fav 的 user_id 做权限检查
-		return Dbo.queryList("SELECT * FROM " + User_fav.TableName +
-						" WHERE user_id = ? AND fav_flag = ?" +
-						" ORDER BY fav_id DESC LIMIT ?",
-				getUserId(), IsFlag.Shi.getCode(), queryNum
+		return Dbo.queryList("SELECT uf.*,sfa.file_suffix,sfa.hbase_name,sfa.file_type FROM " + User_fav.TableName + " uf" +
+				" JOIN " + Source_file_attribute.TableName + " sfa ON sfa.file_id = uf.file_id" +
+				" WHERE user_id = ? AND fav_flag = ?" +
+				" ORDER BY fav_id DESC LIMIT ?",
+			getUserId(), IsFlag.Shi.getCode(), queryNum
 		);
 	}
 
 	@Method(desc = "全文检索方法",
-			logicStep = "数据可访问权限处理方式: 全文检索不做权限校验" +
-					"1.根据类型获取对应搜索结果集" +
-					"1-1.全文检索返回结果集" +
-					"1-2.以图搜图返回结果集" +
-					"1-3.文章相似度返回结果集" +
-					"1-4.文件名搜索返回结果集" +
-					"2.结果集处理"
+		logicStep = "数据可访问权限处理方式: 全文检索不做权限校验" +
+			"1.根据类型获取对应搜索结果集" +
+			"1-1.全文检索返回结果集" +
+			"1-2.以图搜图返回结果集" +
+			"1-3.文章相似度返回结果集" +
+			"1-4.文件名搜索返回结果集" +
+			"2.结果集处理"
 	)
 	@Param(name = "queryKeyword", desc = "查询内容", range = "String类型值,无输入限制", nullable = true)
 	@Param(name = "searchType", desc = "检索类型", range = "String类型值,检索类型（全文检索：fullTextSearch," +
-			"searchByMap：以图搜图,articleSimilarityQuery：文章相似度,fileNameSearch：文件名搜索）", valueIfNull =
-			"fullTextSearch")
+		"searchByMap：以图搜图,articleSimilarityQuery：文章相似度,fileNameSearch：文件名搜索）", valueIfNull =
+		"fullTextSearch")
 	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "1")
 	@Param(name = "currPage", desc = "分页", range = "int类型值,默认为1", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
@@ -84,13 +87,11 @@ public class FullTextSearchAction extends BaseAction {
 			switch (searchType) {
 				//1-1.全文检索返回结果集
 				case "fullTextSearch":
-					if (StringUtil.isBlank(queryKeyword.trim())) {
-						throw new BusinessException("检索内容不能为空！");
-					}
+					//检索条件校验
+					Validator.notNull(queryKeyword, "检索内容不能为空");
 					queryKeyword = getParticipleQuery(queryKeyword.trim());
-					result = getFinalResult(queryKeyword, start, pageSize, currPage, totalSize);
-					List<String> analysis = Arrays.asList(queryKeyword.substring(1, queryKeyword.length() - 1)
-							.split("\" OR \""));
+					result = getFinalResult(queryKeyword, start, pageSize, currPage);
+					List<String> analysis = Arrays.asList(queryKeyword.substring(1, queryKeyword.length() - 1).split("\" OR \""));
 					ftsMap.put("analysis", analysis);
 					if (!result.isEmpty()) {
 						// 返回总数据记录
@@ -128,58 +129,58 @@ public class FullTextSearchAction extends BaseAction {
 				for (Map<String, Object> stringObjectMap : rsList) {
 					String fileId = (String) stringObjectMap.get("file_id");
 					String originalName = (String) stringObjectMap.get("original_name");
-					String downloadPath = action + "downloadFileSDO.do?view_down_file_id=" + fileId +
-							"&view_down_file_name=" + originalName;
+					String downloadPath = action +
+						"downloadFileSDO.do?view_down_file_id=" + fileId +
+						"&view_down_file_name=" + originalName;
 					stringObjectMap.put("downloadPath", downloadPath);
-					stringObjectMap.put("collectTime", DateUtil.parseStr2DateWith8Char((String) stringObjectMap.get(
-							"storage_date")) + " " + DateUtil.parseStr2TimeWith6Char((String) stringObjectMap.get(
-							"storage_time")));
+					stringObjectMap.put("collectTime",
+						DateUtil.parseStr2DateWith8Char((String) stringObjectMap.get("storage_date")) + " " +
+							DateUtil.parseStr2TimeWith6Char((String) stringObjectMap.get("storage_time")));
 					rList.add(stringObjectMap);
 				}
 				ftsMap.put("result", rList);
-				ftsMap.put("collectType", AgentType.WenJianXiTong.getValue());
+				ftsMap.put("collectType", AgentType.WenJianXiTong.getCode());
 				ftsMap.put("totalSize", totalSize);
-				ftsMap.put("shi", IsFlag.Shi.getValue());
 			}
 		}
 		return ftsMap;
 	}
 
 	@Method(desc = "全文检索方法",
-			logicStep = "数据可访问权限处理方式: 全文检索不做权限校验" +
-					"1.初始化待返回的结果集" +
-					"2.查询结果结果集为空直接返回" +
-					"3.获取结果集中的 agent_id 和 file_id" +
-					"3-1.agentIdList去重" +
-					"4.全文库检索" +
-					"4-1.创建查询sql" +
-					"4-2.获取查询sql返回结果" +
-					"5.设置返回结果集内容"
+		logicStep = "数据可访问权限处理方式: 全文检索不做权限校验" +
+			"1.初始化待返回的结果集" +
+			"2.查询结果结果集为空直接返回" +
+			"3.获取结果集中的 agent_id 和 file_id" +
+			"3-1.agentIdList去重" +
+			"4.全文库检索" +
+			"4-1.创建查询sql" +
+			"4-2.获取查询sql返回结果" +
+			"5.设置返回结果集内容"
 	)
 	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值,无输入限制")
 	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "9")
 	@Param(name = "currPage", desc = "分页", range = "int类型值,默认为1", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
 	@Return(desc = "通过查询结果查出更多关联信息的结果集", range = "无限制")
-	private Result getFinalResult(String queryConditions, int start, int pageSize, int currPage, int totalSize) {
+	private Result getFinalResult(String queryConditions, int start, int pageSize, int currPage) {
 		//1.初始化待返回的结果集
-		Result resultSet = new Result();
-		Result resultProcessing = queryResultProcessing(queryConditions, start, pageSize, resultSet, totalSize);
+		Result resultProcessing = queryResultProcessing(queryConditions, start, pageSize);
 		//2.查询结果的结果集为空直接返回
 		if (resultProcessing.isEmpty()) {
-			return resultSet;
+			return new Result();
 		}
 		//3.获取结果集中的 agent_id 和 file_id
-		List<String> agentIdList = new ArrayList<>();
+		List<Long> agentIdList = new ArrayList<>();
 		List<String> fileIdList = new ArrayList<>();
 		for (int i = 0; i < resultProcessing.getRowCount(); i++) {
-			String agentId = resultProcessing.getString(i, "agent_id");
+			long agentId = resultProcessing.getLong(i, "agent_id");
 			String fileId = resultProcessing.getString(i, "file_id");
 			agentIdList.add(agentId);
 			fileIdList.add(fileId);
 		}
 		//3-1.agentIdList去重
-		List<String> newAgentIdList = removeDuplicateInList(agentIdList);
+		Object[] newAgentIdArr = agentIdList.stream().distinct().toArray();
+		Object[] newFileIdArr = fileIdList.toArray();
 		//4.全文检索
 		Search_info searchInfo = new Search_info();
 		searchInfo.setWord_name(queryConditions);
@@ -189,52 +190,50 @@ public class FullTextSearchAction extends BaseAction {
 		//4-1.创建查询sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
+		//查询非结构化采集的sql
 		asmSql.addSql(" SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
-				" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
-				" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id," +
-				" fcs.fcs_name,datasource_name,agent_name,si.si_count,uf.fav_id,uf.fav_flag FROM data_source ds" +
-				" JOIN agent_info gi ON gi.SOURCE_ID = ds.SOURCE_ID JOIN file_collect_set fcs ON " +
-				" fcs.agent_id = gi.agent_id JOIN source_file_attribute sfa ON sfa.SOURCE_ID = ds.SOURCE_ID and" +
-				" sfa.AGENT_ID = gi.AGENT_ID and sfa.COLLECT_SET_ID = fcs.FCS_ID left join search_info si on" +
-				" sfa.file_id = si.file_id and word_name = ?");
-		asmSql.addParam(searchInfo.getWord_name());
-		asmSql.addSql(" LEFT JOIN user_fav uf ON sfa.file_id = uf.file_id where collect_type = ? ");
-		asmSql.addParam(sourceFileAttribute.getCollect_type());
-		asmSql.addSql(" AND sfa.AGENT_ID in (");
-		//Agent_info信息
-		Agent_info agentInfo = new Agent_info();
-		agentIdListToSql(newAgentIdList, asmSql, agentInfo);
-		asmSql.addSql(") AND sfa.file_id in (");
-		fileIdListToSql(fileIdList, asmSql, sourceFileAttribute);
-		asmSql.addSql(") union SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
-				" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
-				" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id," +
-				" db.task_name as fcs_name,datasource_name,agent_name,0 as si_count,uf.fav_id,uf.fav_flag" +
-				" FROM data_source ds JOIN  agent_info gi ON ds.SOURCE_ID = gi.SOURCE_ID JOIN database_set db" +
-				" ON db.agent_id = gi.agent_id JOIN source_file_attribute sfa ON sfa.SOURCE_ID = ds.SOURCE_ID" +
-				" and sfa.AGENT_ID = gi.AGENT_ID and sfa.COLLECT_SET_ID = db.DATABASE_ID LEFT JOIN user_fav uf" +
-				" ON sfa.file_id = uf.file_id where collect_type in(?,?)");
-		asmSql.addParam(AgentType.ShuJuKu.getCode());
-		asmSql.addParam(AgentType.DBWenJian.getCode());
-		asmSql.addSql(" AND sfa.AGENT_ID in (");
-		agentIdListToSql(newAgentIdList, asmSql, agentInfo);
-		asmSql.addSql(") AND sfa.file_id in (");
-		fileIdListToSql(fileIdList, asmSql, sourceFileAttribute);
-		asmSql.addSql(") ORDER BY si_count asc");
+			" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
+			" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id," +
+			" fcs.fcs_name,datasource_name,agent_name,si.si_count,uf.fav_id,uf.fav_flag,sfa.file_type" +
+			" FROM " + Data_source.TableName + " ds" +
+			" JOIN " + Agent_info.TableName + " gi ON gi.SOURCE_ID = ds.SOURCE_ID" +
+			" JOIN " + File_collect_set.TableName + " fcs ON fcs.agent_id = gi.agent_id" +
+			" JOIN " + Source_file_attribute.TableName + " sfa ON sfa.SOURCE_ID = ds.SOURCE_ID and sfa.AGENT_ID = gi.AGENT_ID" +
+			" and sfa.COLLECT_SET_ID = fcs.FCS_ID");
+		asmSql.addSql(" LEFT JOIN " + Search_info.TableName + " si on word_name=?").addParam(searchInfo.getWord_name());
+		asmSql.addSql(" LEFT JOIN " + User_fav.TableName + " uf ON sfa.file_id=uf.file_id");
+		asmSql.addSql(" where collect_type=? ").addParam(sourceFileAttribute.getCollect_type());
+		asmSql.addORParam("sfa.AGENT_ID", newAgentIdArr);
+		asmSql.addORParam("sfa.file_id", newFileIdArr);
+		//查询数据库采集和DB文件采集的sql
+//		asmSql.addSql(" UNION");
+//		asmSql.addSql(" SELECT sfa.source_path,sfa.file_suffix,sfa.file_id,sfa.storage_time,sfa.storage_date," +
+//			" sfa.original_update_date,sfa.hbase_name, sfa.original_update_time,sfa.file_md5,sfa.original_name," +
+//			" sfa.file_size,sfa.seqencing,collect_type,sfa.collect_set_id,sfa.source_id,sfa.agent_id," +
+//			" db.task_name as fcs_name,datasource_name,agent_name,0 as si_count,uf.fav_id,uf.fav_flag" +
+//			" FROM data_source ds JOIN  agent_info gi ON ds.SOURCE_ID = gi.SOURCE_ID JOIN database_set db" +
+//			" ON db.agent_id = gi.agent_id JOIN source_file_attribute sfa ON sfa.SOURCE_ID = ds.SOURCE_ID" +
+//			" and sfa.AGENT_ID = gi.AGENT_ID and sfa.COLLECT_SET_ID = db.DATABASE_ID LEFT JOIN user_fav uf" +
+//			" ON sfa.file_id = uf.file_id where collect_type in(?,?)");
+//		asmSql.addParam(AgentType.ShuJuKu.getCode());
+//		asmSql.addParam(AgentType.DBWenJian.getCode());
+//		asmSql.addSql(" AND sfa.AGENT_ID in (");
+//		agentIdListToSql(newAgentIdList, asmSql, agentInfo);
+//		asmSql.addSql(") AND sfa.file_id in (");
+//		fileIdListToSql(fileIdList, asmSql, sourceFileAttribute);
+//		asmSql.addSql(")");
+		asmSql.addSql(" ORDER BY si_count asc");
 		//4-2.获取查询sql返回结果
-		resultSet = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
+		Result resultSet = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
 		//5.设置返回结果集内容
-		for (int i = 0; i < resultProcessing.getRowCount(); i++) {
+		for (int i = 0; i < resultSet.getRowCount(); i++) {
 			String fileId = resultSet.getString(i, "file_id");
-			for (int j = 0; j < resultSet.getRowCount(); j++) {
-				String fileIdSolr = resultSet.getString(j, "file_id");
+			for (int j = 0; j < resultProcessing.getRowCount(); j++) {
+				String fileIdSolr = resultProcessing.getString(j, "file_id");
 				if (fileId.equals(fileIdSolr)) {
-					resultSet.setObject(i, "summary_content",
-							resultProcessing.getString(j, "summary_content"));
-					resultSet.setObject(i, "totalSize",
-							resultProcessing.getString(j, "totalSize"));
-					resultSet.setObject(i, "csv",
-							resultProcessing.getString(j, "csv"));
+					resultSet.setObject(i, "summary_content", resultProcessing.getString(j, "summary_content"));
+					resultSet.setObject(i, "totalSize", resultProcessing.getString(j, "totalSize"));
+					resultSet.setObject(i, "csv", resultProcessing.getString(j, "csv"));
 				}
 			}
 		}
@@ -248,7 +247,6 @@ public class FullTextSearchAction extends BaseAction {
 		//获取solr分词关键字
 		try (ISolrOperator os = SolrFactory.getInstance()) {
 			List<String> participleList = os.getAnalysis(queryKeyword);
-			participleList.add(0, queryKeyword);
 			StringBuilder queryPlus = new StringBuilder();
 			queryPlus.append("\"");
 			for (int i = 0; i < participleList.size(); i++) {
@@ -266,27 +264,26 @@ public class FullTextSearchAction extends BaseAction {
 	}
 
 	@Method(desc = "查询结果集处理",
-			logicStep = "数据可访问权限处理方式:暂不做数据校验处理（该表存储数据量多的情况下,数据查询效率问题）" +
-					"1.获取solr返回结果" +
-					"2.返回两类数据 数据文件和文本文件" +
-					"2-1.存放文件卸数的 因为有摘要" +
-					"2-2.存放数据库卸数的 因为返回每一行数据量大" +
-					"2-3.记录文件的file_id" +
-					"2-3-1.通过file_id查询文件,不为空则继续往结果集添加新的列,否则传入空集,文件采集" +
-					"2-4.同样对表名进行处理,类似" +
-					"2-5.把结果集放入一个新的结果集,然后返回"
+		logicStep = "数据可访问权限处理方式:暂不做数据校验处理（该表存储数据量多的情况下,数据查询效率问题）" +
+			"1.获取solr返回结果" +
+			"2.返回两类数据 数据文件和文本文件" +
+			"2-1.存放文件卸数的 因为有摘要" +
+			"2-2.存放数据库卸数的 因为返回每一行数据量大" +
+			"2-3.记录文件的file_id" +
+			"2-3-1.通过file_id查询文件,不为空则继续往结果集添加新的列,否则传入空集,文件采集" +
+			"2-4.同样对表名进行处理,类似" +
+			"2-5.把结果集放入一个新的结果集,然后返回"
 	)
 	@Param(name = "queryConditions", desc = "查询条件", range = "String类型值,符合solr查询规则")
 	@Param(name = "start", desc = "查询开始行", range = "int类型值,1-99,默认为9", valueIfNull = "9")
 	@Param(name = "pageSize", desc = "分页大小", range = "int类型值,默认为10", valueIfNull = "10")
-	@Param(name = "result", desc = "查询结果集", range = "result类型值,不为空", nullable = true)
 	@Param(name = "totalSize", desc = "查询结果行数统计", range = "long类型值,不为空", valueIfNull = "0")
 	@Return(desc = "solr分词关键字", range = "无限制")
-	private Result queryResultProcessing(String queryConditions, int start, int pageSize, Result result,
-	                                     int totalSize) {
+	private Result queryResultProcessing(String queryConditions, int start, int pageSize) {
+		Result result = new Result();
 		//数据可访问权限处理方式: source_file_attribute 暂不做数据校验处理（该表存储数据量多的情况下,数据查询效率问题）
 		//1.获取solr返回结果
-		List<Map<String, String>> querySolrRs = getQueryFromSolr(queryConditions, start, pageSize);
+		List<Map<String, Object>> querySolrRs = getQueryFromSolr(queryConditions, start, pageSize);
 		if (querySolrRs.size() == 0) {
 			//如果没有符合的返回null
 			return result;
@@ -296,41 +293,38 @@ public class FullTextSearchAction extends BaseAction {
 		//2-1.存放文件卸数的 因为有摘要
 		Map<String, String> map = new HashMap<>();
 		//2-2.存放数据库卸数的 因为返回每一行数据量大
-		List<Map<String, String>> mapCsv = new ArrayList<>();
-		for (Map<String, String> parseObject : querySolrRs) {
+		List<Map<String, Object>> mapCsv = new ArrayList<>();
+		logger.info("全文检索条件:" + queryConditions + ", 检索结果条数: " + querySolrRs.size() + " 条");
+		int totalSize = querySolrRs.size();
+		for (Map<String, Object> parseObject : querySolrRs) {
 			//获取file_id或者数据文件的MD5值
-			String id = parseObject.get("id");
+			String id = parseObject.get("id").toString();
 			//是否为大文件
-			String isBigFile = parseObject.get("is_big_file");
-			if (0 == totalSize) {
-				//总行数
-				totalSize = Integer.parseInt(parseObject.get("sum"));
-			}
+			String isBigFile = parseObject.get("is_big_file").toString();
 			//数据库卸数(必须保证,db卸数的表中没有表的列名为is_big_file)
 			if (StringUtil.isEmpty(isBigFile)) {
 				//数据库表名
-				String tableName = parseObject.get("table-name");
+				String tableName = parseObject.get("table-name").toString();
 				if (!StringUtil.isEmpty(tableName)) {
 					tableNameList.add(tableName);
 					mapCsv.add(parseObject);
 				}
 			} else {
 				//文件采集的文件摘要
-				String summary = parseObject.get("file_summary");
+				String summary = parseObject.get("file_summary").toString();
 				map.put(id, summary);
 			}
 		}
 		//2-3.记录文件的file_id
 		HashSet<String> idList = new HashSet<>(map.keySet());
-		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
-		asmSql.clean();
-		asmSql.addSql("select * from source_file_attribute where");
-		asmSql.addORParam("file_id", idList.toArray());
-		asmSql.addSql(" ORDER BY file_id");
 		//2-3-1.通过file_id查询文件,不为空则继续往结果集添加新的列,否则传入空集,文件采集
-		Result queryResultByFileId = new Result();
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		if (idList.size() != 0) {
-			queryResultByFileId = Dbo.queryResult(asmSql.sql(), asmSql.params());
+			asmSql.clean();
+			asmSql.addSql("select * from " + Source_file_attribute.TableName + " where");
+			asmSql.addORParam("file_id", idList.toArray(), "");
+			asmSql.addSql(" ORDER BY file_id");
+			Result queryResultByFileId = Dbo.queryResult(asmSql.sql(), asmSql.params());
 			for (int i = 0; i < queryResultByFileId.getRowCount(); i++) {
 				String key = queryResultByFileId.getString(i, "file_id");
 				String summary = map.get(key);
@@ -338,11 +332,11 @@ public class FullTextSearchAction extends BaseAction {
 				queryResultByFileId.setObject(i, "totalSize", totalSize);
 				queryResultByFileId.setObject(i, "csv", mapCsv);
 			}
+			//把结果集放入一个新的结果集
+			result.add(queryResultByFileId);
 		}
-		//把结果集放入一个新的结果集
-		result.add(queryResultByFileId);
 		//2-4.同样对表名进行处理,类似
-		Result queryResultByTableName = new Result();
+		Result queryResultByTableName;
 		if (tableNameList.size() != 0) {
 			asmSql.clean();
 			asmSql.addSql(" select * from source_file_attribute where ");
@@ -353,84 +347,36 @@ public class FullTextSearchAction extends BaseAction {
 				queryResultByTableName.setObject(i, "totalSize", totalSize);
 				queryResultByTableName.setObject(i, "csv", mapCsv);
 			}
+			//把结果集放入一个新的结果集,然后返回
+			result.add(queryResultByTableName);
 		}
-		//2-5.把结果集放入一个新的结果集,然后返回
-		result.add(queryResultByTableName);
 		return result;
 	}
 
 	@Method(desc = "根据查询条件在solr中检索出符合条件的结果",
-			logicStep = "数据可访问权限处理方式: 无数据库访问,不做权限校验" +
-					"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
-					"2.返回当前登录的用户已经收藏的文件列表的List结果集"
+		logicStep = "数据可访问权限处理方式: 无数据库访问,不做权限校验" +
+			"1.如果查询条数小于1条则显示默认9条,查询条数大于99条则显示99条,否则取传入的查询条数" +
+			"2.返回当前登录的用户已经收藏的文件列表的List结果集"
 	)
 	@Param(name = "queryConditions", desc = "查询关键字", range = "String类型值,无限制条件,不为空", nullable = true)
 	@Param(name = "start", desc = "查询开始行数", range = "int类型值,正整数")
 	@Param(name = "rows", desc = "查询 行数", range = "int类型值,正整数")
 	@Return(desc = "solr检索出的结果集", range = "无限制")
-	private List<Map<String, String>> getQueryFromSolr(String queryConditions, int start, int rows) {
+	private List<Map<String, Object>> getQueryFromSolr(String queryConditions, int start, int rows) {
 		List<Map<String, String>> resultMaps = new ArrayList<>();
-		Map<String, String> querySolrMap = new HashMap<>();
-//		if (StringUtil.isEmpty(queryConditions)) {
-//			queryConditions = "*:*";
-//		}
-		//TODO os.QuerySolr返回结果使用了 JSONObject
-//		try (OperSolr os = SolrFactory.getInstance()) {
-//			querySolr = (List<JSONObject>)os.QuerySolr(query, start, rows);
-//		}
-//		catch(Exception e) {
-//		throw new BusinessException("Failed to queryFromSolr...");
-//		}
-		resultMaps.add(querySolrMap);
-		return resultMaps;
-
-	}
-
-	@Method(desc = "除去List集合中的重复数据",
-			logicStep = "通过HashSet踢除重复元素除去List集合中的重复数据")
-	@Param(name = "list", desc = "List集合", range = "List集合")
-	@Return(desc = "去重后的list集合", range = "去重后的list集合")
-	private List<String> removeDuplicateInList(List<String> list) {
-		HashSet<String> h = new HashSet<>(list);
-		list.clear();
-		list.addAll(h);
-		return list;
-	}
-
-	@Method(desc = "将 agent_id 的 List 转成需要的sql语句",
-			logicStep = "将 agent_id 的 List 转成需要的sql语句")
-	@Param(name = "agentIdList", desc = "List集合", range = "List集合")
-	@Param(name = "asmSql", desc = "SqlOperator.Assembler对象", range = "查询sql")
-	@Param(name = "agentInfo", desc = "Agent_info 对象", range = "Agent_info 对象")
-	@Return(desc = "拼接完成的查询sql", range = "拼接完成的查询sql")
-	private void agentIdListToSql(List<String> agentIdList, SqlOperator.Assembler asmSql, Agent_info agentInfo) {
-		for (int i = 0; i < agentIdList.size(); i++) {
-			agentInfo.setAgent_id(agentIdList.get(i));
-			asmSql.addSql("'" + agentInfo.getAgent_id() + "'");
-			if (i < agentIdList.size() - 1) {
-				asmSql.addSql(",");
-			}
+		if (StringUtil.isEmpty(queryConditions)) {
+			queryConditions = "*:*";
 		}
-	}
-
-	@Method(desc = "将 file_id 的 List 转成需要的sql语句",
-			logicStep = "将 file_id 的 List 转成需要的sql语句")
-	@Param(name = "fileIdList", desc = "List集合", range = "List集合")
-	@Param(name = "asmSql", desc = "SqlOperator.Assembler对象", range = "查询sql")
-	@Param(name = "sfa", desc = "Source_file_attribute 对象", range = "Source_file_attribute 对象")
-	@Return(desc = "拼接完成的查询sql", range = "拼接完成的查询sql")
-	private void fileIdListToSql(List<String> fileIdList, SqlOperator.Assembler asmSql, Source_file_attribute sfa) {
-		for (int i = 0; i < fileIdList.size(); i++) {
-			sfa.setFile_id(fileIdList.get(i));
-			asmSql.addSql("'" + sfa.getFile_id() + "'");
-			if (i < fileIdList.size() - 1) {
-				asmSql.addSql(",");
-			}
+		try (ISolrOperator os = SolrFactory.getInstance()) {
+			return os.querySolr(queryConditions, start, rows);
+		} catch (Exception e) {
+			throw new BusinessException("Failed to queryFromSolr...");
 		}
+
 	}
 
 	@Method(desc = "获取文章相似度查询结果",
-			logicStep = "获取文章相似度查询结果")
+		logicStep = "获取文章相似度查询结果")
 	@Param(name = "docAddress", desc = "文章上传地址", range = "文章上传地址全路径")
 	@Param(name = "similarityRate", desc = "文章相似率", range = "1%-100%")
 	@Param(name = "searchWay", desc = "查询类型,是否返回文本信息", range = "1：是,0：否")
@@ -471,11 +417,11 @@ public class FullTextSearchAction extends BaseAction {
 			Result query = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(), asmSql.params());
 			if (!query.isEmpty()) {
 				query.setObject(0, "summary_content",
-						documentSimilar.getString(i, "summary_content"));
+					documentSimilar.getString(i, "summary_content"));
 				query.setObject(0, "rate",
-						documentSimilar.getString(i, "rate"));
+					documentSimilar.getString(i, "rate"));
 				query.setObject(0, "totalSize",
-						documentSimilar.getRowCount());
+					documentSimilar.getRowCount());
 				filterQuery.add(query);
 			}
 		}
@@ -484,7 +430,7 @@ public class FullTextSearchAction extends BaseAction {
 	}
 
 	@Method(desc = "获取文件名检索结果",
-			logicStep = "获取文件名检索结果")
+		logicStep = "获取文件名检索结果")
 	@Param(name = "fileName", desc = "搜索文件名", range = "String类型字符串,没有输入限制")
 	@Param(name = "currPage", desc = "分页开始页面", range = "1%-100%", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页大小", range = "1：是,0：否", valueIfNull = "10")
@@ -496,15 +442,15 @@ public class FullTextSearchAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT sfa.*,ds.datasource_name,gi.agent_name,fcs.fcs_name,uf.fav_id,uf.fav_flag from (" +
-				" SELECT a.* FROM source_file_attribute a  WHERE collect_type = ? ");
+			" SELECT a.* FROM source_file_attribute a  WHERE collect_type = ? ");
 		asmSql.addParam(AgentType.WenJianXiTong.getCode());
 		asmSql.addLikeParam("original_name", fileName);
 		asmSql.addORParam("a.source_id", sourceIdsObj);
 		asmSql.addSql(" ) sfa join data_source ds  ON sfa.source_id=ds.source_id JOIN agent_info gi ON sfa.agent_id =" +
-				" gi.agent_id JOIN file_collect_set fcs ON sfa.collect_set_id = fcs.fcs_id LEFT JOIN user_fav uf ON" +
-				" sfa.file_id = uf.file_id ORDER BY seqencing DESC");
+			" gi.agent_id JOIN file_collect_set fcs ON sfa.collect_set_id = fcs.fcs_id LEFT JOIN user_fav uf ON" +
+			" sfa.file_id = uf.file_id ORDER BY seqencing DESC");
 		Result fileNameSearchResult = Dbo.queryPagedResult(new DefaultPageImpl(currPage, pageSize), asmSql.sql(),
-				asmSql.params());
+			asmSql.params());
 		EssaySimilar es = new EssaySimilar();
 		for (int i = 0; i < fileNameSearchResult.getRowCount(); i++) {
 			String fileAvroPath = fileNameSearchResult.getString(i, "file_avro_path");
