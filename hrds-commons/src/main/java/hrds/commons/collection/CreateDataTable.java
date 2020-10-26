@@ -58,6 +58,7 @@ public class CreateDataTable {
 			//创建Hive存储类型的数据表
 			createHiveTable(db, layerBean, dqTableInfo, dqTableColumns);
 		} else if (store_type == Store_type.HBASE) {
+			createHBaseTable(db, layerBean, dqTableInfo, dqTableColumns);
 			//TODO 暂不支持
 		} else if (store_type == Store_type.SOLR) {
 			//TODO 暂不支持
@@ -66,14 +67,14 @@ public class CreateDataTable {
 		} else if (store_type == Store_type.MONGODB) {
 			//TODO 暂不支持
 		} else {
-			throw new BusinessException("获取创建存储层表SQL时,未找到匹配的存储层类型!");
+			throw new BusinessException("创建存储层数表时,未找到匹配的存储层类型!");
 		}
 
 	}
 
 	@Method(desc = "创建关系型数据库数据表", logicStep = "创建关系型数据库数据表")
 	@Param(name = "db", desc = "配置库DatabaseWrapper对象", range = "配置库DatabaseWrapper对象")
-	@Param(name = "dbDataConn", desc = "存储层DatabaseWrapper对象", range = "存储层DatabaseWrapper对象")
+	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
 	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	private static void createDatabaseTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
@@ -252,10 +253,9 @@ public class CreateDataTable {
 		}
 	}
 
-
 	@Method(desc = "创建Hive存储类型的数据表", logicStep = "创建Hive存储类型的数据表")
 	@Param(name = "db", desc = "配置库DatabaseWrapper对象", range = "配置库DatabaseWrapper对象")
-	@Param(name = "dbDataConn", desc = "存储层DatabaseWrapper对象", range = "存储层DatabaseWrapper对象")
+	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
 	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	private static void createHiveTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
@@ -362,13 +362,13 @@ public class CreateDataTable {
 				}
 				createTableSQL.append(" stored as ").append(hive_stored_as_type);
 			} else if (fileFormat == FileFormat.FeiDingChang) {
-				String column_separator = "|";
+				String column_separator = "|"; //TODO Dq_table_info没有保存字段分隔符信息
 				createTableSQL.append(" ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.MultiDelimitSerDe' WITH  " +
 					"SERDEPROPERTIES (\"field.delim\"=\"").append(column_separator).append("\") stored as textfile");
 			} else if (fileFormat == FileFormat.CSV) {
 				createTableSQL.append(" ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' stored as TEXTFILE");
 			} else if (fileFormat == FileFormat.DingChang) {
-				throw new BusinessException("暂不支持定长类型直接加载到hive表");
+				throw new BusinessException("创建Hive类型表,暂不支持定长类型");
 			} else {
 				throw new BusinessException("未找到匹配的存储类型! " + fileFormat);
 			}
@@ -397,6 +397,16 @@ public class CreateDataTable {
 				logger.info("关闭Hive存储层db连接成功!");
 			}
 		}
+	}
+
+	@Method(desc = "创建HBase存储类型的数据表", logicStep = "创建HBase存储类型的数据表")
+	@Param(name = "db", desc = "配置库DatabaseWrapper对象", range = "配置库DatabaseWrapper对象")
+	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
+	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
+	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
+	private  static void createHBaseTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
+	                                      List<Dq_table_column> dqTableColumns){
+
 	}
 
 	@Method(desc = "判断表是否在指定存储已经存在", logicStep = "判断表是否在指定存储已经存在,存在就抛出异常")
