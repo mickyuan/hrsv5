@@ -1,5 +1,6 @@
 package hrds.h.biz.realloader;
 
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.StoreLayerAdded;
@@ -27,10 +28,12 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
      * spark 作业的配置类
      */
     private final SparkHandleArgument.HbaseSolrArgs hbaseSolrArgs = new SparkHandleArgument.HbaseSolrArgs();
+    String prePartitions;
 
     protected HbaseOverSolrLoader(MarketConf conf) {
         super(conf);
         initArgs();
+        prePartitions = conf.getDmDatatable().getPre_partition();
     }
 
     private void initArgs() {
@@ -86,8 +89,12 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
     public void ensureRelation() {
         try (HBaseHelper helper = HBaseHelper.getHelper()) {
             if (!helper.existsTable(tableName)) {
-                //TODO 预分区要做啊
-                helper.createTable(tableName, "F");
+                if (StringUtil.isBlank(prePartitions)) {
+                    helper.createSimpleTable(tableName);
+                } else {
+                    helper.createTableWithPartitions(tableName, prePartitions,
+                            Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
+                }
             }
             hiveMapHBase(tableName, conf.getDatatableFields());
             //solr可能是没有选择的
@@ -143,16 +150,14 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
 
     @Override
     public void replace() {
-//        String replaceTempTable = tableName + "_hyren_r";
         try (HBaseHelper helper = HBaseHelper.getHelper()) {
-
             if (helper.existsTable(tableName)) {
-                helper.truncateTable(tableName, false);
+                helper.truncateTable(tableName, true);
             }
-//            helper.createTable(tableName, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
             //solr可能是没有选择的
             if (hbaseSolrArgs.getSolrCols() != null) {
                 CollectionUtil.deleteCollection(CollectionUtil.getCollection(tableName));
+                //删除直接创建会报错说collection已存在，所以睡眠两秒
                 Thread.sleep(2000);
                 CollectionUtil.createCollection(CollectionUtil.getCollection(tableName));
             }
@@ -160,15 +165,9 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
             hbaseSolrArgs.setOverWrite(true);
             hbaseSolrArgs.setTableName(tableName);
             SparkJobRunner.runJob(hbaseSolrArgs);
-//            helper.dropTable(tableName);
-//            helper.renameTable(replaceTempTable, tableName);
         } catch (IOException | InterruptedException e) {
             throw new AppSystemException(e);
         }
-
-//        hbaseSolrArgs.setOverWrite(true);
-//        SparkJobRunner.runJob(hbaseSolrArgs);
-
     }
 
     @Override

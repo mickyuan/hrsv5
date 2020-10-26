@@ -41,7 +41,9 @@ public class TypeTransLength {
 			String substring = column_type.substring(start + 1, end);
 			if (substring.contains(COMMA)) {
 				List<String> split = StringUtil.split(substring, COMMA);
-				return Integer.parseInt(split.get(0)) + Integer.parseInt(split.get(1));
+				//对于字段类型为number(22,2)、number(38,12)的字段，在数据库中的长度为22、38，抽取出来的定长会多一个正负号和一个点，
+				// 因此统一处理为22+2 和 38+2
+				return Integer.parseInt(split.get(0)) + 2;
 			}
 			return Integer.parseInt(substring);
 		} else {
@@ -65,7 +67,10 @@ public class TypeTransLength {
 			String substring = column_type.substring(start + 1, end);
 			if (substring.contains(COMMA)) {
 				List<String> split = StringUtil.split(substring, COMMA);
-				return Integer.parseInt(split.get(0)) + Integer.parseInt(split.get(1));
+				//对于字段类型为number(22,2)、number(38,12)的字段，在数据库中的长度为22、38，抽取出来的定长会多一个正负号和一个点，
+				// 因此统一处理为22+2 和 38+2
+				return Integer.parseInt(split.get(0)) + 2;
+//				return Integer.parseInt(split.get(0)) + Integer.parseInt(split.get(1));
 			}
 			return Integer.parseInt(substring);
 		} else {

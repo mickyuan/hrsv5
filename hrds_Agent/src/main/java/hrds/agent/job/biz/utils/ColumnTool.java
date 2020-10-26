@@ -44,7 +44,14 @@ public class ColumnTool {
 			//不是新列则放到set
 			if (IsFlag.Fou.getCode().equals(column.getIs_new())) {
 				String columnName = column.getColumn_name();
-				columnNames.add(columnName);
+				//过滤掉海云的六个字段
+				if (!(Constant.SDATENAME.equalsIgnoreCase(columnName) || Constant.EDATENAME.equalsIgnoreCase(columnName)
+						|| Constant.MD5NAME.equalsIgnoreCase(columnName) || Constant.HYREN_OPER_DATE
+						.equalsIgnoreCase(columnName)
+						|| Constant.HYREN_OPER_TIME.equalsIgnoreCase(columnName) || Constant.HYREN_OPER_PERSON
+						.equalsIgnoreCase(columnName))) {
+					columnNames.add(columnName);
+				}
 			}
 		}
 		//3、将得到的columnName放入Set集合并返回
