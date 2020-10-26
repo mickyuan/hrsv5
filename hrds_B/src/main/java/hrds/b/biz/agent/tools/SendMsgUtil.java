@@ -10,6 +10,7 @@ import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
+import fd.ng.web.util.Dbo;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
@@ -325,7 +326,8 @@ public class SendMsgUtil {
 		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
 			"UPDATE " + Database_set.TableName + " SET is_sendok = ? WHERE database_id = ?",
 			IsFlag.Shi.getCode(), colSetId);
-
+		//FIXME 这里为了防止立即执行时出现等待超时问题,所以手动执行提交操作...否则下面的异常将会对DB进行回滚,导致此次任务的标识为未配置完成
+		Dbo.db().commit();
 		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
 		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
 		logger.debug("准备建立连接，请求的URL为" + url);
