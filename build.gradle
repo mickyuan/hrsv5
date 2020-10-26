@@ -35,8 +35,9 @@ subprojects {
 
     repositories {
         mavenLocal()
-        maven { url 'http://139.9.126.19:38877/repository/hyren-maven-group/' }
-        //maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'http://172.168.0.61:18081/repository/hyren-maven-group/' }
+//        maven { url 'http://139.9.126.19:38877/repository/hyren-maven-group/' }
+//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
     }
 
     configurations {
@@ -96,17 +97,17 @@ subprojects {
         compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
         compile group: 'commons-codec', name: 'commons-codec', version: '1.10'
         /** hadoop */
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '2.6.0'
-        compile group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: '2.6.0'
-        compile group: 'org.apache.hadoop', name: 'hadoop-yarn-client', version: '2.6.0'
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '2.6.0-cdh5.16.2'
+        compile group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: '2.6.0-cdh5.16.2'
+        compile group: 'org.apache.hadoop', name: 'hadoop-yarn-client', version: '2.6.0-cdh5.16.2'
 
         /** hbase */
-        compile group: 'org.apache.hbase', name: 'hbase-common', version: '1.2.0'
-        compile group: 'org.apache.hbase', name: 'hbase-client', version: '1.2.0'
-        compile group: 'org.apache.hbase', name: 'hbase-server', version: '1.2.0'
+        compile group: 'org.apache.hbase', name: 'hbase-common', version: '1.2.0-cdh5.16.2'
+        compile group: 'org.apache.hbase', name: 'hbase-client', version: '1.2.0-cdh5.16.2'
+        compile group: 'org.apache.hbase', name: 'hbase-server', version: '1.2.0-cdh5.16.2'
         /** hive */
-        compile group: 'org.apache.hive', name: 'hive-exec', version: '1.1.0'
-        compile group: 'org.apache.hive', name: 'hive-jdbc', version: '1.1.0'
+        compile group: 'org.apache.hive', name: 'hive-exec', version: '1.1.0-cdh5.16.2'
+        compile group: 'org.apache.hive', name: 'hive-jdbc', version: '1.1.0-cdh5.16.2'
         /** solr */
         compile group: 'org.apache.solr', name: 'solr-solrj', version: '5.3.1'
         /** solr分词 */
@@ -178,18 +179,32 @@ subprojects {
         //遍历项目的所有依赖的jar包赋值给变量someString
         configurations.runtime.each { classpaths = classpaths + " ../lib/" + it.name }
         //设置manifest
-        manifest {
-            attributes(
-                    'Main-Class': appMainClass,
-                    'Class-Path': classpaths,
-                    "Implementation-Title": archivesBaseName,
-                    "Implementation-Version": project.version,
-                    'Built-By': System.getProperty('user.name'),
-                    'Built-JDK': System.getProperty('java.version'),
-                    'Source-Compatibility': project.sourceCompatibility,
-                    'Target-Compatibility': project.targetCompatibility,
-                    "Build-Time": rootProject.ext.currentDateTime
-            )
+        if (project.name == "hrds-commons" || project.name == "hrds_H") {
+            manifest {
+                attributes(
+                        "Implementation-Title": archivesBaseName,
+                        "Implementation-Version": project.version,
+                        'Built-By': System.getProperty('user.name'),
+                        'Built-JDK': System.getProperty('java.version'),
+                        'Source-Compatibility': project.sourceCompatibility,
+                        'Target-Compatibility': project.targetCompatibility,
+                        "Build-Time": rootProject.ext.currentDateTime
+                )
+            }
+        } else {
+            manifest {
+                attributes(
+                        'Main-Class': appMainClass,
+                        'Class-Path': classpaths,
+                        "Implementation-Title": archivesBaseName,
+                        "Implementation-Version": project.version,
+                        'Built-By': System.getProperty('user.name'),
+                        'Built-JDK': System.getProperty('java.version'),
+                        'Source-Compatibility': project.sourceCompatibility,
+                        'Target-Compatibility': project.targetCompatibility,
+                        "Build-Time": rootProject.ext.currentDateTime
+                )
+            }
         }
     }
     //create a directory, create it if it does not exist
