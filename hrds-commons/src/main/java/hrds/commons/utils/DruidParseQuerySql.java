@@ -7,6 +7,7 @@ import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
+import com.alibaba.druid.sql.dialect.oracle.ast.expr.OracleSysdateExpr;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.*;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
@@ -694,6 +695,8 @@ public class DruidParseQuerySql {
 			}
 		} else if (sqlexpr instanceof SQLVariantRefExpr) {
 			throw new BusinessSystemException("SQLVariantRefExpr 有待开发");
+		} else if (sqlexpr instanceof OracleSysdateExpr) {
+			return;
 		} else {
 			throw new BusinessSystemException("未知的sqlexpr类型 sqlexpr：" + sqlexpr.toString() + "class:" + sqlexpr.getClass());
 		}
@@ -863,18 +866,13 @@ public class DruidParseQuerySql {
 
 
 	public static void main(String[] args) {
-		String sql = "SELECT ADVISORYNUM,ACCEPTDATE,BUSINESSTYPE2,BUSINESSTYPE3,STATUS,PROBLEM,STARLEVEL,RESULT," +
-				"PONITSTANDARD,REPORTSOURCE,ORGID,ISMONIT,REPORTER,SECTIONID,COMEFROM,COMP_TYPE,INGLE_TYPE_ID," +
-				"REPORTSOURCE_ID,COMEFROM_ID,HPB_ID,COMPLAINOBJECT,ISVALID,TEL,DISTRICT,STREETNAME,ADDRESS,SECTIONNAME,ORGNAME,BUSINESSTYPE1 FROM S30_I_INGLE";
-//		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
-//		System.out.println(sql1.getSelectSql());
-//		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
-//		selectColumnMap.forEach((key, value) ->
-//				System.out.println(key + "====" + value)
-//		);
-//		List<String> strings = DruidParseQuerySql.parseSqlTableToList(sql);
-//		strings.forEach(System.out::println);
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
-		System.out.println(druidParseQuerySql.getSelectSql());
+		String sql = "select SYSDATE from aaa";
+		String dbType = JdbcConstants.ORACLE;
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
+		for (SQLStatement stmt : stmtList) {
+			SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
+			SQLSelect sqlSelect = sqlSelectStatement.getSelect();
+			SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
+		}
 	}
 }
