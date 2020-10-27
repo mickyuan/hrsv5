@@ -143,8 +143,10 @@ public class MarketConfUtils {
              */
 			Optional<Dm_relevant_info> dmRelevantInfo = SqlOperator.queryOneObject(db, Dm_relevant_info.class,
 				"select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", datatableId);
-			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setFinalSql(dm_relevant_info.getPost_work()));
-			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setPreSql(dm_relevant_info.getPre_work()));
+			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setFinalSql(fillSqlWithParams(dm_relevant_info.getPost_work()
+					, marketConf.getSqlParams())));
+			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setPreSql(fillSqlWithParams(dm_relevant_info.getPre_work()
+					, marketConf.getSqlParams())));
 
 			/*
 			 * 获取带有存储附加属性的列
