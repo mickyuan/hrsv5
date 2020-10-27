@@ -905,8 +905,6 @@ UPDATE_USER                                       BIGINT default 0 NULL, --用�
 CONDITION_SQL                                     VARCHAR(2048) NULL, --条件SQL
 CONSTRAINT AUTO_COMP_SUM_PK PRIMARY KEY(COMPONENT_ID)   );
 
-
-
 --角色信息表
 DROP TABLE IF EXISTS SYS_ROLE ;
 CREATE TABLE SYS_ROLE(
@@ -1502,7 +1500,7 @@ VALID_S_DATE                                      CHAR(8) NOT NULL, --有效开�
 VALID_E_DATE                                      CHAR(8) NOT NULL, --有效结束日期
 IS_ALIVE                                          CHAR(1) default '1' NOT NULL, --是否保留原字段
 IS_NEW                                            CHAR(1) default '1' NOT NULL, --是否为变化生成
-IS_ZIPPER_FIELD                                   CHAR(1) NOT NULL, --是否为拉链字段
+IS_ZIPPER_FIELD                                   CHAR(1) default '0' NOT NULL, --是否为拉链字段
 TC_OR                                             VARCHAR(512) NULL, --清洗顺序
 TC_REMARK                                         VARCHAR(512) NULL, --备注
 CONSTRAINT TABLE_COLUMN_PK PRIMARY KEY(COLUMN_ID)   );
