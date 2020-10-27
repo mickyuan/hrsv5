@@ -7,6 +7,7 @@ import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
+import com.alibaba.druid.sql.dialect.oracle.ast.expr.OracleSysdateExpr;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.*;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
@@ -694,6 +695,8 @@ public class DruidParseQuerySql {
 			}
 		} else if (sqlexpr instanceof SQLVariantRefExpr) {
 			throw new BusinessSystemException("SQLVariantRefExpr 有待开发");
+		} else if (sqlexpr instanceof OracleSysdateExpr) {
+			return;
 		} else {
 			throw new BusinessSystemException("未知的sqlexpr类型 sqlexpr：" + sqlexpr.toString() + "class:" + sqlexpr.getClass());
 		}
