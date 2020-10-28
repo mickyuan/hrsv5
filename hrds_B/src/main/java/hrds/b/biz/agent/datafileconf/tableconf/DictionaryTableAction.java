@@ -607,7 +607,7 @@ public class DictionaryTableAction extends BaseAction {
 						+ "not EXISTS (SELECT * FROM  " + Data_store_reg.TableName
 						+ " t2  WHERE t1.table_name = t2.table_name) AND t1.database_id = ? ")
 				.addParam(colSetId)
-				.addORParam("table_name", deleteTableName.toArray(new String[deleteTableName.size()]), "AND");
+				.addORParam("table_name", deleteTableName.toArray(new String[0]), "AND");
 
 		Object[] deleteTableId = Dbo.queryOneColumnList(assembler.sql(), assembler.params()).toArray(new Object[0]);
 
@@ -629,7 +629,7 @@ public class DictionaryTableAction extends BaseAction {
 						+ "WHERE t1.database_id = ?")
 				.addParam(colSetId)
 				.addORParam("t1.table_id", deleteTableId);
-		List<Object> deleteTableColumnId = Dbo.queryOneColumnList(assembler.sql(), assembler.params());
+		Object[] deleteTableColumnId = Dbo.queryOneColumnList(assembler.sql(), assembler.params()).toArray(new Object[0]);
 
 		// 1: 先获取表的ID(table_id)信息,在删除表信息(table_info)
 		assembler.clean();
@@ -642,14 +642,14 @@ public class DictionaryTableAction extends BaseAction {
 		assembler.clean();
 		assembler
 			.addSql("DELETE FROM " + Table_column.TableName)
-			.addORParam("column_id", deleteTableId, "WHERE");
+			.addORParam("column_id", deleteTableColumnId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 		// 3: 列拆分(column_split)
 		assembler.clean();
 		assembler
 			.addSql("DELETE FROM " + Column_split.TableName)
 			.addORParam(
-				"column_id", deleteTableColumnId.toArray(new Object[deleteTableColumnId.size()]), "WHERE");
+				"column_id", deleteTableColumnId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 
 		// 4: 列清洗(column_clean)
@@ -657,7 +657,7 @@ public class DictionaryTableAction extends BaseAction {
 		assembler
 			.addSql("DELETE FROM " + Column_clean.TableName)
 			.addORParam(
-				"column_id", deleteTableColumnId.toArray(new Object[deleteTableColumnId.size()]), "WHERE");
+				"column_id", deleteTableColumnId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 
 		// 5: 数据抽取定义(data_extraction_def)
@@ -665,7 +665,7 @@ public class DictionaryTableAction extends BaseAction {
 		assembler
 			.addSql("DELETE FROM " + Data_extraction_def.TableName)
 			.addORParam(
-				"table_id", deleteTableColumnId.toArray(new Object[deleteTableColumnId.size()]), "WHERE");
+				"table_id", deleteTableId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 
 		// 6: 表存储信息(table_storage_info)
@@ -673,7 +673,7 @@ public class DictionaryTableAction extends BaseAction {
 		assembler
 			.addSql("DELETE FROM " + Table_storage_info.TableName)
 			.addORParam(
-				"table_id", deleteTableColumnId.toArray(new Object[deleteTableColumnId.size()]), "WHERE");
+				"table_id", deleteTableId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 
 		// 7: 表清洗参数信息(table_clean)
@@ -681,7 +681,7 @@ public class DictionaryTableAction extends BaseAction {
 		assembler
 			.addSql("DELETE FROM " + Table_clean.TableName)
 			.addORParam(
-				"table_id", deleteTableColumnId.toArray(new Object[deleteTableColumnId.size()]), "WHERE");
+				"table_id", deleteTableId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 
 		// 8: 列合并信息表(column_merge)")
@@ -689,7 +689,7 @@ public class DictionaryTableAction extends BaseAction {
 		assembler
 			.addSql("DELETE FROM " + Column_merge.TableName)
 			.addORParam(
-				"table_id", deleteTableColumnId.toArray(new Object[deleteTableColumnId.size()]), "WHERE");
+				"table_id", deleteTableId, "WHERE");
 		execute(assembler.sql(), assembler.params());
 	}
 
