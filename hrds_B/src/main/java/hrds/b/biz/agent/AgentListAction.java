@@ -982,7 +982,7 @@ public class AgentListAction extends BaseAction {
 			etl_date, is_download, sqlParam);
 
 		if ("true".equals(is_download)) {
-			responseFile("dd_json.json", dataDic.getBytes());
+			responseFile(sourceDBConfResult.getString(0, "task_name") + ".json", dataDic.getBytes());
 		}
 	}
 
