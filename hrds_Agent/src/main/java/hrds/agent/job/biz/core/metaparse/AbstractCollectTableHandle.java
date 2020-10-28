@@ -89,7 +89,7 @@ public abstract class AbstractCollectTableHandle implements CollectTableHandle {
 	 */
 	private String getCollectSqlByColumn(CollectTableBean collectTableBean, DatabaseWrapper db, String database_name) {
 		String tableName = collectTableBean.getTable_name();
-		//筛选出不是新列的字段
+		//筛选出不是新列的字段和不是海云默认添加列的字段
 		Set<String> collectColumnNames = ColumnTool.getCollectColumnName(
 				collectTableBean.getCollectTableColumnBeanList());
 		//根据列名和表名获得采集SQL

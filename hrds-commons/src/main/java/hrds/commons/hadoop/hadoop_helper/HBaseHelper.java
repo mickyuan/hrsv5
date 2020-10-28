@@ -192,6 +192,11 @@ public class HBaseHelper implements Closeable {
 		createTable(table, 1, null, true, Bytes.toString(Constant.HBASE_COLUMN_FAMILY));
 	}
 
+	public void createSimpleTable(String tableName) throws IOException {
+
+		createSimpleTable(TableName.valueOf(tableName));
+	}
+
 	public void createTable(TableName table, String... colfams) throws IOException {
 
 		createTable(table, 1, null, true, colfams);
