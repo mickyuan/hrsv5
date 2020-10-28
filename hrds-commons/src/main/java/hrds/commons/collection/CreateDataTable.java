@@ -59,13 +59,17 @@ public class CreateDataTable {
 			createHiveTable(db, layerBean, dqTableInfo, dqTableColumns);
 		} else if (store_type == Store_type.HBASE) {
 			createHBaseTable(db, layerBean, dqTableInfo, dqTableColumns);
+			throw new BusinessException("创建 HBase 类型存储层数表，暂未实现!");
 			//TODO 暂不支持
 		} else if (store_type == Store_type.SOLR) {
 			//TODO 暂不支持
+			throw new BusinessException("创建 SOLR 类型存储层数表，暂未实现!");
 		} else if (store_type == Store_type.ElasticSearch) {
 			//TODO 暂不支持
+			throw new BusinessException("创建 ElasticSearch 类型存储层数表，暂未实现!");
 		} else if (store_type == Store_type.MONGODB) {
 			//TODO 暂不支持
+			throw new BusinessException("创建 MONGODB 类型存储层数表，暂未实现!");
 		} else {
 			throw new BusinessException("创建存储层数表时,未找到匹配的存储层类型!");
 		}
