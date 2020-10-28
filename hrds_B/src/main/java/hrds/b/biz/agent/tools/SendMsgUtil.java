@@ -12,23 +12,26 @@ import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
 import fd.ng.web.util.Dbo;
 import hrds.commons.codes.IsFlag;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.entity.Object_collect_struct;
+import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.Object_handle_type;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.AgentActionUtil;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.PackUtil;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @DocClass(desc = "海云应用管理端向Agent端发送消息的工具类，该类的职责是配合CollTbConfStepAction完成访问Agent的工作，" +
 	"其测试用例在CollTbConfStepActionTest中，没有对它单独定义测试用例", author = "WangZhengcheng")
 public class SendMsgUtil {
 
-	private static final Log logger = LogFactory.getLog(SendMsgUtil.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "海云应用管理端向Agent端发送消息，根据模糊字段查询表名", logicStep = "" +
 		"1、对参数合法性进行校验" +
@@ -393,7 +396,7 @@ public class SendMsgUtil {
 		DboExecute.updatesOrThrow("此次采集任务配置完成,更新状态失败",
 				"UPDATE " + Object_collect.TableName + " SET is_sendok = ? WHERE odc_id = ?",
 				IsFlag.Shi.getCode(), odc_id);
-
+		Dbo.db().commit();
 		//2、使用数据压缩工具类，酌情对发送的信息进行压缩
 		String url = AgentActionUtil.getUrl(agentId, userId, methodName);
 		logger.debug("准备建立连接，请求的URL为" + url);
