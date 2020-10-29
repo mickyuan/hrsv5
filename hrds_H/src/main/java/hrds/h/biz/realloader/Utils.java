@@ -375,4 +375,13 @@ public class Utils {
 		}
 		db.execute(renameSql);
 	}
+
+    /**
+     * 获取 hive 表大小统计信息，触发优化 broadcast 等优化方式
+     * @param db
+     * @param tableName
+     */
+    static void computeStatistics(DatabaseWrapper db, String tableName) {
+        db.execute("ANALYZE TABLE " + tableName + " COMPUTE STATISTICS NOSCAN");
+    }
 }
