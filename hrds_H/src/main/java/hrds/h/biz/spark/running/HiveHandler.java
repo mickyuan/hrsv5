@@ -28,7 +28,7 @@ public class HiveHandler extends Handler {
 
     @Override
     public void insert() {
-        DataFrameWriter<Row> dataFrameWriter = dataset.write();
+        DataFrameWriter<Row> dataFrameWriter = dataset.write().format("parquet");
         if (hiveArgs.isOverWrite()) {
             dataFrameWriter.mode(SaveMode.Overwrite);
         } else {
