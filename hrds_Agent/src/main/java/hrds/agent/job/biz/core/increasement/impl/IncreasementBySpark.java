@@ -57,6 +57,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		List<String> sqlList = new ArrayList<>();
 		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		sqlList.add("alter table " + deltaTableName + " rename to " + yesterdayTableName);
+		sqlList.add("ANALYZE TABLE " + yesterdayTableName + " COMPUTE STATISTICS NOSCAN");
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
@@ -68,6 +69,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		restore(StorageType.ZhuiJia.getCode());
 		//3.插入今天新增的数据,执行sql
 		HSqlExecute.executeSql(insertDeltaDataSql(yesterdayTableName, todayTableName), db);
+		HSqlExecute.executeSql("ANALYZE TABLE " + yesterdayTableName + " COMPUTE STATISTICS NOSCAN", db);
 	}
 
 	/**
@@ -84,6 +86,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		//将临时表改名为进数之后的表
 		sqlList.add("ALTER TABLE " + deltaTableName + " RENAME TO " + yesterdayTableName);
+		sqlList.add("ANALYZE TABLE " + yesterdayTableName + " COMPUTE STATISTICS NOSCAN");
 		//执行sql
 		HSqlExecute.executeSql(sqlList, db);
 	}
@@ -154,6 +157,7 @@ public class IncreasementBySpark extends JDBCIncreasement {
 		sqlList.add("DROP TABLE IF EXISTS " + yesterdayTableName);
 		//8.将临时表改名为进数之后的表
 		sqlList.add(db.getDbtype().ofRenameSql(deltaTableName, yesterdayTableName));
+		sqlList.add("ANALYZE TABLE " + yesterdayTableName + " COMPUTE STATISTICS NOSCAN");
 		HSqlExecute.executeSql(sqlList, db);
 	}
 
