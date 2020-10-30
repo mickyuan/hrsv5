@@ -4,7 +4,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
-import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
+import hrds.agent.job.biz.core.dfstage.service.ReadFileToSolr;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import org.apache.hadoop.fs.Path;
@@ -45,7 +45,7 @@ public class ParquetFileParserDeal extends FileParserAbstract {
 				List<String> valueList = new ArrayList<>();// 存储全量插入信息的list
 				fileRowCount++;
 				for (int j = 0; j < dictionaryColumnList.size(); j++) {
-					valueList.add(ReadFileToDataBase.getParquetValue(dictionaryTypeList.get(j), line,
+					valueList.add(ReadFileToSolr.getParquetValue(dictionaryTypeList.get(j), line,
 							dictionaryColumnList.get(j)).toString());
 				}
 				//校验数据

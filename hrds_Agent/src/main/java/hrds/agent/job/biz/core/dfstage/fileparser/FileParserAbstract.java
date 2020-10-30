@@ -196,7 +196,7 @@ public abstract class FileParserAbstract implements FileParserInterface {
 	/**
 	 * 查询是否选择了拉链字段，如果有，则不做任何操作，没有，则全部key的值变为true
 	 */
-	protected Map<String, Boolean> transMd5ColMap(Map<String, Boolean> md5ColMap) {
+	public static Map<String, Boolean> transMd5ColMap(Map<String, Boolean> md5ColMap) {
 		Map<String, Boolean> map = new HashMap<>();
 		boolean flag = true;
 		for (String key : md5ColMap.keySet()) {

@@ -401,8 +401,7 @@ public class DFUploadStageImpl extends AbstractJobStage {
 
 	public static void uploadLobsFileToOracle(String absolutePath, Session session, ChannelSftp channel,
 											  String targetDir, String unload_hbase_name) throws Exception {
-		File file = new File(absolutePath);
-		String LOBs = file.getParent() + File.separator + "LOBS" + File.separator;
+		String LOBs = FileNameUtils.getFullPath(absolutePath) + "LOBS" + File.separator;
 		String[] fileNames = new File(LOBs).list();
 		//XXX 大字段文件这里目前只支持oracle数据库
 		if (SystemUtil.OS_NAME.toLowerCase().contains("windows")) {//卸数的agent在linux系统下，使用命令压缩文件
