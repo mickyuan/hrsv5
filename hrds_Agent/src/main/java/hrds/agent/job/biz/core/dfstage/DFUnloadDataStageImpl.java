@@ -22,6 +22,7 @@ import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -161,6 +162,16 @@ public class DFUnloadDataStageImpl extends AbstractJobStage {
 						fileResult.add(split.get(0));
 						pageCountResult.add(Long.parseLong(split.get(1)));
 						LOGGER.info("---------------" + parseResult + "---------------");
+					}
+					//如果有大字段文件夹，复制到转存之后的文件目录
+					if (new File(file_path + "LOB").exists()) {
+						String unloadMovePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
+								collectTableBean.getDatabase_id() + File.separator + collectTableBean.getHbase_name() +
+								File.separator + collectTableBean.getEtlDate() + File.separator, true);
+						FileUtils.copyDirectoryToDirectory(new File(file_path + "LOB"),
+								new File(unloadMovePath));
+						FileUtils.copyDirectoryToDirectory(new File(file_path + "LOBS"),
+								new File(unloadMovePath));
 					}
 					LOGGER.info("表" + collectTableBean.getHbase_name()
 							+ FileFormat.ofValueByCode(tableBean.getFile_format()) + "文件转存结束");
