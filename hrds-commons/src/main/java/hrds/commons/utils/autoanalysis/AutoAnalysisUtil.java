@@ -35,10 +35,12 @@ public class AutoAnalysisUtil {
 	@Param(name = "db", desc = "连接对象", range = "无限制")
 	@Return(desc = "返回仪表盘信息", range = "无限制")
 	public static Map<String, Object> getDashboardInfoById(long dashboard_id, DatabaseWrapper db) {
+		Map<String, Object> resultMap = new HashMap<>();
 		// 1.根据仪表板id获取数据仪表板信息表数据
 		Map<String, Object> dashboardInfo = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id=?",
 				dashboard_id);
+		resultMap.put("auto_dashboard_info",dashboardInfo);
 		// 2.获取仪表板边框组件信息表信息
 		List<Auto_frame_info> frameInfoList = SqlOperator.queryList(db, Auto_frame_info.class,
 				"SELECT * FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
@@ -56,7 +58,7 @@ public class AutoAnalysisUtil {
 				frameMap.put("static", true);
 				dashboardList.add(frameMap);
 			}
-			dashboardInfo.put("frameInfo", frameInfoList);
+			resultMap.put("frameInfo", frameInfoList);
 		}
 		// 3.查询关联信息表
 		List<Auto_asso_info> autoAssoInfoList = SqlOperator.queryList(db, Auto_asso_info.class,
@@ -77,10 +79,10 @@ public class AutoAnalysisUtil {
 				componentMap.put("type", auto_asso_info.getComponent_id());
 				componentMap.put("static", true);
 				autoCompSumList.add(auto_comp_sum);
-				dashboardInfo.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
+				resultMap.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
 				dashboardList.add(componentMap);
 			}
-			dashboardInfo.put("autoCompSum", autoCompSumList);
+			resultMap.put("autoCompSums", autoCompSumList);
 		}
 		// 4.查询仪表板标题表与字体表信息
 		List<Map<String, Object>> labelAndFontList = SqlOperator.queryList(db,
@@ -110,10 +112,10 @@ public class AutoAnalysisUtil {
 				contentColorSize.put("label_content", auto_label_info.getLabel_content());
 				contentColorSize.put("label_color", auto_label_info.getLabel_color());
 				contentColorSize.put("label_size", auto_label_info.getLabel_size());
-				dashboardInfo.put(auto_label_info.getLabel_id().toString(), contentColorSize);
+				resultMap.put(auto_label_info.getLabel_id().toString(), contentColorSize);
 				dashboardList.add(labelMap);
 			}
-			dashboardInfo.put("labelAndFont", labelAndFontList);
+			resultMap.put("labelAndFont", labelAndFontList);
 		}
 		// 5.查询仪表板分割线表信息
 		List<Auto_line_info> autoLineInfoList = SqlOperator.queryList(db, Auto_line_info.class,
@@ -132,14 +134,14 @@ public class AutoAnalysisUtil {
 				JSONObject contentColorType = new JSONObject();
 				contentColorType.put("line_color", auto_line_info.getLine_color());
 				contentColorType.put("line_type", auto_line_info.getLine_type());
-				dashboardInfo.put(auto_line_info.getLine_id().toString(), contentColorType);
+				resultMap.put(auto_line_info.getLine_id().toString(), contentColorType);
 				dashboardList.add(lineMap);
 			}
-			dashboardInfo.put("autoLineInfo", autoLineInfoList);
+			resultMap.put("autoLineInfo", autoLineInfoList);
 		}
-		dashboardInfo.put("layout", dashboardList);
+		resultMap.put("layout", dashboardList);
 		// 6.返回仪表盘信息
-		return dashboardInfo;
+		return resultMap;
 	}
 
 	@Method(desc = "根据可视化组件ID查看可视化组件信息", logicStep = "1.查询组件汇总表" +
