@@ -12,3 +12,6 @@
 - 修改数据库抽取过滤掉海云字段，采集海云入库的表不会报错列冲突。
 - 修改 血缘分析 新增 oracledateexpr 情况。
 - 修复加工前后置作业不支持动态参数的问题
+# 5.2.2
+- 数据库直连采集支持拉链，db文件采集batch入库支持大字段
+- 采集进hive表增加ANALYZE TABLE tableName COMPUTE STATISTICS NOSCAN优化
