@@ -13,6 +13,7 @@ import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.jsch.AgentDeploy;
 import hrds.commons.utils.jsch.SFTPChannel;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -62,13 +63,17 @@ public class ScpHadoopConf {
 
 					// 如果不含有当前目录,则在目标Agent目录下创建,反之直接将本地文件使用 SFTP方式传输到指定位置
 					try {
-						// 检查目录是否存在,不存在就创建目录
-						SFTPChannel.execCommandByJSchNoRs(shellSession,
-							"mkdir -p " + targetMachineConf);
-
-                        LOGGER.info("开始传输集群 XML" + localFilePath + " 到目录 :" + targetMachineConf);
-						// 将本地文件 sftp到远程目录下
-						chSftp.put(localFilePath, targetMachineConf);
+						//检查当前本地文件是否存在,如果不存在则不做任何操作
+						if (!new File(localFilePath).exists()) {
+							LOGGER.info("本地文件: " + localFilePath + " 不存在,跳过!!!");
+						} else {
+							// 检查目录是否存在,不存在就创建目录
+							SFTPChannel.execCommandByJSchNoRs(shellSession,
+								"mkdir -p " + targetMachineConf);
+							LOGGER.info("开始传输集群XML: " + localFilePath + " 到目录 :" + targetMachineConf);
+							// 将本地文件 sftp到远程目录下
+							chSftp.put(localFilePath, targetMachineConf);
+						}
 
 						// 修改传输完成后的文件名称,传输过去的文件名称为md5文件名称
 //						SFTPChannel.execCommandByJSch(
@@ -82,10 +87,10 @@ public class ScpHadoopConf {
 //								+ AgentDeploy.SEPARATOR
 //								+ orginalFileName);
 					} catch (SftpException e) {
-                        LOGGER.error(e);
+						LOGGER.error(e);
 						throw new BusinessException("创建远程目录  " + targetMachineConf + "  失败!!!");
 					} catch (Exception e) {
-                        LOGGER.error(e);
+						LOGGER.error(e);
 						throw new BusinessException(e.getMessage());
 					}
 				});
