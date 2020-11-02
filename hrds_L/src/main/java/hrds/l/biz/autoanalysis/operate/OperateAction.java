@@ -864,6 +864,7 @@ public class OperateAction extends BaseAction {
 			list.add(y);
 			scatterData.add(list);
 		}
+		resultMap.put("legend_data", y_columns);
 		resultMap.put("scatterData", scatterData);
 	}
 
