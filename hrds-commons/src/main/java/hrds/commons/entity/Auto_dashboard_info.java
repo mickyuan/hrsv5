@@ -60,6 +60,8 @@ public class Auto_dashboard_info extends ProjectTableEntity
 	private Long user_id;
 	@DocBean(name ="update_user",value="用户ID:",dataType = Long.class,required = false)
 	private Long update_user;
+	@DocBean(name ="is_gridline",value="是否显示网格线(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
+	private String is_gridline;
 
 	/** 取得：仪表板id */
 	public Long getDashboard_id(){
@@ -198,5 +200,13 @@ public class Auto_dashboard_info extends ProjectTableEntity
 		if(!fd.ng.core.utils.StringUtil.isEmpty(update_user)){
 			this.update_user=new Long(update_user);
 		}
+	}
+	/** 取得：是否显示网格线 */
+	public String getIs_gridline(){
+		return is_gridline;
+	}
+	/** 设置：是否显示网格线 */
+	public void setIs_gridline(String is_gridline){
+		this.is_gridline=is_gridline;
 	}
 }

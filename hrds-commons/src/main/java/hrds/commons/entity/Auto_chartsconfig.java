@@ -34,15 +34,15 @@ public class Auto_chartsconfig extends ProjectTableEntity
 	private Long config_id;
 	@DocBean(name ="type",value="图表类型:",dataType = String.class,required = false)
 	private String type;
-	@DocBean(name ="xaxisindex",value="x轴索引号:",dataType = Long.class,required = true)
+	@DocBean(name ="xaxisindex",value="x轴索引号:",dataType = Long.class,required = false)
 	private Long xaxisindex;
-	@DocBean(name ="yaxisindex",value="y轴索引号:",dataType = Long.class,required = true)
+	@DocBean(name ="yaxisindex",value="y轴索引号:",dataType = Long.class,required = false)
 	private Long yaxisindex;
 	@DocBean(name ="symbol",value="标记图形:",dataType = String.class,required = false)
 	private String symbol;
-	@DocBean(name ="symbolsize",value="标记大小:",dataType = Long.class,required = true)
+	@DocBean(name ="symbolsize",value="标记大小:",dataType = Long.class,required = false)
 	private Long symbolsize;
-	@DocBean(name ="symbolrotate",value="标记旋转角度:",dataType = Long.class,required = true)
+	@DocBean(name ="symbolrotate",value="标记旋转角度:",dataType = Long.class,required = false)
 	private Long symbolrotate;
 	@DocBean(name ="showsymbol",value="显示标记(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String showsymbol;
@@ -54,7 +54,7 @@ public class Auto_chartsconfig extends ProjectTableEntity
 	private String step;
 	@DocBean(name ="smooth",value="平滑曲线显示(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String smooth;
-	@DocBean(name ="z",value="z值:",dataType = Long.class,required = true)
+	@DocBean(name ="z",value="z值:",dataType = Long.class,required = false)
 	private Long z;
 	@DocBean(name ="silent",value="触发鼠标事件(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String silent;
@@ -68,23 +68,23 @@ public class Auto_chartsconfig extends ProjectTableEntity
 	private String center;
 	@DocBean(name ="radius",value="半径:",dataType = String.class,required = false)
 	private String radius;
-	@DocBean(name ="left_distance",value="左侧距离:",dataType = Long.class,required = true)
+	@DocBean(name ="left_distance",value="左侧距离:",dataType = Long.class,required = false)
 	private Long left_distance;
-	@DocBean(name ="top_distance",value="上侧距离:",dataType = Long.class,required = true)
+	@DocBean(name ="top_distance",value="上侧距离:",dataType = Long.class,required = false)
 	private Long top_distance;
-	@DocBean(name ="right_distance",value="右侧距离:",dataType = Long.class,required = true)
+	@DocBean(name ="right_distance",value="右侧距离:",dataType = Long.class,required = false)
 	private Long right_distance;
-	@DocBean(name ="bottom_distance",value="下侧距离:",dataType = Long.class,required = true)
+	@DocBean(name ="bottom_distance",value="下侧距离:",dataType = Long.class,required = false)
 	private Long bottom_distance;
-	@DocBean(name ="width",value="宽度:",dataType = Long.class,required = true)
+	@DocBean(name ="width",value="宽度:",dataType = Long.class,required = false)
 	private Long width;
-	@DocBean(name ="height",value="高度:",dataType = Long.class,required = true)
+	@DocBean(name ="height",value="高度:",dataType = Long.class,required = false)
 	private Long height;
-	@DocBean(name ="leafdepth",value="下钻层数:",dataType = Long.class,required = true)
+	@DocBean(name ="leafdepth",value="下钻层数:",dataType = Long.class,required = false)
 	private Long leafdepth;
 	@DocBean(name ="nodeclick",value="点击节点行为:",dataType = String.class,required = false)
 	private String nodeclick;
-	@DocBean(name ="visiblemin",value="最小面积阈值:",dataType = Long.class,required = true)
+	@DocBean(name ="visiblemin",value="最小面积阈值:",dataType = Long.class,required = false)
 	private Long visiblemin;
 	@DocBean(name ="sort",value="块数据排序方式:",dataType = String.class,required = false)
 	private String sort;
