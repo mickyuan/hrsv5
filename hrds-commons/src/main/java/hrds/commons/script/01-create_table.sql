@@ -835,8 +835,9 @@ LAST_UPDATE_TIME                                  CHAR(6) NULL, --最后更新�
 UPDATE_USER                                       BIGINT default 0 NULL, --用户ID
 BORDERTYPE                                        CHAR(2) NULL, --边框类型
 BACKGROUND                                        VARCHAR(16) NULL, --背景色
-BORDERCOLOR                                       CHAR(2) NULL, --边框颜色
-BORDERWIDTH                                       CHAR(2) NULL, --边框宽度
+BORDERCOLOR                                       VARCHAR(16) NULL, --边框颜色
+BORDERWIDTH                                       VARCHAR(16) NULL, --边框宽度
+IS_GRIDLINE                                       CHAR(1) NOT NULL, --是否显示网格线
 DASHBOARD_STATUS                                  CHAR(1) NOT NULL, --仪表盘发布状态
 CONSTRAINT AUTO_DASHBOARD_INFO_PK PRIMARY KEY(DASHBOARD_ID)   );
 
@@ -1134,32 +1135,32 @@ CREATE TABLE AUTO_CHARTSCONFIG(
 CONFIG_ID                                         BIGINT default 0 NOT NULL, --配置编号
 TYPE                                              VARCHAR(16) NULL, --图表类型
 PROVINCENAME                                      VARCHAR(32) NULL, --地图省份
-XAXISINDEX                                        BIGINT default 0 NOT NULL, --x轴索引号
-YAXISINDEX                                        BIGINT default 0 NOT NULL, --y轴索引号
+XAXISINDEX                                        BIGINT default 0 NULL, --x轴索引号
+YAXISINDEX                                        BIGINT default 0 NULL, --y轴索引号
 SYMBOL                                            VARCHAR(16) NULL, --标记图形
-SYMBOLSIZE                                        BIGINT default 0 NOT NULL, --标记大小
-SYMBOLROTATE                                      BIGINT default 0 NOT NULL, --标记旋转角度
+SYMBOLSIZE                                        BIGINT default 0 NULL, --标记大小
+SYMBOLROTATE                                      BIGINT default 0 NULL, --标记旋转角度
 SHOWSYMBOL                                        CHAR(1) NOT NULL, --显示标记
 STACK                                             VARCHAR(16) NULL, --数据堆叠
 CONNECTNULLS                                      CHAR(1) NOT NULL, --连接空数据
 STEP                                              CHAR(1) NOT NULL, --是阶梯线图
 SMOOTH                                            CHAR(1) NOT NULL, --平滑曲线显示
-Z                                                 BIGINT default 0 NOT NULL, --z值
+Z                                                 BIGINT default 0 NULL, --z值
 SILENT                                            CHAR(1) NOT NULL, --触发鼠标事件
 LEGENDHOVERLINK                                   CHAR(1) NOT NULL, --启用图例联动高亮
 CLOCKWISE                                         CHAR(1) NOT NULL, --是顺时针排布
 ROSETYPE                                          CHAR(1) NOT NULL, --是南丁格尔图
 CENTER                                            VARCHAR(32) NULL, --圆心坐标
 RADIUS                                            VARCHAR(32) NULL, --半径
-LEFT_DISTANCE                                     BIGINT default 0 NOT NULL, --左侧距离
-TOP_DISTANCE                                      BIGINT default 0 NOT NULL, --上侧距离
-RIGHT_DISTANCE                                    BIGINT default 0 NOT NULL, --右侧距离
-BOTTOM_DISTANCE                                   BIGINT default 0 NOT NULL, --下侧距离
-WIDTH                                             BIGINT default 0 NOT NULL, --宽度
-HEIGHT                                            BIGINT default 0 NOT NULL, --高度
-LEAFDEPTH                                         BIGINT default 0 NOT NULL, --下钻层数
+LEFT_DISTANCE                                     BIGINT default 0 NULL, --左侧距离
+TOP_DISTANCE                                      BIGINT default 0 NULL, --上侧距离
+RIGHT_DISTANCE                                    BIGINT default 0 NULL, --右侧距离
+BOTTOM_DISTANCE                                   BIGINT default 0 NULL, --下侧距离
+WIDTH                                             BIGINT default 0 NULL, --宽度
+HEIGHT                                            BIGINT default 0 NULL, --高度
+LEAFDEPTH                                         BIGINT default 0 NULL, --下钻层数
 NODECLICK                                         VARCHAR(16) NULL, --点击节点行为
-VISIBLEMIN                                        BIGINT default 0 NOT NULL, --最小面积阈值
+VISIBLEMIN                                        BIGINT default 0 NULL, --最小面积阈值
 SORT                                              VARCHAR(16) NULL, --块数据排序方式
 LAYOUT                                            VARCHAR(16) NULL, --布局方式
 POLYLINE                                          CHAR(1) NOT NULL, --是多段线
