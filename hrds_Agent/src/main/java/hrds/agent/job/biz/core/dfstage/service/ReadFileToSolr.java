@@ -5,9 +5,11 @@ import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
+import hrds.agent.job.biz.constant.DataTypeConstant;
 import hrds.agent.job.biz.constant.JobConstant;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
@@ -26,6 +28,7 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.orc.OrcFile;
@@ -43,6 +46,7 @@ import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -215,21 +219,21 @@ public class ReadFileToSolr implements Callable<Long> {
 		doc.addField("table-name", collectTableBean.getHbase_name());
 		for (int j = 0; j < columnList.size(); j++) {
 			if (isMd5) {
-				Object value = ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j), null);
+				Object value = getValue(typeList.get(j), valueList.get(j), null);
 				sb.append(value);
 				doc.addField("tf-" + columnList.get(j), value);
 			} else {
 				if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(j))) {
 					if (is_append) {
 						doc.addField("id", collectTableBean.getHbase_name() + "_"
-								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j), null) + "_" + etl_date);
+								+ getValue(typeList.get(j), valueList.get(j), null) + "_" + etl_date);
 					} else {
 						doc.addField("id", collectTableBean.getHbase_name() + "_"
-								+ ReadFileToDataBase.getValue(typeList.get(j), valueList.get(j), null));
+								+ getValue(typeList.get(j), valueList.get(j), null));
 					}
 
 				} else {
-					doc.addField("tf-" + columnList.get(j), ReadFileToDataBase.
+					doc.addField("tf-" + columnList.get(j),
 							getValue(typeList.get(j), valueList.get(j), null));
 				}
 			}
@@ -310,22 +314,22 @@ public class ReadFileToSolr implements Callable<Long> {
 					doc.addField("table-name", collectTableBean.getHbase_name());
 					for (int i = 0; i < result.getNumFields(); i++) {
 						if (isMd5) {
-							Object value = ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null);
+							Object value = getValue(typeList.get(i), result.getFieldValue(i), null);
 							sb.append(value);
 							doc.addField("tf-" + columnList.get(i), value);
 						} else {
 							if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(i))) {
 								if (is_append) {
 									doc.addField("id", collectTableBean.getHbase_name() + "_"
-											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null)
+											+ getValue(typeList.get(i), result.getFieldValue(i), null)
 											+ "_" + etl_date);
 								} else {
 									doc.addField("id", collectTableBean.getHbase_name() + "_"
-											+ ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null));
+											+ getValue(typeList.get(i), result.getFieldValue(i), null));
 								}
 							} else {
 								doc.addField("tf-" + columnList.get(i),
-										ReadFileToDataBase.getValue(typeList.get(i), result.getFieldValue(i), null));
+										getValue(typeList.get(i), result.getFieldValue(i), null));
 							}
 						}
 					}
@@ -369,22 +373,22 @@ public class ReadFileToSolr implements Callable<Long> {
 				doc.addField("table-name", collectTableBean.getHbase_name());
 				for (int j = 0; j < columnList.size(); j++) {
 					if (isMd5) {
-						Object value = ReadFileToDataBase.getParquetValue(typeList.get(j), line, columnList.get(j));
+						Object value = getParquetValue(typeList.get(j), line, columnList.get(j));
 						sb.append(value);
 						doc.addField("tf-" + columnList.get(j), value);
 					} else {
 						if (Constant.MD5NAME.equalsIgnoreCase(columnList.get(j))) {
 							if (is_append) {
 								doc.addField("id", collectTableBean.getHbase_name() + "_"
-										+ ReadFileToDataBase.getParquetValue(typeList.get(j), line,
+										+ getParquetValue(typeList.get(j), line,
 										columnList.get(j)) + "_" + etl_date);
 							} else {
 								doc.addField("id", collectTableBean.getHbase_name() + "_"
-										+ ReadFileToDataBase.getParquetValue(typeList.get(j), line, columnList.get(j)));
+										+ getParquetValue(typeList.get(j), line, columnList.get(j)));
 							}
 						} else {
 							doc.addField("tf-" + columnList.get(j),
-									ReadFileToDataBase.getParquetValue(typeList.get(j), line, columnList.get(j)));
+									getParquetValue(typeList.get(j), line, columnList.get(j)));
 						}
 					}
 				}
@@ -459,6 +463,88 @@ public class ReadFileToSolr implements Callable<Long> {
 		} catch (Exception e) {
 			throw new AppSystemException("提交数据到solr异常", e);
 		}
+	}
+
+	public static Object getParquetValue(String type, Group line, String column) {
+		Object str;
+		type = type.toLowerCase();
+		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = line.getBoolean(column, 0);
+		} else if (type.contains(DataTypeConstant.INT8.getMessage())
+				|| type.contains(DataTypeConstant.BIGINT.getMessage())
+				|| type.contains(DataTypeConstant.LONG.getMessage())) {
+			str = line.getLong(column, 0);
+		} else if (type.contains(DataTypeConstant.INT.getMessage())) {
+			str = line.getInteger(column, 0);
+		} else if (type.contains(DataTypeConstant.FLOAT.getMessage())) {
+			str = line.getFloat(column, 0);
+		} else if (type.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
+			str = line.getDouble(column, 0);
+		} else {
+			// 如果取出的值为null则给空字符串
+			if ((str = line.getString(column, 0)) == null) {
+				str = "";
+			}
+			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		return str;
+	}
+
+	public static Object getValue(String type, WritableComparable tmpValue, Dbtype dbtype) {
+		Object str;
+		type = type.toLowerCase();
+		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? null : Boolean.parseBoolean(tmpValue.toString().trim());
+		} else if (type.contains(DataTypeConstant.LONG.getMessage())
+				|| type.contains(DataTypeConstant.INT.getMessage())
+				|| type.contains(DataTypeConstant.FLOAT.getMessage())
+				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? null : new BigDecimal(tmpValue.toString().trim());
+		} else {
+			// 如果取出的值为null则给空字符串
+			str = tmpValue == null ? "" : tmpValue.toString();
+			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		if (Dbtype.TERADATA == dbtype) {
+			if (str != null) {
+				str = String.valueOf(str);
+			}
+		}
+		return str;
+	}
+
+	public static Object getValue(String type, String tmpValue, Dbtype dbtype) {
+		Object str;
+		type = type.toLowerCase();
+		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = StringUtil.isBlank(tmpValue) ? null : Boolean.parseBoolean(tmpValue.trim());
+		} else if (type.contains(DataTypeConstant.LONG.getMessage())
+				|| type.contains(DataTypeConstant.INT.getMessage())
+				|| type.contains(DataTypeConstant.FLOAT.getMessage())
+				|| type.contains(DataTypeConstant.DOUBLE.getMessage())
+				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
+				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
+			// 如果取出的值为null则给空字符串
+			str = StringUtil.isBlank(tmpValue) ? null : new BigDecimal(tmpValue.trim());
+		} else {
+			// 如果取出的值为null则给空字符串
+			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue.trim();
+			//TODO 这里应该有好多类型需要支持，然后在else里面报错
+		}
+		if (Dbtype.TERADATA == dbtype) {
+			if (str != null) {
+				str = String.valueOf(str);
+			}
+		}
+		return str;
 	}
 
 }

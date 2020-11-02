@@ -2,6 +2,7 @@ package hrds.agent.job.biz.core.dfstage.service;
 
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
+import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
@@ -39,10 +40,7 @@ import org.apache.parquet.hadoop.example.GroupReadSupport;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +58,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 	private final TableBean tableBean;
 	//文件对应存储的目的地信息
 	private final DataStoreConfBean dataStoreConfBean;
+	//本地文件BLOB类型的问价流存放的文件夹 LOBS
+	private final String lobsFileAbsolutePath;
 
 	/**
 	 * 读取文件到数据库构造方法
@@ -79,6 +79,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		this.collectTableBean = collectTableBean;
 		this.dataStoreConfBean = dataStoreConfBean;
 		this.tableBean = tableBean;
+		this.lobsFileAbsolutePath = FileNameUtils.getFullPath(fileAbsolutePath) + "LOBS" + File.separator;
 	}
 
 	@Method(desc = "执行读取文件batch提交到数据库的方法", logicStep = "")
@@ -96,7 +97,6 @@ public class ReadFileToDataBase implements Callable<Long> {
 			//3.拼接batch插入数据库的sql
 			String batchSql = getBatchSql(columnList, collectTableBean.getHbase_name() + "_"
 					+ 1);
-			//TODO 根据存储期限去修改表名称
 			//4.根据卸数问价类型读取文件插入到数据库
 			//文件编码
 			String file_code = tableBean.getFile_code();
@@ -366,7 +366,7 @@ public class ReadFileToDataBase implements Callable<Long> {
 		}
 	}
 
-	public static Object getParquetValue(String type, Group line, String column) {
+	private Object getParquetValue(String type, Group line, String column) throws FileNotFoundException {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -384,6 +384,17 @@ public class ReadFileToDataBase implements Callable<Long> {
 				|| type.contains(DataTypeConstant.DECIMAL.getMessage())
 				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			str = line.getDouble(column, 0);
+		} else if (DataTypeConstant.CLOB.getMessage().equalsIgnoreCase(type)) {
+			str = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(
+					line.getString(column, 0).getBytes())));
+		} else if (DataTypeConstant.BLOB.getMessage().equalsIgnoreCase(type)) {
+			String tmpValue = line.getString(column, 0);
+			if (tmpValue == null || StringUtil.isEmpty(tmpValue)) {
+				str = null;
+			} else {
+				str = new BufferedInputStream(new FileInputStream(lobsFileAbsolutePath +
+						tmpValue));
+			}
 		} else {
 			// 如果取出的值为null则给空字符串
 			if ((str = line.getString(column, 0)) == null) {
@@ -432,7 +443,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return num;
 	}
 
-	public static Object getValue(String type, WritableComparable tmpValue, Dbtype dbtype) {
+	private Object getValue(String type, WritableComparable tmpValue, Dbtype dbtype)
+			throws FileNotFoundException {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -446,6 +458,17 @@ public class ReadFileToDataBase implements Callable<Long> {
 				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? null : new BigDecimal(tmpValue.toString().trim());
+		} else if (DataTypeConstant.CLOB.getMessage().equalsIgnoreCase(type)) {
+			String clobValue = tmpValue == null ? "" : tmpValue.toString();
+			str = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(
+					clobValue.getBytes())));
+		} else if (DataTypeConstant.BLOB.getMessage().equalsIgnoreCase(type)) {
+			if (tmpValue == null || StringUtil.isEmpty(tmpValue.toString())) {
+				str = null;
+			} else {
+				str = new BufferedInputStream(new FileInputStream(lobsFileAbsolutePath +
+						tmpValue.toString()));
+			}
 		} else {
 			// 如果取出的值为null则给空字符串
 			str = tmpValue == null ? "" : tmpValue.toString();
@@ -459,7 +482,8 @@ public class ReadFileToDataBase implements Callable<Long> {
 		return str;
 	}
 
-	static Object getValue(String type, String tmpValue, Dbtype dbtype) {
+	private Object getValue(String type, String tmpValue, Dbtype dbtype) throws
+			FileNotFoundException {
 		Object str;
 		type = type.toLowerCase();
 		if (type.contains(DataTypeConstant.BOOLEAN.getMessage())) {
@@ -473,6 +497,17 @@ public class ReadFileToDataBase implements Callable<Long> {
 				|| type.contains(DataTypeConstant.NUMERIC.getMessage())) {
 			// 如果取出的值为null则给空字符串
 			str = StringUtil.isBlank(tmpValue) ? null : new BigDecimal(tmpValue.trim());
+		} else if (DataTypeConstant.CLOB.getMessage().equalsIgnoreCase(type)) {
+			String clobValue = tmpValue == null ? "" : tmpValue;
+			str = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(
+					clobValue.getBytes())));
+		} else if (DataTypeConstant.BLOB.getMessage().equalsIgnoreCase(type)) {
+			if (tmpValue == null || StringUtil.isEmpty(tmpValue)) {
+				str = null;
+			} else {
+				str = new BufferedInputStream(new FileInputStream(lobsFileAbsolutePath +
+						tmpValue));
+			}
 		} else {
 			// 如果取出的值为null则给空字符串
 			str = StringUtil.isBlank(tmpValue) ? "" : tmpValue.trim();
