@@ -104,6 +104,15 @@ public class JdbcDirectCollectTableHandleParse extends AbstractCollectTableHandl
 			colTypeMetaInfo.append(STRSPLIT).append("char(8)");
 			colLengthInfo.append(STRSPLIT).append("8");
 			//判断算拉链，增加两个字段，结束日期和md5
+			if (IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper())) {
+				//拉链存储
+				//默认拼一列字段海云结束日期、海云MD5
+				columnMetaInfo.append(STRSPLIT).append(Constant.EDATENAME).append(STRSPLIT).append(Constant.MD5NAME);
+				colTypeMetaInfo.append(STRSPLIT).append("char(8)").append(STRSPLIT).append("char(32)");
+				colLengthInfo.append(STRSPLIT).append("8").append(STRSPLIT).append("32");
+				//设置表算md5，针对写文件的逻辑，使得卸数的文件有结束日期和md5两列
+				collectTableBean.setIs_md5(IsFlag.Shi.getCode());
+			}
 			//添加操作日期、操作时间、操作人
 			if (JobConstant.ISADDOPERATEINFO) {
 				columnMetaInfo.append(STRSPLIT).append(Constant.HYREN_OPER_DATE).append(STRSPLIT)

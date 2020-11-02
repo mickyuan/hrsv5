@@ -106,6 +106,7 @@ public class CarbondataLoader extends AbstractRealLoader {
     public void finalWork() {
 
         try (DatabaseWrapper db = new DatabaseWrapper(); DatabaseWrapper carbonDb = getCarbonDb()) {
+            Utils.computeStatistics(carbonDb, tableName);
             //后置作业
             Utils.finalWorkWithoutTrans(finalSql, carbonDb);
             //预聚合sql处理

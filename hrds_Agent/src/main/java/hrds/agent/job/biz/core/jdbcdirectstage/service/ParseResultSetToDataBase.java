@@ -1,13 +1,16 @@
 package hrds.agent.job.biz.core.jdbcdirectstage.service;
 
 import fd.ng.core.annotation.DocClass;
+import fd.ng.core.utils.MD5Util;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.DataStoreConfBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.JobConstant;
+import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -18,6 +21,7 @@ import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @DocClass(desc = "解析ResultSet数据到数据库", author = "zxz", createdate = "2019/12/17 15:43")
 public class ParseResultSetToDataBase {
@@ -38,6 +42,8 @@ public class ParseResultSetToDataBase {
 	protected String operateTime;
 	//操作人
 	protected String user_id;
+	//是否拉链存储
+	private final boolean is_zipper_flag;
 
 	/**
 	 * 读取文件到数据库构造方法
@@ -56,11 +62,14 @@ public class ParseResultSetToDataBase {
 		this.operateDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 		this.operateTime = new SimpleDateFormat("HH:mm:ss").format(new Date());
 		this.user_id = String.valueOf(collectTableBean.getUser_id());
+		this.is_zipper_flag = IsFlag.Shi.getCode().equals(collectTableBean.getIs_zipper());
 	}
 
 	public long parseResultSet() {
 		//获取所有字段的名称，包括列分割和列合并出来的字段名称
 		List<String> columnMetaInfoList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
+		Map<String, Boolean> isZipperFieldInfo = FileParserAbstract.transMd5ColMap(tableBean.getIsZipperFieldInfo());
+		StringBuilder md5Value = new StringBuilder();
 		String etlDate = collectTableBean.getEtlDate();
 		String batchSql = ReadFileToDataBase.getBatchSql(columnMetaInfoList,
 				collectTableBean.getHbase_name() + "_" + 1);
@@ -117,8 +126,18 @@ public class ParseResultSetToDataBase {
 							}
 						}
 					}
+					//TODO 这里要放到上面，因为流的取值不能只能toString
+					if (is_zipper_flag && isZipperFieldInfo.get(selectColumnList.get(i))) {
+						md5Value.append(resultSet.getObject(selectColumnList.get(i)));
+					}
 				}
 				pst.setString(numberOfColumns + 1, etlDate);
+				//判断是否拼接md5，结束日期
+				if (is_zipper_flag) {
+					pst.setString(numberOfColumns + 2, Constant.MAXDATE);
+					pst.setString(numberOfColumns + 3, MD5Util.md5String(md5Value.toString()));
+					md5Value.delete(0,md5Value.length());
+				}
 				//拼接操作时间、操作日期、操作人
 				appendOperateInfo(pst, numberOfColumns);
 				pst.addBatch();
@@ -144,9 +163,15 @@ public class ParseResultSetToDataBase {
 	 */
 	private void appendOperateInfo(PreparedStatement pst, int numberOfColumns) throws Exception {
 		if (JobConstant.ISADDOPERATEINFO) {
-			pst.setString(numberOfColumns + 2, operateDate);
-			pst.setString(numberOfColumns + 3, operateTime);
-			pst.setString(numberOfColumns + 4, user_id);
+			if (is_zipper_flag) {
+				pst.setString(numberOfColumns + 4, operateDate);
+				pst.setString(numberOfColumns + 5, operateTime);
+				pst.setString(numberOfColumns + 6, user_id);
+			} else {
+				pst.setString(numberOfColumns + 2, operateDate);
+				pst.setString(numberOfColumns + 3, operateTime);
+				pst.setString(numberOfColumns + 4, user_id);
+			}
 		}
 	}
 

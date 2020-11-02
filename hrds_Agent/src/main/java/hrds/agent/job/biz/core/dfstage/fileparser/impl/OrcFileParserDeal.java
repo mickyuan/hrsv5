@@ -4,6 +4,7 @@ import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.core.dfstage.fileparser.FileParserAbstract;
 import hrds.agent.job.biz.core.dfstage.service.ReadFileToDataBase;
+import hrds.agent.job.biz.core.dfstage.service.ReadFileToSolr;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.Constant;
@@ -59,7 +60,7 @@ public class OrcFileParserDeal extends FileParserAbstract {
 					}
 					fileRowCount++;
 					for (int i = 0; i < result.getNumFields(); i++) {
-						valueList.add(ReadFileToDataBase.getValue(dictionaryTypeList.get(i),
+						valueList.add(ReadFileToSolr.getValue(dictionaryTypeList.get(i),
 								result.getFieldValue(i), null).toString());
 					}
 					//校验数据是否正确

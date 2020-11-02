@@ -96,14 +96,15 @@ public class HiveLoader extends AbstractRealLoader {
         try (DatabaseWrapper db = getHiveDb()) {
             if (Utils.hasTodayDataLimit(db, tableName, etlDate,
                     datatableId, isMultipleInput, conf.isIncrement())) {
-                String after = "case " + EDATENAME + " when '" + etlDate + "' then '" + MAXDATE + "' else "
-                        + EDATENAME + " end " + EDATENAME;
+                String after = "CASE " + EDATENAME + " WHEN '" + etlDate + "' THEN '" + MAXDATE + "' ELSE "
+                        + EDATENAME + " END " + EDATENAME;
                 String join = StringUtil.replace(hiveArgs.getColumns(), EDATENAME, after);
-                String restoreSql = "create table " + tableName + "_restore as select  " + join + " from " + tableName + " where "
+                db.execute("DROP TABLE IF EXISTS "+tableName + "_restore");
+                String restoreSql = "CREATE TABLE " + tableName + "_restore AS SELECT  " + join + " FROM " + tableName + " WHERE "
                         + SDATENAME + "<>'" + etlDate + "'";
                 db.execute(restoreSql);
-                db.execute("drop table if exists " + tableName);
-                db.execute("alter table " + tableName + "_restore rename to " + tableName);
+                db.execute("DROP TABLE IF EXISTS " + tableName);
+                db.execute("ALTER TABLE " + tableName + "_restore RENAME TO " + tableName);
             }
         }
     }
@@ -111,6 +112,7 @@ public class HiveLoader extends AbstractRealLoader {
     @Override
     public void finalWork() {
         try (DatabaseWrapper db = getHiveDb()) {
+            Utils.computeStatistics(db, tableName);
             Utils.finalWorkWithoutTrans(finalSql, db);
         }
     }
