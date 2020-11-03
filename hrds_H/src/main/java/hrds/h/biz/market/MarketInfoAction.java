@@ -432,6 +432,7 @@ public class MarketInfoAction extends BaseAction {
 	@Method(desc = "根据加工表主键查询当前存储层是否是关系性数据库", logicStep = "")
 	@Param(name = "datatable_id", desc = "加工表主键", range = "无限制")
 	@Param(name = "sql", desc = "查询SQL", range = "无限制")
+	@UploadFile
 	public boolean getIfRelationDatabase(String datatable_id, String sql) {
 		Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
 		dtab_relation_store.setTab_id(datatable_id);
@@ -1135,6 +1136,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "查询返回结果集", range = "无限制")
+	@UploadFile
 	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter) {
 		//初始化查询结果集
 		List<Map<String, Object>> dataBySQL_rs = new ArrayList<>();
@@ -1202,6 +1204,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "列结构", range = "无限制")
+	@UploadFile
 	public Map<String, Object> getColumnBySql(String querysql, String datatable_id, String sqlparameter) {
 		Map<String, Object> resultmap = new HashMap<>();
 		List<Map<String, Object>> resultlist = new ArrayList<>();
