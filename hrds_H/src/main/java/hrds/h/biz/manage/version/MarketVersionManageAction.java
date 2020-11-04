@@ -249,18 +249,31 @@ public class MarketVersionManageAction extends BaseAction {
 	@Param(name = "dmlTableVersionInfos", desc = "表版本信息", range = "取值范围说明")
 	private static List<Map<String, Object>> conversionDMLTableVersionInfos(long datatable_id,
 	                                                                        List<Map<String, Object>> dmlTableVersionInfos) {
+		//获取集市表信息
+		Dm_datatable dm_datatable = Dbo.queryOneObject(Dm_datatable.class,
+			"SELECT * FROM " + Dm_datatable.TableName + " dd WHERE dd.datatable_id=?", datatable_id)
+			.orElseThrow(() -> (new BusinessException("获取集市表信息的SQL失败!")));
+		//设置集市表版本信息
 		List<Map<String, Object>> dmlTableVersionNodes = new ArrayList<>();
 		dmlTableVersionInfos.forEach(dmlTableVersionInfo -> {
-			String file_id = String.valueOf(datatable_id);
+			String file_id = String.valueOf(dm_datatable.getDatatable_id());
 			String version_date = String.valueOf(dmlTableVersionInfo.get("version_date"));
 			Map<String, Object> map = new HashMap<>();
 			map.put("id", file_id + "_" + version_date);
 			map.put("label", version_date);
-			map.put("parent_id", datatable_id);
+			map.put("parent_id", dm_datatable.getDatatable_id());
+			map.put("classify_id", dm_datatable.getCategory_id());
 			map.put("file_id", file_id);
+			map.put("table_name", dm_datatable.getDatatable_en_name());
+			map.put("hyren_name", dm_datatable.getDatatable_en_name());
+			map.put("original_name", dm_datatable.getDatatable_cn_name());
 			map.put("data_layer", DataSourceType.DML.getCode());
 			map.put("tree_page_source", TreePageSource.MARKET_VERSION_MANAGE);
-			map.put("description", "版本日期：" + version_date);
+			map.put("description", "" +
+				"表英文名：" + dm_datatable.getDatatable_en_name() + "\n" +
+				"表中文名：" + dm_datatable.getDatatable_cn_name() + "\n" +
+				"版本日期：" + version_date + "\n" +
+				"表描述：" + dm_datatable.getDatatable_desc());
 			dmlTableVersionNodes.add(map);
 		});
 		return dmlTableVersionNodes;
