@@ -49,6 +49,33 @@ public class DqTableInfoBean extends ProjectTableEntity {
     //是否包含表头
     @DocBean(name = "is_header", value = "是否包含表头", dataType = String.class)
     private String is_header;
+    //列族信息
+    @DocBean(name = "column_familie_s", value = "列族信息", dataType = String.class)
+    private String column_familie_s;
+    //是否使用Bloom过滤器
+    @DocBean(name = "is_use_bloom_filter", value = "是否使用Bloom过滤器", dataType = String.class)
+    private String is_use_bloom_filter;
+    //Bloom过滤器类型 BloomType(ROW: 根据KeyValue中的row来过滤storefile; ROWCOL: 根据KeyValue中的row+qualifier来过滤storefile)
+    @DocBean(name = "bloom_filter_type", value = "Bloom过滤器类型", dataType = String.class)
+    private String bloom_filter_type;
+    //是否压缩
+    @DocBean(name = "is_compress", value = "是否压缩", dataType = String.class)
+    private String is_compress;
+    //数据块大小
+    @DocBean(name = "block_size", value = "数据块大小", dataType = String.class)
+    private String block_size;
+    //数据块编码 DataBlockEncoding(NONE,PREFIX,DIFF,FAST_DIFF,PREFIX_TREE)
+    @DocBean(name = "data_block_encoding", value = "数据块编码", dataType = String.class)
+    private String data_block_encoding;
+    //版本数,数据最大版本数
+    @DocBean(name = "max_version", value = "版本数", dataType = String.class)
+    private String max_version;
+    //预分区规则 PrePartition(SPLITNUM,SPLITPOINS)
+    @DocBean(name = "pre_split", value = "预分区规则", dataType = String.class)
+    private String pre_split;
+    //预分区参数
+    @DocBean(name = "pre_parm", value = "预分区参数", dataType = String.class)
+    private String pre_parm;
 
 
     public String getTable_space() {
@@ -153,5 +180,77 @@ public class DqTableInfoBean extends ProjectTableEntity {
 
     public void setIs_header(String is_header) {
         this.is_header = is_header;
+    }
+
+    public String getColumn_familie_s() {
+        return column_familie_s;
+    }
+
+    public void setColumn_familie_s(String column_familie_s) {
+        this.column_familie_s = column_familie_s;
+    }
+
+    public String getIs_use_bloom_filter() {
+        return is_use_bloom_filter;
+    }
+
+    public void setIs_use_bloom_filter(String is_use_bloom_filter) {
+        this.is_use_bloom_filter = is_use_bloom_filter;
+    }
+
+    public String getBloom_filter_type() {
+        return bloom_filter_type;
+    }
+
+    public void setBloom_filter_type(String bloom_filter_type) {
+        this.bloom_filter_type = bloom_filter_type;
+    }
+
+    public String getIs_compress() {
+        return is_compress;
+    }
+
+    public void setIs_compress(String is_compress) {
+        this.is_compress = is_compress;
+    }
+
+    public String getBlock_size() {
+        return block_size;
+    }
+
+    public void setBlock_size(String block_size) {
+        this.block_size = block_size;
+    }
+
+    public String getData_block_encoding() {
+        return data_block_encoding;
+    }
+
+    public void setData_block_encoding(String data_block_encoding) {
+        this.data_block_encoding = data_block_encoding;
+    }
+
+    public String getMax_version() {
+        return max_version;
+    }
+
+    public void setMax_version(String max_version) {
+        this.max_version = max_version;
+    }
+
+    public String getPre_split() {
+        return pre_split;
+    }
+
+    public void setPre_split(String pre_split) {
+        this.pre_split = pre_split;
+    }
+
+    public String getPre_parm() {
+        return pre_parm;
+    }
+
+    public void setPre_parm(String pre_parm) {
+        this.pre_parm = pre_parm;
     }
 }
