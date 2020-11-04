@@ -14,10 +14,22 @@ import hrds.commons.codes.Store_type;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.readconfig.ConfigReader;
 import hrds.commons.utils.Constant;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +70,7 @@ public class CreateDataTable {
 			//创建Hive存储类型的数据表
 			createHiveTable(db, layerBean, dqTableInfo, dqTableColumns);
 		} else if (store_type == Store_type.HBASE) {
-			createHBaseTable(db, layerBean, dqTableInfo, dqTableColumns);
+//			createHBaseTable(db, layerBean, dqTableInfo, dqTableColumns);
 			throw new BusinessException("创建 HBase 类型存储层数表，暂未实现!");
 			//TODO 暂不支持
 		} else if (store_type == Store_type.SOLR) {
@@ -408,8 +420,122 @@ public class CreateDataTable {
 	@Param(name = "layerBean", desc = "LayerBean对象", range = "LayerBean对象")
 	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
-	private  static void createHBaseTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
-	                                      List<Dq_table_column> dqTableColumns){
+	private static void createHBaseTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
+	                                     List<Dq_table_column> dqTableColumns) {
+		//获取表空间
+		String name_space = dqTableInfo.getTable_space();
+		//获取需要创建的HBase表名和表中文名
+		String hbase_table_name = dqTableInfo.getTable_name();
+		String hbase_table_ch_name = dqTableInfo.getCh_name();
+		//校验不允许在系统命名空间下创建表
+		if (name_space.equalsIgnoreCase(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
+			throw new BusinessException("不允许在系统命名空间下创建表");
+		}
+		//如果表空间为空，则使用默认的表空间
+		if (StringUtil.isBlank(name_space)) {
+			name_space = NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR;
+		}
+		//根据存储层信息获取存储层的 Configuration
+		Configuration conf = ConfigReader.getConfiguration(layerBean);
+		//创建HBase表
+		try (HBaseHelper helper = HBaseHelper.getHelper(conf)) {
+			//如果新表名存在,则抛出已经存在的异常
+			if (helper.existsTable(name_space + ":" + hbase_table_name)) {
+				throw new BusinessException("待创建的HBase表已经在存储层中存在! 表名: " + name_space + ":" + hbase_table_name);
+			}
+			//Admin
+			Admin admin = helper.getAdmin();
+			TableName tableName;
+			//如果表空间不是默认的表空间: default ,则创建表空间
+			if (!name_space.equalsIgnoreCase(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR)) {
+				try {
+					NamespaceDescriptor namespaceDescriptor = NamespaceDescriptor.create(name_space).build();
+					admin.createNamespace(namespaceDescriptor);
+				} catch (IOException ioe) {
+					throw new BusinessException("创建HBase命名空间失败!" + name_space);
+				}
+				tableName = TableName.valueOf(name_space, hbase_table_name);
+			} else {
+				tableName = TableName.valueOf(hbase_table_name);
+			}
+			//数表详细信息
+			HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
+			String[] column_familie_s = new String[]{"cf1", "cf2"}; //TODO column_familie_s Dq_table_info没有保存是列族信息信息
+			for (String column_familie : column_familie_s) {
+				if (StringUtil.isBlank(column_familie)) {
+					continue;
+				}
+				//字段详细信息
+				HColumnDescriptor col_desc = new HColumnDescriptor(column_familie);
+				//设置最大版本数
+				int max_version = 10;
+				col_desc.setMaxVersions(max_version);
+				//设置压缩(snappy)
+				IsFlag is_compress = IsFlag.ofEnumByCode("1");//TODO Dq_table_info缺失is_compress信息
+				if (is_compress == IsFlag.Shi) {
+					col_desc.setCompressionType(Compression.Algorithm.SNAPPY);
+				}
+				//是否使用bloomFilter
+				// -支持BloomType为(ROW: 根据KeyValue中的row来过滤storefile; ROWCOL: 根据KeyValue中的row+qualifier来过滤storefile)
+				IsFlag is_use_bloom_filter = IsFlag.ofEnumByCode("1");//TODO Dq_table_info缺失is_use_bloom_filter信息
+				if (is_use_bloom_filter == IsFlag.Shi) {
+					String bloom_filter_type = "ROW"; //TODO Dq_table_info缺失bloom_filter_type信息
+					BloomType bloomType = BloomType.valueOf(bloom_filter_type);
+					if (bloomType == BloomType.ROW) {
+						col_desc.setBloomFilterType(BloomType.ROW);
+					} else if (bloomType == BloomType.ROWCOL) {
+						col_desc.setBloomFilterType(BloomType.ROWCOL);
+					} else {
+						throw new BusinessException("BloomType类型不合法!"
+							+ " {ROW: 根据KeyValue中的row来过滤storefile; ROWCOL: 根据KeyValue中的row+qualifier来过滤storefile}");
+					}
+				} else if (is_use_bloom_filter == IsFlag.Fou) {
+					col_desc.setBloomFilterType(BloomType.NONE);
+				}
+				//设置HFile数据块大小,单位b（默认64 kb=65536 b）
+				int block_size = 65536;
+				col_desc.setBlocksize(block_size);
+				//设置进缓存，优先考虑将该列族放入块缓存中，针对随机读操作相对较多的列族可以设置该属性为true
+				IsFlag is_in_memory = IsFlag.ofEnumByCode("1");//TODO Dq_table_info缺失is_in_memory信息
+				if (is_in_memory == IsFlag.Shi) {
+					col_desc.setInMemory(Boolean.TRUE);
+				} else if (is_in_memory == IsFlag.Fou) {
+					col_desc.setInMemory(Boolean.FALSE);
+				} else {
+					throw new BusinessException("列族: " + column_familie
+						+ ", 是否加入块缓存的配置不合法! is_in_memory: " + is_in_memory.getCode());
+				}
+				//设置数据块编码方式设置,如果不设置默认为 NONE
+				String data_block_encoding = "NONE"; //TODO Dq_table_info缺失data_block_encoding信息
+				DataBlockEncoding dataBlockEncoding = DataBlockEncoding.valueOf(data_block_encoding);
+				if (dataBlockEncoding == DataBlockEncoding.NONE || dataBlockEncoding == DataBlockEncoding.PREFIX
+					|| dataBlockEncoding == DataBlockEncoding.DIFF || dataBlockEncoding == DataBlockEncoding.FAST_DIFF
+					|| dataBlockEncoding == DataBlockEncoding.PREFIX_TREE) {
+					col_desc.setDataBlockEncoding(dataBlockEncoding);
+				} else {
+					throw new BusinessException("数据块编码方式不合法! data_block_encoding=" + dataBlockEncoding.name());
+				}
+				hTableDescriptor.addFamily(col_desc);
+			}
+			//设置预分区配置信息
+			String pre_split = "SPLITNUM"; //TODO 代码项PrePartition(SPLITNUM,SPLITPOINS) Dq_table_info缺失pre_parm信息
+			String pre_parm = "2000000"; //TODO Dq_table_info缺失pre_parm信息
+			byte[][] splitKeys = null;
+			if (StringUtil.isNotBlank(pre_split)) {
+				splitKeys = null; //TODO 代码项没有 根据代码项和分区参数设置预分区信息
+			}
+			if( splitKeys != null ) {
+				admin.createTable(hTableDescriptor, splitKeys);
+			}else {
+				admin.createTable(hTableDescriptor);
+			}
+			//创建Hbase映射hive表
+
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new BusinessException("执行HBase类型存储层创建表失败! table_name=" + hbase_table_name);
+		}
 
 	}
 
