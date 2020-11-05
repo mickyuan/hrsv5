@@ -30,6 +30,9 @@ public abstract class BaseAction extends AbstractWebappBaseAction {
 		String iSol = PropertyParaValue.getString("is_save_operation_log", "0");
 		//1、获取user是否存在，不存在抛异常
 		_userCookieName = request.getHeader(ActionUtil._userCookieName);
+		if(null ==_userCookieName){
+			_userCookieName = request.getParameter(ActionUtil._userCookieName);
+		}
 		User user = getUser();
 		if (user == null) {
 			return ActionResultHelper.bizError("no cookies");
