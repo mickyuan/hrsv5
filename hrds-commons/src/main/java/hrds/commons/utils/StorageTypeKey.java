@@ -63,6 +63,13 @@ public class StorageTypeKey {
 	//HBase计算增量的引擎
 	public static final String increment_engine = "increment_engine";
 
+	//数据库连接池的参数，非必须
+	public static final String minPoolSize = "minPoolSize";
+	//数据库连接池的参数，非必须
+	public static final String maxPoolSize = "maxPoolSize";
+	//连接是设置拉取批次的大小，非必须
+	public static final String fetch_size = "fetch_size";
+
 	static {
 		//数据库，不支持外部表
 		List<String> databaseKeys = new ArrayList<>(Arrays.
@@ -101,7 +108,8 @@ public class StorageTypeKey {
 
 		List<String> hiveExternalTableKeys = new ArrayList<>(Arrays.
 				asList(database_driver, jdbc_url, user_name, database_pwd, database_name, database_code,
-						platform, hadoop_user_name, prncipal_name, core_site, hdfs_site, keytab_file, keytab_user));
+						platform, hadoop_user_name, prncipal_name, core_site, hdfs_site, keytab_file, keytab_user,
+						external_root_path));
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode() + "_" + IsFlag.Shi.getCode(), hiveExternalTableKeys);
 
 		List<String> hbaseKeys = new ArrayList<>(Arrays.
