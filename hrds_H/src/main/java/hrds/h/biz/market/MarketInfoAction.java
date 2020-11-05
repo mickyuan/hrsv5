@@ -211,7 +211,7 @@ public class MarketInfoAction extends BaseAction {
 			categoryRelationBean.setData_mart_id(data_mart_id);
 		}
 		// 保存加工分类
-		saveDmCategory(categoryRelationBeans);
+		saveDmCategory(data_mart_id, categoryRelationBeans);
 	}
 
 	@Method(desc = "保存加工分类", logicStep = "1.判断加工工程是否存在" +
@@ -222,9 +222,10 @@ public class MarketInfoAction extends BaseAction {
 			"5.更新加工分类")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
-	private void saveDmCategory(CategoryRelationBean[] categoryRelationBeans) {
+	public void saveDmCategory(long data_mart_id, CategoryRelationBean[] categoryRelationBeans) {
 		List<Map<String, Long>> idNameList = getIdNameList(categoryRelationBeans);
 		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
+			categoryRelationBean.setData_mart_id(data_mart_id);
 			// 2.实体字段合法性检查
 			checkDmCategoryFields(categoryRelationBean);
 			// 3.判断是新增还是更新加工分类
