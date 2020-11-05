@@ -901,7 +901,7 @@ public class DataStoreAction extends BaseAction {
 	@Param(name = "store_type", desc = "存储层配置存储类型", range = "使用（Store_type）代码项")
 	@Param(name = "is_hadoopclient", desc = "是否支持外部表", range = "使用（IsFlag）代码项")
 	@Return(desc = "返回支持外部表的配置属性key", range = "无限制")
-	public Map<String, Object> getAttrKeyIsSupportExternalTable(String store_type, String is_hadoopclient) {
+	public Map<String, Object> getExternalTableAttrKey(String store_type, String is_hadoopclient) {
 		Store_type.ofEnumByCode(store_type);
 		// 1.判断是否支持外部表
 		if (IsFlag.ofEnumByCode(is_hadoopclient) != IsFlag.Shi) {
@@ -936,8 +936,13 @@ public class DataStoreAction extends BaseAction {
 			// 关系型数据库支持外部表获取属性key
 			List<String> updateStorageKeys = StorageTypeKey.getUpdateFinallyStorageKeys();
 			List<String> keyList = storageKeys.get(database_type + "_" + IsFlag.Shi.getCode());
-			return getAttrKeyByIsFile(updateStorageKeys, keyList);
+			if (null == keyList) {
+				return getDataLayerAttrKey(store_type);
+			} else {
+				return getAttrKeyByIsFile(updateStorageKeys, keyList);
+			}
+		} else {
+			throw new BusinessException("是否支持外部表请选择是！");
 		}
-		return null;
 	}
 }
