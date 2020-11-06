@@ -136,13 +136,22 @@ public class DataStoreAction extends BaseAction {
 						}
 					}
 					// 文件存在则不需要重新命名
-					if (!uploadedFile.renameTo(new File(destFile.getPath() + File.separator + originalFileName))) {
-						if (uploadedFile.delete()) {
-							throw new BusinessException("删除文件失败");
+					String pathname = destFile.getPath() + File.separator + originalFileName;
+					if (!uploadedFile.renameTo(new File(pathname))) {
+						if (new File(pathname).exists()) {
+							// 文件已存在先删除，再重命名替换
+							if (!new File(pathname).delete()) {
+								throw new BusinessException("删除文件失败");
+							}
+							if (!uploadedFile.renameTo(new File(pathname))) {
+								if (uploadedFile.delete()) {
+									throw new BusinessException("删除原文件失败");
+								}
+								throw new BusinessException("文件重命名失败");
+							}
 						}
-						throw new BusinessException("文件重命名失败");
 					}
-					data_store_layer_attr.setStorage_property_val(destFile.getPath() + File.separator + originalFileName);
+					data_store_layer_attr.setStorage_property_val(pathname);
 					data_store_layer_attr.setIs_file(IsFlag.Shi.getCode());
 					data_store_layer_attr.setDsla_remark(originalFileName + "文件已上传");
 					data_store_layer_attr.add(Dbo.db());
@@ -568,7 +577,7 @@ public class DataStoreAction extends BaseAction {
 		// 5.更新数据存储附加信息
 		addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
 		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除文件要放在删除属性之前
-		if (files != null && files.length != 0) {
+		if (files != null && files.length != 0) {//  FIXME: 2020/11/6  这里要做判断 文件项切换为非文件项删除问题
 			deleteConfFile(dsl_id, files);
 			uploadConfFile(files, dsl_id, dsl_name, dataStoreLayerAttr);
 		}
@@ -771,15 +780,18 @@ public class DataStoreAction extends BaseAction {
 					"3.返回根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息")
 	@Param(name = "dsl_id", desc = "存储层定义表主键ID", range = "新增存储层时生成")
 	@Param(name = "store_type", desc = "存储层配置存储类型", range = "使用（Store_type）代码项")
+	@Param(name = "is_hadoopclient", desc = "是否hadoop客户端", range = "使用（IsFlag）代码项")
 	@Return(desc = "返回根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息", range = "无限制")
-	public Result searchDataStoreLayerAttrByIdAndType(long dsl_id, String store_type) {
+	public Result getLayerAttrByIdAndType(long dsl_id, String store_type, String is_hadoopclient) {
 		// 1.数据可访问权限处理方式，该方法不需要权限验证
 		// 2.验证存储层配置存储类型是否合法
 		Store_type.ofEnumByCode(store_type);
+		IsFlag.ofEnumByCode(is_hadoopclient);
 		// 3.返回根据存储层定义表主键ID与存储层配置存储类型查询存储层属性信息
 		return Dbo.queryResult("select t2.* from " + Data_store_layer.TableName
-				+ " t1 left join " + Data_store_layer_attr.TableName + " t2 on t1.dsl_id=t2.dsl_id "
-				+ " where t1.dsl_id=? and t1.store_type=?", dsl_id, store_type);
+						+ " t1 left join " + Data_store_layer_attr.TableName + " t2 on t1.dsl_id=t2.dsl_id "
+						+ " where t1.dsl_id=? and t1.store_type=? and is_hadoopclient=?",
+				dsl_id, store_type, is_hadoopclient);
 	}
 
 	@Method(desc = "下载配置文件",
