@@ -5,6 +5,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.FileNameUtils;
 import hrds.agent.job.biz.bean.CollectTableBean;
 import hrds.agent.job.biz.bean.StageParamInfo;
 import hrds.agent.job.biz.bean.StageStatusInfo;
@@ -12,12 +13,17 @@ import hrds.agent.job.biz.bean.TableBean;
 import hrds.agent.job.biz.constant.RunStatusConstant;
 import hrds.agent.job.biz.constant.StageConstant;
 import hrds.agent.job.biz.core.AbstractJobStage;
+import hrds.agent.job.biz.core.jdbcdirectstage.JdbcDirectUnloadDataStageImpl;
 import hrds.agent.job.biz.utils.CommunicationUtil;
 import hrds.agent.job.biz.utils.JobStatusInfoUtil;
 import hrds.commons.codes.AgentType;
+import hrds.commons.codes.FileFormat;
 import hrds.commons.entity.Data_store_reg;
+import hrds.commons.utils.Constant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
 
 @DocClass(desc = "数据文件采集，数据登记阶段实现", author = "WangZhengcheng")
 public class DFDataRegistrationStageImpl extends AbstractJobStage {
@@ -69,6 +75,15 @@ public class DFDataRegistrationStageImpl extends AbstractJobStage {
 			data_store_reg.setMeta_info(metaInfoObj.toJSONString());
 			CommunicationUtil.addDataStoreReg(data_store_reg, collectTableBean.getDatabase_id());
 			JobStatusInfoUtil.endStageStatusInfo(statusInfo, RunStatusConstant.SUCCEED.getCode(), "执行成功");
+			//清空转存到agent目录下的脏数据
+			String unloadFileAbsolutePath = FileNameUtils.normalize(Constant.DBFILEUNLOADFOLDER +
+					collectTableBean.getDatabase_id() + File.separator + collectTableBean.getHbase_name() +
+					File.separator + collectTableBean.getEtlDate() + File.separator, true);
+			File dir = new File(unloadFileAbsolutePath);
+			//这里要考虑重跑的问题
+			if (dir.exists()) {
+				fd.ng.core.utils.FileUtil.cleanDirectory(dir);
+			}
 			LOGGER.info("------------------表" + collectTableBean.getHbase_name()
 					+ "DB文件采集数据登记阶段成功------------------执行时间为："
 					+ (System.currentTimeMillis() - startTime) / 1000 + "，秒");
