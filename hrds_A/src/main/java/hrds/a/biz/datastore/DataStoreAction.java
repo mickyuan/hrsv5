@@ -149,6 +149,10 @@ public class DataStoreAction extends BaseAction {
 								}
 								throw new BusinessException("文件重命名失败");
 							}
+						}else {
+							if (uploadedFile.delete()) {
+								throw new BusinessException("删除原文件失败");
+							}
 						}
 					}
 					data_store_layer_attr.setStorage_property_val(pathname);
@@ -576,13 +580,13 @@ public class DataStoreAction extends BaseAction {
 		deleteDataStoreLayerAdded(dsl_id);
 		// 5.更新数据存储附加信息
 		addDataStoreLayerAdded(dsl_id, dslad_remark, dsla_storelayer);
-		// 6.判断文件是否存在，如果存在则先删除原配置文件,删除文件要放在删除属性之前
-		if (files != null && files.length != 0) {//  FIXME: 2020/11/6  这里要做判断 文件项切换为非文件项删除问题
+		// 6.更新数据存储层配置属性信息
+		updateDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
+		// 7.判断文件是否存在，如果存在则先删除原配置文件
+		if (files != null && files.length != 0) {
 			deleteConfFile(dsl_id, files);
 			uploadConfFile(files, dsl_id, dsl_name, dataStoreLayerAttr);
 		}
-		// 7.更新数据存储层配置属性信息
-		updateDataStorageLayerAttr(dataStoreLayerAttr, dsl_id);
 	}
 
 	@Method(desc = "删除配置文件",
@@ -598,8 +602,8 @@ public class DataStoreAction extends BaseAction {
 			String fileName = FileUploadUtil.getOriginalFileName(file);
 			Optional<Data_store_layer_attr> dataStoreLayerAttr = Dbo.queryOneObject(Data_store_layer_attr.class,
 					"select * from " + Data_store_layer_attr.TableName +
-							" where dsl_id=? and is_file=? and storage_property_key=?", dsl_id,
-					IsFlag.Shi.getCode(), fileName);
+							" where dsl_id=? and storage_property_key=? and is_file=?", dsl_id, fileName,
+					IsFlag.Shi.getCode());
 			// 3.遍历获取属性value值，判断文件是否存在，存在则删除
 			if (dataStoreLayerAttr.isPresent()) {
 				Data_store_layer_attr storeLayerAttr = dataStoreLayerAttr.get();
@@ -612,9 +616,6 @@ public class DataStoreAction extends BaseAction {
 						}
 					}
 				}
-				// 4.删除配置文件信息
-				Dbo.execute("delete from " + Data_store_layer_attr.TableName + " where dsl_id=?" +
-						" and is_file=? and storage_property_key=?", dsl_id, IsFlag.Shi.getCode(), fileName);
 			}
 		}
 	}
@@ -660,8 +661,8 @@ public class DataStoreAction extends BaseAction {
 	private void deleteDataStoreLayerAttr(long dsl_id) {
 		// 1.数据可访问权限处理方式，该方法不需要权限控制
 		// 2.删除数据存储层配置属性信息,,不关心删除几条数据
-		Dbo.execute("delete from " + Data_store_layer_attr.TableName + " where dsl_id=? and is_file=?",
-				dsl_id, IsFlag.Fou.getCode());
+		Dbo.execute("delete from " + Data_store_layer_attr.TableName + " where dsl_id=?",
+				dsl_id);
 	}
 
 	@Method(desc = "删除数据存储附加信息",
