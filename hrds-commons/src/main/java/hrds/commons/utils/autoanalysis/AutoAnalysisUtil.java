@@ -12,8 +12,6 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AxisType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,8 +20,6 @@ import java.util.Map;
 
 @DocClass(desc = "仪表板工具类", author = "dhw", createdate = "2020/10/20 17:24")
 public class AutoAnalysisUtil {
-
-	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "1.根据仪表板id获取数据仪表板信息表数据" +
 			"2.获取仪表板边框组件信息表信息" +
@@ -40,7 +36,7 @@ public class AutoAnalysisUtil {
 		Map<String, Object> dashboardInfo = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_dashboard_info.TableName + " WHERE dashboard_id=?",
 				dashboard_id);
-		resultMap.put("auto_dashboard_info",dashboardInfo);
+		resultMap.put("auto_dashboard_info", dashboardInfo);
 		// 2.获取仪表板边框组件信息表信息
 		List<Auto_frame_info> frameInfoList = SqlOperator.queryList(db, Auto_frame_info.class,
 				"SELECT * FROM " + Auto_frame_info.TableName + " WHERE dashboard_id = ?", dashboard_id);
@@ -48,14 +44,10 @@ public class AutoAnalysisUtil {
 		if (!frameInfoList.isEmpty()) {
 			for (Auto_frame_info auto_frame_info : frameInfoList) {
 				Map<String, Object> frameMap = new HashMap<>();
-				frameMap.put("x", auto_frame_info.getX_axis_coord());
-				frameMap.put("y", auto_frame_info.getY_axis_coord());
-				frameMap.put("w", auto_frame_info.getLength());
-				frameMap.put("h", auto_frame_info.getWidth());
-				frameMap.put("i", auto_frame_info.getSerial_number());
-				frameMap.put("type", auto_frame_info.getFrame_id());
+				setGridLayout(frameMap, auto_frame_info.getX_axis_coord(), auto_frame_info.getY_axis_coord(),
+						auto_frame_info.getLength(), auto_frame_info.getWidth(),
+						auto_frame_info.getSerial_number(), auto_frame_info.getFrame_id());
 				frameMap.put("label", "2");
-				frameMap.put("static", true);
 				dashboardList.add(frameMap);
 			}
 			resultMap.put("frameInfo", frameInfoList);
@@ -71,13 +63,9 @@ public class AutoAnalysisUtil {
 				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
 						JsonUtil.toJson(componentMap.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
-				componentMap.put("x", auto_asso_info.getX_axis_coord());
-				componentMap.put("y", auto_asso_info.getY_axis_coord());
-				componentMap.put("w", auto_asso_info.getLength());
-				componentMap.put("h", auto_asso_info.getWidth());
-				componentMap.put("i", auto_asso_info.getSerial_number());
-				componentMap.put("type", auto_asso_info.getComponent_id());
-				componentMap.put("static", true);
+				setGridLayout(componentMap, auto_asso_info.getX_axis_coord(), auto_asso_info.getY_axis_coord(),
+						auto_asso_info.getLength(), auto_asso_info.getWidth(),
+						auto_asso_info.getSerial_number(), auto_asso_info.getComponent_id());
 				autoCompSumList.add(auto_comp_sum);
 				resultMap.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
 				dashboardList.add(componentMap);
@@ -100,14 +88,10 @@ public class AutoAnalysisUtil {
 						.orElseThrow(() -> new BusinessException("实体转换失败"));
 				map.put("textStyle", auto_font_info);
 				Map<String, Object> labelMap = new HashMap<>();
-				labelMap.put("x", auto_label_info.getX_axis_coord());
-				labelMap.put("y", auto_label_info.getY_axis_coord());
-				labelMap.put("w", auto_label_info.getLength());
-				labelMap.put("h", auto_label_info.getWidth());
-				labelMap.put("i", auto_label_info.getSerial_number());
-				labelMap.put("type", auto_label_info.getLabel_id());
+				setGridLayout(labelMap, auto_label_info.getX_axis_coord(), auto_label_info.getY_axis_coord(),
+						auto_label_info.getLength(), auto_label_info.getWidth(),
+						auto_label_info.getSerial_number(), auto_label_info.getLabel_id());
 				labelMap.put("label", "0");
-				labelMap.put("static", true);
 				Map<String, Object> contentColorSize = new HashMap<>();
 				contentColorSize.put("label_content", auto_label_info.getLabel_content());
 				contentColorSize.put("label_color", auto_label_info.getLabel_color());
@@ -123,14 +107,10 @@ public class AutoAnalysisUtil {
 		if (!autoLineInfoList.isEmpty()) {
 			for (Auto_line_info auto_line_info : autoLineInfoList) {
 				Map<String, Object> lineMap = new HashMap<>();
-				lineMap.put("x", auto_line_info.getX_axis_coord());
-				lineMap.put("y", auto_line_info.getY_axis_coord());
-				lineMap.put("w", auto_line_info.getLine_length());
-				lineMap.put("h", auto_line_info.getLine_weight());
-				lineMap.put("i", auto_line_info.getSerial_number());
-				lineMap.put("type", auto_line_info.getLine_id());
+				setGridLayout(lineMap, auto_line_info.getX_axis_coord(), auto_line_info.getY_axis_coord(),
+						auto_line_info.getLine_length(), auto_line_info.getLine_weight(),
+						auto_line_info.getSerial_number(), auto_line_info.getLine_id());
 				lineMap.put("label", "1");
-				lineMap.put("static", true);
 				JSONObject contentColorType = new JSONObject();
 				contentColorType.put("line_color", auto_line_info.getLine_color());
 				contentColorType.put("line_type", auto_line_info.getLine_type());
@@ -266,5 +246,25 @@ public class AutoAnalysisUtil {
 		resultMap.put("legendInfo", legendMap);
 		// 返回根据可视化组件ID查看可视化组件信息
 		return resultMap;
+	}
+
+	@Method(desc = "设置仪表盘网格布局参数", logicStep = "1.设置仪表盘网格布局参数")
+	@Param(name = "labelMap", desc = "封装仪表盘网格布局参数集合", range = "无限制")
+	@Param(name = "x", desc = "标识栅格元素位于第几列", range = "需为自然数")
+	@Param(name = "y", desc = "标识栅格元素位于第几行", range = "需为自然数")
+	@Param(name = "w", desc = "标识栅格元素的初始宽度", range = "需为自然数")
+	@Param(name = "h", desc = "标识栅格元素的初始高度", range = "需为自然数")
+	@Param(name = "i", desc = "栅格中元素的ID", range = "需为自然数")
+	@Param(name = "type", desc = "对应组件ID", range = "新增对应组件时生成")
+	private static void setGridLayout(Map<String, Object> map, Integer x, Integer y,
+	                                  Object w, Object h, Object i, Long id) {
+		// 1.设置仪表盘网格布局参数
+		map.put("x", x);
+		map.put("y", y);
+		map.put("w", w);
+		map.put("h", h);
+		map.put("i", i);
+		map.put("type", id);
+		map.put("static", true);
 	}
 }

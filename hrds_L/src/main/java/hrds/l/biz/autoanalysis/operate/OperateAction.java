@@ -62,7 +62,7 @@ public class OperateAction extends BaseAction {
 	// 柱状折线混合图
 	private static final String BL = "bl";
 	// 柱状折线混合图-简单
-	private static final String BLSIMPLE = "blsimple";
+//	private static final String BLSIMPLE = "blsimple";
 	//	// 多维柱状图(3)
 //	private static final String BARMD = "barmd";
 	// 极坐标柱状图
@@ -70,7 +70,7 @@ public class OperateAction extends BaseAction {
 	// 散点图
 	private static final String SCATTER = "scatter";
 	// 气泡图
-	private static final String BUBBLE = "bubble";
+//	private static final String BUBBLE = "bubble";
 	// 饼图
 	private static final String PIE = "pie";
 	// 环形饼图
@@ -86,7 +86,7 @@ public class OperateAction extends BaseAction {
 	// 地理坐标/地图
 	private static final String MAP = "map";
 	// 盒形图
-	private static final String BOXPLOT = "boxplot";
+//	private static final String BOXPLOT = "boxplot";
 
 	static {
 		numbersArray.add("int");
@@ -668,7 +668,7 @@ public class OperateAction extends BaseAction {
 			// 折线图和柱状图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
 		} else if (STACKINGBAR.equals(chart_type)) {
-			putDataForStackingbar(componentList, x_columns, y_columns, chart_type, resultMap);
+			putDataForStackingBar(componentList, x_columns, y_columns, resultMap);
 		} else if (POLARBAR.equals(chart_type)) {
 			// 极坐标柱状图
 			putDataForPolarbar(componentList, x_columns, y_columns, resultMap);
@@ -729,16 +729,15 @@ public class OperateAction extends BaseAction {
 			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			Map<String, Object> labelmap = new HashMap<>();
-			for (int i = 0; i < y_columns.length; i++) {
+			for (String y_column : y_columns) {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
-				for (int j = 0; j < componentList.size(); j++) {
-					String s = componentList.get(j).get(y_columns[i].trim()).toString().trim();
-					checkIfNumeric(s, y_columns[i]);
+				for (Map<String, Object> stringObjectMap : componentList) {
+					String s = stringObjectMap.get(y_column.trim()).toString().trim();
+					checkIfNumeric(s, y_column);
 					data.add(s);
 				}
-				map.put("name", y_columns[i]);
+				map.put("name", y_column);
 				map.put("type", "bar");
 				map.put("data", data);
 				map.put("coordinateSystem", "polar");
@@ -919,15 +918,15 @@ public class OperateAction extends BaseAction {
 			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			for (int i = 0; i < y_columns.length; i++) {
+			for (String y_column : y_columns) {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
 				for (Map<String, Object> stringObjectMap : componentList) {
-					String s = stringObjectMap.get(y_columns[i].trim()).toString();
-					checkIfNumeric(s, y_columns[i]);
+					String s = stringObjectMap.get(y_column.trim()).toString();
+					checkIfNumeric(s, y_column);
 					data.add(s);
 				}
-				map.put("name", y_columns[i]);
+				map.put("name", y_column);
 				map.put("type", chart_type);
 				map.put("data", data);
 				yList.add(map);
@@ -945,29 +944,28 @@ public class OperateAction extends BaseAction {
 
 	}
 
-	private void putDataForStackingbar(List<Map<String, Object>> componentList, String[] x_columns,
-	                                   String[] y_columns, String chart_type,
-	                                   Map<String, Object> resultMap) {
+	private void putDataForStackingBar(List<Map<String, Object>> componentList, String[] x_columns,
+	                                   String[] y_columns, Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			Map<String, Object> labelmap = new HashMap<>();
-			labelmap.put("show", true);
-			labelmap.put("position", "inside");
-			for (int i = 0; i < y_columns.length; i++) {
+			Map<String, Object> labelMap = new HashMap<>();
+			labelMap.put("show", true);
+			labelMap.put("position", "inside");
+			for (String y_column : y_columns) {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
-				for (int j = 0; j < componentList.size(); j++) {
-					String s = componentList.get(j).get(y_columns[i].trim()).toString();
-					checkIfNumeric(s, y_columns[i]);
+				for (Map<String, Object> stringObjectMap : componentList) {
+					String s = stringObjectMap.get(y_column.trim()).toString();
+					checkIfNumeric(s, y_column);
 					data.add(s);
 				}
-				map.put("name", y_columns[i]);
+				map.put("name", y_column);
 				map.put("type", "bar");
 				map.put("stack", "总量");
-				map.put("label", labelmap);
+				map.put("label", labelMap);
 				map.put("data", data);
 				yList.add(map);
 			}
@@ -1083,15 +1081,15 @@ public class OperateAction extends BaseAction {
 			result_sql = new StringBuilder(result_sql.substring(0, result_sql.length() - 1));
 		}
 		if (!upAndLowArray.isEmpty()) {
-			int number[] = new int[upAndLowArray.size()];
+			int[] number = new int[upAndLowArray.size()];
 			result_sql.append(Constant.SPACE + "ORDER BY" + Constant.SPACE);
 			for (int i = 0; i < upAndLowArray.size(); i++) {
 				Map<String, String> map = upAndLowArray.get(i);
-				String limitvalue = map.get(LIMITVALUE);
-				if (!StringUtils.isNumeric(limitvalue)) {
+				String limitValue = map.get(LIMITVALUE);
+				if (!StringUtils.isNumeric(limitValue)) {
 					throw new BusinessException("当前过滤条件:" + map.get(COLUMNNAME) + "的值不是数字");
 				}
-				number[i] = Integer.valueOf(map.get(LIMITVALUE));
+				number[i] = Integer.parseInt(map.get(LIMITVALUE));
 				result_sql.append(map.get(COLUMNNAME));
 				if (map.get(ZUIDAXIAOKEY).equals(ZUIDANGE)) {
 					result_sql.append(Constant.SPACE + "DESC" + Constant.SPACE);
@@ -1101,17 +1099,14 @@ public class OperateAction extends BaseAction {
 			//去除，
 			result_sql = new StringBuilder(result_sql.substring(0, result_sql.length() - 1));
 			Arrays.sort(number);
-			result_sql.append(Constant.SPACE + "LIMIT").append(number);
+			result_sql.append(Constant.SPACE + "LIMIT").append(Arrays.toString(number));
 		}
-		return result_sql.toString().toString();
+		return result_sql.toString();
 	}
 
-	/**
-	 * 根据Auto_comp_data_sum拼接查询SQL
-	 *
-	 * @param auto_comp_data_sum
-	 * @return
-	 */
+	@Method(desc = "据Auto_comp_data_sum拼接查询SQL", logicStep = "")
+	@Param(name = "auto_comp_data_sum", desc = "组件数据汇总信息表", range = "与数据库对应表一致", isBean = true)
+	@Return(desc = "返回拼接好的sql", range = "无限制")
 	private String getSelectSql(Auto_comp_data_sum auto_comp_data_sum) {
 		String column_name = auto_comp_data_sum.getColumn_name();
 		String summary_type = auto_comp_data_sum.getSummary_type();
@@ -1134,15 +1129,11 @@ public class OperateAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 根据Auto_comp_cond拼接条件SQL
-	 *
-	 * @param auto_comp_cond
-	 * @param upAndLowArray
-	 * @return
-	 */
+	@Method(desc = "根据Auto_comp_cond拼接条件SQL", logicStep = "")
+	@Param(name = "auto_comp_cond", desc = "组件条件表", range = "与数据库对应表一致", isBean = true)
+	@Param(name = "upAndLowArray", desc = "对最大的N个做单独处理数据集合", range = "无限制")
+	@Return(desc = "返回拼接后的sql", range = "无限制")
 	private String getCondSql(Auto_comp_cond auto_comp_cond, ArrayList<Map<String, String>> upAndLowArray) {
-		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		String cond_en_column = auto_comp_cond.getCond_en_column();
 		String operator = auto_comp_cond.getOperator();
 		String cond_value = auto_comp_cond.getCond_value();
@@ -1306,8 +1297,8 @@ public class OperateAction extends BaseAction {
 		});
 		Auto_axisline_info yAxisLine = JSONObject.parseObject(yAxisLineString, new TypeReference<Auto_axisline_info>() {
 		});
-		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
-		});
+//		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
+//		});
 		Auto_chartsconfig auto_chartsconfig = JSONObject.parseObject(auto_chartsconfigString, new TypeReference<Auto_chartsconfig>() {
 		});
 		Auto_label auto_label = JSONObject.parseObject(auto_labelString, new TypeReference<Auto_label>() {
@@ -1393,8 +1384,8 @@ public class OperateAction extends BaseAction {
 		});
 		Auto_axisline_info yAxisLine = JSONObject.parseObject(yAxisLineString, new TypeReference<Auto_axisline_info>() {
 		});
-		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
-		});
+//		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
+//		});
 		Auto_chartsconfig auto_chartsconfig = JSONObject.parseObject(auto_chartsconfigString, new TypeReference<Auto_chartsconfig>() {
 		});
 		Auto_label auto_label = JSONObject.parseObject(auto_labelString, new TypeReference<Auto_label>() {
