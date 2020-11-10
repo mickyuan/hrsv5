@@ -1,13 +1,10 @@
 package hrds.commons.hadoop.solr;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
 import hrds.commons.hadoop.hadoop_helper.HdfsOperator;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.SolrDocumentList;
-import org.stringtemplate.v4.ST;
 
 import java.io.Closeable;
 import java.util.List;
