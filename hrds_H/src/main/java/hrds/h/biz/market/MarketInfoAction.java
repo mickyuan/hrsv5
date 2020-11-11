@@ -1580,7 +1580,7 @@ public class MarketInfoAction extends BaseAction {
 				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 	@Method(desc = "保存新增加工2的数据",
