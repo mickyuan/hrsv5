@@ -7,8 +7,7 @@ import hrds.commons.entity.Dm_operation_info;
 import hrds.commons.utils.Constant;
 import hrds.h.biz.config.MarketConf;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class VersionManager {
     private final DatabaseWrapper db;
@@ -40,11 +39,35 @@ public class VersionManager {
                         Constant.INVDATE.equals(field.getEnd_date()));
     }
 
+    String lastVersionDate(){
+        Map<String, Object> fieldMaxSDate = SqlOperator.queryOneObject(db,
+                "select max(start_date) as fieldMaxSDate from datatable_field_info where datatable_id = ? and end_date <> ?",
+                datatableId, Constant.INITDATE);
+        Map<String, Object> fieldMaxEDate = SqlOperator.queryOneObject(db,
+                "select max(end_date) as fieldMaxEDate from datatable_field_info where datatable_id = ? and end_date < ?",
+                datatableId, Constant.MAXDATE);
+        Map<String, Object> sqlMaxEDate = SqlOperator.queryOneObject(db,
+                "select max(end_date) as sqlMaxEDate from dm_operation_info where datatable_id = ? and end_date < ?",
+                datatableId, Constant.MAXDATE);
+        List<String> max = new ArrayList<>(3);
+        if (fieldMaxSDate.get("fieldmaxsdate") != null) {
+            max.add((String) fieldMaxSDate.get("fieldmaxsdate"));
+        }
+        if (fieldMaxEDate.get("fieldmaxedate") != null) {
+            max.add((String) fieldMaxEDate.get("fieldmaxedate"));
+        }
+        if (sqlMaxEDate.get("sqlmaxedate") != null) {
+            max.add((String) sqlMaxEDate.get("sqlmaxedate"));
+        }
+        max.sort(Collections.reverseOrder());
+        return max.get(0);
+    }
+
     /**
      * @return 需要重命名的表名
      */
     String getRenameTableName() {
-        return tableName + "_" + etlDate.substring(2);
+        return tableName + "_" + lastVersionDate().substring(2);
     }
 
     /**
