@@ -1745,7 +1745,7 @@ public class OperateAction extends BaseAction {
 				componentInfo.put("h", 30);
 				componentInfo.put("i", autoCompSum.getComponent_id());
 				componentInfo.put("static", true);
-				componentInfo.put("type", autoCompSum.getComponent_id() + "");
+				componentInfo.put("type", String.valueOf(autoCompSum.getComponent_id()));
 				componentOnDashBoard.put(String.valueOf(autoCompSum.getComponent_id()),
 						auto_comp_sum.getComponent_buffer());
 				componentList.add(componentInfo);

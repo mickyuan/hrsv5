@@ -521,7 +521,7 @@ public class ManageAction extends BaseAction {
 				List<String> tableList = DruidParseQuerySql.parseSqlTableToList(sql);
 				// 获取所有表对应字段信息
 				Map<String, String> columnByTable = getColumnByTable(tableList);
-				String tableAndChColumnName = columnByTable.get(exprName);
+				String tableAndChColumnName = columnByTable.get(exprName.toUpperCase());
 				List<String> tableAndColumn = StringUtil.split(tableAndChColumnName, Constant.METAINFOSPLIT);
 				auto_tp_res_set.setSource_table_name(tableAndColumn.get(0));
 				auto_tp_res_set.setColumn_cn_name(tableAndColumn.get(1));

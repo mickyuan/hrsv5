@@ -742,7 +742,7 @@ public class ServiceInterfaceUserImplAction extends AbstractWebappBaseAction
 			"4.返回仪表盘信息")
 	@Param(name = "checkParam", desc = "接口检查参数实体", range = "无限制", isBean = true)
 	@Return(desc = "返回仪表盘信息", range = "无限制")
-	public Map<String, Object> dashboardRelease(CheckParam checkParam) {
+	public Map<String, Object> showReleaseDashboard(CheckParam checkParam) {
 		long start = System.currentTimeMillis();
 		Interface_use_log interface_use_log = new Interface_use_log();
 		// 请求开始时间
