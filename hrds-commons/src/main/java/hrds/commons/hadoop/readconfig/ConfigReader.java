@@ -22,7 +22,7 @@ public class ConfigReader {
 	 * 支持的平台类型
 	 */
 	public enum PlatformType {
-		normal, fic50, fic60, fic80, cdh5_13
+		normal, fic80, cdh5
 	}
 
 	/**
@@ -138,16 +138,8 @@ public class ConfigReader {
 		try {
 			if (PlatformType.normal.toString().equals(platform)) {
 				logger.info("Do nothing");
-			} else if (PlatformType.cdh5_13.toString().equals(platform)) {
+			} else if (PlatformType.cdh5.toString().equals(platform)) {
 				conf = CDHLoginUtil.login(conf, prncipal_name);
-			} else if (PlatformType.fic50.toString().equals(platform)) {
-				conf = SecurityUtils.HBaselogin(conf, "user.keytab", "admin@Hadoop");
-				// Security login
-				if (!SecurityUtils.Maplogin(conf)) {
-					logger.error("Login system failed");
-				}
-			} else if (PlatformType.fic60.toString().equals(platform)) {
-				conf = lg.hbaseLogin(conf, prncipal_name);
 			} else if (PlatformType.fic80.toString().equals(platform)) {
 				conf = C80LoginUtil.login(conf, prncipal_name);
 			} else {

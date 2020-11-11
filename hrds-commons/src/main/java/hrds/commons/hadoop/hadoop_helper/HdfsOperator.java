@@ -23,11 +23,10 @@ import java.util.List;
 public class HdfsOperator implements Closeable {
 
 	private static final Logger logger = LogManager.getLogger();
-	public static final int defaultBufferedSize = 8192;
-	public static final Charset defaultCharset = StandardCharsets.UTF_8;
-	private FileSystem fs;
-
+	//HDFS文件系统类对象,初始化FileSystem的工具类
 	private HDFSFileSystem hdfsFileSystem;
+	//文件系统实现对象(实际操作文件系统对象)
+	private FileSystem fileSystem;
 
 	public HdfsOperator() throws IOException {
 		this(null);
@@ -46,62 +45,118 @@ public class HdfsOperator implements Closeable {
 		this(configPath, platform, prncipal_name, null);
 	}
 
-	public HdfsOperator(String configPath, String platform,
-	                    String prncipal_name, String hadoop_user_name) throws IOException {
+
+	public HdfsOperator(String configPath, String platform, String prncipal_name, String hadoop_user_name) throws IOException {
+		//设置HDFS文件系统类对象
 		hdfsFileSystem = new HDFSFileSystem(configPath, platform, prncipal_name, hadoop_user_name);
-		fs = hdfsFileSystem.getFileSystem();
+		//设置文件系统实现对象
+		fileSystem = hdfsFileSystem.getFileSystem();
 	}
 
+	/**
+	 * 获取Configuration对象
+	 *
+	 * @return Configuration 设置完成的Configuration对象
+	 */
 	public Configuration getConfiguration() {
 		return hdfsFileSystem.getConfig();
 	}
 
+	/**
+	 * 获取文件系统对象
+	 *
+	 * @return fileSystem
+	 */
 	public FileSystem getFileSystem() {
-		return fs;
+		return fileSystem;
 	}
 
+	/**
+	 * 获取HDFS文件系统类对象
+	 *
+	 * @return hdfsFileSystem HDFS文件系统类对象
+	 */
 	public HDFSFileSystem getHDFSFileSystem() {
 		return hdfsFileSystem;
 	}
 
+	/**
+	 * 获取工作目录 所有相对路径都会相对于它解析。如果 directory 不为空,则设置当前目录为默认的工作目录
+	 *
+	 * @param directory 指定的工作目录路径
+	 * @return 工作目录的路径
+	 */
 	public Path getWorkingDirectory(String directory) {
 		return hdfsFileSystem.getWorkingDirectory(directory);
 	}
 
-	public boolean mkdir(Path path) throws IOException {
-		boolean isok = fs.mkdirs(path);
-		if (isok) {
-			logger.debug("create " + path + " ok!");
-		} else {
-			logger.debug("create " + path + " failure");
-		}
-		return isok;
-
-	}
-
-	public boolean mkdir(String path) throws IllegalArgumentException, IOException {
+	/**
+	 * @param path 目录路径 String
+	 * @return 是否标记
+	 */
+	public boolean mkdir(String path) {
 		return mkdir(new Path(path));
 	}
 
-	public boolean renamedir(Path oldpath, Path newpath) throws IOException {
-		boolean isok = fs.rename(oldpath, newpath);
-		if (isok) {
-			logger.debug("modify " + oldpath + "-->" + newpath + " ok!");
-		} else {
-			logger.debug("modify " + oldpath + "-->" + newpath + " failure!");
+	/**
+	 * @param path 目录路径 Path
+	 * @return 是否标记
+	 */
+	public boolean mkdir(Path path) {
+		try {
+			boolean isok = fileSystem.mkdirs(path);
+			if (isok) {
+				logger.debug("create " + path + " ok!");
+			} else {
+				logger.debug("create " + path + " failure");
+			}
+			return isok;
+		} catch (IOException ioe) {
+			throw new BusinessException("create " + path + ", an exception occurred, please try again!");
 		}
-		return isok;
+
 	}
 
-	public boolean renamedir(String oldpath, String newpath) throws IOException {
+	/**
+	 * 重命名目录
+	 *
+	 * @param oldpath 旧目录路径 String
+	 * @param newpath 新目录路径 String
+	 * @return 是否标记
+	 */
+	public boolean renamedir(String oldpath, String newpath) {
 		return renamedir(new Path(oldpath), new Path(newpath));
 	}
 
+	/**
+	 * 重命名目录
+	 *
+	 * @param oldpath 旧目录路径 Path
+	 * @param newpath 新目录路径 Path
+	 * @return 是否标记
+	 */
+	public boolean renamedir(Path oldpath, Path newpath) {
+		try {
+			boolean isok = fileSystem.rename(oldpath, newpath);
+			if (isok) {
+				logger.debug("modify " + oldpath + "-->" + newpath + " ok!");
+			} else {
+				logger.debug("modify " + oldpath + "-->" + newpath + " failure!");
+			}
+			return isok;
+		} catch (IOException ioe) {
+			throw new BusinessException("modify " + oldpath + "-->" + newpath + ", an exception occurred, please try again!");
+		}
+	}
+
+	/**
+	 * 关闭hdfs文件系统
+	 */
 	@Override
 	public void close() {
 		try {
-			if (fs != null)
-				fs.close();
+			if (fileSystem != null)
+				fileSystem.close();
 			if (hdfsFileSystem != null)
 				hdfsFileSystem.close();
 		} catch (IOException e) {
@@ -112,16 +167,25 @@ public class HdfsOperator implements Closeable {
 	/**
 	 * 判断hdfs上的路径是不是存在
 	 *
-	 * @param path 路径
+	 * @param path 路径 String
 	 * @return true 存在 false 不存在
-	 * @throws IOException IO异常
 	 */
-	public boolean exists(String path) throws IOException {
+	public boolean exists(String path) {
 		return exists(new Path(path));
 	}
 
-	public boolean exists(Path path) throws IOException {
-		return fs.exists(path);
+	/**
+	 * 判断hdfs上的路径是不是存在
+	 *
+	 * @param path 路径 Path
+	 * @return true 存在 false 不存在
+	 */
+	public boolean exists(Path path) {
+		try {
+			return fileSystem.exists(path);
+		} catch (IOException ioe) {
+			throw new BusinessException("Checking directory " + path + ", an IO exception occurred, please try again!");
+		}
 	}
 
 	/**
@@ -154,9 +218,8 @@ public class HdfsOperator implements Closeable {
 				return false;
 			}
 		}
-		fs.copyFromLocalFile(srcPath, hdfsPath);
+		fileSystem.copyFromLocalFile(srcPath, hdfsPath);
 		return true;
-
 	}
 
 	/**
@@ -188,7 +251,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public boolean deletePath(Path path, boolean recursive) throws IOException {
-		return fs.delete(path, recursive);
+		return fileSystem.delete(path, recursive);
 	}
 
 	/**
@@ -210,7 +273,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public void fromHdfsToLocal(Path hdfsPath, Path srcFileName) throws IOException {
-		fs.copyToLocalFile(hdfsPath, hdfsPath);
+		fileSystem.copyToLocalFile(hdfsPath, hdfsPath);
 	}
 
 	/**
@@ -219,7 +282,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws Exception Exception
 	 */
 	public void download(String srcPath, String dstPath) throws Exception {
-		if (fs.isFile(new Path(srcPath))) {
+		if (fileSystem.isFile(new Path(srcPath))) {
 			downFromCloud(srcPath, dstPath);
 		} else {
 			downloadFolder(srcPath, dstPath);
@@ -234,7 +297,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public void downFromCloud(String hdfsPath, String srcFileName) throws IOException {
-		try (InputStream HDFS_IN = fs.open(new Path(hdfsPath)); OutputStream OutToLOCAL = new FileOutputStream(srcFileName)) {
+		try (InputStream HDFS_IN = fileSystem.open(new Path(hdfsPath)); OutputStream OutToLOCAL = new FileOutputStream(srcFileName)) {
 			IOUtils.copyBytes(HDFS_IN, OutToLOCAL, 1024, true);
 		}
 	}
@@ -253,7 +316,7 @@ public class HdfsOperator implements Closeable {
 				throw new BusinessException("创建目录" + dstDir.getCanonicalPath() + "失败！");
 			}
 		}
-		FileStatus[] srcFileStatus = fs.listStatus(new Path(srcPath));
+		FileStatus[] srcFileStatus = fileSystem.listStatus(new Path(srcPath));
 		Path[] srcFilePath = FileUtil.stat2Paths(srcFileStatus);
 		for (Path path : srcFilePath) {
 			String srcFile = path.toString();
@@ -272,8 +335,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public boolean copy(String srcPath, String destPath, boolean overWrite) throws IOException {
-
-		return FileUtil.copy(fs, new Path(srcPath), fs, new Path(destPath), false, overWrite, getConfiguration());
+		return FileUtil.copy(fileSystem, new Path(srcPath), fileSystem, new Path(destPath), false, overWrite, getConfiguration());
 	}
 
 	/**
@@ -286,8 +348,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public boolean move(String srcPath, String destPath, boolean overWrite) throws IllegalArgumentException, IOException {
-
-		return FileUtil.copy(fs, new Path(srcPath), fs, new Path(destPath), true, overWrite, fs.getConf());
+		return FileUtil.copy(fileSystem, new Path(srcPath), fileSystem, new Path(destPath), true, overWrite, fileSystem.getConf());
 	}
 
 	/**
@@ -297,7 +358,6 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public List<Path> listFiles(String path, boolean isContainDir) throws IOException {
-
 		return listFiles(new Path(path), isContainDir);
 	}
 
@@ -310,24 +370,23 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public List<Path> listFiles(Path path, boolean isContainDir) throws IOException {
-
 		List<Path> pathList = new ArrayList<>();
-		if (!fs.exists(path)) {
+		if (!fileSystem.exists(path)) {
 			logger.info(path + " does not exsit...");
 			return null;
 		}
-		if (!fs.isDirectory(path)) {
+		if (!fileSystem.isDirectory(path)) {
 			logger.info(path + " is not a directory, can not be listed...");
 			return null;
 		}
-		FileStatus[] status = fs.listStatus(path);
+		FileStatus[] status = fileSystem.listStatus(path);
 		Path p;
 		for (FileStatus fileStatus : status) {
 			p = fileStatus.getPath();
 			if (isContainDir) {
 				pathList.add(p);
 			} else {
-				if (!fs.isDirectory(p)) {
+				if (!fileSystem.isDirectory(p)) {
 					pathList.add(p);
 				}
 			}
@@ -342,7 +401,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public boolean emptyFolder(Path path) throws IOException {
-		if (exists(path.toString()) && fs.isDirectory(path)) {
+		if (exists(path.toString()) && fileSystem.isDirectory(path)) {
 			List<Path> list = listFiles(path.toString(), true);
 			for (Path path2 : list) {
 				deletePath(path2.toString());
@@ -350,7 +409,6 @@ public class HdfsOperator implements Closeable {
 			return true;
 		}
 		return false;
-
 	}
 
 	/**
@@ -361,9 +419,9 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public long getDirectoryCount(String directory) throws IOException {
-
 		return getDirectoryCount(new Path(directory));
 	}
+
 
 	/**
 	 * 目录下文件统计数
@@ -373,8 +431,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public long getDirectoryCount(Path directory) throws IOException {
-
-		return fs.getContentSummary(directory).getDirectoryCount();
+		return fileSystem.getContentSummary(directory).getDirectoryCount();
 	}
 
 	/**
@@ -393,9 +450,8 @@ public class HdfsOperator implements Closeable {
 	 * @param directory 文件目录 Path
 	 */
 	public long getDirectoryLength(Path directory) throws IOException {
-		return fs.getContentSummary(directory).getLength();
+		return fileSystem.getContentSummary(directory).getLength();
 	}
-
 
 	/**
 	 * Copy files between FileSystems.
@@ -406,7 +462,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public void copyMerge(Path srcDir, Path dstFile, boolean deleteSource) throws IOException {
-		FileUtil.copy(fs, srcDir, fs, dstFile, deleteSource, this.getConfiguration());
+		FileUtil.copy(fileSystem, srcDir, fileSystem, dstFile, deleteSource, this.getConfiguration());
 	}
 
 	/**
@@ -428,7 +484,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public boolean isDirectory(Path path) throws IOException {
-		return fs.isDirectory(path);
+		return fileSystem.isDirectory(path);
 	}
 
 	/**
@@ -450,7 +506,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public boolean isFile(Path path) throws IOException {
-		return fs.isFile(path);
+		return fileSystem.isFile(path);
 	}
 
 	/**
@@ -473,7 +529,7 @@ public class HdfsOperator implements Closeable {
 	 */
 	public FSDataInputStream open(Path path) throws IOException {
 
-		return fs.open(path);
+		return fileSystem.open(path);
 	}
 
 	/**
@@ -484,7 +540,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public FSDataOutputStream create(String path) throws IOException {
-		return fs.create(new Path(path));
+		return fileSystem.create(new Path(path));
 	}
 
 	/**
@@ -495,7 +551,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public FSDataOutputStream create(Path path) throws IOException {
-		return fs.create(path);
+		return fileSystem.create(path);
 	}
 
 	/**
@@ -506,15 +562,15 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public BufferedReader toBufferedReader(Path path) throws IOException {
-		return toBufferedReader(path, defaultCharset, defaultBufferedSize);
+		return toBufferedReader(path, StandardCharsets.UTF_8, 8192);
 	}
 
 	/**
 	 * BufferedReader 读取文件
 	 *
 	 * @param path       文件路径 Path
-	 * @param charset    Charset
-	 * @param bufferSize bufferSize
+	 * @param charset    Charset 文件编码
+	 * @param bufferSize bufferSize buffer大小
 	 * @return BufferedReader
 	 * @throws IOException IOException
 	 */
@@ -527,9 +583,8 @@ public class HdfsOperator implements Closeable {
 	 * 确保目录存在,如果不存在则创建
 	 *
 	 * @param path 目录 Stirng
-	 * @throws IOException IOException
 	 */
-	public void ensureDirectory(String path) throws IOException {
+	public void ensureDirectory(String path) {
 		ensureDirectory(new Path(path));
 	}
 
@@ -537,9 +592,8 @@ public class HdfsOperator implements Closeable {
 	 * 确保目录存在,如果不存在则创建
 	 *
 	 * @param path 目录 Path
-	 * @throws IOException IOException
 	 */
-	public void ensureDirectory(Path path) throws IOException {
+	public void ensureDirectory(Path path) {
 		if (!exists(path)) {
 			mkdir(path);
 		}

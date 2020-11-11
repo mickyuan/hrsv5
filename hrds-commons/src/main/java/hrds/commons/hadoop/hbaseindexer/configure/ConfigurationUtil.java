@@ -14,18 +14,17 @@ import org.apache.commons.lang.StringUtils;
  * hbase on solr 的一些配置
  *
  * @author Mick
- *
  */
 public class ConfigurationUtil {
 	// tomcat bin/conf/hbase-site.xml
 	private static final String HBASESITE = "./conf/hbase-site.xml";
 	public static final String SOLR_ON_HBASE_COLLECTION = PropertyParaValue.getString("solrOnHbase", "hbase_solr");
 	public static final String SOLR_ON_HBASE_URL = PropertyParaValue.getString("solrUrl", "http://10.0.168.103:18983/solr/")
-			+ SOLR_ON_HBASE_COLLECTION;
+		+ SOLR_ON_HBASE_COLLECTION;
 	public static final String ZKHOST = PropertyParaValue.getString("zkHost", "0.0.0.0/solr").replace("/solr", "");
 	// CDH所使用同步hbase与solr的mr jar包可能所在路径
-	private static final String[] MR_JAR_MAYBE_PATHS = new String[] { "../shared/hbase-indexer-mr-job.jar",
-			"./lib/hbase-indexer-mr-job.jar" };
+	private static final String[] MR_JAR_MAYBE_PATHS = new String[]{"../shared/hbase-indexer-mr-job.jar",
+		"./lib/hbase-indexer-mr-job.jar"};
 	// 需要在solr中添加的tablename field名称
 	public static final String TABLE_NAME_FIELD = "F-TABLE_NAME";
 
@@ -64,16 +63,14 @@ public class ConfigurationUtil {
 		String platform = PropertyParaValue.getString("platform", "normal");
 		String command = "";
 		// FI
-		if (platform.equals(ConfigReader.PlatformType.fic60.toString())
-				|| platform.equals(ConfigReader.PlatformType.fic60.toString())) {
-
+		if (platform.equals(ConfigReader.PlatformType.fic80.toString())) {
 			command = "bash hbase-indexer batch-indexer --hbase-indexer-zk %s --hbase-indexer-name %s "
-					+ "--hbase-indexer-file %s --output-dir hdfs://hacluster/tmp/solr --go-live "
-					+ "--overwrite-output-dir -v --reducers 3 --zk-host %s";
+				+ "--hbase-indexer-file %s --output-dir hdfs://hacluster/tmp/solr --go-live "
+				+ "--overwrite-output-dir -v --reducers 3 --zk-host %s";
 			command = String.format(command, ZKHOST, indexerName, xmlPath, ZKHOST + "/solr");
 			// cdh
 		} else if (platform.equals(ConfigReader.PlatformType.normal.toString())
-				|| platform.equals(ConfigReader.PlatformType.cdh5_13.toString())) {
+			|| platform.equals(ConfigReader.PlatformType.cdh5.toString())) {
 
 			// 因为web这边和agent这边的lib包的相对路径不同，所以要找一下
 			String syncJarPath = "";
@@ -108,7 +105,7 @@ public class ConfigurationUtil {
 
 	public static String randomXmlFilePath() {
 		return FileUtils.getTempDirectoryPath() + File.separator + "datatmp" + File.separator
-				+ System.currentTimeMillis() + ".xml";
+			+ System.currentTimeMillis() + ".xml";
 	}
 
 }

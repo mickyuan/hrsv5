@@ -60,26 +60,16 @@ public class HDFSFileSystem {
 			conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
 			fileSystem = FileSystem.get(conf);
 			logger.info("normal FileSystem inited ");
-		} else if (ConfigReader.PlatformType.cdh5_13.toString().equals(platform)) {
+		} else if (ConfigReader.PlatformType.cdh5.toString().equals(platform)) {
 			conf = loginUtil.confLoad();
 			conf = loginUtil.authentication(conf, prncipal_name);
 			fileSystem = FileSystem.get(conf);
 			logger.info("cdh5_13 FileSystem inited ");
-		} else if (ConfigReader.PlatformType.fic50.toString().equals(platform)) {
-			conf = SecurityUtils.confLoad();
-			conf = SecurityUtils.authentication(conf);
-			fileSystem = FileSystem.get(conf);
-			logger.info("fi FileSystem inited ");
 		} else if (ConfigReader.PlatformType.fic80.toString().equals(platform)) {
 			conf = loginUtil.confLoad();
 			conf = loginUtil.authentication(conf, prncipal_name);
 			fileSystem = FileSystem.get(conf);
 			logger.info("fic60 FileSystem inited ");
-		} else if (ConfigReader.PlatformType.fic60.toString().equals(platform)) {
-			conf = loginUtil.confLoad();
-			conf = C80LoginUtil.login(conf, prncipal_name);
-			fileSystem = FileSystem.get(conf);
-			logger.info("fic80 FileSystem inited ");
 		} else {
 			throw new AppSystemException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
 		}
