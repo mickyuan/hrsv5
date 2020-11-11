@@ -1,6 +1,5 @@
 package hrds.h.biz.config;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
@@ -75,9 +74,9 @@ public class MarketConfUtils {
             根据主键 datatable_id 查询 字段 实体
              */
 			List<Datatable_field_info> datatableFields = SqlOperator.queryList(db, Datatable_field_info.class,
-				"select * from " + Datatable_field_info.TableName
-					+ " where datatable_id = ? AND end_date = ? order by field_seq", datatableId,
-				Constant.MAXDATE);
+					"select * from " + Datatable_field_info.TableName
+							+ " where datatable_id = ? and (end_date = ? or end_date = ?)"
+					, datatableId, Constant.INITDATE, Constant.MAXDATE);
 			Validator.notEmpty(String.format(nullQueryExceptString,
 				Datatable_field_info.TableName, "datatable_id", datatableId));
 
@@ -97,10 +96,10 @@ public class MarketConfUtils {
               根据主键 datatable_id 查询 需要执行的sql，并进行替换
              */
 			Dm_operation_info dmOperationInfo = SqlOperator.queryOneObject(db, Dm_operation_info.class,
-				"select * from " + Dm_operation_info.TableName + " where datatable_id = ? AND end_date = ?", datatableId,
-				Constant.MAXDATE)
-				.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
-					Dm_operation_info.TableName, "datatable_id", datatableId)));
+					"select * from " + Dm_operation_info.TableName + " where datatable_id = ? AND (end_date = ? or end_date = ?)",
+					datatableId, Constant.MAXDATE, Constant.INITDATE)
+					.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+							Dm_operation_info.TableName, "datatable_id", datatableId)));
 
 			marketConf.setCompleteSql(replaceView(fillSqlWithParams(dmOperationInfo.getExecute_sql()
 				, marketConf.getSqlParams())));

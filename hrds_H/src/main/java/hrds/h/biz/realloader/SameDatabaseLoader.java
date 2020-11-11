@@ -55,6 +55,11 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void ensureRelation() {
+        if (versionManager.isVersionExpire()) {
+            if (!db.isExistTable(versionManager.getRenameTableName()) && db.isExistTable(tableName)) {
+                Utils.renameTable(db, tableName, versionManager.getRenameTableName());
+            }
+        }
         Utils.softCreateTable(db, tableName, createTableColumnTypes);
     }
 
@@ -138,11 +143,22 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 
     @Override
     public void restore() throws SQLException {
-        db.rollback();
         if (Utils.hasTodayData(db, tableName, etlDate,
                 datatableId, isMultipleInput, conf.isIncrement())) {
             Utils.restoreDatabaseData(db, tableName, conf.getEtlDate(), conf.getDatatableId(),
                     isMultipleInput, conf.isIncrement());
+        }
+    }
+
+    @Override
+    public void handleException() {
+        db.rollback();
+        if (versionManager.isVersionExpire()) {
+            versionManager.rollBack();
+            if (db.isExistTable(versionManager.getRenameTableName())) {
+                Utils.dropTable(db, tableName);
+                Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
+            }
         }
     }
 
@@ -154,6 +170,11 @@ public class SameDatabaseLoader extends AbstractRealLoader {
     @Override
     public void finalWork() {
         Utils.finalWorkWithoutTrans(finalSql, db);
+        versionManager.updateSqlVersion();
+        if (versionManager.isVersionExpire()) {
+            versionManager.updateFieldVersion();
+            versionManager.commit();
+        }
         db.commit();
     }
 

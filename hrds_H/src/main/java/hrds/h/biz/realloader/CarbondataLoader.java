@@ -44,6 +44,11 @@ public class CarbondataLoader extends AbstractRealLoader {
     @Override
     public void ensureRelation() {
         try (DatabaseWrapper db = getCarbonDb()) {
+            if (versionManager.isVersionExpire()) {
+                if (!db.isExistTable(versionManager.getRenameTableName()) && db.isExistTable(tableName)) {
+                    Utils.renameTable(db, tableName, versionManager.getRenameTableName());
+                }
+            }
             createCarbonTable(db, tableName);
         }
     }
@@ -103,6 +108,19 @@ public class CarbondataLoader extends AbstractRealLoader {
     }
 
     @Override
+    public void handleException() {
+        try (DatabaseWrapper db = getCarbonDb()) {
+            if (versionManager.isVersionExpire()) {
+                versionManager.rollBack();
+                if (db.isExistTable(versionManager.getRenameTableName())) {
+                    Utils.dropTable(db, tableName);
+                    Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
+                }
+            }
+        }
+    }
+
+    @Override
     public void finalWork() {
 
         try (DatabaseWrapper db = new DatabaseWrapper(); DatabaseWrapper carbonDb = getCarbonDb()) {
@@ -118,6 +136,10 @@ public class CarbondataLoader extends AbstractRealLoader {
                 carbonDb.execute(preAggregateSql);
             });
         }
-
+        versionManager.updateSqlVersion();
+        if (versionManager.isVersionExpire()) {
+            versionManager.updateFieldVersion();
+            versionManager.commit();
+        }
     }
 }

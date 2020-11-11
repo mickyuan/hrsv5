@@ -469,7 +469,8 @@ public class MarketInfoAction extends BaseAction {
 	public boolean getIfRelationDatabase2(String datatable_id) {
 		Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
 		dtab_relation_store.setTab_id(datatable_id);
-		Optional<Dm_operation_info> dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class, "select view_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dtab_relation_store.getTab_id());
+		Optional<Dm_operation_info> dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class, "select view_sql from " + Dm_operation_info.TableName + " where datatable_id = ? and (end_date = ? or end_date = ?)",
+				dtab_relation_store.getTab_id(), Constant.INITDATE, Constant.MAXDATE);
 		if (dm_operation_info.isPresent()) {
 			String sql = dm_operation_info.get().getView_sql();
 			Optional<Data_store_layer> data_store_layer = Dbo.queryOneObject(Data_store_layer.class, "select t1.dsl_id,t1.store_type from " + Data_store_layer.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
@@ -1451,7 +1452,7 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatatable_id(datatable_id);
 		//获取所有字段
 		List<Map<String, Object>> list = Dbo.queryList("select * from " + Datatable_field_info.TableName +
-				" where datatable_id = ? AND end_date = ? order by field_seq", dm_datatable.getDatatable_id(), Constant.MAXDATE);
+				" where datatable_id = ? AND end_date in (?,?) order by field_seq", dm_datatable.getDatatable_id(), Constant.MAXDATE, Constant.INITDATE);
 		Datatable_field_info datatable_field_info = new Datatable_field_info();
 		for (Map<String, Object> map : list) {
 			String datatable_field_id = map.get("datatable_field_id").toString();
@@ -1603,12 +1604,17 @@ public class MarketInfoAction extends BaseAction {
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 				"select execute_sql,id,datatable_id,end_date,start_date from " + Dm_operation_info.TableName
 						+ " where datatable_id = ? AND end_date = ?",
+				dm_datatable.getDatatable_id(), Constant.INITDATE);
+		//新增时判断SQL是否存在
+		Optional<Dm_operation_info> dm_operation_infoOptional1 = Dbo.queryOneObject(Dm_operation_info.class,
+				"select execute_sql,id,datatable_id,end_date,start_date from " + Dm_operation_info.TableName
+						+ " where datatable_id = ? AND end_date = ?",
 				dm_datatable.getDatatable_id(), Constant.MAXDATE);
 		//根据querysql和datatable_field_info获取最终执行的sql
 		String execute_sql = getExecute_sql(datatable_field_info, querysql);
 		//设置标签 判断是新增 还是 更新
 		//没有数据 表示新增 增加sql创建时间
-		if (!dm_operation_infoOptional.isPresent()) {
+		if (!dm_operation_infoOptional1.isPresent() && !dm_operation_infoOptional.isPresent()) {
 			dm_datatable.setDdlc_date(DateUtil.getSysDate());
 			dm_datatable.setDdlc_time(DateUtil.getSysTime());
 			dm_datatable.update(Dbo.db());
@@ -1618,61 +1624,54 @@ public class MarketInfoAction extends BaseAction {
 			dm_operation_info.setView_sql(querysql);
 			dm_operation_info.setExecute_sql(execute_sql);
 			dm_operation_info.setStart_date(DateUtil.getSysDate());
-			dm_operation_info.setEnd_date(Constant.MAXDATE);
+			dm_operation_info.setEnd_date(Constant.INITDATE);
 			dm_operation_info.add(Dbo.db());
 			//保存血缘关系的表，进入数据库
 			saveBloodRelationToPGTable(execute_sql, datatable_id);
 		}
 		//更新时判断SQL是否一致
 		else {
-			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
-			//如果不一致 修改 更新SQL 时间
-			if (!dm_operation_info.getExecute_sql().equals(execute_sql)) {
-				//加工 如果执行sql不一致,并且任务执行成功过,则提示不允许修改表结构信息
-				//TODO 如果后台版本管理完成后,去掉这个校验
-				Optional<Dtab_relation_store> dtab_rs_optional = Dbo.queryOneObject(Dtab_relation_store.class,
-						"select * from " + Dtab_relation_store.TableName + " dtab_rs" +
-								" join " + Dm_datatable.TableName + " dm on dtab_rs.tab_id=dm.datatable_id" +
-								" where dtab_rs.is_successful=? and dtab_rs.tab_id=?",
-						JobExecuteState.WanCheng.getCode(), dm_datatable.getDatatable_id());
-				if (dtab_rs_optional.isPresent()) {
-					throw new BusinessException("试用版不允许修改表结构!");
-				}
-				dm_datatable.setDdlc_date(DateUtil.getSysDate());
-				dm_datatable.setDdlc_time(DateUtil.getSysTime());
-				//更新加工表的SQL修改时间字段
-				dm_datatable.update(Dbo.db());
-				//如果当天的失效SQL存在,则删除掉.因为SQL关链的数据只保留一份
-				/*
-						1: 如果当天SQL修改了2次,只保留最后一次的操作记录,这里先将当天的关联sql信息删除掉
-						2: 如果当天SQL变化了,有没有历史修改记录,则直接把上次的SQL关链
-						3: 新增此次修改的SQL记录信息
-					 */
-				if (!dm_operation_info.getStart_date().equals(DateUtil.getSysDate())) {
-					//1: 如果当天SQL修改了2次,只保留最后一次的操作记录,这里先将当天的关联sql信息删除掉
+			if (dm_operation_infoOptional.isPresent()) {
+				Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
+				if (!dm_operation_info.getExecute_sql().equals(execute_sql)) {
+					dm_datatable.setDdlc_date(DateUtil.getSysDate());
+					dm_datatable.setDdlc_time(DateUtil.getSysTime());
+					//更新加工表的SQL修改时间字段
+					dm_datatable.update(Dbo.db());
 					Dbo.execute("DELETE FROM " + Dm_operation_info.TableName
-									+ " WHERE end_date = ? AND datatable_id = ?", DateUtil.getSysDate(),
+									+ " WHERE end_date = ? AND datatable_id = ?", Constant.INITDATE,
 							dm_operation_info.getDatatable_id());
-					//2: 如果当天SQL变化了,有没有历史修改记录,则直接把上次的SQL关链
-					DboExecute.updatesOrThrow("更新的数据超出了预期结果",
-							"UPDATE " + Dm_operation_info.TableName
-									+ " SET end_date = ? WHERE id = ? AND end_date = ? AND datatable_id = ?",
-							DateUtil.getSysDate(), dm_operation_info.getId(), Constant.MAXDATE,
-							dm_operation_info.getDatatable_id());
-				}
-				//3: 新增此次修改的SQL记录信息
-				dm_operation_info.setView_sql(querysql);
-				dm_operation_info.setExecute_sql(execute_sql);
-				dm_operation_info.setEnd_date(Constant.MAXDATE);
-				if (!dm_operation_info.getStart_date().equals(DateUtil.getSysDate())) {
+
+					//3: 新增此次修改的SQL记录信息
+					dm_operation_info.setView_sql(querysql);
+					dm_operation_info.setExecute_sql(execute_sql);
+					dm_operation_info.setEnd_date(Constant.INITDATE);
 					dm_operation_info.setId(PrimayKeyGener.getNextId());
 					dm_operation_info.setStart_date(DateUtil.getSysDate());
 					dm_operation_info.add(Dbo.db());
-				} else {
-					updatebean(dm_operation_info);
+					//保存血缘关系的表，进入数据库
+					saveBloodRelationToPGTable(execute_sql, datatable_id);
 				}
-				//保存血缘关系的表，进入数据库
-				saveBloodRelationToPGTable(execute_sql, datatable_id);
+			} else {
+
+				Dm_operation_info dm_operation_info1 = dm_operation_infoOptional1.get();
+				if (!dm_operation_info1.getExecute_sql().equals(execute_sql)) {
+					dm_datatable.setDdlc_date(DateUtil.getSysDate());
+					dm_datatable.setDdlc_time(DateUtil.getSysTime());
+					dm_datatable.update(Dbo.db());
+					dm_operation_info1.setEnd_date(Constant.INVDATE);
+					dm_operation_info1.update(Dbo.db());
+					Dm_operation_info dmOperationInfo = new Dm_operation_info();
+					dmOperationInfo.setId(PrimayKeyGener.getNextId());
+					dmOperationInfo.setDatatable_id(datatable_id);
+					dmOperationInfo.setView_sql(querysql);
+					dmOperationInfo.setExecute_sql(execute_sql);
+					dmOperationInfo.setStart_date(DateUtil.getSysDate());
+					dmOperationInfo.setEnd_date(Constant.INITDATE);
+					dmOperationInfo.add(Dbo.db());
+					//保存血缘关系的表，进入数据库
+					saveBloodRelationToPGTable(execute_sql, datatable_id);
+				}
 			}
 		}
 		//删除原有数据 因为页面可能会存在修改sql 导致的字段大幅度变动 所以针对更新的逻辑会特别复杂 故采用全删全增的方式
@@ -1686,8 +1685,8 @@ public class MarketInfoAction extends BaseAction {
 		List<Datatable_field_info> dataBaseFields = Dbo.queryList(Datatable_field_info.class,
 				"SELECT datatable_id,datatable_field_id,field_cn_name,field_en_name,field_length,field_process,field_seq,field_type,"
 						+ "group_mapping,process_mapping,end_date,start_date FROM " + Datatable_field_info.TableName
-						+ " where datatable_id = ? AND end_date = ?",
-				dm_datatable.getDatatable_id(), Constant.MAXDATE);
+						+ " where datatable_id = ? AND end_date in (?,?)",
+				dm_datatable.getDatatable_id(), Constant.MAXDATE, Constant.INITDATE);
 
 		if (dataBaseFields.size() == 0) {
 			//新增字段表
@@ -1697,7 +1696,7 @@ public class MarketInfoAction extends BaseAction {
 				df_info.setDatatable_field_id(datatable_field_id);
 				df_info.setDatatable_id(datatable_id);
 				df_info.setStart_date(DateUtil.getSysDate());
-				df_info.setEnd_date(Constant.MAXDATE);
+				df_info.setEnd_date(Constant.INITDATE);
 				df_info.add(Dbo.db());
 			}
 		} else {
@@ -1710,7 +1709,7 @@ public class MarketInfoAction extends BaseAction {
 				throw new BusinessException("没有表字段信息");
 			}
 			List<Datatable_field_info> webField_infos = Arrays.asList(datatable_field_info);
-			//查找不存在数据库中的,说明被修改了
+			//查找不存在数据库中的,说明被删除了
 			List<Datatable_field_info> notExists = dataBaseFields.stream()
 					.filter(item -> !webField_infos.contains(item))
 					.collect(Collectors.toList());
@@ -1718,16 +1717,16 @@ public class MarketInfoAction extends BaseAction {
 				//清空当天的失效数据,失效数据直保留一份
 				Assembler assembler = Assembler.newInstance()
 						.addSql("DELETE FROM " + Datatable_field_info.TableName
-								+ " WHERE end_date = ? AND start_date = ? AND datatable_id = ?")
-						.addParam(DateUtil.getSysDate()).addParam(DateUtil.getSysDate())
+								+ " WHERE end_date = ? AND datatable_id = ?")
+						.addParam(Constant.INVDATE)
 						.addParam(dm_datatable.getDatatable_id());
 				Dbo.execute(assembler.sql(), assembler.params());
 				//执行完清空
 				assembler.clean();
 				//更新修改的原字段信息为失效
 				assembler.addSql("UPDATE " + Datatable_field_info.TableName
-						+ " SET end_date = ? WHERE end_date = ? AND datatable_id = ?")
-						.addParam(DateUtil.getSysDate()).addParam(Constant.MAXDATE).addParam(dm_datatable.getDatatable_id());
+						+ " SET end_date = ? WHERE end_date in (?,?) AND datatable_id = ?")
+						.addParam(Constant.INVDATE).addParam(Constant.MAXDATE).addParam(Constant.INITDATE).addParam(dm_datatable.getDatatable_id());
 				assembler.addORParam("field_en_name",
 						notExists.stream().map(Datatable_field_info::getField_en_name).toArray(String[]::new), "AND");
 				Dbo.execute(assembler.sql(), assembler.params());
@@ -1748,7 +1747,7 @@ public class MarketInfoAction extends BaseAction {
 				add.setDatatable_field_id(PrimayKeyGener.getNextId());
 				add.setDatatable_id(datatable_id);
 				add.setStart_date(DateUtil.getSysDate());
-				add.setEnd_date(Constant.MAXDATE);
+				add.setEnd_date(Constant.INITDATE);
 				add.add(Dbo.db());
 			}
 
@@ -1979,14 +1978,17 @@ public class MarketInfoAction extends BaseAction {
 	public String getQuerySql(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
+		Optional<Dm_operation_info> dm_operation_infoOptional1 = Dbo.queryOneObject(Dm_operation_info.class,
+				"select view_sql as execute_sql from " + Dm_operation_info.TableName + " t1 where " +
+						"datatable_id = ? AND end_date = ?", dm_datatable.getDatatable_id(), Constant.INITDATE);
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 				"select view_sql as execute_sql from " + Dm_operation_info.TableName + " t1 where " +
 						"datatable_id = ? AND end_date = ?", dm_datatable.getDatatable_id(), Constant.MAXDATE);
-		if (dm_operation_infoOptional.isPresent()) {
-			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
-			return dm_operation_info.getExecute_sql();
+		if (dm_operation_infoOptional1.isPresent()) {
+			Dm_operation_info dm_operation_info1 = dm_operation_infoOptional1.get();
+			return dm_operation_info1.getExecute_sql();
 		} else {
-			return null;
+			return dm_operation_infoOptional.map(Dm_operation_info::getExecute_sql).orElse(null);
 		}
 	}
 

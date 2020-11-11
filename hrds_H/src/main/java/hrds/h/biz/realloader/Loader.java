@@ -69,6 +69,16 @@ public interface Loader extends Closeable {
     void restore() throws SQLException;
 
     /**
+     * 处理由于数据错误导致的问题，如事务回滚等
+     *
+     * @return
+     * @author xxx
+     * Date:2018年10月31日10:25:36
+     * @since JDK 1.7
+     */
+    void handleException();
+
+    /**
      * 前置作业
      */
     void preWork();
