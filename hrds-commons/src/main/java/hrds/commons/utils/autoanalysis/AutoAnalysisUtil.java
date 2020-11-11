@@ -64,7 +64,7 @@ public class AutoAnalysisUtil {
 						JsonUtil.toJson(componentMap.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
 				setGridLayout(componentMap, auto_asso_info.getX_axis_coord(), auto_asso_info.getY_axis_coord(),
-						auto_asso_info.getLength(), auto_asso_info.getWidth(),
+						auto_asso_info.getLength().longValue(), auto_asso_info.getWidth().longValue(),
 						auto_asso_info.getSerial_number(), auto_asso_info.getComponent_id());
 				autoCompSumList.add(auto_comp_sum);
 				resultMap.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
@@ -89,7 +89,7 @@ public class AutoAnalysisUtil {
 				map.put("textStyle", auto_font_info);
 				Map<String, Object> labelMap = new HashMap<>();
 				setGridLayout(labelMap, auto_label_info.getX_axis_coord(), auto_label_info.getY_axis_coord(),
-						auto_label_info.getLength(), auto_label_info.getWidth(),
+						auto_label_info.getLength().longValue(), auto_label_info.getWidth().longValue(),
 						auto_label_info.getSerial_number(), auto_label_info.getLabel_id());
 				labelMap.put("label", "0");
 				Map<String, Object> contentColorSize = new HashMap<>();
@@ -257,14 +257,14 @@ public class AutoAnalysisUtil {
 	@Param(name = "i", desc = "栅格中元素的ID", range = "需为自然数")
 	@Param(name = "type", desc = "对应组件ID", range = "新增对应组件时生成")
 	private static void setGridLayout(Map<String, Object> map, Integer x, Integer y,
-	                                  Object w, Object h, Object i, Long id) {
+	                                  Long w, Long h, Object i, Long id) {
 		// 1.设置仪表盘网格布局参数
 		map.put("x", x);
 		map.put("y", y);
 		map.put("w", w);
 		map.put("h", h);
 		map.put("i", i);
-		map.put("type", id);
+		map.put("type", String.valueOf(id));
 		map.put("static", true);
 	}
 }
