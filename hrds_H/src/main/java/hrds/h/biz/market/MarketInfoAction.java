@@ -9,6 +9,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.bean.EqualsBuilder;
 import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
@@ -1570,6 +1571,18 @@ public class MarketInfoAction extends BaseAction {
 		return field_type;
 	}
 
+	private boolean beanContains(List<Datatable_field_info> o1, Datatable_field_info o2) {
+		for (Datatable_field_info a : o1) {
+			if (EqualsBuilder.reflectionEquals(a, o2,
+					"datatable_field_id","field_desc","field_seq",
+					"remark","field_process","process_mapping","datatable_id",
+					"group_mapping","start_date","end_date")) {
+				return true;
+			}
+		}
+		return true;
+	}
+
 	@Method(desc = "保存新增加工2的数据",
 			logicStep = "1.检查页面数据合法性" +
 					"2.删除相关6张表中的数据" +
@@ -1711,7 +1724,7 @@ public class MarketInfoAction extends BaseAction {
 			List<Datatable_field_info> webField_infos = Arrays.asList(datatable_field_info);
 			//查找不存在数据库中的,说明被删除了
 			List<Datatable_field_info> notExists = dataBaseFields.stream()
-					.filter(item -> !webField_infos.contains(item))
+					.filter(item -> !beanContains(webField_infos, item))
 					.collect(Collectors.toList());
 			if (notExists.size() != 0) {
 				//清空当天的失效数据,失效数据直保留一份
