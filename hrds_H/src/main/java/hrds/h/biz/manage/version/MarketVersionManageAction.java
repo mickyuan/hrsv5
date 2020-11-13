@@ -89,14 +89,24 @@ public class MarketVersionManageAction extends BaseAction {
 		for (String version_date : version_date_s) {
 			//获取选中版本的字段信息
 			asmSql.clean();
-			asmSql.addSql("select dfi.field_en_name,dfi.field_cn_name,dfi.field_type from" +
-				" datatable_field_info dfi where dfi.datatable_id=?").addParam(datatable_id);
-			asmSql.addSql(" and (");
-			asmSql.addSql(" start_date=?").addParam(version_date);
-			asmSql.addSql(" or (start_date<? and end_date=?)").addParam(version_date).addParam(Constant.MAXDATE);
-			asmSql.addSql(" or (start_date<? and end_date!=?").addParam(version_date).addParam(Constant.MAXDATE);
-			asmSql.addSql(" and end_date>?)").addParam(version_date);
-			asmSql.addSql(")");
+			//如果选中的版本日志是"00000000",则查询已经修改但未运行成功的字段信息
+			if (version_date.equalsIgnoreCase(Constant.INITDATE)) {
+				asmSql.addSql("select dfi.field_en_name,dfi.field_cn_name,dfi.field_type,dfi.field_length from "
+					+ Datatable_field_info.TableName + " dfi where dfi.datatable_id=?").addParam(datatable_id);
+				asmSql.addSql("and dfi.end_date in (?,?)").addParam(Constant.INITDATE).addParam(Constant.MAXDATE);
+			}
+			//否则获取指定版本的字段信息
+			else {
+				asmSql.addSql("select dfi.field_en_name,dfi.field_cn_name,dfi.field_type,dfi.field_length from "
+					+ Datatable_field_info.TableName + " dfi where dfi.datatable_id=?").addParam(datatable_id);
+				asmSql.addSql("and dfi.start_date<=? and dfi.end_date>?").addParam(version_date).addParam(version_date);
+//				asmSql.addSql(" and (");
+//				asmSql.addSql(" start_date=?").addParam(version_date);
+//				asmSql.addSql(" or (start_date<? and end_date=?)").addParam(version_date).addParam(Constant.MAXDATE);
+//				asmSql.addSql(" or (start_date<? and end_date!=?").addParam(version_date).addParam(Constant.MAXDATE);
+//				asmSql.addSql(" and end_date>?)").addParam(version_date);
+//				asmSql.addSql(")");
+			}
 			List<Datatable_field_info> selectedVersionFieldList =
 				Dbo.queryList(Datatable_field_info.class, asmSql.sql(), asmSql.params());
 			//设置数据表结果版本数据信息map,用于设置多版本显示信息
@@ -128,6 +138,7 @@ public class MarketVersionManageAction extends BaseAction {
 				new_dfi.setField_en_name("--");
 				new_dfi.setField_cn_name("--");
 				new_dfi.setField_type("--");
+				new_dfi.setField_length("--");
 				//处理当前版本的每一条记录
 				for (Datatable_field_info datatable_field_info : selectedVersionFieldList) {
 					if (field_en_name.equalsIgnoreCase(datatable_field_info.getField_en_name())) {
@@ -140,9 +151,10 @@ public class MarketVersionManageAction extends BaseAction {
 					for (Datatable_field_info d : fieldUnionResult) {
 						if (d.getField_en_name().equalsIgnoreCase(new_dfi.getField_en_name())
 							&& d.getField_cn_name().equalsIgnoreCase(new_dfi.getField_cn_name())
-							&& d.getField_type().equalsIgnoreCase(new_dfi.getField_type())) {
+							&& d.getField_type().equalsIgnoreCase(new_dfi.getField_type())
+							&& d.getField_length().equalsIgnoreCase(new_dfi.getField_length())) {
+							//如果需要比较的信息一致,设置标记为一样,然后跳出,如果不跳出下次处理会把已经设置标记的数据改掉
 							dfi_map.put("is_same", IsFlag.Shi.getCode());
-							//如果找到共同的字段,设置标记为一样,然后跳出,如果不跳出下次处理会把已经设置标记得数据改掉
 							break;
 						} else {
 							dfi_map.put("is_same", IsFlag.Fou.getCode());
@@ -172,12 +184,21 @@ public class MarketVersionManageAction extends BaseAction {
 		}
 		//初始sql版本解析信息
 		Map<String, Object> sql_version_info_map = new HashMap<>();
+		//根据版本日期和集市表id获取表的版本信息
 		for (String version_date : version_date_s) {
-			//根据版本日期和集市表id获取表的版本信息
-			Dm_operation_info dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class,
-				"select * from dm_operation_info where datatable_id=? and start_date<=? and end_date>?",
-				datatable_id, version_date, version_date).orElseThrow(()
-				-> (new BusinessException("根据数据表id和版本日期获取表sql版本信息失败!")));
+			//如果选中的版本日志是"00000000",则查询已经修改但未运行成功sql信息
+			Dm_operation_info dm_operation_info;
+			if (version_date.equalsIgnoreCase(Constant.INITDATE)) {
+				dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class,
+					"select * from dm_operation_info where datatable_id=? and end_date in (?,?)",
+					datatable_id, version_date, Constant.MAXDATE).orElseThrow(()
+					-> (new BusinessException("根据数据表id和版本日期获取表sql版本信息失败!")));
+			} else {
+				dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class,
+					"select * from dm_operation_info where datatable_id=? and start_date<=? and end_date>?",
+					datatable_id, version_date, version_date).orElseThrow(()
+					-> (new BusinessException("根据数据表id和版本日期获取表sql版本信息失败!")));
+			}
 			//获取当前版本执行sql
 			String execute_sql = dm_operation_info.getExecute_sql();
 			Validator.notBlank(execute_sql, "执行sql为空!");
@@ -226,20 +247,22 @@ public class MarketVersionManageAction extends BaseAction {
 		//获取sql版本
 		asmSql.addSql(" SELECT doi.start_date AS version_date FROM " + Dm_operation_info.TableName + " doi" +
 			" JOIN " + Dm_datatable.TableName + " dd ON doi.datatable_id=dd.datatable_id" +
-			" WHERE dd.datatable_id=?").addParam(datatable_id);
+			" WHERE dd.datatable_id=? and end_date!=?").addParam(datatable_id).addParam(Constant.INITDATE);
 		asmSql.addSql(" UNION ALL");
 		asmSql.addSql(" SELECT doi.end_date AS version_date FROM  " + Dm_operation_info.TableName + " doi" +
 			" JOIN " + Dm_datatable.TableName + " dd ON doi.datatable_id=dd.datatable_id" +
-			" WHERE dd.datatable_id=? and end_date != ?").addParam(datatable_id).addParam(Constant.MAXDATE);
+			" WHERE dd.datatable_id=? and end_date not in (?,?)").addParam(datatable_id)
+			.addParam(Constant.MAXDATE).addParam(Constant.INVDATE);
 		//获取字段版本
 		asmSql.addSql(" UNION ALL");
 		asmSql.addSql(" SELECT dfi.start_date AS version_date FROM " + Datatable_field_info.TableName + " dfi" +
 			" JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id=dfi.datatable_id" +
-			" WHERE dd.datatable_id=?").addParam(datatable_id);
+			" WHERE dd.datatable_id=? and end_date!=?").addParam(datatable_id).addParam(Constant.INITDATE);
 		asmSql.addSql(" UNION ALL");
 		asmSql.addSql(" SELECT dfi.end_date AS version_date FROM " + Datatable_field_info.TableName + " dfi" +
 			" JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id=dfi.datatable_id" +
-			" WHERE dd.datatable_id=? and end_date != ?").addParam(datatable_id).addParam(Constant.MAXDATE);
+			" WHERE dd.datatable_id=? and end_date not in (?,?)").addParam(datatable_id)
+			.addParam(Constant.MAXDATE).addParam(Constant.INVDATE);
 		asmSql.addSql(" ) aa ORDER BY version_date DESC");
 		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
