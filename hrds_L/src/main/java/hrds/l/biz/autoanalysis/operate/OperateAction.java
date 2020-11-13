@@ -63,8 +63,6 @@ public class OperateAction extends BaseAction {
 	private static final String BL = "bl";
 	// 柱状折线混合图-简单
 //	private static final String BLSIMPLE = "blsimple";
-	//	// 多维柱状图(3)
-//	private static final String BARMD = "barmd";
 	// 极坐标柱状图
 	private static final String POLARBAR = "polarbar";
 	// 散点图
@@ -651,19 +649,20 @@ public class OperateAction extends BaseAction {
 	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
 	                                        String chart_type) {
 		List<Map<String, Object>> componentList = new ArrayList<>();
+		Set<String> columns = new HashSet<>();
 		// 1.获取组件数据
 		new ProcessingData() {
 			@Override
 			public void dealLine(Map<String, Object> map) {
+				// 1.获取列信息
+				map.forEach((k, v) -> columns.add(k)
+				);
 				componentList.add(map);
 			}
 		}.getPageDataLayer(exe_sql, Dbo.db(), 1, 100);
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("chart_type", chart_type);
 		// 2.根据不同图标类型获取图表数据
-//		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
-//			// 折线图和柱状图
-//			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
 		if (LINE.equals(chart_type) || BAR.equals(chart_type)) {
 			// 折线图和柱状图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
@@ -686,6 +685,7 @@ public class OperateAction extends BaseAction {
 		} else if (TABLE.equals(chart_type)) {
 			// 二维表
 			resultMap.put("tableData", componentList);
+			resultMap.put("columns", columns);
 		} else if (TREEMAP.equals(chart_type)) {
 			// 矩形树图
 			putDataForTreemap(componentList, x_columns, y_columns, resultMap);
@@ -694,7 +694,7 @@ public class OperateAction extends BaseAction {
 			//TODO
 		} else if (MAP.equals(chart_type)) {
 			// 地理坐标/地图
-			putDataForBubble(componentList, x_columns, y_columns, resultMap);
+			putDataForBubbleOrMap(componentList, x_columns, y_columns, resultMap);
 		} else {
 			throw new BusinessException("暂不支持该种图例类型" + chart_type);
 		}
@@ -755,8 +755,8 @@ public class OperateAction extends BaseAction {
 		}
 	}
 
-	private void putDataForBubble(List<Map<String, Object>> componentList, String[] x_columns,
-	                              String[] y_columns, Map<String, Object> resultMap) {
+	private void putDataForBubbleOrMap(List<Map<String, Object>> componentList, String[] x_columns,
+	                                   String[] y_columns, Map<String, Object> resultMap) {
 		List<Map<String, Object>> seriesData = new ArrayList<>();
 		for (Map<String, Object> stringObjectMap : componentList) {
 			Map<String, Object> map = new HashMap<>();
@@ -765,23 +765,6 @@ public class OperateAction extends BaseAction {
 			seriesData.add(map);
 		}
 		resultMap.put("seriesData", seriesData);
-	}
-
-	private void putDateForBarmd(List<Map<String, Object>> componentList, String[] x_columns,
-	                             String[] y_columns, Map<String, Object> resultMap) {
-		List<List<Object>> data = new ArrayList<>();
-		String y_column = y_columns[0];
-		for (Map<String, Object> stringObjectMap : componentList) {
-			List<Object> dataTmp = new ArrayList<>();
-			for (String x_column : x_columns) {
-				dataTmp.add(stringObjectMap.get(x_column));
-			}
-			//支持各种数值类型
-			dataTmp.add(stringObjectMap.get(y_column));
-			data.add(dataTmp);
-		}
-		resultMap.put("xColLen", x_columns.length);
-		resultMap.put("barmdData", data);
 	}
 
 	private void putDataForTreemap(List<Map<String, Object>> componentList, String[] x_columns,
@@ -1260,18 +1243,17 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoCompCondString", desc = "组件条件表对象数组", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "autoCompGroupString", desc = "组件分组表对象数组", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "autoCompDataSumString", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致")
-	@Param(name = "titleFontString", desc = "字体属性表对象（标题）", range = "与数据库表规则一致")
-	@Param(name = "axisStyleFontString", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致")
-	@Param(name = "autoAxisInfoString", desc = "轴配置信息表对象数组",
-			range = "与数据库表规则一致,轴类型axis_type使用（IsFlag代码项，0:x轴，1:y轴）")
-	@Param(name = "xAxisLabelString", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致")
-	@Param(name = "yAxisLabelString", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "xAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "yAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "auto_table_infoString", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_chartsconfigString", desc = "图表配置信息表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_labelString", desc = "图形文本标签表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致")
+	@Param(name = "titleFontString", desc = "字体属性表对象（标题）", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "axisStyleFontString", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "autoAxisInfoString", desc = "轴配置信息表对象数组", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "xAxisLabelString", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "yAxisLabelString", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "xAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "yAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_table_infoString", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_chartsconfigString", desc = "图表配置信息表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_labelString", desc = "图形文本标签表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致", nullable = true)
 	@UploadFile
 	public void updateVisualComponentInfo(String componentBeanString, String auto_comp_sumString,
 	                                      String autoCompCondString, String autoCompGroupString,
@@ -1297,8 +1279,8 @@ public class OperateAction extends BaseAction {
 		});
 		Auto_axisline_info yAxisLine = JSONObject.parseObject(yAxisLineString, new TypeReference<Auto_axisline_info>() {
 		});
-//		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
-//		});
+		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
+		});
 		Auto_chartsconfig auto_chartsconfig = JSONObject.parseObject(auto_chartsconfigString, new TypeReference<Auto_chartsconfig>() {
 		});
 		Auto_label auto_label = JSONObject.parseObject(auto_labelString, new TypeReference<Auto_label>() {
@@ -1335,7 +1317,7 @@ public class OperateAction extends BaseAction {
 		// 4.保存组件关联表数据
 		saveComponentInfo(componentBean, auto_comp_sum, titleFont, axisStyleFont, xAxisLabel, yAxisLabel,
 				xAxisLine, yAxisLine, auto_chartsconfig, auto_label, auto_legend_info, autoCompConds,
-				autoCompGroups, autoCompDataSums, autoAxisInfos);
+				autoCompGroups, autoCompDataSums, autoAxisInfos, auto_table_info);
 	}
 
 	@Method(desc = "新增保存可视化组件信息", logicStep = "1.校验组件汇总表字段合法性" +
@@ -1347,18 +1329,18 @@ public class OperateAction extends BaseAction {
 	@Param(name = "autoCompCondString", desc = "组件条件表对象数组", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "autoCompGroupString", desc = "组件分组表对象数组", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "autoCompDataSumString", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致")
-	@Param(name = "titleFontString", desc = "字体属性表对象（标题）", range = "与数据库表规则一致")
-	@Param(name = "axisStyleFontString", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致")
+	@Param(name = "titleFontString", desc = "字体属性表对象（标题）", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "axisStyleFontString", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "autoAxisInfoString", desc = "轴配置信息表对象数组",
-			range = "与数据库表规则一致,轴类型axis_type使用（IsFlag代码项，0:x轴，1:y轴）")
-	@Param(name = "xAxisLabelString", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致")
-	@Param(name = "yAxisLabelString", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "xAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "yAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "auto_table_infoString", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_chartsconfigString", desc = "图表配置信息表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_labelString", desc = "图形文本标签表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致")
+			range = "与数据库表规则一致", nullable = true)
+	@Param(name = "xAxisLabelString", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "yAxisLabelString", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "xAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "yAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_table_infoString", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_chartsconfigString", desc = "图表配置信息表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_labelString", desc = "图形文本标签表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致", nullable = true)
 	@UploadFile
 	public void addVisualComponentInfo(String componentBeanString, String auto_comp_sumString,
 	                                   String autoCompCondString, String autoCompGroupString,
@@ -1384,8 +1366,8 @@ public class OperateAction extends BaseAction {
 		});
 		Auto_axisline_info yAxisLine = JSONObject.parseObject(yAxisLineString, new TypeReference<Auto_axisline_info>() {
 		});
-//		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
-//		});
+		Auto_table_info auto_table_info = JSONObject.parseObject(auto_table_infoString, new TypeReference<Auto_table_info>() {
+		});
 		Auto_chartsconfig auto_chartsconfig = JSONObject.parseObject(auto_chartsconfigString, new TypeReference<Auto_chartsconfig>() {
 		});
 		Auto_label auto_label = JSONObject.parseObject(auto_labelString, new TypeReference<Auto_label>() {
@@ -1424,7 +1406,7 @@ public class OperateAction extends BaseAction {
 		// 4.保存组件关联表数据
 		saveComponentInfo(componentBean, auto_comp_sum, titleFont, axisStyleFont, xAxisLabel, yAxisLabel,
 				xAxisLine, yAxisLine, auto_chartsconfig, auto_label, auto_legend_info, autoCompConds,
-				autoCompGroups, autoCompDataSums, autoAxisInfos);
+				autoCompGroups, autoCompDataSums, autoAxisInfos, auto_table_info);
 	}
 
 	@Method(desc = "保存组件关联表数据", logicStep = "1.保存组件条件表" +
@@ -1439,23 +1421,24 @@ public class OperateAction extends BaseAction {
 			"10.保存图表配置信息表" +
 			"11.保存文本标签信息表" +
 			"12.保存图例信息表")
-	@Param(name = "componentBeanString", desc = "可视化组件参数实体bean", range = "自定义无限制")
-	@Param(name = "auto_comp_sumString", desc = "组件汇总表对象", range = "与数据库表规则一致")
-	@Param(name = "autoCompCondString", desc = "组件条件表对象数组", range = "与数据库表规则一致", nullable = true)
-	@Param(name = "autoCompGroupString", desc = "组件分组表对象数组", range = "与数据库表规则一致", nullable = true)
-	@Param(name = "autoCompDataSumString", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致")
-	@Param(name = "titleFontString", desc = "字体属性表对象（标题）", range = "与数据库表规则一致")
-	@Param(name = "axisStyleFontString", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致")
-	@Param(name = "autoAxisInfoString", desc = "轴配置信息表对象数组",
+	@Param(name = "componentBean", desc = "可视化组件参数实体bean", range = "自定义无限制")
+	@Param(name = "auto_comp_sum", desc = "组件汇总表对象", range = "与数据库表规则一致")
+	@Param(name = "autoCompConds", desc = "组件条件表对象数组", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "autoCompGroups", desc = "组件分组表对象数组", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "autoCompDataSums", desc = "组件数据汇总信息表对象数组", range = "与数据库表规则一致")
+	@Param(name = "titleFont", desc = "字体属性表对象（标题）", range = "与数据库表规则一致")
+	@Param(name = "axisStyleFont", desc = "字体属性表对象（轴字体样式）", range = "与数据库表规则一致")
+	@Param(name = "autoAxisInfo", desc = "轴配置信息表对象数组",
 			range = "与数据库表规则一致,轴类型axis_type使用（IsFlag代码项，0:x轴，1:y轴）")
-	@Param(name = "xAxisLabelString", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致")
-	@Param(name = "yAxisLabelString", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "xAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "yAxisLineString", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
-	@Param(name = "auto_table_infoString", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_chartsconfigString", desc = "图表配置信息表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_labelString", desc = "图形文本标签表对象", range = "与数据库表规则一致")
-	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致")
+	@Param(name = "xAxisLabel", desc = "轴标签配置信息表对象(x轴)", range = "与数据库表规则一致")
+	@Param(name = "yAxisLabel", desc = "轴标签配置信息表对象(y轴)", range = "与数据库表规则一致")
+	@Param(name = "xAxisLine", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
+	@Param(name = "yAxisLine", desc = "轴线配置信息表对象(y轴)", range = "与数据库表规则一致")
+	@Param(name = "auto_table_info", desc = "组件数据汇总信息表对象", range = "与数据库表规则一致")
+	@Param(name = "auto_chartsconfig", desc = "图表配置信息表对象", range = "与数据库表规则一致")
+	@Param(name = "auto_label", desc = "图形文本标签表对象", range = "与数据库表规则一致")
+	@Param(name = "auto_legend_info", desc = "组件图例信息表对象", range = "与数据库表规则一致")
+	@Param(name = "auto_table_info", desc = "组件图例信息表对象", range = "与数据库表规则一致")
 	private void saveComponentInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum,
 	                               Auto_font_info titleFont, Auto_font_info axisStyleFont,
 	                               Auto_axislabel_info xAxisLabel, Auto_axislabel_info yAxisLabel,
@@ -1463,7 +1446,7 @@ public class OperateAction extends BaseAction {
 	                               Auto_chartsconfig auto_chartsconfig, Auto_label auto_label,
 	                               Auto_legend_info auto_legend_info, Auto_comp_cond[] autoCompConds,
 	                               Auto_comp_group[] autoCompGroups, Auto_comp_data_sum[] autoCompDataSums,
-	                               Auto_axis_info[] autoAxisInfos) {
+	                               Auto_axis_info[] autoAxisInfos, Auto_table_info auto_table_info) {
 		// 1.保存组件条件表
 		if (autoCompConds != null && autoCompConds.length > 0) {
 			for (Auto_comp_cond auto_comp_cond : autoCompConds) {
@@ -1515,77 +1498,89 @@ public class OperateAction extends BaseAction {
 		// 4.保存横轴纵轴字段信息表
 		addAutoAxisColInfo(componentBean, auto_comp_sum);
 		// 5.保存图表标题字体属性表数据
-		titleFont.setFont_id(PrimayKeyGener.getNextId());
-		titleFont.setFont_corr_id(auto_comp_sum.getComponent_id());
-		titleFont.setFont_corr_tname(Auto_comp_sum.TableName);
-		titleFont.add(Dbo.db());
+		if (titleFont != null) {
+			titleFont.setFont_id(PrimayKeyGener.getNextId());
+			titleFont.setFont_corr_id(auto_comp_sum.getComponent_id());
+			titleFont.setFont_corr_tname(Auto_comp_sum.TableName);
+			titleFont.add(Dbo.db());
+		}
 		// 6.保存x/y轴配置信息表数据
-		for (Auto_axis_info auto_axis_info : autoAxisInfos) {
-			Validator.notBlank(auto_axis_info.getAxis_type(), "轴类型不能为空");
-			auto_axis_info.setAxis_id(PrimayKeyGener.getNextId());
-			auto_axis_info.setComponent_id(auto_comp_sum.getComponent_id());
-			auto_axis_info.add(Dbo.db());
-			axisStyleFont.setFont_id(PrimayKeyGener.getNextId());
-			axisStyleFont.setFont_corr_id(auto_axis_info.getAxis_id());
-			axisStyleFont.setFont_corr_tname(Auto_axis_info.TableName);
-			axisStyleFont.add(Dbo.db());
-			// 7.保存x/y轴线配置信息/轴标签配置信息表数据
-			if (AxisType.XAxis == AxisType.ofEnumByCode(auto_axis_info.getAxis_type())) {
-				// x轴线配置信息表数据
-				xAxisLine.setAxis_id(auto_axis_info.getAxis_id());
-				xAxisLine.setAxisline_id(PrimayKeyGener.getNextId());
-				xAxisLine.add(Dbo.db());
-				// x轴标签配置信息表数据
-				xAxisLabel.setLable_id(PrimayKeyGener.getNextId());
-				xAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
-				xAxisLabel.add(Dbo.db());
-				// 8.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）
-			} else {
-				// y轴线配置信息表数据
-				yAxisLine.setAxis_id(auto_axis_info.getAxis_id());
-				yAxisLine.setAxisline_id(PrimayKeyGener.getNextId());
-				yAxisLine.add(Dbo.db());
-				// y轴标签配置信息表数据
-				yAxisLabel.setLable_id(PrimayKeyGener.getNextId());
-				yAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
-				yAxisLabel.add(Dbo.db());
+		if (autoAxisInfos != null) {
+			for (Auto_axis_info auto_axis_info : autoAxisInfos) {
+				Validator.notBlank(auto_axis_info.getAxis_type(), "轴类型不能为空");
+				auto_axis_info.setAxis_id(PrimayKeyGener.getNextId());
+				auto_axis_info.setComponent_id(auto_comp_sum.getComponent_id());
+				auto_axis_info.add(Dbo.db());
+				axisStyleFont.setFont_id(PrimayKeyGener.getNextId());
+				axisStyleFont.setFont_corr_id(auto_axis_info.getAxis_id());
+				axisStyleFont.setFont_corr_tname(Auto_axis_info.TableName);
+				axisStyleFont.add(Dbo.db());
+				// 7.保存x/y轴线配置信息/轴标签配置信息表数据
+				if (AxisType.XAxis == AxisType.ofEnumByCode(auto_axis_info.getAxis_type())) {
+					// x轴线配置信息表数据
+					xAxisLine.setAxis_id(auto_axis_info.getAxis_id());
+					xAxisLine.setAxisline_id(PrimayKeyGener.getNextId());
+					xAxisLine.add(Dbo.db());
+					// x轴标签配置信息表数据
+					xAxisLabel.setLable_id(PrimayKeyGener.getNextId());
+					xAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
+					xAxisLabel.add(Dbo.db());
+					// 8.保存x,y轴标签字体属性(因为x轴，y轴字体属性一样，所以这里以x轴编号为字体属性对应的编号）
+				} else {
+					// y轴线配置信息表数据
+					yAxisLine.setAxis_id(auto_axis_info.getAxis_id());
+					yAxisLine.setAxisline_id(PrimayKeyGener.getNextId());
+					yAxisLine.add(Dbo.db());
+					// y轴标签配置信息表数据
+					yAxisLabel.setLable_id(PrimayKeyGener.getNextId());
+					yAxisLabel.setAxis_id(auto_axis_info.getAxis_id());
+					yAxisLabel.add(Dbo.db());
+				}
 			}
 		}
 //		// 9.保存二维表样式信息表
-//		auto_table_info.setConfig_id(PrimayKeyGener.getNextId());
-//		auto_table_info.setComponent_id(auto_comp_sum.getComponent_id());
-//		auto_table_info.add(Dbo.db());
+		if (null != auto_table_info) {
+			auto_table_info.setConfig_id(PrimayKeyGener.getNextId());
+			auto_table_info.setComponent_id(auto_comp_sum.getComponent_id());
+			auto_table_info.add(Dbo.db());
+		}
 //		// 10.保存图表配置信息表
-		auto_chartsconfig.setConfig_id(PrimayKeyGener.getNextId());
-		auto_chartsconfig.setComponent_id(auto_comp_sum.getComponent_id());
-		auto_chartsconfig.setShowsymbol(auto_chartsconfig.getSymbol() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getSymbol());
-		auto_chartsconfig.setConnectnulls(auto_chartsconfig.getConnectnulls() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getConnectnulls());
-		auto_chartsconfig.setStep(auto_chartsconfig.getStep() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getStep());
-		auto_chartsconfig.setSmooth(auto_chartsconfig.getSmooth() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getSmooth());
-		auto_chartsconfig.setSilent(auto_chartsconfig.getSilent() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getSilent());
-		auto_chartsconfig.setLegendhoverlink(auto_chartsconfig.getLegendhoverlink() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getLegendhoverlink());
-		auto_chartsconfig.setClockwise(auto_chartsconfig.getClockwise() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getClockwise());
-		auto_chartsconfig.setRosetype(auto_chartsconfig.getRosetype() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getRosetype());
-		auto_chartsconfig.setPolyline(auto_chartsconfig.getPolyline() == null ? IsFlag.Fou.getCode() :
-				auto_chartsconfig.getPolyline());
-		auto_chartsconfig.add(Dbo.db());
+		if (auto_chartsconfig != null) {
+			auto_chartsconfig.setConfig_id(PrimayKeyGener.getNextId());
+			auto_chartsconfig.setComponent_id(auto_comp_sum.getComponent_id());
+			auto_chartsconfig.setShowsymbol(auto_chartsconfig.getSymbol() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getSymbol());
+			auto_chartsconfig.setConnectnulls(auto_chartsconfig.getConnectnulls() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getConnectnulls());
+			auto_chartsconfig.setStep(auto_chartsconfig.getStep() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getStep());
+			auto_chartsconfig.setSmooth(auto_chartsconfig.getSmooth() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getSmooth());
+			auto_chartsconfig.setSilent(auto_chartsconfig.getSilent() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getSilent());
+			auto_chartsconfig.setLegendhoverlink(auto_chartsconfig.getLegendhoverlink() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getLegendhoverlink());
+			auto_chartsconfig.setClockwise(auto_chartsconfig.getClockwise() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getClockwise());
+			auto_chartsconfig.setRosetype(auto_chartsconfig.getRosetype() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getRosetype());
+			auto_chartsconfig.setPolyline(auto_chartsconfig.getPolyline() == null ? IsFlag.Fou.getCode() :
+					auto_chartsconfig.getPolyline());
+			auto_chartsconfig.add(Dbo.db());
+		}
 //		// 11.保存文本标签信息表
-		auto_label.setLable_id(PrimayKeyGener.getNextId());
-		auto_label.setLabel_corr_tname(Auto_chartsconfig.TableName);
-		auto_label.setLabel_corr_id(auto_comp_sum.getComponent_id());
-		auto_label.add(Dbo.db());
+		if (auto_label != null) {
+			auto_label.setLable_id(PrimayKeyGener.getNextId());
+			auto_label.setLabel_corr_tname(Auto_chartsconfig.TableName);
+			auto_label.setLabel_corr_id(auto_comp_sum.getComponent_id());
+			auto_label.add(Dbo.db());
+		}
 //		// 12.保存图例信息表
-		auto_legend_info.setLegend_id(PrimayKeyGener.getNextId());
-		auto_legend_info.setComponent_id(auto_comp_sum.getComponent_id());
-		auto_legend_info.add(Dbo.db());
+		if (null != auto_legend_info) {
+			auto_legend_info.setLegend_id(PrimayKeyGener.getNextId());
+			auto_legend_info.setComponent_id(auto_comp_sum.getComponent_id());
+			auto_legend_info.add(Dbo.db());
+		}
 	}
 
 	private void addAutoAxisColInfo(ComponentBean componentBean, Auto_comp_sum auto_comp_sum) {
