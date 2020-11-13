@@ -4,6 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
@@ -95,17 +96,24 @@ public class MarketVersionManageAction extends BaseAction {
 					+ Datatable_field_info.TableName + " dfi where dfi.datatable_id=?").addParam(datatable_id);
 				asmSql.addSql("and dfi.end_date in (?,?)").addParam(Constant.INITDATE).addParam(Constant.MAXDATE);
 			}
+			//如果查看版本刚好是今天,则需要取开始日期为今天,结束日期为00000000的字段
+			else if (version_date.equalsIgnoreCase(DateUtil.getSysDate())) {
+				asmSql.addSql("select dfi.field_en_name,dfi.field_cn_name,dfi.field_type,dfi.field_length from "
+					+ Datatable_field_info.TableName + " dfi where dfi.datatable_id=?").addParam(datatable_id);
+				asmSql.addSql("and start_date=? and dfi.end_date!=?")
+					.addParam(version_date).addParam(Constant.INITDATE);
+			}
 			//否则获取指定版本的字段信息
 			else {
 				asmSql.addSql("select dfi.field_en_name,dfi.field_cn_name,dfi.field_type,dfi.field_length from "
 					+ Datatable_field_info.TableName + " dfi where dfi.datatable_id=?").addParam(datatable_id);
-				asmSql.addSql("and dfi.start_date<=? and dfi.end_date>?").addParam(version_date).addParam(version_date);
-//				asmSql.addSql(" and (");
-//				asmSql.addSql(" start_date=?").addParam(version_date);
-//				asmSql.addSql(" or (start_date<? and end_date=?)").addParam(version_date).addParam(Constant.MAXDATE);
-//				asmSql.addSql(" or (start_date<? and end_date!=?").addParam(version_date).addParam(Constant.MAXDATE);
-//				asmSql.addSql(" and end_date>?)").addParam(version_date);
-//				asmSql.addSql(")");
+				asmSql.addSql("and dfi.start_date<=? and dfi.end_date>? and dfi.end_date!=?")
+					.addParam(version_date).addParam(version_date).addParam(Constant.INVDATE);
+				asmSql.addSql(" UNION ALL");
+				asmSql.addSql("select dfi.field_en_name,dfi.field_cn_name,dfi.field_type,dfi.field_length from "
+					+ Datatable_field_info.TableName + " dfi where dfi.datatable_id=?").addParam(datatable_id);
+				asmSql.addSql("and dfi.start_date=? and dfi.end_date=?")
+					.addParam(version_date).addParam(Constant.INITDATE);
 			}
 			List<Datatable_field_info> selectedVersionFieldList =
 				Dbo.queryList(Datatable_field_info.class, asmSql.sql(), asmSql.params());
@@ -257,7 +265,8 @@ public class MarketVersionManageAction extends BaseAction {
 		asmSql.addSql(" UNION ALL");
 		asmSql.addSql(" SELECT dfi.start_date AS version_date FROM " + Datatable_field_info.TableName + " dfi" +
 			" JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id=dfi.datatable_id" +
-			" WHERE dd.datatable_id=? and end_date!=?").addParam(datatable_id).addParam(Constant.INITDATE);
+			" WHERE dd.datatable_id=? and end_date!=? and start_date!=?")
+			.addParam(datatable_id).addParam(Constant.INITDATE).addParam(DateUtil.getSysDate());
 		asmSql.addSql(" UNION ALL");
 		asmSql.addSql(" SELECT dfi.end_date AS version_date FROM " + Datatable_field_info.TableName + " dfi" +
 			" JOIN " + Dm_datatable.TableName + " dd ON dd.datatable_id=dfi.datatable_id" +
