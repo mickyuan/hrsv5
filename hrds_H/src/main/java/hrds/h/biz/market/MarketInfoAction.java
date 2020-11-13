@@ -1745,18 +1745,10 @@ public class MarketInfoAction extends BaseAction {
 				Dbo.execute(assembler.sql(), assembler.params());
 			}
 
-			List<Datatable_field_info> exists = dataBaseFields.stream()
-					.filter(webField_infos::contains)
+			List<Datatable_field_info> exists = webField_infos.stream()
+					.filter(item -> !beanContains(dataBaseFields, item))
 					.collect(Collectors.toList());
-			List<Datatable_field_info> field_info = new ArrayList<>();
-			// 去重找到页面新增的数据,然后新增入库
-			webField_infos.forEach(field -> {
-						if (!exists.contains(field)) {
-							field_info.add(field);
-						}
-					}
-			);
-			for (Datatable_field_info add : field_info) {
+			for (Datatable_field_info add : exists) {
 				add.setDatatable_field_id(PrimayKeyGener.getNextId());
 				add.setDatatable_id(datatable_id);
 				add.setStart_date(DateUtil.getSysDate());
