@@ -1727,17 +1727,8 @@ public class MarketInfoAction extends BaseAction {
 					.filter(item -> !beanContains(webField_infos, item))
 					.collect(Collectors.toList());
 			if (notExists.size() != 0) {
-				//清空当天的失效数据,失效数据直保留一份
-				Assembler assembler = Assembler.newInstance()
-						.addSql("DELETE FROM " + Datatable_field_info.TableName
-								+ " WHERE end_date = ? AND datatable_id = ?")
-						.addParam(Constant.INVDATE)
-						.addParam(dm_datatable.getDatatable_id());
-				Dbo.execute(assembler.sql(), assembler.params());
-				//执行完清空
-				assembler.clean();
 				//更新修改的原字段信息为失效
-				assembler.addSql("UPDATE " + Datatable_field_info.TableName
+				Assembler assembler = Assembler.newInstance().addSql("UPDATE " + Datatable_field_info.TableName
 						+ " SET end_date = ? WHERE end_date in (?,?) AND datatable_id = ?")
 						.addParam(Constant.INVDATE).addParam(Constant.MAXDATE).addParam(Constant.INITDATE).addParam(dm_datatable.getDatatable_id());
 				assembler.addORParam("field_en_name",
