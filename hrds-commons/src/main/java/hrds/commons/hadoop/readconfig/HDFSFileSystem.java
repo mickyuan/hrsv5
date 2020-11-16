@@ -2,12 +2,12 @@ package hrds.commons.hadoop.readconfig;
 
 
 import fd.ng.core.utils.StringUtil;
-import hrds.commons.exception.AppSystemException;
+import hrds.commons.exception.BusinessException;
+import hrds.commons.hadoop.loginAuth.ILoginAuth;
+import hrds.commons.hadoop.loginAuth.LoginAuthFactory;
 import hrds.commons.utils.PropertyParaValue;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,25 +24,24 @@ public class HDFSFileSystem {
 	private FileSystem fileSystem;
 	private Configuration conf;
 
-	public HDFSFileSystem() throws IOException {
+	public HDFSFileSystem() {
 		this(null);
 	}
 
-	public HDFSFileSystem(String configPath) throws IOException {
+	public HDFSFileSystem(String configPath) {
 		this(configPath, null);
 	}
 
-	public HDFSFileSystem(String configPath, String platform) throws IOException {
+	public HDFSFileSystem(String configPath, String platform) {
 		this(configPath, platform, null);
 	}
 
 	public HDFSFileSystem(String configPath, String platform,
-	                      String prncipal_name) throws IOException {
+	                      String prncipal_name) {
 		this(configPath, platform, prncipal_name, null);
 	}
 
-	public HDFSFileSystem(String configPath, String platform,
-	                      String prncipal_name, String hadoop_user_name) throws IOException {
+	public HDFSFileSystem(String configPath, String platform, String prncipal_name, String hadoop_user_name) {
 		if (configPath == null || StringUtil.isBlank(configPath)) {
 			configPath = System.getProperty("user.dir") + File.separator + "conf" + File.separator;
 		}
@@ -55,41 +54,27 @@ public class HDFSFileSystem {
 		if (hadoop_user_name == null || StringUtil.isBlank(hadoop_user_name)) {
 			hadoop_user_name = PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf");
 		}
-		LoginUtil loginUtil = new LoginUtil(configPath);
-		if (ConfigReader.PlatformType.normal.toString().equals(platform)) {
-			conf = ConfigReader.getConfiguration(configPath, platform, prncipal_name, hadoop_user_name);
+		//登录认证
+		ILoginAuth iLoginAuth = LoginAuthFactory.getInstance(platform, configPath);
+		conf = iLoginAuth.login(prncipal_name);
+		//设置hadoop_user_name,如果配置参数未设置,取默认值"hyshf"
+		System.setProperty("HADOOP_USER_NAME", hadoop_user_name);
+		//初始化文件系统实现对象
+		try {
 			fileSystem = FileSystem.get(conf);
-			logger.info("normal FileSystem inited ");
-		} else if (ConfigReader.PlatformType.cdh5.toString().equals(platform)) {
-			conf = loginUtil.confLoad();
-			conf = loginUtil.authentication(conf, prncipal_name);
-			fileSystem = FileSystem.get(conf);
-			logger.info("cdh5_13 FileSystem inited ");
-		} else if (ConfigReader.PlatformType.fic80.toString().equals(platform)) {
-			conf = loginUtil.confLoad();
-			conf = loginUtil.authentication(conf, prncipal_name);
-			fileSystem = FileSystem.get(conf);
-			logger.info("fic60 FileSystem inited ");
-		} else {
-			throw new AppSystemException("The platform is a wrong type ,please check the syspara table for the argument <platform>...");
+			logger.info("platform: " + platform + " fileSystem inited success!");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new BusinessException("platform: " + platform + " fileSystem inited failed!");
 		}
 	}
 
 	public FileSystem getFileSystem() {
-
 		return fileSystem;
 	}
 
 	public Configuration getConfig() {
 		return conf;
-	}
-
-	public Path getWorkingDirectory(String directory) {
-
-		if (StringUtils.isBlank(directory))
-			return fileSystem.getWorkingDirectory();
-		fileSystem.setWorkingDirectory(new Path(fileSystem.getConf().get("fs.default.name") + Path.SEPARATOR + directory + Path.SEPARATOR));
-		return fileSystem.getWorkingDirectory();
 	}
 
 	public void close() {
@@ -102,5 +87,4 @@ public class HDFSFileSystem {
 			logger.error(e.getMessage(), e);
 		}
 	}
-
 }
