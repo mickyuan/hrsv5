@@ -333,11 +333,11 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 		try {
 			logger.info("要读取得文件目录是: " + HDFSPath);
 			Path path = new Path(HDFSPath);
-			FileSystem fs = operator.getFileSystem();
-			if (fs.getFileStatus(path).isFile()) {
+			FileSystem fileSystem = operator.fileSystem;
+			if (fileSystem.getFileStatus(path).isFile()) {
 				processSingleCsv(hbaseName.toUpperCase(), new Path(HDFSPath), operator, columnLine);
 			} else {
-				FileStatus[] filesStatus = fs.listStatus(path, p ->
+				FileStatus[] filesStatus = fileSystem.listStatus(path, p ->
 					p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					logger.info("开始处理CSV文件: " + file.getPath());
@@ -372,12 +372,12 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 		try {
 			logger.info("要读取得文件目录是: " + filePath);
 			Path path = new Path(filePath);
-			FileSystem fs = operator.getFileSystem();
-			Configuration conf = operator.getConfiguration();
-			if (fs.getFileStatus(path).isFile()) {
+			FileSystem fileSystem = operator.fileSystem;
+			Configuration conf = operator.conf;
+			if (fileSystem.getFileStatus(path).isFile()) {
 				processSingleParquet(hbaseName.toUpperCase(), new Path(filePath), conf, columnLine);
 			} else {
-				FileStatus[] filesStatus = fs.listStatus(path, p ->
+				FileStatus[] filesStatus = fileSystem.listStatus(path, p ->
 					p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					if (file.getLen() == 0) {
@@ -475,11 +475,11 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 		try {
 			logger.info("要读取得文件目录是: " + filePath);
 			Path path = new Path(filePath);
-			FileSystem fs = operator.getFileSystem();
-			if (fs.getFileStatus(path).isFile()) {
+			FileSystem fileSystem = operator.fileSystem;
+			if (fileSystem.getFileStatus(path).isFile()) {
 				processSingleOrc(hbaseName.toUpperCase(), new Path(filePath), operator, columnLine);
 			} else {
-				FileStatus[] filesStatus = fs.listStatus(path, p -> p.getName().toLowerCase().contains(tableName.toLowerCase()));
+				FileStatus[] filesStatus = fileSystem.listStatus(path, p -> p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					logger.info("开始处理Orc文件: " + file.getPath());
 					/* 处理单个ORC文件 */
@@ -512,11 +512,11 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 		try {
 			logger.info("要读取得文件目录是: " + filePath);
 			Path path = new Path(filePath);
-			FileSystem fs = operator.getFileSystem();
-			if (fs.getFileStatus(path).isFile()) {
+			FileSystem fileSystem = operator.fileSystem;
+			if (fileSystem.getFileStatus(path).isFile()) {
 				processSingleSeq(hbaseName.toUpperCase(), new Path(filePath), operator, columnLine);
 			} else {
-				FileStatus[] filesStatus = fs.listStatus(path, p ->
+				FileStatus[] filesStatus = fileSystem.listStatus(path, p ->
 					p.getName().toLowerCase().contains(tableName.toLowerCase()));
 				for (FileStatus file : filesStatus) {
 					logger.info("开始处理SequenceFile文件: " + file.getPath());
@@ -675,7 +675,7 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 			String[] columnNames = columnLine.split(",");
 			//列值
 			String[] columnValues;
-			Reader reader = OrcFile.createReader(operator.getFileSystem(), orcPath);
+			Reader reader = OrcFile.createReader(operator.fileSystem, orcPath);
 			List<SolrInputDocument> docs = new ArrayList<>();
 			SolrInputDocument doc;
 			RecordReader records = reader.rows();
@@ -727,10 +727,9 @@ public abstract class SolrOperatorImpl implements ISolrOperator {
 	private void processSingleSeq(String tableName, Path sequenceFilePath, HdfsOperator operator, String columnLine) {
 		//记录耗时
 		long start = System.currentTimeMillis();
-		try (SequenceFile.Reader reader = new SequenceFile.Reader(operator.getConfiguration(),
-			SequenceFile.Reader.file(sequenceFilePath))) {
-			Writable key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), operator.getConfiguration());
-			Writable val = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), operator.getConfiguration());
+		try (SequenceFile.Reader reader = new SequenceFile.Reader(operator.conf, SequenceFile.Reader.file(sequenceFilePath))) {
+			Writable key = (Writable) ReflectionUtils.newInstance(reader.getKeyClass(), operator.conf);
+			Writable val = (Writable) ReflectionUtils.newInstance(reader.getValueClass(), operator.conf);
 			//列名称
 			String[] columnNames = columnLine.split(",");
 			//列值
