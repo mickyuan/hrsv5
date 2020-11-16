@@ -115,7 +115,9 @@ public abstract class LoginAuthImpl implements ILoginAuth {
 		setKrb5Config(krb5ConfFile.getAbsolutePath());
 		// 4.set configuration
 		setConfiguration(conf);
-		// 5.login and check for hadoop
+		// 5 set zookeeperServerPrincipal
+		setZookeeperServerPrincipal(ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
+		// 6.login and check for hadoop
 		loginHDFS(principle_name, userKeytabFile.getAbsolutePath());
 		logger.info("Login success!!!!!!!!!!!!!!");
 		//返回conf
@@ -152,11 +154,10 @@ public abstract class LoginAuthImpl implements ILoginAuth {
 	/**
 	 * 设置 ZookeeperServerPrincipal
 	 *
-	 * @param zkServerPrincipalKey zk认证key zkServerPrincipalKey
-	 * @param zkServerPrincipal    zk认证实体 zkServerPrincipal
+	 * @param zkServerPrincipal zk认证实体 zkServerPrincipal
 	 */
-	protected void setZookeeperServerPrincipal(String zkServerPrincipalKey, String zkServerPrincipal) {
-
+	protected void setZookeeperServerPrincipal(String zkServerPrincipal) {
+		String zkServerPrincipalKey = ZOOKEEPER_SERVER_PRINCIPAL_KEY;
 		System.setProperty(zkServerPrincipalKey, zkServerPrincipal);
 		String ret = System.getProperty(zkServerPrincipalKey);
 		if (ret == null) {

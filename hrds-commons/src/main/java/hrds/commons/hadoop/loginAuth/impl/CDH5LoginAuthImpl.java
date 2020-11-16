@@ -85,7 +85,9 @@ public class CDH5LoginAuthImpl extends LoginAuthImpl {
 		setKrb5Config(krb5ConfFile.getAbsolutePath());
 		// 4.set configuration
 		setConfiguration(conf);
-		// 5.login and check for hadoop
+		// 5 set zookeeperServerPrincipal
+		setZookeeperServerPrincipal("zookeeper/hadoop");
+		// 6.login and check for hadoop
 		loginHDFS(principle_name, userKeytabFile.getAbsolutePath());
 		logger.info("Login success!!!!!!!!!!!!!!");
 		//返回conf
