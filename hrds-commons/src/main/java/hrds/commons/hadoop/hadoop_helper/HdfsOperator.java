@@ -1,8 +1,9 @@
 package hrds.commons.hadoop.hadoop_helper;
 
-import hrds.commons.exception.BusinessException;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.hadoop.readconfig.HDFSFileSystem;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.*;
@@ -26,58 +27,55 @@ public class HdfsOperator implements Closeable {
 	//HDFS文件系统类对象,初始化FileSystem的工具类
 	private HDFSFileSystem hdfsFileSystem;
 	//文件系统实现对象(实际操作文件系统对象)
-	private FileSystem fileSystem;
+	public FileSystem fileSystem;
+	//Configuration对象
+	public Configuration conf;
 
-	public HdfsOperator() throws IOException {
+	/**
+	 * 测试main方法
+	 *
+	 * @param args args
+	 * @throws IOException IOException
+	 */
+	public static void main(String[] args) throws IOException {
+		HdfsOperator hdfsOperator = new HdfsOperator();
+		//列出集群指定目录下文件, isContainDir: 是否显示文件夹
+		List<Path> paths;
+		paths = hdfsOperator.listFiles("/tmp/xxxxxx", true);
+		paths.forEach(System.out::println);
+		String new_path_str = "/tmp/xxxxxx/" + System.currentTimeMillis();
+		Path new_path = new Path(new_path_str);
+		System.out.println(new_path);
+		if (!hdfsOperator.exists(new_path)) {
+			hdfsOperator.mkdir(new_path);
+		}
+		paths = hdfsOperator.listFiles("/tmp/xxxxxx", true);
+		paths.forEach(System.out::println);
+	}
+
+	public HdfsOperator() {
 		this(null);
 	}
 
-	public HdfsOperator(String configPath) throws IOException {
+	public HdfsOperator(String configPath) {
 		this(configPath, null);
 	}
 
-	public HdfsOperator(String configPath, String platform) throws IOException {
+	public HdfsOperator(String configPath, String platform) {
 		this(configPath, platform, null);
 	}
 
-	public HdfsOperator(String configPath, String platform,
-	                    String prncipal_name) throws IOException {
+	public HdfsOperator(String configPath, String platform, String prncipal_name) {
 		this(configPath, platform, prncipal_name, null);
 	}
 
-
-	public HdfsOperator(String configPath, String platform, String prncipal_name, String hadoop_user_name) throws IOException {
+	public HdfsOperator(String configPath, String platform, String prncipal_name, String hadoop_user_name) {
 		//设置HDFS文件系统类对象
 		hdfsFileSystem = new HDFSFileSystem(configPath, platform, prncipal_name, hadoop_user_name);
 		//设置文件系统实现对象
 		fileSystem = hdfsFileSystem.getFileSystem();
-	}
-
-	/**
-	 * 获取Configuration对象
-	 *
-	 * @return Configuration 设置完成的Configuration对象
-	 */
-	public Configuration getConfiguration() {
-		return hdfsFileSystem.getConfig();
-	}
-
-	/**
-	 * 获取文件系统对象
-	 *
-	 * @return fileSystem
-	 */
-	public FileSystem getFileSystem() {
-		return fileSystem;
-	}
-
-	/**
-	 * 获取HDFS文件系统类对象
-	 *
-	 * @return hdfsFileSystem HDFS文件系统类对象
-	 */
-	public HDFSFileSystem getHDFSFileSystem() {
-		return hdfsFileSystem;
+		//设置
+		conf = hdfsFileSystem.getConfig();
 	}
 
 	/**
@@ -87,7 +85,12 @@ public class HdfsOperator implements Closeable {
 	 * @return 工作目录的路径
 	 */
 	public Path getWorkingDirectory(String directory) {
-		return hdfsFileSystem.getWorkingDirectory(directory);
+		if (StringUtils.isBlank(directory)) {
+			return fileSystem.getWorkingDirectory();
+		} else {
+			fileSystem.setWorkingDirectory(new Path(fileSystem.getConf().get("fs.default.name") + Path.SEPARATOR + directory + Path.SEPARATOR));
+		}
+		return fileSystem.getWorkingDirectory();
 	}
 
 	/**
@@ -112,7 +115,7 @@ public class HdfsOperator implements Closeable {
 			}
 			return isok;
 		} catch (IOException ioe) {
-			throw new BusinessException("create " + path + ", an exception occurred, please try again!");
+			throw new AppSystemException("An exception occurred. " + ioe.getMessage());
 		}
 
 	}
@@ -145,7 +148,7 @@ public class HdfsOperator implements Closeable {
 			}
 			return isok;
 		} catch (IOException ioe) {
-			throw new BusinessException("modify " + oldpath + "-->" + newpath + ", an exception occurred, please try again!");
+			throw new AppSystemException("modify " + oldpath + "-->" + newpath + ", an exception occurred, please try again!");
 		}
 	}
 
@@ -184,7 +187,7 @@ public class HdfsOperator implements Closeable {
 		try {
 			return fileSystem.exists(path);
 		} catch (IOException ioe) {
-			throw new BusinessException("Checking directory " + path + ", an IO exception occurred, please try again!");
+			throw new AppSystemException("Checking directory " + path + ", an IO exception occurred, please try again!");
 		}
 	}
 
@@ -313,7 +316,7 @@ public class HdfsOperator implements Closeable {
 		File dstDir = new File(dstPath + File.separator + folderName);
 		if (!dstDir.exists()) {
 			if (!dstDir.mkdirs()) {
-				throw new BusinessException("创建目录" + dstDir.getCanonicalPath() + "失败！");
+				throw new AppSystemException("创建目录" + dstDir.getCanonicalPath() + "失败！");
 			}
 		}
 		FileStatus[] srcFileStatus = fileSystem.listStatus(new Path(srcPath));
@@ -335,7 +338,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IO异常
 	 */
 	public boolean copy(String srcPath, String destPath, boolean overWrite) throws IOException {
-		return FileUtil.copy(fileSystem, new Path(srcPath), fileSystem, new Path(destPath), false, overWrite, getConfiguration());
+		return FileUtil.copy(fileSystem, new Path(srcPath), fileSystem, new Path(destPath), false, overWrite, conf);
 	}
 
 	/**
@@ -349,6 +352,15 @@ public class HdfsOperator implements Closeable {
 	 */
 	public boolean move(String srcPath, String destPath, boolean overWrite) throws IllegalArgumentException, IOException {
 		return FileUtil.copy(fileSystem, new Path(srcPath), fileSystem, new Path(destPath), true, overWrite, fileSystem.getConf());
+	}
+
+	/**
+	 * @param path 目录 String
+	 * @return 文件路径的list List
+	 * @throws IOException IOException
+	 */
+	public List<Path> listFiles(String path) throws IOException {
+		return listFiles(new Path(path), true);
 	}
 
 	/**
@@ -462,7 +474,7 @@ public class HdfsOperator implements Closeable {
 	 * @throws IOException IOException
 	 */
 	public void copyMerge(Path srcDir, Path dstFile, boolean deleteSource) throws IOException {
-		FileUtil.copy(fileSystem, srcDir, fileSystem, dstFile, deleteSource, this.getConfiguration());
+		FileUtil.copy(fileSystem, srcDir, fileSystem, dstFile, deleteSource, conf);
 	}
 
 	/**
