@@ -4,7 +4,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.hadoop.readconfig.LoginUtil;
+import hrds.commons.hadoop.loginAuth.impl.LoginAuthImpl;
 import hrds.commons.hadoop.solr.ISolrOperator;
 import hrds.commons.hadoop.solr.SolrLogin;
 import hrds.commons.hadoop.solr.SolrParam;
@@ -49,6 +49,8 @@ public class SolrOperatorImpl5_3_1 extends SolrOperatorImpl implements ISolrOper
 	private void connectSolr() {
 		//1.solr服务验证
 		setSecConfig();
+		//设置zookeeperServerPrincipal
+		SolrLogin.setZookeeperServerPrincipal(LoginAuthImpl.ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
 		try {
 			server$ = new CloudSolrClient(CommonVariables.ZK_HOST);
 			server$.setDefaultCollection(CommonVariables.SOLR_COLLECTION);
@@ -63,11 +65,13 @@ public class SolrOperatorImpl5_3_1 extends SolrOperatorImpl implements ISolrOper
 
 	private void connectSolr(SolrParam solrParam, String configPath) {
 		//1.solr服务验证
-		if (configPath != null) {
-			setSecConfig(configPath);
-		} else {
+		if (StringUtil.isBlank(configPath)) {
 			setSecConfig();
+		} else {
+			setSecConfig(configPath);
 		}
+		//设置zookeeperServerPrincipal
+		SolrLogin.setZookeeperServerPrincipal(LoginAuthImpl.ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
 		try {
 			if (StringUtil.isEmpty(solrParam.getCollection())) {
 				throw new AppSystemException("远程连接solr的collection为空！！！");
@@ -95,7 +99,6 @@ public class SolrOperatorImpl5_3_1 extends SolrOperatorImpl implements ISolrOper
 		path = path.replace("\\", "\\\\");
 		SolrLogin.setJaasFile(path + "user.keytab");
 		SolrLogin.setKrb5Config(path + "krb5.conf");
-		SolrLogin.setZookeeperServerPrincipal(LoginUtil.ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
 	}
 
 	@Method(desc = "设置服务认证", logicStep = "设置服务认证")
@@ -106,7 +109,6 @@ public class SolrOperatorImpl5_3_1 extends SolrOperatorImpl implements ISolrOper
 		if (new File(path + "krb5.conf").exists()) {
 			SolrLogin.setKrb5Config(path + "krb5.conf");
 		}
-		SolrLogin.setZookeeperServerPrincipal(LoginUtil.ZOOKEEPER_DEFAULT_SERVER_PRINCIPAL);
 	}
 
 	/**
