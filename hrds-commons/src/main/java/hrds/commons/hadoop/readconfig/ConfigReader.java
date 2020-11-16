@@ -4,6 +4,9 @@ import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.exception.AppSystemException;
+import hrds.commons.hadoop.hadoop_helper.HBaseHelper;
+import hrds.commons.hadoop.loginAuth.ILoginAuth;
+import hrds.commons.hadoop.loginAuth.LoginAuthFactory;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.commons.utils.StorageTypeKey;
@@ -12,8 +15,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Configuration
+ */
 public class ConfigReader {
 
 	private static final Logger logger = LogManager.getLogger();
@@ -23,6 +30,26 @@ public class ConfigReader {
 	 */
 	public enum PlatformType {
 		normal, fic80, cdh5
+	}
+
+	/**
+	 * Configuration main
+	 *
+	 * @param args args
+	 */
+	public static void main(String[] args) throws IOException {
+		Configuration conf = ConfigReader.getConfiguration();
+		HBaseHelper helper = HBaseHelper.getHelper(conf);
+		if (helper.existsTable("a")) {
+			System.out.println("table: a, exist!");
+		} else {
+			System.out.println("table: a, is not exist!");
+		}
+		if (helper.existsTable("t1")) {
+			System.out.println("table: t1, exist!");
+		} else {
+			System.out.println("table: t1, is not exist!");
+		}
 	}
 
 	/**
@@ -90,67 +117,41 @@ public class ConfigReader {
 	/**
 	 * load conf to Configuration
 	 *
-	 * @param configPath       配置文件目录
-	 * @param platform         平台类型
-	 * @param prncipal_name    认证名称
-	 * @param hadoop_user_name 用户
+	 * @param configPath    配置文件目录
+	 * @param platform      平台类型
+	 * @param prncipal_name 认证名称
 	 * @return Configuration
 	 */
 	public static Configuration getConfiguration(String configPath, String platform, String prncipal_name, String hadoop_user_name) {
 		try {
-			logger.info("configReader  " + configPath);
-			LoginUtil loginUtil;
-			if (StringUtil.isEmpty(configPath)) {
-				loginUtil = new LoginUtil();
-			} else {
-				loginUtil = new LoginUtil(configPath);
-			}
-			Configuration conf = loginUtil.confLoad();
+			//参数校验
 			if (platform == null) {
+				//平台类型,如果未配置则去默认值"normal"
 				platform = PropertyParaValue.getString("platform", PlatformType.normal.toString());
 			}
 			if (prncipal_name == null) {
+				//认证实体名,如果未配置则去默认值"admin@HADOOP.COM"
 				prncipal_name = PropertyParaValue.getString("principle.name", "admin@HADOOP.COM");
 			}
-			if (hadoop_user_name == null) {
+			if (hadoop_user_name == null || StringUtil.isBlank(hadoop_user_name)) {
+				//hadoop_user_name,如果配置参数未设置,取默认值"hyshf"
 				hadoop_user_name = PropertyParaValue.getString("HADOOP_USER_NAME", "hyshf");
 			}
 			//平台验证
-			return initAuth(conf, platform, prncipal_name, hadoop_user_name, loginUtil);
-		} catch (Exception e) {
-			logger.error("Failed to verify the platform...", e);
-			throw new AppSystemException("认证获取conf失败", e);
-		}
-	}
-
-	/**
-	 * initial authentication
-	 *
-	 * @param conf             Configuration
-	 * @param platform         平台类型
-	 * @param prncipal_name    认证名称
-	 * @param hadoop_user_name 用户
-	 * @param lg               LoginUtil
-	 * @return Configuration
-	 */
-	private static Configuration initAuth(Configuration conf, String platform, String prncipal_name, String hadoop_user_name, LoginUtil lg) {
-		logger.info("initAuth platform: " + platform);
-		try {
-			if (PlatformType.normal.toString().equals(platform)) {
-				logger.info("Do nothing");
-			} else if (PlatformType.cdh5.toString().equals(platform)) {
-				conf = CDHLoginUtil.login(conf, prncipal_name);
-			} else if (PlatformType.fic80.toString().equals(platform)) {
-				conf = C80LoginUtil.login(conf, prncipal_name);
+			ILoginAuth iLoginAuth;
+			if (StringUtil.isEmpty(configPath)) {
+				//未配置conf文件路径,取程序运行家目录下的conf,设置平台登录实例
+				iLoginAuth = LoginAuthFactory.getInstance(platform);
 			} else {
-				throw new AppSystemException("The platform is a wrong type ,please check <platform>...");
+				//指定conf文件,设置平台登录实例
+				iLoginAuth = LoginAuthFactory.getInstance(platform, configPath);
 			}
-			//设置hadoop_user_name
-			conf.set("HADOOP_USER_NAME", hadoop_user_name);
-			return conf;
+			//设置hadoop_user_name,如果配置参数未设置,取默认值"hyshf"
+			System.setProperty("HADOOP_USER_NAME", hadoop_user_name);
+			return iLoginAuth.login(prncipal_name);
 		} catch (Exception e) {
-			logger.error("Failed to initAuth...", e);
-			throw new AppSystemException("认证获取conf失败", e);
+			logger.error("platform:" + platform + " verification failed ...", e);
+			throw new AppSystemException("platform: " + platform + " ,认证失败! " + e.getMessage());
 		}
 	}
 }
