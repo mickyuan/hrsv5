@@ -68,7 +68,7 @@ public class OperateAction extends BaseAction {
 	// 散点图
 	private static final String SCATTER = "scatter";
 	// 气泡图
-//	private static final String BUBBLE = "bubble";
+	private static final String BUBBLE = "bubble";
 	// 饼图
 	private static final String PIE = "pie";
 	// 环形饼图
@@ -663,7 +663,7 @@ public class OperateAction extends BaseAction {
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("chart_type", chart_type);
 		// 2.根据不同图标类型获取图表数据
-		if (LINE.equals(chart_type) || BAR.equals(chart_type)) {
+		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
 			// 折线图和柱状图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
 		} else if (STACKINGBAR.equals(chart_type)) {
@@ -689,11 +689,8 @@ public class OperateAction extends BaseAction {
 		} else if (TREEMAP.equals(chart_type)) {
 			// 矩形树图
 			putDataForTreemap(componentList, x_columns, y_columns, resultMap);
-		} else if (BL.equals(chart_type)) {
-			// 混合图
-			//TODO
-		} else if (MAP.equals(chart_type)) {
-			// 地理坐标/地图
+		} else if (MAP.equals(chart_type) || BUBBLE.equals(chart_type)) {
+			// 地理坐标/地图、气泡图
 			putDataForBubbleOrMap(componentList, x_columns, y_columns, resultMap);
 		} else {
 			throw new BusinessException("暂不支持该种图例类型" + chart_type);
@@ -894,24 +891,33 @@ public class OperateAction extends BaseAction {
 	}
 
 	private void putDataForLine(List<Map<String, Object>> componentList, String[] x_columns,
-	                            String[] y_columns, String chart_type,
-	                            Map<String, Object> resultMap) {
+	                            String[] y_columns, String chart_type, Map<String, Object> resultMap) {
 		// 添加legend的值
 		if (y_columns != null && y_columns.length > 0) {
 			resultMap.put("legend_data", y_columns);
 			// 添加y轴的值
 			List<Object> yList = new ArrayList<>();
-			for (String y_column : y_columns) {
+			for (int j = 0; j < y_columns.length; j++) {
 				Map<String, Object> map = new HashMap<>();
 				List<Object> data = new ArrayList<>();
 				for (Map<String, Object> stringObjectMap : componentList) {
-					String s = stringObjectMap.get(y_column.trim()).toString();
-					checkIfNumeric(s, y_column);
+					String s = stringObjectMap.get(y_columns[j].trim()).toString();
+					checkIfNumeric(s, y_columns[j].trim());
 					data.add(s);
 				}
-				map.put("name", y_column);
-				map.put("type", chart_type);
 				map.put("data", data);
+				map.put("name", y_columns[j].trim());
+				if (BL.equals(chart_type)) {
+					if (j < 2) {
+						map.put("type", BAR);
+						map.put("stack", "two");
+					} else {
+						map.put("type", LINE);
+						map.put("yAxisIndex", "1");
+					}
+				} else {
+					map.put("type", chart_type);
+				}
 				yList.add(map);
 			}
 			resultMap.put("seriesArray", yList);
@@ -924,7 +930,6 @@ public class OperateAction extends BaseAction {
 			}
 			resultMap.put("xArray", xList);
 		}
-
 	}
 
 	private void putDataForStackingBar(List<Map<String, Object>> componentList, String[] x_columns,
