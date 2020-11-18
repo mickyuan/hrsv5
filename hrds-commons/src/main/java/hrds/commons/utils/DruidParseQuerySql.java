@@ -604,7 +604,7 @@ public class DruidParseQuerySql {
 		} else if (sqlexpr instanceof SQLBinaryOpExprGroup) {
 			throw new BusinessSystemException("SQLBinaryOpExprGroup 有待开发");
 		} else if (sqlexpr instanceof SQLBooleanExpr) {
-			throw new BusinessSystemException("SQLBooleanExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLCaseExpr) {
 			SQLCaseExpr sqlCaseExpr = (SQLCaseExpr) sqlexpr;
 			List<SQLCaseExpr.Item> items = sqlCaseExpr.getItems();
@@ -710,7 +710,8 @@ public class DruidParseQuerySql {
 				getcolumn(sqlListExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLVariantRefExpr) {
-			throw new BusinessSystemException("SQLVariantRefExpr 有待开发");
+			//？占位符
+			return;
 		} else if (sqlexpr instanceof OracleSysdateExpr) {
 			return;
 		} else {
