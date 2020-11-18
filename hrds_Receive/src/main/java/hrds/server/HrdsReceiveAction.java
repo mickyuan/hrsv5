@@ -124,9 +124,11 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		Source_file_attribute attribute = JSONObject.parseObject(source_file_attribute,
 				Source_file_attribute.class);
 		//2.查询source_file_attribute
-		Result result = Dbo.queryResult("select * from source_file_attribute where agent_id =? and source_id = ? " +
-						"and collect_set_id =? and lower(hbase_name) = lower(?)", attribute.getAgent_id(),
-				attribute.getSource_id(), attribute.getCollect_set_id(), attribute.getHbase_name());
+//		Result result = Dbo.queryResult("select * from source_file_attribute where agent_id =? and source_id = ? " +
+//						"and collect_set_id =? and lower(hbase_name) = lower(?)", attribute.getAgent_id(),
+//				attribute.getSource_id(), attribute.getCollect_set_id(), attribute.getHbase_name());
+		Result result = Dbo.queryResult("select * from source_file_attribute where lower(hbase_name) = lower(?)",
+				attribute.getHbase_name());
 		//3.更新或者新增source_file_attribute表
 		if (result.isEmpty()) {
 			attribute.setFile_id(UUID.randomUUID().toString());
@@ -150,10 +152,12 @@ public class HrdsReceiveAction extends AgentBaseAction {
 		Data_store_reg data_store = JSONObject.parseObject(data_store_reg,
 				Data_store_reg.class);
 		//2.查询source_file_attribute
-		Result result = Dbo.queryResult("select * from data_store_reg where agent_id =? and source_id = ? " +
-						"and database_id =? and lower(hyren_name) = lower(?)", data_store.getAgent_id(),
-				data_store.getSource_id(), data_store.getDatabase_id(), data_store.getHyren_name());
-		//3.更新或者新增data_store表
+//		Result result = Dbo.queryResult("select * from data_store_reg where agent_id =? and source_id = ? " +
+//						"and database_id =? and lower(hyren_name) = lower(?)", data_store.getAgent_id(),
+//				data_store.getSource_id(), data_store.getDatabase_id(), data_store.getHyren_name());
+		Result result = Dbo.queryResult("select * from data_store_reg where lower(hyren_name) = lower(?)"
+				, data_store.getHyren_name());
+		//3. 更新或者新增data_store表
 		if (result.isEmpty()) {
 			data_store.setFile_id(UUID.randomUUID().toString());
 			//新增source_file_attribute表

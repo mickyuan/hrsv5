@@ -36,9 +36,10 @@ public class MarketConf implements Serializable {
 	 */
 	private String tableName;
 	/**
-	 * 需要执行的主sql
+	 * 需要执行的主sql,会将贴源登记的前缀替换替换掉
 	 */
 	private String completeSql;
+	private String beforeReplaceSql;
 	/**
 	 * 多作业导入同一表
 	 */
@@ -235,5 +236,13 @@ public class MarketConf implements Serializable {
 
 	public void setAddAttrColMap(Map<String, List<String>> addAttrColMap) {
 		this.addAttrColMap = addAttrColMap;
+	}
+
+	public String getBeforeReplaceSql() {
+		return beforeReplaceSql;
+	}
+
+	public void setBeforeReplaceSql(String beforeReplaceSql) {
+		this.beforeReplaceSql = beforeReplaceSql;
 	}
 }

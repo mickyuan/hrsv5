@@ -18,6 +18,8 @@ import hrds.commons.entity.Data_store_layer_attr;
 import hrds.commons.entity.Database_set;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.StorageTypeKey;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.Map;
 
 @DocClass(desc = "数据库直连采集获取数据库连接", author = "WangZhengcheng", createdate = "2019/10/28 14:26")
 public class ConnectionTool {
+	//打印日志
+	private static Logger logger = LogManager.getLogger();
 
 	@Method(desc = "根据数据库配置信息获取数据库连接", logicStep = "" +
 			"1、将SourceDataConfBean对象中的内容封装到dbInfo中" +
@@ -132,6 +136,8 @@ public class ConnectionTool {
 		dbInfo.setDbtype(dbType);
 		dbInfo.setShow_conn_time(true);
 		dbInfo.setShow_sql(true);
+		//打印创建连接的参数
+		logger.info("创建连接的参数为：==============" + dbInfo.toString());
 		//3、根据数据库类型获取对应数据库的数据库连接
 		DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbInfo).create();
 		if (db.getDbtype() == Dbtype.TERADATA && db.getDatabaseName() != null) {
@@ -142,6 +148,64 @@ public class ConnectionTool {
 		}
 		return db;
 	}
+
+//	public static DatabaseWrapper getDBWrapper(Map<String, String> dbConfig, int fetch_size) {
+//		//1、将SourceDataConfBean对象中的内容封装到dbInfo中
+//		DbinfosConf.Dbinfo dbInfo = new DbinfosConf.Dbinfo();
+//		if (dbConfig.get(StorageTypeKey.name) != null) {
+//			dbInfo.setName(dbConfig.get(StorageTypeKey.name));
+//		} else {
+//			dbInfo.setName(DbinfosConf.DEFAULT_DBNAME);
+//		}
+//		dbInfo.setDriver(dbConfig.get(StorageTypeKey.database_driver));
+//		dbInfo.setUrl(dbConfig.get(StorageTypeKey.jdbc_url));
+//		dbInfo.setUsername(dbConfig.get(StorageTypeKey.user_name));
+//		dbInfo.setPassword(dbConfig.get(StorageTypeKey.database_pwd));
+//		if (dbConfig.get(StorageTypeKey.conn_way) == null || "jdbc".equalsIgnoreCase(dbConfig
+//				.get(StorageTypeKey.conn_way))) {
+//			dbInfo.setWay(ConnWay.JDBC);
+//		} else if ("pool".equalsIgnoreCase(dbConfig.get(StorageTypeKey.conn_way))) {
+//			dbInfo.setWay(ConnWay.POOL);
+//		} else if ("JNDI".equalsIgnoreCase(dbConfig.get(StorageTypeKey.conn_way))) {
+//			dbInfo.setWay(ConnWay.JNDI);
+//		}
+//		if (!StringUtil.isEmpty(dbConfig.get(StorageTypeKey.minPoolSize))) {
+//			dbInfo.setMinPoolSize(Integer.parseInt(dbConfig.get(StorageTypeKey.minPoolSize)));
+//		}
+//		if (!StringUtil.isEmpty(dbConfig.get(StorageTypeKey.maxPoolSize))) {
+//			dbInfo.setMaxPoolSize(Integer.parseInt(dbConfig.get(StorageTypeKey.maxPoolSize)));
+//		}
+//		if (!StringUtil.isEmpty(dbConfig.get(StorageTypeKey.fetch_size))) {
+//			dbInfo.setFetch_size(Integer.parseInt(dbConfig.get(StorageTypeKey.fetch_size)));
+//		}
+//		//2、获取数据库类型
+//		Dbtype dbType = getDbType(dbConfig.get(StorageTypeKey.database_type));
+//		if (dbType == Dbtype.HIVE) {
+//			dbInfo.setAutoCommit(false);
+//		}
+//		if (fetch_size != 0) {
+//			dbInfo.setFetch_size(fetch_size);
+//			if (dbType == Dbtype.POSTGRESQL) {
+//				dbInfo.setAutoCommit(false);
+//			}
+//		}
+//		if (!StringUtil.isEmpty(dbConfig.get(StorageTypeKey.database_name))) {
+//			dbInfo.setDataBaseName(dbConfig.get(StorageTypeKey.database_name));
+//		}
+//		dbInfo.setDbtype(dbType);
+//		dbInfo.setShow_conn_time(true);
+//		dbInfo.setShow_sql(true);
+//		//3、根据数据库类型获取对应数据库的数据库连接
+//		logger.info("建立db连接的参数为：" + dbConfig.toString());
+//		DatabaseWrapper db = new DatabaseWrapper.Builder().dbconf(dbInfo).create();
+//		if (db.getDbtype() == Dbtype.TERADATA && db.getDatabaseName() != null) {
+//			db.execute("DATABASE " + db.getDatabaseName().toUpperCase());
+//		}
+//		if (db.getDbtype() == Dbtype.HIVE && db.getDatabaseName() != null) {
+//			db.execute("USE " + db.getDatabaseName().toUpperCase());
+//		}
+//		return db;
+//	}
 
 	@Method(desc = "根据数据库配置信息获取数据库连接", logicStep = "" +
 			"1、将database_set对象中的内容封装到dbInfo中" +

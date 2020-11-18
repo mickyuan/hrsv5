@@ -61,6 +61,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
             }
         }
         Utils.softCreateTable(db, tableName, createTableColumnTypes);
+        //创建索引
+        Utils.softCreateIndex(db,conf,tableName);
     }
 
     @Override
