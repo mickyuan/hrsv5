@@ -18,7 +18,6 @@ public class AnalysisAction extends BaseAction {
 	@Method(desc = "解析传递SQL的信息", logicStep = "获取SQL中的字段,表名,关联条件,过滤条件等信息")
 	@Param(name = "sql", desc = "解析的SQL信息", range = "不可为空")
 	@Param(name = "dbtype", desc = "SQL的数据库类型(使用Driuid(1.2.3)中DbType类中的数据库类型)", range = "不可为空")
-	@UploadFile
 	public Map<String, Object> analysisSqlData(String sql, String dbtype) {
 
 		Map<String, Object> tableMap = DruidParseQuerySql.analysisTableRelation(sql, dbtype);

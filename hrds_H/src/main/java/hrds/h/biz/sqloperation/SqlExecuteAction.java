@@ -28,7 +28,6 @@ public class SqlExecuteAction extends BaseAction {
             "4: 如果异常,则返回错误信息,反正返回正常")
     @Param(name = "sql", desc = "要执行的SQL语句", range = "执行的SQL信息,不能为空")
     @Param(name = "storageType", desc = "存储层名称", range = "需要执行在那个存储层下,不能为空")
-    @UploadFile
     public void sqlExecute(String sql, String storageType) {
 
         Validator.notBlank(sql, "执行SQL不能为空");
