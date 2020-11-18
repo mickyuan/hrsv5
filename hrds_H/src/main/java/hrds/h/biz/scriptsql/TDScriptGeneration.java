@@ -1,0 +1,125 @@
+package hrds.h.biz.scriptsql;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import fd.ng.core.utils.FileNameUtils;
+import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.StorageType;
+import hrds.commons.codes.Store_type;
+import hrds.commons.exception.AppSystemException;
+import hrds.commons.utils.PropertyParaValue;
+import hrds.h.biz.config.MarketConf;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class TDScriptGeneration {
+
+	public static void scriptGeneration(MarketConf conf, String createTableColumnTypes) {
+		List<String> sqlList = new ArrayList<>();
+		//前置SQL信息
+		if (StringUtil.isNotBlank(conf.getPreSql())) {
+			sqlList.add(conf.getPreSql());
+		}
+		//检查表名是否存在
+		if (StringUtil.isBlank(conf.getTableName())) {
+			throw new AppSystemException("表名未传递");
+		}
+		//检查表字段信息是否存在
+		if (StringUtil.isBlank(createTableColumnTypes)) {
+			throw new AppSystemException("表字段信息未传递");
+		}
+		//检查数据加载方式是否传递
+		if (StringUtil.isBlank(conf.getDmDatatable().getStorage_type())) {
+			throw new AppSystemException("表数据加载方式未传递");
+		}
+		//检查脚本模板路径是否存在
+//		if (StringUtil.isBlank(jsonObject.getString("scriptModelPath"))) {
+//			throw new AppSystemException("脚本模板未传递");
+//		}
+
+		//数据SQL
+		if (StringUtil.isBlank(conf.getBeforeReplaceSql())) {
+			throw new AppSystemException("数据源sql未传递");
+		}
+
+		//mapping数据信息
+		sqlList.add(
+			"create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")");
+		//如果是替换的方式,先将表的删除,然后在重新创建,并加载数据
+		StorageType store_type = StorageType.ofEnumByCode(conf.getDmDatatable().getStorage_type());
+		if (store_type == StorageType.TiHuan) {
+			sqlList.add("drop table " + conf.getTableName());
+			sqlList.add("create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")");
+		}
+		sqlList.add("insert into " + conf.getTableName() + " select * from (" + conf.getBeforeReplaceSql() + ") hyren");
+
+		//后置sql信息
+		if (StringUtil.isNotBlank(conf.getFinalSql())) {
+			sqlList.add(conf.getFinalSql());
+		}
+
+		//sql处理集合
+		scriptGeneration(sqlList, conf.getTableName());
+	}
+
+	static void scriptGeneration(List<String> mappingSqlList, String tableName) {
+		BufferedReader read = null;
+		BufferedWriter writer = null;
+		try {
+			String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+			File modelPath = new File(scriptModelPath);
+			if (!modelPath.exists()) {
+				throw new AppSystemException("模板文件不存在");
+			}
+			String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
+			String plFileName = tableName + fileSuffixName;
+			read = new BufferedReader(new FileReader(modelPath));
+			File createFile = new File(System.getProperty("user.dir"));
+			if (!createFile.exists()) {
+				throw new AppSystemException("本地目录不存在,无法建立脚本");
+			}
+			writer = new BufferedWriter(new FileWriter(createFile.getAbsolutePath() + File.separator + plFileName));
+			String line;
+			while ((line = read.readLine()) != null) {
+				if (line.contains("my $SQL=<<EOF_SQL;")) {
+					StringBuffer buffer = new StringBuffer();
+					buffer.append(line).append(System.lineSeparator());
+					mappingSqlList.forEach(item -> {
+						buffer.append(item).append(System.lineSeparator()).append(";").append(System.lineSeparator())
+							.append(".IF ERRORCODE <> 0 THEN .GOTO QUITWITHERROR;").append(System.lineSeparator())
+							.append(System.lineSeparator());
+					});
+					writer.write(buffer.toString());
+				} else if (line.startsWith("my $SCTIPT=")) {
+					writer.write("my $SCTIPT=" + "\"" + plFileName + "\"");
+				} else {
+					writer.write(line);
+					writer.write(System.lineSeparator());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (read != null) {
+				try {
+					read.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+}

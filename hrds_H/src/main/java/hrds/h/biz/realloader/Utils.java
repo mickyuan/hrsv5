@@ -42,7 +42,7 @@ public class Utils {
 	 * @param isDatabase 是否是关系型数据库
 	 * @return 字段名，字段类型组合
 	 */
-	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
+	public static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
 
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 		final StringBuilder columnTypes = new StringBuilder(300);

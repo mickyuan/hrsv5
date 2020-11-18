@@ -1,8 +1,12 @@
 package hrds.h.biz.config;
 
 
-import hrds.commons.entity.*;
-
+import fd.ng.core.utils.Validator;
+import hrds.commons.entity.Data_store_layer;
+import hrds.commons.entity.Data_store_layer_attr;
+import hrds.commons.entity.Datatable_field_info;
+import hrds.commons.entity.Dm_datatable;
+import hrds.commons.entity.Dtab_relation_store;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +31,7 @@ public class MarketConf implements Serializable {
 	 */
 	private final String sqlParams;
 	/**
-	 * 是否是属于重跑
-	 * 当属于重跑时，需要将当天已经跑过的数据清除掉
+	 * 是否是属于重跑 当属于重跑时，需要将当天已经跑过的数据清除掉
 	 */
 	private boolean rerun;
 	/**
@@ -93,8 +96,18 @@ public class MarketConf implements Serializable {
 	}
 
 	/**
-	 * 获取 集市配置
-	 * 包括参数检查与初始化
+	 * 这里构造一个只需要一个参数的方法,提供给集市生成脚本使用
+	 *
+	 * @param datatableId : 集市表ID主键
+	 */
+	private MarketConf(String datatableId) {
+		this.datatableId = datatableId;
+		this.etlDate = null;
+		this.sqlParams = null;
+	}
+
+	/**
+	 * 获取 集市配置 包括参数检查与初始化
 	 *
 	 * @param datatableId 集市主表主键
 	 * @param etldate     跑批日期
@@ -110,6 +123,23 @@ public class MarketConf implements Serializable {
 		MarketConfUtils.initBeans(conf);
 		//验证是否属于重跑
 		MarketConfUtils.checkReRun(conf, etldate);
+
+		return conf;
+	}
+
+	/**
+	 * 获取 集市配置 包括参数检查与初始化
+	 * 提供给集市生成脚本使用
+	 * @param datatableId 集市主表主键
+	 * @return 集市配置实体
+	 */
+	public static MarketConf getConf(String datatableId) {
+
+		//验证输入参数合法性
+		Validator.notBlank(datatableId, String.format("集市信息id不可为空: %s", datatableId));
+		final MarketConf conf = new MarketConf(datatableId);
+		//初始化实体类
+		MarketConfUtils.initBeans(conf);
 
 		return conf;
 	}
