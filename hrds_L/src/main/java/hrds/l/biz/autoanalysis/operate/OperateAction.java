@@ -63,7 +63,7 @@ public class OperateAction extends BaseAction {
 	// 柱状折线混合图
 	private static final String BL = "bl";
 	// 柱状折线混合图-简单
-//	private static final String BLSIMPLE = "blsimple";
+	private static final String BLSIMPLE = "blsimple";
 	// 极坐标柱状图
 	private static final String POLARBAR = "polarbar";
 	// 散点图
@@ -665,8 +665,11 @@ public class OperateAction extends BaseAction {
 		resultMap.put("chart_type", chart_type);
 		// 2.根据不同图标类型获取图表数据
 		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
-			// 折线图和柱状图
+			// 折线图和柱状图、柱状折线混合图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
+		} else if (BLSIMPLE.equals(chart_type)) {
+			// 柱状折线混合图-简单
+			putDataForBLSimple(componentList, x_columns, y_columns, resultMap);
 		} else if (STACKINGBAR.equals(chart_type)) {
 			putDataForStackingBar(componentList, x_columns, y_columns, resultMap);
 		} else if (POLARBAR.equals(chart_type)) {
@@ -970,9 +973,9 @@ public class OperateAction extends BaseAction {
 		}
 	}
 
-	private void checkIfNumeric(String s, String columnnname) {
+	private void checkIfNumeric(String s, String columnName) {
 		if (!s.matches("-[0-9]+(.[0-9]+)?|[0-9]+(.[0-9]+)?")) {
-			throw new BusinessException(columnnname + "字段包含不是数值的值，无法构成图");
+			throw new BusinessException(columnName + "字段包含不是数值的值，无法构成图");
 		}
 	}
 
