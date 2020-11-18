@@ -1,5 +1,6 @@
 package hrds.l.biz.autoanalysis.operate;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.util.JdbcConstants;
 import com.alibaba.fastjson.JSON;
@@ -323,8 +324,8 @@ public class OperateAction extends BaseAction {
 		List<String> template_sql = Dbo.queryOneColumnList(
 				"select template_sql from auto_tp_info where template_id = ?",
 				template_id);
-		String dbType = JdbcConstants.POSTGRESQL;
-		String format_sql = SQLUtils.format(template_sql.get(0), dbType);
+		DbType postgresql = JdbcConstants.POSTGRESQL;
+		String format_sql = SQLUtils.format(template_sql.get(0), postgresql);
 		List<Auto_tp_cond_info> autoTpCondInfoList = Dbo.queryList(Auto_tp_cond_info.class,
 				"select * from " + Auto_tp_cond_info.TableName + " where template_id = ?",
 				template_id);

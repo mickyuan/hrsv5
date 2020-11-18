@@ -1,5 +1,6 @@
 package hrds.l.biz.autoanalysis.manage;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.expr.*;
@@ -130,9 +131,9 @@ public class ManageAction extends BaseAction {
 	public Map<String, Object> generateTemplateParam(String template_sql) {
 		// 1.校验sql是否正确
 		verifySqlIsLegal(template_sql);
-		String dbType = JdbcConstants.ORACLE;
+		DbType oracle = JdbcConstants.ORACLE;
 		// 2.sql格式化并处理sql去除;结尾
-		String format_sql = SQLUtils.format(template_sql, dbType).trim();
+		String format_sql = SQLUtils.format(template_sql, oracle).trim();
 		if (format_sql.endsWith(";")) {
 			format_sql = format_sql.substring(0, format_sql.length() - 1);
 		}
