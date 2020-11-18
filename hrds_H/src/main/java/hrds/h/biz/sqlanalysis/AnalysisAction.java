@@ -1,6 +1,5 @@
 package hrds.h.biz.sqlanalysis;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -40,7 +39,6 @@ public class AnalysisAction extends BaseAction {
 		tableColumns.remove(tableMap.get("tableName"));
 		tableMap.put("tableColumn", tableColumns);
 
-		System.out.println(JSON.toJSONString(tableMap));
 		return tableMap;
 
 	}
