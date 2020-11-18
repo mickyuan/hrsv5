@@ -389,13 +389,15 @@ public class Utils {
 		//oracle数据库创建索引
 		if (Dbtype.ORACLE == db.getDbtype()) {
 			List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
-			for (int i = 0; i < additionalAttrs.size(); i++) {
-				String indexName = "idx_" + tableName + "_" + i;
-				if (isExistIndex(indexName, db)) {
-					db.execute("drop index " + indexName);
+			if(additionalAttrs!=null && additionalAttrs.size()>0){
+				for (int i = 0; i < additionalAttrs.size(); i++) {
+					String indexName = "idx_" + tableName + "_" + i;
+					if (isExistIndex(indexName, db)) {
+						db.execute("drop index " + indexName);
+					}
+					db.execute("create index  " + indexName + " on " +
+							tableName + "(" + additionalAttrs.get(i) + ")");
 				}
-				db.execute("create index  " + indexName + " on " +
-						tableName + "(" + additionalAttrs.get(i) + ")");
 			}
 		}
 	}
