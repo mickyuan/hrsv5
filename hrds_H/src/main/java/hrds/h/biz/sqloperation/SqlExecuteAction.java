@@ -6,8 +6,8 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.exception.internal.RawlayerRuntimeException;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
+import fd.ng.web.action.AbstractWebappBaseAction;
 import fd.ng.web.util.Dbo;
-import hrds.commons.base.BaseAction;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.collection.bean.DbConfBean;
 import hrds.commons.entity.Data_store_layer;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @DocClass(desc = "SQL执行操作服务类", author = "Mr.Lee", createdate = "2020-11-16 10:32")
-public class SqlExecuteAction extends BaseAction {
+public class SqlExecuteAction extends AbstractWebappBaseAction {
 
     @Method(desc = "执行提供的SQL", logicStep = "" +
             "1: 根据提供的存储层名称查询DB连接信息" +

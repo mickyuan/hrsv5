@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import hrds.commons.base.BaseAction;
+import fd.ng.web.action.AbstractWebappBaseAction;
 import hrds.commons.utils.DruidParseQuerySql;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 @DocClass(desc = "解析SQL中的信息", author = "Mr.Lee", createdate = "2020-11-13 15:24")
-public class AnalysisAction extends BaseAction {
+public class AnalysisAction extends AbstractWebappBaseAction {
 
 	@Method(desc = "解析传递SQL的信息", logicStep = "获取SQL中的字段,表名,关联条件,过滤条件等信息")
 	@Param(name = "sql", desc = "解析的SQL信息", range = "不可为空")
