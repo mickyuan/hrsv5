@@ -6,7 +6,6 @@ import fd.ng.core.annotation.Param;
 import fd.ng.core.exception.internal.RawlayerRuntimeException;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.collection.ConnectionTool;

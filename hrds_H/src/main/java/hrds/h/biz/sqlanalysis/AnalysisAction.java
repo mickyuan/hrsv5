@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
-import fd.ng.web.annotation.UploadFile;
 import hrds.commons.base.BaseAction;
 import hrds.commons.utils.DruidParseQuerySql;
 import java.util.HashSet;
