@@ -103,5 +103,8 @@ public abstract class AbstractRealLoader implements Loader {
 
     @Override
     public void close() {
+        if (versionManager != null) {
+            versionManager.close();
+        }
     }
 }
