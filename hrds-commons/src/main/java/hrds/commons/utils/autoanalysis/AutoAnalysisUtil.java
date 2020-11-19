@@ -1,5 +1,7 @@
 package hrds.commons.utils.autoanalysis;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
@@ -157,12 +159,12 @@ public class AutoAnalysisUtil {
 		List<Map<String, Object>> compCondList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_comp_cond.TableName + " WHERE component_id = ?"
 				, component_id);
-		resultMap.put("compCond", compCondList);
+		resultMap.put("compCond", JSONArray.parseArray(JSON.toJSONString(compCondList)));
 		// 3.根据组件id查询组件分组表
 		List<Map<String, Object>> compGroupList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_comp_group.TableName + " WHERE component_id = ?",
 				component_id);
-		resultMap.put("compGroup", compGroupList);
+		resultMap.put("compGroup", JSONArray.parseArray(JSON.toJSONString(compGroupList)));
 		// 4.根据组件id查询组件数据汇总信息表
 		List<Map<String, Object>> compDataSumList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_comp_data_sum.TableName + " WHERE component_id = ?",
@@ -173,77 +175,77 @@ public class AutoAnalysisUtil {
 				"SELECT * FROM " + Auto_axis_col_info.TableName
 						+ " WHERE component_id = ? AND show_type = ?",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("xAxisCol", xAxisColList);
+		resultMap.put("xAxisCol", JSONArray.parseArray(JSON.toJSONString(xAxisColList)));
 		List<Map<String, Object>> yAxisColList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_axis_col_info.TableName
 						+ " WHERE component_id = ? AND show_type = ?",
 				component_id, AxisType.YAxis.getCode());
-		resultMap.put("yAxisCol", yAxisColList);
+		resultMap.put("yAxisCol", JSONArray.parseArray(JSON.toJSONString(yAxisColList)));
 		// 6.根据组件id查询图表标题字体属性信息表
 		Map<String, Object> fontInfoMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_font_info.TableName + " WHERE font_corr_id = ?",
 				component_id);
-		resultMap.put("titleFontInfo", fontInfoMap);
+		resultMap.put("titleFontInfo", JSONArray.parseObject(JSON.toJSONString(fontInfoMap)));
 		// 7.根据组件id查询x,y轴标签字体属性信息表,因为x/y轴字体是一样的,保存的时候是以x轴编号保存所以这里以x轴编号查询
 		Map<String, Object> xFontInfoMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_font_info.TableName
 						+ " WHERE font_corr_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("axisFontInfo", xFontInfoMap);
+		resultMap.put("axisFontInfo", JSONArray.parseObject(JSON.toJSONString(xFontInfoMap)));
 		// 8.根据组件id查询x/y轴配置信息表
 		List<Map<String, Object>> xAxisInfoList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_axis_info.TableName + " WHERE component_id = ? AND axis_type = ?",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("xAxisInfo", xAxisInfoList);
+		resultMap.put("xAxisInfo", JSONArray.parseArray(JSON.toJSONString(xAxisInfoList)));
 		List<Map<String, Object>> yAxisInfoList = SqlOperator.queryList(db,
 				"SELECT * FROM " + Auto_axis_info.TableName + " WHERE component_id = ? AND axis_type = ?",
 				component_id, AxisType.YAxis.getCode());
-		resultMap.put("yAxisInfo", yAxisInfoList);
+		resultMap.put("yAxisInfo", JSONArray.parseArray(JSON.toJSONString(yAxisInfoList)));
 		// 9.根据组件id查询x/y轴标签配置信息表
 		Map<String, Object> xAxislabelMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axislabel_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("xAxisLabel", xAxislabelMap);
+		resultMap.put("xAxisLabel", JSONArray.parseObject(JSON.toJSONString(xAxislabelMap)));
 		Map<String, Object> yAxislabelMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axislabel_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.YAxis.getCode());
-		resultMap.put("yAxisLabel", yAxislabelMap);
+		resultMap.put("yAxisLabel", JSONArray.parseObject(JSON.toJSONString(yAxislabelMap)));
 		// 10.根据组件id查询x/y轴线配置信息表
 		Map<String, Object> xAxislineMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axisline_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.XAxis.getCode());
-		resultMap.put("xAxisLine", xAxislineMap);
+		resultMap.put("xAxisLine", JSONArray.parseObject(JSON.toJSONString(xAxislineMap)));
 		Map<String, Object> yAxislineMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_axisline_info.TableName
 						+ " WHERE axis_id IN (SELECT axis_id FROM " + Auto_axis_info.TableName
 						+ " WHERE component_id = ? AND axis_type = ?)",
 				component_id, AxisType.YAxis.getCode());
-		resultMap.put("yAxisLine", yAxislineMap);
+		resultMap.put("yAxisLine", JSONArray.parseObject(JSON.toJSONString(yAxislineMap)));
 		// 11.根据组件id查询二维表样式信息表
 		Map<String, Object> tableInfoMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_table_info.TableName + " WHERE component_id = ?",
 				component_id);
-		resultMap.put("twoDimensionalTable", tableInfoMap);
+		resultMap.put("twoDimensionalTable", JSONArray.parseObject(JSON.toJSONString(tableInfoMap)));
 		// 12.根据组件id查询图表配置信息表
 		Map<String, Object> chartsconfigMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_chartsconfig.TableName + " WHERE component_id = ?",
 				component_id);
-		resultMap.put("chartsconfig", chartsconfigMap);
+		resultMap.put("chartsconfig", JSONArray.parseObject(JSON.toJSONString(chartsconfigMap)));
 		// 13.根据组件id查询文本标签信息表
 		Map<String, Object> textLabelMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_label.TableName + " WHERE label_corr_id = ?", component_id);
-		resultMap.put("textLabel", textLabelMap);
+		resultMap.put("textLabel", JSONArray.parseObject(JSON.toJSONString(textLabelMap)));
 		// 14.根据组件id查询图例信息表
 		Map<String, Object> legendMap = SqlOperator.queryOneObject(db,
 				"SELECT * FROM " + Auto_legend_info.TableName + " WHERE component_id = ?", component_id);
-		resultMap.put("legendInfo", legendMap);
+		resultMap.put("legendInfo", JSONArray.parseObject(JSON.toJSONString(legendMap)));
 		// 返回根据可视化组件ID查看可视化组件信息
 		return resultMap;
 	}
