@@ -44,9 +44,9 @@ public class SameDatabaseLoader extends AbstractRealLoader {
         columns = Utils.columns(conf.getDatatableFields());
         createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, true);
         databaseType = DatabaseType.ofEnumByCode(tableLayerAttrs.get(StorageTypeKey.database_type));
-        currentTableName = "curr_" + tableName;
-        validTableName = "valid_" + tableName;
-        invalidTableName = "invalid_" + tableName;
+        currentTableName = "cr_" + tableName;
+        validTableName = "va_" + tableName;
+        invalidTableName = "in_" + tableName;
 
         db = ConnectionTool.getDBWrapper(tableLayerAttrs);
         //开启事务，在 this.rollback() 中进行回滚,在 this.finalWork() 中 commit()
@@ -71,7 +71,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
      */
     @Override
     public void replace() {
-        String replaceTempTable = tableName + "_hyren_r";
+        String replaceTempTable = tableName + "_hy";
         forceCreateTable(replaceTempTable);
         insertData(replaceTempTable);
         Utils.dropTable(db, tableName);

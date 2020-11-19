@@ -7,6 +7,7 @@ import fd.ng.core.annotation.Return;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.cache.CacheConfBean;
@@ -219,6 +220,7 @@ public class WebSqlQueryAction extends BaseAction {
 	@Method(desc = "获取SQL中相关表和字段信息", logicStep = "获取SQL中相关表和字段信息")
 	@Param(name = "sql", desc = "解析sql", range = "String")
 	@Return(desc = "SQL中相关表和字段信息", range = "SQL中相关表和字段信息")
+	@UploadFile
 	public List<Map<String, Object>> getTableColumnInfoBySql(String sql) {
 		//数据校验
 		Validator.notBlank(sql, "解析sql不能为空");
