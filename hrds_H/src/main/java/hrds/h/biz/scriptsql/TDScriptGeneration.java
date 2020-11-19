@@ -1,11 +1,11 @@
 package hrds.h.biz.scriptsql;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.web.util.RequestUtil;
+import fd.ng.web.util.ResponseUtil;
+import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.StorageType;
-import hrds.commons.codes.Store_type;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.h.biz.config.MarketConf;
@@ -15,8 +15,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 
 public class TDScriptGeneration {
 
@@ -71,14 +73,15 @@ public class TDScriptGeneration {
 	static void scriptGeneration(List<String> mappingSqlList, String tableName) {
 		BufferedReader read = null;
 		BufferedWriter writer = null;
-		try {
-			String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
+		String plFileName = tableName + "." + fileSuffixName;
+		HttpServletResponse response = ResponseUtil.getResponse();
+		try (OutputStream out = response.getOutputStream();) {
 			File modelPath = new File(scriptModelPath);
 			if (!modelPath.exists()) {
 				throw new AppSystemException("模板文件不存在");
 			}
-			String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
-			String plFileName = tableName + fileSuffixName;
 			read = new BufferedReader(new FileReader(modelPath));
 			File createFile = new File(System.getProperty("user.dir"));
 			if (!createFile.exists()) {
@@ -86,9 +89,9 @@ public class TDScriptGeneration {
 			}
 			writer = new BufferedWriter(new FileWriter(createFile.getAbsolutePath() + File.separator + plFileName));
 			String line;
+			StringBuffer buffer = new StringBuffer();
 			while ((line = read.readLine()) != null) {
 				if (line.contains("my $SQL=<<EOF_SQL;")) {
-					StringBuffer buffer = new StringBuffer();
 					buffer.append(line).append(System.lineSeparator());
 					mappingSqlList.forEach(item -> {
 						buffer.append(item).append(System.lineSeparator()).append(";").append(System.lineSeparator())
@@ -99,10 +102,27 @@ public class TDScriptGeneration {
 				} else if (line.startsWith("my $SCTIPT=")) {
 					writer.write("my $SCTIPT=" + "\"" + plFileName + "\"");
 				} else {
-					writer.write(line);
-					writer.write(System.lineSeparator());
+					buffer.append(line).append(System.lineSeparator());
 				}
 			}
+			// 清空response
+			response.reset();
+			// 设置响应头，控制浏览器下载该文件
+			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+				// 4.1firefox浏览器
+				response.setHeader("content-disposition", "attachment;filename="
+					+ new String(plFileName.getBytes(DataBaseCode.UTF_8.getValue()),
+					DataBaseCode.ISO_8859_1.getValue()));
+			} else {
+				// 4.2其它浏览器
+				response.setHeader("content-disposition", "attachment;filename="
+					+ new String(plFileName.getBytes(),DataBaseCode.UTF_8.getValue()));
+			}
+			response.setHeader("content-type", "text/html;charset=" + DataBaseCode.UTF_8.getValue());
+			response.setCharacterEncoding(DataBaseCode.UTF_8.getValue());
+			response.setContentType("APPLICATION/OCTET-STREAM");
+			// 创建输出流
+			out.write(buffer.toString().getBytes());
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
