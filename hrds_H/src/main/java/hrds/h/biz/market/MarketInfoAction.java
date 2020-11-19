@@ -34,6 +34,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.background.query.UDLDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.*;
 import hrds.commons.utils.etl.EtlJobUtil;
@@ -260,7 +261,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
 	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
-	                            CategoryRelationBean categoryRelationBean) {
+								CategoryRelationBean categoryRelationBean) {
 		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
 		if (categoryRelationBean.getParent_category_id() == null) {
 			for (Map<String, Long> map : idNameList) {
@@ -415,7 +416,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
-	                                                                  long category_id) {
+																	  long category_id) {
 		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
@@ -511,7 +512,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
 	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
-	                                        List<Map<String, Object>> categoryList) {
+											List<Map<String, Object>> categoryList) {
 		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
 		if (!dmCategoryList.isEmpty()) {
@@ -602,7 +603,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
-	                                              String category_name, List<Map<String, Object>> categoryList) {
+												  String category_name, List<Map<String, Object>> categoryList) {
 		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
@@ -668,7 +669,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "dm_category", desc = "加工分类实体对象", range = "与数据库表字段规则一致", isBean = true)
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
-	                           List<Map<String, Long>> idNameList) {
+							   List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
 			// 1.新增选择新增的分类作为上级分类
 			for (Map<String, Long> map : idNameList) {
@@ -1574,9 +1575,9 @@ public class MarketInfoAction extends BaseAction {
 	private boolean beanContains(List<Datatable_field_info> o1, Datatable_field_info o2) {
 		for (Datatable_field_info a : o1) {
 			if (EqualsBuilder.reflectionEquals(a, o2,
-					"datatable_field_id","field_desc","field_seq",
-					"remark","field_process","process_mapping","datatable_id",
-					"group_mapping","start_date","end_date")) {
+					"datatable_field_id", "field_desc", "field_seq",
+					"remark", "field_process", "process_mapping", "datatable_id",
+					"group_mapping", "start_date", "end_date")) {
 				return true;
 			}
 		}
@@ -1597,8 +1598,8 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "pre_partition", desc = "预分区,只有是存储层选择hbase时可能存在",
 			range = "预分区键，如 a,b,c 或者是预分区数，如 10", nullable = true)
 	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id,
-	                                     String pre_partition, Dcol_relation_store[] dm_column_storage,
-	                                     String querysql, String hbasesort) {
+										 String pre_partition, Dcol_relation_store[] dm_column_storage,
+										 String querysql, String hbasesort) {
 		Map<String, Object> resultmap = new HashMap<>();
 		//循环 检查数据合法性
 		for (int i = 0; i < datatable_field_info.length; i++) {
@@ -2116,6 +2117,18 @@ public class MarketInfoAction extends BaseAction {
 			}
 			resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
 			return resultmap;
+		} else if (source.equals(DataSourceType.UDL.getCode())) {
+			Dq_table_info dq_table_info = UDLDataQuery.getUDLTableInfo(id);
+			String table_name = dq_table_info.getTable_name();
+			//查询表字段信息
+			List<Map<String, Object>> column_list = Dbo.queryList(
+					"select column_name as columnname," +
+							" column_type AS columntype,false as selectionstate " +
+							" FROM " + Dq_table_column.TableName + " WHERE table_id=?",
+					dq_table_info.getTable_id());
+			resultmap.put("tablename",table_name);
+			resultmap.put("columnresult",column_list);
+			return resultmap;
 		}
 		//TODO 新的层加进来后 还需要补充
 		return null;
@@ -2193,7 +2206,7 @@ public class MarketInfoAction extends BaseAction {
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
-		     XSSFWorkbook workbook = new XSSFWorkbook()) {
+			 XSSFWorkbook workbook = new XSSFWorkbook()) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -2872,7 +2885,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private Set<String> getDatatableDiff(List<Dm_datatable> dm_datatables,
-	                                     List<String> enNameList) {
+										 List<String> enNameList) {
 		Set<String> diffSet = new HashSet<>();
 		for (Dm_datatable dm_datatable : dm_datatables) {
 			Map<String, Object> datatableMap = Dbo.queryOneObject(
@@ -2945,7 +2958,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private List<String> getDatatableFieldDiff(List<Datatable_field_info> datatable_field_infos,
-	                                           long data_mart_id) {
+											   long data_mart_id) {
 		List<String> diffList = new ArrayList<>();
 		// 新版本有效数据表字段数据
 		List<Datatable_field_info> datatableFieldInfos = getDatatable_field_infos(data_mart_id);
@@ -3584,7 +3597,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private void setStoreAdd(Dcol_relation_store dcol_relation_store, Dtab_relation_store dm_relation_datatable,
-	                         String key, String dsla_storelayer) {
+							 String key, String dsla_storelayer) {
 		if (StringUtil.isNotBlank(key)) {
 			List<String> keyList = StringUtil.split(key, "|");
 			for (int k = 0; k < keyList.size(); k++) {
