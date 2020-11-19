@@ -148,10 +148,10 @@ public class HBaseHelper implements Closeable {
 
 	public void createTableHashedPartitions(String table, int partitions, String... colfams) throws IOException {
 
-		if( partitions < 2 || partitions > 100 ) {
+		if( partitions < 2 || partitions > 2000 ) {
 			throw new IllegalArgumentException(
 					"Partitions count must be a nature number which " +
-							"between 2 and 200 but got an unexpected number: " + partitions);
+							"between 2 and 2000 but got an unexpected number: " + partitions);
 		}
 		HashChoreWoker worker = new HashChoreWoker(1000000, partitions);
 		byte[][] splitKeys = worker.calcSplitKeys();
