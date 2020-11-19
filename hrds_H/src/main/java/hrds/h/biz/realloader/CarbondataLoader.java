@@ -139,7 +139,7 @@ public class CarbondataLoader extends AbstractRealLoader {
         versionManager.updateSqlVersion();
         if (versionManager.isVersionExpire()) {
             versionManager.updateFieldVersion();
-            versionManager.commit();
         }
+        versionManager.commit();
     }
 }

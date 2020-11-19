@@ -27,8 +27,8 @@ public class ServiceUserAction extends BaseAction {
 		// 1.数据可访问权限处理方式：该方法通过user_id进行访问权限限制
 		SqlOperator.Assembler assembler = SqlOperator.Assembler.newInstance();
 		assembler.clean();
-		assembler.addSql("SELECT interface_use_id,interface_name,use_valid_date,start_use_date,url,user_id FROM "
-				+ Interface_use.TableName + " WHERE user_id = ?").addParam(getUserId());
+		assembler.addSql("SELECT * FROM " + Interface_use.TableName + " WHERE user_id = ?")
+				.addParam(getUserId());
 		// 2.判断接口名称是否为空，不为空加条件查询
 		if (StringUtil.isNotBlank(interface_name)) {
 			assembler.addLikeParam("interface_name", "%" + interface_name + "%");
