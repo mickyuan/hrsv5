@@ -1316,8 +1316,7 @@ public class OperateAction extends BaseAction {
 		Map<String, Object> chartShow = getChartShow(exe_sql, componentBean.getX_columns(),
 				componentBean.getY_columns(), auto_comp_sum.getChart_type());
 		chartShow.put("itemStyle", auto_label);
-		auto_comp_sum.setComponent_buffer(auto_comp_sum.getComponent_buffer() == null ?
-				JsonUtil.toJson(chartShow) : auto_comp_sum.getComponent_buffer());
+		auto_comp_sum.setComponent_buffer(JsonUtil.toJson(chartShow));
 		// 2.更新组件汇总表数据
 		auto_comp_sum.update(Dbo.db());
 		Validator.notBlank(componentBean.getFetch_name(), "取数名称不能为空");
@@ -1406,8 +1405,7 @@ public class OperateAction extends BaseAction {
 		Map<String, Object> chartShow = getChartShow(exe_sql, componentBean.getX_columns(),
 				componentBean.getY_columns(), auto_comp_sum.getChart_type());
 		chartShow.put("itemStyle", auto_label);
-		auto_comp_sum.setComponent_buffer(auto_comp_sum.getComponent_buffer() == null ?
-				JsonUtil.toJson(chartShow) : auto_comp_sum.getComponent_buffer());
+		auto_comp_sum.setComponent_buffer(JsonUtil.toJson(chartShow));
 		// 2.判断组件名称是否已存在
 		isAutoCompSumExist(auto_comp_sum.getComponent_name());
 		// 3.保存组件汇总表数据
