@@ -46,6 +46,7 @@ public class ManageAction extends BaseAction {
 
 	private static final Logger logger = LogManager.getLogger();
 	private static final ArrayList<String> numbersArray = new ArrayList<>();
+	private static final int maxvaluesize = 64;
 
 	static {
 		numbersArray.add("int");
@@ -115,7 +116,7 @@ public class ManageAction extends BaseAction {
 				public void dealLine(Map<String, Object> map) {
 					resultList.add(map);
 				}
-			}.getPageDataLayer(template_sql, Dbo.db(),1,10);
+			}.getPageDataLayer(template_sql, Dbo.db(), 1, 10);
 			return resultList;
 		} catch (Exception e) {
 			logger.error(e);
@@ -130,7 +131,7 @@ public class ManageAction extends BaseAction {
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
 	public Map<String, Object> generateTemplateParam(String template_sql) {
 		// 1.校验sql是否正确
-		verifySqlIsLegal(template_sql);
+//		verifySqlIsLegal(template_sql);
 		DbType oracle = JdbcConstants.ORACLE;
 		// 2.sql格式化并处理sql去除;结尾
 		String format_sql = SQLUtils.format(template_sql, oracle).trim();
@@ -140,13 +141,9 @@ public class ManageAction extends BaseAction {
 		Set<Map<String, Object>> autoTpCondInfoList = new HashSet<>();
 		Set<Auto_tp_res_set> autoTpResSets = new HashSet<>();
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(format_sql);
-		if (druidParseQuerySql.leftWhere != druidParseQuerySql.rightWhere) {
-			if (null != druidParseQuerySql.rightWhere) {
-				setAutoTpCond(autoTpCondInfoList, druidParseQuerySql.rightWhere);
-			}
-		}
-		if (null != druidParseQuerySql.leftWhere) {
-			setAutoTpCond(autoTpCondInfoList, druidParseQuerySql.leftWhere);
+		List<SQLExpr> allWherelist = druidParseQuerySql.getAllWherelist();
+		for (SQLExpr sqlExpr : allWherelist) {
+			setAutoTpCond(autoTpCondInfoList, sqlExpr);
 		}
 		// 获取模板结果配置信息
 		getAutoTpResSet(autoTpResSets, format_sql, druidParseQuerySql.selectList);
@@ -167,8 +164,8 @@ public class ManageAction extends BaseAction {
 	@Param(name = "autoTpResSets", desc = "模板结果实体对象实体数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_tp_info", desc = "模板信息实体对象数组", range = "与数据库表规则一致", isBean = true)
 	public void saveTemplateConfInfo(Auto_tp_cond_info[] autoTpCondInfos,
-	                                 Auto_tp_res_set[] autoTpResSets,
-	                                 Auto_tp_info auto_tp_info) {
+									 Auto_tp_res_set[] autoTpResSets,
+									 Auto_tp_info auto_tp_info) {
 		// 数据可访问权限处理方式：通过user_id进行访问权限限制
 		// 1.校验自主取数模板字段是否合法
 		checkAutoTpInfoFields(auto_tp_info);
@@ -310,7 +307,7 @@ public class ManageAction extends BaseAction {
 	@Param(name = "autoTpResSets", desc = "模板结果实体对象实体数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_tp_info", desc = "模板信息实体对象", range = "与数据库表规则一致", isBean = true)
 	public void updateTemplateConfInfo(Auto_tp_cond_info[] autoTpCondInfos, Auto_tp_res_set[] autoTpResSets,
-	                                   Auto_tp_info auto_tp_info) {
+									   Auto_tp_info auto_tp_info) {
 		// 数据可访问权限处理方式：通过user_id进行访问权限限制
 		// 1.校验模板参数合法性
 		Validator.notNull(auto_tp_info.getTemplate_id(), "编辑时模板ID不能为空");
@@ -408,62 +405,53 @@ public class ManageAction extends BaseAction {
 	}
 
 	private void setAutoTpCond(Set<Map<String, Object>> autoTpCondInfoList, SQLExpr sqlExpr) {
-		Map<String, Object> condInfoMap = new HashMap<>();
 		if (sqlExpr instanceof SQLBetweenExpr) {
 			SQLBetweenExpr sqlBetweenExpr = (SQLBetweenExpr) sqlExpr;
-			SQLExpr testExpr = sqlBetweenExpr.testExpr;
-			setSqlPropertyExpr(condInfoMap, testExpr);
-			condInfoMap.put("con_relation", "BETWEEN");
-			// fixme 这个原来默认给64，不知道这个作用是什么
-			condInfoMap.put("value_size", 64);
-			SQLExpr beginExpr = sqlBetweenExpr.beginExpr;
-			String pre_value = beginExpr.toString() + "," + sqlBetweenExpr.endExpr.toString();
-			setAutoTpCondBySqlExpr(autoTpCondInfoList, condInfoMap, beginExpr, pre_value);
+			SQLExpr testExpr = sqlBetweenExpr.getTestExpr();
+			SQLExpr beginExpr = sqlBetweenExpr.getBeginExpr();
+			SQLExpr endExpr = sqlBetweenExpr.getEndExpr();
+			String pre_value = beginExpr.toString() + "," + endExpr.toString();
+			setAutoTpCondBySqlExpr(autoTpCondInfoList, testExpr, "BETWEEN", pre_value, IsFlag.Shi.getCode());
 		} else if (sqlExpr instanceof SQLBinaryOpExpr) {
 			SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) sqlExpr;
 			SQLExpr exprLeft = sqlBinaryOpExpr.getLeft();
 			SQLExpr exprRight = sqlBinaryOpExpr.getRight();
-			if (exprLeft instanceof SQLIdentifierExpr || exprLeft instanceof SQLPropertyExpr) {
-				setSqlPropertyExpr(condInfoMap, exprLeft);
-				condInfoMap.put("con_relation", sqlBinaryOpExpr.getOperator().name);
-				condInfoMap.put("value_size", 64);
-				SQLExpr right = sqlBinaryOpExpr.getRight();
-				setAutoTpCondBySqlExpr(autoTpCondInfoList, condInfoMap, right, right.toString());
+			if (checkExprIfColumn(exprLeft) || checkExprIfColumn(exprRight)) {
+				if (checkExprIfColumn(exprLeft) && checkExprIfColumn(exprRight)) {
+					setAutoTpCondBySqlExpr(autoTpCondInfoList, exprLeft, sqlBinaryOpExpr.getOperator().getName(), exprRight.toString(), IsFlag.Fou.getCode());
+				} else if (checkExprIfColumn(exprLeft)) {
+					setAutoTpCondBySqlExpr(autoTpCondInfoList, exprLeft, sqlBinaryOpExpr.getOperator().getName(), exprRight.toString(), IsFlag.Shi.getCode());
+				} else {
+					setAutoTpCondBySqlExpr(autoTpCondInfoList, exprRight, sqlBinaryOpExpr.getOperator().getName(), exprLeft.toString(), IsFlag.Shi.getCode());
+				}
 			} else {
-				setAutoTpCond(autoTpCondInfoList, exprLeft);
-				setAutoTpCond(autoTpCondInfoList, exprRight);
+				//如果左右两边都不是字段的话，那么就认为是常量判断 跳过 DO NOTING
+				logger.info("sqlExpr:" + sqlExpr.toString() + " 的左右两侧都不是字段，跳过");
 			}
 		} else if (sqlExpr instanceof SQLInListExpr) {
 			SQLInListExpr sqlInListExpr = (SQLInListExpr) sqlExpr;
-			setSqlPropertyExpr(condInfoMap, sqlInListExpr.getExpr());
-			condInfoMap.put("con_relation", "IN");
-			condInfoMap.put("value_size", 64);
+			SQLExpr leftExpr = sqlInListExpr.getExpr();
 			List<SQLExpr> targetList = sqlInListExpr.getTargetList();
 			StringBuilder sb = new StringBuilder();
 			for (SQLExpr expr : targetList) {
 				sb.append(expr.toString()).append(",");
 			}
-			setAutoTpCondBySqlExpr(autoTpCondInfoList, condInfoMap, sqlInListExpr.getExpr(),
-					sb.deleteCharAt(sb.length() - 1).toString());
-		}
-	}
-
-	private void setAutoTpCondBySqlExpr(Set<Map<String, Object>> autoTpCondInfoList,
-	                                    Map<String, Object> condInfoMap, SQLExpr sqlExpr, String pre_value) {
-		if (sqlExpr instanceof SQLIntegerExpr) {
-			condInfoMap.put("value_type", AutoValueType.ShuZhi.getCode());
-		} else if (sqlExpr instanceof SQLDateExpr) {
-			condInfoMap.put("value_type", AutoValueType.RiQi.getCode());
+			String pre_value = sb.deleteCharAt(sb.length() - 1).toString();
+			setAutoTpCondBySqlExpr(autoTpCondInfoList, leftExpr, "IN", pre_value, IsFlag.Shi.getCode());
 		} else {
-			condInfoMap.put("value_type", AutoValueType.ZiFuChuan.getCode());
+			Class<? extends SQLExpr> aClass = sqlExpr.getClass();
+			throw new BusinessException("sqlexpr：" + sqlExpr.toString() + "sqlexpr.class:" + aClass + " 请联系管理员");
 		}
-		condInfoMap.put("is_required", IsFlag.Shi.getCode());
-		condInfoMap.put("pre_value", pre_value);
-		condInfoMap.put("checked", true);
-		autoTpCondInfoList.add(condInfoMap);
 	}
 
-	private void setSqlPropertyExpr(Map<String, Object> condInfoMap, SQLExpr sqlExpr) {
+	private boolean checkExprIfColumn(SQLExpr expr) {
+		return expr instanceof SQLIdentifierExpr || expr instanceof SQLPropertyExpr;
+	}
+
+	private void setAutoTpCondBySqlExpr(Set<Map<String, Object>> autoTpCondInfoList, SQLExpr sqlExpr, String con_relation, String pre_value, String is_required) {
+		Map<String, Object> condInfoMap = new HashMap<>();
+		//这里没法判断值是什么类型的 所以全部预设为字符串
+		condInfoMap.put("value_type", AutoValueType.ZiFuChuan.getCode());
 		if (sqlExpr instanceof SQLPropertyExpr) {
 			SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlExpr;
 			condInfoMap.put("cond_para_name", sqlPropertyExpr.toString());
@@ -474,10 +462,21 @@ public class ManageAction extends BaseAction {
 			condInfoMap.put("cond_en_column", sqlExpr.toString());
 			condInfoMap.put("cond_cn_column", sqlExpr.toString());
 		}
+		condInfoMap.put("con_relation", con_relation);
+		condInfoMap.put("is_required", is_required);
+		condInfoMap.put("value_size", maxvaluesize);
+		condInfoMap.put("pre_value", pre_value);
+		condInfoMap.put("checked", true);
+		if (autoTpCondInfoList.contains(condInfoMap)) {
+			throw new BusinessException("存在相同的条件："
+					+ condInfoMap.get("cond_en_column") +" "+ condInfoMap.get("con_relation") +" "+ condInfoMap.get("pre_value")
+					+ ",无法解析，建议先通过加工生成目标表后再创建模板表");
+		}
+		autoTpCondInfoList.add(condInfoMap);
 	}
 
 	private void getAutoTpResSet(Set<Auto_tp_res_set> autoTpResSets, String sql,
-	                             List<SQLSelectItem> selectList) {
+								 List<SQLSelectItem> selectList) {
 		// 获取表名对应别名，key为原表名，value为表别名
 		Map<String, String> sourceAndAliasName = getTableAndAliasName(sql);
 		for (SQLSelectItem sqlSelectItem : selectList) {
@@ -567,7 +566,7 @@ public class ManageAction extends BaseAction {
 	}
 
 	private void setAutoTpResSet(Set<Auto_tp_res_set> autoTpResSets, Auto_tp_res_set auto_tp_res_set,
-	                             List<Map<String, Object>> columns) {
+								 List<Map<String, Object>> columns) {
 		for (Map<String, Object> column : columns) {
 			if (auto_tp_res_set.getColumn_en_name().equals(column.get("column_name").toString())) {
 				auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
@@ -582,7 +581,7 @@ public class ManageAction extends BaseAction {
 	}
 
 	private void setAllColumns(Set<Auto_tp_res_set> autoTpResSets, String table_name,
-	                           List<Map<String, Object>> columns) {
+							   List<Map<String, Object>> columns) {
 		for (Map<String, Object> column : columns) {
 			Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
 			auto_tp_res_set.setSource_table_name(table_name);
