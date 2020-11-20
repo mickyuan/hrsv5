@@ -70,7 +70,7 @@ public class DatabaseLoader extends AbstractRealLoader {
 	@Override
 	public void replace() {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-			String replaceTempTable = tableName + "_hyren_r";
+			String replaceTempTable = tableName + "_hy";
 			Utils.forceCreateTable(db, replaceTempTable, createTableColumnTypes);
 			databaseArgs.setOverWrite(false);
 			databaseArgs.setTableName(replaceTempTable);

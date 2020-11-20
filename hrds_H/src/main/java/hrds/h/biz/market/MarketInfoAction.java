@@ -432,6 +432,7 @@ public class MarketInfoAction extends BaseAction {
 	@Method(desc = "根据加工表主键查询当前存储层是否是关系性数据库", logicStep = "")
 	@Param(name = "datatable_id", desc = "加工表主键", range = "无限制")
 	@Param(name = "sql", desc = "查询SQL", range = "无限制")
+	@UploadFile
 	public boolean getIfRelationDatabase(String datatable_id, String sql) {
 		Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
 		dtab_relation_store.setTab_id(datatable_id);
@@ -1135,6 +1136,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "querysql", desc = "查询SQL", range = "String类型SQL")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "查询返回结果集", range = "无限制")
+	@UploadFile
 	public List<Map<String, Object>> getDataBySQL(String querysql, String sqlparameter) {
 		//初始化查询结果集
 		List<Map<String, Object>> dataBySQL_rs = new ArrayList<>();
@@ -1202,6 +1204,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表ID")
 	@Param(name = "sqlparameter", desc = "SQL参数", range = "String类型参数", nullable = true)
 	@Return(desc = "列结构", range = "无限制")
+	@UploadFile
 	public Map<String, Object> getColumnBySql(String querysql, String datatable_id, String sqlparameter) {
 		Map<String, Object> resultmap = new HashMap<>();
 		List<Map<String, Object>> resultlist = new ArrayList<>();
@@ -1617,7 +1620,7 @@ public class MarketInfoAction extends BaseAction {
 			dm_operation_info.setEnd_date(Constant.MAXDATE);
 			dm_operation_info.add(Dbo.db());
 			//保存血缘关系的表，进入数据库
-			saveBloodRelationToPGTable(execute_sql, datatable_id);
+			saveBloodRelationToPGTable(querysql, datatable_id);
 		}
 		//更新时判断SQL是否一致
 		else {
@@ -1625,15 +1628,15 @@ public class MarketInfoAction extends BaseAction {
 			//如果不一致 修改 更新SQL 时间
 			if (!dm_operation_info.getExecute_sql().equals(execute_sql)) {
 				//加工 如果执行sql不一致,并且任务执行成功过,则提示不允许修改表结构信息
-				//TODO 如果后台版本管理完成后,去掉这个校验
-				Optional<Dtab_relation_store> dtab_rs_optional = Dbo.queryOneObject(Dtab_relation_store.class,
-						"select * from " + Dtab_relation_store.TableName + " dtab_rs" +
-								" join " + Dm_datatable.TableName + " dm on dtab_rs.tab_id=dm.datatable_id" +
-								" where dtab_rs.is_successful=? and dtab_rs.tab_id=?",
-						JobExecuteState.WanCheng.getCode(), dm_datatable.getDatatable_id());
-				if (dtab_rs_optional.isPresent()) {
-					throw new BusinessException("试用版不允许修改表结构!");
-				}
+				//FIXME 如果后台版本管理完成后,去掉这个校验  这里完成了嘛？（TBH))
+//				Optional<Dtab_relation_store> dtab_rs_optional = Dbo.queryOneObject(Dtab_relation_store.class,
+//						"select * from " + Dtab_relation_store.TableName + " dtab_rs" +
+//								" join " + Dm_datatable.TableName + " dm on dtab_rs.tab_id=dm.datatable_id" +
+//								" where dtab_rs.is_successful=? and dtab_rs.tab_id=?",
+//						JobExecuteState.WanCheng.getCode(), dm_datatable.getDatatable_id());
+//				if (dtab_rs_optional.isPresent()) {
+//					throw new BusinessException("试用版不允许修改表结构!");
+//				}
 				dm_datatable.setDdlc_date(DateUtil.getSysDate());
 				dm_datatable.setDdlc_time(DateUtil.getSysTime());
 				//更新加工表的SQL修改时间字段
@@ -1823,65 +1826,66 @@ public class MarketInfoAction extends BaseAction {
 			isBean = true)
 	@Param(name = "querySql", desc = "querySql", range = "String类型加工查询SQL")
 	public String getExecute_sql(Datatable_field_info[] datatable_field_info, String querySql) {
+		return querySql;
 		//解析querySql,获取查询sql的别名，加查询列的map
-		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querySql);
-		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
-		boolean flag = true;
-		//1.根据datatable_field_info信息拼接所有查询列的信息
-		StringBuilder sb = new StringBuilder(1024);
-		sb.append("SELECT ");
-		for (Datatable_field_info field_info : datatable_field_info) {
-			ProcessType processType = ProcessType.ofEnumByCode(field_info.getField_process());
-			if (ProcessType.DingZhi == processType) {
-				sb.append(field_info.getProcess_mapping()).append(" as ")
-						.append(field_info.getField_en_name()).append(",");
-			} else if (ProcessType.ZiZeng == processType) {
-				//这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
-				logger.info("自增不拼接字段");
-			} else if (ProcessType.YingShe == processType) {
-				sb.append(selectColumnMap.get(field_info.getProcess_mapping().toUpperCase())).append(" as ")
-						.append(field_info.getField_en_name()).append(",");
-			} else if (ProcessType.HanShuYingShe == processType) {
-				//TODO 这里如果函数映射包含函数映射会有问题，待讨论
-				sb.append(field_info.getProcess_mapping()).append(" as ")
-						.append(field_info.getField_en_name()).append(",");
-			} else if (ProcessType.FenZhuYingShe == processType && flag) {
-				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
-				sb.append("#{HyrenFenZhuYingShe}").append(",");
-				flag = false;
-			} else if (!flag) {
-				logger.info("第二次进来分组映射不做任何操作，跳过");
-			} else {
-				throw new BusinessException("错误的字段映射规则");
-			}
-		}
-		String selectSql = sb.toString();
-		sb.delete(0, sb.length());
-		StringBuilder groupSql = new StringBuilder();
-		//2.遍历所有为分组映射的字段
-		for (Datatable_field_info field_info : datatable_field_info) {
-			//为分组映射
-			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
-				String replacement = field_info.getProcess_mapping() + " as " + field_info.getField_en_name();
-				List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
-				sb.append(selectSql.replace("#{HyrenFenZhuYingShe}", replacement));
-				sb.append("'").append(split.get(1)).append("'").append(" as ").append(split.get(0)).append(" FROM ");
-				//先格式化查询的sql,替换掉原始查询SQL的select部分
-				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
-						druidParseQuerySql.getSelectSql(), sb.toString());
-				sb.delete(0, sb.length());
-				groupSql.append(execute_sql).append(" union all ");
-			}
-		}
-		//3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。
-		if (groupSql.length() > 0) {
-			return groupSql.delete(groupSql.length() - " union all ".length(), groupSql.length()).toString();
-		} else {
-			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
-			//先格式化查询的sql,替换掉原始查询SQL的select部分
-			return SQLUtils.format(querySql, JdbcConstants.HIVE).replace(
-					druidParseQuerySql.getSelectSql(), selectSql);
-		}
+//		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querySql);
+//		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
+//		boolean flag = true;
+//		//1.根据datatable_field_info信息拼接所有查询列的信息
+//		StringBuilder sb = new StringBuilder(1024);
+//		sb.append("SELECT ");
+//		for (Datatable_field_info field_info : datatable_field_info) {
+//			ProcessType processType = ProcessType.ofEnumByCode(field_info.getField_process());
+//			if (ProcessType.DingZhi == processType) {
+//				sb.append(field_info.getProcess_mapping()).append(" as ")
+//						.append(field_info.getField_en_name()).append(",");
+//			} else if (ProcessType.ZiZeng == processType) {
+//				//这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
+//				logger.info("自增不拼接字段");
+//			} else if (ProcessType.YingShe == processType) {
+//				sb.append(selectColumnMap.get(field_info.getProcess_mapping().toUpperCase())).append(" as ")
+//						.append(field_info.getField_en_name()).append(",");
+//			} else if (ProcessType.HanShuYingShe == processType) {
+//				//TODO 这里如果函数映射包含函数映射会有问题，待讨论
+//				sb.append(field_info.getProcess_mapping()).append(" as ")
+//						.append(field_info.getField_en_name()).append(",");
+//			} else if (ProcessType.FenZhuYingShe == processType && flag) {
+//				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
+//				sb.append("#{HyrenFenZhuYingShe}").append(",");
+//				flag = false;
+//			} else if (!flag) {
+//				logger.info("第二次进来分组映射不做任何操作，跳过");
+//			} else {
+//				throw new BusinessException("错误的字段映射规则");
+//			}
+//		}
+//		String selectSql = sb.toString();
+//		sb.delete(0, sb.length());
+//		StringBuilder groupSql = new StringBuilder();
+//		//2.遍历所有为分组映射的字段
+//		for (Datatable_field_info field_info : datatable_field_info) {
+//			//为分组映射
+//			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+//				String replacement = field_info.getProcess_mapping() + " as " + field_info.getField_en_name();
+//				List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
+//				sb.append(selectSql.replace("#{HyrenFenZhuYingShe}", replacement));
+//				sb.append("'").append(split.get(1)).append("'").append(" as ").append(split.get(0)).append(" FROM ");
+//				//先格式化查询的sql,替换掉原始查询SQL的select部分
+//				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
+//						druidParseQuerySql.getSelectSql(), sb.toString());
+//				sb.delete(0, sb.length());
+//				groupSql.append(execute_sql).append(" union all ");
+//			}
+//		}
+//		//3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。
+//		if (groupSql.length() > 0) {
+//			return groupSql.delete(groupSql.length() - " union all ".length(), groupSql.length()).toString();
+//		} else {
+//			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
+//			//先格式化查询的sql,替换掉原始查询SQL的select部分
+//			return SQLUtils.format(querySql, JdbcConstants.HIVE).replace(
+//					druidParseQuerySql.getSelectSql(), selectSql);
+//		}
 	}
 
 	/**
@@ -3191,9 +3195,10 @@ public class MarketInfoAction extends BaseAction {
 				for (String pre_sql : pre_works) {
 					//SQL解析判断表名是否正确
 					String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_sql);
-					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-						throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-					}
+					//FIXME 南通这里要求关掉判断
+//					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+//						throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+//					}
 				}
 			} else {
 				pre_work = pre_work.trim();
@@ -3202,9 +3207,10 @@ public class MarketInfoAction extends BaseAction {
 				}
 				//SQL解析判断表名是否正确
 				String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
-				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-					throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-				}
+				//FIXME 南通这里要求关掉判断
+//				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+//					throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+//				}
 			}
 		}
 		//判空
@@ -3214,9 +3220,10 @@ public class MarketInfoAction extends BaseAction {
 				String[] post_works = post_work.split(";;");
 				for (String post_sql : post_works) {
 					String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_sql);
-					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-						throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-					}
+					//FIXME 南通这里要求关掉判断
+//					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+//						throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+//					}
 				}
 			} else {
 				post_work = post_work.trim();
@@ -3224,9 +3231,10 @@ public class MarketInfoAction extends BaseAction {
 					post_work = post_work.substring(0, post_work.length() - 1);
 				}
 				String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
-				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-					throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-				}
+				//FIXME 南通这里要求关掉判断
+//				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+//					throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+//				}
 			}
 		}
 
