@@ -38,3 +38,8 @@ TODO
 resources
 log
 hyrenv5
+/.gradle/
+/conf/
+/storeConfigPath/
+/CommunicationError/
+/mapDb/
