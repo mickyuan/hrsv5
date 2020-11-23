@@ -63,17 +63,6 @@ public class StorageTypeKey {
 	//HBase计算增量的引擎
 	public static final String increment_engine = "increment_engine";
 
-	//数据库连接池的参数，非必须
-	public static final String minPoolSize = "minPoolSize";
-	//数据库连接池的参数，非必须
-	public static final String maxPoolSize = "maxPoolSize";
-	//连接是设置拉取批次的大小，非必须
-	public static final String fetch_size = "fetch_size";
-	//数据库连接的方式
-	public static final String conn_way = "conn_way";
-	//数据库连接池的名称
-	public static final String name = "name";
-
 	static {
 		//数据库，不支持外部表
 		List<String> databaseKeys = new ArrayList<>(Arrays.
