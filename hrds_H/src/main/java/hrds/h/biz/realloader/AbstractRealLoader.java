@@ -49,6 +49,11 @@ public abstract class AbstractRealLoader implements Loader {
      */
     protected boolean isMultipleInput;
 
+    /**
+     * 加工版本管理
+     */
+    protected VersionManager versionManager;
+
     protected AbstractRealLoader(MarketConf conf) {
         this.conf = conf;
         tableName = conf.getTableName();
@@ -58,6 +63,7 @@ public abstract class AbstractRealLoader implements Loader {
         preSql = conf.getPreSql();
         isMultipleInput = conf.isMultipleInput();
         initTableLayerProperties();
+        this.versionManager = new VersionManager(conf);
     }
 
     @Override
@@ -97,5 +103,8 @@ public abstract class AbstractRealLoader implements Loader {
 
     @Override
     public void close() {
+        if (versionManager != null) {
+            versionManager.close();
+        }
     }
 }

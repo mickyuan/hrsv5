@@ -25,6 +25,14 @@ public class Constant {
 	 */
 	public static final String MAXDATE = "99991231";
 	/**
+	 * 数据有效日期
+	 */
+	public static final String INVDATE = "99999999";
+	/**
+	 * 数据初始化日期
+	 */
+	public static final String INITDATE = "00000000";
+	/**
 	 * 部署时服务器的默认端口
 	 */
 	public static final String SFTP_PORT = "22";

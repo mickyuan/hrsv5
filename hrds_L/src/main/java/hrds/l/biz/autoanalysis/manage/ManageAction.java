@@ -1,5 +1,6 @@
 package hrds.l.biz.autoanalysis.manage;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.expr.*;
@@ -14,6 +15,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AutoTemplateStatus;
@@ -130,7 +132,7 @@ public class ManageAction extends BaseAction {
 	public Map<String, Object> generateTemplateParam(String template_sql) {
 		// 1.校验sql是否正确
 		verifySqlIsLegal(template_sql);
-		String dbType = JdbcConstants.ORACLE;
+		DbType dbType = JdbcConstants.ORACLE;
 		// 2.sql格式化并处理sql去除;结尾
 		String format_sql = SQLUtils.format(template_sql, dbType).trim();
 		if (format_sql.endsWith(";")) {

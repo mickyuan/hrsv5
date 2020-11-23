@@ -50,6 +50,11 @@ public class DatabaseLoader extends AbstractRealLoader {
 	@Override
 	public void ensureRelation() {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
+			if (versionManager.isVersionExpire()) {
+				if (!db.isExistTable(versionManager.getRenameTableName())) {
+					Utils.renameTable(db, tableName, versionManager.getRenameTableName());
+				}
+			}
 			Utils.softCreateTable(db, tableName, createTableColumnTypes);
 		}
 	}
@@ -70,7 +75,7 @@ public class DatabaseLoader extends AbstractRealLoader {
 	@Override
 	public void replace() {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
-			String replaceTempTable = tableName + "_hy";
+			String replaceTempTable = tableName + "_hyren_r";
 			Utils.forceCreateTable(db, replaceTempTable, createTableColumnTypes);
 			databaseArgs.setOverWrite(false);
 			databaseArgs.setTableName(replaceTempTable);
@@ -97,8 +102,26 @@ public class DatabaseLoader extends AbstractRealLoader {
 	}
 
 	@Override
+	public void handleException() {
+		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
+			if (versionManager.isVersionExpire()) {
+				versionManager.rollBack();
+				if (db.isExistTable(versionManager.getRenameTableName())) {
+					Utils.dropTable(db, tableName);
+					Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
+				}
+			}
+		}
+	}
+
+	@Override
 	public void finalWork() {
 		Utils.finalWorkWithinTrans(finalSql, tableLayerAttrs);
+		versionManager.updateSqlVersion();
+		if (versionManager.isVersionExpire()) {
+			versionManager.updateFieldVersion();
+			versionManager.commit();
+		}
 	}
 
 

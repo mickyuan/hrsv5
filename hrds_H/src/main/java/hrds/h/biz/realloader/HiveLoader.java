@@ -52,6 +52,11 @@ public class HiveLoader extends AbstractRealLoader {
     @Override
     public void ensureRelation() {
         try (DatabaseWrapper db = getHiveDb()) {
+            if (versionManager.isVersionExpire()) {
+                if (!db.isExistTable(versionManager.getRenameTableName()) && db.isExistTable(tableName)) {
+                    Utils.renameTable(db, tableName, versionManager.getRenameTableName());
+                }
+            }
             createHiveTable(db, tableName);
         }
     }
@@ -99,7 +104,7 @@ public class HiveLoader extends AbstractRealLoader {
                 String after = "CASE " + EDATENAME + " WHEN '" + etlDate + "' THEN '" + MAXDATE + "' ELSE "
                         + EDATENAME + " END " + EDATENAME;
                 String join = StringUtil.replace(hiveArgs.getColumns(), EDATENAME, after);
-                db.execute("DROP TABLE IF EXISTS "+tableName + "_restore");
+                db.execute("DROP TABLE IF EXISTS " + tableName + "_restore");
                 String restoreSql = "CREATE TABLE " + tableName + "_restore AS SELECT  " + join + " FROM " + tableName + " WHERE "
                         + SDATENAME + "<>'" + etlDate + "'";
                 db.execute(restoreSql);
@@ -110,10 +115,28 @@ public class HiveLoader extends AbstractRealLoader {
     }
 
     @Override
+    public void handleException() {
+        try (DatabaseWrapper db = getHiveDb()) {
+            if (versionManager.isVersionExpire()) {
+                versionManager.rollBack();
+                if (db.isExistTable(versionManager.getRenameTableName())) {
+                    Utils.dropTable(db, tableName);
+                    Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
+                }
+            }
+        }
+    }
+
+    @Override
     public void finalWork() {
         try (DatabaseWrapper db = getHiveDb()) {
             Utils.computeStatistics(db, tableName);
             Utils.finalWorkWithoutTrans(finalSql, db);
+            versionManager.updateSqlVersion();
+            if (versionManager.isVersionExpire()) {
+                versionManager.updateFieldVersion();
+                versionManager.commit();
+            }
         }
     }
 }

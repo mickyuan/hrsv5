@@ -176,6 +176,11 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
     }
 
     @Override
+    public void handleException() {
+
+    }
+
+    @Override
     public void restore() {
         //TODO  怎么回滚
 //        try (HBaseHelper helper = HBaseHelper.getHelper()) {
@@ -185,4 +190,12 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
 //        }
     }
 
+    @Override
+    public void finalWork() {
+        versionManager.updateSqlVersion();
+        if (versionManager.isVersionExpire()) {
+            versionManager.updateFieldVersion();
+            versionManager.commit();
+        }
+    }
 }

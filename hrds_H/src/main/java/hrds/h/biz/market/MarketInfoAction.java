@@ -9,6 +9,7 @@ import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
+import fd.ng.core.bean.EqualsBuilder;
 import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.CodecUtil;
 import fd.ng.core.utils.DateUtil;
@@ -33,6 +34,7 @@ import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.tree.background.TreeNodeInfo;
 import hrds.commons.tree.background.bean.TreeConf;
+import hrds.commons.tree.background.query.UDLDataQuery;
 import hrds.commons.tree.commons.TreePageSource;
 import hrds.commons.utils.*;
 import hrds.commons.utils.etl.EtlJobUtil;
@@ -211,7 +213,7 @@ public class MarketInfoAction extends BaseAction {
 			categoryRelationBean.setData_mart_id(data_mart_id);
 		}
 		// 保存加工分类
-		saveDmCategory(categoryRelationBeans);
+		saveDmCategory(data_mart_id, categoryRelationBeans);
 	}
 
 	@Method(desc = "保存加工分类", logicStep = "1.判断加工工程是否存在" +
@@ -222,9 +224,10 @@ public class MarketInfoAction extends BaseAction {
 			"5.更新加工分类")
 	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
-	private void saveDmCategory(CategoryRelationBean[] categoryRelationBeans) {
+	public void saveDmCategory(long data_mart_id, CategoryRelationBean[] categoryRelationBeans) {
 		List<Map<String, Long>> idNameList = getIdNameList(categoryRelationBeans);
 		for (CategoryRelationBean categoryRelationBean : categoryRelationBeans) {
+			categoryRelationBean.setData_mart_id(data_mart_id);
 			// 2.实体字段合法性检查
 			checkDmCategoryFields(categoryRelationBean);
 			// 3.判断是新增还是更新加工分类
@@ -258,7 +261,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "idNameList", desc = "上级分类对应分类ID集合", range = "无限制")
 	@Param(name = "categoryRelationBeans", desc = "自定义加工分类实体对象数组", range = "无限制", isBean = true)
 	private void updateCategory(long data_mart_id, List<Map<String, Long>> idNameList,
-	                            CategoryRelationBean categoryRelationBean) {
+								CategoryRelationBean categoryRelationBean) {
 		// 1.上级分类ID为空，编辑时已存在分类选择新增分类作为上级分类
 		if (categoryRelationBean.getParent_category_id() == null) {
 			for (Map<String, Long> map : idNameList) {
@@ -413,7 +416,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Return(desc = "返回根据分类ID，分类名称获取分类信息", range = "无限制")
 	public List<Map<String, Object>> getDmCategoryNodeInfoByIdAndName(long data_mart_id, String category_name,
-	                                                                  long category_id) {
+																	  long category_id) {
 		// 1.判断加工工程是否存在
 		isDmInfoExist(data_mart_id);
 		List<Map<String, Object>> categoryList = new ArrayList<>();
@@ -468,7 +471,8 @@ public class MarketInfoAction extends BaseAction {
 	public boolean getIfRelationDatabase2(String datatable_id) {
 		Dtab_relation_store dtab_relation_store = new Dtab_relation_store();
 		dtab_relation_store.setTab_id(datatable_id);
-		Optional<Dm_operation_info> dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class, "select view_sql from " + Dm_operation_info.TableName + " where datatable_id = ?", dtab_relation_store.getTab_id());
+		Optional<Dm_operation_info> dm_operation_info = Dbo.queryOneObject(Dm_operation_info.class, "select view_sql from " + Dm_operation_info.TableName + " where datatable_id = ? and (end_date = ? or end_date = ?)",
+				dtab_relation_store.getTab_id(), Constant.INITDATE, Constant.MAXDATE);
 		if (dm_operation_info.isPresent()) {
 			String sql = dm_operation_info.get().getView_sql();
 			Optional<Data_store_layer> data_store_layer = Dbo.queryOneObject(Data_store_layer.class, "select t1.dsl_id,t1.store_type from " + Data_store_layer.TableName + " t1 left join " + Dtab_relation_store.TableName + " t2 on t1.dsl_id = t2.dsl_id " +
@@ -508,7 +512,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "category_id", desc = "加工分类ID", range = "新增加工分类时生成")
 	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	private void getChildDmCategoryNodeInfo(long data_mart_id, long category_id,
-	                                        List<Map<String, Object>> categoryList) {
+											List<Map<String, Object>> categoryList) {
 		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, category_id);
 		if (!dmCategoryList.isEmpty()) {
@@ -599,7 +603,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "categoryList", desc = "加工分类集合", range = "无限制")
 	@Return(desc = "返回子分类信息", range = "无限制")
 	private void getChildDmCategoryForDmDataTable(long data_mart_id, long parent_category_id,
-	                                              String category_name, List<Map<String, Object>> categoryList) {
+												  String category_name, List<Map<String, Object>> categoryList) {
 		// 1.根据加工ID与父分类ID查询加工分类信息
 		List<Dm_category> dmCategoryList = getDm_categories(data_mart_id, parent_category_id);
 		// 2.获取所有子分类信息
@@ -665,7 +669,7 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "新增加工工程时生成")
 	@Param(name = "dm_category", desc = "加工分类实体对象", range = "与数据库表字段规则一致", isBean = true)
 	private void addDmCategory(long data_mart_id, CategoryRelationBean categoryRelationBean,
-	                           List<Map<String, Long>> idNameList) {
+							   List<Map<String, Long>> idNameList) {
 		if (categoryRelationBean.getParent_category_id() == null) {
 			// 1.新增选择新增的分类作为上级分类
 			for (Map<String, Long> map : idNameList) {
@@ -1450,7 +1454,7 @@ public class MarketInfoAction extends BaseAction {
 		dm_datatable.setDatatable_id(datatable_id);
 		//获取所有字段
 		List<Map<String, Object>> list = Dbo.queryList("select * from " + Datatable_field_info.TableName +
-				" where datatable_id = ? AND end_date = ? order by field_seq", dm_datatable.getDatatable_id(), Constant.MAXDATE);
+				" where datatable_id = ? AND end_date in (?,?) order by field_seq", dm_datatable.getDatatable_id(), Constant.MAXDATE, Constant.INITDATE);
 		Datatable_field_info datatable_field_info = new Datatable_field_info();
 		for (Map<String, Object> map : list) {
 			String datatable_field_id = map.get("datatable_field_id").toString();
@@ -1568,6 +1572,18 @@ public class MarketInfoAction extends BaseAction {
 		return field_type;
 	}
 
+	private boolean beanContains(List<Datatable_field_info> o1, Datatable_field_info o2) {
+		for (Datatable_field_info a : o1) {
+			if (EqualsBuilder.reflectionEquals(a, o2,
+					"datatable_field_id", "field_desc", "field_seq",
+					"remark", "field_process", "process_mapping", "datatable_id",
+					"group_mapping", "start_date", "end_date")) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Method(desc = "保存新增加工2的数据",
 			logicStep = "1.检查页面数据合法性" +
 					"2.删除相关6张表中的数据" +
@@ -1582,8 +1598,8 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "pre_partition", desc = "预分区,只有是存储层选择hbase时可能存在",
 			range = "预分区键，如 a,b,c 或者是预分区数，如 10", nullable = true)
 	public Map<String, Object> addDFInfo(Datatable_field_info[] datatable_field_info, String datatable_id,
-	                                     String pre_partition, Dcol_relation_store[] dm_column_storage,
-	                                     String querysql, String hbasesort) {
+										 String pre_partition, Dcol_relation_store[] dm_column_storage,
+										 String querysql, String hbasesort) {
 		Map<String, Object> resultmap = new HashMap<>();
 		//循环 检查数据合法性
 		for (int i = 0; i < datatable_field_info.length; i++) {
@@ -1602,12 +1618,17 @@ public class MarketInfoAction extends BaseAction {
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 				"select execute_sql,id,datatable_id,end_date,start_date from " + Dm_operation_info.TableName
 						+ " where datatable_id = ? AND end_date = ?",
+				dm_datatable.getDatatable_id(), Constant.INITDATE);
+		//新增时判断SQL是否存在
+		Optional<Dm_operation_info> dm_operation_infoOptional1 = Dbo.queryOneObject(Dm_operation_info.class,
+				"select execute_sql,id,datatable_id,end_date,start_date from " + Dm_operation_info.TableName
+						+ " where datatable_id = ? AND end_date = ?",
 				dm_datatable.getDatatable_id(), Constant.MAXDATE);
 		//根据querysql和datatable_field_info获取最终执行的sql
 		String execute_sql = getExecute_sql(datatable_field_info, querysql);
 		//设置标签 判断是新增 还是 更新
 		//没有数据 表示新增 增加sql创建时间
-		if (!dm_operation_infoOptional.isPresent()) {
+		if (!dm_operation_infoOptional1.isPresent() && !dm_operation_infoOptional.isPresent()) {
 			dm_datatable.setDdlc_date(DateUtil.getSysDate());
 			dm_datatable.setDdlc_time(DateUtil.getSysTime());
 			dm_datatable.update(Dbo.db());
@@ -1617,61 +1638,54 @@ public class MarketInfoAction extends BaseAction {
 			dm_operation_info.setView_sql(querysql);
 			dm_operation_info.setExecute_sql(execute_sql);
 			dm_operation_info.setStart_date(DateUtil.getSysDate());
-			dm_operation_info.setEnd_date(Constant.MAXDATE);
+			dm_operation_info.setEnd_date(Constant.INITDATE);
 			dm_operation_info.add(Dbo.db());
 			//保存血缘关系的表，进入数据库
-			saveBloodRelationToPGTable(querysql, datatable_id);
+			saveBloodRelationToPGTable(execute_sql, datatable_id);
 		}
 		//更新时判断SQL是否一致
 		else {
-			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
-			//如果不一致 修改 更新SQL 时间
-			if (!dm_operation_info.getExecute_sql().equals(execute_sql)) {
-				//加工 如果执行sql不一致,并且任务执行成功过,则提示不允许修改表结构信息
-				//FIXME 如果后台版本管理完成后,去掉这个校验  这里完成了嘛？（TBH))
-//				Optional<Dtab_relation_store> dtab_rs_optional = Dbo.queryOneObject(Dtab_relation_store.class,
-//						"select * from " + Dtab_relation_store.TableName + " dtab_rs" +
-//								" join " + Dm_datatable.TableName + " dm on dtab_rs.tab_id=dm.datatable_id" +
-//								" where dtab_rs.is_successful=? and dtab_rs.tab_id=?",
-//						JobExecuteState.WanCheng.getCode(), dm_datatable.getDatatable_id());
-//				if (dtab_rs_optional.isPresent()) {
-//					throw new BusinessException("试用版不允许修改表结构!");
-//				}
-				dm_datatable.setDdlc_date(DateUtil.getSysDate());
-				dm_datatable.setDdlc_time(DateUtil.getSysTime());
-				//更新加工表的SQL修改时间字段
-				dm_datatable.update(Dbo.db());
-				//如果当天的失效SQL存在,则删除掉.因为SQL关链的数据只保留一份
-				/*
-						1: 如果当天SQL修改了2次,只保留最后一次的操作记录,这里先将当天的关联sql信息删除掉
-						2: 如果当天SQL变化了,有没有历史修改记录,则直接把上次的SQL关链
-						3: 新增此次修改的SQL记录信息
-					 */
-				if (!dm_operation_info.getStart_date().equals(DateUtil.getSysDate())) {
-					//1: 如果当天SQL修改了2次,只保留最后一次的操作记录,这里先将当天的关联sql信息删除掉
+			if (dm_operation_infoOptional.isPresent()) {
+				Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
+				if (!dm_operation_info.getExecute_sql().equals(execute_sql)) {
+					dm_datatable.setDdlc_date(DateUtil.getSysDate());
+					dm_datatable.setDdlc_time(DateUtil.getSysTime());
+					//更新加工表的SQL修改时间字段
+					dm_datatable.update(Dbo.db());
 					Dbo.execute("DELETE FROM " + Dm_operation_info.TableName
-									+ " WHERE end_date = ? AND datatable_id = ?", DateUtil.getSysDate(),
+									+ " WHERE end_date = ? AND datatable_id = ?", Constant.INITDATE,
 							dm_operation_info.getDatatable_id());
-					//2: 如果当天SQL变化了,有没有历史修改记录,则直接把上次的SQL关链
-					DboExecute.updatesOrThrow("更新的数据超出了预期结果",
-							"UPDATE " + Dm_operation_info.TableName
-									+ " SET end_date = ? WHERE id = ? AND end_date = ? AND datatable_id = ?",
-							DateUtil.getSysDate(), dm_operation_info.getId(), Constant.MAXDATE,
-							dm_operation_info.getDatatable_id());
-				}
-				//3: 新增此次修改的SQL记录信息
-				dm_operation_info.setView_sql(querysql);
-				dm_operation_info.setExecute_sql(execute_sql);
-				dm_operation_info.setEnd_date(Constant.MAXDATE);
-				if (!dm_operation_info.getStart_date().equals(DateUtil.getSysDate())) {
+
+					//3: 新增此次修改的SQL记录信息
+					dm_operation_info.setView_sql(querysql);
+					dm_operation_info.setExecute_sql(execute_sql);
+					dm_operation_info.setEnd_date(Constant.INITDATE);
 					dm_operation_info.setId(PrimayKeyGener.getNextId());
 					dm_operation_info.setStart_date(DateUtil.getSysDate());
 					dm_operation_info.add(Dbo.db());
-				} else {
-					updatebean(dm_operation_info);
+					//保存血缘关系的表，进入数据库
+					saveBloodRelationToPGTable(execute_sql, datatable_id);
 				}
-				//保存血缘关系的表，进入数据库
-				saveBloodRelationToPGTable(execute_sql, datatable_id);
+			} else {
+
+				Dm_operation_info dm_operation_info1 = dm_operation_infoOptional1.get();
+				if (!dm_operation_info1.getExecute_sql().equals(execute_sql)) {
+					dm_datatable.setDdlc_date(DateUtil.getSysDate());
+					dm_datatable.setDdlc_time(DateUtil.getSysTime());
+					dm_datatable.update(Dbo.db());
+					dm_operation_info1.setEnd_date(Constant.INVDATE);
+					dm_operation_info1.update(Dbo.db());
+					Dm_operation_info dmOperationInfo = new Dm_operation_info();
+					dmOperationInfo.setId(PrimayKeyGener.getNextId());
+					dmOperationInfo.setDatatable_id(datatable_id);
+					dmOperationInfo.setView_sql(querysql);
+					dmOperationInfo.setExecute_sql(execute_sql);
+					dmOperationInfo.setStart_date(DateUtil.getSysDate());
+					dmOperationInfo.setEnd_date(Constant.INITDATE);
+					dmOperationInfo.add(Dbo.db());
+					//保存血缘关系的表，进入数据库
+					saveBloodRelationToPGTable(execute_sql, datatable_id);
+				}
 			}
 		}
 		//删除原有数据 因为页面可能会存在修改sql 导致的字段大幅度变动 所以针对更新的逻辑会特别复杂 故采用全删全增的方式
@@ -1685,8 +1699,8 @@ public class MarketInfoAction extends BaseAction {
 		List<Datatable_field_info> dataBaseFields = Dbo.queryList(Datatable_field_info.class,
 				"SELECT datatable_id,datatable_field_id,field_cn_name,field_en_name,field_length,field_process,field_seq,field_type,"
 						+ "group_mapping,process_mapping,end_date,start_date FROM " + Datatable_field_info.TableName
-						+ " where datatable_id = ? AND end_date = ?",
-				dm_datatable.getDatatable_id(), Constant.MAXDATE);
+						+ " where datatable_id = ? AND end_date in (?,?)",
+				dm_datatable.getDatatable_id(), Constant.MAXDATE, Constant.INITDATE);
 
 		if (dataBaseFields.size() == 0) {
 			//新增字段表
@@ -1696,7 +1710,7 @@ public class MarketInfoAction extends BaseAction {
 				df_info.setDatatable_field_id(datatable_field_id);
 				df_info.setDatatable_id(datatable_id);
 				df_info.setStart_date(DateUtil.getSysDate());
-				df_info.setEnd_date(Constant.MAXDATE);
+				df_info.setEnd_date(Constant.INITDATE);
 				df_info.add(Dbo.db());
 			}
 		} else {
@@ -1709,45 +1723,28 @@ public class MarketInfoAction extends BaseAction {
 				throw new BusinessException("没有表字段信息");
 			}
 			List<Datatable_field_info> webField_infos = Arrays.asList(datatable_field_info);
-			//查找不存在数据库中的,说明被修改了
+			//查找不存在数据库中的,说明被删除了
 			List<Datatable_field_info> notExists = dataBaseFields.stream()
-					.filter(item -> !webField_infos.contains(item))
+					.filter(item -> !beanContains(webField_infos, item))
 					.collect(Collectors.toList());
 			if (notExists.size() != 0) {
-				//清空当天的失效数据,失效数据直保留一份
-				Assembler assembler = Assembler.newInstance()
-						.addSql("DELETE FROM " + Datatable_field_info.TableName
-								+ " WHERE end_date = ? AND start_date = ? AND datatable_id = ?")
-						.addParam(DateUtil.getSysDate()).addParam(DateUtil.getSysDate())
-						.addParam(dm_datatable.getDatatable_id());
-				Dbo.execute(assembler.sql(), assembler.params());
-				//执行完清空
-				assembler.clean();
 				//更新修改的原字段信息为失效
-				assembler.addSql("UPDATE " + Datatable_field_info.TableName
-						+ " SET end_date = ? WHERE end_date = ? AND datatable_id = ?")
-						.addParam(DateUtil.getSysDate()).addParam(Constant.MAXDATE).addParam(dm_datatable.getDatatable_id());
+				Assembler assembler = Assembler.newInstance().addSql("UPDATE " + Datatable_field_info.TableName
+						+ " SET end_date = ? WHERE end_date in (?,?) AND datatable_id = ?")
+						.addParam(Constant.INVDATE).addParam(Constant.MAXDATE).addParam(Constant.INITDATE).addParam(dm_datatable.getDatatable_id());
 				assembler.addORParam("field_en_name",
 						notExists.stream().map(Datatable_field_info::getField_en_name).toArray(String[]::new), "AND");
 				Dbo.execute(assembler.sql(), assembler.params());
 			}
 
-			List<Datatable_field_info> exists = dataBaseFields.stream()
-					.filter(webField_infos::contains)
+			List<Datatable_field_info> exists = webField_infos.stream()
+					.filter(item -> !beanContains(dataBaseFields, item))
 					.collect(Collectors.toList());
-			List<Datatable_field_info> field_info = new ArrayList<>();
-			// 去重找到页面新增的数据,然后新增入库
-			webField_infos.forEach(field -> {
-						if (!exists.contains(field)) {
-							field_info.add(field);
-						}
-					}
-			);
-			for (Datatable_field_info add : field_info) {
+			for (Datatable_field_info add : exists) {
 				add.setDatatable_field_id(PrimayKeyGener.getNextId());
 				add.setDatatable_id(datatable_id);
 				add.setStart_date(DateUtil.getSysDate());
-				add.setEnd_date(Constant.MAXDATE);
+				add.setEnd_date(Constant.INITDATE);
 				add.add(Dbo.db());
 			}
 
@@ -1826,66 +1823,65 @@ public class MarketInfoAction extends BaseAction {
 			isBean = true)
 	@Param(name = "querySql", desc = "querySql", range = "String类型加工查询SQL")
 	public String getExecute_sql(Datatable_field_info[] datatable_field_info, String querySql) {
-		return querySql;
 		//解析querySql,获取查询sql的别名，加查询列的map
-//		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querySql);
-//		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
-//		boolean flag = true;
-//		//1.根据datatable_field_info信息拼接所有查询列的信息
-//		StringBuilder sb = new StringBuilder(1024);
-//		sb.append("SELECT ");
-//		for (Datatable_field_info field_info : datatable_field_info) {
-//			ProcessType processType = ProcessType.ofEnumByCode(field_info.getField_process());
-//			if (ProcessType.DingZhi == processType) {
-//				sb.append(field_info.getProcess_mapping()).append(" as ")
-//						.append(field_info.getField_en_name()).append(",");
-//			} else if (ProcessType.ZiZeng == processType) {
-//				//这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
-//				logger.info("自增不拼接字段");
-//			} else if (ProcessType.YingShe == processType) {
-//				sb.append(selectColumnMap.get(field_info.getProcess_mapping().toUpperCase())).append(" as ")
-//						.append(field_info.getField_en_name()).append(",");
-//			} else if (ProcessType.HanShuYingShe == processType) {
-//				//TODO 这里如果函数映射包含函数映射会有问题，待讨论
-//				sb.append(field_info.getProcess_mapping()).append(" as ")
-//						.append(field_info.getField_en_name()).append(",");
-//			} else if (ProcessType.FenZhuYingShe == processType && flag) {
-//				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
-//				sb.append("#{HyrenFenZhuYingShe}").append(",");
-//				flag = false;
-//			} else if (!flag) {
-//				logger.info("第二次进来分组映射不做任何操作，跳过");
-//			} else {
-//				throw new BusinessException("错误的字段映射规则");
-//			}
-//		}
-//		String selectSql = sb.toString();
-//		sb.delete(0, sb.length());
-//		StringBuilder groupSql = new StringBuilder();
-//		//2.遍历所有为分组映射的字段
-//		for (Datatable_field_info field_info : datatable_field_info) {
-//			//为分组映射
-//			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
-//				String replacement = field_info.getProcess_mapping() + " as " + field_info.getField_en_name();
-//				List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
-//				sb.append(selectSql.replace("#{HyrenFenZhuYingShe}", replacement));
-//				sb.append("'").append(split.get(1)).append("'").append(" as ").append(split.get(0)).append(" FROM ");
-//				//先格式化查询的sql,替换掉原始查询SQL的select部分
-//				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
-//						druidParseQuerySql.getSelectSql(), sb.toString());
-//				sb.delete(0, sb.length());
-//				groupSql.append(execute_sql).append(" union all ");
-//			}
-//		}
-//		//3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。
-//		if (groupSql.length() > 0) {
-//			return groupSql.delete(groupSql.length() - " union all ".length(), groupSql.length()).toString();
-//		} else {
-//			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
-//			//先格式化查询的sql,替换掉原始查询SQL的select部分
-//			return SQLUtils.format(querySql, JdbcConstants.HIVE).replace(
-//					druidParseQuerySql.getSelectSql(), selectSql);
-//		}
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(querySql);
+		Map<String, String> selectColumnMap = druidParseQuerySql.getSelectColumnMap();
+		boolean flag = true;
+		//1.根据datatable_field_info信息拼接所有查询列的信息
+		StringBuilder sb = new StringBuilder(1024);
+		sb.append("SELECT ");
+		for (Datatable_field_info field_info : datatable_field_info) {
+			ProcessType processType = ProcessType.ofEnumByCode(field_info.getField_process());
+			if (ProcessType.DingZhi == processType) {
+				sb.append(field_info.getProcess_mapping()).append(" as ")
+						.append(field_info.getField_en_name()).append(",");
+			} else if (ProcessType.ZiZeng == processType) {
+				//这里拼接的sql不处理自增的，后台会根据自增的数据库类型去拼接对应的自增函数
+				logger.info("自增不拼接字段");
+			} else if (ProcessType.YingShe == processType) {
+				sb.append(selectColumnMap.get(field_info.getProcess_mapping().toUpperCase())).append(" as ")
+						.append(field_info.getField_en_name()).append(",");
+			} else if (ProcessType.HanShuYingShe == processType) {
+				//TODO 这里如果函数映射包含函数映射会有问题，待讨论
+				sb.append(field_info.getProcess_mapping()).append(" as ")
+						.append(field_info.getField_en_name()).append(",");
+			} else if (ProcessType.FenZhuYingShe == processType && flag) {
+				//分组映射，当前预览的sql只取第一个查询列的值作为表字段的位置，多个作业分别查询不同的列加上分组的列
+				sb.append("#{HyrenFenZhuYingShe}").append(",");
+				flag = false;
+			} else if (!flag) {
+				logger.info("第二次进来分组映射不做任何操作，跳过");
+			} else {
+				throw new BusinessException("错误的字段映射规则");
+			}
+		}
+		String selectSql = sb.toString();
+		sb.delete(0, sb.length());
+		StringBuilder groupSql = new StringBuilder();
+		//2.遍历所有为分组映射的字段
+		for (Datatable_field_info field_info : datatable_field_info) {
+			//为分组映射
+			if (ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+				String replacement = field_info.getProcess_mapping() + " as " + field_info.getField_en_name();
+				List<String> split = StringUtil.split(field_info.getGroup_mapping(), "=");
+				sb.append(selectSql.replace("#{HyrenFenZhuYingShe}", replacement));
+				sb.append("'").append(split.get(1)).append("'").append(" as ").append(split.get(0)).append(" FROM ");
+				//先格式化查询的sql,替换掉原始查询SQL的select部分
+				String execute_sql = SQLUtils.format(querySql, JdbcConstants.ORACLE).replace(
+						druidParseQuerySql.getSelectSql(), sb.toString());
+				sb.delete(0, sb.length());
+				groupSql.append(execute_sql).append(" union all ");
+			}
+		}
+		//3.判断，如果有分组映射返回分组映射拼接的sql,没有则返回根据查询列处理拼接的sql。
+		if (groupSql.length() > 0) {
+			return groupSql.delete(groupSql.length() - " union all ".length(), groupSql.length()).toString();
+		} else {
+			selectSql = selectSql.substring(0, selectSql.length() - 1) + " FROM ";
+			//先格式化查询的sql,替换掉原始查询SQL的select部分
+			return SQLUtils.format(querySql, JdbcConstants.HIVE).replace(
+					druidParseQuerySql.getSelectSql(), selectSql);
+		}
 	}
 
 	/**
@@ -1979,14 +1975,17 @@ public class MarketInfoAction extends BaseAction {
 	public String getQuerySql(String datatable_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
+		Optional<Dm_operation_info> dm_operation_infoOptional1 = Dbo.queryOneObject(Dm_operation_info.class,
+				"select view_sql as execute_sql from " + Dm_operation_info.TableName + " t1 where " +
+						"datatable_id = ? AND end_date = ?", dm_datatable.getDatatable_id(), Constant.INITDATE);
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
 				"select view_sql as execute_sql from " + Dm_operation_info.TableName + " t1 where " +
 						"datatable_id = ? AND end_date = ?", dm_datatable.getDatatable_id(), Constant.MAXDATE);
-		if (dm_operation_infoOptional.isPresent()) {
-			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
-			return dm_operation_info.getExecute_sql();
+		if (dm_operation_infoOptional1.isPresent()) {
+			Dm_operation_info dm_operation_info1 = dm_operation_infoOptional1.get();
+			return dm_operation_info1.getExecute_sql();
 		} else {
-			return null;
+			return dm_operation_infoOptional.map(Dm_operation_info::getExecute_sql).orElse(null);
 		}
 	}
 
@@ -2118,6 +2117,18 @@ public class MarketInfoAction extends BaseAction {
 			}
 			resultmap.put("tablename", tablenamelist.get(0).get("tablename"));
 			return resultmap;
+		} else if (source.equals(DataSourceType.UDL.getCode())) {
+			Dq_table_info dq_table_info = UDLDataQuery.getUDLTableInfo(id);
+			String table_name = dq_table_info.getTable_name();
+			//查询表字段信息
+			List<Map<String, Object>> column_list = Dbo.queryList(
+					"select column_name as columnname," +
+							" column_type AS columntype,false as selectionstate " +
+							" FROM " + Dq_table_column.TableName + " WHERE table_id=?",
+					dq_table_info.getTable_id());
+			resultmap.put("tablename",table_name);
+			resultmap.put("columnresult",column_list);
+			return resultmap;
 		}
 		//TODO 新的层加进来后 还需要补充
 		return null;
@@ -2195,7 +2206,7 @@ public class MarketInfoAction extends BaseAction {
 	public void downloadDmDatatable(String datatable_id) {
 		String fileName = datatable_id + ".xlsx";
 		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
-		     XSSFWorkbook workbook = new XSSFWorkbook()) {
+			 XSSFWorkbook workbook = new XSSFWorkbook()) {
 			ResponseUtil.getResponse().reset();
 			// 4.设置响应头，控制浏览器下载该文件
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
@@ -2874,7 +2885,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private Set<String> getDatatableDiff(List<Dm_datatable> dm_datatables,
-	                                     List<String> enNameList) {
+										 List<String> enNameList) {
 		Set<String> diffSet = new HashSet<>();
 		for (Dm_datatable dm_datatable : dm_datatables) {
 			Map<String, Object> datatableMap = Dbo.queryOneObject(
@@ -2947,7 +2958,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private List<String> getDatatableFieldDiff(List<Datatable_field_info> datatable_field_infos,
-	                                           long data_mart_id) {
+											   long data_mart_id) {
 		List<String> diffList = new ArrayList<>();
 		// 新版本有效数据表字段数据
 		List<Datatable_field_info> datatableFieldInfos = getDatatable_field_infos(data_mart_id);
@@ -3195,10 +3206,9 @@ public class MarketInfoAction extends BaseAction {
 				for (String pre_sql : pre_works) {
 					//SQL解析判断表名是否正确
 					String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_sql);
-					//FIXME 南通这里要求关掉判断
-//					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-//						throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-//					}
+					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+						throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+					}
 				}
 			} else {
 				pre_work = pre_work.trim();
@@ -3207,10 +3217,9 @@ public class MarketInfoAction extends BaseAction {
 				}
 				//SQL解析判断表名是否正确
 				String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(pre_work);
-				//FIXME 南通这里要求关掉判断
-//				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-//					throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-//				}
+				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+					throw new BusinessException("前置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+				}
 			}
 		}
 		//判空
@@ -3220,10 +3229,9 @@ public class MarketInfoAction extends BaseAction {
 				String[] post_works = post_work.split(";;");
 				for (String post_sql : post_works) {
 					String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_sql);
-					//FIXME 南通这里要求关掉判断
-//					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-//						throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-//					}
+					if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+						throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+					}
 				}
 			} else {
 				post_work = post_work.trim();
@@ -3231,10 +3239,9 @@ public class MarketInfoAction extends BaseAction {
 					post_work = post_work.substring(0, post_work.length() - 1);
 				}
 				String preworktablename = DruidParseQuerySql.getInDeUpSqlTableName(post_work);
-				//FIXME 南通这里要求关掉判断
-//				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
-//					throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
-//				}
+				if (!preworktablename.equalsIgnoreCase(datatable_en_name)) {
+					throw new BusinessException("后置处理的操作表为" + preworktablename + ",非本加工表,保存失败");
+				}
 			}
 		}
 
@@ -3590,7 +3597,7 @@ public class MarketInfoAction extends BaseAction {
 	}
 
 	private void setStoreAdd(Dcol_relation_store dcol_relation_store, Dtab_relation_store dm_relation_datatable,
-	                         String key, String dsla_storelayer) {
+							 String key, String dsla_storelayer) {
 		if (StringUtil.isNotBlank(key)) {
 			List<String> keyList = StringUtil.split(key, "|");
 			for (int k = 0; k < keyList.size(); k++) {

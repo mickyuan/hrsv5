@@ -1,6 +1,5 @@
 package hrds.h.biz.config;
 
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.FileUtil;
 import fd.ng.core.utils.StringUtil;
@@ -11,6 +10,7 @@ import fd.ng.db.resultset.Result;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ProcessType;
 import hrds.commons.codes.StorageType;
+import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
@@ -61,9 +61,9 @@ public class MarketConfUtils {
              根据主键 datatable_id 查询 Dm_datatable 实体
              */
 			Dm_datatable dmDatatable = SqlOperator.queryOneObject(db, Dm_datatable.class,
-				"select * from dm_datatable where datatable_id = ?", datatableId)
-				.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
-					Dm_datatable.TableName, "datatable_id", datatableId)));
+					"select * from dm_datatable where datatable_id = ?", datatableId)
+					.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+							Dm_datatable.TableName, "datatable_id", datatableId)));
 
 			marketConf.setDmDatatable(dmDatatable);
 			marketConf.setTableName(dmDatatable.getDatatable_en_name().toLowerCase());
@@ -75,11 +75,11 @@ public class MarketConfUtils {
             根据主键 datatable_id 查询 字段 实体
              */
 			List<Datatable_field_info> datatableFields = SqlOperator.queryList(db, Datatable_field_info.class,
-				"select * from " + Datatable_field_info.TableName
-					+ " where datatable_id = ? AND end_date = ? order by field_seq", datatableId,
-				Constant.MAXDATE);
+					"select * from " + Datatable_field_info.TableName
+							+ " where datatable_id = ? and (end_date = ? or end_date = ?)"
+					, datatableId, Constant.INITDATE, Constant.MAXDATE);
 			Validator.notEmpty(String.format(nullQueryExceptString,
-				Datatable_field_info.TableName, "datatable_id", datatableId));
+					Datatable_field_info.TableName, "datatable_id", datatableId));
 
 			//添加自定义HYREN字段，字段全部转小写
 			handleFields(datatableFields, marketConf.isMultipleInput(), marketConf.isIncrement());
@@ -88,7 +88,7 @@ public class MarketConfUtils {
 			for (Datatable_field_info field_info : datatableFields) {
 				//如果有分组映射，只保留第一个分组映射的值
 				if (field_info.getField_process() != null &&
-					ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+						ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
 					marketConf.setGroup(true);
 					break;
 				}
@@ -97,21 +97,22 @@ public class MarketConfUtils {
               根据主键 datatable_id 查询 需要执行的sql，并进行替换
              */
 			Dm_operation_info dmOperationInfo = SqlOperator.queryOneObject(db, Dm_operation_info.class,
-				"select * from " + Dm_operation_info.TableName + " where datatable_id = ? AND end_date = ?", datatableId,
-				Constant.MAXDATE)
-				.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
-					Dm_operation_info.TableName, "datatable_id", datatableId)));
+					"select * from " + Dm_operation_info.TableName + " where datatable_id = ? AND (end_date = ? or end_date = ?)",
+					datatableId, Constant.MAXDATE, Constant.INITDATE)
+					.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+							Dm_operation_info.TableName, "datatable_id", datatableId)));
+			String beforeReplaceSql = replaceView(fillSqlWithParams(dmOperationInfo.getExecute_sql(), marketConf.getSqlParams()));
+			marketConf.setBeforeReplaceSql(beforeReplaceSql);
 
-			marketConf.setCompleteSql(replaceView(fillSqlWithParams(dmOperationInfo.getExecute_sql()
-				, marketConf.getSqlParams())));
+			marketConf.setCompleteSql(ProcessingData.getdStoreReg(beforeReplaceSql, db));
 
             /*
               根据主键 datatable_id 查询出 集市表存储关系表
              */
 			Dtab_relation_store dtabRelationStore = SqlOperator.queryOneObject(db, Dtab_relation_store.class,
-				"select * from " + Dtab_relation_store.TableName + " where tab_id = ?", datatableId)
-				.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
-					Dtab_relation_store.TableName, "tab_id", datatableId)));
+					"select * from " + Dtab_relation_store.TableName + " where tab_id = ?", datatableId)
+					.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+							Dtab_relation_store.TableName, "tab_id", datatableId)));
 
 			marketConf.setDtabRelationStore(dtabRelationStore);
 
@@ -121,9 +122,9 @@ public class MarketConfUtils {
               根据 存储层配置id 查询出 数据存储层配置表
              */
 			Data_store_layer dataStoreLayer = SqlOperator.queryOneObject(db, Data_store_layer.class,
-				"select * from data_store_layer where dsl_id = ?", dslId)
-				.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
-					Data_store_layer.TableName, "dsl_id", datatableId)));
+					"select * from data_store_layer where dsl_id = ?", dslId)
+					.orElseThrow(() -> new AppSystemException(String.format(nullQueryExceptString,
+							Data_store_layer.TableName, "dsl_id", datatableId)));
 
 			marketConf.setDataStoreLayer(dataStoreLayer);
 
@@ -131,10 +132,10 @@ public class MarketConfUtils {
             根据主键 存储层配置id 查询 数据存储层配置属性表
              */
 			List<Data_store_layer_attr> dataStoreLayerAttrs = SqlOperator.queryList(db, Data_store_layer_attr.class,
-				"select * from data_store_layer_attr where dsl_id = ?", dslId);
+					"select * from data_store_layer_attr where dsl_id = ?", dslId);
 
 			Validator.notEmpty(dataStoreLayerAttrs, String.format(nullQueryExceptString,
-				Data_store_layer_attr.TableName, "dsl_id", dslId));
+					Data_store_layer_attr.TableName, "dsl_id", dslId));
 
 			marketConf.setDataStoreLayerAttrs(dataStoreLayerAttrs);
 
@@ -142,7 +143,7 @@ public class MarketConfUtils {
               根据主键 datatable_id 查询出 集市表存储关系表
              */
 			Optional<Dm_relevant_info> dmRelevantInfo = SqlOperator.queryOneObject(db, Dm_relevant_info.class,
-				"select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", datatableId);
+					"select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", datatableId);
 			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setFinalSql(fillSqlWithParams(dm_relevant_info.getPost_work()
 					, marketConf.getSqlParams())));
 			dmRelevantInfo.ifPresent(dm_relevant_info -> marketConf.setPreSql(fillSqlWithParams(dm_relevant_info.getPre_work()
@@ -153,9 +154,9 @@ public class MarketConfUtils {
 			 */
 			Map<String, List<String>> addAttrColMap = new HashMap<>();
 			String sql = "select dfi.field_en_name,dsla.dsla_storelayer from " + Datatable_field_info.TableName
-				+ " dfi join " + Dcol_relation_store.TableName + " dcs on dfi.datatable_field_id = " +
-				"dcs.col_id join " + Data_store_layer_added.TableName + " dsla on dcs.dslad_id = " +
-				"dsla.dslad_id where dfi.datatable_id = ? AND dfi.end_date = ?";
+					+ " dfi join " + Dcol_relation_store.TableName + " dcs on dfi.datatable_field_id = " +
+					"dcs.col_id join " + Data_store_layer_added.TableName + " dsla on dcs.dslad_id = " +
+					"dsla.dslad_id where dfi.datatable_id = ? AND dfi.end_date = ?";
 			Result result = SqlOperator.queryResult(db, sql, datatableId, Constant.MAXDATE);
 			//遍历
 			for (int i = 0; i < result.getRowCount(); i++) {
@@ -179,7 +180,7 @@ public class MarketConfUtils {
 	 * @param datatableFields 所有字段实体
 	 */
 	private static void handleFields(List<Datatable_field_info> datatableFields,
-		boolean isMultipleInput, boolean isIncrement) {
+									 boolean isMultipleInput, boolean isIncrement) {
 		if (datatableFields.size() == 0) {
 			throw new AppSystemException("从数据库中获取的字段数量为0");
 		}
@@ -191,7 +192,7 @@ public class MarketConfUtils {
 			Datatable_field_info field_info = datatableFields.get(i);
 			//如果有分组映射，只保留第一个分组映射的值
 			if (field_info.getField_process() != null &&
-				ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
+					ProcessType.FenZhuYingShe == ProcessType.ofEnumByCode(field_info.getField_process())) {
 				//第一次进来
 				if (flag) {
 					datatable_field_info = new Datatable_field_info();
@@ -247,7 +248,7 @@ public class MarketConfUtils {
 		}
 		//字段全部转小写
 		datatableFields.forEach(datatableField ->
-			datatableField.setField_en_name(datatableField.getField_en_name().toLowerCase()));
+				datatableField.setField_en_name(datatableField.getField_en_name().toLowerCase()));
 
 	}
 
@@ -298,7 +299,7 @@ public class MarketConfUtils {
 	 * 集市作业配置类实体序列化路径前缀
 	 */
 	private static final String MARKET_CONF_SERIALIZATION_PATH = FileUtil.TEMP_DIR_NAME +
-		"market-serialize" + FileUtil.PATH_SEPARATOR_CHAR;
+			"market-serialize" + FileUtil.PATH_SEPARATOR_CHAR;
 
 	static {
 		try {
@@ -319,10 +320,10 @@ public class MarketConfUtils {
 		try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(serializeFile))) {
 			out.writeObject(conf);
 			log.info(String.format("将 %s 对象序列化进 %s 成功！",
-				MarketConf.class.getSimpleName(), serializeFile.getAbsolutePath()));
+					MarketConf.class.getSimpleName(), serializeFile.getAbsolutePath()));
 		} catch (IOException e) {
 			throw new AppSystemException(String.format("将 %s 对象序列化进 %s 失败 :",
-				MarketConf.class.getSimpleName(), serializeFile.getAbsolutePath()), e);
+					MarketConf.class.getSimpleName(), serializeFile.getAbsolutePath()), e);
 		}
 	}
 

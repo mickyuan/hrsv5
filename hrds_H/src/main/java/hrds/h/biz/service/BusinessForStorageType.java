@@ -64,6 +64,7 @@ public final class BusinessForStorageType implements ILoadBussiness {
             try {
                 logger.warn("作业执行失败，执行回滚操作。");
                 loader.restore();
+                loader.handleException();
             } catch (Exception warn) {
                 logger.warn("作业回滚异常： ", e);
             }
