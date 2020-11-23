@@ -38,6 +38,7 @@ import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.spark.sql.sources.In;
 
 import java.util.*;
 
@@ -354,12 +355,18 @@ public class ManageAction extends BaseAction {
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
 	@Param(name = "showNum", desc = "显示条数", range = "正整数", valueIfNull = "10")
 	@Return(desc = "返回数据结果", range = "无限制")
-	public List<Map<String, Object>> getPreviewData(String template_sql, int showNum) {
+	public List<Map<String, Object>> getPreviewData(String template_sql, String showNum) {
 		// 数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 最多只显示1000行
 		List<Map<String, Object>> resultData = new ArrayList<>();
-		if (showNum > 1000) {
-			showNum = 1000;
+		int i = 0;
+		try{
+			i = Integer.parseInt(showNum);
+		}catch (Exception e){
+			throw new BusinessException("请填入整数");
+		}
+		if (i > 1000) {
+			i = 1000;
 		}
 		// 1.根据sql查询数据结果
 		new ProcessingData() {
@@ -367,7 +374,7 @@ public class ManageAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				resultData.add(map);
 			}
-		}.getPageDataLayer(template_sql, Dbo.db(), 1, showNum <= 0 ? 100 : showNum);
+		}.getPageDataLayer(template_sql, Dbo.db(), 1, i <= 0 ? 100 : i);
 		return resultData;
 	}
 
@@ -439,8 +446,10 @@ public class ManageAction extends BaseAction {
 			String pre_value = sb.deleteCharAt(sb.length() - 1).toString();
 			setAutoTpCondBySqlExpr(autoTpCondInfoList, leftExpr, "IN", pre_value, IsFlag.Shi.getCode());
 		} else {
-			Class<? extends SQLExpr> aClass = sqlExpr.getClass();
-			throw new BusinessException("sqlexpr：" + sqlExpr.toString() + "sqlexpr.class:" + aClass + " 请联系管理员");
+			if(sqlExpr != null) {
+				Class<? extends SQLExpr> aClass = sqlExpr.getClass();
+				throw new BusinessException("sqlexpr：" + sqlExpr.toString() + "sqlexpr.class:" + aClass + " 请联系管理员");
+			}
 		}
 	}
 
