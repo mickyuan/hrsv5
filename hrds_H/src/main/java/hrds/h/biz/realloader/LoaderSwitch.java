@@ -57,7 +57,7 @@ public class LoaderSwitch {
      */
     private static boolean isSameJdbc(MarketConf conf) {
 
-        String sql = conf.getCompleteSql();
+        String sql = conf.getBeforeReplaceSql();
         //通过sql解析到所有的来源表名
         List<String> listTable = DruidParseQuerySql.parseSqlTableToList(sql);
         //添加输出表名

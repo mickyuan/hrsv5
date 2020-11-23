@@ -28,8 +28,6 @@ public class StorageTypeKey {
 	public static final String yarn_site = "yarn-site.xml";
 	public static final String hbase_site = "hbase-site.xml";
 	public static final String mapred_site = "mapred-site.xml";
-	public static final String keytab = "keytab";
-	public static final String krb5 = "krb5";
 	//平台版本
 	public static final String platform = "platform";
 	//操作hdfs的用户名
@@ -64,6 +62,17 @@ public class StorageTypeKey {
 
 	//HBase计算增量的引擎
 	public static final String increment_engine = "increment_engine";
+
+	//数据库连接池的参数，非必须
+	public static final String minPoolSize = "minPoolSize";
+	//数据库连接池的参数，非必须
+	public static final String maxPoolSize = "maxPoolSize";
+	//连接是设置拉取批次的大小，非必须
+	public static final String fetch_size = "fetch_size";
+	//数据库连接的方式
+	public static final String conn_way = "conn_way";
+	//数据库连接池的名称
+	public static final String name = "name";
 
 	static {
 		//数据库，不支持外部表
@@ -103,12 +112,13 @@ public class StorageTypeKey {
 
 		List<String> hiveExternalTableKeys = new ArrayList<>(Arrays.
 				asList(database_driver, jdbc_url, user_name, database_pwd, database_name, database_code,
-						platform, hadoop_user_name, prncipal_name, core_site, hdfs_site, keytab, krb5));
+						platform, hadoop_user_name, prncipal_name, core_site, hdfs_site, keytab_file, keytab_user,
+						external_root_path));
 		FINALLY_STORAGE_KEYS.put(Store_type.HIVE.getCode() + "_" + IsFlag.Shi.getCode(), hiveExternalTableKeys);
 
 		List<String> hbaseKeys = new ArrayList<>(Arrays.
 				asList(zkhost, increment_engine, database_driver, jdbc_url, user_name, database_pwd, database_name,
-						platform, hadoop_user_name, prncipal_name, hdfs_site, hbase_site, keytab, krb5));
+						platform, hadoop_user_name, prncipal_name, hdfs_site, hbase_site, keytab_file, keytab_user));
 		FINALLY_STORAGE_KEYS.put(Store_type.HBASE.getCode(), hbaseKeys);
 
 		List<String> solrKeys = new ArrayList<>(Arrays.asList(solr_zk_url, collection));
@@ -119,8 +129,7 @@ public class StorageTypeKey {
 		UPDATE_FINALLY_STORAGE_KEYS.add(yarn_site);
 		UPDATE_FINALLY_STORAGE_KEYS.add(hbase_site);
 		UPDATE_FINALLY_STORAGE_KEYS.add(mapred_site);
-		UPDATE_FINALLY_STORAGE_KEYS.add(keytab);
-		UPDATE_FINALLY_STORAGE_KEYS.add(krb5);
+		UPDATE_FINALLY_STORAGE_KEYS.add(keytab_file);
 
 	}
 
@@ -134,4 +143,5 @@ public class StorageTypeKey {
 
 		return UPDATE_FINALLY_STORAGE_KEYS;
 	}
+
 }

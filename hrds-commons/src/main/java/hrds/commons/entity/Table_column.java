@@ -56,7 +56,7 @@ public class Table_column extends ProjectTableEntity
 	private String is_new;
 	@DocBean(name ="tc_or",value="清洗顺序:",dataType = String.class,required = false)
 	private String tc_or;
-	@DocBean(name ="is_zipper_field",value="是否为拉链字段:",dataType = String.class,required = true)
+	@DocBean(name ="is_zipper_field",value="是否为拉链字段(IsFlag):1-是<Shi> 0-否<Fou> ",dataType = String.class,required = true)
 	private String is_zipper_field;
 
 	/** 取得：字段ID */

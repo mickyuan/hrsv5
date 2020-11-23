@@ -38,11 +38,11 @@ public class Utils {
 	 * a string, b double, c long
 	 * 这样的字符串
 	 *
-	 * @param conf            集市配置类实体
-	 * @param isDatabase      是否是关系型数据库
+	 * @param conf       集市配置类实体
+	 * @param isDatabase 是否是关系型数据库
 	 * @return 字段名，字段类型组合
 	 */
-	static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
+	public static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
 
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 		final StringBuilder columnTypes = new StringBuilder(300);
@@ -85,7 +85,7 @@ public class Utils {
 			if (conf.isMultipleInput()) {
 				s = StringUtil.replaceLast(s, str, "char(18)");
 			}
-			if(conf.isGroup()){
+			if (conf.isGroup()) {
 				s = StringUtil.replaceLast(s, str, "char(32)");
 			}
 			return s;
@@ -111,7 +111,7 @@ public class Utils {
 	 * @param db DatabaseWrapper
 	 */
 	static void restoreDatabaseData(DatabaseWrapper db, String tableName,
-	                                String etlDate, String datatableId, boolean isMultipleInput,boolean isIncrement) {
+									String etlDate, String datatableId, boolean isMultipleInput, boolean isIncrement) {
 		if (isMultipleInput) {
 			db.execute(String.format("DELETE FROM %s WHERE %s = '%s' AND %s = '%s'",
 					tableName, SDATENAME, etlDate, TABLE_ID_NAME, datatableId));
@@ -168,7 +168,7 @@ public class Utils {
 	}
 
 	static boolean hasTodayDataLimit(DatabaseWrapper db, String tableName,
-								String etlDate, String datatableId, boolean isMultipleInput, boolean isIncrement) throws SQLException {
+									 String etlDate, String datatableId, boolean isMultipleInput, boolean isIncrement) throws SQLException {
 
 		if (isMultipleInput) {
 			ResultSet resultSet = db.queryGetResultSet(String.format("SELECT * FROM %s WHERE %s = '%s' AND %s = '%s' LIMIT 1",
@@ -203,16 +203,15 @@ public class Utils {
 	}
 
 
-
 	/**
 	 * 创建表
 	 * 如果表存在就报错
 	 */
 	static void createTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
 		String createSql;
-		if(db.getDbtype()== Dbtype.TERADATA){
+		if (db.getDbtype() == Dbtype.TERADATA) {
 			createSql = "CREATE MULTISET TABLE ";
-		}else {
+		} else {
 			createSql = "CREATE TABLE ";
 		}
 		createSql += tableName + " (" + createTableColumnTypes + ")";
@@ -276,15 +275,15 @@ public class Utils {
 	 * 不支持数据库级别事务回滚
 	 *
 	 * @param sqlsJoined 多个sql，以 ;; 隔开
-	 * @param db     db对象
+	 * @param db         db对象
 	 */
 	static void finalWorkWithoutTrans(String sqlsJoined, DatabaseWrapper db) {
 		//把sql字符串转换成sql的list
 		Optional<List<String>> OptionSqls = getFinalWorkSqls(sqlsJoined);
 		if (OptionSqls.isPresent()) {
-				for (String sql : OptionSqls.get()) {
-					db.execute(sql);
-				}
+			for (String sql : OptionSqls.get()) {
+				db.execute(sql);
+			}
 		}
 	}
 
@@ -293,7 +292,7 @@ public class Utils {
 	 * 不支持数据库级别事务回滚
 	 *
 	 * @param sqlsJoined 多个sql，以 ;; 隔开
-	 * @param db     db对象
+	 * @param db         db对象
 	 */
 	static void preWorkWithoutTrans(String sqlsJoined, DatabaseWrapper db) {
 		//把sql字符串转换成sql的list
@@ -376,12 +375,43 @@ public class Utils {
 		db.execute(renameSql);
 	}
 
-    /**
-     * 获取 hive 表大小统计信息，触发优化 broadcast 等优化方式
-     * @param db
-     * @param tableName
-     */
-    static void computeStatistics(DatabaseWrapper db, String tableName) {
-        db.execute("ANALYZE TABLE " + tableName + " COMPUTE STATISTICS NOSCAN");
-    }
+	/**
+	 * 获取 hive 表大小统计信息，触发优化 broadcast 等优化方式
+	 *
+	 * @param db
+	 * @param tableName
+	 */
+	static void computeStatistics(DatabaseWrapper db, String tableName) {
+		db.execute("ANALYZE TABLE " + tableName + " COMPUTE STATISTICS NOSCAN");
+	}
+
+	public static void softCreateIndex(DatabaseWrapper db, MarketConf conf, String tableName) {
+		//oracle数据库创建索引
+		if (Dbtype.ORACLE == db.getDbtype()) {
+			List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
+			if(additionalAttrs!=null && additionalAttrs.size()>0){
+				for (int i = 0; i < additionalAttrs.size(); i++) {
+					String indexName = "idx_" + tableName + "_" + i;
+					if (isExistIndex(indexName, db)) {
+						db.execute("drop index " + indexName);
+					}
+					db.execute("create index  " + indexName + " on " +
+							tableName + "(" + additionalAttrs.get(i) + ")");
+				}
+			}
+		}
+	}
+
+	/**
+	 * 拼接Oracle判断索引是否存在，存在则返回true
+	 */
+	public static boolean isExistIndex(String indexName, DatabaseWrapper db) {
+		try {
+			ResultSet resultSet = db.queryGetResultSet("SELECT * FROM user_objects where  lower(object_name) = '"
+					+ indexName.toLowerCase() + "'");
+			return resultSet.next();
+		} catch (SQLException throwables) {
+			throw new AppSystemException("查找是否存在索引报错");
+		}
+	}
 }
