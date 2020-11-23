@@ -27,7 +27,4 @@ public class CommonVariables {
     public static final String AUTHORITY = PropertyParaValue.getString("restAuthority", "");
     //接口数据文件的存放路径
     public static final String RESTFILEPATH = PropertyParaValue.getString("restFilePath", "");
-    //数据对标，表函数依赖和主键分析输出结果的根目录
-    public static final String ALGORITHMS_RESULT_ROOT_PATH = PropertyParaValue.getString(
-            "algorithms_result_root_path", "");
 }
