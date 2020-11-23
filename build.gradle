@@ -37,7 +37,6 @@ subprojects {
         mavenLocal()
         maven { url 'http://172.168.0.61:18081/repository/hyren-maven-group/' }
 //        maven { url 'http://139.9.126.19:38877/repository/hyren-maven-group/' }
-        maven { url 'https://mvnrepository.com/artifact/com.alibaba/druid' }
     }
 
     configurations {
