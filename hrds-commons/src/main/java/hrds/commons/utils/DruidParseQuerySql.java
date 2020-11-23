@@ -1,5 +1,6 @@
 package hrds.commons.utils;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLName;
@@ -7,24 +8,35 @@ import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
+import com.alibaba.druid.sql.dialect.db2.visitor.DB2SchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.h2.visitor.H2SchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.hive.visitor.HiveSchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.odps.visitor.OdpsSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.oracle.ast.expr.OracleSysdateExpr;
 import com.alibaba.druid.sql.dialect.oracle.ast.stmt.*;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleStatementParser;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.phoenix.visitor.PhoenixSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.postgresql.parser.PGSQLStatementParser;
 import com.alibaba.druid.sql.dialect.postgresql.visitor.PGSchemaStatVisitor;
+import com.alibaba.druid.sql.dialect.sqlserver.visitor.SQLServerSchemaStatVisitor;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
+import com.alibaba.druid.sql.visitor.SchemaStatVisitor;
 import com.alibaba.druid.stat.TableStat;
 import com.alibaba.druid.stat.TableStat.Name;
 import com.alibaba.druid.util.JdbcConstants;
 import fd.ng.core.exception.BusinessSystemException;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import hrds.commons.codes.TableStorage;
 import hrds.commons.entity.Dm_datatable;
 import hrds.commons.entity.Dm_operation_info;
+import hrds.commons.exception.AppSystemException;
 import hrds.commons.exception.BusinessException;
+import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
@@ -39,6 +51,7 @@ import java.util.*;
  * <p>version: JDK 1.8</p>
  */
 public class DruidParseQuerySql {
+
 	public static String sourcecolumn = "sourcecolumn";
 	public static String sourcetable = "sourcetable";
 	public List<SQLSelectItem> selectList = null;
@@ -49,6 +62,7 @@ public class DruidParseQuerySql {
 	private List<HashMap<String, Object>> columnlist = new ArrayList<>();
 	private HashMap<String, Object> hashmap = new HashMap<>();
 	private String mainSql = "";
+	public List<SQLExpr> allWherelist = new ArrayList<>();
 
 	/**
 	 * <p>方法描述: 将传入的SQL使用Oracle的方式进行解析</p>
@@ -68,17 +82,76 @@ public class DruidParseQuerySql {
 		if (query instanceof SQLUnionQuery) {
 			SQLUnionQuery unionQuery = (SQLUnionQuery) query;
 			this.left = (OracleSelectQueryBlock) unionQuery.getLeft();
-			OracleSelectQueryBlock right = (OracleSelectQueryBlock) unionQuery.getRight();
-			this.rightWhere = right.getWhere();
 		} else {
 			this.left = (OracleSelectQueryBlock) query;
 		}
+		getAllWhere(query);
 		this.selectList = this.left.getSelectList();
 		this.leftWhere = this.left.getWhere();
 	}
 
 	public DruidParseQuerySql() {
 
+	}
+
+	private void handleFromInWhere(SQLTableSource sqlTableSource, SQLSelectQueryBlock sqlSelectQueryBlock) {
+		if (sqlTableSource instanceof SQLJoinTableSource) {
+			SQLJoinTableSource sqlJoinTableSource = (SQLJoinTableSource) sqlTableSource;
+			SQLExpr condition = sqlJoinTableSource.getCondition();
+			allWherelist.add(condition);
+			SQLTableSource left = sqlJoinTableSource.getLeft();
+			SQLTableSource right = sqlJoinTableSource.getRight();
+			handleFromInWhere(left, sqlSelectQueryBlock);
+			handleFromInWhere(right, null);
+		}
+		//如果是子查询，继续拆分from
+		else if (sqlTableSource instanceof SQLSubqueryTableSource) {
+			SQLSubqueryTableSource sqlSubqueryTableSource = (SQLSubqueryTableSource) sqlTableSource;
+			SQLSelect sqlSelect = sqlSubqueryTableSource.getSelect();
+			SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
+			getAllWhere(sqlSelectQuery);
+			SQLExpr where = sqlSelectQueryBlock.getWhere();
+			allWherelist.add(where);
+		}
+		//如果是单表的话 那么单表的parent一定是最简单的查询
+		else if (sqlTableSource instanceof SQLExprTableSource) {
+			if (sqlSelectQueryBlock != null) {
+				SQLExpr where = sqlSelectQueryBlock.getWhere();
+				putWhereIntoList(where);
+			}
+		}
+	}
+
+	private void putWhereIntoList(SQLExpr where) {
+		//单独处理这里binaryopexpr 要把 多个and or 都拆分开来
+		if (where instanceof SQLBinaryOpExpr) {
+			SQLBinaryOpExpr sqlBinaryOpExpr = (SQLBinaryOpExpr) where;
+			SQLBinaryOperator operator = sqlBinaryOpExpr.getOperator();
+			if (operator == SQLBinaryOperator.BooleanAnd || operator == SQLBinaryOperator.BooleanXor || operator == SQLBinaryOperator.BooleanOr) {
+				SQLExpr left = sqlBinaryOpExpr.getLeft();
+				putWhereIntoList(left);
+				SQLExpr right = sqlBinaryOpExpr.getRight();
+				putWhereIntoList(right);
+			}
+			else {
+				allWherelist.add(where);
+			}
+		} else {
+			allWherelist.add(where);
+		}
+	}
+
+	private void getAllWhere(SQLSelectQuery query) {
+		if (query instanceof SQLUnionQuery) {
+			SQLSelectQuery left = ((SQLUnionQuery) query).getLeft();
+			getAllWhere(left);
+			SQLSelectQuery right = ((SQLUnionQuery) query).getRight();
+			getAllWhere(right);
+		} else if (query instanceof SQLSelectQueryBlock) {
+			SQLSelectQueryBlock sqlSelectQueryBlock = (SQLSelectQueryBlock) query;
+			SQLTableSource sqlTableSource = sqlSelectQueryBlock.getFrom();
+			handleFromInWhere(sqlTableSource, sqlSelectQueryBlock);
+		}
 	}
 
 	/**
@@ -140,6 +213,10 @@ public class DruidParseQuerySql {
 		return selectList;
 	}
 
+	public List<SQLExpr> getAllWherelist() {
+		return allWherelist;
+	}
+
 	public void setSelectList(List<SQLSelectItem> selectList) {
 		this.selectList = selectList;
 	}
@@ -198,7 +275,7 @@ public class DruidParseQuerySql {
 		this.listmap.clear();
 		this.columnlist.clear();
 		this.hashmap.clear();
-		String dbType = JdbcConstants.ORACLE;
+		DbType dbType = JdbcConstants.ORACLE;
 		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
 		for (SQLStatement stmt : stmtList) {
 			SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
@@ -228,7 +305,8 @@ public class DruidParseQuerySql {
 			//开始处理from的部分
 			handleFrom(oracleSelectQueryBlock.getFrom());
 		} else {
-			throw new BusinessSystemException("未知的sqlSelectQuery：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass());
+			throw new BusinessSystemException(
+					"未知的sqlSelectQuery：" + sqlSelectQuery.toString() + " class:" + sqlSelectQuery.getClass());
 		}
 	}
 
@@ -271,7 +349,8 @@ public class DruidParseQuerySql {
 				sqlObject = sqlObject.getParent();
 				//判断 如果当前完整查询sql 为子查询的话 需要记录子查询的临时表名
 				if (sqlObject.getParent() instanceof OracleSelectSubqueryTableSource) {
-					OracleSelectSubqueryTableSource oracleSelectSubqueryTableSource = (OracleSelectSubqueryTableSource) sqlObject.getParent();
+					OracleSelectSubqueryTableSource oracleSelectSubqueryTableSource = (OracleSelectSubqueryTableSource) sqlObject
+							.getParent();
 					upperealias = oracleSelectSubqueryTableSource.getAlias();
 				}
 				while (!(sqlObject instanceof OracleSelectQueryBlock)) {
@@ -319,14 +398,16 @@ public class DruidParseQuerySql {
 							ArrayList<HashMap<String, Object>> templist = getTempList(alias);
 							if (sqlexpr instanceof SQLIdentifierExpr) {
 								if (uppercolumn.equalsIgnoreCase(sqlexpr.toString())) {
-									putResult(templist, alias, stringObjectHashMap.get("columnname") == null ? null : stringObjectHashMap.get("columnname").toString(),
+									putResult(templist, alias, stringObjectHashMap.get("columnname") == null ? null
+													: stringObjectHashMap.get("columnname").toString(),
 											stringObjectHashMap.get("table").toString());
 								}
 							} else if (sqlexpr instanceof SQLPropertyExpr) {
 								SQLPropertyExpr sqlPropertyExpr = (SQLPropertyExpr) sqlexpr;
 								if (uppercolumn.equalsIgnoreCase(sqlPropertyExpr.getName())
 										&& sqlPropertyExpr.getOwner().toString().equalsIgnoreCase(upperealias)) {
-									putResult(templist, alias, stringObjectHashMap.get("columnname") == null ? null : stringObjectHashMap.get("columnname").toString(),
+									putResult(templist, alias, stringObjectHashMap.get("columnname") == null ? null
+													: stringObjectHashMap.get("columnname").toString(),
 											stringObjectHashMap.get("table").toString());
 								}
 							}
@@ -415,7 +496,8 @@ public class DruidParseQuerySql {
 	 * <p>创建时间: 2020-04-10</p>
 	 * <p>参   数:  </p>
 	 */
-	private void startHandleFromColumn(OracleSelectQueryBlock oracleSelectQueryBlock, SQLTableSource sqlTableSource, String upperealias) {
+	private void startHandleFromColumn(OracleSelectQueryBlock oracleSelectQueryBlock, SQLTableSource sqlTableSource,
+									   String upperealias) {
 		SQLTableSource from = oracleSelectQueryBlock.getFrom();
 		Boolean isOracleSelectTableReference = oracleSelectQueryBlock.getFrom() instanceof OracleSelectTableReference;
 		//表示第一次开始寻找
@@ -501,12 +583,13 @@ public class DruidParseQuerySql {
 	 * <p>创建时间: 2020-04-10</p>
 	 * <p>参   数:  </p>
 	 */
-	private void handleColumn(SQLSelectItem sqlSelectItem, OracleSelectTableReference oracleSelectTableReference, Boolean isOracleSelectTableReference) {
+	private void handleColumn(SQLSelectItem sqlSelectItem, OracleSelectTableReference oracleSelectTableReference,
+							  Boolean isOracleSelectTableReference) {
 		String alias = getAlias(sqlSelectItem);
-		HashMap<String, Object> map = new HashMap<>();
 		columnlist.clear();
 		getcolumn(sqlSelectItem.getExpr(), sqlSelectItem.getAlias());
 		for (HashMap<String, Object> stringObjectHashMap : columnlist) {
+			HashMap<String, Object> map = new HashMap<>();
 			SQLExpr column = (SQLExpr) stringObjectHashMap.get("column");
 			if (column instanceof SQLIdentifierExpr) {
 				//如果是简单select 需要判断from的部分是否来自单表 如果不是，则需要明确字段来源
@@ -536,9 +619,8 @@ public class DruidParseQuerySql {
 	}
 
 	/**
-	 * TODO 这个方法将迭代获取一个select表达式中所包含的所有字段，需要根据表达式的类型进行分类讨论
-	 * Druid提供大概40种Select类型，目前对其中的大部分进行处理，日后可能需要新增
-	 * 详情参见 com.alibaba.druid.sql.ast.expr;
+	 * TODO 这个方法将迭代获取一个select表达式中所包含的所有字段，需要根据表达式的类型进行分类讨论 Druid提供大概40种Select类型，目前对其中的大部分进行处理，日后可能需要新增 详情参见
+	 * com.alibaba.druid.sql.ast.expr;
 	 * <p>方法描述: 根据select表达式，获取字段</p>
 	 * <p>@author: TBH </p>
 	 * <p>创建时间: 2020-04-10</p>
@@ -588,12 +670,12 @@ public class DruidParseQuerySql {
 		} else if (sqlexpr instanceof SQLBinaryOpExprGroup) {
 			throw new BusinessSystemException("SQLBinaryOpExprGroup 有待开发");
 		} else if (sqlexpr instanceof SQLBooleanExpr) {
-			throw new BusinessSystemException("SQLBooleanExpr 有待开发");
+			return;
 		} else if (sqlexpr instanceof SQLCaseExpr) {
 			SQLCaseExpr sqlCaseExpr = (SQLCaseExpr) sqlexpr;
 			List<SQLCaseExpr.Item> items = sqlCaseExpr.getItems();
 			for (SQLCaseExpr.Item item : items) {
-				getcolumn(item.getConditionExpr(), alias);
+//                getcolumn(item.getConditionExpr(), alias);
 				getcolumn(item.getValueExpr(), alias);
 			}
 			SQLExpr elseExpr = sqlCaseExpr.getElseExpr();
@@ -694,7 +776,8 @@ public class DruidParseQuerySql {
 				getcolumn(sqlListExpr, alias);
 			}
 		} else if (sqlexpr instanceof SQLVariantRefExpr) {
-			throw new BusinessSystemException("SQLVariantRefExpr 有待开发");
+			//？占位符
+			return;
 		} else if (sqlexpr instanceof OracleSysdateExpr) {
 			return;
 		} else {
@@ -736,7 +819,7 @@ public class DruidParseQuerySql {
 	 * 判断视图
 	 */
 	public String GetNewSql(String sql) {
-		String dbType = JdbcConstants.ORACLE;
+		DbType dbType = JdbcConstants.ORACLE;
 //		List<String> sqllist = new ArrayList<>();
 		HashMap<String, String> viewMap = new HashMap<>();
 		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
@@ -798,7 +881,8 @@ public class DruidParseQuerySql {
 		} else if (sqlTableSource instanceof OracleSelectTableReference) {
 			OracleSelectTableReference oracleSelectTableReference = (OracleSelectTableReference) sqlTableSource;
 			String tablename = oracleSelectTableReference.getExpr().toString();
-			List<Map<String, Object>> maps = SqlOperator.queryList(db, "select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join " + Dm_operation_info.TableName +
+			List<Map<String, Object>> maps = SqlOperator.queryList(db,
+					"select t2.execute_sql from " + Dm_datatable.TableName + " t1 left join " + Dm_operation_info.TableName +
 							" t2 on t1.datatable_id = t2.datatable_id where lower(t1.datatable_en_name) = ? and t1.table_storage = ?",
 					tablename.toLowerCase(), TableStorage.ShuJuShiTu.getCode());
 			if (!maps.isEmpty()) {
@@ -820,7 +904,7 @@ public class DruidParseQuerySql {
 
 	public static String getInDeUpSqlTableName(String sql) {
 		String tablename = "";
-		String dbType = JdbcConstants.ORACLE;
+		DbType dbType = JdbcConstants.ORACLE;
 		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
 		for (SQLStatement stmt : stmtList) {
 			if (stmt instanceof OracleUpdateStatement) {
@@ -864,15 +948,195 @@ public class DruidParseQuerySql {
 		return selectColumnMap;
 	}
 
+	/**
+	 * 解析sql中的信息,如果需要同时解析多个sql请使用分号 ; 隔开
+	 *
+	 * @param sql  : 需要解析的SQL信息
+	 * @param type : 解析的方式,指的是数据库的类型(使用Druid中的 DbType 中的数据库类型)
+	 * @return : 返回表及表字段
+	 */
+	public static Map<String, Object> analysisTableRelation(String sql, String type) {
+
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, type);
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql();
+		Map<String, Object> targetTableDataMap = new HashMap<>();
+		for (SQLStatement sqlStatement : stmtList) {
+			Map<String, Object> bloodRelationMap = null;
+			if (sqlStatement instanceof SQLInsertStatement) {//新增
+				bloodRelationMap = druidParseQuerySql
+						.getBloodRelationMap(((SQLInsertStatement) sqlStatement).getQuery().toString());
+			} else if (sqlStatement instanceof SQLDeleteStatement) {//删除SQL
+
+			} else if (sqlStatement instanceof SQLUpdateStatement) {//更新SQL
+			} else if (sqlStatement instanceof SQLSelectStatement) {//查询SQL
+				bloodRelationMap = druidParseQuerySql
+						.getBloodRelationMap(((SQLSelectStatement) sqlStatement).getSelect().getQuery().toString());
+			} else if (sqlStatement instanceof SQLCreateTableStatement) {//创建SQL
+				SQLSelect select = ((SQLCreateTableStatement) sqlStatement).getSelect();
+				if (select != null) {
+					bloodRelationMap = druidParseQuerySql
+							.getBloodRelationMap(select.getQuery().toString());
+				}
+			}
+			targetTableDataMap.put("targetTableField", bloodRelationMap);
+			SchemaStatVisitor visitor = getVisitor(sqlStatement, type);
+			//			获取表名称
+			targetTableDataMap.put("tableName", visitor.getTables().keySet().toArray()[0].toString());
+		}
+
+		return targetTableDataMap;
+	}
+
+	private static SchemaStatVisitor getVisitor(SQLStatement stmt, String type) {
+
+		SchemaStatVisitor visitor;
+		if (type.equals(DbType.teradata.toString())) {
+			visitor = new PGSchemaStatVisitor();
+		} else if (type.equals(DbType.oracle.toString())) {
+			visitor = new OracleSchemaStatVisitor();
+		} else if (type.equals(DbType.mysql.toString())) {
+			visitor = new MySqlSchemaStatVisitor();
+		} else if (type.equals(DbType.phoenix.toString())) {
+			visitor = new PhoenixSchemaStatVisitor();
+		} else if (type.equals(DbType.postgresql.toString())) {
+			visitor = new PGSchemaStatVisitor();
+		} else if (type.equals(DbType.sqlserver.toString())) {
+			visitor = new SQLServerSchemaStatVisitor();
+		} else if (type.equals(DbType.db2.toString())) {
+			visitor = new DB2SchemaStatVisitor();
+		} else if (type.equals(DbType.odps.toString())) {
+			visitor = new OdpsSchemaStatVisitor();
+		} else if (type.equals(DbType.hive.toString())) {
+			visitor = new HiveSchemaStatVisitor();
+		} else if (type.equals(DbType.h2.toString())) {
+			visitor = new H2SchemaStatVisitor();
+		} else {
+			throw new AppSystemException("暂时不支持的数据库类型操作");
+		}
+		stmt.accept(visitor);
+		return visitor;
+	}
+
+	/**
+	 * 解析SQL中的表名称
+	 *
+	 * @param sql  : 需要解析的SQL信息
+	 * @param type : 解析的方式,指的是数据库的类型(使用Druid中的JdbcConstants中的数据库类型)
+	 * @return : 返回SQL中表的信息集合
+	 */
+	public static List<String> getSqlTableList(String sql, String type) {
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, type);
+		List<String> tableList = new ArrayList<>();
+		for (SQLStatement sqlStatement : stmtList) {
+			SchemaStatVisitor visitor = getVisitor(sqlStatement, type);
+			visitor.getTables().keySet().forEach(item -> {
+				if (!tableList.contains(item.toString())) {
+					tableList.add(item.toString());
+				}
+			});
+		}
+		return tableList;
+	}
+
+	/**
+	 * 解析sql每个表执行方式, 如果执行的SQL是Select,则返回的数据是 {tableName:Select}
+	 *
+	 * @param sql  : 需要解析的SQL信息
+	 * @param type : 解析的方式,指的是数据库的类型(使用Druid中的JdbcConstants中的数据库类型)
+	 * @return : 返回当前sql每个表执行方式
+	 */
+	public static Map<String, String> getSqlManipulation(String sql, String type) {
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, type);
+		Map<String, String> tableMap = new HashMap<>();
+		for (SQLStatement sqlStatement : stmtList) {
+			SchemaStatVisitor visitor = getVisitor(sqlStatement, type);
+			visitor.getTables().forEach((k, v) -> {
+				if (!tableMap.containsKey(k)) {
+					tableMap.put(k.toString(), v.toString().toUpperCase());
+				}
+			});
+		}
+		return tableMap;
+	}
+
+	/**
+	 * 解析sql的条件信息, 如果执行的SQL是Select,则返回的数据是 {tableName:Select}
+	 *
+	 * @param sql  : 需要解析的SQL信息
+	 * @param type : 解析的方式,指的是数据库的类型(使用Druid中的JdbcConstants中的数据库类型)
+	 * @return : 返回当前sql条件信息
+	 */
+	public static List<String> getSqlConditions(String sql, String type) {
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, type);
+		List<String> tableList = new ArrayList<>();
+		for (SQLStatement sqlStatement : stmtList) {
+			SchemaStatVisitor visitor = getVisitor(sqlStatement, type);
+			visitor.getConditions().forEach(itme -> {
+				//这里如果能拿到过滤的值,说明是有效的过滤条件,则放入List中
+				if (itme.getValues().size() > 0) {
+					tableList.add(itme.toString());
+				}
+			});
+		}
+		return tableList;
+	}
+
+	/**
+	 * 解析sql关联信息
+	 *
+	 * @param sql  : 需要解析的SQL信息
+	 * @param type : 解析的方式,指的是数据库的类型(使用Druid中的JdbcConstants中的数据库类型)
+	 * @return : 返回sql关联信息
+	 */
+	public static List<String> getRelationships(String sql, String type) {
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, type);
+		List<String> tableList = new ArrayList<>();
+		for (SQLStatement sqlStatement : stmtList) {
+			SchemaStatVisitor visitor = getVisitor(sqlStatement, type);
+			visitor.getRelationships().forEach(itme -> {
+				if (!tableList.contains(itme.toString())) {
+					tableList.add(itme.toString());
+				}
+			});
+		}
+		return tableList;
+	}
+
+	public static Map<String, List<String>> getTableColumns(String sql, String type) {
+		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, type);
+		Map<String, List<String>> targetTableMap = new LinkedHashMap<>();
+		stmtList.forEach(sqlStatement -> {
+			SchemaStatVisitor visitor = getVisitor(sqlStatement, type);
+			Collection<TableStat.Column> columns = visitor.getColumns();
+			columns.forEach(column -> {
+				String fieldName = column.getName();
+				if (!"UNKNOWN".equals(column.getTable())) {
+					if (targetTableMap.containsKey(column.getTable())) {
+						targetTableMap.get(column.getTable()).add(fieldName);
+					} else {
+						List<String> fieldList = new ArrayList<>();
+						fieldList.add(fieldName);
+						targetTableMap.put(column.getTable(), fieldList);
+					}
+				}
+			});
+		});
+		return targetTableMap;
+	}
 
 	public static void main(String[] args) {
-		String sql = "select SYSDATE from aaa";
-		String dbType = JdbcConstants.ORACLE;
-		List<SQLStatement> stmtList = SQLUtils.parseStatements(sql, dbType);
-		for (SQLStatement stmt : stmtList) {
-			SQLSelectStatement sqlSelectStatement = (SQLSelectStatement) stmt;
-			SQLSelect sqlSelect = sqlSelectStatement.getSelect();
-			SQLSelectQuery sqlSelectQuery = sqlSelect.getQuery();
-		}
+		String sql = "SELECT ADVISORYNUM,ACCEPTDATE,BUSINESSTYPE2,BUSINESSTYPE3,STATUS,PROBLEM,STARLEVEL,RESULT," +
+				"PONITSTANDARD,REPORTSOURCE,ORGID,ISMONIT,REPORTER,SECTIONID,COMEFROM,COMP_TYPE,INGLE_TYPE_ID," +
+				"REPORTSOURCE_ID,COMEFROM_ID,HPB_ID,COMPLAINOBJECT,ISVALID,TEL,DISTRICT,STREETNAME,ADDRESS,SECTIONNAME,ORGNAME,BUSINESSTYPE1 FROM S30_I_INGLE";
+//		DruidParseQuerySql sql1 = new DruidParseQuerySql(sql);
+//		System.out.println(sql1.getSelectSql());
+//		Map<String, String> selectColumnMap = sql1.getSelectColumnMap();
+//		selectColumnMap.forEach((key, value) ->
+//				System.out.println(key + "====" + value)
+//		);
+//		List<String> strings = DruidParseQuerySql.parseSqlTableToList(sql);
+//		strings.forEach(System.out::println);
+		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(sql);
+		System.out.println(druidParseQuerySql.getSelectSql());
 	}
 }
