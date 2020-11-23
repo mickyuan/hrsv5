@@ -15,3 +15,10 @@
 # 5.2.2
 - 数据库直连采集支持拉链，db文件采集batch入库支持大字段
 - 采集进hive表增加ANALYZE TABLE tableName COMPUTE STATISTICS NOSCAN优化
+# 11-19
+- 修改了webSQL控制台sql输入框改为formdata的方式传输数据，防止SQL过长
+- 修改了加工第二部（查询，确定，下一步）三个功能为formdata的方式进行传输，防止参数过多
+- 修改了加工获取执行SQL方法，getexecute_sql方法，改为直接返回查询sql(原因是sql中存在使用关键子sysdate，而druid解析有问题）
+- 修改了加工运行时，拼接临时表时的表名过长问题，将hyren_,validate_,invalidate 改为hy_,va_,in_
+- 去除了一个判断，在编辑加工任务，修改sql时判断版本的问题
+- 关闭了判断前后置作业sql必须为修改本加工任务的表名的部分
