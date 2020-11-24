@@ -1490,8 +1490,8 @@ public class MarketInfoAction extends BaseAction {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setDatatable_id(datatable_id);
 		Optional<Dm_operation_info> dm_operation_infoOptional = Dbo.queryOneObject(Dm_operation_info.class,
-				"select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ? AND end_date = ?",
-				dm_datatable.getDatatable_id(), Constant.MAXDATE);
+				"select execute_sql from " + Dm_operation_info.TableName + " where datatable_id = ? AND end_date in (?,?)",
+				dm_datatable.getDatatable_id(), Constant.INITDATE, Constant.MAXDATE);
 		//如果有数据就回显
 		if (dm_operation_infoOptional.isPresent()) {
 			Dm_operation_info dm_operation_info = dm_operation_infoOptional.get();
