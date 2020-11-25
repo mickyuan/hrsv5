@@ -6,6 +6,7 @@ import fd.ng.web.util.RequestUtil;
 import fd.ng.web.util.ResponseUtil;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.h.biz.config.MarketConf;
@@ -50,14 +51,18 @@ public class TDScriptGeneration {
 			throw new AppSystemException("数据源sql未传递");
 		}
 
+		//附加信息,如主键,索引等
+		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
 		//mapping数据信息
 		sqlList.add(
-			"create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")");
+			"create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")" + String
+				.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs)));
 		//如果是替换的方式,先将表的删除,然后在重新创建,并加载数据
 		StorageType store_type = StorageType.ofEnumByCode(conf.getDmDatatable().getStorage_type());
 		if (store_type == StorageType.TiHuan) {
 			sqlList.add("drop table " + conf.getTableName());
-			sqlList.add("create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")");
+			sqlList.add("create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") " + String
+				.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs)));
 		}
 		sqlList.add("insert into " + conf.getTableName() + " select * from (" + conf.getBeforeReplaceSql() + ") hyren");
 
@@ -116,7 +121,7 @@ public class TDScriptGeneration {
 			} else {
 				// 4.2其它浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-					+ new String(plFileName.getBytes(),DataBaseCode.UTF_8.getValue()));
+					+ new String(plFileName.getBytes(), DataBaseCode.UTF_8.getValue()));
 			}
 			response.setHeader("content-type", "text/html;charset=" + DataBaseCode.UTF_8.getValue());
 			response.setCharacterEncoding(DataBaseCode.UTF_8.getValue());

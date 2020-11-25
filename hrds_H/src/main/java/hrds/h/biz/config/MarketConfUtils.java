@@ -156,8 +156,8 @@ public class MarketConfUtils {
 			String sql = "select dfi.field_en_name,dsla.dsla_storelayer from " + Datatable_field_info.TableName
 					+ " dfi join " + Dcol_relation_store.TableName + " dcs on dfi.datatable_field_id = " +
 					"dcs.col_id join " + Data_store_layer_added.TableName + " dsla on dcs.dslad_id = " +
-					"dsla.dslad_id where dfi.datatable_id = ? AND dfi.end_date = ?";
-			Result result = SqlOperator.queryResult(db, sql, datatableId, Constant.MAXDATE);
+					"dsla.dslad_id where dfi.datatable_id = ? AND dfi.end_date in (?,?)";
+			Result result = SqlOperator.queryResult(db, sql, datatableId, Constant.MAXDATE,Constant.INITDATE);
 			//遍历
 			for (int i = 0; i < result.getRowCount(); i++) {
 				String dsla_storelayer = result.getString(i, "dsla_storelayer");
