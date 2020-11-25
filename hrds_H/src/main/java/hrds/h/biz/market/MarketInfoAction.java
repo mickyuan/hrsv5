@@ -2126,8 +2126,8 @@ public class MarketInfoAction extends BaseAction {
 							" column_type AS columntype,false as selectionstate " +
 							" FROM " + Dq_table_column.TableName + " WHERE table_id=?",
 					dq_table_info.getTable_id());
-			resultmap.put("tablename",table_name);
-			resultmap.put("columnresult",column_list);
+			resultmap.put("tablename", table_name);
+			resultmap.put("columnresult", column_list);
 			return resultmap;
 		}
 		//TODO 新的层加进来后 还需要补充
@@ -3372,37 +3372,14 @@ public class MarketInfoAction extends BaseAction {
 	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "加工工程主键data_mart_id")
 	@UploadFile
 	public void uploadExcelFile(String file, String data_mart_id) {
-		FileInputStream fis;
-		Workbook workBook;
+		FileInputStream fis = null;
+		Workbook workBook = null;
 		try {
-			//获取文件
-			File uploadedFile = FileUploadUtil.getUploadedFile(file);
-			if (!uploadedFile.exists()) {
-				throw new BusinessException("上传文件不存在！");
-			}
-			//创建的输入流
-			String path = uploadedFile.toPath().toString();
-			fis = new FileInputStream(path);
-			//判断文件后缀名
-			if (path.toLowerCase().endsWith(xlsxSuffix)) {
-				try {
-					workBook = new XSSFWorkbook(fis);
-				} catch (IOException e) {
-					throw new BusinessException("定义XSSFWorkbook失败");
-				}
-			} else if (path.toLowerCase().endsWith(xlsSuffix)) {
-				try {
-					workBook = new HSSFWorkbook(fis);
-				} catch (IOException e) {
-					throw new BusinessException("定义XSSFWorkbook失败");
-				}
-			} else {
-				throw new BusinessException("文件格式不正确，不是excel文件");
-			}
+			getWorkbook(file,fis,workBook);
 			saveimportexcel(workBook, data_mart_id);
 			workBook.close();
 			fis.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new BusinessException("导入excel文件数据失败！");
 		}
 	}
@@ -3742,5 +3719,60 @@ public class MarketInfoAction extends BaseAction {
 
 		DboExecute.deletesOrThrow("删除的预聚合信息超出了范围", "DELETE FROM "
 				+ Cb_preaggregate.TableName + " WHERE agg_id = ?", agg_id);
+	}
+
+	@Method(desc = "上传Excel文件",
+			logicStep = "接收excel文件并解析文件入库")
+	@Param(name = "file", desc = "上传文件,文件名为作业配置对应那几张表名", range = "以每个模块对应表名为文件名")
+	@Param(name = "data_mart_id", desc = "Dm_info主键，加工工程ID", range = "加工工程主键data_mart_id")
+	@UploadFile
+	public void uploadExcelFile2(String file, String data_mart_id) {
+		FileInputStream fis = null;
+		Workbook workBook = null;
+		try {
+			getWorkbook(file, fis, workBook);
+			MappingExcelImExport mappingExcelImExport = new MappingExcelImExport();
+			mappingExcelImExport.importExcel(workBook, data_mart_id);
+			workBook.close();
+			fis.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new BusinessException("导入excel文件数据失败！");
+		}
+	}
+
+	/**
+	 * 封装一个根据file获取workbook的方法
+	 * @param file
+	 * @param fis
+	 * @param workBook
+	 * @throws Exception
+	 */
+	private Workbook getWorkbook(String file, FileInputStream fis, Workbook workBook) throws Exception {
+		//获取文件
+		File uploadedFile = FileUploadUtil.getUploadedFile(file);
+		if (!uploadedFile.exists()) {
+			throw new BusinessException("上传文件不存在！");
+		}
+		//创建的输入流
+		String path = uploadedFile.toPath().toString();
+		fis = new FileInputStream(path);
+		//判断文件后缀名
+		if (path.toLowerCase().endsWith(xlsxSuffix)) {
+			try {
+				workBook = new XSSFWorkbook(fis);
+			} catch (IOException e) {
+				throw new BusinessException("定义XSSFWorkbook失败");
+			}
+		} else if (path.toLowerCase().endsWith(xlsSuffix)) {
+			try {
+				workBook = new HSSFWorkbook(fis);
+			} catch (IOException e) {
+				throw new BusinessException("定义XSSFWorkbook失败");
+			}
+		} else {
+			throw new BusinessException("文件格式不正确，不是excel文件");
+		}
+		return workBook;
 	}
 }
