@@ -15,5 +15,5 @@ printf $CLASSPATH
 
 HADOOP_OPTS="-Djava.library.path=/opt/cloudera/parcels/CDH/lib/hadoop/lib/native"
 cd $PROJECTDIR
-java -Xms1024m -Xmx1024m $HADOOP_OPTS -Dproject.name="market-work"  -cp $CLASSPATH $MainClass "$@"
+java -Xms64m -Xmx1024m $HADOOP_OPTS -Dproject.name="market-work"  -cp $CLASSPATH $MainClass "$@"
 
