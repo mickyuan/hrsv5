@@ -100,7 +100,7 @@ public class MarketConf implements Serializable {
 	 *
 	 * @param datatableId : 集市表ID主键
 	 */
-	private MarketConf(String datatableId) {
+	public MarketConf(String datatableId) {
 		this.datatableId = datatableId;
 		this.etlDate = null;
 		this.sqlParams = null;
@@ -188,7 +188,7 @@ public class MarketConf implements Serializable {
 		return sqlParams;
 	}
 
-	void setTableName(String tableName) {
+	public void setTableName(String tableName) {
 		this.tableName = tableName;
 	}
 
@@ -224,7 +224,7 @@ public class MarketConf implements Serializable {
 		return dmDatatable;
 	}
 
-	void setDmDatatable(Dm_datatable dmDatatable) {
+	public void setDmDatatable(Dm_datatable dmDatatable) {
 		this.dmDatatable = dmDatatable;
 	}
 
@@ -232,7 +232,7 @@ public class MarketConf implements Serializable {
 		return datatableFields;
 	}
 
-	void setDatatableFields(List<Datatable_field_info> datatableFields) {
+	public void setDatatableFields(List<Datatable_field_info> datatableFields) {
 		this.datatableFields = datatableFields;
 	}
 

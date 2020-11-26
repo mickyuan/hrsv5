@@ -1,5 +1,7 @@
 package hrds.h.biz.scriptsql;
 
+import com.alibaba.druid.sql.SQLUtils;
+import com.alibaba.druid.util.JdbcConstants;
 import fd.ng.core.utils.FileNameUtils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.RequestUtil;
@@ -10,6 +12,7 @@ import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.h.biz.config.MarketConf;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,7 +26,9 @@ import javax.servlet.http.HttpServletResponse;
 
 public class TDScriptGeneration {
 
-	public static void scriptGeneration(MarketConf conf, String createTableColumnTypes) {
+
+	public List<String> sqlGeneration(MarketConf conf, String createTableColumnTypes) {
+
 		List<String> sqlList = new ArrayList<>();
 		//前置SQL信息
 		if (StringUtil.isNotBlank(conf.getPreSql())) {
@@ -54,31 +59,54 @@ public class TDScriptGeneration {
 		//附加信息,如主键,索引等
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
 		//mapping数据信息
-		sqlList.add(
-			"create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")" + String
-				.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs)));
+		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
+			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")";
+			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+			sqlList.add(createsql);
+		} else {
+			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")" + String
+					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
+			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+			sqlList.add(createsql);
+		}
 		//如果是替换的方式,先将表的删除,然后在重新创建,并加载数据
 		StorageType store_type = StorageType.ofEnumByCode(conf.getDmDatatable().getStorage_type());
 		if (store_type == StorageType.TiHuan) {
 			sqlList.add("drop table " + conf.getTableName());
-			sqlList.add("create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") " + String
-				.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs)));
+			if (additionalAttrs == null || additionalAttrs.isEmpty()) {
+				String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") ";
+				//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+				sqlList.add(createsql);
+			} else {
+				String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") " + String
+						.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
+				//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+				sqlList.add(createsql);
+			}
 		}
-		sqlList.add("insert into " + conf.getTableName() + " select * from (" + conf.getBeforeReplaceSql() + ") hyren");
+		String insertsql = "insert into " + conf.getTableName() + " select * from (" + conf.getBeforeReplaceSql() + ") hyren";
+//		insertsql = SQLUtils.format(insertsql, JdbcConstants.TERADATA);
+		sqlList.add(insertsql);
 
 		//后置sql信息
 		if (StringUtil.isNotBlank(conf.getFinalSql())) {
-			sqlList.add(conf.getFinalSql());
+			String finalSql = conf.getFinalSql();
+//			finalSql = SQLUtils.format(finalSql, JdbcConstants.TERADATA);
+			sqlList.add(finalSql);
 		}
-
-		//sql处理集合
-		scriptGeneration(sqlList, conf.getTableName());
+		return sqlList;
 	}
+//	public void scriptGeneration(MarketConf conf, String createTableColumnTypes) {
+//		scriptGeneration(sqlList, conf.getTableName());
+//	}
 
-	static void scriptGeneration(List<String> mappingSqlList, String tableName) {
+	public void scriptGeneration(List<String> mappingSqlList, String tableName) {
 		BufferedReader read = null;
 		BufferedWriter writer = null;
-		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+		//fixme 服务器路径
+//		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+		//fixme 本地测试用路径
+		String scriptModelPath = "C:\\tmp\\perl模板.pl";
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
 		String plFileName = tableName + "." + fileSuffixName;
 		HttpServletResponse response = ResponseUtil.getResponse();
@@ -92,7 +120,11 @@ public class TDScriptGeneration {
 			if (!createFile.exists()) {
 				throw new AppSystemException("本地目录不存在,无法建立脚本");
 			}
-			writer = new BufferedWriter(new FileWriter(createFile.getAbsolutePath() + File.separator + plFileName));
+			String plfilename = plFileName;
+			if (plfilename.contains("${") && plfilename.contains("}")) {
+				plfilename = plfilename.substring(plfilename.indexOf("}") + 2);
+			}
+			writer = new BufferedWriter(new FileWriter(createFile.getAbsolutePath() + File.separator + plfilename));
 			String line;
 			StringBuffer buffer = new StringBuffer();
 			while ((line = read.readLine()) != null) {
@@ -100,8 +132,8 @@ public class TDScriptGeneration {
 					buffer.append(line).append(System.lineSeparator());
 					mappingSqlList.forEach(item -> {
 						buffer.append(item).append(System.lineSeparator()).append(";").append(System.lineSeparator())
-							.append(".IF ERRORCODE <> 0 THEN .GOTO QUITWITHERROR;").append(System.lineSeparator())
-							.append(System.lineSeparator());
+								.append(".IF ERRORCODE <> 0 THEN .GOTO QUITWITHERROR;").append(System.lineSeparator())
+								.append(System.lineSeparator());
 					});
 					writer.write(buffer.toString());
 				} else if (line.startsWith("my $SCTIPT=")) {
@@ -116,12 +148,12 @@ public class TDScriptGeneration {
 			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
 				// 4.1firefox浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-					+ new String(plFileName.getBytes(DataBaseCode.UTF_8.getValue()),
-					DataBaseCode.ISO_8859_1.getValue()));
+						+ new String(plFileName.getBytes(DataBaseCode.UTF_8.getValue()),
+						DataBaseCode.ISO_8859_1.getValue()));
 			} else {
 				// 4.2其它浏览器
 				response.setHeader("content-disposition", "attachment;filename="
-					+ new String(plFileName.getBytes(), DataBaseCode.UTF_8.getValue()));
+						+ new String(plFileName.getBytes(), DataBaseCode.UTF_8.getValue()));
 			}
 			response.setHeader("content-type", "text/html;charset=" + DataBaseCode.UTF_8.getValue());
 			response.setCharacterEncoding(DataBaseCode.UTF_8.getValue());
