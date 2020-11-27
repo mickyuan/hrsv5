@@ -43,3 +43,6 @@ hyrenv5
 /storeConfigPath/
 /CommunicationError/
 /mapDb/
+/dirFile/
+/jobInfo/
+/tempresources/
