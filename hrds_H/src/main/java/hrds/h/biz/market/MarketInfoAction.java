@@ -2223,6 +2223,7 @@ public class MarketInfoAction extends BaseAction {
 			workbook.write(out);
 			out.flush();
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new BusinessException("加工数据表下载错误");
 		}
 	}
@@ -3776,7 +3777,7 @@ public class MarketInfoAction extends BaseAction {
 				throw new BusinessException("文件格式不正确，不是excel文件");
 			}
 			MappingExcelImExport mappingExcelImExport = new MappingExcelImExport();
-			mappingExcelImExport.importExcel(workBook, data_mart_id,getUserId());
+			mappingExcelImExport.importExcel(workBook, data_mart_id, getUserId());
 			workBook.close();
 			fis.close();
 		} catch (Exception e) {
@@ -3785,5 +3786,46 @@ public class MarketInfoAction extends BaseAction {
 		}
 	}
 
+	@Method(desc = "控制响应头下载加工表的excel信息",
+			logicStep = "")
+	@Param(name = "datatable_id", desc = "加工数据表主键", range = "String类型加工表主键")
+	@Param(name = "tablename", desc = "加工数据表表名", range = "String类型加工表表名")
+	@Return(desc = "查询返回结果集", range = "无限制")
+	public void exportMappingExcel(Long datatable_id, String tablename) {
+		String fileName = tablename + ".xlsx";
+		try (OutputStream out = ResponseUtil.getResponse().getOutputStream();
+			 XSSFWorkbook workbook = new XSSFWorkbook()) {
+			ResponseUtil.getResponse().reset();
+			// 4.设置响应头，控制浏览器下载该文件
+			if (RequestUtil.getRequest().getHeader("User-Agent").toLowerCase().indexOf("firefox") > 0) {
+				// 4.1firefox浏览器
+				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+						+ new String(fileName.getBytes(CodecUtil.UTF8_CHARSET), DataBaseCode.ISO_8859_1.getCode()));
+			} else {
+				// 4.2其它浏览器
+				ResponseUtil.getResponse().setHeader("content-disposition", "attachment;filename="
+						+ Base64.getEncoder().encodeToString(fileName.getBytes(CodecUtil.UTF8_CHARSET)));
+			}
+			ResponseUtil.getResponse().setContentType("APPLICATION/OCTET-STREAM");
+			MappingExcelImExport mappingExcelImExport = new MappingExcelImExport();
+			int i = 0;
+			mappingExcelImExport.generateMappingExcel(workbook, datatable_id, "映射模式", i);
+			Dm_datatable dm_datatable = new Dm_datatable();
+			dm_datatable.setDatatable_id(datatable_id);
+			List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where remark = ?", String.valueOf(dm_datatable.getDatatable_id()));
+			if (!dm_datatables.isEmpty()) {
+
+				for (Dm_datatable dm_datatable1 : dm_datatables) {
+					Long datatable_id1 = dm_datatable1.getDatatable_id();
+					i = mappingExcelImExport.generateMappingExcel(workbook, datatable_id1, "映射模式-子表", i);
+				}
+			}
+			workbook.write(out);
+			out.flush();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new BusinessException("加工数据表下载错误");
+		}
+	}
 
 }
