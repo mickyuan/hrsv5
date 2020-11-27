@@ -104,9 +104,9 @@ public class TDScriptGeneration {
 		BufferedReader read = null;
 		BufferedWriter writer = null;
 		//fixme 服务器路径
-//		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
 		//fixme 本地测试用路径
-		String scriptModelPath = "C:\\tmp\\perl模板.pl";
+//		String scriptModelPath = "C:\\tmp\\perl模板.pl";
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
 		String plFileName = tableName + "." + fileSuffixName;
 		HttpServletResponse response = ResponseUtil.getResponse();
