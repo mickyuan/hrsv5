@@ -68,7 +68,7 @@ public class CommandExecute {
 			String taskInfo = FileUtil.readFile2String(new File(JobConstant.MESSAGEFILE + taskId));
 			//采集类型是非结构化采集
 			if (AgentType.WenJianXiTong.getCode().equals(collectType)) {
-				startFileCollectJob(taskId, taskInfo);
+				startFileCollectJob(taskInfo);
 			}
 			//采集类型不是非结构化采集
 			else {
@@ -189,10 +189,8 @@ public class CommandExecute {
 
 	/**
 	 * 开始文件采集作业
-	 *
-	 * @param taskId 采集任务id
 	 */
-	private static void startFileCollectJob(String taskId, String taskInfo) {
+	private static void startFileCollectJob(String taskInfo) {
 		//文件采集需要的参数实体bean
 		FileCollectParamBean fileCollectParamBean = JSONObject.parseObject(taskInfo, FileCollectParamBean.class);
 		//1.将页面传递过来的压缩信息解压写文件
