@@ -267,6 +267,6 @@ public class AutoAnalysisUtil {
 		map.put("h", h);
 		map.put("i", i);
 		map.put("type", String.valueOf(id));
-		map.put("static", true);
+		map.put("static", false);
 	}
 }

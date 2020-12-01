@@ -392,15 +392,15 @@ public class OperateAction extends BaseAction {
 
 	private String trim(String string) {
 		while (string.contains("\n") || string.contains("\r") || string.contains("\n\r")
-				|| string.contains("\t") || string.contains(Constant.SPACE+Constant.SPACE)
-				|| string.contains(Constant.SPACE+Constant.RXKH)|| string.contains(Constant.LXKH+Constant.SPACE)) {
+				|| string.contains("\t") || string.contains(Constant.SPACE + Constant.SPACE)
+				|| string.contains(Constant.SPACE + Constant.RXKH) || string.contains(Constant.LXKH + Constant.SPACE)) {
 			string = string.replace("\n", Constant.SPACE);
 			string = string.replace("\r", Constant.SPACE);
 			string = string.replace("\n\r", Constant.SPACE);
 			string = string.replace("\t", Constant.SPACE);
-			string = string.replace(Constant.SPACE+Constant.SPACE, Constant.SPACE);
-			string = string.replace(Constant.SPACE+Constant.RXKH, Constant.RXKH);
-			string = string.replace(Constant.LXKH+Constant.SPACE, Constant.LXKH);
+			string = string.replace(Constant.SPACE + Constant.SPACE, Constant.SPACE);
+			string = string.replace(Constant.SPACE + Constant.RXKH, Constant.RXKH);
+			string = string.replace(Constant.LXKH + Constant.SPACE, Constant.LXKH);
 		}
 		return string;
 	}
@@ -754,7 +754,7 @@ public class OperateAction extends BaseAction {
 				for (Map<String, Object> stringObjectMap : componentList) {
 					String s = stringObjectMap.get(y_column.trim()).toString().trim();
 					s = checkIfNumeric(s, y_column);
-					if(s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")){
+					if (s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")) {
 						data.add(s);
 					}
 
@@ -862,10 +862,11 @@ public class OperateAction extends BaseAction {
 			String y = stringObjectMap.get(y_columns[0]).toString();
 			x = checkIfNumeric(x, x_columns[0]);
 			y = checkIfNumeric(y, y_columns[0]);
-			if(x != null && !x.toLowerCase().equals("null") && !x.trim().equals("")
-			&& y != null && !y.toLowerCase().equals("null") && !y.trim().equals("")){
+			if (x != null && !x.toLowerCase().equals("null") && !x.trim().equals("")
+					&& y != null && !y.toLowerCase().equals("null") && !y.trim().equals("")) {
 				list.add(x);
-				list.add(y);scatterData.add(list);
+				list.add(y);
+				scatterData.add(list);
 			}
 		}
 		resultMap.put("legend_data", y_columns);
@@ -886,7 +887,7 @@ public class OperateAction extends BaseAction {
 			map.put("value", stringObjectMap.get(y_columns[0]));
 			String s = stringObjectMap.get(y_columns[0]).toString();
 			s = checkIfNumeric(s, y_columns[0]);
-			if(s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")){
+			if (s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")) {
 				count = count.add(new BigDecimal(s));
 			}
 			seriesData.add(map);
@@ -932,7 +933,7 @@ public class OperateAction extends BaseAction {
 				for (Map<String, Object> stringObjectMap : componentList) {
 					String s = stringObjectMap.get(y_columns[j].trim()).toString();
 					s = checkIfNumeric(s, y_columns[j].trim());
-					if(s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")){
+					if (s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")) {
 						data.add(s);
 					}
 				}
@@ -944,7 +945,7 @@ public class OperateAction extends BaseAction {
 						map.put("stack", "two");
 					} else {
 						map.put("type", LINE);
-						map.put("yAxisIndex", j-2);
+						map.put("yAxisIndex", j - 2);
 					}
 				} else {
 					map.put("type", chart_type);
@@ -979,7 +980,7 @@ public class OperateAction extends BaseAction {
 				for (Map<String, Object> stringObjectMap : componentList) {
 					String s = stringObjectMap.get(y_column.trim()).toString();
 					s = checkIfNumeric(s, y_column);
-					if(s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")){
+					if (s != null && !s.toLowerCase().equals("null") && !s.trim().equals("")) {
 						data.add(s);
 					}
 				}
@@ -1003,14 +1004,14 @@ public class OperateAction extends BaseAction {
 	}
 
 	private String checkIfNumeric(String s, String columnName) {
-		if(s == null || s.toLowerCase().equals("null") || s.trim().equals("")){
+		if (s == null || s.toLowerCase().equals("null") || s.trim().equals("")) {
 			logger.info(columnName + "字段包含空值");
 			return "";
 		}
 		s = s.trim();
 		if (!s.matches("-[0-9]+(.[0-9]+)?|[0-9]+(.[0-9]+)?")) {
 			throw new BusinessException(columnName + "字段包含不是数值的值，无法构成图");
-		}else{
+		} else {
 			return s;
 		}
 	}
@@ -1777,12 +1778,12 @@ public class OperateAction extends BaseAction {
 				Auto_comp_sum auto_comp_sum = JsonUtil.toObjectSafety(
 						JsonUtil.toJson(componentInfo.get("compSum")), Auto_comp_sum.class)
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
-				componentInfo.put("x", (i % 3) * 33);
-				componentInfo.put("y", (i / 3) * 30);
-				componentInfo.put("w", 33);
-				componentInfo.put("h", 30);
+				componentInfo.put("x", (i % 2) * (48 + (i % 2)));
+				componentInfo.put("y", (i / 2) * (27 + i / 2));
+				componentInfo.put("w", 48);
+				componentInfo.put("h", 27);
 				componentInfo.put("i", autoCompSum.getComponent_id());
-				componentInfo.put("static", true);
+				componentInfo.put("static", false);
 				componentInfo.put("type", String.valueOf(autoCompSum.getComponent_id()));
 				componentOnDashBoard.put(String.valueOf(autoCompSum.getComponent_id()),
 						auto_comp_sum.getComponent_buffer());
