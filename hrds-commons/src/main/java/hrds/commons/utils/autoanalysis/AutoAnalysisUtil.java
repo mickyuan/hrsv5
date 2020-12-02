@@ -48,7 +48,7 @@ public class AutoAnalysisUtil {
 				Map<String, Object> frameMap = new HashMap<>();
 				setGridLayout(frameMap, auto_frame_info.getX_axis_coord(), auto_frame_info.getY_axis_coord(),
 						auto_frame_info.getLength(), auto_frame_info.getWidth(),
-						auto_frame_info.getSerial_number(), auto_frame_info.getFrame_id());
+						auto_frame_info.getFrame_id(), auto_frame_info.getFrame_id());
 				frameMap.put("label", "2");
 				dashboardList.add(frameMap);
 			}
@@ -67,7 +67,7 @@ public class AutoAnalysisUtil {
 						.orElseThrow(() -> new BusinessException("转换实体失败"));
 				setGridLayout(componentMap, auto_asso_info.getX_axis_coord(), auto_asso_info.getY_axis_coord(),
 						auto_asso_info.getLength().longValue(), auto_asso_info.getWidth().longValue(),
-						auto_asso_info.getSerial_number(), auto_asso_info.getComponent_id());
+						auto_asso_info.getComponent_id(), auto_asso_info.getComponent_id());
 				autoCompSumList.add(auto_comp_sum);
 				resultMap.put(String.valueOf(auto_asso_info.getComponent_id()), auto_comp_sum.getComponent_buffer());
 				dashboardList.add(componentMap);
@@ -92,7 +92,7 @@ public class AutoAnalysisUtil {
 				Map<String, Object> labelMap = new HashMap<>();
 				setGridLayout(labelMap, auto_label_info.getX_axis_coord(), auto_label_info.getY_axis_coord(),
 						auto_label_info.getLength().longValue(), auto_label_info.getWidth().longValue(),
-						auto_label_info.getSerial_number(), auto_label_info.getLabel_id());
+						auto_label_info.getLabel_id(), auto_label_info.getLabel_id());
 				labelMap.put("label", "0");
 				Map<String, Object> contentColorSize = new HashMap<>();
 				contentColorSize.put("label_content", auto_label_info.getLabel_content());
@@ -111,7 +111,7 @@ public class AutoAnalysisUtil {
 				Map<String, Object> lineMap = new HashMap<>();
 				setGridLayout(lineMap, auto_line_info.getX_axis_coord(), auto_line_info.getY_axis_coord(),
 						auto_line_info.getLine_length(), auto_line_info.getLine_weight(),
-						auto_line_info.getSerial_number(), auto_line_info.getLine_id());
+						auto_line_info.getLine_id(), auto_line_info.getLine_id());
 				lineMap.put("label", "1");
 				JSONObject contentColorType = new JSONObject();
 				contentColorType.put("line_color", auto_line_info.getLine_color());
