@@ -276,17 +276,13 @@ public class DFUploadStageImpl extends AbstractJobStage {
 				data_store_connect_attr.get(StorageTypeKey.prncipal_name),
 				data_store_connect_attr.get(StorageTypeKey.hadoop_user_name))) {
 			//创建hdfs表的文件夹
-			if (!operator.exists(hdfsPath)) {
-				if (!operator.mkdir(hdfsPath)) {
-					throw new AppSystemException("创建hdfs文件夹" + hdfsPath + "失败");
-				}
-			} else {
+			if (operator.exists(hdfsPath)) {
 				if (!operator.deletePath(hdfsPath)) {
 					throw new AppSystemException("删除hdfs文件夹" + hdfsPath + "失败");
 				}
-				if (!operator.mkdir(hdfsPath)) {
-					throw new AppSystemException("创建hdfs文件夹" + hdfsPath + "失败");
-				}
+			}
+			if (!operator.mkdir(hdfsPath)) {
+				throw new AppSystemException("创建hdfs文件夹" + hdfsPath + "失败");
 			}
 			if (SystemUtil.OS_NAME.toLowerCase().contains("windows")) {
 				//windows机器上使用api上传hdfs

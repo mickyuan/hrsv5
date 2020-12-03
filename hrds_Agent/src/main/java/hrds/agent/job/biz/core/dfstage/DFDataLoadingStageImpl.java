@@ -560,8 +560,11 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				sqlList.add(genHiveLoad(todayTableName, tableBean, tableBean.getColumn_separator()));
 			} else if (FileFormat.CSV.getCode().equals(file_format)) {
 				sqlList.add(genHiveLoadCsv(todayTableName, tableBean));
+			} else if (FileFormat.DingChang.getCode().equals(file_format)) {
+				sqlList.add(genHiveDingChangLoad(todayTableName, tableBean, tableBean.getColumn_separator()));
 			} else {
-				throw new AppSystemException("暂不支持定长或者其他特殊类型直接加载到hive表");
+				throw new AppSystemException("目前仅支持：SequenceFile、Parquet、Orc、Csv、非定长、定长文件；" +
+						"暂不支持其他特殊类型直接加载到hive表");
 			}
 			//3.加载数据
 			sqlList.add("load data inpath '" + hdfsFilePath + "' into table " + todayTableName);
@@ -659,6 +662,32 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 				"SERDEPROPERTIES (\"field.delim\"=\"").append(database_separatorr).append("\") stored as  textfile");
 //		sql.append(") ROW FORMAT DELIMITED FIELDS TERMINATED BY  '").append(database_separatorr)
 //				.append("'").append("stored as textfile");
+		//判断是否有表头
+		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
+			//包含表头，跳过第一行
+			sql.append(" tblproperties (\"skip.header.line.count\"=\"1\")");
+		}
+		return sql.toString();
+	}
+
+	/**
+	 * 创建hive外部表加载定长的行式存储文件
+	 */
+	public static String genHiveDingChangLoad(String todayTableName, TableBean tableBean, String database_separatorr) {
+		StringBuilder sql = new StringBuilder(120);
+		String file_code = DataBaseCode.ofValueByCode(tableBean.getFile_code());
+		List<String> columnList = StringUtil.split(tableBean.getColumnMetaInfo(), Constant.METAINFOSPLIT);
+		String columnsLengths = tableBean.getColLengthInfo().replace(Constant.METAINFOSPLIT, ",");
+		sql.append("CREATE TABLE IF NOT EXISTS ").append(todayTableName).append(" (");
+		for (String column : columnList) {
+			sql.append("`").append(column).append("` ").append(" string,");
+		}
+		sql.deleteCharAt(sql.length() - 1);
+		sql.append(") ROW FORMAT SERDE 'serde.HyrenSerDe' WITH  " +
+				"SERDEPROPERTIES (\"field.delim\"=\"").append(database_separatorr).append("\"," +
+				"\"serialization.encoding\"=\"").append(file_code).append("\"," +
+				"\"hyren.columns.lengths\"=\"").append(columnsLengths).append("\"" +
+				") stored as textfile");
 		//判断是否有表头
 		if (IsFlag.Shi.getCode().equals(tableBean.getIs_header())) {
 			//包含表头，跳过第一行
