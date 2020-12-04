@@ -41,6 +41,9 @@ INSERT INTO sys_para VALUES ('403', 'isconcurrent', '0', 'hrds_h.properties', '�
 INSERT INTO sys_para VALUES ('404', 'sysnumber', '2000000', 'hrds_h.properties', '数据表记录阈值,超过时使用spark程序生成文件');
 -- 数据管控配置
 INSERT INTO sys_para VALUES ('501', 'predict_address', 'http://192.168.1.101:38081/predict', 'hrds_k.properties','数据对标-表结构对标预测地址');
+INSERT INTO sys_para VALUES ('502', 'algorithms_result_root_path', 'file:///D:/algorithms_result_root_path/', 'hrds_k.properties','数据对标，表函数依赖和主键分析输出结果的根目录');
+INSERT INTO sys_para VALUES ('503', 'algorithms_python_serve', 'http://127.0.0.1:33333/', 'hrds_k.properties','数据对标，调用python服务的url');
+INSERT INTO sys_para VALUES ('504', 'algorithms_spark_classpath', 'hrds_K/build/libs/hrds_K-5.0.jar;lib/*;hrds_K/src/main/resources/;spark/jars/*;libs/runtime/*;hrds-commons/build/libs/hrds-commons-5.0.jar', 'hrds_k.properties','数据对标算主键函数依赖执行spark程序所依赖的classpath');
 -- 作业配置
 INSERT INTO sys_para VALUES ('601', 'etlDeployPath', '/home/hyshf/HRSDATA/agent_deploy_dir/etlagent','hrds_c.properties', '作业调度默认部署路径');
 INSERT INTO sys_para VALUES ('602', 'controlPath', '/home/hyshf/HRSDATA/agent_download_package/etl/hrds_Control-5.0.jar','hrds_c.properties','CONTROL程序jar包地址');
