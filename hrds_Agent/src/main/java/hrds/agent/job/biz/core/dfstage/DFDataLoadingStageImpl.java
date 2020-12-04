@@ -683,7 +683,7 @@ public class DFDataLoadingStageImpl extends AbstractJobStage {
 			sql.append("`").append(column).append("` ").append(" string,");
 		}
 		sql.deleteCharAt(sql.length() - 1);
-		sql.append(") ROW FORMAT SERDE 'serde.HyrenSerDe' WITH  " +
+		sql.append(") ROW FORMAT SERDE 'hrds.commons.hadoop.hive.serde.HyrenSerDe' WITH  " +
 				"SERDEPROPERTIES (\"field.delim\"=\"").append(database_separatorr).append("\"," +
 				"\"serialization.encoding\"=\"").append(file_code).append("\"," +
 				"\"hyren.columns.lengths\"=\"").append(columnsLengths).append("\"" +
