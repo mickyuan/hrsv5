@@ -108,7 +108,11 @@ public class TDScriptGeneration {
 		//fixme 本地测试用路径
 //		String scriptModelPath = "C:\\tmp\\perl模板.pl";
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
-		String plFileName = tableName + "." + fileSuffixName;
+		String filename = tableName;
+		if (tableName.toUpperCase().startsWith("${BASE::CHN") && tableName.contains(".")) {
+			filename = tableName.substring(12, 15).toLowerCase() + "_chn_" + tableName.substring(tableName.indexOf(".") + 1) + "0200";
+		}
+		String plFileName = filename + "." + fileSuffixName;
 		HttpServletResponse response = ResponseUtil.getResponse();
 		try (OutputStream out = response.getOutputStream();) {
 			File modelPath = new File(scriptModelPath);

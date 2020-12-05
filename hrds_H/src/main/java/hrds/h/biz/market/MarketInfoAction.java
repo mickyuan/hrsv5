@@ -782,7 +782,7 @@ public class MarketInfoAction extends BaseAction {
 	public List<Map<String, Object>> queryDMDataTableByDataMartID(String data_mart_id) {
 		Dm_datatable dm_datatable = new Dm_datatable();
 		dm_datatable.setData_mart_id(data_mart_id);
-		return Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " +
+		List<Map<String, Object>> maps = Dbo.queryList("SELECT * ,case when t1.datatable_id in (select datatable_id from " +
 						Datatable_field_info.TableName + ") then true else false end as isadd,"
 						+ "case when ? in (select ds.store_type from "
 						+ Data_store_layer.TableName
@@ -793,8 +793,35 @@ public class MarketInfoAction extends BaseAction {
 						" t3 on t1.category_id=t3.category_id" +
 						" where t1.data_mart_id = ? and t2.data_source = ? order by t1.datatable_id asc",
 				Store_type.CARBONDATA.getCode(), dm_datatable.getData_mart_id(), StoreLayerDataSource.DM.getCode());
+		List<Map<String, Object>> resultmaps = new ArrayList<>();
+		for (Map<String, Object> map : maps) {
+			Object remarkObject = map.get("remark");
+			if (remarkObject != null) {
+				String remark = remarkObject.toString();
+				if (!remark.isEmpty()) {
+					if (checkIfNumeric(remark)) {
+						Dm_datatable dm_datatable1 = new Dm_datatable();
+						dm_datatable1.setDatatable_id(remark);
+						List<Dm_datatable> dm_datatables = Dbo.queryList(Dm_datatable.class, "select * from " + Dm_datatable.TableName + " where datatable_id = ? and data_mart_id = ?"
+								, dm_datatable1.getDatatable_id(), dm_datatable.getData_mart_id());
+						if (!dm_datatables.isEmpty()) {
+							continue;
+						}
+					}
+				}
+			}
+			resultmaps.add(map);
+		}
+		return resultmaps;
 	}
 
+	private boolean checkIfNumeric(String s) {
+		if (s.matches("-[0-9]+(.[0-9]+)?|[0-9]+(.[0-9]+)?")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	/**
 	 * 封装一个删除SQL的方法
@@ -1340,8 +1367,8 @@ public class MarketInfoAction extends BaseAction {
 								+ Table_column.TableName + " t2 on t1.table_id = t2.table_id" +
 								" left join " + Table_storage_info.TableName + " t3 on t1.table_id = t3.table_id left join " +
 								Dtab_relation_store.TableName + " t4 on t4.tab_id = t3.storage_id " +
-								"where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? and t4.data_source = ?",
-						sourcecolumn.toLowerCase(), sourcetable.toLowerCase(), StoreLayerDataSource.DB.getCode());
+								"where lower(t2.column_name) = ? and lower(t1.hyren_name) = ? ",
+						sourcecolumn.toLowerCase(), sourcetable.toLowerCase());
 				//如果为空，说明字段不存在
 				if (maps.isEmpty()) {
 					resultmap.put("sourcetype", field_type);
