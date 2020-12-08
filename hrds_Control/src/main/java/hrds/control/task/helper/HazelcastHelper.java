@@ -32,7 +32,7 @@ public class HazelcastHelper {
 	 * 1.初始化类。
 	 */
 	private HazelcastHelper() {
-// 创建默认config对象
+        // 创建默认config对象
 		Config config = new Config();
 		//设置启动socket绑定的ip
 		config.setProperty("hazelcast.local.localAddress", ControlConfigure.HazelcastConfig.localAddress);

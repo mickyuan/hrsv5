@@ -44,7 +44,7 @@ public class TaskSqlHelper {
 
 		//1.构造DatabaseWrapper实例。
 		DatabaseWrapper db = _dbBox.get();
-		if (db == null) {
+		if (db == null || !db.isConnected()) {
 			db = new DatabaseWrapper();
 			_dbBox.set(db);
 		}
@@ -316,7 +316,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtlSysRunStatusAndBathDate(String etlSysCd, String strBathDate,
-	                                                    String runStatus) {
+														String runStatus) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -394,7 +394,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void deleteEtlJobWithoutFrequency(String etlSysCd, String currBathDate,
-	                                                String jobStatus) {
+													String jobStatus) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -420,7 +420,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void deleteEtlJobByJobStatus(String etlSysCd, String currBathDate,
-	                                           String jobStatus) {
+											   String jobStatus) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -470,7 +470,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static Object[] insertIntoJobTable(Etl_job_cur job) {
-		Object[] paramsjob = new Object[]{
+		return new Object[]{
 				job.getCom_exe_num(),
 				job.getComments(),
 				job.getCurr_bath_date(),
@@ -505,7 +505,6 @@ public class TaskSqlHelper {
 				job.getSub_sys_cd(),
 				job.getToday_disp()
 		};
-		return paramsjob;
 	}
 
 	public static void insertIntoJobTable(List<Object[]> paramsList) {
@@ -539,7 +538,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtjJobWithDispStatus(String dispStatus, String etlSysCd,
-	                                              String currBathDate) {
+												  String currBathDate) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -571,7 +570,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtlJobDispStatus(String dispStatus, String etlSysCd, String etlJob,
-	                                          String currBathDate) {
+											  String currBathDate) {
 
 		//1.更新数据库表数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -604,7 +603,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtlJobDispStatus(String dispStatus, String etlSysCd,
-	                                          List<EtlJobBean> etlJobCurs) {
+											  List<EtlJobBean> etlJobCurs) {
 
 		//1.批量更新数据库数据。
 		//TODO 在批量执行的情况下，数据只能这样组装？执行验证只能如此？
@@ -715,7 +714,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateVirtualJob(String etlSysCd, String eltJob, String currBathDate,
-	                                    String currStTime, String currEndTime) {
+										String currStTime, String currEndTime) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -991,7 +990,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtlResourceUsedByResourceType(String etlSysCd,
-	                                                       List<Etl_resource> etlResources) {
+														   List<Etl_resource> etlResources) {
 
 		//TODO 在批量执行的情况下，数据只能这样组装？执行验证只能如此？
 		List<Object[]> params = new ArrayList<>();
@@ -1034,7 +1033,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtlResourceUsedByResourceType(String etlSysCd, String resourceType,
-	                                                       int used) {
+														   int used) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
@@ -1264,7 +1263,7 @@ public class TaskSqlHelper {
 	 * @date 2019/10/9
 	 */
 	public static void updateEtlJobCurrPriority(int jobPriorityCurr, String etlSysCd, String etlJob,
-	                                            String currBathDate) {
+												String currBathDate) {
 
 		//1.更新数据库数据。
 		DatabaseWrapper db = TaskSqlHelper.getDbConnector();
