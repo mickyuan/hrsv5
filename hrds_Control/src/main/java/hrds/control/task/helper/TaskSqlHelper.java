@@ -44,7 +44,7 @@ public class TaskSqlHelper {
 
 		//1.构造DatabaseWrapper实例。
 		DatabaseWrapper db = _dbBox.get();
-		if (db == null) {
+		if (db == null || !db.isConnected()) {
 			db = new DatabaseWrapper();
 			_dbBox.set(db);
 		}

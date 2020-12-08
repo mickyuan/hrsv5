@@ -48,10 +48,8 @@ public class AppMain {
 
 		//跑批批次日期
 		String bathDateStr = CMD_ARGS.opt("etl.date").value;
-		boolean isResumeRun = CMD_ARGS.opt("-CR").value.equals(IsFlag.Shi.getCode()) ? true : false;
-		boolean isAutoShift = CMD_ARGS.opt("-AS").value.equals(IsFlag.Shi.getCode()) ? true : false;
-//		boolean isResumeRun = Boolean.parseBoolean(CMD_ARGS.opt("-CR").value);  //是否续跑
-//		boolean isAutoShift = Boolean.parseBoolean(CMD_ARGS.opt("-AS").value);  //是否自动日切
+		boolean isResumeRun = CMD_ARGS.opt("-CR").value.equals(IsFlag.Shi.getCode());//是否续跑
+		boolean isAutoShift = CMD_ARGS.opt("-AS").value.equals(IsFlag.Shi.getCode());//是否自动日切
 		String strSystemCode = CMD_ARGS.opt("sys.code").value; //调度系统代码
 		try {
 			Etl_sys etlSys = TaskSqlHelper.getEltSysBySysCode(strSystemCode); //----------------这里 db没有关闭
@@ -70,7 +68,7 @@ public class AppMain {
 				}
 			}
 
-			System.out.println(String.format("开始启动Agent服务，跑批日期：%s，系统代码：%s，" +
+			logger.info(String.format("开始启动Agent服务，跑批日期：%s，系统代码：%s，" +
 							"是否续跑：%s，是否自动日切：%s", bathDate.toString(), strSystemCode,
 					isResumeRun, isAutoShift));
 
@@ -88,11 +86,9 @@ public class AppMain {
 			// 2）runCMServer 把每个初始化方法逐个调用，最后启动任务线程。有多种任务线程，则逐个启动
 			// 3）启动管理用的HTTPSERVER
 
-			System.out.println("-------------- Agent服务启动完成 --------------");
+			logger.info("-------------- Control Agent服务启动完成 --------------");
 		} catch (Exception ex) {
 			logger.error("Exception happened!", ex);
-		} finally {
-			TaskSqlHelper.closeDbConnector();//关闭数据库连接
 		}
 	}
 }

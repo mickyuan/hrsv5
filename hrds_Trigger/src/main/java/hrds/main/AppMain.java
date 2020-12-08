@@ -1,12 +1,11 @@
 package hrds.main;
 
 import fd.ng.core.cmd.ArgsParser;
-import fd.ng.db.jdbc.DatabaseWrapper;
 import hrds.commons.codes.Job_Status;
 import hrds.commons.entity.Etl_sys;
-import hrds.trigger.task.helper.HazelcastHelper;
-import hrds.trigger.task.helper.TaskSqlHelper;
+import hrds.commons.exception.AppSystemException;
 import hrds.trigger.server.TriggerManageServer;
+import hrds.trigger.task.helper.TaskSqlHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,11 +50,9 @@ public class AppMain {
 			TriggerManageServer triggerManageServer = new TriggerManageServer(strSystemCode);
 			triggerManageServer.runCMServer();
 
-			System.out.println("-------------- Trigger服务启动完成 --------------");
+			logger.info("-------------- Trigger Agent服务启动完成 --------------");
 		} catch (Exception ex) {
-			logger.error("Exception happened!", ex);
-		} finally {
-			TaskSqlHelper.closeDbConnector();//关闭数据库连接
+			throw new AppSystemException("Exception happened!", ex);
 		}
 	}
 }

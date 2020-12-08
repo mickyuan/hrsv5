@@ -1,5 +1,6 @@
 package hrds.control.server;
 
+import hrds.commons.exception.AppSystemException;
 import hrds.control.task.TaskManager;
 import hrds.control.task.helper.HazelcastHelper;
 import hrds.control.task.helper.TaskSqlHelper;
@@ -134,7 +135,7 @@ public class ControlManageServer {
 					}
 				}
 			} catch (Exception ex) {
-				logger.error("Exception happened!", ex);
+				throw new AppSystemException("Exception happened!", ex);
 			} finally {
 				TaskSqlHelper.closeDbConnector();   //关闭数据库连接
 				//关闭分布式缓存
