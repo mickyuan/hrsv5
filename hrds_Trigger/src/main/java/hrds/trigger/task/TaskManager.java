@@ -1,15 +1,5 @@
 package hrds.trigger.task;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import fd.ng.db.jdbc.DatabaseWrapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.Job_Status;
@@ -22,6 +12,14 @@ import hrds.trigger.beans.EtlJobParaAnaly;
 import hrds.trigger.task.executor.TaskExecutor;
 import hrds.trigger.task.helper.HazelcastHelper;
 import hrds.trigger.task.helper.TaskSqlHelper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * ClassName: TaskManager<br>
@@ -156,71 +154,71 @@ public class TaskManager {
 	public void runEtlJob(final Etl_job_cur etlJobCur, final boolean hasHandle) {
 		try {
 			executeThread.execute(() -> {
-
-				String etlJob = etlJobCur.getEtl_job();
 				try {
-					String currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
-					etlJobCur.setCurr_st_time(currDateTime);
-					//1、将待执行的作业更新至运行中状态中，并开始执行作业；
-					TaskSqlHelper.updateEtlJob2Running(etlSysCode, etlJob, currDateTime);
+					String etlJob = etlJobCur.getEtl_job();
+					try {
+						String currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
+						etlJobCur.setCurr_st_time(currDateTime);
+						//1、将待执行的作业更新至运行中状态中，并开始执行作业；
+						TaskSqlHelper.updateEtlJob2Running(etlSysCode, etlJob, currDateTime);
 
-					logger.info("{} 作业开始执行，开始执行时间为 {}", etlJob, currDateTime);
-					Etl_job_cur etlJobCurResult = TaskExecutor.executeEtlJob(etlJobCur);
+						logger.info("{} 作业开始执行，开始执行时间为 {}", etlJob, currDateTime);
+						Etl_job_cur etlJobCurResult = TaskExecutor.executeEtlJob(etlJobCur);
 
-					//进程返回0，意味着正常结束 TODO 注意，目前仅支持作业的[正确结束、异常结束]两种状态
-					if (TaskExecutor.PROGRAM_DONE_FLAG == etlJobCurResult.getJob_return_val()) {
-						etlJobCurResult.setJob_disp_status(Job_Status.DONE.getCode());
-					} else {
-						logger.warn("{} 作业异常结束", etlJob);
-						etlJobCurResult.setJob_disp_status(Job_Status.ERROR.getCode());
+						//进程返回0，意味着正常结束 TODO 注意，目前仅支持作业的[正确结束、异常结束]两种状态
+						if (TaskExecutor.PROGRAM_DONE_FLAG == etlJobCurResult.getJob_return_val()) {
+							etlJobCurResult.setJob_disp_status(Job_Status.DONE.getCode());
+						} else {
+							logger.warn("{} 作业异常结束", etlJob);
+							etlJobCurResult.setJob_disp_status(Job_Status.ERROR.getCode());
+						}
+
+						currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
+						etlJobCurResult.setCurr_end_time(currDateTime);
+						etlJobCurResult.setLast_exe_time(currDateTime);
+
+						//2、作业执行完后，更新作业状态，包括：更新调度历史信息、更新作业状态、推送结束标识到redis；
+						freedEtlJob(etlJobCurResult);
+					} catch (IOException | InterruptedException e) {
+						logger.warn("{} 作业异常结束并修改作业状态", etlJobCur.getEtl_job());
+						e.printStackTrace();
+						etlJobCur.setJob_disp_status(Job_Status.ERROR.getCode());
+						String currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
+						etlJobCur.setCurr_end_time(currDateTime);
+						etlJobCur.setLast_exe_time(currDateTime);
+						freedEtlJob(etlJobCur);
+					} catch (Exception e) {
+						logger.warn("errorHappens", e);
 					}
+					//TODO 此处是否有问题（连带着control），对于任何干预，干预的状态应该与作业本身的执行状态无关，
+					// 即"干预成功了，但是作业执行成功/失败了"，trigger不应该理会干预的的状态问题。
+					//3、作业执行完后，如果作业是干预途径来启动，修改干预信息。
+					if (hasHandle) {
 
-					currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
-					etlJobCurResult.setCurr_end_time(currDateTime);
-					etlJobCurResult.setLast_exe_time(currDateTime);
+						Optional<Etl_job_hand> etlJobHandOptional =
+								TaskSqlHelper.getEtlJobHandle(etlSysCode, etlJob, JT);
+						if (!etlJobHandOptional.isPresent()) {
+							logger.warn("{} 该作业的干预无法查询到，干预处理将会忽略", etlJob);
+							return;
+						}
 
-					//2、作业执行完后，更新作业状态，包括：更新调度历史信息、更新作业状态、推送结束标识到redis；
-					freedEtlJob(etlJobCurResult);
-				} catch (IOException | InterruptedException e) {
-					logger.warn("{} 作业异常结束并修改作业状态", etlJobCur.getEtl_job());
-					e.printStackTrace();
-					etlJobCur.setJob_disp_status(Job_Status.ERROR.getCode());
-					String currDateTime = DateUtil.getDateTime(DateUtil.DATETIME_DEFAULT);
-					etlJobCur.setCurr_end_time(currDateTime);
-					etlJobCur.setLast_exe_time(currDateTime);
-					freedEtlJob(etlJobCur);
-				} catch (Exception e) {
-					logger.warn("errorHappens", e);
-				}
-				//TODO 此处是否有问题（连带着control），对于任何干预，干预的状态应该与作业本身的执行状态无关，
-				// 即"干预成功了，但是作业执行成功/失败了"，trigger不应该理会干预的的状态问题。
-				//3、作业执行完后，如果作业是干预途径来启动，修改干预信息。
-				if (hasHandle) {
-
-					Optional<Etl_job_hand> etlJobHandOptional =
-							TaskSqlHelper.getEtlJobHandle(etlSysCode, etlJob, JT);
-					if (!etlJobHandOptional.isPresent()) {
-						logger.warn("{} 该作业的干预无法查询到，干预处理将会忽略", etlJob);
-						return;
+						Etl_job_hand etlJobHand = etlJobHandOptional.get();
+						if (Job_Status.DONE.getCode().equals(etlJobCur.getJob_disp_status())) {
+							etlJobHand.setHand_status(Meddle_status.DONE.getCode());
+							etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
+						} else if (Job_Status.ERROR.getCode().equals(etlJobCur.getJob_disp_status())) {
+							etlJobHand.setHand_status(Meddle_status.ERROR.getCode());
+							etlJobHand.setMain_serv_sync(Main_Server_Sync.NO.getCode());
+							etlJobHand.setWarning(ERRORJOBMSG);
+						}
+						TaskManager.updateHandle(etlJobHand);
 					}
-
-					Etl_job_hand etlJobHand = etlJobHandOptional.get();
-					if (Job_Status.DONE.getCode().equals(etlJobCur.getJob_disp_status())) {
-						etlJobHand.setHand_status(Meddle_status.DONE.getCode());
-						etlJobHand.setMain_serv_sync(Main_Server_Sync.YES.getCode());
-					} else if (Job_Status.ERROR.getCode().equals(etlJobCur.getJob_disp_status())) {
-						etlJobHand.setHand_status(Meddle_status.ERROR.getCode());
-						etlJobHand.setMain_serv_sync(Main_Server_Sync.NO.getCode());
-						etlJobHand.setWarning(ERRORJOBMSG);
-					}
-
-					TaskManager.updateHandle(etlJobHand);
+				} finally {
+					TaskSqlHelper.closeDbConnector();//关闭数据库连接
 				}
 			});
 		} catch (Exception ex) {
 			logger.error("Exception happened!", ex);
-		} finally {
-			TaskSqlHelper.closeDbConnector();//关闭数据库连接
 		}
 	}
 
