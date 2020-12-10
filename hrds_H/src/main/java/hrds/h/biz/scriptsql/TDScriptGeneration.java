@@ -110,7 +110,7 @@ public class TDScriptGeneration {
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
 		String filename = tableName;
 		if (tableName.toUpperCase().startsWith("${BASE::CHN") && tableName.contains(".")) {
-			filename = tableName.substring(12, 15).toLowerCase() + "_chn_" + tableName.substring(tableName.indexOf(".") + 1) + "0200";
+			filename = tableName.substring(12, 15).toLowerCase() + "_chn_" + tableName.substring(tableName.indexOf(".") + 1).toLowerCase() + "0200";
 		}
 		String plFileName = filename + "." + fileSuffixName;
 		HttpServletResponse response = ResponseUtil.getResponse();
