@@ -59,30 +59,30 @@ public class TDScriptGeneration {
 		//附加信息,如主键,索引等
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
 		//mapping数据信息
-		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
-			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")";
-			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
-			sqlList.add(createsql);
-		} else {
-			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")" + String
-					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
-			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
-			sqlList.add(createsql);
-		}
+//		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
+//			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")";
+//			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+//			sqlList.add(createsql);
+//		} else {
+//			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")" + String
+//					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
+//			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+//			sqlList.add(createsql);
+//		}
 		//如果是替换的方式,先将表的删除,然后在重新创建,并加载数据
 		StorageType store_type = StorageType.ofEnumByCode(conf.getDmDatatable().getStorage_type());
 		if (store_type == StorageType.TiHuan) {
 			sqlList.add("drop table " + conf.getTableName());
-			if (additionalAttrs == null || additionalAttrs.isEmpty()) {
-				String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") ";
-				//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
-				sqlList.add(createsql);
-			} else {
-				String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") " + String
-						.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
-				//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
-				sqlList.add(createsql);
-			}
+		}
+		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
+			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") ";
+			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+			sqlList.add(createsql);
+		} else {
+			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ") " + String
+					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
+			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
+			sqlList.add(createsql);
 		}
 		String insertsql = "insert into " + conf.getTableName() + " select * from (" + conf.getBeforeReplaceSql() + ") hyren";
 //		insertsql = SQLUtils.format(insertsql, JdbcConstants.TERADATA);

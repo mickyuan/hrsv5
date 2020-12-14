@@ -39,7 +39,6 @@ public class SqlScriptAction extends BaseAction {
 		TDScriptGeneration tdScriptGeneration = new TDScriptGeneration();
 		List<String> allsqls = new ArrayList<>();
 		List<String> strings = tdScriptGeneration.sqlGeneration(conf, createTableColumnTypes);
-		allsqls.addAll(strings);
 		for (Dm_datatable every_dm_datatable : dm_datatables) {
 			Long datatable_id1 = every_dm_datatable.getDatatable_id();
 //			conf = new MarketConf(String.valueOf(datatable_id1));
@@ -48,6 +47,7 @@ public class SqlScriptAction extends BaseAction {
 			strings = tdScriptGeneration.sqlGeneration(conf, createTableColumnTypes);
 			allsqls.addAll(strings);
 		}
+		allsqls.addAll(strings);
 		tdScriptGeneration.scriptGeneration(allsqls, tableName);
 	}
 
