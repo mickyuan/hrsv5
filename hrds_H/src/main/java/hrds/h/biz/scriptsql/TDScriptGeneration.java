@@ -135,9 +135,14 @@ public class TDScriptGeneration {
 				if (line.contains("my $SQL=<<EOF_SQL;")) {
 					buffer.append(line).append(System.lineSeparator());
 					mappingSqlList.forEach(item -> {
-						buffer.append(item).append(System.lineSeparator()).append(";").append(System.lineSeparator())
-								.append(".IF ERRORCODE <> 0 THEN .GOTO QUITWITHERROR;").append(System.lineSeparator())
-								.append(System.lineSeparator());
+						if (item.trim().toLowerCase().startsWith("drop")) {
+							buffer.append(item).append(System.lineSeparator()).append(";").append(System.lineSeparator())
+									.append(System.lineSeparator());
+						} else {
+							buffer.append(item).append(System.lineSeparator()).append(";").append(System.lineSeparator())
+									.append(".IF ERRORCODE <> 0 THEN .GOTO QUITWITHERROR;").append(System.lineSeparator())
+									.append(System.lineSeparator());
+						}
 					});
 					writer.write(buffer.toString());
 				} else if (line.startsWith("my $SCTIPT=")) {
