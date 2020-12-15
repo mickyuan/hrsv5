@@ -44,8 +44,8 @@ public class SqlScriptAction extends BaseAction {
 //			conf = new MarketConf(String.valueOf(datatable_id1));
 			conf = getconf(String.valueOf(datatable_id1));
 			createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, true);
-			strings = tdScriptGeneration.sqlGeneration(conf, createTableColumnTypes);
-			allsqls.addAll(strings);
+			List<String> strings2 = tdScriptGeneration.sqlGeneration(conf, createTableColumnTypes);
+			allsqls.addAll(strings2);
 		}
 		allsqls.addAll(strings);
 		tdScriptGeneration.scriptGeneration(allsqls, tableName);

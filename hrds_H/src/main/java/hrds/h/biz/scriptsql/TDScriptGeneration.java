@@ -33,7 +33,9 @@ public class TDScriptGeneration {
 		List<String> sqlList = new ArrayList<>();
 		//前置SQL信息
 		if (StringUtil.isNotBlank(conf.getPreSql())) {
-			sqlList.add(conf.getPreSql());
+			String preSql = conf.getPreSql();
+			preSql = preSql.replace("\r\n",System.lineSeparator()).replace("\r",System.lineSeparator()).replace("\n",System.lineSeparator());
+			sqlList.add(preSql);
 		}
 		//检查表名是否存在
 		if (StringUtil.isBlank(conf.getTableName())) {
@@ -47,67 +49,26 @@ public class TDScriptGeneration {
 		if (StringUtil.isBlank(conf.getDmDatatable().getStorage_type())) {
 			throw new AppSystemException("表数据加载方式未传递");
 		}
-		//检查脚本模板路径是否存在
-//		if (StringUtil.isBlank(jsonObject.getString("scriptModelPath"))) {
-//			throw new AppSystemException("脚本模板未传递");
-//		}
-
 		//数据SQL
 		if (StringUtil.isBlank(conf.getBeforeReplaceSql())) {
 			throw new AppSystemException("数据源sql未传递");
 		}
-
 		//附加信息,如主键,索引等
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
-		//mapping数据信息
-//		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
-//			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")";
-//			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
-//			sqlList.add(createsql);
-//		} else {
-//			String createsql = "create multiset table " + conf.getTableName() + "(" + createTableColumnTypes + ")" + String
-//					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
-//			//createsql = SQLUtils.format(createsql, JdbcConstants.TERADATA);
-//			sqlList.add(createsql);
-//		}
 		//如果是替换的方式,先将表的删除,然后在重新创建,并加载数据
 		StorageType store_type = StorageType.ofEnumByCode(conf.getDmDatatable().getStorage_type());
 		if (store_type == StorageType.TiHuan) {
 			sqlList.add("drop table " + conf.getTableName());
 		}
 		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
-			String createsql = "create table " + conf.getTableName() + "(" + createTableColumnTypes + ") ";
-			createsql = SQLUtils.format(createsql, JdbcConstants.ORACLE).replace("\t", System.lineSeparator() + "\t");
-			createsql = createsql.trim().toUpperCase().replace("CREATE TABLE", "CREATE MULTISET TABLE");
+			String createsql = "create table " + conf.getTableName() + "(" + System.lineSeparator() + createTableColumnTypes + ") ";
 			sqlList.add(createsql);
 		} else {
-			String createsql = "create table " + conf.getTableName() + "(" + createTableColumnTypes + ") " + String
+			String createsql = "create table " + conf.getTableName() + "(" + System.lineSeparator() + createTableColumnTypes + ") " + String
 					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
-			createsql = SQLUtils.format(createsql, JdbcConstants.ORACLE).replace("\t", System.lineSeparator() + "\t");
-			createsql = createsql.trim().toUpperCase().replace("CREATE TABLE", "CREATE MULTISET TABLE");
 			sqlList.add(createsql);
 		}
 		String beforeReplaceSql = conf.getBeforeReplaceSql().toUpperCase().trim();
-//		String qualifySql = "";
-//		if (beforeReplaceSql.contains("QUALIFY ROW_NUMBER()")) {
-//			qualifySql = beforeReplaceSql.substring(beforeReplaceSql.indexOf("QUALIFY ROW_NUMBER()"));
-//			beforeReplaceSql = beforeReplaceSql.substring(0, beforeReplaceSql.indexOf("QUALIFY ROW_NUMBER()"));
-//		}
-//		String castSql1 = "CAST('${TX_DATE}' AS DATE FORMAT 'YYYYMMDD')";
-//		String castSql2 = "CAST('{TX_DATE}' AS DATE FORMAT 'YYYYMMDD')";
-//		if (beforeReplaceSql.contains(castSql1)) {
-//			beforeReplaceSql = beforeReplaceSql.replace(castSql1, castSqlReplace);
-//			beforeReplaceSql = SQLUtils.format(beforeReplaceSql, JdbcConstants.ORACLE);
-//			beforeReplaceSql = beforeReplaceSql.replace(castSqlReplace, castSql1);
-//		} else if (beforeReplaceSql.contains(castSql2)) {
-//			beforeReplaceSql = beforeReplaceSql.replace(castSql2, castSqlReplace);
-//			beforeReplaceSql = SQLUtils.format(beforeReplaceSql, JdbcConstants.ORACLE);
-//			beforeReplaceSql = beforeReplaceSql.replace(castSqlReplace, castSql2);
-//		} else{
-//			beforeReplaceSql = SQLUtils.format(beforeReplaceSql, JdbcConstants.ORACLE);
-//		}
-//		beforeReplaceSql = beforeReplaceSql.replace("\t", System.lineSeparator() + "\t");
-//		beforeReplaceSql = beforeReplaceSql + System.lineSeparator() + qualifySql;
 		String insertsql = "INSERT INTO " + conf.getTableName() + " SELECT * FROM (" + System.lineSeparator()
 				+ beforeReplaceSql + System.lineSeparator()
 				+ ") HYREN";
@@ -115,22 +76,19 @@ public class TDScriptGeneration {
 		//后置sql信息
 		if (StringUtil.isNotBlank(conf.getFinalSql())) {
 			String finalSql = conf.getFinalSql();
-//			finalSql = SQLUtils.format(finalSql, JdbcConstants.TERADATA);
+			finalSql = finalSql.replace("\r\n",System.lineSeparator()).replace("\r",System.lineSeparator()).replace("\n",System.lineSeparator());
 			sqlList.add(finalSql);
 		}
 		return sqlList;
 	}
-//	public void scriptGeneration(MarketConf conf, String createTableColumnTypes) {
-//		scriptGeneration(sqlList, conf.getTableName());
-//	}
 
 	public void scriptGeneration(List<String> mappingSqlList, String tableName) {
 		BufferedReader read = null;
 		BufferedWriter writer = null;
 		//fixme 服务器路径
-		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+//		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
 		//fixme 本地测试用路径
-//		String scriptModelPath = "C:\\tmp\\perl模板.pl";
+		String scriptModelPath = "C:\\tmp\\perl模板.pl";
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
 		String filename = tableName;
 		if (tableName.toUpperCase().startsWith("${BASE::CHN") && tableName.contains(".")) {
@@ -211,14 +169,5 @@ public class TDScriptGeneration {
 				}
 			}
 		}
-	}
-
-	public static void main(String args[]) {
-		String sql = "select CUS_MOBILE as TEL_NO,CUS_MOBILE as CUS_NAME,RES_DATE as RES_DATE,RES_BEGIN_TIME as RES_BEGIN_TIME,RES_END_TIME as RES_END_TIME,BR_NO as BR_NO,BR_NAME as BR_NAME,BR_ADDR as BR_ADDR,RES_FORM_ID as RES_FORM_ID from  ${BASE::CHN_SDFVIEWDB}.SJ9_QM_RES_REGISTER_T T1  INNER JOIN  ${BASE::CHN_SDFVIEWDB}.SJ9_QM_RES_FORM_T T2 ON T1.RES_FORM_ID = T2.RES_FORM_ID\n" +
-				"AND T2.RES_FORM_TYPE = 'M2'  WHERE T1.TR_ID = '1000000016'\n" +
-				"AND T1.STATUS <> '1'\n" +
-				"AND T1.RES_DATE = CAST('${TX_DATE}' AS DATE FORMAT 'YYYYMMDD')\n" +
-				"AND COALESCE(T1.CUS_MOBILE,'') <> ''\n";
-		SQLUtils.format(sql, JdbcConstants.TERADATA);
 	}
 }

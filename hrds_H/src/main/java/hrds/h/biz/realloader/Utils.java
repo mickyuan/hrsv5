@@ -11,6 +11,7 @@ import hrds.h.biz.config.MarketConf;
 import hrds.h.biz.config.MarketConfUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import scala.annotation.meta.field;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,10 +47,11 @@ public class Utils {
 
 		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
 		final StringBuilder columnTypes = new StringBuilder(300);
-		conf.getDatatableFields().forEach(field -> {
-
+		List<Datatable_field_info> datatableFields = conf.getDatatableFields();
+		for (int i = 0; i < datatableFields.size(); i++) {
+			Datatable_field_info field = datatableFields.get(i);
 			String fieldName = field.getField_en_name();
-			columnTypes
+			columnTypes.append("\t")
 					.append(fieldName)
 					.append(" ")
 					.append(field.getField_type());
@@ -64,12 +66,12 @@ public class Utils {
 			if (isDatabase && additionalAttrs != null && additionalAttrs.contains(fieldName)) {
 				columnTypes.append(" primary key");
 			}
-
-			columnTypes.append(",");
-
-		});
-		//把最后一个逗号给删除掉
-		columnTypes.deleteCharAt(columnTypes.length() - 1);
+			if (i != datatableFields.size() - 1) {
+				columnTypes.append(",");
+			}
+			columnTypes.append(" -- " + field.getField_cn_name());
+			columnTypes.append(System.lineSeparator());
+		}
 
 		//如果是database类型 则类型为定长char类型，否则为string类型（默认）
 		if (isDatabase) {
@@ -389,7 +391,7 @@ public class Utils {
 		//oracle数据库创建索引
 		if (Dbtype.ORACLE == db.getDbtype()) {
 			List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.SuoYinLie.getCode());
-			if(additionalAttrs!=null && additionalAttrs.size()>0){
+			if (additionalAttrs != null && additionalAttrs.size() > 0) {
 				for (int i = 0; i < additionalAttrs.size(); i++) {
 					String indexName = "idx_" + tableName + "_" + i;
 					if (isExistIndex(indexName, db)) {

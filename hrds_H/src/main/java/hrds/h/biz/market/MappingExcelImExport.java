@@ -103,7 +103,14 @@ public class MappingExcelImExport {
 					String mappingcolumn = getCellValue(row, 9, "映射规则", true);
 					own_dource_table_id = saveDmDatatableSource(datatable_id, databasesource + Separator + sourcetablename);
 					saveDmEtlmapInfo(datatable_id, own_dource_table_id, destcolumn, sourcecolumn, mappingcolumn);
-					sql += mappingcolumn + " as " + destcolumn + ",";
+					if (!mappingcolumn.trim().contains(" ") && !mappingcolumn.trim().contains("(")
+							&& !mappingcolumn.trim().contains(".") && !mappingcolumn.trim().contains(")")
+							&& !sourcetablename.equals("/") && !sourcetablename.isEmpty()
+							&& !mappingcolumn.contains("'") && !mappingcolumn.contains("\"")) {
+						sql += sourcetablename + "." + mappingcolumn + " as " + destcolumn + ",";
+					} else {
+						sql += mappingcolumn + " as " + destcolumn + ",";
+					}
 					count++;
 					i++;
 				}
@@ -259,6 +266,7 @@ public class MappingExcelImExport {
 	 * @param datatable_id
 	 */
 	private void saveDmRelevantInfo(String flag, String condition, Long datatable_id) {
+//		condition = condition.replace("\n"," ").replace("\r\n"," ").replace("\r"," ");
 		List<Dm_relevant_info> dm_relevant_infos = Dbo.queryList(Dm_relevant_info.class, "select * from " + Dm_relevant_info.TableName + " where datatable_id = ?", datatable_id);
 		if (dm_relevant_infos.isEmpty()) {
 			Dm_relevant_info dm_relevant_info = new Dm_relevant_info();
