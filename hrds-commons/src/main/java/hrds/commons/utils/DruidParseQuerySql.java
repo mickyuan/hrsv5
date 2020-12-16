@@ -132,8 +132,7 @@ public class DruidParseQuerySql {
 				putWhereIntoList(left);
 				SQLExpr right = sqlBinaryOpExpr.getRight();
 				putWhereIntoList(right);
-			}
-			else {
+			} else {
 				allWherelist.add(where);
 			}
 		} else {
@@ -990,25 +989,25 @@ public class DruidParseQuerySql {
 	private static SchemaStatVisitor getVisitor(SQLStatement stmt, String type) {
 
 		SchemaStatVisitor visitor;
-		if (type.equals(DbType.teradata.toString())) {
+		if (type.toLowerCase().equals(DbType.teradata.toString())) {
 			visitor = new PGSchemaStatVisitor();
-		} else if (type.equals(DbType.oracle.toString())) {
+		} else if (type.toLowerCase().equals(DbType.oracle.toString())) {
 			visitor = new OracleSchemaStatVisitor();
-		} else if (type.equals(DbType.mysql.toString())) {
+		} else if (type.toLowerCase().equals(DbType.mysql.toString())) {
 			visitor = new MySqlSchemaStatVisitor();
-		} else if (type.equals(DbType.phoenix.toString())) {
+		} else if (type.toLowerCase().equals(DbType.phoenix.toString())) {
 			visitor = new PhoenixSchemaStatVisitor();
-		} else if (type.equals(DbType.postgresql.toString())) {
+		} else if (type.toLowerCase().equals(DbType.postgresql.toString())) {
 			visitor = new PGSchemaStatVisitor();
-		} else if (type.equals(DbType.sqlserver.toString())) {
+		} else if (type.toLowerCase().equals(DbType.sqlserver.toString())) {
 			visitor = new SQLServerSchemaStatVisitor();
-		} else if (type.equals(DbType.db2.toString())) {
+		} else if (type.toLowerCase().equals(DbType.db2.toString())) {
 			visitor = new DB2SchemaStatVisitor();
-		} else if (type.equals(DbType.odps.toString())) {
+		} else if (type.toLowerCase().equals(DbType.odps.toString())) {
 			visitor = new OdpsSchemaStatVisitor();
-		} else if (type.equals(DbType.hive.toString())) {
+		} else if (type.toLowerCase().equals(DbType.hive.toString())) {
 			visitor = new HiveSchemaStatVisitor();
-		} else if (type.equals(DbType.h2.toString())) {
+		} else if (type.toLowerCase().equals(DbType.h2.toString())) {
 			visitor = new H2SchemaStatVisitor();
 		} else {
 			throw new AppSystemException("暂时不支持的数据库类型操作");
