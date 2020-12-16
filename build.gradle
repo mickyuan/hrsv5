@@ -180,7 +180,7 @@ subprojects {
         //遍历项目的所有依赖的jar包赋值给变量someString
         configurations.runtime.each { classpaths = classpaths + " ../lib/" + it.name }
         //设置manifest
-        if (project.name == "hrds-commons" || project.name == "hrds_H") {
+//        if (project.name == "hrds-commons" || project.name == "hrds_H") {
             manifest {
                 attributes(
                         "Implementation-Title": archivesBaseName,
@@ -192,21 +192,21 @@ subprojects {
                         "Build-Time": rootProject.ext.currentDateTime
                 )
             }
-        } else {
-            manifest {
-                attributes(
-                        'Main-Class': appMainClass,
-                        'Class-Path': classpaths,
-                        "Implementation-Title": archivesBaseName,
-                        "Implementation-Version": project.version,
-                        'Built-By': System.getProperty('user.name'),
-                        'Built-JDK': System.getProperty('java.version'),
-                        'Source-Compatibility': project.sourceCompatibility,
-                        'Target-Compatibility': project.targetCompatibility,
-                        "Build-Time": rootProject.ext.currentDateTime
-                )
-            }
-        }
+//        } else {
+//            manifest {
+//                attributes(
+//                        'Main-Class': appMainClass,
+//                        'Class-Path': classpaths,
+//                        "Implementation-Title": archivesBaseName,
+//                        "Implementation-Version": project.version,
+//                        'Built-By': System.getProperty('user.name'),
+//                        'Built-JDK': System.getProperty('java.version'),
+//                        'Source-Compatibility': project.sourceCompatibility,
+//                        'Target-Compatibility': project.targetCompatibility,
+//                        "Build-Time": rootProject.ext.currentDateTime
+//                )
+//            }
+//        }
     }
     //create a directory, create it if it does not exist
     def createDir = {

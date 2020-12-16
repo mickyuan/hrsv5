@@ -12,6 +12,8 @@ import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.h.biz.config.MarketConf;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -27,8 +29,9 @@ import javax.servlet.http.HttpServletResponse;
 public class TDScriptGeneration {
 
 	private static String castSqlReplace = "hyren_castdate_column";
-
+	private static final Logger logger = LogManager.getLogger();
 	public List<String> sqlGeneration(MarketConf conf, String createTableColumnTypes) {
+
 
 		List<String> sqlList = new ArrayList<>();
 		//前置SQL信息
@@ -87,6 +90,7 @@ public class TDScriptGeneration {
 		BufferedWriter writer = null;
 		//fixme 服务器路径
 		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
+		logger.info("scriptModelPath:"+scriptModelPath);
 		//fixme 本地测试用路径
 //		String scriptModelPath = "C:\\tmp\\perl模板.pl";
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);
