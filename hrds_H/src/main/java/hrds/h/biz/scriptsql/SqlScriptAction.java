@@ -3,6 +3,7 @@ package hrds.h.biz.scriptsql;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
@@ -12,11 +13,13 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.ProcessType;
 import hrds.commons.codes.StorageType;
+import hrds.commons.codes.StoreLayerAdded;
 import hrds.commons.collection.ProcessingData;
 import hrds.commons.entity.*;
 import hrds.commons.exception.AppSystemException;
 import hrds.commons.utils.Constant;
 import hrds.h.biz.config.MarketConf;
+import hrds.h.biz.config.MarketConfUtils;
 import hrds.h.biz.realloader.Utils;
 import org.apache.commons.lang.StringUtils;
 
@@ -44,6 +47,7 @@ public class SqlScriptAction extends BaseAction {
 //			conf = new MarketConf(String.valueOf(datatable_id1));
 			conf = getconf(String.valueOf(datatable_id1));
 			createTableColumnTypes = Utils.buildCreateTableColumnTypes(conf, true);
+			createTableColumnTypes = buildCreateTableColumnTypes(conf, true);
 			List<String> strings2 = tdScriptGeneration.sqlGeneration(conf, createTableColumnTypes);
 			allsqls.addAll(strings2);
 		}
@@ -103,7 +107,57 @@ public class SqlScriptAction extends BaseAction {
 				, dm_datatable.getDatatable_id(), Constant.INITDATE, Constant.MAXDATE);
 		conf.setDatatableFields(datatableFields);
 		return conf;
+	}
 
+	public static String buildCreateTableColumnTypes(MarketConf conf, boolean isDatabase) {
 
+		List<String> additionalAttrs = conf.getAddAttrColMap().get(StoreLayerAdded.ZhuJian.getCode());
+		final StringBuilder columnTypes = new StringBuilder(300);
+		List<Datatable_field_info> datatableFields = conf.getDatatableFields();
+		for (int i = 0; i < datatableFields.size(); i++) {
+			Datatable_field_info field = datatableFields.get(i);
+			String fieldName = field.getField_en_name();
+			columnTypes.append("\t")
+					.append(fieldName)
+					.append(" ")
+					.append(field.getField_type());
+
+			String fieldLength = field.getField_length();
+			//写了精度，则添加精度
+			if (StringUtil.isNotBlank(fieldLength)) {
+				columnTypes
+						.append("(").append(fieldLength).append(")");
+			}
+			//如果选择了主键，则添加主键
+			if (isDatabase && additionalAttrs != null && additionalAttrs.contains(fieldName)) {
+				columnTypes.append(" primary key");
+			}
+			if (i != datatableFields.size() - 1) {
+				columnTypes.append(",");
+			}
+			columnTypes.append(" -- " + field.getField_cn_name());
+			columnTypes.append(System.lineSeparator());
+		}
+
+		//如果是database类型 则类型为定长char类型，否则为string类型（默认）
+		if (isDatabase) {
+			String str = MarketConfUtils.DEFAULT_STRING_TYPE;
+			String s = columnTypes.toString();
+			if (conf.isIncrement()) {
+				s = StringUtil.replaceLast(s, str, "char(32)");
+				s = StringUtil.replaceLast(s, str, "char(8)");
+			}
+			s = StringUtil.replaceLast(s, str, "char(8)");
+
+			//多集市输入会多个字段
+			if (conf.isMultipleInput()) {
+				s = StringUtil.replaceLast(s, str, "char(18)");
+			}
+			if (conf.isGroup()) {
+				s = StringUtil.replaceLast(s, str, "char(32)");
+			}
+			return s;
+		}
+		return columnTypes.toString();
 	}
 }

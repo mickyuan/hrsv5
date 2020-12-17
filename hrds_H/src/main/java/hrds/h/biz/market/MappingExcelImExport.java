@@ -129,7 +129,11 @@ public class MappingExcelImExport {
 							? getCellValue(row, 4, "关联类型", false) : "";
 					String joincondition = getCellValue(row, 5, "关联条件", false) != null
 							? getCellValue(row, 5, "关联条件", false) : "";
-					sql += jointype + Constant.SPACE + databasename + "." + tablename + Constant.SPACE + alias + Constant.SPACE + joincondition + Constant.SPACE;
+					if (databasename.isEmpty()) {
+						sql += jointype + Constant.SPACE + tablename + Constant.SPACE + alias + Constant.SPACE + joincondition + Constant.SPACE;
+					} else {
+						sql += jointype + Constant.SPACE + databasename + "." + tablename + Constant.SPACE + alias + Constant.SPACE + joincondition + Constant.SPACE;
+					}
 					updateDmDatatableSource(datatable_id, databasename + Separator + tablename, alias, jointype, joincondition);
 					i++;
 				}

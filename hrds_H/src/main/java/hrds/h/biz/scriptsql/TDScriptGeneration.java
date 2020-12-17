@@ -30,6 +30,7 @@ public class TDScriptGeneration {
 
 	private static String castSqlReplace = "hyren_castdate_column";
 	private static final Logger logger = LogManager.getLogger();
+
 	public List<String> sqlGeneration(MarketConf conf, String createTableColumnTypes) {
 
 
@@ -37,7 +38,7 @@ public class TDScriptGeneration {
 		//前置SQL信息
 		if (StringUtil.isNotBlank(conf.getPreSql())) {
 			String preSql = conf.getPreSql();
-			preSql = preSql.replace("\r\n",System.lineSeparator()).replace("\r",System.lineSeparator()).replace("\n",System.lineSeparator());
+			preSql = preSql.replace("\r\n", System.lineSeparator()).replace("\r", System.lineSeparator()).replace("\n", System.lineSeparator());
 			sqlList.add(preSql);
 		}
 		//检查表名是否存在
@@ -62,14 +63,14 @@ public class TDScriptGeneration {
 		StorageType store_type = StorageType.ofEnumByCode(conf.getDmDatatable().getStorage_type());
 		if (store_type == StorageType.TiHuan) {
 			sqlList.add("drop table " + conf.getTableName());
-		}
-		if (additionalAttrs == null || additionalAttrs.isEmpty()) {
-			String createsql = "create table " + conf.getTableName() + "(" + System.lineSeparator() + createTableColumnTypes + ") ";
-			sqlList.add(createsql);
-		} else {
-			String createsql = "create table " + conf.getTableName() + "(" + System.lineSeparator() + createTableColumnTypes + ") " + String
-					.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
-			sqlList.add(createsql);
+			if (additionalAttrs == null || additionalAttrs.isEmpty()) {
+				String createsql = "create table " + conf.getTableName() + "(" + System.lineSeparator() + createTableColumnTypes + ") ";
+				sqlList.add(createsql);
+			} else {
+				String createsql = "create table " + conf.getTableName() + "(" + System.lineSeparator() + createTableColumnTypes + ") " + String
+						.format("PRIMARY INDEX(%s)", String.join(",", additionalAttrs));
+				sqlList.add(createsql);
+			}
 		}
 		String beforeReplaceSql = conf.getBeforeReplaceSql().toUpperCase().trim();
 		String insertsql = "INSERT INTO " + conf.getTableName() + " SELECT * FROM (" + System.lineSeparator()
@@ -79,7 +80,7 @@ public class TDScriptGeneration {
 		//后置sql信息
 		if (StringUtil.isNotBlank(conf.getFinalSql())) {
 			String finalSql = conf.getFinalSql();
-			finalSql = finalSql.replace("\r\n",System.lineSeparator()).replace("\r",System.lineSeparator()).replace("\n",System.lineSeparator());
+			finalSql = finalSql.replace("\r\n", System.lineSeparator()).replace("\r", System.lineSeparator()).replace("\n", System.lineSeparator());
 			sqlList.add(finalSql);
 		}
 		return sqlList;
@@ -90,7 +91,7 @@ public class TDScriptGeneration {
 		BufferedWriter writer = null;
 		//fixme 服务器路径
 		String scriptModelPath = PropertyParaValue.getString("scriptPatt", "/home/hyshf/");
-		logger.info("scriptModelPath:"+scriptModelPath);
+		logger.info("scriptModelPath:" + scriptModelPath);
 		//fixme 本地测试用路径
 //		String scriptModelPath = "C:\\tmp\\perl模板.pl";
 		String fileSuffixName = FileNameUtils.getExtension(scriptModelPath);

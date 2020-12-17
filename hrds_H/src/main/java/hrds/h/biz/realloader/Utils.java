@@ -69,7 +69,7 @@ public class Utils {
 			if (i != datatableFields.size() - 1) {
 				columnTypes.append(",");
 			}
-			columnTypes.append(" -- " + field.getField_cn_name());
+//			columnTypes.append(" -- " + field.getField_cn_name());
 			columnTypes.append(System.lineSeparator());
 		}
 
@@ -218,6 +218,10 @@ public class Utils {
 		}
 		createSql += tableName + " (" + createTableColumnTypes + ")";
 		db.execute(createSql);
+		//2020年12月17日 TBH add
+		// 针对teradata 这里需要commit 一下
+		// only an et or null statement is legal after a DDL Statement
+		db.commit();
 	}
 
 	/**
