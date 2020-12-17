@@ -155,8 +155,8 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 	@Override
 	public void handleException() {
 		db.rollback();
+		versionManager.rollBack();
 		if (versionManager.isVersionExpire()) {
-			versionManager.rollBack();
 			if (db.isExistTable(versionManager.getRenameTableName())) {
 				Utils.dropTable(db, tableName);
 				Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
@@ -185,9 +185,7 @@ public class SameDatabaseLoader extends AbstractRealLoader {
 		if (db != null) {
 			db.close();
 		}
-		if (versionManager != null) {
-			versionManager.close();
-		}
+		super.close();
 	}
 
 	private void dropTempTable() {

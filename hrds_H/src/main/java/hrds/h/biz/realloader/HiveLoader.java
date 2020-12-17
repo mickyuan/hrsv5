@@ -116,9 +116,9 @@ public class HiveLoader extends AbstractRealLoader {
 
     @Override
     public void handleException() {
+        versionManager.rollBack();
         try (DatabaseWrapper db = getHiveDb()) {
             if (versionManager.isVersionExpire()) {
-                versionManager.rollBack();
                 if (db.isExistTable(versionManager.getRenameTableName())) {
                     Utils.dropTable(db, tableName);
                     Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
@@ -135,8 +135,8 @@ public class HiveLoader extends AbstractRealLoader {
             versionManager.updateSqlVersion();
             if (versionManager.isVersionExpire()) {
                 versionManager.updateFieldVersion();
-                versionManager.commit();
             }
+            versionManager.commit();
         }
     }
 }
