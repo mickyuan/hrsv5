@@ -103,9 +103,9 @@ public class DatabaseLoader extends AbstractRealLoader {
 
 	@Override
 	public void handleException() {
+		versionManager.rollBack();
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(tableLayerAttrs)) {
 			if (versionManager.isVersionExpire()) {
-				versionManager.rollBack();
 				if (db.isExistTable(versionManager.getRenameTableName())) {
 					Utils.dropTable(db, tableName);
 					Utils.renameTable(db, versionManager.getRenameTableName(), tableName);
@@ -120,8 +120,8 @@ public class DatabaseLoader extends AbstractRealLoader {
 		versionManager.updateSqlVersion();
 		if (versionManager.isVersionExpire()) {
 			versionManager.updateFieldVersion();
-			versionManager.commit();
 		}
+		versionManager.commit();
 	}
 
 

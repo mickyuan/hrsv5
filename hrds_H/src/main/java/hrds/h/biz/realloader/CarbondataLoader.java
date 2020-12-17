@@ -109,9 +109,9 @@ public class CarbondataLoader extends AbstractRealLoader {
 
     @Override
     public void handleException() {
+        versionManager.rollBack();
         try (DatabaseWrapper db = getCarbonDb()) {
             if (versionManager.isVersionExpire()) {
-                versionManager.rollBack();
                 if (db.isExistTable(versionManager.getRenameTableName())) {
                     Utils.dropTable(db, tableName);
                     Utils.renameTable(db, versionManager.getRenameTableName(), tableName);

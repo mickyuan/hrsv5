@@ -177,7 +177,7 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
 
     @Override
     public void handleException() {
-
+        versionManager.rollBack();
     }
 
     @Override
@@ -195,7 +195,7 @@ public class HbaseOverSolrLoader extends AbstractRealLoader {
         versionManager.updateSqlVersion();
         if (versionManager.isVersionExpire()) {
             versionManager.updateFieldVersion();
-            versionManager.commit();
         }
+        versionManager.commit();
     }
 }
