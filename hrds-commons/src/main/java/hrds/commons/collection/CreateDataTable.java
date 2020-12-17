@@ -47,10 +47,10 @@ public class CreateDataTable {
 	@Param(name = "dqTableInfo", desc = "待创建表的表信息", range = "Dq_table_info待创建表的表信息")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	public static void createDataTableByStorageLayer(DatabaseWrapper db, long dsl_id, Dq_table_info dqTableInfo,
-	                                                 List<Dq_table_column> dqTableColumns) {
+													 List<Dq_table_column> dqTableColumns) {
 		//获取存储层信息
 		LayerBean layerBean = SqlOperator.queryOneObject(db, LayerBean.class, "select * from " + Data_store_layer.TableName +
-			" where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
+				" where dsl_id=?", dsl_id).orElseThrow(() -> (new BusinessException("获取存储层数据信息的SQL失败!")));
 		//根据存储层定义创建数据表
 		createDataTableByStorageLayer(db, layerBean, dqTableInfo, dqTableColumns);
 	}
@@ -61,7 +61,7 @@ public class CreateDataTable {
 	@Param(name = "dqTableInfo", desc = "待创建表的表信息", range = "Dq_table_info待创建表的表信息")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	public static void createDataTableByStorageLayer(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
-	                                                 List<Dq_table_column> dqTableColumns) {
+													 List<Dq_table_column> dqTableColumns) {
 		Store_type store_type = Store_type.ofEnumByCode(layerBean.getStore_type());
 		if (store_type == Store_type.DATABASE) {
 			//创建关系型数据库数据表
@@ -94,7 +94,7 @@ public class CreateDataTable {
 	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	private static void createDatabaseTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
-	                                        List<Dq_table_column> dqTableColumns) {
+											List<Dq_table_column> dqTableColumns) {
 		//获取表空间
 		String table_space = dqTableInfo.getTable_space();
 		//获取表名
@@ -106,139 +106,151 @@ public class CreateDataTable {
 			//根据表信息和字段信息设置建表语句
 			StringBuilder createTableSQL = new StringBuilder();
 			//ORACLE
-			if (dbDataConn.getDbtype() == Dbtype.ORACLE) {
-				//根据配置的表空间创建SCHEMA
-				if (StringUtil.isNotBlank(table_space)) {
-					int i = dbDataConn.execute("CREATE SCHEMA IF NOT EXISTS " + table_space);
-					if (i != 0) {
-						throw new BusinessException("创建表空间失败! table_space: " + table_space);
-					}
+//			if (dbDataConn.getDbtype() == Dbtype.ORACLE) {
+//				//根据配置的表空间创建SCHEMA
+//				if (StringUtil.isNotBlank(table_space)) {
+//					int i = dbDataConn.execute("CREATE SCHEMA IF NOT EXISTS " + table_space);
+//					if (i != 0) {
+//						throw new BusinessException("创建表空间失败! table_space: " + table_space);
+//					}
+//				}
+//				//数据库类型是oarcle,判断表名长度不能大于30
+//				if (table_name.length() > 30) {
+//					throw new BusinessException("oracle数据库下表名长度不能超过30位! table_name: " + table_name);
+//				}
+//				//检查数据表是否在存储层中存在
+//				tableIsExistsStorageLayer(dbDataConn, table_space, table_name);
+//				//设置建表语句
+//				createTableSQL.append("CREATE TABLE");
+//				if (StringUtil.isNotBlank(table_space)) {
+//					createTableSQL.append(" ").append(table_space).append(".");
+//				}
+//				createTableSQL.append(" ").append(table_name);
+//				createTableSQL.append(" (");
+//				//主键字段信息
+//				List<String> pk_column_s = new ArrayList<>();
+//				for (Dq_table_column dqTableColumn : dqTableColumns) {
+//					//获取字段的附加信息
+//					List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
+//							"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
+//									" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
+//									" WHERE col_id=?", dqTableColumn.getField_id());
+//					//设置主键信息
+//					for (Map<String, Object> dcol_info : dcol_info_s) {
+//						StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
+//						if (storeLayerAdded == StoreLayerAdded.ZhuJian) {
+//							pk_column_s.add(dqTableColumn.getColumn_name());
+//						}
+//					}
+//					//字段名
+//					String table_column = dqTableColumn.getColumn_name();
+//					//字段类型
+//					String column_type = dqTableColumn.getColumn_type();
+//					//字段长度
+//					String column_length = dqTableColumn.getColumn_length();
+//					//设置建表语句的字段信息
+//					createTableSQL.append(table_column).append(Constant.SPACE).append(column_type);
+//					if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
+//							&& !column_type.equals("boolean")) {
+//						createTableSQL.append("(").append(column_length).append(")");
+//					}
+//					//是否可为空标识
+//					IsFlag is_null = IsFlag.ofEnumByCode(dqTableColumn.getIs_null());
+//					if (is_null == IsFlag.Shi) {
+//						createTableSQL.append(Constant.SPACE).append("NULL");
+//					} else if (is_null == IsFlag.Fou) {
+//						createTableSQL.append(Constant.SPACE).append("NOT NULL");
+//					} else {
+//						throw new BusinessException("字段: column_name=" + table_column + " 的是否标记信息不合法!");
+//					}
+//					//拼接字段分隔 ","
+//					createTableSQL.append(",");
+//				}
+//				//根据字段选择主键标记设置建表语句
+//				if (!pk_column_s.isEmpty()) {
+//					createTableSQL.append("CONSTRAINT").append(Constant.SPACE);
+//					createTableSQL.append(table_name).append("_PK").append(Constant.SPACE);
+//					createTableSQL.append("PRIMARY KEY(").append(String.join(",", pk_column_s)).append(")");
+//					createTableSQL.append(",");
+//				}
+//			} else if (dbDataConn.getDbtype() == Dbtype.TERADATA) {
+//
+//			}
+			//通用创建表语句
+//			else {
+			//根据配置的表空间创建SCHEMA
+			if (StringUtil.isNotBlank(table_space)) {
+				int i = dbDataConn.execute("CREATE SCHEMA IF NOT EXISTS " + table_space);
+				if (i != 0) {
+					throw new BusinessException("创建表空间失败! table_space: " + table_space);
 				}
+			}
+			if (dbDataConn.getDbtype() == Dbtype.ORACLE) {
 				//数据库类型是oarcle,判断表名长度不能大于30
 				if (table_name.length() > 30) {
 					throw new BusinessException("oracle数据库下表名长度不能超过30位! table_name: " + table_name);
 				}
-				//检查数据表是否在存储层中存在
-				tableIsExistsStorageLayer(dbDataConn, table_space, table_name);
-				//设置建表语句
-				createTableSQL.append("CREATE TABLE");
-				if (StringUtil.isNotBlank(table_space)) {
-					createTableSQL.append(" ").append(table_space).append(".");
-				}
-				createTableSQL.append(" ").append(table_name);
-				createTableSQL.append(" (");
-				//主键字段信息
-				List<String> pk_column_s = new ArrayList<>();
-				for (Dq_table_column dqTableColumn : dqTableColumns) {
-					//获取字段的附加信息
-					List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
-						"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
-							" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
-							" WHERE col_id=?", dqTableColumn.getField_id());
-					//设置主键信息
-					for (Map<String, Object> dcol_info : dcol_info_s) {
-						StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
-						if (storeLayerAdded == StoreLayerAdded.ZhuJian) {
-							pk_column_s.add(dqTableColumn.getColumn_name());
-						}
-					}
-					//字段名
-					String table_column = dqTableColumn.getColumn_name();
-					//字段类型
-					String column_type = dqTableColumn.getColumn_type();
-					//字段长度
-					String column_length = dqTableColumn.getColumn_length();
-					//设置建表语句的字段信息
-					createTableSQL.append(table_column).append(Constant.SPACE).append(column_type);
-					if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
-						&& !column_type.equals("boolean")) {
-						createTableSQL.append("(").append(column_length).append(")");
-					}
-					//是否可为空标识
-					IsFlag is_null = IsFlag.ofEnumByCode(dqTableColumn.getIs_null());
-					if (is_null == IsFlag.Shi) {
-						createTableSQL.append(Constant.SPACE).append("NULL");
-					} else if (is_null == IsFlag.Fou) {
-						createTableSQL.append(Constant.SPACE).append("NOT NULL");
-					} else {
-						throw new BusinessException("字段: column_name=" + table_column + " 的是否标记信息不合法!");
-					}
-					//拼接字段分隔 ","
-					createTableSQL.append(",");
-				}
-				//根据字段选择主键标记设置建表语句
-				if (!pk_column_s.isEmpty()) {
-					createTableSQL.append("CONSTRAINT").append(Constant.SPACE);
-					createTableSQL.append(table_name).append("_PK").append(Constant.SPACE);
-					createTableSQL.append("PRIMARY KEY(").append(String.join(",", pk_column_s)).append(")");
-					createTableSQL.append(",");
-				}
 			}
-			//通用创建表语句
-			else {
-				//根据配置的表空间创建SCHEMA
-				if (StringUtil.isNotBlank(table_space)) {
-					int i = dbDataConn.execute("CREATE SCHEMA IF NOT EXISTS " + table_space);
-					if (i != 0) {
-						throw new BusinessException("创建表空间失败! table_space: " + table_space);
-					}
-				}
-				//检查数据表是否在存储层中存在
-				tableIsExistsStorageLayer(dbDataConn, table_space, table_name);
-				//设置建表语句
+			//检查数据表是否在存储层中存在
+			tableIsExistsStorageLayer(dbDataConn, table_space, table_name);
+			//设置建表语句
+			if (dbDataConn.getDbtype() == Dbtype.ORACLE || dbDataConn.getDbtype() == Dbtype.TERADATA ) {
+				createTableSQL.append("CREATE TABLE ");
+			} else {
 				createTableSQL.append("CREATE TABLE IF NOT EXISTS");
-				if (StringUtil.isNotBlank(table_space)) {
-					createTableSQL.append(" ").append(table_space).append(".");
-				}
-				createTableSQL.append(" ").append(table_name);
-				createTableSQL.append(" (");
-				//主键字段信息
-				List<String> pk_column_s = new ArrayList<>();
-				for (Dq_table_column dqTableColumn : dqTableColumns) {
-					//获取字段的附加信息
-					List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
-						"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
-							" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
-							" WHERE col_id=?", dqTableColumn.getField_id());
-					//设置主键信息
-					for (Map<String, Object> dcol_info : dcol_info_s) {
-						StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
-						if (storeLayerAdded == StoreLayerAdded.ZhuJian) {
-							pk_column_s.add(dqTableColumn.getColumn_name());
-						}
-					}
-					//字段名
-					String table_column = dqTableColumn.getColumn_name();
-					//字段类型
-					String column_type = dqTableColumn.getColumn_type();
-					//字段长度
-					String column_length = dqTableColumn.getColumn_length();
-					//设置建表语句的字段信息
-					createTableSQL.append(table_column).append(Constant.SPACE).append(column_type);
-					if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
-						&& !column_type.equals("boolean")) {
-						createTableSQL.append("(").append(column_length).append(")");
-					}
-					//是否可为空标识
-					IsFlag is_null = IsFlag.ofEnumByCode(dqTableColumn.getIs_null());
-					if (is_null == IsFlag.Shi) {
-						createTableSQL.append(Constant.SPACE).append("NULL");
-					} else if (is_null == IsFlag.Fou) {
-						createTableSQL.append(Constant.SPACE).append("NOT NULL");
-					} else {
-						throw new BusinessException("字段: column_name=" + table_column + " 的是否标记信息不合法!");
-					}
-					//拼接字段分隔 ","
-					createTableSQL.append(",");
-				}
-				//根据字段选择主键标记设置建表语句
-				if (!pk_column_s.isEmpty()) {
-					createTableSQL.append("CONSTRAINT").append(Constant.SPACE);
-					createTableSQL.append(table_name).append("_PK").append(Constant.SPACE);
-					createTableSQL.append("PRIMARY KEY(").append(String.join(",", pk_column_s)).append(")");
-					createTableSQL.append(",");
-				}
 			}
+			if (StringUtil.isNotBlank(table_space)) {
+				createTableSQL.append(" ").append(table_space).append(".");
+			}
+			createTableSQL.append(" ").append(table_name);
+			createTableSQL.append(" (");
+			//主键字段信息
+			List<String> pk_column_s = new ArrayList<>();
+			for (Dq_table_column dqTableColumn : dqTableColumns) {
+				//获取字段的附加信息
+				List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
+						"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
+								" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
+								" WHERE col_id=?", dqTableColumn.getField_id());
+				//设置主键信息
+				for (Map<String, Object> dcol_info : dcol_info_s) {
+					StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
+					if (storeLayerAdded == StoreLayerAdded.ZhuJian) {
+						pk_column_s.add(dqTableColumn.getColumn_name());
+					}
+				}
+				//字段名
+				String table_column = dqTableColumn.getColumn_name();
+				//字段类型
+				String column_type = dqTableColumn.getColumn_type();
+				//字段长度
+				String column_length = dqTableColumn.getColumn_length();
+				//设置建表语句的字段信息
+				createTableSQL.append(table_column).append(Constant.SPACE).append(column_type);
+				if (!StringUtil.isEmpty(column_length) && !column_type.equals("int")
+						&& !column_type.equals("boolean")) {
+					createTableSQL.append("(").append(column_length).append(")");
+				}
+				//是否可为空标识
+				IsFlag is_null = IsFlag.ofEnumByCode(dqTableColumn.getIs_null());
+				if (is_null == IsFlag.Shi) {
+					createTableSQL.append(Constant.SPACE).append("NULL");
+				} else if (is_null == IsFlag.Fou) {
+					createTableSQL.append(Constant.SPACE).append("NOT NULL");
+				} else {
+					throw new BusinessException("字段: column_name=" + table_column + " 的是否标记信息不合法!");
+				}
+				//拼接字段分隔 ","
+				createTableSQL.append(",");
+			}
+			//根据字段选择主键标记设置建表语句
+			if (!pk_column_s.isEmpty()) {
+				createTableSQL.append("CONSTRAINT").append(Constant.SPACE);
+				createTableSQL.append(table_name).append("_PK").append(Constant.SPACE);
+				createTableSQL.append("PRIMARY KEY(").append(String.join(",", pk_column_s)).append(")");
+				createTableSQL.append(",");
+			}
+//			}
 			//删除最后一个 ","
 			createTableSQL.deleteCharAt(createTableSQL.length() - 1);
 			//拼接结束的 ")"
@@ -275,7 +287,7 @@ public class CreateDataTable {
 	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	private static void createHiveTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
-	                                    List<Dq_table_column> dqTableColumns) {
+										List<Dq_table_column> dqTableColumns) {
 		//获取表空间
 		String table_space = dqTableInfo.getTable_space();
 		//获取表名
@@ -321,9 +333,9 @@ public class CreateDataTable {
 				String column_length = dqTableColumn.getColumn_length();
 				//获取字段的附加信息
 				List<Map<String, Object>> dcol_info_s = SqlOperator.queryList(db,
-					"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
-						" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
-						" WHERE col_id=?", dqTableColumn.getField_id());
+						"SELECT * FROM " + Dcol_relation_store.TableName + " dcol_rs" +
+								" JOIN " + Data_store_layer_added.TableName + " dsl_add ON dcol_rs" + ".dslad_id=dsl_add.dslad_id " +
+								" WHERE col_id=?", dqTableColumn.getField_id());
 				//设置分区列信息
 				for (Map<String, Object> dcol_info : dcol_info_s) {
 					StoreLayerAdded storeLayerAdded = StoreLayerAdded.ofEnumByCode(dcol_info.get("dsla_storelayer").toString());
@@ -380,7 +392,7 @@ public class CreateDataTable {
 			} else if (fileFormat == FileFormat.FeiDingChang) {
 				String column_separator = "|"; //TODO Dq_table_info没有保存字段分隔符信息
 				createTableSQL.append(" ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.MultiDelimitSerDe' WITH  " +
-					"SERDEPROPERTIES (\"field.delim\"=\"").append(column_separator).append("\") stored as textfile");
+						"SERDEPROPERTIES (\"field.delim\"=\"").append(column_separator).append("\") stored as textfile");
 			} else if (fileFormat == FileFormat.CSV) {
 				createTableSQL.append(" ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' stored as TEXTFILE");
 			} else if (fileFormat == FileFormat.DingChang) {
@@ -421,7 +433,7 @@ public class CreateDataTable {
 	@Param(name = "dqTableInfo", desc = "表信息", range = "Dq_table_info")
 	@Param(name = "dqTableColumns", desc = "待创建表的表字段信息", range = "List<Dq_table_column> 字段信息")
 	private static void createHBaseTable(DatabaseWrapper db, LayerBean layerBean, Dq_table_info dqTableInfo,
-	                                     List<Dq_table_column> dqTableColumns) {
+										 List<Dq_table_column> dqTableColumns) {
 		//获取表空间
 		String name_space = dqTableInfo.getTable_space();
 		//获取需要创建的HBase表名和表中文名
@@ -487,7 +499,7 @@ public class CreateDataTable {
 						col_desc.setBloomFilterType(BloomType.ROWCOL);
 					} else {
 						throw new BusinessException("BloomType类型不合法!"
-							+ " {ROW: 根据KeyValue中的row来过滤storefile; ROWCOL: 根据KeyValue中的row+qualifier来过滤storefile}");
+								+ " {ROW: 根据KeyValue中的row来过滤storefile; ROWCOL: 根据KeyValue中的row+qualifier来过滤storefile}");
 					}
 				} else if (is_use_bloom_filter == IsFlag.Fou) {
 					col_desc.setBloomFilterType(BloomType.NONE);
@@ -503,14 +515,14 @@ public class CreateDataTable {
 					col_desc.setInMemory(Boolean.FALSE);
 				} else {
 					throw new BusinessException("列族: " + column_familie
-						+ ", 是否加入块缓存的配置不合法! is_in_memory: " + is_in_memory.getCode());
+							+ ", 是否加入块缓存的配置不合法! is_in_memory: " + is_in_memory.getCode());
 				}
 				//设置数据块编码方式设置,如果不设置默认为 NONE
 				String data_block_encoding = "NONE"; //TODO Dq_table_info缺失data_block_encoding信息
 				DataBlockEncoding dataBlockEncoding = DataBlockEncoding.valueOf(data_block_encoding);
 				if (dataBlockEncoding == DataBlockEncoding.NONE || dataBlockEncoding == DataBlockEncoding.PREFIX
-					|| dataBlockEncoding == DataBlockEncoding.DIFF || dataBlockEncoding == DataBlockEncoding.FAST_DIFF
-					|| dataBlockEncoding == DataBlockEncoding.PREFIX_TREE) {
+						|| dataBlockEncoding == DataBlockEncoding.DIFF || dataBlockEncoding == DataBlockEncoding.FAST_DIFF
+						|| dataBlockEncoding == DataBlockEncoding.PREFIX_TREE) {
 					col_desc.setDataBlockEncoding(dataBlockEncoding);
 				} else {
 					throw new BusinessException("数据块编码方式不合法! data_block_encoding=" + dataBlockEncoding.name());
@@ -524,9 +536,9 @@ public class CreateDataTable {
 			if (StringUtil.isNotBlank(pre_split)) {
 				splitKeys = null; //TODO 代码项没有 根据代码项和分区参数设置预分区信息
 			}
-			if( splitKeys != null ) {
+			if (splitKeys != null) {
 				admin.createTable(hTableDescriptor, splitKeys);
-			}else {
+			} else {
 				admin.createTable(hTableDescriptor);
 			}
 			//创建Hbase映射hive表
