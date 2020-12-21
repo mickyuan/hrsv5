@@ -115,6 +115,8 @@ INSERT INTO interface_info VALUES ('115', 'sqlInterfaceSearch', 'sql查询接口
 INSERT INTO interface_info VALUES ('118', 'rowKeySearch', 'rowkey查询', '1', '1', '01-137', null, 1001);
 INSERT INTO interface_info VALUES (123, 'uuidDownload', 'UUID数据下载', '2', '1', '01-143', null, 1001);
 INSERT INTO interface_info VALUES (124, 'hbaseSolrQuery', 'Solr查询Hbase数据接口', '2', '1', '01-144', null, 1001);
+INSERT INTO interface_info VALUES (125, 'sqlExecute', 'SQL执行接口', '2', '1', '01-145', null, 1001);
+INSERT INTO interface_info VALUES (125, 'sqlQueryRelation', 'SQL血缘查询', '2', '1', '01-146', null, 1001);
 
 
 delete from dq_rule_def;
