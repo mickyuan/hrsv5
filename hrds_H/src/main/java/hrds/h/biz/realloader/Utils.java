@@ -217,11 +217,7 @@ public class Utils {
 			createSql = "CREATE TABLE ";
 		}
 		createSql += tableName + " (" + createTableColumnTypes + ")";
-		db.execute(createSql);
-		//2020年12月17日 TBH add
-		// 针对teradata 这里需要commit 一下
-		// only an et or null statement is legal after a DDL Statement
-		db.commit();
+		db.ExecDDL(createSql);
 	}
 
 	/**
@@ -231,7 +227,7 @@ public class Utils {
 	static void forceCreateTable(DatabaseWrapper db, String tableName, String createTableColumnTypes) {
 
 		if (db.isExistTable(tableName)) {
-			db.execute("DROP TABLE " + tableName);
+			db.ExecDDL("DROP TABLE " + tableName);
 		}
 		createTable(db, tableName, createTableColumnTypes);
 	}
@@ -346,7 +342,7 @@ public class Utils {
 	static void softDropTable(DatabaseWrapper db, String tableName) {
 		try {
 			if (db.isExistTable(tableName)) {
-				db.execute("DROP TABLE " + tableName);
+				db.ExecDDL("DROP TABLE " + tableName);
 			}
 		} catch (Exception e) {
 			logger.warn("删除临时表 " + tableName + " 失败");
@@ -356,7 +352,7 @@ public class Utils {
 	static void dropTable(DatabaseWrapper db, String tableName) {
 		try {
 			if (db.isExistTable(tableName)) {
-				db.execute("DROP TABLE " + tableName);
+				db.ExecDDL("DROP TABLE " + tableName);
 			}
 		} catch (Exception e) {
 			throw new AppSystemException("删除表失败：" + tableName, e);
@@ -378,7 +374,7 @@ public class Utils {
 		} else {
 			renameSql = "ALTER TABLE " + srcTableName + " RENAME TO " + destTableName;
 		}
-		db.execute(renameSql);
+		db.ExecDDL(renameSql);
 	}
 
 	/**
@@ -399,9 +395,9 @@ public class Utils {
 				for (int i = 0; i < additionalAttrs.size(); i++) {
 					String indexName = "idx_" + tableName + "_" + i;
 					if (isExistIndex(indexName, db)) {
-						db.execute("drop index " + indexName);
+						db.ExecDDL("drop index " + indexName);
 					}
-					db.execute("create index  " + indexName + " on " +
+					db.ExecDDL("create index  " + indexName + " on " +
 							tableName + "(" + additionalAttrs.get(i) + ")");
 				}
 			}
