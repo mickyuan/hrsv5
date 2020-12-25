@@ -38,7 +38,6 @@ import hrds.commons.utils.tree.Node;
 import hrds.commons.utils.tree.NodeDataConvertedTreeList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.spark.sql.sources.In;
 
 import java.util.*;
 
@@ -142,8 +141,8 @@ public class ManageAction extends BaseAction {
 		Set<Map<String, Object>> autoTpCondInfoList = new HashSet<>();
 		Set<Auto_tp_res_set> autoTpResSets = new HashSet<>();
 		DruidParseQuerySql druidParseQuerySql = new DruidParseQuerySql(format_sql);
-		List<SQLExpr> allWherelist = druidParseQuerySql.getAllWherelist();
-		for (SQLExpr sqlExpr : allWherelist) {
+		List<SQLExpr> allWhereList = druidParseQuerySql.getAllWherelist();
+		for (SQLExpr sqlExpr : allWhereList) {
 			setAutoTpCond(autoTpCondInfoList, sqlExpr);
 		}
 		// 获取模板结果配置信息
@@ -165,8 +164,8 @@ public class ManageAction extends BaseAction {
 	@Param(name = "autoTpResSets", desc = "模板结果实体对象实体数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_tp_info", desc = "模板信息实体对象数组", range = "与数据库表规则一致", isBean = true)
 	public void saveTemplateConfInfo(Auto_tp_cond_info[] autoTpCondInfos,
-									 Auto_tp_res_set[] autoTpResSets,
-									 Auto_tp_info auto_tp_info) {
+	                                 Auto_tp_res_set[] autoTpResSets,
+	                                 Auto_tp_info auto_tp_info) {
 		// 数据可访问权限处理方式：通过user_id进行访问权限限制
 		// 1.校验自主取数模板字段是否合法
 		checkAutoTpInfoFields(auto_tp_info);
@@ -308,7 +307,7 @@ public class ManageAction extends BaseAction {
 	@Param(name = "autoTpResSets", desc = "模板结果实体对象实体数组", range = "与数据库表规则一致", isBean = true)
 	@Param(name = "auto_tp_info", desc = "模板信息实体对象", range = "与数据库表规则一致", isBean = true)
 	public void updateTemplateConfInfo(Auto_tp_cond_info[] autoTpCondInfos, Auto_tp_res_set[] autoTpResSets,
-									   Auto_tp_info auto_tp_info) {
+	                                   Auto_tp_info auto_tp_info) {
 		// 数据可访问权限处理方式：通过user_id进行访问权限限制
 		// 1.校验模板参数合法性
 		Validator.notNull(auto_tp_info.getTemplate_id(), "编辑时模板ID不能为空");
@@ -360,9 +359,9 @@ public class ManageAction extends BaseAction {
 		// 最多只显示1000行
 		List<Map<String, Object>> resultData = new ArrayList<>();
 		int i = 0;
-		try{
+		try {
 			i = Integer.parseInt(showNum);
-		}catch (Exception e){
+		} catch (Exception e) {
 			throw new BusinessException("请填入整数");
 		}
 		if (i > 1000) {
@@ -446,7 +445,7 @@ public class ManageAction extends BaseAction {
 			String pre_value = sb.deleteCharAt(sb.length() - 1).toString();
 			setAutoTpCondBySqlExpr(autoTpCondInfoList, leftExpr, "IN", pre_value, IsFlag.Shi.getCode());
 		} else {
-			if(sqlExpr != null) {
+			if (sqlExpr != null) {
 				Class<? extends SQLExpr> aClass = sqlExpr.getClass();
 				throw new BusinessException("sqlexpr：" + sqlExpr.toString() + "sqlexpr.class:" + aClass + " 请联系管理员");
 			}
@@ -478,14 +477,14 @@ public class ManageAction extends BaseAction {
 		condInfoMap.put("checked", true);
 		if (autoTpCondInfoList.contains(condInfoMap)) {
 			throw new BusinessException("存在相同的条件："
-					+ condInfoMap.get("cond_en_column") +" "+ condInfoMap.get("con_relation") +" "+ condInfoMap.get("pre_value")
+					+ condInfoMap.get("cond_en_column") + " " + condInfoMap.get("con_relation") + " " + condInfoMap.get("pre_value")
 					+ ",无法解析，建议先通过加工生成目标表后再创建模板表");
 		}
 		autoTpCondInfoList.add(condInfoMap);
 	}
 
 	private void getAutoTpResSet(Set<Auto_tp_res_set> autoTpResSets, String sql,
-								 List<SQLSelectItem> selectList) {
+	                             List<SQLSelectItem> selectList) {
 		// 获取表名对应别名，key为原表名，value为表别名
 		Map<String, String> sourceAndAliasName = getTableAndAliasName(sql);
 		for (SQLSelectItem sqlSelectItem : selectList) {
@@ -530,16 +529,20 @@ public class ManageAction extends BaseAction {
 				List<String> tableList = DruidParseQuerySql.parseSqlTableToList(sql);
 				// 获取所有表对应字段信息
 				Map<String, String> columnByTable = getColumnByTable(tableList);
-				String tableAndChColumnName = columnByTable.get(exprName.toUpperCase());
-				List<String> tableAndColumn = StringUtil.split(tableAndChColumnName, Constant.METAINFOSPLIT);
-				auto_tp_res_set.setSource_table_name(tableAndColumn.get(0));
-				auto_tp_res_set.setColumn_cn_name(tableAndColumn.get(1));
-				if (numbersArray.contains(tableAndColumn.get(2))) {
-					auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
-				} else {
-					auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+				for (String key : columnByTable.keySet()) {
+					if (key.equalsIgnoreCase(exprName)) {
+						String tableAndChColumnName = columnByTable.get(exprName.toLowerCase());
+						List<String> tableAndColumn = StringUtil.split(tableAndChColumnName, Constant.METAINFOSPLIT);
+						auto_tp_res_set.setSource_table_name(tableAndColumn.get(0));
+						auto_tp_res_set.setColumn_cn_name(tableAndColumn.get(1));
+						if (numbersArray.contains(tableAndColumn.get(2))) {
+							auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
+						} else {
+							auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+						}
+						autoTpResSets.add(auto_tp_res_set);
+					}
 				}
-				autoTpResSets.add(auto_tp_res_set);
 			} else {
 				throw new BusinessException(sqlSelectItem.getExpr() + "未开发 有待开发");
 			}
@@ -575,7 +578,7 @@ public class ManageAction extends BaseAction {
 	}
 
 	private void setAutoTpResSet(Set<Auto_tp_res_set> autoTpResSets, Auto_tp_res_set auto_tp_res_set,
-								 List<Map<String, Object>> columns) {
+	                             List<Map<String, Object>> columns) {
 		for (Map<String, Object> column : columns) {
 			if (auto_tp_res_set.getColumn_en_name().equals(column.get("column_name").toString())) {
 				auto_tp_res_set.setColumn_cn_name(column.get("column_ch_name").toString());
@@ -590,7 +593,7 @@ public class ManageAction extends BaseAction {
 	}
 
 	private void setAllColumns(Set<Auto_tp_res_set> autoTpResSets, String table_name,
-							   List<Map<String, Object>> columns) {
+	                           List<Map<String, Object>> columns) {
 		for (Map<String, Object> column : columns) {
 			Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
 			auto_tp_res_set.setSource_table_name(table_name);
