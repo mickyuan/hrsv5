@@ -2042,4 +2042,17 @@ public class OperateAction extends BaseAction {
 			throw new BusinessException("仪表板名称已存在");
 		}
 	}
+
+	//TBH
+	@Method(desc = "根据组件ID，获取仪表盘基本信息", logicStep = "根据组件ID，获取仪表盘基本信息" )
+	@Param(name = "dashboard_id", desc = "仪表盘id", range = "String")
+	public List<Object> getComponentByDashboardId(String dashboard_id){
+		Auto_asso_info auto_asso_info = new Auto_asso_info();
+		auto_asso_info.setDashboard_id(dashboard_id);
+		//TODO 表auto_asso_info要新增一个字段 是否为大屏
+		List<Object> objects = Dbo.queryOneColumnList("select component_id from " + Auto_comp_sum.TableName + " where component_id in (" +
+				" select component_id from " + Auto_asso_info.TableName + " where dashboard_id = ?)", auto_asso_info.getDashboard_id());
+		return objects;
+	}
+
 }
