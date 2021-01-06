@@ -1201,7 +1201,7 @@ public class OperateAction extends BaseAction {
 		} else if (AutoDataSumType.QiuZuiXiaoZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
 			return "min(" + column_name + ") as " + seperator + "min(" + column_name + ")" + seperator + " ,";
 		} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "count(" + column_name + ") as " + seperator + "count(*)" + seperator + " ,";
+			return column_name + " as " + seperator + "count(*)" + seperator + " ,";
 		} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
 			return column_name + " as " + seperator + column_name + seperator + ",";
 		} else if (AutoDataSumType.ChaKanQuanBu == AutoDataSumType.ofEnumByCode(summary_type)) {
