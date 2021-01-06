@@ -531,7 +531,7 @@ public class ManageAction extends BaseAction {
 				Map<String, String> columnByTable = getColumnByTable(tableList);
 				for (String key : columnByTable.keySet()) {
 					if (key.equalsIgnoreCase(exprName)) {
-						String tableAndChColumnName = columnByTable.get(exprName.toLowerCase());
+						String tableAndChColumnName = columnByTable.get(key);
 						List<String> tableAndColumn = StringUtil.split(tableAndChColumnName, Constant.METAINFOSPLIT);
 						auto_tp_res_set.setSource_table_name(tableAndColumn.get(0));
 						auto_tp_res_set.setColumn_cn_name(tableAndColumn.get(1));
