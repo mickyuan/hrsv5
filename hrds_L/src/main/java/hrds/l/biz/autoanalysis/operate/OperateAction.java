@@ -16,6 +16,7 @@ import fd.ng.core.utils.DateUtil;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
+import fd.ng.db.conf.Dbtype;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.conf.WebinfoConf;
@@ -23,12 +24,14 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.*;
 import hrds.commons.collection.ProcessingData;
+import hrds.commons.collection.bean.LayerBean;
 import hrds.commons.entity.*;
 import hrds.commons.entity.fdentity.ProjectTableEntity;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.DataTableUtil;
 import hrds.commons.utils.DboExecute;
+import hrds.commons.utils.DruidParseQuerySql;
 import hrds.commons.utils.autoanalysis.AutoAnalysisUtil;
 import hrds.commons.utils.key.PrimayKeyGener;
 import hrds.l.biz.autoanalysis.bean.ComponentBean;
@@ -1054,6 +1057,7 @@ public class OperateAction extends BaseAction {
 		Validator.notNull(componentBean.getFetch_name(), "取数名称不能为空");
 		Validator.notNull(componentBean.getData_source(), "数据来源不能为空");
 		String fetch_sql;
+		List<String> databaseTypeList = new ArrayList<>();
 		if (AutoSourceObject.ZiZhuShuJuShuJuJi == AutoSourceObject.ofEnumByCode(componentBean.getData_source())) {
 			// 自主取数数据集
 			// 获取自主取数部分的sql
@@ -1061,19 +1065,55 @@ public class OperateAction extends BaseAction {
 					"select fetch_sum_id from " + Auto_fetch_sum.TableName + " where fetch_name=?",
 					componentBean.getFetch_name());
 			fetch_sql = getAccessSql(idList.get(0));
+			List<String> sqlTableList = DruidParseQuerySql.getSqlTableList(fetch_sql, DbType.oracle.toString());
+			Map<String, List<LayerBean>> layerByTableMap = ProcessingData.getLayerByTable(sqlTableList, Dbo.db());
+			Iterator<Map.Entry<String, List<LayerBean>>> iterator = layerByTableMap.entrySet().iterator();
+			Map<String, Object> tableMap = new HashMap<>();
+			//重新整理数据结构，原本的map key是目标字段 新的tableMap的数据结构key为来源表的表名
+			while (iterator.hasNext()) {
+				Map.Entry<String, List<LayerBean>> next = iterator.next();
+				List<LayerBean> layerByTableList = next.getValue();
+				for (int i = 0; i < layerByTableList.size(); i++) {
+					LayerBean layerBean = layerByTableList.get(i);
+					String databaseType = getDatabaseType(layerBean);
+					if (!databaseTypeList.contains(databaseType)) {
+						databaseTypeList.add(databaseType);
+					}
+				}
+			}
 		} else if (AutoSourceObject.XiTongJiShuJuJi == AutoSourceObject.ofEnumByCode(componentBean.getData_source())) {
 			// 系统级数据集
 			// 拼接系统数据集sql
+			List<LayerBean> layerByTableList = ProcessingData.getLayerByTable(componentBean.getFetch_name(), Dbo.db());
 			fetch_sql = "SELECT" + Constant.SPACE + "*" + Constant.SPACE +
 					"FROM" + Constant.SPACE + componentBean.getFetch_name();
+			for (int i = 0; i < layerByTableList.size(); i++) {
+				LayerBean layerBean = layerByTableList.get(i);
+				String databaseType = getDatabaseType(layerBean);
+				if (!databaseTypeList.contains(databaseType)) {
+					databaseTypeList.add(databaseType);
+				}
+			}
 		} else {//数据组件数据集
 			throw new BusinessException("暂不支持该种数据集" + componentBean.getData_source());
+		}
+		String seperator = "'";
+		if (databaseTypeList.size() == 0) {
+			throw new BusinessException("表未找到存储位置");
+		} else {
+			//FIXME 可以完善
+			String databaseType = databaseTypeList.get(0);
+			if (databaseType.toLowerCase().startsWith("oracle") || databaseType.toLowerCase().equals("postgresql")) {
+				seperator = "\"";
+			}else if(databaseType.toLowerCase().equals("hive")){
+				seperator = "`";
+			}
 		}
 		// 添加select 部分
 		StringBuilder result_sql = new StringBuilder();
 		result_sql.append("SELECT" + Constant.SPACE);
 		for (Auto_comp_data_sum auto_comp_data_sum : autoCompDataSums) {
-			String selectSql = getSelectSql(auto_comp_data_sum);
+			String selectSql = getSelectSql(auto_comp_data_sum, seperator);
 			result_sql.append(selectSql);
 		}
 		// 去除,
@@ -1136,19 +1176,19 @@ public class OperateAction extends BaseAction {
 	@Method(desc = "据Auto_comp_data_sum拼接查询SQL", logicStep = "")
 	@Param(name = "auto_comp_data_sum", desc = "组件数据汇总信息表", range = "与数据库对应表一致", isBean = true)
 	@Return(desc = "返回拼接好的sql", range = "无限制")
-	private String getSelectSql(Auto_comp_data_sum auto_comp_data_sum) {
+	private String getSelectSql(Auto_comp_data_sum auto_comp_data_sum, String seperator) {
 		String column_name = auto_comp_data_sum.getColumn_name();
 		String summary_type = auto_comp_data_sum.getSummary_type();
 		if (AutoDataSumType.QiuHe == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "sum(" + column_name + ") as 'sum(" + column_name + ")' ,";
+			return "sum(" + column_name + ") as " + seperator + "sum(" + column_name + ")" + seperator + " ,";
 		} else if (AutoDataSumType.QiuPingJun == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "avg(" + column_name + ") as 'avg(" + column_name + ")' ,";
+			return "avg(" + column_name + ") as " + seperator + "avg(" + column_name + ")" + seperator + " ,";
 		} else if (AutoDataSumType.QiuZuiDaZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "max(" + column_name + ") as 'max(" + column_name + ")' ,";
+			return "max(" + column_name + ") as " + seperator + "max(" + column_name + ")" + seperator + " ,";
 		} else if (AutoDataSumType.QiuZuiXiaoZhi == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "min(" + column_name + ") as 'min(" + column_name + ")' ,";
+			return "min(" + column_name + ") as " + seperator + "min(" + column_name + ")" + seperator + " ,";
 		} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "count(" + column_name + ") as 'count(*)' ,";
+			return "count(" + column_name + ") as " + seperator + "count(*)" + seperator + " ,";
 		} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
 			return column_name + ",";
 		} else if (AutoDataSumType.ChaKanQuanBu == AutoDataSumType.ofEnumByCode(summary_type)) {
@@ -2044,9 +2084,9 @@ public class OperateAction extends BaseAction {
 	}
 
 	//TBH
-	@Method(desc = "根据组件ID，获取仪表盘基本信息", logicStep = "根据组件ID，获取仪表盘基本信息" )
+	@Method(desc = "根据仪表盘ID，获取所有组件基本信息", logicStep = "根据仪表盘ID，获取所有组件基本信息")
 	@Param(name = "dashboard_id", desc = "仪表盘id", range = "String")
-	public List<Object> getComponentByDashboardId(String dashboard_id){
+	public List<Object> getComponentByDashboardId(String dashboard_id) {
 		Auto_asso_info auto_asso_info = new Auto_asso_info();
 		auto_asso_info.setDashboard_id(dashboard_id);
 		//TODO 表auto_asso_info要新增一个字段 是否为大屏
@@ -2055,4 +2095,25 @@ public class OperateAction extends BaseAction {
 		return objects;
 	}
 
+	/**
+	 * 根据存储信息，直接返回存储的数据库；
+	 *
+	 * @param layerBean
+	 * @return
+	 */
+	private String getDatabaseType(LayerBean layerBean) {
+		String store_type = layerBean.getStore_type();
+		if (store_type.equals(Store_type.DATABASE.getCode())) {
+			Map<String, String> layerAttr = layerBean.getLayerAttr();
+			String database_type = layerAttr.get("database_type");
+			if (!StringUtils.isEmpty(database_type)) {
+				return DatabaseType.ofValueByCode(database_type);
+			} else {
+				logger.error("根据存储层信息未找到存储数据库，layerBean：" + layerBean);
+				throw new BusinessException("根据存储层信息未找到存储数据库");
+			}
+		} else {
+			return Store_type.ofValueByCode(store_type).toLowerCase();
+		}
+	}
 }
