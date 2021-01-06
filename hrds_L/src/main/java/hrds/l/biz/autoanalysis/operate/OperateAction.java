@@ -1105,15 +1105,28 @@ public class OperateAction extends BaseAction {
 			String databaseType = databaseTypeList.get(0);
 			if (databaseType.toLowerCase().startsWith("oracle") || databaseType.toLowerCase().equals("postgresql")) {
 				seperator = "\"";
-			}else if(databaseType.toLowerCase().equals("hive")){
+			} else if (databaseType.toLowerCase().equals("hive")) {
 				seperator = "`";
 			}
 		}
 		// 添加select 部分
 		StringBuilder result_sql = new StringBuilder();
 		result_sql.append("SELECT" + Constant.SPACE);
+		Map<String, Object> columnByName = getColumnByName(componentBean.getFetch_name(), componentBean.getData_source());
+		List<Map<String, Object>> columnlist = (List<Map<String, Object>>) columnByName.get("columns");
+		List<String> allcolumnlist = new ArrayList<>();
+		for (Map<String, Object> column : columnlist) {
+			String column_name = "";
+			if (AutoSourceObject.ZiZhuShuJuShuJuJi == AutoSourceObject.ofEnumByCode(componentBean.getData_source())) {
+				column_name = column.get("fetch_res_name").toString();
+			} else {
+				column_name = column.get("column_name").toString();
+			}
+			allcolumnlist.add(column_name);
+		}
 		for (Auto_comp_data_sum auto_comp_data_sum : autoCompDataSums) {
-			String selectSql = getSelectSql(auto_comp_data_sum, seperator);
+//			String selectSql = getSelectSql(auto_comp_data_sum, seperator, null);
+			String selectSql = getSelectSql(auto_comp_data_sum, seperator, allcolumnlist);
 			result_sql.append(selectSql);
 		}
 		// 去除,
@@ -1176,7 +1189,7 @@ public class OperateAction extends BaseAction {
 	@Method(desc = "据Auto_comp_data_sum拼接查询SQL", logicStep = "")
 	@Param(name = "auto_comp_data_sum", desc = "组件数据汇总信息表", range = "与数据库对应表一致", isBean = true)
 	@Return(desc = "返回拼接好的sql", range = "无限制")
-	private String getSelectSql(Auto_comp_data_sum auto_comp_data_sum, String seperator) {
+	private String getSelectSql(Auto_comp_data_sum auto_comp_data_sum, String seperator, List<String> allcolumnlist) {
 		String column_name = auto_comp_data_sum.getColumn_name();
 		String summary_type = auto_comp_data_sum.getSummary_type();
 		if (AutoDataSumType.QiuHe == AutoDataSumType.ofEnumByCode(summary_type)) {
@@ -1190,9 +1203,13 @@ public class OperateAction extends BaseAction {
 		} else if (AutoDataSumType.ZongHangShu == AutoDataSumType.ofEnumByCode(summary_type)) {
 			return "count(" + column_name + ") as " + seperator + "count(*)" + seperator + " ,";
 		} else if (AutoDataSumType.YuanShiShuJu == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return column_name + ",";
+			return column_name + " as " + seperator + column_name + seperator + ",";
 		} else if (AutoDataSumType.ChaKanQuanBu == AutoDataSumType.ofEnumByCode(summary_type)) {
-			return "*,";
+			String result = "";
+			for (String column : allcolumnlist) {
+				result += column + " as " + seperator + column + seperator + ",";
+			}
+			return result;
 		} else {
 			throw new BusinessException("当前查询内容不存在于代码项中:" + summary_type);
 		}
@@ -1340,6 +1357,7 @@ public class OperateAction extends BaseAction {
 	@Param(name = "auto_chartsconfigString", desc = "图表配置信息表对象", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "auto_labelString", desc = "图形文本标签表对象", range = "与数据库表规则一致", nullable = true)
 	@Param(name = "auto_legend_infoString", desc = "组件图例信息表对象", range = "与数据库表规则一致", nullable = true)
+	@Param(name = "allcolumn", desc = "所有字段", range = "String", nullable = true)
 	@UploadFile
 	public void updateVisualComponentInfo(String componentBeanString, String auto_comp_sumString,
 										  String autoCompCondString, String autoCompGroupString,
@@ -1348,7 +1366,7 @@ public class OperateAction extends BaseAction {
 										  String xAxisLabelString, String yAxisLabelString,
 										  String xAxisLineString, String yAxisLineString,
 										  String auto_table_infoString, String auto_chartsconfigString,
-										  String auto_labelString, String auto_legend_infoString) {
+										  String auto_labelString, String auto_legend_infoString, String allcolumn) {
 		ComponentBean componentBean = JSONObject.parseObject(componentBeanString, new TypeReference<ComponentBean>() {
 		});
 		Auto_comp_sum auto_comp_sum = JSONObject.parseObject(auto_comp_sumString, new TypeReference<Auto_comp_sum>() {
