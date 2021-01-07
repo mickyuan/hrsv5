@@ -889,7 +889,7 @@ COMPONENT_DESC                                    VARCHAR(512) NULL, --组件描
 DATA_SOURCE                                       CHAR(2) NOT NULL, --数据来源
 COMPONENT_STATUS                                  CHAR(2) NOT NULL, --组件状态
 SOURCES_OBJ                                       VARCHAR(100) NULL, --数据源对象
-EXE_SQL                                           VARCHAR(512) NULL, --执行sql
+EXE_SQL                                           VARCHAR(2048) NULL, --执行sql
 CHART_TYPE                                        VARCHAR(100) NULL, --图表类型
 BACKGROUND                                        VARCHAR(16) NULL, --背景色
 COMPONENT_BUFFER                                  VARCHAR(512) NULL, --组件缓存

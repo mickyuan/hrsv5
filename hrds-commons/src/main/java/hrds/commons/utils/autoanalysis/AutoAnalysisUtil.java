@@ -14,6 +14,8 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AxisType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +24,7 @@ import java.util.Map;
 
 @DocClass(desc = "仪表板工具类", author = "dhw", createdate = "2020/10/20 17:24")
 public class AutoAnalysisUtil {
+	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "1.根据仪表板id获取数据仪表板信息表数据" +
 			"2.获取仪表板边框组件信息表信息" +
@@ -259,13 +262,13 @@ public class AutoAnalysisUtil {
 	@Param(name = "i", desc = "栅格中元素的ID", range = "需为自然数")
 	@Param(name = "type", desc = "对应组件ID", range = "新增对应组件时生成")
 	private static void setGridLayout(Map<String, Object> map, Integer x, Integer y,
-	                                  Long w, Long h, Object i, Long id) {
+									  Long w, Long h, Object i, Long id) {
 		// 1.设置仪表盘网格布局参数
 		map.put("x", x);
 		map.put("y", y);
 		map.put("w", w);
 		map.put("h", h);
-		map.put("i", i);
+		map.put("i", String.valueOf(id));
 		map.put("type", String.valueOf(id));
 		map.put("static", false);
 	}
