@@ -88,6 +88,7 @@ public class OperateAction extends BaseAction {
 	// 地理坐标/地图
 	private static final String MAP = "map";
 	// 盒形图
+	private static final String LargeScreenTheme = "LargeScreenTheme";
 //	private static final String BOXPLOT = "boxplot";
 
 	static {
@@ -685,6 +686,7 @@ public class OperateAction extends BaseAction {
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("chart_type", chart_type);
 		// 2.根据不同图标类型获取图表数据
+		logger.info("----------------------chart_type:"+chart_type);
 		if (LINE.equals(chart_type) || BAR.equals(chart_type) || BL.equals(chart_type)) {
 			// 折线图和柱状图、柱状折线混合图
 			putDataForLine(componentList, x_columns, y_columns, chart_type, resultMap);
@@ -2133,5 +2135,39 @@ public class OperateAction extends BaseAction {
 		} else {
 			return Store_type.ofValueByCode(store_type).toLowerCase();
 		}
+	}
+
+	//TBH
+	@Method(desc = "组件ID的List", logicStep = "保存大屏展示信息")
+	@Param(name = "component_id_list", desc = "组件IDid", range = "String")
+	@Param(name = "dashboard_name", desc = "仪表盘名称", range = "String")
+	@Param(name = "dashboard_desc", desc = "仪表盘描述", range = "String")
+	public Long saveLargeScreen(String[] component_id_list,String dashboard_desc,String dashboard_name){
+		List<String> list = Arrays.asList(component_id_list);
+		Auto_dashboard_info auto_dashboard_info = new Auto_dashboard_info();
+		auto_dashboard_info.setDashboard_name(dashboard_name);
+		auto_dashboard_info.setDashboard_desc(dashboard_desc);
+		Long nextId = PrimayKeyGener.getNextId();
+		auto_dashboard_info.setDashboard_id(nextId);
+		auto_dashboard_info.setDashboard_theme(LargeScreenTheme);
+		auto_dashboard_info.setCreate_date(DateUtil.getSysDate());
+		auto_dashboard_info.setCreate_time(DateUtil.getSysTime());
+		auto_dashboard_info.setUser_id(getUserId());
+		auto_dashboard_info.setIs_gridline(IsFlag.Fou.getCode());
+		auto_dashboard_info.setDashboard_status(IsFlag.Fou.getCode());
+		auto_dashboard_info.add(Dbo.db());
+		for(int i=0;i<list.size();i++){
+			String component_id = list.get(i);
+			Auto_asso_info auto_asso_info = new Auto_asso_info();
+			auto_asso_info.setDashboard_id(nextId);
+			auto_asso_info.setComponent_id(component_id);
+			auto_asso_info.setSerial_number(0);
+			auto_asso_info.setX_axis_coord(0);
+			auto_asso_info.setY_axis_coord(0);
+			auto_asso_info.setLength(0);
+			auto_asso_info.setWidth(0);
+			auto_asso_info.add(Dbo.db());
+		}
+		return nextId;
 	}
 }
