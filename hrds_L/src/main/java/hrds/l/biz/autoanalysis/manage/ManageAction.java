@@ -131,7 +131,7 @@ public class ManageAction extends BaseAction {
 	@Param(name = "template_sql", desc = "自主取数模板sql", range = "无限制")
 	public Map<String, Object> generateTemplateParam(String template_sql) {
 		// 1.校验sql是否正确
-//		verifySqlIsLegal(template_sql);
+		verifySqlIsLegal(template_sql);
 		DbType oracle = JdbcConstants.ORACLE;
 		// 2.sql格式化并处理sql去除;结尾
 		String format_sql = SQLUtils.format(template_sql, oracle).trim();
@@ -358,7 +358,7 @@ public class ManageAction extends BaseAction {
 		// 数据可访问权限处理方式：该方法不需要进行访问权限限制
 		// 最多只显示1000行
 		List<Map<String, Object>> resultData = new ArrayList<>();
-		int i = 0;
+		int i;
 		try {
 			i = Integer.parseInt(showNum);
 		} catch (Exception e) {
