@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 
 public class HrdsReceiveAgent extends WebServer {
-    protected static final Logger logger = LogManager.getLogger(HrdsReceiveAgent.class.getName());
+    protected static final Logger logger = LogManager.getLogger();
 
     public HrdsReceiveAgent(HttpServerConfBean confBase) {
         super(confBase);

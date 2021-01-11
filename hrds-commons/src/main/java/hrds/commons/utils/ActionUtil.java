@@ -1,7 +1,5 @@
 package hrds.commons.utils;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.JsonUtil;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.web.util.RequestUtil;
@@ -9,9 +7,6 @@ import hrds.commons.exception.BusinessException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Optional;
 

@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BusinessException extends BusinessProcessException {
 	private static final long serialVersionUID = 8714959098642865641L;
-	private static final Logger logger = LogManager.getLogger(BusinessException.class.getName());
+	private static final Logger logger = LogManager.getLogger();
 
 	/**
 	 * 直接设置错误提示信息，并自动把 message 打入日志中。<Br>

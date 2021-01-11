@@ -12,8 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 @DocClass(desc = "日志读取工具类")
 public class ReadLog {

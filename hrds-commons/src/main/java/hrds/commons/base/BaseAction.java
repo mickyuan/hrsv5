@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 
 public abstract class BaseAction extends AbstractWebappBaseAction {
-	private static final Logger logger = LogManager.getLogger(BaseAction.class.getName());
+	private static final Logger logger = LogManager.getLogger();
 
 	/**
 	 * 所有action会经过这里，判断登录信息是否存在

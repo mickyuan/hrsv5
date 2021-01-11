@@ -26,7 +26,7 @@ public class ParallerTestUtil {
 	public static final YamlMap TESTINITCONFIG = YamlFactory.load(new File(new File(
 			System.getProperty("user.dir")).getParent() + File.separator + "testinfo.conf")).asMap();
 
-	private static final Logger logger = LogManager.getLogger(ParallerTestUtil.class);
+	private static final Logger logger = LogManager.getLogger();
 
 	/**
 	 * @param inputConfigPath  需要测试的测试用例的配置文件绝对路径
