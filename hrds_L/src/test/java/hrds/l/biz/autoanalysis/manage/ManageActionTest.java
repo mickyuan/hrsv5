@@ -54,31 +54,13 @@ public class ManageActionTest extends WebBaseTestCase {
 	public void before() {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			// 1.初始化用户信息
-			//构建用户登录信息
-			Sys_user sys_user = new Sys_user();
-			sys_user.setUser_id(TEST_USER_ID);
-			sys_user.setCreate_id(TEST_USER_ID);
-			sys_user.setDep_id(DEP_ID);
-			sys_user.setRole_id("1001");
-			sys_user.setUser_name("自主取数测试用户");
-			sys_user.setUser_password(PASSWORD);
-			// 0：管理员，1：操作员
-			sys_user.setUseris_admin(IsFlag.Fou.getCode());
-			sys_user.setUser_type("00");
-			sys_user.setUsertype_group(null);
-			sys_user.setLogin_ip("127.0.0.1");
-			sys_user.setLogin_date(DateUtil.getSysDate());
-			sys_user.setUser_state("1");
-			sys_user.setCreate_date(DateUtil.getSysDate());
-			sys_user.setCreate_time(DateUtil.getSysTime());
-			sys_user.setUpdate_date(DateUtil.getSysDate());
-			sys_user.setUpdate_time(DateUtil.getSysTime());
+			Sys_user sys_user = getSys_user();
 			assertThat("初始化自主取数测试用户信息成功", sys_user.add(db), is(1));
-			// 3.初始化Auto_tp_info表测试数据
+			// 2.初始化Auto_tp_info表测试数据
 			List<Auto_tp_info> autoTpInfoList = getAuto_tp_infos();
 			autoTpInfoList.forEach(autoTpInfo -> assertThat(Auto_tp_info.TableName + "表初始化测试数据成功",
 					autoTpInfo.add(db), is(1)));
-			// 4.初始化auto_tp_cond_info表测试数据
+			// 3.初始化auto_tp_cond_info表测试数据
 			List<Auto_tp_cond_info> auto_tp_cond_infos = getAuto_tp_cond_infos();
 			for (Auto_tp_cond_info auto_tp_cond_info : auto_tp_cond_infos) {
 				auto_tp_cond_info.setTemplate_cond_id(PrimayKeyGener.getNextId());
@@ -87,7 +69,7 @@ public class ManageActionTest extends WebBaseTestCase {
 			}
 			auto_tp_cond_infos.forEach(auto_tp_cond_info -> assertThat(Auto_tp_cond_info.TableName +
 					"表初始化测试数据成功", auto_tp_cond_info.add(db), is(1)));
-			// 5.初始化auto_tp_res_set表测试数据
+			// 4.初始化auto_tp_res_set表测试数据
 			List<Auto_tp_res_set> auto_tp_res_sets = getAuto_tp_res_sets();
 			for (Auto_tp_res_set auto_tp_res_set : auto_tp_res_sets) {
 				auto_tp_res_set.setTemplate_id(TEMPLATE_ID);
@@ -111,6 +93,28 @@ public class ManageActionTest extends WebBaseTestCase {
 		ActionResult ar = JsonUtil.toObjectSafety(responseValue, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
+	}
+
+	private Sys_user getSys_user() {
+		Sys_user sys_user = new Sys_user();
+		sys_user.setUser_id(TEST_USER_ID);
+		sys_user.setCreate_id(TEST_USER_ID);
+		sys_user.setDep_id(DEP_ID);
+		sys_user.setRole_id("1001");
+		sys_user.setUser_name("自主取数测试用户");
+		sys_user.setUser_password(PASSWORD);
+		// 0：管理员，1：操作员
+		sys_user.setUseris_admin(IsFlag.Fou.getCode());
+		sys_user.setUser_type("00");
+		sys_user.setUsertype_group(null);
+		sys_user.setLogin_ip("127.0.0.1");
+		sys_user.setLogin_date(DateUtil.getSysDate());
+		sys_user.setUser_state("1");
+		sys_user.setCreate_date(DateUtil.getSysDate());
+		sys_user.setCreate_time(DateUtil.getSysTime());
+		sys_user.setUpdate_date(DateUtil.getSysDate());
+		sys_user.setUpdate_time(DateUtil.getSysTime());
+		return sys_user;
 	}
 
 	private List<Auto_tp_info> getAuto_tp_infos() {
