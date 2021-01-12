@@ -256,22 +256,33 @@ public class ManageAction extends BaseAction {
 				template_id);
 	}
 
-	@Method(desc = "根据模板ID获取自主取数模板条件信息", logicStep = "1.根据模板ID获取自主取数模板条件信息")
+	@Method(desc = "根据模板ID获取自主取数模板条件信息", logicStep = "1.判断模板是否存在" +
+			"2.根据模板ID获取模板信息" +
+			"3.根据模板sql生成模板参数" +
+			"4.根据sql获取模板条件参数" +
+			"5.根据模板ID获取自主取数模板条件信息" +
+			"6.判断哪些是必填参数")
 	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
 	@Return(desc = "返回根据模板ID获取自主取数模板条件信息", range = "无限制")
 	public List<Map<String, Object>> getAutoTpCondInfoById(long template_id) {
 		// 数据可访问权限处理方式：通过user_id进行访问权限限制
+		// 1.判断模板是否存在
+		isExistAutoTpInfo(template_id);
+		// 2.根据模板ID获取模板信息
 		Map<String, Object> autoTpInfo = getAutoTpInfoById(template_id);
+		// 3.根据模板sql生成模板参数
 		Map<String, Object> paramMap = generateTemplateParam(autoTpInfo.get("template_sql").toString());
+		// 4.根据sql获取模板条件参数
 		List<Map<String, Object>> autoTpCondInfoList = JsonUtil.toObject(
 				JsonUtil.toJson(paramMap.get("autoTpCondInfo")),
 				new TypeReference<List<Map<String, Object>>>() {
 				}.getType());
-		// 1.根据模板ID获取自主取数模板条件信息
+		// 5.根据模板ID获取自主取数模板条件信息
 		List<Map<String, Object>> auto_tp_cond_infoList =
 				Dbo.queryList(
 						"select * from " + Auto_tp_cond_info.TableName + " where template_id=?",
 						template_id);
+		// 6.判断哪些是必填参数
 		for (Map<String, Object> objectMap : autoTpCondInfoList) {
 			objectMap.put("checked", false);
 			for (Map<String, Object> map : auto_tp_cond_infoList) {
@@ -287,14 +298,24 @@ public class ManageAction extends BaseAction {
 		return autoTpCondInfoList;
 	}
 
-	@Method(desc = "根据模板ID获取自主取数模板结果信息", logicStep = "1.根据模板ID获取自主取数模板结果信息")
+	@Method(desc = "根据模板ID获取自主取数模板结果信息", logicStep = "1.判断模板是否存在" +
+			"2.根据模板ID获取自主取数模板结果信息")
 	@Param(name = "template_id", desc = "自主取数模板ID", range = "新增自主取数模板时生成")
 	@Return(desc = "返回根据模板ID获取自主取数模板结果信息", range = "无限制")
 	public List<Map<String, Object>> getAutoTpResSetById(long template_id) {
 		// 数据可访问权限处理方式：通过user_id进行访问权限限制
-		// 1.根据模板ID获取自主取数模板结果信息
+		// 1.判断模板是否存在
+		isExistAutoTpInfo(template_id);
+		// 2.根据模板ID获取自主取数模板结果信息
 		return Dbo.queryList("select * from " + Auto_tp_res_set.TableName + " where template_id=?",
 				template_id);
+	}
+
+	private void isExistAutoTpInfo(long template_id) {
+		if (Dbo.queryNumber("select count(*) from " + Auto_tp_info.TableName + " where template_id=?",
+				template_id).orElseThrow(() -> new BusinessException("sql查询错误")) == 0) {
+			throw new BusinessException(template_id + "对应模板不存在，请检查");
+		}
 	}
 
 	@Method(desc = "更新模板配置页面的信息包括 模板内容 条件参数 和 结果设置", logicStep = "1.校验模板参数合法性" +
