@@ -33,6 +33,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @DocClass(desc = "自主取数管理测试类", author = "dhw", createdate = "2021/1/11 9:57")
 public class ManageActionTest extends WebBaseTestCase {
+
 	//请填写测试用户需要做登录验证的A项目的登录验证的接口
 	private static final String LOGIN_URL = ParallerTestUtil.TESTINITCONFIG.getString("login_url");
 	// 已经存在的用户ID,用于模拟登录
@@ -77,6 +78,27 @@ public class ManageActionTest extends WebBaseTestCase {
 			List<Auto_tp_info> autoTpInfoList = getAuto_tp_infos();
 			autoTpInfoList.forEach(autoTpInfo -> assertThat(Auto_tp_info.TableName + "表初始化测试数据成功",
 					autoTpInfo.add(db), is(1)));
+			// 4.初始化auto_tp_cond_info表测试数据
+			List<Auto_tp_cond_info> auto_tp_cond_infos = getAuto_tp_cond_infos();
+			for (Auto_tp_cond_info auto_tp_cond_info : auto_tp_cond_infos) {
+				auto_tp_cond_info.setTemplate_cond_id(PrimayKeyGener.getNextId());
+				auto_tp_cond_info.setTemplate_id(TEMPLATE_ID);
+				auto_tp_cond_info.setIs_dept_id(IsFlag.Fou.getCode());
+			}
+			auto_tp_cond_infos.forEach(auto_tp_cond_info -> assertThat(Auto_tp_cond_info.TableName +
+					"表初始化测试数据成功", auto_tp_cond_info.add(db), is(1)));
+			// 5.初始化auto_tp_res_set表测试数据
+			List<Auto_tp_res_set> auto_tp_res_sets = getAuto_tp_res_sets();
+			for (Auto_tp_res_set auto_tp_res_set : auto_tp_res_sets) {
+				auto_tp_res_set.setTemplate_id(TEMPLATE_ID);
+				auto_tp_res_set.setTemplate_res_id(PrimayKeyGener.getNextId());
+				auto_tp_res_set.setIs_dese(IsFlag.Fou.getCode());
+				auto_tp_res_set.setCreate_user(TEST_USER_ID);
+				auto_tp_res_set.setCreate_date(DateUtil.getSysDate());
+				auto_tp_res_set.setCreate_time(DateUtil.getSysTime());
+			}
+			auto_tp_res_sets.forEach(auto_tp_res_set -> assertThat(Auto_tp_res_set.TableName +
+					"表初始化测试数据成功", auto_tp_res_set.add(db), is(1)));
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
@@ -290,7 +312,10 @@ public class ManageActionTest extends WebBaseTestCase {
 		}
 	}
 
-	@Method(desc = "保存模板配置页面的信息包括模板内容,条件参数和结果设置", logicStep = "1.正确的数据访问1,数据都有效")
+	@Method(desc = "保存模板配置页面的信息包括模板内容,条件参数和结果设置", logicStep = "1.正确的数据访问1,数据都有效"
+			+ "2.错误的数据访问1，template_sql为空" +
+			"3.错误的数据访问2，template_name为空" +
+			"4.错误的数据访问3，template_desc为空")
 	@Test
 	public void saveTemplateConfInfo() {
 		// 1.正确的数据访问1,数据都有效
@@ -324,8 +349,9 @@ public class ManageActionTest extends WebBaseTestCase {
 			assertThat(autoTpInfo.getCreate_user(), is(auto_tp_info.getCreate_user()));
 			for (Auto_tp_cond_info autoTpCondInfo : getAuto_tp_cond_infos()) {
 				Auto_tp_cond_info auto_tp_cond_info = SqlOperator.queryOneObject(db, Auto_tp_cond_info.class,
-						"select * from " + Auto_tp_cond_info.TableName + " where cond_para_name=?",
-						autoTpCondInfo.getCond_para_name())
+						"select * from " + Auto_tp_cond_info.TableName
+								+ " where cond_para_name=? and template_id=?",
+						autoTpCondInfo.getCond_para_name(), autoTpInfo.getTemplate_id())
 						.orElseThrow(() -> new BusinessException("sql查询错误"));
 				assertThat(autoTpCondInfo.getCond_para_name(), is(auto_tp_cond_info.getCond_para_name()));
 				assertThat(autoTpCondInfo.getValue_size(), is(auto_tp_cond_info.getValue_size()));
@@ -337,8 +363,9 @@ public class ManageActionTest extends WebBaseTestCase {
 			}
 			for (Auto_tp_res_set autoTpResSet : getAuto_tp_res_sets()) {
 				Auto_tp_res_set auto_tp_res_set = SqlOperator.queryOneObject(db, Auto_tp_res_set.class,
-						"select * from " + Auto_tp_res_set.TableName + " where column_en_name=?",
-						autoTpResSet.getColumn_en_name())
+						"select * from " + Auto_tp_res_set.TableName
+								+ " where column_en_name=? and template_id=?",
+						autoTpResSet.getColumn_en_name(), autoTpInfo.getTemplate_id())
 						.orElseThrow(() -> new BusinessException("sql查询错误"));
 				assertThat(autoTpResSet.getSource_table_name(), is(auto_tp_res_set.getSource_table_name()));
 				assertThat(autoTpResSet.getRes_show_column(), is(auto_tp_res_set.getRes_show_column()));
@@ -347,7 +374,56 @@ public class ManageActionTest extends WebBaseTestCase {
 				assertThat(autoTpResSet.getColumn_type(), is(auto_tp_res_set.getColumn_type()));
 			}
 		}
-
+		// 2.错误的数据访问1，template_sql为空
+		auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_name("新增自主取数模板测试" + THREAD_ID);
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		auto_tp_info.setTemplate_desc("自主取数模板测试");
+		bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("saveTemplateConfInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，template_name为空
+		auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_sql(TEMPLATE_SQL);
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		auto_tp_info.setTemplate_desc("自主取数模板测试");
+		bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("saveTemplateConfInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，template_desc为空
+		auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_name("新增自主取数模板测试" + THREAD_ID);
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("saveTemplateConfInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	private List<Auto_tp_res_set> getAuto_tp_res_sets() {
@@ -376,6 +452,43 @@ public class ManageActionTest extends WebBaseTestCase {
 		return autoTpResSets;
 	}
 
+	private List<Auto_tp_res_set> getAutoTpResSetList() {
+		List<Auto_tp_res_set> autoTpResSets = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
+			auto_tp_res_set.setTemplate_id(TEMPLATE_ID);
+			auto_tp_res_set.setSource_table_name("dhw_tpcds_item");
+			if (i == 0) {
+				auto_tp_res_set.setColumn_en_name("i_item_id");
+				auto_tp_res_set.setColumn_cn_name("商品标识");
+				auto_tp_res_set.setRes_show_column("i_item_id");
+				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+			} else if (i == 1) {
+				auto_tp_res_set.setColumn_en_name("i_item_sk");
+				auto_tp_res_set.setColumn_cn_name("商品编号");
+				auto_tp_res_set.setRes_show_column("i_item_sk");
+				auto_tp_res_set.setColumn_type(AutoValueType.ShuZhi.getCode());
+			} else if (i == 2) {
+				auto_tp_res_set.setColumn_en_name("i_item_desc");
+				auto_tp_res_set.setColumn_cn_name("商品描述");
+				auto_tp_res_set.setRes_show_column("i_item_desc");
+				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+			} else if (i == 3) {
+				auto_tp_res_set.setColumn_en_name("i_rec_start_date");
+				auto_tp_res_set.setColumn_cn_name("记录开始日期");
+				auto_tp_res_set.setRes_show_column("i_rec_start_date");
+				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+			} else {
+				auto_tp_res_set.setColumn_en_name("i_rec_end_date");
+				auto_tp_res_set.setColumn_cn_name("记录结束日期");
+				auto_tp_res_set.setRes_show_column("i_rec_end_date");
+				auto_tp_res_set.setColumn_type(AutoValueType.ZiFuChuan.getCode());
+			}
+			autoTpResSets.add(auto_tp_res_set);
+		}
+		return autoTpResSets;
+	}
+
 	private List<Auto_tp_cond_info> getAuto_tp_cond_infos() {
 		List<Auto_tp_cond_info> autoTpCondInfoList = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
@@ -393,6 +506,32 @@ public class ManageActionTest extends WebBaseTestCase {
 				autoTpCondInfo.setCond_cn_column("i_current_price");
 				autoTpCondInfo.setCond_en_column("i_current_price");
 				autoTpCondInfo.setPre_value("76,76 + 30");
+				autoTpCondInfo.setCond_para_name("i_current_price");
+				autoTpCondInfo.setCon_relation("BETWEEN");
+			}
+			autoTpCondInfoList.add(autoTpCondInfo);
+		}
+		return autoTpCondInfoList;
+	}
+
+	private List<Auto_tp_cond_info> getAutoTpCondInfoList() {
+		List<Auto_tp_cond_info> autoTpCondInfoList = new ArrayList<>();
+		for (int i = 0; i < 2; i++) {
+			Auto_tp_cond_info autoTpCondInfo = new Auto_tp_cond_info();
+			autoTpCondInfo.setTemplate_id(TEMPLATE_ID);
+			autoTpCondInfo.setValue_size("64");
+			autoTpCondInfo.setIs_required(IsFlag.Shi.getCode());
+			autoTpCondInfo.setValue_type(AutoValueType.ZiFuChuan.getCode());
+			if (i == 0) {
+				autoTpCondInfo.setCond_cn_column("i_item_id");
+				autoTpCondInfo.setCond_en_column("i_item_id");
+				autoTpCondInfo.setPre_value("0");
+				autoTpCondInfo.setCond_para_name("i_item_id");
+				autoTpCondInfo.setCon_relation(">=");
+			} else {
+				autoTpCondInfo.setCond_cn_column("i_current_price");
+				autoTpCondInfo.setCond_en_column("i_current_price");
+				autoTpCondInfo.setPre_value("76,106");
 				autoTpCondInfo.setCond_para_name("i_current_price");
 				autoTpCondInfo.setCon_relation("BETWEEN");
 			}
@@ -427,17 +566,171 @@ public class ManageActionTest extends WebBaseTestCase {
 		assertThat(ar.getDataForMap().isEmpty(), is(true));
 	}
 
-	@Method(desc = "", logicStep = "")
+	@Method(desc = "根据模板ID获取自主取数模板条件信息", logicStep = "")
 	@Test
 	public void getAutoTpCondInfoById() {
+		// 1.正确的数据访问，模板ID存在
+		String bodyString = new HttpClient()
+				.addData("template_id", TEMPLATE_ID)
+				.post(getActionUrl("getAutoTpCondInfoById"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		List<Auto_tp_cond_info> auto_tp_cond_infos = ar.getDataForEntityList(Auto_tp_cond_info.class);
+		checkAutoTpCondInfo(auto_tp_cond_infos);
+		// 2.错误的数据访问1，模板ID不存在
+		bodyString = new HttpClient()
+				.addData("template_id", "-1111")
+				.post(getActionUrl("getAutoTpCondInfoById"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "根据模板ID获取自主取数模板结果信息", logicStep = "1.正确的数据访问，模板ID存在" +
+			"2.错误的数据访问1，模板ID不存在")
 	@Test
 	public void getAutoTpResSetById() {
+		// 1.正确的数据访问，模板ID存在
+		String bodyString = new HttpClient()
+				.addData("template_id", TEMPLATE_ID)
+				.post(getActionUrl("getAutoTpResSetById"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		List<Auto_tp_res_set> auto_tp_res_sets = ar.getDataForEntityList(Auto_tp_res_set.class);
+		checkAutoTpResSet(auto_tp_res_sets);
+		// 2.错误的数据访问1，模板ID不存在
+		bodyString = new HttpClient()
+				.addData("template_id", "-1111")
+				.post(getActionUrl("getAutoTpResSetById"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	@Test
 	public void updateTemplateConfInfo() {
+		List<Auto_tp_cond_info> autoTpCondInfos = getAutoTpCondInfoList();
+		List<Auto_tp_res_set> autoTpResSets = getAutoTpResSetList();
+		Auto_tp_info auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_id(TEMPLATE_ID);
+		auto_tp_info.setTemplate_name("更新自主取数模板测试" + THREAD_ID);
+		auto_tp_info.setTemplate_status(AutoTemplateStatus.BianJi.getCode());
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		auto_tp_info.setTemplate_desc("自主取数模板测试");
+		auto_tp_info.setTemplate_sql("SELECT i_item_sk,i_item_id,i_item_desc,i_rec_start_date,i_rec_end_date" +
+				" FROM dhw_tpcds_item WHERE i_current_price BETWEEN 76 AND 106 and i_item_sk >= 0");
+		// 1.正确的数据访问1，数据都有效
+		String bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("updateTemplateConfInfo"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Auto_tp_info autoTpInfo = SqlOperator.queryOneObject(db, Auto_tp_info.class,
+					"select * from " + Auto_tp_info.TableName + " where template_name=?",
+					auto_tp_info.getTemplate_name())
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(autoTpInfo.getTemplate_desc(), is(auto_tp_info.getTemplate_desc()));
+			assertThat(autoTpInfo.getTemplate_sql(), is(auto_tp_info.getTemplate_sql()));
+			assertThat(autoTpInfo.getData_source(), is(auto_tp_info.getData_source()));
+			assertThat(autoTpInfo.getCreate_user(), is(auto_tp_info.getCreate_user()));
+			for (Auto_tp_cond_info autoTpCondInfo : getAutoTpCondInfoList()) {
+				Auto_tp_cond_info auto_tp_cond_info = SqlOperator.queryOneObject(db, Auto_tp_cond_info.class,
+						"select * from " + Auto_tp_cond_info.TableName + " where cond_para_name=?",
+						autoTpCondInfo.getCond_para_name())
+						.orElseThrow(() -> new BusinessException("sql查询错误"));
+				assertThat(autoTpCondInfo.getCond_para_name(), is(auto_tp_cond_info.getCond_para_name()));
+				assertThat(autoTpCondInfo.getValue_size(), is(auto_tp_cond_info.getValue_size()));
+				assertThat(autoTpCondInfo.getCon_relation(), is(auto_tp_cond_info.getCon_relation()));
+				assertThat(autoTpCondInfo.getCond_cn_column(), is(auto_tp_cond_info.getCond_cn_column()));
+				assertThat(autoTpCondInfo.getCond_en_column(), is(auto_tp_cond_info.getCond_en_column()));
+				assertThat(autoTpCondInfo.getIs_required(), is(auto_tp_cond_info.getIs_required()));
+				assertThat(autoTpCondInfo.getPre_value(), is(auto_tp_cond_info.getPre_value()));
+			}
+			for (Auto_tp_res_set autoTpResSet : getAutoTpResSetList()) {
+				Auto_tp_res_set auto_tp_res_set = SqlOperator.queryOneObject(db, Auto_tp_res_set.class,
+						"select * from " + Auto_tp_res_set.TableName
+								+ " where column_en_name=? and template_id=?",
+						autoTpResSet.getColumn_en_name(), TEMPLATE_ID)
+						.orElseThrow(() -> new BusinessException("sql查询错误"));
+				assertThat(autoTpResSet.getSource_table_name(), is(auto_tp_res_set.getSource_table_name()));
+				assertThat(autoTpResSet.getRes_show_column(), is(auto_tp_res_set.getRes_show_column()));
+				assertThat(autoTpResSet.getColumn_cn_name(), is(auto_tp_res_set.getColumn_cn_name()));
+				assertThat(autoTpResSet.getColumn_type(), is(auto_tp_res_set.getColumn_type()));
+				assertThat(autoTpResSet.getColumn_en_name(), is(auto_tp_res_set.getColumn_en_name()));
+			}
+		}
+		// 2.错误的数据访问1，template_id为空
+		auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_name("新增自主取数模板测试" + THREAD_ID);
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		auto_tp_info.setTemplate_sql(TEMPLATE_SQL);
+		auto_tp_info.setTemplate_status(AutoTemplateStatus.BianJi.getCode());
+		auto_tp_info.setTemplate_desc("自主取数模板测试");
+		bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("updateTemplateConfInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		// 3.错误的数据访问2，template_status为空
+		auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_id(TEMPLATE_ID);
+		auto_tp_info.setTemplate_name("新增自主取数模板测试" + THREAD_ID);
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		auto_tp_info.setTemplate_sql(TEMPLATE_SQL);
+		auto_tp_info.setTemplate_desc("自主取数模板测试");
+		bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("updateTemplateConfInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，template_status不为编辑状态
+		auto_tp_info = new Auto_tp_info();
+		auto_tp_info.setTemplate_id(TEMPLATE_ID);
+		auto_tp_info.setTemplate_name("新增自主取数模板测试" + THREAD_ID);
+		auto_tp_info.setCreate_date(DateUtil.getSysDate());
+		auto_tp_info.setCreate_time(DateUtil.getSysTime());
+		auto_tp_info.setTemplate_sql(TEMPLATE_SQL);
+		auto_tp_info.setData_source(IsFlag.Shi.getCode());
+		auto_tp_info.setTemplate_status(AutoTemplateStatus.FaBu.getCode());
+		auto_tp_info.setCreate_user(TEST_USER_ID);
+		auto_tp_info.setTemplate_desc("自主取数模板测试");
+		bodyString = new HttpClient()
+				.addData("autoTpCondInfos", JsonUtil.toJson(autoTpCondInfos))
+				.addData("autoTpResSets", JsonUtil.toJson(autoTpResSets))
+				.addData("auto_tp_info", auto_tp_info)
+				.post(getActionUrl("updateTemplateConfInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	@Method(desc = "数据预览", logicStep = "1.正确的数据访问1，showNum为空" +
@@ -461,7 +754,9 @@ public class ManageActionTest extends WebBaseTestCase {
 		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
-		List<Map> data = ar.getDataForEntityList(Map.class);
+		List<Map<String, Object>> data = JsonUtil.toObject(JsonUtil.toJson(ar.getData()),
+				new TypeReference<List<Map<String, Object>>>() {
+				}.getType());
 		assertThat(data.size() <= 100, is(true));
 	}
 
@@ -540,6 +835,22 @@ public class ManageActionTest extends WebBaseTestCase {
 			num = SqlOperator.queryNumber(db,
 					"select count(*) from " + Auto_tp_info.TableName + " where template_id in (?,?,?)",
 					TEMPLATE_ID, TEMPLATE_ID + 1, TEMPLATE_ID + 2)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			// 3.删除auto_tp_cond_info表测试数据
+			SqlOperator.execute(db, "delete from " + Auto_tp_cond_info.TableName + " where template_id=?",
+					TEMPLATE_ID);
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Auto_tp_cond_info.TableName + " where template_id =?",
+					TEMPLATE_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			// 4.删除auto_tp_res_set表测试数据
+			SqlOperator.execute(db, "delete from " + Auto_tp_res_set.TableName + " where template_id=?",
+					TEMPLATE_ID);
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Auto_tp_res_set.TableName + " where template_id =?",
+					TEMPLATE_ID)
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
 			assertThat(num, is(0L));
 			// 删除新增模板测试数据
