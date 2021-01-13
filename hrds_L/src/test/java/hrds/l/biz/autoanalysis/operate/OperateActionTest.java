@@ -44,10 +44,16 @@ public class OperateActionTest extends WebBaseTestCase {
 	private long THREAD_ID = Thread.currentThread().getId() * 1000000;
 	// 模板信息表主键ID
 	private long TEMPLATE_ID = PrimayKeyGener.getNextId() + THREAD_ID;
+	// 模板结果信息表主键ID
+	private long TEMPLATE_RES_ID = PrimayKeyGener.getNextId() + THREAD_ID;
+	// 模板条件信息表主键ID
+	private long TEMPLATE_COND_ID = PrimayKeyGener.getNextId() + THREAD_ID;
+	// 取数汇总结构表主键ID
+	private long FETCH_RES_ID = PrimayKeyGener.getNextId() + THREAD_ID;
+	// 取数条件表主键ID
+	private long FETCH_COND_ID = PrimayKeyGener.getNextId() + THREAD_ID;
 	// 测试用户
 	private long TEST_USER_ID = SYS_USER_ID + THREAD_ID;
-	private String TEMPLATE_SQL = "SELECT I_ITEM_SK,I_ITEM_ID,I_ITEM_DESC FROM DHW_TPCDS_ITEM"
-			+ " WHERE I_CURRENT_PRICE BETWEEN 76 AND 76 + 30 AND I_ITEM_SK > 0";
 	private String FETCH_SQL = "SELECT I_ITEM_SK,I_ITEM_ID,I_ITEM_DESC" +
 			" FROM (SELECT * FROM DHW_TPCDS_ITEM WHERE I_CURRENT_PRICE BETWEEN 76 AND 76 + 30"
 			+ "AND I_ITEM_SK > 0)  TEMP_TABLE ";
@@ -81,6 +87,10 @@ public class OperateActionTest extends WebBaseTestCase {
 			List<Auto_fetch_cond> auto_fetch_conds = getAuto_fetch_conds();
 			auto_fetch_conds.forEach(auto_fetch_cond -> assertThat(Auto_fetch_cond.TableName +
 					"表初始化测试数据成功", auto_fetch_cond.add(db), is(1)));
+			// 7.初始化auto_fetch_res表测试数据
+			List<Auto_fetch_res> auto_fetch_resList = getAuto_fetch_res();
+			auto_fetch_resList.forEach(auto_fetch_res -> assertThat(Auto_fetch_cond.TableName +
+					"表初始化测试数据成功", auto_fetch_res.add(db), is(1)));
 			// 提交事务
 			SqlOperator.commitTransaction(db);
 		}
@@ -95,13 +105,29 @@ public class OperateActionTest extends WebBaseTestCase {
 		assertThat(ar.isSuccess(), is(true));
 	}
 
+	private List<Auto_fetch_res> getAuto_fetch_res() {
+		List<Auto_fetch_res> auto_fetch_resList = new ArrayList<>();
+		for (int i = 0; i < getAuto_tp_res_sets().size(); i++) {
+			Auto_tp_res_set auto_tp_res_set = getAuto_tp_res_sets().get(i);
+			Auto_fetch_res auto_fetch_res = new Auto_fetch_res();
+			auto_fetch_res.setFetch_res_id(FETCH_RES_ID + i);
+			auto_fetch_res.setShow_num(i);
+			auto_fetch_res.setFetch_sum_id(FETCH_SUM_ID);
+			auto_fetch_res.setTemplate_res_id(auto_tp_res_set.getTemplate_res_id());
+			auto_fetch_res.setFetch_res_name(auto_tp_res_set.getRes_show_column());
+			auto_fetch_resList.add(auto_fetch_res);
+		}
+		return auto_fetch_resList;
+	}
+
 	private List<Auto_fetch_cond> getAuto_fetch_conds() {
 		List<Auto_fetch_cond> auto_fetch_conds = new ArrayList<>();
-		for (Auto_tp_cond_info auto_tp_cond_info : getAuto_tp_cond_infos()) {
+		for (int i = 0; i < getAuto_tp_cond_infos().size(); i++) {
+			Auto_tp_cond_info auto_tp_cond_info = getAuto_tp_cond_infos().get(i);
 			Auto_fetch_cond auto_fetch_cond = new Auto_fetch_cond();
 			auto_fetch_cond.setFetch_sum_id(FETCH_SUM_ID);
 			auto_fetch_cond.setTemplate_cond_id(auto_tp_cond_info.getTemplate_cond_id());
-			auto_fetch_cond.setFetch_cond_id(PrimayKeyGener.getNextId());
+			auto_fetch_cond.setFetch_cond_id(FETCH_COND_ID + i);
 			auto_fetch_cond.setCond_value(auto_tp_cond_info.getPre_value());
 			auto_fetch_conds.add(auto_fetch_cond);
 		}
@@ -112,7 +138,7 @@ public class OperateActionTest extends WebBaseTestCase {
 		List<Auto_tp_cond_info> autoTpCondInfoList = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
 			Auto_tp_cond_info autoTpCondInfo = new Auto_tp_cond_info();
-			autoTpCondInfo.setTemplate_cond_id(PrimayKeyGener.getNextId());
+			autoTpCondInfo.setTemplate_cond_id(TEMPLATE_COND_ID + i);
 			autoTpCondInfo.setTemplate_id(TEMPLATE_ID);
 			autoTpCondInfo.setIs_dept_id(IsFlag.Fou.getCode());
 			autoTpCondInfo.setValue_size("64");
@@ -141,7 +167,7 @@ public class OperateActionTest extends WebBaseTestCase {
 		for (int i = 0; i < 3; i++) {
 			Auto_tp_res_set auto_tp_res_set = new Auto_tp_res_set();
 			auto_tp_res_set.setTemplate_id(TEMPLATE_ID);
-			auto_tp_res_set.setTemplate_res_id(PrimayKeyGener.getNextId());
+			auto_tp_res_set.setTemplate_res_id(TEMPLATE_RES_ID + i);
 			auto_tp_res_set.setSource_table_name("dhw_tpcds_item");
 			auto_tp_res_set.setIs_dese(IsFlag.Fou.getCode());
 			auto_tp_res_set.setCreate_date(DateUtil.getSysDate());
@@ -195,6 +221,8 @@ public class OperateActionTest extends WebBaseTestCase {
 		for (int i = 0; i < 2; i++) {
 			Auto_tp_info auto_tp_info = new Auto_tp_info();
 			auto_tp_info.setTemplate_id(TEMPLATE_ID + i);
+			String TEMPLATE_SQL = "SELECT I_ITEM_SK,I_ITEM_ID,I_ITEM_DESC FROM DHW_TPCDS_ITEM"
+					+ " WHERE I_CURRENT_PRICE BETWEEN 76 AND 76 + 30 AND I_ITEM_SK > 0";
 			auto_tp_info.setTemplate_sql(TEMPLATE_SQL);
 			auto_tp_info.setTemplate_desc("自主取数已发布模板");
 			auto_tp_info.setTemplate_status(AutoTemplateStatus.FaBu.getCode());
@@ -399,8 +427,7 @@ public class OperateActionTest extends WebBaseTestCase {
 	}
 
 	@Method(desc = "获取自主取数选择历史信息", logicStep = "1.正确的数据访问1，template_id存在" +
-			"2.错误的数据访问1，template_id不存在" +
-			"")
+			"2.错误的数据访问1，template_id不存在")
 	@Test
 	public void getAccessSelectHistory() {
 		// 1.正确的数据访问1，template_id存在
@@ -429,69 +456,343 @@ public class OperateActionTest extends WebBaseTestCase {
 		assertThat(auto_fetch_sums.size(), is(0));
 	}
 
-	@Method(desc = "通过选择历史情况获取之前的条件", logicStep = "")
+	@Method(desc = "通过选择历史情况获取之前的条件", logicStep = "1.正确的数据访问1，fetch_sum_id存在" +
+			"2.错误的数据访问1，fetch_sum_id不存在")
 	@Test
 	public void getAccessCondFromHistory() {
-		// 1.正确的数据访问1，template_id存在
+		// 1.正确的数据访问1，fetch_sum_id存在
 		String bodyString = new HttpClient()
-				.addData("template_id", TEMPLATE_ID)
+				.addData("fetch_sum_id", FETCH_SUM_ID)
 				.post(getActionUrl("getAccessCondFromHistory"))
 				.getBodyString();
 		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
 				.orElseThrow(() -> new BusinessException("连接失败"));
 		assertThat(ar.isSuccess(), is(true));
+		List<Map<String, Object>> accessCondList = JsonUtil.toObject(JsonUtil.toJson(ar.getData()),
+				new TypeReference<List<Map<String, Object>>>() {
+				}.getType());
+		List<String> condValueList = accessCondList.stream().map(map -> map.get("cond_value").toString())
+				.collect(Collectors.toList());
+		assertThat(condValueList.contains(String.valueOf(0)), is(true));
+		assertThat(condValueList.contains("76,76 + 30"), is(true));
+		// 2.错误的数据访问1，fetch_sum_id不存在
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", "-1111")
+				.post(getActionUrl("getAccessCondFromHistory"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		accessCondList = JsonUtil.toObject(JsonUtil.toJson(ar.getData()),
+				new TypeReference<List<Map<String, Object>>>() {
+				}.getType());
+		assertThat(accessCondList.size(), is(0));
 	}
 
+	@Method(desc = "通过选择历史情况获取之前的条件", logicStep = "1.正确的数据访问1，fetch_sum_id存在" +
+			"2.错误的数据访问1，fetch_sum_id不存在")
 	@Test
 	public void getAccessResultFromHistory() {
+		// 1.正确的数据访问1，fetch_sum_id存在
+		String bodyString = new HttpClient()
+				.addData("fetch_sum_id", FETCH_SUM_ID)
+				.post(getActionUrl("getAccessResultFromHistory"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		List<Map<String, Object>> accessResList = JsonUtil.toObject(JsonUtil.toJson(ar.getData()),
+				new TypeReference<List<Map<String, Object>>>() {
+				}.getType());
+		List<String> resShowColumnList = accessResList.stream().map(map -> map.get("res_show_column").toString())
+				.collect(Collectors.toList());
+		assertThat(resShowColumnList.contains("i_item_id"), is(true));
+		assertThat(resShowColumnList.contains("i_item_sk"), is(true));
+		assertThat(resShowColumnList.contains("i_item_desc"), is(true));
+		// 2.错误的数据访问1，fetch_sum_id不存在
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", "-1111")
+				.post(getActionUrl("getAccessResultFromHistory"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		accessResList = JsonUtil.toObject(JsonUtil.toJson(ar.getData()),
+				new TypeReference<List<Map<String, Object>>>() {
+				}.getType());
+		assertThat(accessResList.size(), is(0));
 	}
 
+	@Method(desc = "获取自主取数清单查询结果", logicStep = "1.正确的数据访问1，fetch_sum_id存在" +
+			"2.错误的数据访问1，fetch_sum_id不存在")
 	@Test
 	public void getAutoAccessQueryResult() {
+		// 1.正确的数据访问1，fetch_sum_id存在
+		String bodyString = new HttpClient()
+				.addData("fetch_sum_id", FETCH_SUM_ID)
+				.post(getActionUrl("getAutoAccessQueryResult"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 2.错误的数据访问1，fetch_sum_id不存在
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", "-1111")
+				.post(getActionUrl("getAutoAccessQueryResult"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "获取自主取数清单查询结果", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.错误的数据访问1，template_id不存在")
 	@Test
 	public void saveAutoAccessInfoToQuery() {
+		Auto_fetch_sum auto_fetch_sum = new Auto_fetch_sum();
+		auto_fetch_sum.setTemplate_id(TEMPLATE_ID);
+		auto_fetch_sum.setFetch_name("自主取数取数汇总测试" + THREAD_ID);
+		auto_fetch_sum.setFetch_status(AutoFetchStatus.BianJi.getCode());
+		auto_fetch_sum.setCreate_user(TEST_USER_ID);
+		auto_fetch_sum.setCreate_date(DateUtil.getSysDate());
+		auto_fetch_sum.setCreate_time(DateUtil.getSysTime());
+		auto_fetch_sum.setFetch_desc("自主取数取数汇总测试");
+		// 1.正确的数据访问1，数据都有效
+		String bodyString = new HttpClient()
+				.addData("auto_fetch_sum", auto_fetch_sum)
+				.addData("autoTpCondInfos", JsonUtil.toJson(getAuto_tp_cond_infos()))
+				.addData("autoFetchRes", JsonUtil.toJson(getAutoFetchResList()))
+				.post(getActionUrl("saveAutoAccessInfoToQuery"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 2.错误的数据访问1，template_id为空
+		auto_fetch_sum = new Auto_fetch_sum();
+		auto_fetch_sum.setFetch_name("自主取数取数汇总测试" + THREAD_ID);
+		auto_fetch_sum.setFetch_status(AutoFetchStatus.BianJi.getCode());
+		auto_fetch_sum.setCreate_user(TEST_USER_ID);
+		auto_fetch_sum.setCreate_date(DateUtil.getSysDate());
+		auto_fetch_sum.setCreate_time(DateUtil.getSysTime());
+		auto_fetch_sum.setFetch_desc("自主取数取数汇总测试");
+		bodyString = new HttpClient()
+				.addData("auto_fetch_sum", auto_fetch_sum)
+				.addData("autoTpCondInfos", JsonUtil.toJson(getAuto_tp_cond_infos()))
+				.addData("autoFetchRes", JsonUtil.toJson(getAutoFetchResList()))
+				.post(getActionUrl("saveAutoAccessInfoToQuery"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	private List<Auto_fetch_res> getAutoFetchResList() {
+		List<Auto_fetch_res> auto_fetch_resList = new ArrayList<>();
+		for (int i = 0; i < getAuto_tp_res_sets().size(); i++) {
+			Auto_tp_res_set auto_tp_res_set = getAuto_tp_res_sets().get(i);
+			Auto_fetch_res auto_fetch_res = new Auto_fetch_res();
+			auto_fetch_res.setShow_num(i + 1);
+			auto_fetch_res.setFetch_sum_id(FETCH_SUM_ID);
+			auto_fetch_res.setTemplate_res_id(auto_tp_res_set.getTemplate_res_id());
+			auto_fetch_res.setFetch_res_name(auto_tp_res_set.getRes_show_column());
+			auto_fetch_resList.add(auto_fetch_res);
+		}
+		return auto_fetch_resList;
+	}
+
+	@Method(desc = "保存自主取数信息", logicStep = "1.正确的数据访问1，数据都有效" +
+			"2.错误的数据访问1，fetch_sum_id为空" +
+			"3.错误的数据访问2，template_id为空" +
+			"4.错误的数据访问3，fetch_name为空")
 	@Test
 	public void saveAutoAccessInfo() {
+		Auto_fetch_sum auto_fetch_sum = new Auto_fetch_sum();
+		auto_fetch_sum.setFetch_sum_id(FETCH_SUM_ID);
+		auto_fetch_sum.setTemplate_id(TEMPLATE_ID);
+		auto_fetch_sum.setFetch_name("保存自主取数汇总测试" + THREAD_ID);
+		auto_fetch_sum.setFetch_desc("保存自主取数汇总测试");
+		// 1.正确的数据访问1，数据都有效
+		String bodyString = new HttpClient()
+				.addData("auto_fetch_sum", auto_fetch_sum)
+				.post(getActionUrl("saveAutoAccessInfo"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		try (DatabaseWrapper db = new DatabaseWrapper()) {
+			Auto_fetch_sum autoFetchSum = SqlOperator.queryOneObject(db, Auto_fetch_sum.class,
+					"select * from " + Auto_fetch_sum.TableName + " where fetch_sum_id=?",
+					FETCH_SUM_ID).orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(auto_fetch_sum.getFetch_name(), is(autoFetchSum.getFetch_name()));
+			assertThat(auto_fetch_sum.getTemplate_id(), is(autoFetchSum.getTemplate_id()));
+			assertThat(auto_fetch_sum.getFetch_desc(), is(autoFetchSum.getFetch_desc()));
+
+		}
+		// 2.错误的数据访问1，fetch_sum_id为空
+		auto_fetch_sum = new Auto_fetch_sum();
+		auto_fetch_sum.setTemplate_id(TEMPLATE_ID);
+		auto_fetch_sum.setFetch_name("保存自主取数汇总测试" + THREAD_ID);
+		auto_fetch_sum.setFetch_desc("保存自主取数汇总测试");
+		bodyString = new HttpClient()
+				.addData("auto_fetch_sum", auto_fetch_sum)
+				.post(getActionUrl("saveAutoAccessInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		auto_fetch_sum = new Auto_fetch_sum();
+		auto_fetch_sum.setFetch_sum_id(FETCH_SUM_ID);
+		auto_fetch_sum.setFetch_name("保存自主取数汇总测试" + THREAD_ID);
+		auto_fetch_sum.setFetch_desc("保存自主取数汇总测试");
+		// 3.错误的数据访问2，template_id为空
+		bodyString = new HttpClient()
+				.addData("auto_fetch_sum", auto_fetch_sum)
+				.post(getActionUrl("saveAutoAccessInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
+		// 4.错误的数据访问3，fetch_name为空
+		auto_fetch_sum = new Auto_fetch_sum();
+		auto_fetch_sum.setFetch_sum_id(FETCH_SUM_ID);
+		auto_fetch_sum.setTemplate_id(TEMPLATE_ID);
+		auto_fetch_sum.setFetch_desc("保存自主取数汇总测试");
+		bodyString = new HttpClient()
+				.addData("auto_fetch_sum", auto_fetch_sum)
+				.post(getActionUrl("saveAutoAccessInfo"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "查看取数sql", logicStep = "1.正确的数据访问1，fetch_sum_id不为空" +
+			"2.错误的数据访问1，fetch_sum_id为空")
 	@Test
 	public void getAccessSql() {
+		// 1.正确的数据访问1，fetch_sum_id不为空
+		String bodyString = new HttpClient()
+				.addData("fetch_sum_id", FETCH_SUM_ID)
+				.post(getActionUrl("getAccessSql"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		assertThat(ar.getData().toString(), is(FETCH_SQL));
+		// 2.错误的数据访问1，fetch_sum_id为空
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", "-111")
+				.post(getActionUrl("getAccessSql"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
+	@Method(desc = "查询我的取数信息", logicStep = "1.正确的数据访问1" +
+			"备注：只有一种情况")
 	@Test
 	public void getMyAccessInfo() {
+		// 1.正确的数据访问1
+		String bodyString = new HttpClient()
+				.post(getActionUrl("getMyAccessInfo"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		List<Auto_fetch_sum> auto_fetch_sums = ar.getDataForEntityList(Auto_fetch_sum.class);
+		List<Auto_fetch_sum> autoFetchSums = getAuto_fetch_sums();
+		assertThat(auto_fetch_sums.retainAll(autoFetchSums), is(true));
 	}
 
+	@Method(desc = "查询我的取数信息", logicStep = "1.正确的数据访问1,fetch_name存在" +
+			"2.错误的数据访问1，fetch_name不存在")
 	@Test
 	public void getMyAccessInfoByName() {
+		// 1.正确的数据访问1,fetch_name存在
+		String bodyString = new HttpClient()
+				.addData("fetch_name", "自主取数取数汇总测试")
+				.post(getActionUrl("getMyAccessInfoByName"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		List<Auto_fetch_sum> auto_fetch_sums = ar.getDataForEntityList(Auto_fetch_sum.class);
+		List<Auto_fetch_sum> autoFetchSums = getAuto_fetch_sums();
+		assertThat(auto_fetch_sums.retainAll(autoFetchSums), is(true));
+		// 2.错误的数据访问1，fetch_name不存在
+		bodyString = new HttpClient()
+				.addData("fetch_name", "-aaaa")
+				.post(getActionUrl("getMyAccessInfoByName"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		auto_fetch_sums = ar.getDataForEntityList(Auto_fetch_sum.class);
+		assertThat(auto_fetch_sums.size(), is(0));
+
 	}
 
+	@Method(desc = "查询我的取数信息", logicStep = "1.正确的数据访问1,fetch_sum_id存在" +
+			"2.错误的数据访问1，fetch_sum_id不存在")
 	@Test
 	public void getMyAccessInfoById() {
+		// 1.正确的数据访问1,fetch_sum_id存在
+		String bodyString = new HttpClient()
+				.addData("fetch_sum_id", FETCH_SUM_ID)
+				.post(getActionUrl("getMyAccessInfoById"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		Auto_fetch_sum auto_fetch_sum = JsonUtil.toObject(JsonUtil.toJson(ar.getData()),
+				new TypeReference<Auto_fetch_sum>() {
+				}.getType());
+		assertThat(auto_fetch_sum.getFetch_name(), is("自主取数取数汇总测试0" + THREAD_ID));
+		assertThat(auto_fetch_sum.getFetch_sql(), is(FETCH_SQL));
+		assertThat(auto_fetch_sum.getFetch_desc(), is("自主取数取数汇总测试"));
+		assertThat(auto_fetch_sum.getFetch_status(), is(AutoFetchStatus.BianJi.getCode()));
+		assertThat(auto_fetch_sum.getCreate_user(), is(TEST_USER_ID));
+		// 2.错误的数据访问1,fetch_sum_id不存在
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", "-111")
+				.post(getActionUrl("getMyAccessInfoById"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.getDataForMap().isEmpty(), is(true));
 	}
 
+	@Method(desc = "取数时清单查询", logicStep = "1.正确的数据访问1,showNum为空" +
+			"2.正确的数据访问2,showNum不为空" +
+			"3.错误的数据访问1,fetch_sum_id不存在")
 	@Test
 	public void getAccessResultByNumber() {
-	}
-
-	@Test
-	public void getVisualComponentInfo() {
-	}
-
-	@Test
-	public void getTAutoDataTableName() {
-	}
-
-	@Test
-	public void getColumnByName() {
-	}
-
-	@Test
-	public void getVisualComponentInfoById() {
+		// 1.正确的数据访问1,showNum为空
+		String bodyString = new HttpClient()
+				.addData("fetch_sum_id", FETCH_SUM_ID)
+				.post(getActionUrl("getAccessResultByNumber"))
+				.getBodyString();
+		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 2.正确的数据访问2,showNum不为空
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", FETCH_SUM_ID)
+				.addData("showNum", 100)
+				.post(getActionUrl("getAccessResultByNumber"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(true));
+		// 3.错误的数据访问1,fetch_sum_id不存在
+		bodyString = new HttpClient()
+				.addData("fetch_sum_id", "-111")
+				.post(getActionUrl("getAccessResultByNumber"))
+				.getBodyString();
+		ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+				.orElseThrow(() -> new BusinessException("连接失败"));
+		assertThat(ar.isSuccess(), is(false));
 	}
 
 	@After
@@ -541,12 +842,45 @@ public class OperateActionTest extends WebBaseTestCase {
 					TEMPLATE_ID)
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
 			assertThat(num, is(0L));
-			// 5.删除auto_tp_cond_info表测试数据
+			// 5.删除Auto_fetch_cond表测试数据
 			SqlOperator.execute(db, "delete from " + Auto_fetch_cond.TableName + " where fetch_sum_id=?",
 					FETCH_SUM_ID);
 			num = SqlOperator.queryNumber(db,
 					"select count(*) from " + Auto_fetch_cond.TableName + " where fetch_sum_id =?",
 					FETCH_SUM_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			// 6.删除Auto_fetch_res表测试数据
+			SqlOperator.execute(db, "delete from " + Auto_fetch_res.TableName + " where fetch_sum_id=?",
+					FETCH_SUM_ID);
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Auto_fetch_res.TableName + " where fetch_sum_id =?",
+					FETCH_SUM_ID)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			// 6.删除新增测试数据
+			SqlOperator.execute(db,
+					"delete from " + Auto_fetch_res.TableName + " where template_res_id in (?,?,?)",
+					TEMPLATE_RES_ID, TEMPLATE_RES_ID + 1, TEMPLATE_RES_ID + 2);
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Auto_fetch_res.TableName + " where template_res_id in (?,?,?)",
+					TEMPLATE_RES_ID, TEMPLATE_RES_ID + 1, TEMPLATE_RES_ID + 2)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			SqlOperator.execute(db,
+					"delete from " + Auto_fetch_cond.TableName + " where template_cond_id in (?,?)",
+					TEMPLATE_COND_ID, TEMPLATE_COND_ID + 1);
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Auto_fetch_cond.TableName + " where template_cond_id in (?,?)",
+					TEMPLATE_COND_ID, TEMPLATE_COND_ID + 1)
+					.orElseThrow(() -> new BusinessException("sql查询错误"));
+			assertThat(num, is(0L));
+			SqlOperator.execute(db,
+					"delete from " + Auto_fetch_sum.TableName + " where template_id =?",
+					TEMPLATE_ID);
+			num = SqlOperator.queryNumber(db,
+					"select count(*) from " + Auto_fetch_sum.TableName + " where template_id =?",
+					TEMPLATE_ID)
 					.orElseThrow(() -> new BusinessException("sql查询错误"));
 			assertThat(num, is(0L));
 			// 提交事务

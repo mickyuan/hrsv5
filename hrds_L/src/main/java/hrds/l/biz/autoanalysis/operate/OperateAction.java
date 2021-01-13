@@ -458,7 +458,7 @@ public class OperateAction extends BaseAction {
 		// 数据可访问权限处理方式，该方法不需要进行权限控制
 		// 1.模糊查询我的取数信息
 		return Dbo.queryList(
-				"select * from " + Auto_fetch_sum.TableName + " where user_id = ? and fetch_name like ?"
+				"select * from " + Auto_fetch_sum.TableName + " where create_user = ? and fetch_name like ?"
 						+ " order by create_date desc,create_time desc",
 				getUserId(), "%" + fetch_name + "%");
 	}
