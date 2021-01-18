@@ -36,7 +36,7 @@ public class HyFDMain {
 	public static void executeFd(AlgorithmsConf algorithmsConf) throws IOException {
 		SparkConf sparkConf = new SparkConf().setAppName("DistributedHybridFD").setMaster("local[*]");
 		sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-		sparkConf.set("spark.kryoserializer.buffer.mb", "1024");
+		sparkConf.set("spark.kryoserializer.buffer.max", "1024m");
 
 		JavaSparkContext sc = new JavaSparkContext(sparkConf);
 		SparkSession spark = SparkSession
@@ -101,7 +101,6 @@ public class HyFDMain {
 		DistributedHyFD.numberAttributes = DistributedHyFD.columnNames.length;
 		DistributedHyFD.datasetFile = algorithmsConf.getInputFilePath();
 		DistributedHyFD.outputFile = algorithmsConf.getOutputFilePath() + Constant.HYFD_RESULT_PATH_NAME;
-		;
 
 		DistributedHyFD.numPartitions = algorithmsConf.getNumPartition();
 		DistributedHyFD.batchSize = algorithmsConf.getBatchSize();

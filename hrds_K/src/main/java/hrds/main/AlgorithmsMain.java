@@ -2,16 +2,15 @@ package hrds.main;
 
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.netclient.http.HttpClient;
 import fd.ng.web.action.ActionResult;
-import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.collection.ConnectionTool;
 import hrds.commons.entity.Dbm_analysis_conf_tab;
 import hrds.commons.entity.Dbm_analysis_schedule_tab;
 import hrds.commons.exception.AppSystemException;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.CommonVariables;
 import hrds.commons.utils.Constant;
 import hrds.commons.utils.PropertyParaValue;
@@ -29,174 +28,130 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.*;
 import java.util.stream.Stream;
 
 public class AlgorithmsMain {
 	//打印日志
 	private static final Logger LOGGER = LogManager.getLogger();
-	private static final Map<String, String> layerAttr = new HashMap<>();
-
-	static {
-		layerAttr.put("ip", "168.168.112.54");
-		layerAttr.put("port", "1521");
-		layerAttr.put(StorageTypeKey.database_driver, "oracle.jdbc.driver.OracleDriver");
-		layerAttr.put(StorageTypeKey.jdbc_url, "jdbc:oracle:thin:@168.168.112.54:1521:ORCL");
-		layerAttr.put(StorageTypeKey.user_name, "hyshf");
-		layerAttr.put(StorageTypeKey.database_pwd, "hyshf");
-		layerAttr.put(StorageTypeKey.database_name, "HYSHF");
-		layerAttr.put(StorageTypeKey.database_type, DatabaseType.Oracle10g.getCode());
-
-//		layerAttr.put("ip", "10.180.5.230");
-//		layerAttr.put("port", "11254");
-//		layerAttr.put(StorageTypeKey.database_driver, "oracle.jdbc.driver.OracleDriver");
-//		layerAttr.put(StorageTypeKey.jdbc_url, "jdbc:oracle:thin:@10.180.5.230:11254:ORCL");
-//		layerAttr.put(StorageTypeKey.user_name, "hyshf");
-//		layerAttr.put(StorageTypeKey.database_pwd, "hyshf");
-//		layerAttr.put(StorageTypeKey.database_name, "HYSHF");
-//		layerAttr.put(StorageTypeKey.database_type, DatabaseType.Oracle10g.getCode());
-	}
+	public static final Map<String, String> layerAttr = new HashMap<>();
 
 	public static void main(String[] args) throws Exception {
+		if (args.length < 6) {
+			LOGGER.info("请填写必要参数；参数一：需要分析的表名称的文件全路径；参数二：数据库的连接方式的文件全路径；" +
+					"参数三：系统分类编码的名称；参数四：需要进行哪些步骤的分析，多个用英文逗号隔开，如：1,2,3,4,5,6(1：字段特征分析，" +
+					"2：函数依赖，3：主键分析，4：单一/联合外键分析，5：维度划分，6：相等类别分析)；参数五：是否重新生成进度表（true或者false）；" +
+					"参数六：函数依赖需要跳过的表名称的文件全路径");
+			return;
+		}
+		//获取所有要分析的表
 		List<String> tableList = readTextFile(args[0]);
+		//获取需要分析的库的连接方式
+		setDataBaseProperties(args[1]);
 		Set<String> validTableSet = new HashSet<>();
+		ResultSet resultSet = null;
+		PreparedStatement curPstmt = null;
+		Connection connection = null;
 		//判断表数据量是否大于10，这里后面是统一配置
-		for (String table : tableList) {
-			try (DatabaseWrapper databaseWrapper = ConnectionTool.getDBWrapper(layerAttr)) {
-				ResultSet resultSet = databaseWrapper.queryGetResultSet("select count(1) as valid_num from "
-						+ table + " where rownum <= 10");
-				while (resultSet.next()) {
-					int valid_num = resultSet.getInt("valid_num");
-					if (valid_num > 5) {
-						validTableSet.add(table);
+		try {
+			connection = ConnectionTool.getDBWrapper(layerAttr).getConnection();
+			for (String table : tableList) {
+				if (!StringUtil.isEmpty(table)) {
+					curPstmt = connection.prepareStatement("select count(1) as valid_num from "
+							+ table + " where rownum <= 10");
+					resultSet = curPstmt.executeQuery();
+					while (resultSet.next()) {
+						int valid_num = resultSet.getInt("valid_num");
+						if (valid_num > 5) {
+							validTableSet.add(table);
+						}
 					}
+					resultSet.close();
+					curPstmt.close();
 				}
 			}
+		} finally {
+			if (resultSet != null)
+				resultSet.close();
+			if (curPstmt != null)
+				curPstmt.close();
+			if (connection != null)
+				connection.close();
 		}
-		runAlgorithms(validTableSet, args[1]);
+		//获取函数依赖需要跳过分析的表
+		List<String> jumpTableList = readTextFile(args[5]);
+		runAlgorithms(validTableSet, args[2], args[3].split(","), Boolean.parseBoolean(args[4]), jumpTableList);
 	}
 
-	private static void runAlgorithms(Set<String> tableList, String sys_class_code) throws Exception {
+	private static void runAlgorithms(Set<String> tableList, String sys_class_code,
+									  String[] checkList, boolean flag, List<String> jumpTableList) {
 		//数据校验
 		if (tableList.size() == 0) {
 			throw new AppSystemException("表信息列表不能为空!");
 		}
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//保存数据分析配置表、分析进度表
-			saveDbmAnalysisConfAndScheduleTab(tableList, sys_class_code, db);
-//			String[] checkList = {"4"};
-//			String[] checkList = {"6"};
-			String[] checkList = {"1", "2", "3", "4", "5", "6"};
+			if (flag) {
+				saveDbmAnalysisConfAndScheduleTab(tableList, sys_class_code, db);
+			}
 			//调用数据对标接口或代码
 			for (String code : checkList) {
 				//遍历所有要进行数据对标的表
-				for (String tableName : tableList) {
-					//需要分析表所在存储层连接属性
-					//获取表字段信息
-					List<String> columnList = getTableColumns(tableName);
-					//将该表的信息配置填充到Conf
-					AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code, columnList);
-					//序列化algorithmsConf类的数据到临时文件夹
-					FileUtils.write(new File(Constant.ALGORITHMS_CONF_SERIALIZE_PATH
-									+ algorithmsConf.getTable_name()), JSONObject.toJSONString(algorithmsConf),
-							StandardCharsets.UTF_8, false);
-					switch (code) {
-						case "1":
-							//字段特征分析
-							analysis_feature(sys_class_code, algorithmsConf.getTable_name());
-							break;
-						case "2":
-//							List<String> tables = StringUtil.split("S10_I_AGENT_ACCOUNTS,S10_I_AGENT_ACCOUNTS_RECORD," +
-//									"S10_I_ATTACHMENT_FILES,S10_I_AUDIT_VALUATE_COND,S10_I_AUDIT_VALUATE_COND_OPER," +
-//									"S10_I_BILL_APP_DETAIL,S10_I_BILL_APP_RANGE,S10_I_BILL_BASE_INFO,S10_I_BILL_REPAIR_INFO," +
-//									"S10_I_BLUEPRINT,S10_I_BLUEPRINT_DRAFT,S10_I_CHECK_RESULT_NOT_BALANCE,S10_I_CHOU_ACCT," +
-//									"S10_I_CHOU_ACCT_WATER,S10_I_CODE_INFO,S10_I_CPA,S10_I_CPA_HOC,S10_I_CPA_REPORT," +
-//									"S10_I_CPA_SECT_DETAIL,S10_I_CPA_SUM,S10_I_CPAY_DETAIL,S10_I_CPAY_SUM,S10_I_CSP,S10_I_CSP_SECT," +
-//									"S10_I_CTRADE,S10_I_CTRANIN_UNIT_DETAIL,S10_I_CTRANOUT_HOU_DETAIL,S10_I_CTRANSFER_SUM," +
-//									"S10_I_CUNIT,S10_I_CUNIT_ACCT_WATER,S10_I_DEV,S10_I_DIR,S10_I_EASTIMATE_CONTRACT," +
-//									"S10_I_EASTIMATE_ORG,S10_I_EASTIMATE_REPORT,S10_I_ESCONTRACT_ITEM,S10_I_ESREPORT_ORGN," +
-//									"S10_I_GROUND,S10_I_HOC,S10_I_HOCACCPUBINFO_NEW,S10_I_HOC_ACCT,S10_I_HOCACCTSUM_NEW," +
-//									"S10_I_HOC_ACOUNNT_RELATION,S10_I_HOCACTCSPMFPAYDETAIL,S10_I_HOCACTHOCSMFPAYDETAIL," +
-//									"S10_I_HOCACTMFEARNDETAILREF,S10_I_HOCARREARAGETOT,S10_I_HOC_DOC_HISTORY,S10_I_HOCMFPAYOUTDETAIL," +
-//									"S10_I_HOCMFPAYOUTDETAIL_OTHER,S10_I_HOCPUBACCOUNT_CONTENT,S10_I_HOCPUBINCMSUM," +
-//									"S10_I_HOCPUBINCMSUM1,S10_I_HOCPUBINCOME,S10_I_HOCPUBINCOME1,S10_I_HOCPUBLNCFORDETAIL," +
-//									"S10_I_HOCTIMEDEPOSITTAKENREF,S10_I_HOCTIMEDEPOSITUNTAKENREF,S10_I_HOCVOTEPROMFPAYDETAIL," +
-//									"S10_I_HOCWORKFUNDFORDETAIL,S10_I_HOU_NOTION_SUM,S10_I_HPB,S10_I_HPB_OFF,S10_I_INCREMENT_HOC_ACCT," +
-//									"S10_I_INCREMENT_HOC_WATER,S10_I_INCREMENT_HOU_WATER,S10_I_INCREMENT_INFO,S10_I_INCREMENT_OWNER_ACCT," +
-//									"S10_I_INCREMENT_TAKEN_DETAIL,S10_I_INCREMENT_VOUCHER,S10_I_INSTALLATION_POSITION," +
-//									"S10_I_M_APP_RANGE,S10_I_M_OBJECT_ATTR,S10_I_M_OBJECT_ATTR_OPER,S10_I_M_OBJECT_ITEM," +
-//									"S10_I_M_OBJECT_TYPE,S10_I_MO_TYPE_ATTR,S10_I_M_PROJECT_ITEM,S10_I_M_PROJECT_MO,S10_I_M_REPAIR_OBJECT," +
-//									"S10_I_OHOC_WATER,S10_I_OHOU_ACCT,S10_I_OHOU_WATER,S10_I_OHOU_WATER_O2O,S10_I_OPAY_SUM,S10_I_OPR_DETAIL," +
-//									"S10_I_OTRADE,S10_I_OUNIT,S10_I_PRO,S10_I_PRO_ACCT,S10_I_PRO_ACCT_WATER,S10_I_PROJECT_CONTRACT," +
-//									"S10_I_PRO_LICENCE,S10_I_PUB_APP_DETAIL,S10_I_PUB_APP_SUM,S10_I_PUB_BILL_DRAW_DETAIL," +
-//									"S10_I_PUBFUNDS_CI,S10_I_PUB_FUNDS_CI_RECORD,S10_I_PUB_ITEM_DETAIL,S10_I_PUB_PRDETAIL," +
-//									"S10_I_RESOLUTION_INFO,S10_I_SD_HOC,S10_I_TELLERS,S10_I_T_WORKSPACE,S10_I_UNITFUNDFORSUM," +
-//									"S10_I_UNITFUNDPAYOUTDETAIL,S10_I_UNITFUNDPAYOUTDETAIL_OTH,S10_I_WEEK_REPORT,S10_I_WS_PROJECT," +
-//									"S10_I_WS_PROJECT_REPORT,S20_I_BXDZ,S20_I_BXDZGL,S20_I_DYBW,S20_I_FH,S20_I_GXRQ,S20_I_JD," +
-//									"S20_I_JF,S20_I_JTGS,S20_I_JTWYGX,S20_I_MPZ,S20_I_QX,S20_I_WYGLC,S20_I_WYGS,S20_I_XQ,S20_I_XQJL," +
-//									"S20_I_YWH,S20_I_ZRZ,S30_I_ATTACHMENTS,S30_I_CHECK_BIZ,S30_I_CHECK_BIZ_RESULT_ITEM," +
-//									"S30_I_CHECK_BIZ_RESULT_SUM,S30_I_CHECK_BIZ_USE_QUOTA_INFO,S30_I_CHECK_CREDIT_RELATE," +
-//									"S30_I_CHECK_QUOTA,S30_I_CHECK_QUOTA_ORG_RELATE,S30_I_CHECK_WAY_SECT,S30_I_CODE_INFO," +
-//									"S30_I_COMEFROM,S30_I_COMMITTEE,S30_I_COMMUNITYCATEGORY,S30_I_CSP,S30_I_CSP_INFO_COLLECT," +
-//									"S30_I_CSP_SECT,S30_I_CSP_SECT_MANGER,S30_I_CX_APPEAL_AUDIT,S30_I_CX_CREDIT_DOCUMENT," +
-//									"S30_I_CX_CREDIT_SCORE,S30_I_CX_CREDIT_SCORE_QUOTA,S30_I_CX_CSM_SCORE,S30_I_CX_CSP_SCORE," +
-//									"S30_I_CX_SCORE_DETAIL,S30_I_DEV,S30_I_DIR,S30_I_DTSB_ELEVATOR,S30_I_DTSB_M_REPAIR_OBJECT," +
-//									"S30_I_ELEVATOR,S30_I_GROUP_FEE,S30_I_HOC,S30_I_HOU,S30_I_HOU_RELATION,S30_I_HPB," +
-//									"S30_I_HPB_OFF,S30_I_INDEXS,S30_I_INGLE,S30_I_INGLE_CSP,S30_I_INGLE_TYPE," +
-//									"S30_I_INSPECTOR_TEAM,S30_I_LOOP,S30_I_MODETEMP,S30_I_NR_ELEVATOR,S30_I_NR_MONITORING_EQUIPMENT," +
-//									"S30_I_NR_PUMP,S30_I_NR_SATELLITE_INFO,S30_I_NR_SECT,S30_I_NR_UNIT,S30_I_OPER_CX_CREDIT_DOCUMENT," +
-//									"S30_I_OPER_RECTIFICATION_SUM,S30_I_OPER_RESULT_QUOTA_ITEMS,S30_I_OPER_SECT_PACT_SUM," +
-//									"S30_I_ORDER_INFO,S30_I_ORG_INFO,S30_I_PARKING_RATE,S30_I_QCMANAGEMENT,S30_I_QUOTA_ITEMS," +
-//									"S30_I_REALTY_GROUP,S30_I_RECTIFICATION_SUM,S30_I_REPORTSOURCE,S30_I_RESULT_COMPLAINTS_ITEMS," +
-//									"S30_I_RESULT_QUOTA_ITEMS,S30_I_RP_QUOTA,S30_I_RP_REPORT_ITEM,S30_I_RP_REPORT_MAIN," +
-//									"S30_I_RP_REPORT_TOPIC,S30_I_RP_SECTKIND,S30_I_RP_TOPIC_QUOTA", ",");
-//							if (tables.contains(tableName)) {
-//								LOGGER.info("---------------------函数依赖已经分析过表：" + tableName + "跳过");
-//								continue;
-//							}
-							LOGGER.info("---------------------------------------------开始函数依赖分析表：" + tableName);
-							//函数依赖分析
-							SparkJobRunner.runJob("hrds.k.biz.algorithms.main.HyFDMain",
-									algorithmsConf.getTable_name());
-							ImportHyFdData.importDataToDatabase(algorithmsConf, db);
-							break;
-						case "3":
-							LOGGER.info("---------------------------------------------开始主键分析表：" + tableName);
-							//主键分析
-							SparkJobRunner.runJob("hrds.k.biz.algorithms.main.HyUCCMain",
-									algorithmsConf.getTable_name());
-							ImportHyUCCData.importDataToDatabase(algorithmsConf, db);
-							break;
-						case "4":
-							//单一、联合主键分析
-							//查询表是联合主键还是单一主键
-							if (isJoinPk(sys_class_code, algorithmsConf.getTable_name(), db)) {
-								analyse_joint_fk(sys_class_code);
-							} else {
-								analyse_table_fk(sys_class_code, algorithmsConf.getTable_name());
-							}
-							break;
-						case "5":
-							//维度划分
-							analyse_dim_division();
-							break;
-						case "6":
-							//相等类别分析
-							analyse_dim_cluster(sys_class_code);
-							break;
-					}
+				//需要分析表所在存储层连接属性
+				switch (code) {
+					case "1":
+						//字段特征分析
+						analysis_feature(sys_class_code, tableList);
+						break;
+					case "2":
+						func_dependency_analysis(sys_class_code, tableList, jumpTableList, db);
+						break;
+					case "3":
+						pk_analysis(sys_class_code, tableList, db);
+						break;
+					case "4":
+						//单一外键分析
+						analyse_table_fk(sys_class_code, tableList, db);
+						//联合外键分析
+						if (isJoinPk(sys_class_code, db)) {
+							LOGGER.info("---------------------------------------------开始联合外键分析");
+							analyse_joint_fk(sys_class_code);
+						}
+						break;
+					case "5":
+						//最后进行维度划分
+						LOGGER.info("---------------------------------------------开始进行维度划分");
+						analyse_dim_division();
+					case "6":
+						//最后进行相等类别分析
+						LOGGER.info("---------------------------------------------开始进行相等类别分析");
+						analyse_dim_cluster(sys_class_code);
 				}
-
 			}
 		}
 	}
 
-	private static boolean isJoinPk(String dsl_name, String table_name, DatabaseWrapper db) throws Exception {
-		ResultSet resultSet = db.queryGetResultSet("select * from dbm_joint_pk_tab where " +
-				"sys_class_code = ? and table_code = ?", dsl_name, table_name);
-		return resultSet.next();
+	private static boolean isJoinPk(String dsl_name, DatabaseWrapper db) {
+		try {
+			ResultSet resultSet = db.queryGetResultSet("select * from dbm_joint_pk_tab where " +
+					"sys_class_code = ? ", dsl_name);
+			return resultSet.next();
+		} catch (SQLException e) {
+			LOGGER.warn(e);
+		}
+		return false;
+	}
+
+	private static boolean isJoinPk(String dsl_name, DatabaseWrapper db, String table_name) {
+		try {
+			ResultSet resultSet = db.queryGetResultSet("select * from dbm_joint_pk_tab where " +
+					"sys_class_code = ? and table_code = ?", dsl_name, table_name);
+			return resultSet.next();
+		} catch (SQLException e) {
+			LOGGER.warn(e);
+		}
+		return false;
 	}
 
 	public static List<String> readTextFile(String file) {
@@ -207,6 +162,17 @@ public class AlgorithmsMain {
 			e.printStackTrace();
 		}
 		return tables;
+	}
+
+	public static void setDataBaseProperties(String file) {
+		try (Stream<String> stream = Files.lines(Paths.get(file))) {
+			stream.forEach(info -> {
+				String[] split = info.split("=");
+				layerAttr.put(split[0], split[1]);
+			});//输出重定向
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -255,52 +221,118 @@ public class AlgorithmsMain {
 	/**
 	 * 分析字段特征
 	 */
-	private static void analysis_feature(String dsl_name, String table_name) {
+	private static void analysis_feature(String dsl_name, Set<String> tableList) {
 		String url = PropertyParaValue.getString("algorithms_python_serve", "http://127.0.0.1:33333/")
 				+ "execute_feature_main";
-		//3、httpClient发送请求并接收响应
-		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("sys_class_code", dsl_name)
-				.addData("table_code", table_name)
-				.addData("etl_date", "")
-				.addData("date_offset", "")
-				.addData("alg", "F5")
-				.addData("layerAttr", JSONObject.toJSONString(layerAttr))
-				.post(url);
-		String bodyString = resVal.getBodyString();
-		//4、根据响应状态码判断响应是否成功
-		ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
-				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
-		//5、若响应不成功，记录日志，并抛出异常告知操作失败
-		if (!ar.isSuccess()) {
-			System.out.println((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
-//			throw new AppSystemException("Agent通讯异常,请检查Agent是否已启动!!!");
+		for (String tableName : tableList) {
+			LOGGER.info("---------------------------------------------开始字段特征分析表: " + tableName);
+			try {
+				//3、httpClient发送请求并接收响应
+				HttpClient.ResponseValue resVal = new HttpClient()
+						.addData("sys_class_code", dsl_name)
+						.addData("table_code", tableName)
+						.addData("etl_date", "")
+						.addData("date_offset", "")
+						.addData("alg", "F5")
+						.addData("layerAttr", JSONObject.toJSONString(layerAttr))
+						.post(url);
+				String bodyString = resVal.getBodyString();
+				//4、根据响应状态码判断响应是否成功
+				ActionResult ar = JsonUtil.toObjectSafety(bodyString, ActionResult.class)
+						.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
+				//5、若响应不成功，记录日志，并抛出异常告知操作失败
+				if (!ar.isSuccess()) {
+					LOGGER.info((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
+				}
+			} catch (Exception e) {
+				LOGGER.warn(tableName + "分析出现错误，跳过");
+			}
+		}
+	}
+
+	/**
+	 * 表内函数依赖分析
+	 */
+	private static void func_dependency_analysis(String sys_class_code, Set<String>
+			tableList, List<String> jumpTableList, DatabaseWrapper db) {
+		for (String tableName : tableList) {
+			LOGGER.info("---------------------------------------------开始函数依赖分析表: " + tableName);
+			try {
+				if (jumpTableList.contains(tableName)) {
+					break;
+				}
+				//获取表字段信息
+				//将该表的信息配置填充到Conf
+				AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code, getTableColumns(tableName));
+				//序列化algorithmsConf类的数据到临时文件夹
+				FileUtils.write(new File(Constant.ALGORITHMS_CONF_SERIALIZE_PATH
+								+ algorithmsConf.getTable_name()), JSONObject.toJSONString(algorithmsConf),
+						StandardCharsets.UTF_8, false);
+				//函数依赖分析
+				SparkJobRunner.runJob("hrds.k.biz.algorithms.main.HyFDMain",
+						algorithmsConf.getTable_name());
+				ImportHyFdData.importDataToDatabase(algorithmsConf, db);
+			} catch (Exception e) {
+				LOGGER.warn(tableName + "分析出现错误，跳过");
+			}
+		}
+	}
+
+	/**
+	 * 主键分析
+	 */
+	private static void pk_analysis(String sys_class_code, Set<String> tableList, DatabaseWrapper db) {
+		for (String tableName : tableList) {
+			LOGGER.info("---------------------------------------------开始主键分析: " + tableName);
+			try {
+				//获取表字段信息
+				//将该表的信息配置填充到Conf
+				AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code, getTableColumns(tableName));
+				//序列化algorithmsConf类的数据到临时文件夹
+				FileUtils.write(new File(Constant.ALGORITHMS_CONF_SERIALIZE_PATH
+								+ algorithmsConf.getTable_name()), JSONObject.toJSONString(algorithmsConf),
+						StandardCharsets.UTF_8, false);
+				//主键分析
+				SparkJobRunner.runJob("hrds.k.biz.algorithms.main.HyUCCMain",
+						algorithmsConf.getTable_name());
+				ImportHyUCCData.importDataToDatabase(algorithmsConf, db);
+			} catch (Exception e) {
+				LOGGER.warn(tableName + "分析出现错误，跳过");
+			}
 		}
 	}
 
 	/**
 	 * 单一外键分析
 	 */
-	private static void analyse_table_fk(String dsl_name, String table_name) {
+	private static void analyse_table_fk(String dsl_name, Set<String> tableList, DatabaseWrapper db) {
 		String url = PropertyParaValue.getString("algorithms_python_serve", "http://127.0.0.1:33333/")
 				+ "execute_analyse_table_fk";
-		//3、httpClient发送请求并接收响应
-		HttpClient.ResponseValue resVal = new HttpClient()
-				.addData("sys_class_code", dsl_name)
-				.addData("table_code", table_name)
-				.addData("start_date", "")
-				.addData("date_offset", "")
-				.addData("mode", dsl_name)
-				.addData("alg", "F5")
-				.addData("layerAttr", JSONObject.toJSONString(layerAttr))
-				.post(url);
-		//4、根据响应状态码判断响应是否成功
-		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
-		//5、若响应不成功，记录日志，并抛出异常告知操作失败
-		if (!ar.isSuccess()) {
-			System.out.println((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
-//			throw new AppSystemException("Agent通讯异常,请检查Agent是否已启动!!!");
+		for (String tableName : tableList) {
+			if (!isJoinPk(dsl_name, db, tableName)) {
+				LOGGER.info("---------------------------------------------开始单一外键分析表: " + tableName);
+				try {
+					//3、httpClient发送请求并接收响应
+					HttpClient.ResponseValue resVal = new HttpClient()
+							.addData("sys_class_code", dsl_name)
+							.addData("table_code", tableName)
+							.addData("start_date", "")
+							.addData("date_offset", "")
+							.addData("mode", dsl_name)
+							.addData("alg", "F5")
+							.addData("layerAttr", JSONObject.toJSONString(layerAttr))
+							.post(url);
+					//4、根据响应状态码判断响应是否成功
+					ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
+							.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
+					//5、若响应不成功，记录日志，并抛出异常告知操作失败
+					if (!ar.isSuccess()) {
+						LOGGER.info((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
+					}
+				} catch (Exception e) {
+					LOGGER.warn(tableName + "单一外键分析出现错误，跳过");
+				}
+			}
 		}
 	}
 
@@ -318,10 +350,10 @@ public class AlgorithmsMain {
 				.post(url);
 		//4、根据响应状态码判断响应是否成功
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+				.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
 		//5、若响应不成功，记录日志，并抛出异常告知操作失败
 		if (!ar.isSuccess()) {
-			System.out.println((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
+			LOGGER.info((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
 //			throw new AppSystemException("Agent通讯异常,请检查Agent是否已启动!!!");
 		}
 	}
@@ -338,10 +370,10 @@ public class AlgorithmsMain {
 				.post(url);
 		//4、根据响应状态码判断响应是否成功
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+				.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
 		//5、若响应不成功，记录日志，并抛出异常告知操作失败
 		if (!ar.isSuccess()) {
-			System.out.println((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
+			LOGGER.info((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
 //			throw new AppSystemException("Agent通讯异常,请检查Agent是否已启动!!!");
 		}
 	}
@@ -359,10 +391,10 @@ public class AlgorithmsMain {
 				.post(url);
 		//4、根据响应状态码判断响应是否成功
 		ActionResult ar = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
-				.orElseThrow(() -> new BusinessException("连接" + url + "服务异常"));
+				.orElseThrow(() -> new AppSystemException("连接" + url + "服务异常"));
 		//5、若响应不成功，记录日志，并抛出异常告知操作失败
 		if (!ar.isSuccess()) {
-			System.out.println((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
+			LOGGER.info((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
 //			throw new AppSystemException("Agent通讯异常,请检查Agent是否已启动!!!");
 		}
 	}
@@ -402,8 +434,8 @@ public class AlgorithmsMain {
 		ResultSet rsColumnInfo;
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(layerAttr)) {
 			DatabaseMetaData dbMeta = db.getConnection().getMetaData();
-			String database = db.getDbtype().getDatabase(db, dbMeta);
-			rsColumnInfo = dbMeta.getColumns(null, database, hyren_name, "%");
+//			String database = db.getDbtype().getDatabase(db, dbMeta);
+			rsColumnInfo = dbMeta.getColumns(null, "%", hyren_name, "%");
 			while (rsColumnInfo.next()) {
 				String colName = rsColumnInfo.getString("COLUMN_NAME");
 				columns.add(colName);

@@ -35,7 +35,7 @@ public class HyUCCMain {
 	public static void executeUCC(AlgorithmsConf algorithmsConf) throws IOException {
 		SparkConf sparkConf = new SparkConf().setAppName("DistributedHybridUCC").setMaster("local[*]");
 		sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-		sparkConf.set("spark.kryoserializer.buffer.mb","1024");
+		sparkConf.set("spark.kryoserializer.buffer.max","1024m");
 		JavaSparkContext sc = new JavaSparkContext(sparkConf);
 		SparkSession spark = SparkSession
 				.builder()

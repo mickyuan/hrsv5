@@ -26,7 +26,7 @@ public class AlgorithmsConf implements Serializable {
 	private Integer numPartition = 56;
 	private Integer batchSize = 56;
 	private Integer validationBatchSize = 5000;
-	private Integer jdbcLimit = 1000000;
+	private Integer jdbcLimit = 1500000;
 
 	@Override
 	public String toString() {

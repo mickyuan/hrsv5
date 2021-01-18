@@ -86,6 +86,10 @@ public class TDBAction extends BaseAction {
 				Map<String, String> jdbcUrlInfo = ConnUtil.getJDBCUrlInfo(layerAttr.get(StorageTypeKey.jdbc_url),
 						layerAttr.get(StorageTypeKey.database_type));
 				layerAttr.putAll(jdbcUrlInfo);
+				//给hive默认的数据库类型
+				if(layerAttr.get("store_type")!=null && Store_type.HIVE.getCode().equals(layerAttr.get("store_type"))){
+					layerAttr.put(StorageTypeKey.database_type,DatabaseType.Hive.getCode());
+				}
 				//获取表字段信息
 				List<Map<String, Object>> columnByFileId = DataTableUtil.getColumnByFileId(tdbTableBean.getData_layer(),
 						Constant.DCL_BATCH, tdbTableBean.getFile_id());
@@ -149,8 +153,9 @@ public class TDBAction extends BaseAction {
 		//遍历map,当所选表在同一存储层，且为数据库类型，直接返回，否则继续找
 		for (String dsl_name : map.keySet()) {
 			List<LayerBean> layerBeans = map.get(dsl_name);
-			if (tdb_table_bean_s.length == layerBeans.size() && Store_type.DATABASE.getCode().
-					equals(layerBeans.get(0).getStore_type())) {
+			if (tdb_table_bean_s.length == layerBeans.size() && (Store_type.DATABASE.getCode().
+					equals(layerBeans.get(0).getStore_type()) || Store_type.HIVE.getCode().
+					equals(layerBeans.get(0).getStore_type()))) {
 				sameLayerBean = layerBeans.get(0);
 				break;
 			}
