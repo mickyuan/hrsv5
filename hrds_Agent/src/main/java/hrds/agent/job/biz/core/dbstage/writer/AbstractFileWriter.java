@@ -143,8 +143,11 @@ public abstract class AbstractFileWriter implements FileWriterInterface {
 			Object oj = resultSet.getObject(column_name);
 			if (null != oj) {
 				if (type == java.sql.Types.TIMESTAMP) {
-					Date date = resultSet.getTimestamp(column_name);
-					reader2String = date.toString();
+					String dateStr = resultSet.getTimestamp(column_name).toString();
+					if (dateStr.endsWith(".0")) {
+						dateStr = dateStr.replace(".0", "");
+					}
+					reader2String = dateStr;
 				} else if (type == java.sql.Types.DATE) {
 					Date date = resultSet.getDate(column_name);
 					reader2String = date.toString();
