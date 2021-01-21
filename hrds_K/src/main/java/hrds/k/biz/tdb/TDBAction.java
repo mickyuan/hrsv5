@@ -87,8 +87,8 @@ public class TDBAction extends BaseAction {
 						layerAttr.get(StorageTypeKey.database_type));
 				layerAttr.putAll(jdbcUrlInfo);
 				//给hive默认的数据库类型
-				if(layerAttr.get("store_type")!=null && Store_type.HIVE.getCode().equals(layerAttr.get("store_type"))){
-					layerAttr.put(StorageTypeKey.database_type,DatabaseType.Hive.getCode());
+				if (layerAttr.get("store_type") != null && Store_type.HIVE.getCode().equals(layerAttr.get("store_type"))) {
+					layerAttr.put(StorageTypeKey.database_type, DatabaseType.Hive.getCode());
 				}
 				//获取表字段信息
 				List<Map<String, Object>> columnByFileId = DataTableUtil.getColumnByFileId(tdbTableBean.getData_layer(),
@@ -408,7 +408,16 @@ public class TDBAction extends BaseAction {
 				" FROM " + Dbm_field_same_result.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
-			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
+			if (table_code.contains("=")) {
+				List<String> split = StringUtil.split(table_code, "=");
+				if ("class".equals(split.get(0).trim()) && StringUtil.isNotBlank(split.get(1))) {
+					asmSql.addSql("WHERE category_same = " + split.get(1));
+				} else if (StringUtil.isNotBlank(split.get(1))) {
+					asmSql.addLikeParam("table_code", "%" + split.get(1) + "%", "WHERE");
+				}
+			} else {
+				asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
+			}
 		}
 		asmSql.addSql(" ORDER BY" +
 				" category_same," +
