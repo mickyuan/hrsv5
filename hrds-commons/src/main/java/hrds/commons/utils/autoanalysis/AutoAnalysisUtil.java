@@ -14,8 +14,6 @@ import fd.ng.web.util.Dbo;
 import hrds.commons.codes.AxisType;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +22,6 @@ import java.util.Map;
 
 @DocClass(desc = "仪表板工具类", author = "dhw", createdate = "2020/10/20 17:24")
 public class AutoAnalysisUtil {
-	private static final Logger logger = LogManager.getLogger();
 
 	@Method(desc = "根据仪表板id获取数据仪表板信息表数据", logicStep = "1.根据仪表板id获取数据仪表板信息表数据" +
 			"2.获取仪表板边框组件信息表信息" +

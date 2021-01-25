@@ -244,7 +244,7 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				accessResult.add(map);
 			}
-		}.getPageDataLayer(fetch_sql, Dbo.db(), 1, 100);
+		}.getPageDataLayer(fetch_sql, Dbo.db(), 1, 50);
 		return accessResult;
 	}
 
@@ -492,7 +492,7 @@ public class OperateAction extends BaseAction {
 			public void dealLine(Map<String, Object> map) {
 				resultData.add(map);
 			}
-		}.getPageDataLayer(accessSql, Dbo.db(), 1, showNum <= 0 ? 100 : showNum);
+		}.getPageDataLayer(accessSql, Dbo.db(), 1, showNum <= 0 ? 50 : showNum);
 		// 2.返回数据结果
 		return resultData;
 	}
@@ -651,11 +651,11 @@ public class OperateAction extends BaseAction {
 		}
 		// 4.获取组件查询结果
 		Map<String, Object> visualComponentResult = getVisualComponentResult(auto_comp_sum.getExe_sql(),
-				100);
+				50);
 		componentInfo.putAll(visualComponentResult);
 		// 5.获取图表结果
 		Map<String, Object> chartShowMap = getChartShow(auto_comp_sum.getExe_sql(), x_columns, y_columns,
-				auto_comp_sum.getChart_type());
+				auto_comp_sum.getChart_type(),50);
 		componentInfo.putAll(chartShowMap);
 		// 6.获取列信息
 		Map<String, Object> tableColumn = getColumnByName(auto_comp_sum.getSources_obj(),
@@ -672,11 +672,15 @@ public class OperateAction extends BaseAction {
 	@Param(name = "x_columns", desc = "x轴列信息", range = "无限制", nullable = true)
 	@Param(name = "y_columns", desc = "y轴列信息", range = "无限制", nullable = true)
 	@Param(name = "chart_type", desc = "图标类型", range = "无限制")
+	@Param(name = "showNum", desc = "显示条数", range = "大于0的正整数", valueIfNull = "50")
 	@Return(desc = "返回图标显示数据", range = "无限制")
 	public Map<String, Object> getChartShow(String exe_sql, String[] x_columns, String[] y_columns,
-	                                        String chart_type) {
+	                                        String chart_type, int showNum) {
 		List<Map<String, Object>> componentList = new ArrayList<>();
 		Set<String> columns = new HashSet<>();
+		if (showNum > 1000) {
+			showNum = 1000;
+		}
 		// 1.获取组件数据
 		new ProcessingData() {
 			@Override
@@ -686,7 +690,7 @@ public class OperateAction extends BaseAction {
 				);
 				componentList.add(map);
 			}
-		}.getPageDataLayer(exe_sql, Dbo.db(), 1, 100);
+		}.getPageDataLayer(exe_sql, Dbo.db(), 1, showNum <= 0 ? 50 : showNum);
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("chart_type", chart_type);
 		// 2.根据不同图标类型获取图表数据
@@ -910,18 +914,19 @@ public class OperateAction extends BaseAction {
 
 		if (PIE.equals(chart_type)) {
 			// 标准饼图
-			series.put("radius", "50%");
+			series.put("radius", "30%");
 			resultMap.put("legendData", legendData);
 		} else if (HUANPIE.equals(chart_type)) {
 			// 环形饼图
 			List<String> radius = new ArrayList<>();
+			radius.add("15%");
 			radius.add("35%");
-			radius.add("60%");
 			series.put("radius", radius);
 			resultMap.put("pietype", "huanpie");
 			resultMap.put("legendData", legendData);
 		} else if (FASANPIE.equals(chart_type)) {
 			// 发散饼图
+			series.put("radius","35%");
 			series.put("roseType", "radius");
 			resultMap.put("legendData", legendData);
 		}
@@ -1030,7 +1035,7 @@ public class OperateAction extends BaseAction {
 					"2.获取组件数据" +
 					"3.封装并返回列信息与组件结果信息")
 	@Param(name = "exe_sql", desc = "可视化组件执行sql", range = "无限制")
-	@Param(name = "showNum", desc = "显示条数", range = "大于0的正整数", valueIfNull = "100")
+	@Param(name = "showNum", desc = "显示条数", range = "大于0的正整数", valueIfNull = "50")
 	@Return(desc = "返回列信息与组件结果信息", range = "无限制")
 	public Map<String, Object> getVisualComponentResult(String exe_sql, int showNum) {
 		List<Map<String, Object>> visualComponentList = new ArrayList<>();
@@ -1044,7 +1049,7 @@ public class OperateAction extends BaseAction {
 				// 2.获取组件数据
 				visualComponentList.add(map);
 			}
-		}.getPageDataLayer(exe_sql, Dbo.db(), 1, showNum <= 0 ? 100 : showNum);
+		}.getPageDataLayer(exe_sql, Dbo.db(), 1, showNum <= 0 ? 50 : showNum);
 		// 3.封装并返回列信息与组件结果信息
 		Map<String, Object> visualComponentMap = new HashMap<>();
 		visualComponentMap.put("visualComponentList", visualComponentList);
@@ -1412,7 +1417,7 @@ public class OperateAction extends BaseAction {
 		auto_comp_sum.setExe_sql(exe_sql);
 		// 获取获取图表数据
 		Map<String, Object> chartShow = getChartShow(exe_sql, componentBean.getX_columns(),
-				componentBean.getY_columns(), auto_comp_sum.getChart_type());
+				componentBean.getY_columns(), auto_comp_sum.getChart_type(),50);
 		chartShow.put("itemStyle", auto_label);
 		auto_comp_sum.setComponent_buffer(JsonUtil.toJson(chartShow));
 		// 2.更新组件汇总表数据
@@ -1501,7 +1506,7 @@ public class OperateAction extends BaseAction {
 		auto_comp_sum.setExe_sql(exe_sql);
 		// 获取获取图表数据
 		Map<String, Object> chartShow = getChartShow(exe_sql, componentBean.getX_columns(),
-				componentBean.getY_columns(), auto_comp_sum.getChart_type());
+				componentBean.getY_columns(), auto_comp_sum.getChart_type(),50);
 		chartShow.put("itemStyle", auto_label);
 		auto_comp_sum.setComponent_buffer(JsonUtil.toJson(chartShow));
 		// 2.判断组件名称是否已存在
