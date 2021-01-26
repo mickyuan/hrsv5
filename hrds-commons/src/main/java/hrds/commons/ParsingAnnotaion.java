@@ -202,7 +202,7 @@ public class ParsingAnnotaion {
 					}
 				}
 			}
-			saveWriteFile("D:/tmp/hrsv5api/data_" + args[0] + ".json", jsonArray.toString());
+			saveWriteFile("/tmp/hrsv5api/data_" + args[0] + ".json", jsonArray.toString());
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
