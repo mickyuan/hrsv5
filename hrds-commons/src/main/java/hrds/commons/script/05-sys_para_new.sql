@@ -7,12 +7,9 @@ INSERT INTO sys_para VALUES ('4', 'hyren_host', 'hdp007.beyondsoft.com', 'common
 INSERT INTO sys_para VALUES ('5', 'hyren_port', '2000', 'system.properties', 'HYREN服务器接受进程端口');
 INSERT INTO sys_para VALUES ('6', 'hyren_osname', 'linux', 'system.properties', 'HYREN服务器操作系统');
 INSERT INTO sys_para VALUES ('7', 'system_language', 'zh_CN', 'system.properties', '服务器系统语言(默认zh_CN,例如英文；en_US)');
-INSERT INTO sys_para VALUES ('8', 'solrOnHbase', 'HrdsHbaseOverSolr', 'system.properties', 'solrOnHbase的collection');
-INSERT INTO sys_para VALUES ('9', 'sys_dateformat', 'yyyy-MM-dd', 'system.properties', '系统日期参数格式化定义');
-INSERT INTO sys_para VALUES ('10', 'hyren_pwd', 'q1w2e3',  'system.properties', '系统默认海云用户的密码');
-INSERT INTO sys_para VALUES ('11', 'redis_ip', '10.71.4.61', 'system.properties', 'Redis服务IP');
-INSERT INTO sys_para VALUES ('12', 'redis_port', '56379', 'system.properties', 'Redis服务监听端口');
-INSERT INTO sys_para VALUES ('13', 'is_save_operation_log', '0', 'system.properties', '是否保存操作日志 (1:是,0:否)');
+INSERT INTO sys_para VALUES ('8', 'sys_dateformat', 'yyyy-MM-dd', 'system.properties', '系统日期参数格式化定义');
+INSERT INTO sys_para VALUES ('9', 'hyren_pwd', 'q1w2e3',  'system.properties', '系统默认海云用户的密码');
+INSERT INTO sys_para VALUES ('10', 'is_save_operation_log', '0', 'system.properties', '是否保存操作日志 (1:是,0:否)');
 -- 公共配置
 INSERT INTO sys_para VALUES ('101', 'solrclassname', 'hrds.commons.hadoop.solr.impl.SolrOperatorImpl5_3_1', 'common.properties', 'solr具体实现类全名hrds.commons.hadoop.solr.impl.SolrOperatorImpl5_3_1');
 INSERT INTO sys_para VALUES ('102', 'zkHost', 'hdp001.beyondsoft.com:2181,hdp002.beyondsoft.com:2181,hdp003.beyondsoft.com:2181/solr', 'common.properties', 'solr的zookeeper配置');
