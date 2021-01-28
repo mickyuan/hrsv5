@@ -435,7 +435,12 @@ public class AlgorithmsMain {
 		try (DatabaseWrapper db = ConnectionTool.getDBWrapper(layerAttr)) {
 			DatabaseMetaData dbMeta = db.getConnection().getMetaData();
 //			String database = db.getDbtype().getDatabase(db, dbMeta);
-			rsColumnInfo = dbMeta.getColumns(null, "%", hyren_name, "%");
+			if (hyren_name.contains(".")) {
+				List<String> split = StringUtil.split(hyren_name, ".");
+				rsColumnInfo = dbMeta.getColumns(null, split.get(0), split.get(1), "%");
+			} else {
+				rsColumnInfo = dbMeta.getColumns(null, "%", hyren_name, "%");
+			}
 			while (rsColumnInfo.next()) {
 				String colName = rsColumnInfo.getString("COLUMN_NAME");
 				columns.add(colName);
