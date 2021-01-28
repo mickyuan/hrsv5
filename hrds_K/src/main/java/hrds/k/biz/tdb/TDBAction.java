@@ -404,7 +404,8 @@ public class TDBAction extends BaseAction {
 				" dim_order," +
 				" table_code," +
 				" col_code," +
-				" category_same" +
+				" category_same," +
+				" rel_type" +
 				" FROM " + Dbm_field_same_result.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
