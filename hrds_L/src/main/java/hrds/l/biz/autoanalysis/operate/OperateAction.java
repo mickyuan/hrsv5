@@ -2047,7 +2047,8 @@ public class OperateAction extends BaseAction {
 			interface_info.setUrl(Constant.DASHBOARDINTERFACENAME);
 			interface_info.add(Dbo.db());
 		} else {
-			Interface_info interface_info = JsonUtil.toObjectSafety(interfaceMap.toString(), Interface_info.class)
+			Interface_info interface_info = JsonUtil.toObjectSafety(
+					JsonUtil.toJson(interfaceMap), Interface_info.class)
 					.orElseThrow(() -> new BusinessException("转换接口信息表实体对象失败"));
 			interface_info.setInterface_name(dashboard_name);
 			try {
