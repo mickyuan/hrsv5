@@ -914,19 +914,19 @@ public class OperateAction extends BaseAction {
 
 		if (PIE.equals(chart_type)) {
 			// 标准饼图
-			series.put("radius", "30%");
+			series.put("radius", "80%");
 			resultMap.put("legendData", legendData);
 		} else if (HUANPIE.equals(chart_type)) {
 			// 环形饼图
 			List<String> radius = new ArrayList<>();
-			radius.add("15%");
 			radius.add("35%");
+			radius.add("80%");
 			series.put("radius", radius);
 			resultMap.put("pietype", "huanpie");
 			resultMap.put("legendData", legendData);
 		} else if (FASANPIE.equals(chart_type)) {
 			// 发散饼图
-			series.put("radius","35%");
+			series.put("radius","80%");
 			series.put("roseType", "radius");
 			resultMap.put("legendData", legendData);
 		}
