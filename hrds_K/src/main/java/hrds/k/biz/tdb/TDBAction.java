@@ -69,7 +69,7 @@ public class TDBAction extends BaseAction {
 	@Param(name = "sys_class_code", desc = "数据对标系统分类名称", range = "不可为空")
 	@Return(desc = "对标记录id", range = "long类型,唯一")
 	public void generateDataBenchmarking(TdbTableBean[] tdb_table_bean_s, String[] checkList,
-	                                     String sys_class_code) throws Exception {
+										 String sys_class_code) throws Exception {
 		//检查要进行数据对标分析的表是否在同一存储层，是否是数据库类型的表，并返回存储层的信息。
 		LayerBean layerBean = checkStoreLayer(tdb_table_bean_s);
 		//数据校验
@@ -478,11 +478,11 @@ public class TDBAction extends BaseAction {
 	}
 
 	@Method(desc = "查询字段外键关系的图", logicStep = "")
-	@Param(name = "cypher", desc = "表sql", range = "无限制")
+	@Param(name = "limitNum", desc = "查询多少条", range = "无限制")
 	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchColumnOfFkRelation(String cypher) {
-		try (Neo4jUtils example = new Neo4jUtils("bolt://172.168.0.60:7687", "neo4j", "hrsdxg")) {
-			return example.searchColumnOfFkRelation(cypher);
+	public List<NodeRelationBean> searchColumnOfFkRelation(String limitNum) {
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchColumnOfFkRelation(limitNum);
 		}
 	}
 

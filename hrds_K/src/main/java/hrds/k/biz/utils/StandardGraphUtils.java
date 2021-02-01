@@ -1,6 +1,7 @@
 package hrds.k.biz.utils;
 
 import hrds.k.biz.tdb.bean.NodeRelationBean;
+import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Path;
@@ -52,6 +53,33 @@ public class StandardGraphUtils {
 		}
 		return nodeRelationBeans;
 	}
+
+
+	public static List<Map<String, Object>> getLabelPropagationResult(Result searchResult) {
+		List<Map<String, Object>> result = new ArrayList<>();
+		while (searchResult.hasNext()) {
+			Map<String, Object> hashMap = new HashMap<>();
+			Record next = searchResult.next();
+			hashMap.put("name", next.get(0).asString());
+			hashMap.put("label", next.get(1).asInt());
+			result.add(hashMap);
+		}
+		return result;
+	}
+
+
+	public static List<Map<String, Object>> getLouVainResult(Result searchResult) {
+		List<Map<String, Object>> result = new ArrayList<>();
+		while (searchResult.hasNext()) {
+			Map<String, Object> hashMap = new HashMap<>();
+			Record next = searchResult.next();
+			hashMap.put("name", next.get(0).asString());
+			hashMap.put("community", next.get(1).asInt());
+			result.add(hashMap);
+		}
+		return result;
+	}
+
 
 	public static void main(String[] args) {
 		//查询表
