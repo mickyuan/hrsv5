@@ -477,6 +477,18 @@ public class TDBAction extends BaseAction {
 		return columnFeatureAnalysisResultMap;
 	}
 
+	@Method(desc = "自定义图计算查询语句查询", logicStep = "")
+	@Param(name = "cypher", desc = "查询语句", range = "不能为空")
+	@Return(desc = "", range = "")
+	public List<NodeRelationBean> searchFromNeo4j(String cypher) {
+		if (StringUtil.isEmpty(cypher)) {
+			throw new BusinessException("查询语句不能为空");
+		}
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchFromNeo4j(cypher);
+		}
+	}
+
 	@Method(desc = "查询字段外键关系的图", logicStep = "")
 	@Param(name = "limitNum", desc = "查询多少条", range = "无限制")
 	@Return(desc = "", range = "")

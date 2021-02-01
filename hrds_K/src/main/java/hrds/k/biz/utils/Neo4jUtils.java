@@ -3,6 +3,7 @@ package hrds.k.biz.utils;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.web.util.Dbo;
+import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
 import org.neo4j.driver.*;
@@ -51,6 +52,14 @@ public class Neo4jUtils implements Closeable {
 		driver.close();
 	}
 
+	/**
+	 * 自定义图计算查询语句查询
+	 *
+	 * @param cypher 查询语句
+	 */
+	public List<NodeRelationBean> searchFromNeo4j(String cypher) {
+		return StandardGraphUtils.getRelationInfo(session.run(cypher));
+	}
 
 	/**
 	 * 查询所有的表节点
@@ -397,4 +406,5 @@ public class Neo4jUtils implements Closeable {
 //					"delete r");
 //		}
 	}
+
 }
