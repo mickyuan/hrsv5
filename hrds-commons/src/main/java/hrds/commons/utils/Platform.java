@@ -184,6 +184,8 @@ public class Platform {
 				scale = 12;
 			}
 			column_type = typeName + "(" + precision + "," + scale + ")";
+		} else if (Types.LONGVARCHAR == dataType) {
+			column_type = "TEXT";
 		} else {
 			if ("char".equalsIgnoreCase(typeName) && precision > 255) {
 				typeName = "varchar";
