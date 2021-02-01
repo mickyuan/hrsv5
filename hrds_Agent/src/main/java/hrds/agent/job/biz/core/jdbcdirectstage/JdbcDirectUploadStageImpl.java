@@ -272,7 +272,8 @@ public class JdbcDirectUploadStageImpl extends AbstractJobStage {
 					return false;
 				} else {
 					return sourceJdbcUrlInfo.get("ip").equals(targetJdbcUrlInfo.get("ip")) &&
-							sourceJdbcUrlInfo.get("port").equals(targetJdbcUrlInfo.get("port"));
+							sourceJdbcUrlInfo.get("port").equals(targetJdbcUrlInfo.get("port")) &&
+							source_database_name.equals(target_database_name);
 				}
 			}
 		}
