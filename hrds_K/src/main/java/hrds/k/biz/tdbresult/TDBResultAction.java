@@ -32,13 +32,13 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT " +
-			"  table_code, " +
-			"  col_code, " +
-			"  col_type, " +
-			"  case col_nullable when '0' then '否' else '是' end as col_nullable, " +
-			"  case col_pk when '0' then '否' else '是' end as col_pk, " +
-			" row_number() over (partition BY table_code ORDER BY col_num) as col_num " +
-			" FROM " + Dbm_mmm_field_info_tab.TableName);
+				"  table_code, " +
+				"  col_code, " +
+				"  col_type, " +
+				"  case col_nullable when '0' then '否' else '是' end as col_nullable, " +
+				"  case col_pk when '0' then '否' else '是' end as col_pk, " +
+				" row_number() over (partition BY table_code ORDER BY col_num) as col_num " +
+				" FROM " + Dbm_mmm_field_info_tab.TableName);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
 		}
@@ -63,11 +63,11 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-			" row_number() over(partition BY table_code ORDER BY group_code) col_num," +
-			" table_code," +
-			" string_agg(col_code,',') AS join_pk_col_code," +
-			" group_code" +
-			" FROM " + Dbm_joint_pk_tab.TableName);
+				" row_number() over(partition BY table_code ORDER BY group_code) col_num," +
+				" table_code," +
+				" string_agg(col_code,',') AS join_pk_col_code," +
+				" group_code" +
+				" FROM " + Dbm_joint_pk_tab.TableName);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
 		}
@@ -93,25 +93,25 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-			" row_number() over(partition BY table_code ORDER BY LENGTH(right_columns)-LENGTH(REPLACE" +
-			" (right_columns,',','')) DESC,LENGTH(left_columns)-LENGTH(REPLACE(left_columns,',','')) ) AS" +
-			" row_num," +
-			" table_code," +
-			" left_columns," +
-			" right_columns" +
-			" FROM" +
-			" (" +
-			" SELECT" +
-			" string_agg(right_columns,',') AS right_columns," +
-			" table_code," +
-			" left_columns" +
-			" FROM " + Dbm_function_dependency_tab.TableName);
+				" row_number() over(partition BY table_code ORDER BY LENGTH(right_columns)-LENGTH(REPLACE" +
+				" (right_columns,',','')) DESC,LENGTH(left_columns)-LENGTH(REPLACE(left_columns,',','')) ) AS" +
+				" row_num," +
+				" table_code," +
+				" left_columns," +
+				" right_columns" +
+				" FROM" +
+				" (" +
+				" SELECT" +
+				" string_agg(right_columns,',') AS right_columns," +
+				" table_code," +
+				" left_columns" +
+				" FROM " + Dbm_function_dependency_tab.TableName);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
 		}
 		asmSql.addSql(" GROUP BY" +
-			" table_code," +
-			" left_columns) temp_dep");
+				" table_code," +
+				" left_columns) temp_dep");
 		// 2.分页查询作业定义信息
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> tableFuncDepData = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
@@ -133,12 +133,12 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-			" fk_table_code ," +
-			" fk_col_code ," +
-			" table_code," +
-			" col_code," +
-			" row_number() over(partition BY fk_table_code ORDER BY col_code) row_num" +
-			" FROM " + Dbm_fk_info_tab.TableName);
+				" fk_table_code ," +
+				" fk_col_code ," +
+				" table_code," +
+				" col_code," +
+				" row_number() over(partition BY fk_table_code ORDER BY col_code) row_num" +
+				" FROM " + Dbm_fk_info_tab.TableName);
 		if (StringUtil.isNotBlank(fk_table_code)) {
 			asmSql.addLikeParam("fk_table_code", "%" + fk_table_code + "%", "WHERE");
 		}
@@ -163,12 +163,12 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-			" dim_order," +
-			" table_code," +
-			" col_code," +
-			" category_same," +
-			" rel_type" +
-			" FROM " + Dbm_field_same_result.TableName
+				" dim_order," +
+				" table_code," +
+				" col_code," +
+				" category_same," +
+				" rel_type" +
+				" FROM " + Dbm_field_same_result.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
 			if (table_code.contains("=")) {
@@ -183,8 +183,8 @@ public class TDBResultAction extends BaseAction {
 			}
 		}
 		asmSql.addSql(" ORDER BY" +
-			" category_same," +
-			" dim_order");
+				" category_same," +
+				" dim_order");
 		// 2.分页查询作业定义信息
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> fieldSameResult = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
@@ -206,21 +206,21 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-			" table_code," +
-			" col_code," +
-			" col_records," +
-			" col_distinct," +
-			" max_len," +
-			" min_len," +
-			" avg_len," +
-			" skew_len," +
-			" kurt_len," +
-			" median_len," +
-			" var_len," +
-			"case when has_chinese = '0' then '否' else '是' end as has_chinese," +
-			"case when tech_cate = '1' then '日期' when tech_cate = '2' then '金额' when tech_cate = '3' then " +
-			"'码值' when tech_cate = '4' then '数值' when tech_cate = '5' then '费率' else 'UNK' end as tech_cate" +
-			" FROM " + Dbm_feature_tab.TableName
+				" table_code," +
+				" col_code," +
+				" col_records," +
+				" col_distinct," +
+				" max_len," +
+				" min_len," +
+				" avg_len," +
+				" skew_len," +
+				" kurt_len," +
+				" median_len," +
+				" var_len," +
+				"case when has_chinese = '0' then '否' else '是' end as has_chinese," +
+				"case when tech_cate = '1' then '日期' when tech_cate = '2' then '金额' when tech_cate = '3' then " +
+				"'码值' when tech_cate = '4' then '数值' when tech_cate = '5' then '费率' else 'UNK' end as tech_cate" +
+				" FROM " + Dbm_feature_tab.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
@@ -245,10 +245,10 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			return example.searchFromNeo4j(cypher);
 		}
-}
+	}
 
 	@Method(desc = "LPA社区发现算法", logicStep = "")
-	@Param(name = "relationship", desc = "页面传参边的属性", range = "（FK、FD、EQUALS、SAME、BDF）")
+	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
@@ -259,6 +259,76 @@ public class TDBResultAction extends BaseAction {
 			return example.searchLabelPropagation(relationship, iterations, limitNum);
 		}
 	}
+
+	@Method(desc = "LOUVAIN社区发现算法", logicStep = "")
+	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
+	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "", range = "")
+	public List<Map<String, Object>> searchLouVain(String relationship, int iterations, String limitNum) {
+		Validator.notBlank(relationship, "页面传参边的属性不能为空");
+		Validator.notNull(iterations, "算法迭代次数不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchLouVain(relationship, iterations, limitNum);
+		}
+	}
+
+	@Method(desc = "求全部最短路径", logicStep = "")
+	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
+	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
+	@Param(name = "level", desc = "最多找多少层", range = "不能为空")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "", range = "")
+	public List<NodeRelationBean> searchAllShortPath(String columnNodeName1, String columnNodeName2,
+	                                                 int level, String limitNum) {
+		Validator.notBlank(columnNodeName1, "第一个字段的节点名称不能为空");
+		Validator.notNull(columnNodeName2, "第二个字段的节点名称不能为空");
+		Validator.notNull(level, "最多找多少层不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
+		}
+	}
+
+	@Method(desc = "求最长路径", logicStep = "")
+	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
+	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
+	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "", range = "")
+	public List<NodeRelationBean> searchLongestPath(String columnNodeName1, String columnNodeName2,
+	                                                int level, String limitNum) {
+		Validator.notBlank(columnNodeName1, "第一个字段的节点名称不能为空");
+		Validator.notNull(columnNodeName2, "第二个字段的节点名称不能为空");
+		Validator.notNull(level, "最多找多少层不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
+		}
+	}
+
+	@Method(desc = "求远近邻关系", logicStep = "")
+	@Param(name = "columnNodeName", desc = "字段的节点名称", range = "不为空")
+	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "", range = "")
+	public List<NodeRelationBean> searchNeighbors(String columnNodeName, int level, String limitNum) {
+		Validator.notBlank(columnNodeName, "字段节点名称不能为空");
+		Validator.notNull(level, "最多找多少层不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchNeighbors(columnNodeName, level, limitNum);
+		}
+	}
+
+	@Method(desc = "三角关系展示", logicStep = "")
+	@Param(name = "relationship", desc = "为页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "", range = "")
+	public List<NodeRelationBean> searchTriangleRelation(String relationship, String limitNum) {
+		Validator.notBlank(relationship, "字段节点名称不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchTriangleRelation(relationship, limitNum);
+		}
+	}
+
 
 	@Method(desc = "查询字段外键关系的图", logicStep = "")
 	@Param(name = "limitNum", desc = "查询多少条", range = "无限制")
