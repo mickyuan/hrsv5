@@ -69,7 +69,7 @@ public class TDBAction extends BaseAction {
 	@Param(name = "sys_class_code", desc = "数据对标系统分类名称", range = "不可为空")
 	@Return(desc = "对标记录id", range = "long类型,唯一")
 	public void generateDataBenchmarking(TdbTableBean[] tdb_table_bean_s, String[] checkList,
-										 String sys_class_code) throws Exception {
+	                                     String sys_class_code) throws Exception {
 		//检查要进行数据对标分析的表是否在同一存储层，是否是数据库类型的表，并返回存储层的信息。
 		LayerBean layerBean = checkStoreLayer(tdb_table_bean_s);
 		//数据校验
@@ -481,11 +481,22 @@ public class TDBAction extends BaseAction {
 	@Param(name = "cypher", desc = "查询语句", range = "不能为空")
 	@Return(desc = "", range = "")
 	public List<NodeRelationBean> searchFromNeo4j(String cypher) {
-		if (StringUtil.isEmpty(cypher)) {
-			throw new BusinessException("查询语句不能为空");
-		}
+		Validator.notBlank(cypher, "查询语句不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			return example.searchFromNeo4j(cypher);
+		}
+	}
+
+	@Method(desc = "LPA社区发现算法", logicStep = "")
+	@Param(name = "relationship", desc = "页面传参边的属性", range = "（FK、FD、EQUALS、SAME、BDF）")
+	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "", range = "")
+	public List<Map<String, Object>> searchLabelPropagation(String relationship, int iterations, String limitNum) {
+		Validator.notBlank(relationship, "页面传参边的属性不能为空");
+		Validator.notNull(iterations, "算法迭代次数不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			return example.searchLabelPropagation(relationship, iterations, limitNum);
 		}
 	}
 
