@@ -1,9 +1,6 @@
 package hrds.k.biz.utils;
 
 import fd.ng.core.utils.StringUtil;
-import fd.ng.db.jdbc.DatabaseWrapper;
-import fd.ng.web.util.Dbo;
-import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
 import org.neo4j.driver.*;
@@ -210,7 +207,8 @@ public class Neo4jUtils implements Closeable {
 	 * level：最多找多少层
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<NodeRelationBean> searchAllShorPath(String columnNodeName1, String columnNodeName2, int level, String limitNum) {
+	public List<NodeRelationBean> searchAllShortPath(String columnNodeName1, String columnNodeName2,
+	                                                 int level, String limitNum) {
 		String cypher = "MATCH (p1:Column {name:'" + columnNodeName1 + "'})," +
 				" (p2:Column {name:'" + columnNodeName2 + "'})," +
 				" p=allShortestPaths((p1)-[*.." + level + "]-(p2))" +
@@ -230,7 +228,7 @@ public class Neo4jUtils implements Closeable {
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
 	public List<NodeRelationBean> searchLongestPath(String columnNodeName1, String columnNodeName2,
-													int level, String limitNum) {
+	                                                int level, String limitNum) {
 		String cypher = "MATCH (a:Column {name:'" + columnNodeName1 + "'})," +
 				" (b:Column {name:'" + columnNodeName2 + "'}),\n" +
 				" p=(a)-[*.." + level + "]-(b)\n" +
@@ -260,7 +258,7 @@ public class Neo4jUtils implements Closeable {
 	 * relationship：为页面传参边的属性（FK、FD、EQUALS、SAME、BDF）
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<NodeRelationBean> searchNeighbors(String relationship, String limitNum) {
+	public List<NodeRelationBean> searchTriangleRelation(String relationship, String limitNum) {
 		String cypher = "";
 		if (!StringUtil.isEmpty(relationship)) {
 			cypher = "match (a)-[:" + relationship + "]-()-[:" + relationship
@@ -276,9 +274,9 @@ public class Neo4jUtils implements Closeable {
 
 	public static void main(String... args) {
 		try (Neo4jUtils neo4jUtils = new Neo4jUtils()) {
-			System.out.println(neo4jUtils.searchAllShorPath("S10_I_PRO_ACCT_PA_INTEREST",
+			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
 					"S10_I_CPA_CPA_NAME", 10, "100"));
-			System.out.println(neo4jUtils.searchAllShorPath("S10_I_PRO_ACCT_PA_INTEREST",
+			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
 					"S10_I_CPA_CPA_NAME", 10, ""));
 		}
 //		//查询
