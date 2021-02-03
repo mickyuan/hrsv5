@@ -1286,10 +1286,14 @@ public class CollTbConfStepAction extends BaseAction {
 					tableName,
 					IsFlag.Fou.getCode());
 
+			if (tableResult.size() == 0){
+				log.warn("为了检测map没有数据，但是显示size大于0，result="+tableResult);
+			}
 			// 2-2、tableResult结果可能有数据，也可能没有数据
 			// 2-3、有数据的情况：编辑采集任务，模糊查询的这张表已经存在于本次采集任务中
 			// 2-4、没有数据的情况：新增采集任务，那么所有的表都无法在table_info中查到数据，给是否并行抽取默认值为否
-			if (tableResult.size() == 0) {
+			//TODO 奇怪的代码，加了奇诡的判断，解决奇怪的问题 tableResult.get("table_id")== null
+			if (tableResult.size() == 0 || tableResult.get("table_id")== null) {
 				Map<String, Object> map = new HashMap<>();
 				map.put("table_name", tableName);
 				map.put("table_ch_name", tableName);
