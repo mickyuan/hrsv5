@@ -424,6 +424,7 @@ public class DBConfStepAction extends BaseAction {
 			.addData("user_name", databaseSet.getUser_name())
 			.addData("database_pad", databaseSet.getDatabase_pad())
 			.addData("database_type", databaseSet.getDatabase_type())
+			.addData("database_name",databaseSet.getDatabase_name())
 			.post(url);
 		// 3、如果测试连接不成功，则抛异常给前端，说明连接失败，如果成功，则不做任务处理
 		ActionResult actionResult = JsonUtil.toObjectSafety(resVal.getBodyString(), ActionResult.class)
