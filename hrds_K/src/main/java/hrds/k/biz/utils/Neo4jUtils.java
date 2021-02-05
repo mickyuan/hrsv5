@@ -3,6 +3,7 @@ package hrds.k.biz.utils;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.utils.PropertyParaValue;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
+import hrds.k.biz.tdb.bean.TriangleRelationBean;
 import org.neo4j.driver.*;
 
 import java.io.Closeable;
@@ -258,7 +259,7 @@ public class Neo4jUtils implements Closeable {
 	 * relationship：为页面传参边的属性（FK、FD、EQUALS、SAME、BDF）
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<NodeRelationBean> searchTriangleRelation(String relationship, String limitNum) {
+	public List<TriangleRelationBean> searchTriangleRelation(String relationship, String limitNum) {
 		String cypher = "";
 		if (!StringUtil.isEmpty(relationship)) {
 			cypher = "match b=(a)-[:" + relationship + "]-()-[:" + relationship
@@ -269,7 +270,7 @@ public class Neo4jUtils implements Closeable {
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
 		}
-		return StandardGraphUtils.getRelationInfo(session.run(cypher));
+		return StandardGraphUtils.getTriangleRelationInfo(session.run(cypher));
 	}
 
 	public static void main(String... args) {
