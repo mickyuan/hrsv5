@@ -11,8 +11,12 @@ import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.base.BaseAction;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
+import hrds.commons.exception.BusinessException;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
+import hrds.k.biz.tdb.bean.TriangleRelationBean;
+import hrds.k.biz.utils.DataConversionUtil;
 import hrds.k.biz.utils.Neo4jUtils;
 
 import java.util.HashMap;
@@ -240,10 +244,12 @@ public class TDBResultAction extends BaseAction {
 	@Method(desc = "自定义图计算查询语句查询", logicStep = "")
 	@Param(name = "cypher", desc = "查询语句", range = "不能为空")
 	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchFromNeo4j(String cypher) {
+	public Map<String, Object> searchFromNeo4j(String cypher) {
 		Validator.notBlank(cypher, "查询语句不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchFromNeo4j(cypher);
+			List<NodeRelationBean> nodeRelationBeans = example.searchFromNeo4j(cypher);
+			return null;
+//			return nodeRelationBeans;
 		}
 	}
 
@@ -252,12 +258,38 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
-	public List<Map<String, Object>> searchLabelPropagation(String relationship, int iterations, String limitNum) {
+	public Map<String, Object> searchLabelPropagation(String relationship, int iterations, String limitNum) {
 		Validator.notBlank(relationship, "页面传参边的属性不能为空");
 		Validator.notNull(iterations, "算法迭代次数不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchLabelPropagation(relationship, iterations, limitNum);
+			List<Map<String, Object>> mapList = example.searchLabelPropagation(relationship, iterations, limitNum);
+			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
+			return DataConversionUtil.conversionDataToEcharts(nodeRelationBeans, mapList, IsFlag.Shi.getCode());
 		}
+	}
+
+	private List<NodeRelationBean> getNodeRelationBeans(String relationship, String limitNum, Neo4jUtils example) {
+		List<NodeRelationBean> nodeRelationBeans;
+		switch (relationship) {
+			case "FK":
+				nodeRelationBeans = example.searchColumnOfFkRelation(limitNum);
+				break;
+			case "FD":
+				nodeRelationBeans = example.searchColumnOfFdRelation(limitNum);
+				break;
+			case "EQUALS":
+				nodeRelationBeans = example.searchColumnOfEqualsRelation(limitNum);
+				break;
+			case "SAME":
+				nodeRelationBeans = example.searchColumnOfSameRelation(limitNum);
+				break;
+			case "BFD":
+				nodeRelationBeans = example.searchColumnOfBfdRelation(limitNum);
+				break;
+			default:
+				throw new BusinessException("暂不支持边的属性为" + relationship);
+		}
+		return nodeRelationBeans;
 	}
 
 	@Method(desc = "LOUVAIN社区发现算法", logicStep = "")
@@ -265,11 +297,13 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
-	public List<Map<String, Object>> searchLouVain(String relationship, int iterations, String limitNum) {
+	public Map<String, Object> searchLouVain(String relationship, int iterations, String limitNum) {
 		Validator.notBlank(relationship, "页面传参边的属性不能为空");
 		Validator.notNull(iterations, "算法迭代次数不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchLouVain(relationship, iterations, limitNum);
+			List<Map<String, Object>> mapList = example.searchLouVain(relationship, iterations, limitNum);
+			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
+			return DataConversionUtil.conversionDataToEcharts(nodeRelationBeans, mapList, IsFlag.Fou.getCode());
 		}
 	}
 
@@ -279,13 +313,15 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "level", desc = "最多找多少层", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchAllShortPath(String columnNodeName1, String columnNodeName2,
-	                                                 int level, String limitNum) {
+	public Map<String, Object> searchAllShortPath(String columnNodeName1, String columnNodeName2,
+	                                              int level, String limitNum) {
 		Validator.notBlank(columnNodeName1, "第一个字段的节点名称不能为空");
 		Validator.notNull(columnNodeName2, "第二个字段的节点名称不能为空");
 		Validator.notNull(level, "最多找多少层不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
+			List<NodeRelationBean> nodeRelationBeans =
+					example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
+			return DataConversionUtil.convertToEcharts(nodeRelationBeans, columnNodeName1, columnNodeName2);
 		}
 	}
 
@@ -295,13 +331,14 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchLongestPath(String columnNodeName1, String columnNodeName2,
-	                                                int level, String limitNum) {
+	public Map<String, Object> searchLongestPath(String columnNodeName1, String columnNodeName2,
+	                                             int level, String limitNum) {
 		Validator.notBlank(columnNodeName1, "第一个字段的节点名称不能为空");
 		Validator.notNull(columnNodeName2, "第二个字段的节点名称不能为空");
 		Validator.notNull(level, "最多找多少层不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
+			List<NodeRelationBean> nodeRelationBeans = example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
+			return DataConversionUtil.convertToEcharts(nodeRelationBeans, columnNodeName1, columnNodeName2);
 		}
 	}
 
@@ -310,11 +347,12 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchNeighbors(String columnNodeName, int level, String limitNum) {
+	public Map<String, Object> searchNeighbors(String columnNodeName, int level, String limitNum) {
 		Validator.notBlank(columnNodeName, "字段节点名称不能为空");
 		Validator.notNull(level, "最多找多少层不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchNeighbors(columnNodeName, level, limitNum);
+			List<NodeRelationBean> nodeRelationBeans = example.searchNeighbors(columnNodeName, level, limitNum);
+			return DataConversionUtil.convertToEchartsTree(nodeRelationBeans);
 		}
 	}
 
@@ -322,20 +360,11 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "relationship", desc = "为页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchTriangleRelation(String relationship, String limitNum) {
+	public Map<String, Object> searchTriangleRelation(String relationship, String limitNum) {
 		Validator.notBlank(relationship, "字段节点名称不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchTriangleRelation(relationship, limitNum);
-		}
-	}
-
-
-	@Method(desc = "查询字段外键关系的图", logicStep = "")
-	@Param(name = "limitNum", desc = "查询多少条", range = "无限制")
-	@Return(desc = "", range = "")
-	public List<NodeRelationBean> searchColumnOfFkRelation(String limitNum) {
-		try (Neo4jUtils example = new Neo4jUtils()) {
-			return example.searchColumnOfFkRelation(limitNum);
+			List<TriangleRelationBean> triangleRelationBeans = example.searchTriangleRelation(relationship, limitNum);
+			return DataConversionUtil.convertToTriangle(triangleRelationBeans);
 		}
 	}
 }
