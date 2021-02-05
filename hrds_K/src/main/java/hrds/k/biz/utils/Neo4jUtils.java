@@ -208,7 +208,7 @@ public class Neo4jUtils implements Closeable {
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
 	public List<NodeRelationBean> searchAllShortPath(String columnNodeName1, String columnNodeName2,
-	                                                 int level, String limitNum) {
+													 int level, String limitNum) {
 		String cypher = "MATCH (p1:Column {name:'" + columnNodeName1 + "'})," +
 				" (p2:Column {name:'" + columnNodeName2 + "'})," +
 				" p=allShortestPaths((p1)-[*.." + level + "]-(p2))" +
@@ -228,7 +228,7 @@ public class Neo4jUtils implements Closeable {
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
 	public List<NodeRelationBean> searchLongestPath(String columnNodeName1, String columnNodeName2,
-	                                                int level, String limitNum) {
+													int level, String limitNum) {
 		String cypher = "MATCH (a:Column {name:'" + columnNodeName1 + "'})," +
 				" (b:Column {name:'" + columnNodeName2 + "'}),\n" +
 				" p=(a)-[*.." + level + "]-(b)\n" +
@@ -261,10 +261,10 @@ public class Neo4jUtils implements Closeable {
 	public List<NodeRelationBean> searchTriangleRelation(String relationship, String limitNum) {
 		String cypher = "";
 		if (!StringUtil.isEmpty(relationship)) {
-			cypher = "match (a)-[:" + relationship + "]-()-[:" + relationship
-					+ "]-()-[:" + relationship + "]-(a) return a";
+			cypher = "match b=(a)-[:" + relationship + "]-()-[:" + relationship
+					+ "]-()-[:" + relationship + "]-(a) return b";
 		} else {
-			cypher = "match (a)-[]-()-[]-()-[]-(a) return a";
+			cypher = "match b=(a)-[]-()-[]-()-[]-(a) return b";
 		}
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
@@ -274,10 +274,11 @@ public class Neo4jUtils implements Closeable {
 
 	public static void main(String... args) {
 		try (Neo4jUtils neo4jUtils = new Neo4jUtils()) {
-			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
-					"S10_I_CPA_CPA_NAME", 10, "100"));
-			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
-					"S10_I_CPA_CPA_NAME", 10, ""));
+//			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
+//					"S10_I_CPA_CPA_NAME", 10, "100"));
+//			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
+//					"S10_I_CPA_CPA_NAME", 10, ""));
+			System.out.println(neo4jUtils.searchTriangleRelation("FK", ""));
 		}
 //		//查询
 //		try (Neo4jUtils example = new Neo4jUtils("bolt://172.168.0.60:7687", "neo4j", "hrsdxg")) {
