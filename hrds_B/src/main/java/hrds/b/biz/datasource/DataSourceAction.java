@@ -1,14 +1,20 @@
 package hrds.b.biz.datasource;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import fd.ng.core.annotation.DocClass;
 import fd.ng.core.annotation.Method;
 import fd.ng.core.annotation.Param;
 import fd.ng.core.annotation.Return;
-import fd.ng.core.utils.*;
+import fd.ng.core.utils.CodecUtil;
+import fd.ng.core.utils.DateUtil;
+import fd.ng.core.utils.JsonUtil;
+import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import fd.ng.db.jdbc.DefaultPageImpl;
 import fd.ng.db.jdbc.Page;
 import fd.ng.db.jdbc.SqlOperator;
+import fd.ng.db.jdbc.SqlOperator.Assembler;
 import fd.ng.db.resultset.Result;
 import fd.ng.web.annotation.UploadFile;
 import fd.ng.web.util.Dbo;
@@ -17,20 +23,49 @@ import fd.ng.web.util.ResponseUtil;
 import hrds.commons.base.BaseAction;
 import hrds.commons.codes.AuthType;
 import hrds.commons.codes.UserType;
-import hrds.commons.entity.*;
+import hrds.commons.entity.Agent_down_info;
+import hrds.commons.entity.Agent_info;
+import hrds.commons.entity.Collect_job_classify;
+import hrds.commons.entity.Column_clean;
+import hrds.commons.entity.Column_merge;
+import hrds.commons.entity.Column_split;
+import hrds.commons.entity.Data_auth;
+import hrds.commons.entity.Data_source;
+import hrds.commons.entity.Database_set;
+import hrds.commons.entity.Department_info;
+import hrds.commons.entity.File_collect_set;
+import hrds.commons.entity.File_source;
+import hrds.commons.entity.Ftp_collect;
+import hrds.commons.entity.Ftp_transfered;
+import hrds.commons.entity.Object_collect;
+import hrds.commons.entity.Object_collect_struct;
+import hrds.commons.entity.Object_collect_task;
+import hrds.commons.entity.Signal_file;
+import hrds.commons.entity.Source_file_attribute;
+import hrds.commons.entity.Source_relation_dep;
+import hrds.commons.entity.Sys_user;
+import hrds.commons.entity.Table_clean;
+import hrds.commons.entity.Table_column;
+import hrds.commons.entity.Table_cycle;
+import hrds.commons.entity.Table_info;
+import hrds.commons.entity.Table_storage_info;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.DboExecute;
 import hrds.commons.utils.key.PrimayKeyGener;
-
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletResponse;
 
 @DocClass(desc = "数据源增删改查，导入、下载类", author = "dhw", createdate = "2019-9-20 09:23:06")
 public class DataSourceAction extends BaseAction {
@@ -246,7 +281,7 @@ public class DataSourceAction extends BaseAction {
 	@Param(name = "datasource_number", desc = "数据源编号", range = "以字母开头的数字、26个英文字母或者下划线组成的字符串")
 	@Param(name = "dep_id", desc = "source_relation_dep表主键ID的数组", range = "不为空以及不为空格")
 	public void updateDataSource(Long source_id, String source_remark, String datasource_name,
-	                             String datasource_number, long[] dep_id) {
+		String datasource_number, long[] dep_id) {
 		// 1.数据可访问权限处理方式，通过source_id与user_id关联检查
 		if (Dbo.queryNumber("select count(1) from " + Data_source.TableName +
 			" where source_id=? and create_user_id=?", source_id, getUserId())
@@ -562,7 +597,8 @@ public class DataSourceAction extends BaseAction {
 			"22.将表清洗参数信息table_clean表数据插入数据库" +
 			"23.将表对应的字段table_column表数据插入数据库" +
 			"24.将列清洗参数信息column_clean表数据插入数据库" +
-			"25.将列拆分信息表column_split表数据插入数据库")
+			"25.将列拆分信息表column_split表数据插入数据库" +
+			"26.将表的采集周期信息表table_cycle表数据插入数据库")
 	@Param(name = "strTemp", desc = "涉及数据源文件下载相关的所有表进行base64编码后的信息", range = "不能为空")
 	@Param(name = "agent_ip", desc = "agent地址", range = "不能为空，服务器ip地址", example = "127.0.0.1")
 	@Param(name = "agent_port", desc = "agent端口", range = "1024-65535")
@@ -621,6 +657,32 @@ public class DataSourceAction extends BaseAction {
 		Map<String, String> columnAndColIdMap = addColumnClean(collectMap, columnIdMap);
 		// 25.将列拆分信息表column_split表数据插入数据库
 		addColumnSplit(collectMap, columnAndColIdMap);
+		// 26.将表的采集周期信息表table_cycle表数据插入数据库
+		addTableCycle(collectMap, tableIdMap);
+	}
+
+	@Method(desc = "保存导入表对应的数据信息", logicStep = ""
+		+ "1: 获取新的表ID, 将导入的数据设置新的ID,以便可以关联上")
+	@Param(name = "collectMap", desc = "上传的数据集合信息", range = "表采集周期信息可以为空,为空表示未配置")
+	@Param(name = "tableIdMap", desc = "导入后新生成的map集合, key: 是导入的ID,value: 是导入后新生成的表ID",
+		range = "表采集周期信息可以为空,为空表示未配置")
+	private void addTableCycle(Map<String, Object> collectMap, Map<Long, String> tableIdMap) {
+
+		if (collectMap.get(Table_cycle.TableName) == null) {
+			return;
+		}
+
+		List<Table_cycle> tableCyclesList = JSON
+			.parseObject(collectMap.get(Table_cycle.TableName).toString(), new TypeReference<List<Table_cycle>>() {
+			});
+
+		tableCyclesList.forEach(table_cycle -> {
+			//生成新的表采集周期ID信息
+			table_cycle.setTc_id(PrimayKeyGener.getNextId());
+			//1: 获取新的表ID, 将导入的数据设置新的ID,以便可以关联上
+			table_cycle.setTable_id(tableIdMap.get(table_cycle.getTable_id()));
+			table_cycle.add(Dbo.db());
+		});
 	}
 
 	@Method(desc = "将table_storage_info表数据插入数据库",
@@ -1331,7 +1393,7 @@ public class DataSourceAction extends BaseAction {
 	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
 	@Param(name = "agentIdMap", desc = "存放新旧agentID的集合", range = "无限制")
 	private void addAgentDownInfo(String agent_ip, String agent_port, long userCollectId,
-	                              Map<String, Object> collectMap, Map<Long, String> agentIdMap) {
+		Map<String, Object> collectMap, Map<Long, String> agentIdMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
 			// 2.判断map中的key值是否为agent_down_info对应表数据
@@ -1375,7 +1437,7 @@ public class DataSourceAction extends BaseAction {
 	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
 	@Param(name = "agentIdMap", desc = "存放新旧agentID的集合", range = "无限制")
 	private Map<String, String> addCollectJobClassify(long userCollectId, Map<String, Object> collectMap,
-	                                                  Map<Long, String> agentIdMap) {
+		Map<Long, String> agentIdMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		Map<String, String> classifyAndAgentIdMap = new HashMap<>();
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1472,7 +1534,7 @@ public class DataSourceAction extends BaseAction {
 	@Param(name = "source_id", desc = "导入数据源重新生成的数据源ID", range = "无限制")
 	@Param(name = "departmentInfo", desc = "存放department_info表新旧部门ID数据的集合", range = "无限制")
 	private void addSourceRelationDep(Map<String, Object> collectMap, String source_id,
-	                                  Map<Long, String> departmentInfo) {
+		Map<Long, String> departmentInfo) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
 			// 2.判断map中的key值是否为对应source_relation_dep表数据
@@ -1548,7 +1610,7 @@ public class DataSourceAction extends BaseAction {
 	@Param(name = "source_id", desc = "导入数据源重新生成的数据源ID", range = "无限制")
 	@Param(name = "collectMap", desc = "所有表数据的map的实体", range = "无限制")
 	private Map<Long, String> addAgentInfo(String agent_ip, String agent_port, long userCollectId,
-	                                       String source_id, Map<String, Object> collectMap) {
+		String source_id, Map<String, Object> collectMap) {
 		// 1.数据权限处理方式，此方法是私有方法，不需要做权限验证
 		Map<Long, String> agentIdMap = new HashMap<>();
 		for (Map.Entry<String, Object> entry : collectMap.entrySet()) {
@@ -1607,15 +1669,16 @@ public class DataSourceAction extends BaseAction {
 			"23.表对应的字段table_column,获取table_column表信息集合入map" +
 			"24.列清洗参数信息column_clean,获取column_clean表信息集合入map" +
 			"25.列拆分信息表column_split,获取column_split表信息集合入map" +
-			"26.使用base64编码" +
-			"27.判断文件是否存在" +
-			"28.清空response，设置响应头，响应编码格式，控制浏览器下载该文件" +
-			"29.通过流的方式写入文件")
+			"26.列拆分信息表数据库采集周期,获取table_cycle表信息集合入map" +
+			"27.使用base64编码" +
+			"28.判断文件是否存在" +
+			"29.清空response，设置响应头，响应编码格式，控制浏览器下载该文件" +
+			"30.通过流的方式写入文件")
 	@Param(name = "source_id", desc = "data_source表主键", range = "不为空以及不为空格，10位数字，新增数据源时生成")
 	public void downloadFile(long source_id) {
 		// 1.数据可访问权限处理方式，这里是下载数据源，所以不需要数据权限验证
 		HttpServletResponse response = ResponseUtil.getResponse();
-		try {
+		try (OutputStream outputStream = response.getOutputStream()) {
 			// 2.创建存放所有数据源下载，所有相关表数据库查询获取数据的map集合
 			Map<String, Object> collectionMap = new HashMap<>();
 			// 3.获取data_source表信息集合，将data_source表信息封装入map
@@ -1663,14 +1726,15 @@ public class DataSourceAction extends BaseAction {
 			addColumnCleanToMap(collectionMap, tableColumnResult);
 			// 25.列拆分信息表column_split,获取column_split表信息集合入map
 			addColumnSplitToMap(collectionMap, tableColumnResult);
-			// 26.使用base64编码
+			//26.列拆分信息表数据库采集周期,获取table_cycle表信息集合入map
+			getTableCycle(collectionMap, tableInfoResult);
+			// 27.使用base64编码
 			byte[] bytes = Base64.getEncoder().encode(JsonUtil.toJson(collectionMap).
 				getBytes(CodecUtil.UTF8_CHARSET));
 			// 28.判断文件是否存在
 			if (bytes == null) {
 				throw new BusinessException("此文件不存在");
 			}
-			OutputStream outputStream = response.getOutputStream();
 			// 29.清空response，设置响应编码格式,响应头，控制浏览器下载该文件
 			response.reset();
 			response.setCharacterEncoding(CodecUtil.UTF8_STRING);
@@ -1678,9 +1742,22 @@ public class DataSourceAction extends BaseAction {
 			// 30.通过流的方式写入文件
 			outputStream.write(bytes);
 			outputStream.flush();
-			outputStream.close();
 		} catch (IOException e) {
 			throw new BusinessException("下载文件失败");
+		}
+	}
+
+	@Method(desc = "获取表的采集周期信息", logicStep = "获取表的采集周期信息")
+	@Param(name = "collectionMap", desc = "封装数据源下载信息（这里封装的是Table_cycle表数据集合）",
+		range = "key值{使用的数据库采集周期的表名}唯一，不为空")
+	@Param(name = "tableInfoResult", desc = "采集数据表的信息集合",
+		range = "可为空")
+	private void getTableCycle(Map<String, Object> collectionMap, Result tableInfoResult) {
+		if (!tableInfoResult.isEmpty()) {
+			Assembler assembler = Assembler.newInstance().addSql("SELECT * FROM " + Table_cycle.TableName)
+				.addORParam("table_id",
+					tableInfoResult.toList().stream().map(item -> item.get("table_id")).toArray(Object[]::new), "WHERE");
+			collectionMap.put(Table_cycle.TableName, Dbo.queryList(Table_cycle.class, assembler.sql(), assembler.params()));
 		}
 	}
 
@@ -1712,7 +1789,7 @@ public class DataSourceAction extends BaseAction {
 	@Param(name = "collectionMap", desc = "所有表数据的map的实体", range = "不能为空")
 	@Param(name = "sourceRelationDepList", desc = "存放source_relation_dep表数据集合", range = "key值唯一，不为空")
 	private void addDepartmentInfoToMap(Map<String, Object> collectionMap,
-	                                    List<Source_relation_dep> sourceRelationDepList) {
+		List<Source_relation_dep> sourceRelationDepList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放department_info表数据的集合
 		List<Optional<Department_info>> departmentInfoList = new ArrayList<>();
@@ -1739,7 +1816,7 @@ public class DataSourceAction extends BaseAction {
 		range = "不为空及空格，10位数字，新增data_source表时自动生成")
 	@Return(desc = "返回source_relation_dep表数据的集合", range = "不为空")
 	private List<Source_relation_dep> addSourceRelationDepToMap(long source_id,
-	                                                            Map<String, Object> collectionMap) {
+		Map<String, Object> collectionMap) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.查询数据源与部门关系表信息
 		List<Source_relation_dep> sourceRelationDepList = Dbo.queryList(Source_relation_dep.class,
@@ -1972,7 +2049,7 @@ public class DataSourceAction extends BaseAction {
 		range = "不能为空,key唯一")
 	@Param(name = "agentInfoList", desc = "agent_info表数据结果集合", range = "不为空")
 	private Result getFileCollectSetResult(Map<String, Object> collectionMap,
-	                                       List<Agent_info> agentInfoList) {
+		List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放file_collect_set表信息的集合
 		Result fileCollectSetResult = new Result();
@@ -2028,7 +2105,7 @@ public class DataSourceAction extends BaseAction {
 		range = "不能为空,key唯一")
 	@Param(name = "objectCollectTaskResult", desc = "object_collect_task表数据结果集", range = "不为空")
 	private void addObjectCollectStructResultToMap(Map<String, Object> collectionMap,
-	                                               Result objectCollectTaskResult) {
+		Result objectCollectTaskResult) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建存放object_collect_struct表信息的集合
 		Result objectCollectStructResult = new Result();
@@ -2213,7 +2290,7 @@ public class DataSourceAction extends BaseAction {
 		range = "不能为空,key唯一")
 	@Param(name = "agentInfoList", desc = "agent_info表数据集合", range = "不为空")
 	private void addCollectJobClassifyToMap(Map<String, Object> collectionMap,
-	                                        List<Agent_info> agentInfoList) {
+		List<Agent_info> agentInfoList) {
 		// 1.数据可访问权限处理方式,这是私有方法，不会被单独调用，所以不需要权限验证
 		// 2.创建封装collect_job_classify信息的集合
 		Result collectJobClassifyResult = new Result();

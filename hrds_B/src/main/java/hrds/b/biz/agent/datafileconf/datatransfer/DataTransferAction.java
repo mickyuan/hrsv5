@@ -136,7 +136,7 @@ public class DataTransferAction extends BaseAction {
 										extractionMap.put("database_code", storageMap.get("database_code"));
 										extractionMap.put(
 											"row_separator",
-												String.valueOf(storageMap.get("row_separator")));
+											String.valueOf(storageMap.get("row_separator")));
 										iterator.remove();
 										break;
 									}
@@ -160,7 +160,6 @@ public class DataTransferAction extends BaseAction {
 			});
 
 		return xmlDataTransfer;
-		//    }
 	}
 
 	@Method(desc = "将数据中的Unicode转换为字符串", logicStep = "Unicode数据转换")
@@ -180,7 +179,7 @@ public class DataTransferAction extends BaseAction {
 					} else if ("\r".equals(separator)) {
 						itemMap.put("row_separator", "\\r");
 					} else {
-						itemMap.put("row_separator", "");
+						itemMap.put("row_separator", separator);
 					}
 				}
 				// 2-2: 对数据中的,列分隔符进行转换 Unicode-->String
