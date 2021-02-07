@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
+import fd.ng.core.utils.Validator;
 import hrds.commons.codes.DataBaseCode;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
@@ -322,8 +323,6 @@ public class Xls2xml {
 	public static void XlsToXml(String xls_path, String xml_path) {
 
 		createXml(xml_path);// 调用方法生成xml文件
-		int number = 0;
-		String info = "";
 		Workbook workbookFromExcel = null;
 		try {
 			File file = new File(xls_path);
@@ -341,7 +340,7 @@ public class Xls2xml {
 					//匹配到英文表名标签,则开始写入xml的table信息
 					if (cellValue.equals("英文表名")) {
 						//下一行必定是参数信息
-						writeTable2Xml(sheetAt.getRow(i + 1));
+						writeTable2Xml(i + 1, sheetAt.getRow(i + 1));
 					}
 					//这里是列标签的开始,写入当前表的列信息
 					if (cellValue.equals("序号")) {
@@ -359,7 +358,6 @@ public class Xls2xml {
 					file.delete();
 				}
 			}
-			logger.info(info + " 表的第 " + number + "数据错误");
 			logger.error(e.getMessage(), e);
 		} finally {
 			try {
@@ -372,38 +370,46 @@ public class Xls2xml {
 		}
 	}
 
-	static void writeTable2Xml(Row rowData) {
+	static void writeTable2Xml(int rowNum, Row rowData) {
 		//英文表名
 		String table_name = ExcelUtil.getValue(rowData.getCell(0)).toString();
+		Validator.notBlank(table_name, "数据字典( " + rowNum + " )行的英文表名为空,请检查");
 		//中文表名
 		String table_cn_name = ExcelUtil.getValue(rowData.getCell(1)).toString();
+		Validator.notBlank(table_cn_name, "数据字典( " + rowNum + " )行的中文表名为空,请检查");
 		//将表的信息写入Xml
-		addTable(table_name.toLowerCase(), table_cn_name, UnloadType.QuanLiangXieShu.getCode());
+		addTable(table_name.toLowerCase(), table_cn_name, null);
 
 		//数据抽取定义信息
 		Data_extraction_def extraction_def = new Data_extraction_def();
 		// 数据编码
 		String database_code = ExcelUtil.getValue(rowData.getCell(2)).toString();
+		Validator.notBlank(database_code, "数据字典( " + rowNum + " )行的数据编码为空,请检查");
 		database_code = DataBaseCode.getCodeByValue(database_code);
 		extraction_def.setDatabase_code(database_code);
 		// 行分隔符
 		String row_separator = ExcelUtil.getValue(rowData.getCell(3)).toString();
+		Validator.notBlank(row_separator, "数据字典( " + rowNum + " )行的行分隔符为空,请检查");
 		row_separator = StringUtil.string2Unicode(row_separator);
 		extraction_def.setRow_separator(row_separator);
 		// 是否有表头
 		String is_header = ExcelUtil.getValue(rowData.getCell(4)).toString();
+		Validator.notBlank(is_header, "数据字典( " + rowNum + " )行的是否有表头为空,请检查");
 		is_header = IsFlag.getCodeByValue(is_header);
 		extraction_def.setIs_header(is_header);
 		// 数据文件格式
 		String dbfile_format = ExcelUtil.getValue(rowData.getCell(5)).toString();
+		Validator.notBlank(dbfile_format, "数据字典( " + rowNum + " )行的数据文件格式为空,请检查");
 		dbfile_format = FileFormat.getCodeByValue(dbfile_format);
 		extraction_def.setDbfile_format(dbfile_format);
 		// 列分隔符
 		String database_separatorr = ExcelUtil.getValue(rowData.getCell(6)).toString();
+		Validator.notBlank(database_separatorr, "数据字典( " + rowNum + " )行的列分隔符为空,请检查");
 		database_separatorr = StringUtil.string2Unicode(database_separatorr);
 		extraction_def.setDatabase_separatorr(database_separatorr);
 		// 数据文件存放路径
 		String plane_url = ExcelUtil.getValue(rowData.getCell(7)).toString();
+		Validator.notBlank(plane_url, "数据字典( " + rowNum + " )行的数据文件存放路径为空,请检查");
 		extraction_def.setPlane_url(plane_url);
 		//写入表的存储信息到Xml
 		addStorage(extraction_def);
@@ -421,23 +427,29 @@ public class Xls2xml {
 			Table_column table_column = new Table_column();
 			// 字段英文名
 			String column_name = ExcelUtil.getValue(rowData.getCell(1)).toString();
+			Validator.notBlank(column_name, "数据字典( " + i + " )行的字段英文名为空,请检查");
 			table_column.setColumn_name(column_name);
 			// 字段中文名
 			String column_cn_name = ExcelUtil.getValue(rowData.getCell(2)).toString();
+			Validator.notBlank(column_cn_name, "数据字典( " + i + " )行的字段中文名为空,请检查");
 			table_column.setColumn_ch_name(column_cn_name);
 			// 数据类型
 			String column_type = ExcelUtil.getValue(rowData.getCell(3)).toString();
+			Validator.notBlank(column_type, "数据字典( " + i + " )行的数据类型为空,请检查");
 			table_column.setColumn_type(column_type);
 			// 键值
 			String is_primary_key = ExcelUtil.getValue(rowData.getCell(4)).toString();
+			Validator.notBlank(is_primary_key, "数据字典( " + i + " )行的键值为空,请检查");
 			is_primary_key = IsFlag.getCodeByValue(is_primary_key);
 			table_column.setIs_primary_key(is_primary_key);
 			// 空值
 			String column_remark = ExcelUtil.getValue(rowData.getCell(5)).toString();
+			Validator.notBlank(column_remark, "数据字典( " + i + " )行的空值信息为空,请检查");
 			column_remark = IsFlag.getCodeByValue(column_remark);
 			table_column.setTc_remark(column_remark);
 			// 是否为拉链字段
 			String is_zipper_field = ExcelUtil.getValue(rowData.getCell(6)).toString();
+			Validator.notBlank(is_zipper_field, "数据字典( " + i + " )行的拉链字段为空,请检查");
 			is_zipper_field = IsFlag.getCodeByValue(is_zipper_field);
 			table_column.setIs_zipper_field(is_zipper_field);
 			table_column.setIs_alive(IsFlag.Shi.getCode());
