@@ -1,10 +1,17 @@
 package hrds.commons.utils.xlstoxml;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
+import hrds.commons.codes.DataBaseCode;
+import hrds.commons.codes.FileFormat;
+import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
+import hrds.commons.entity.Data_extraction_def;
+import hrds.commons.entity.Table_column;
 import hrds.commons.exception.BusinessException;
+import hrds.commons.utils.ExcelUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.SystemUtils;
@@ -111,17 +118,19 @@ public class Xls2xml {
 
 	public static void toXml(String db_path, String xml_path) {
 
-//		String path_cd = pathToUnEscape(db_path + "~dd_data.json");
-		File file = FileUtils.getFile(db_path);
-		if (file.exists()) {
+		String path_cd = pathToUnEscape(db_path);
+		File file = FileUtils.getFile(path_cd);
+		if (file.exists() && db_path.toUpperCase().endsWith("JSON")) {
 			jsonToXml(db_path, xml_path);
-		} else {
-//			path_cd = pathToUnEscape(db_path + "~dd_data.xls");
-			file = FileUtils.getFile(db_path);
+		} else if (db_path.toUpperCase().endsWith("XLS") || db_path.toUpperCase().endsWith("XLSX")) {
+			path_cd = pathToUnEscape(db_path);
+			file = FileUtils.getFile(path_cd);
 			if (!file.exists()) {
 				throw new BusinessException("没有找到相应的数据字典定义文件！");
 			}
 			XlsToXml(db_path, xml_path);
+		} else {
+			throw new BusinessException("请指定正确的数据字典文件！");
 		}
 	}
 
@@ -170,7 +179,7 @@ public class Xls2xml {
 				JSONObject handleType = json.getJSONObject("handle_type");
 				// 数据处理类型
 				addHandleType(handleType.getString("insert"), handleType.getString("update"),
-						handleType.getString("delete"));
+					handleType.getString("delete"));
 				// 列信息
 				JSONArray columns = json.getJSONArray("columns");
 				for (int j = 0; j < columns.size(); j++) {
@@ -192,7 +201,7 @@ public class Xls2xml {
 					int length = getLength(column_type);
 					// 列信息封装
 					addColumnToSemiStructuredCollect(column_id, column_name, column_ch_name, column_type,
-							column_remark, columnposition, is_operate);
+						column_remark, columnposition, is_operate);
 				}
 			}
 			// 生成xml文档
@@ -213,9 +222,9 @@ public class Xls2xml {
 	}
 
 	public static void addColumnToSemiStructuredCollect(String column_id, String column_name,
-	                                                    String column_ch_name, String column_type,
-	                                                    String column_remark, String columnposition,
-	                                                    String is_operate) {
+		String column_ch_name, String column_type,
+		String column_remark, String columnposition,
+		String is_operate) {
 
 		column = xmlCreater.createElement(table, "columns");
 		xmlCreater.createAttribute(column, "column_id", column_id);
@@ -276,26 +285,15 @@ public class Xls2xml {
 				JSONArray columns = json.getJSONArray("columns");//列信息
 				for (int j = 0; j < columns.size(); j++) {
 					JSONObject column = columns.getJSONObject(j);
-					String column_name = column.getString("column_name");//字段名
-					String column_cn_name = column.getString("column_ch_name");//字段中文名
-					String column_type = column.getString("column_type");//字段类型
-					String is_primary_key = column.getString("is_primary_key");//是否为主键
-					String column_remark = column.getString("column_remark");//备注信息
-					String is_get = column.getString("is_get");
-					String is_alive = column.getString("is_alive");
-					String is_new = column.getString("is_new");
-					addColumn(column_name, column_cn_name, column_type, is_primary_key, column_remark, is_get, is_alive, is_new);
+					Table_column table_column = JSON.toJavaObject(column, Table_column.class);
+					table_column.setTc_remark(column.getString("column_remark"));//备注信息
+					addColumn(table_column);
 				}
 				JSONArray storages = json.getJSONArray("storage");
 				for (int j = 0; j < storages.size(); j++) {
 					JSONObject storageJson = storages.getJSONObject(j);
-					String file_format = storageJson.getString("dbfile_format");//文件格式
-					String is_header = storageJson.getString("is_header");//是否有表头
-					String row_separator = storageJson.getString("row_separator");//行分隔符
-					String column_separator = storageJson.getString("database_separatorr");//列分隔符
-					String root_path = storageJson.getString("plane_url");//采集文件的跟目录
-					String file_code = storageJson.getString("database_code");//采集文件的编码
-					addStorage(file_format, is_header, row_separator, column_separator, root_path, file_code);
+					Data_extraction_def extraction_def = JSON.toJavaObject(storageJson, Data_extraction_def.class);
+					addStorage(extraction_def);
 				}
 			}
 			xmlCreater.buildXmlFile();// 生成xml文档
@@ -323,129 +321,32 @@ public class Xls2xml {
 	 */
 	public static void XlsToXml(String xls_path, String xml_path) {
 
-		InputStream xlsFileInputStream = null;
 		createXml(xml_path);// 调用方法生成xml文件
 		int number = 0;
 		String info = "";
+		Workbook workbookFromExcel = null;
 		try {
 			File file = new File(xls_path);
-			xlsFileInputStream = new FileInputStream(file);
-			Workbook workbook = WorkbookFactory.create(xlsFileInputStream);
-			if (workbook == null) {
-				throw new BusinessException("没有找到相应的xml");
-			}
-			Sheet sheet = workbook.getSheetAt(1);
-			if (sheet == null) {
-				throw new BusinessException("没有找到表单对象");
-			}
-			int frstrow = sheet.getFirstRowNum(); //首行
-			int lastrow = sheet.getLastRowNum(); //尾行
-			logger.info("首行：" + frstrow);
-			logger.info("尾行：" + lastrow);
-			if (lastrow == 0) {
-				throw new BusinessException("数据字典必须有数据！");
-			}
-			//得到表头
-			Row rowhead = sheet.getRow(frstrow);
-			int frstcell = rowhead.getFirstCellNum(); //首列
-			int lastcell = rowhead.getLastCellNum(); //尾列
-			logger.info("首列：" + frstcell);
-			logger.info("尾列：" + lastcell);
-			int tableIndex = 1;
-			boolean isNoneed = false;
-			for (int i = frstrow + 1; i <= lastrow; i++) {
-				Row row = sheet.getRow(i);
-				number = row.getRowNum();
-				if (row != null) {
-					String isTable = "";
-					if (i == tableIndex) {//如果整行为空,下一行一定是表名
-						Cell cell = row.getCell(0);
-						if (cell == null) {
-							continue;
-						}
-						String value = getheadCellValue(cell);
-						if (StringUtil.isEmpty(value)) {
-							isNoneed = true;
-							continue;
-						} else {
-							isNoneed = false;
-						}
-						logger.info(value);
-						List<String> table_name = StringUtil.split(value, "-");
-						String en_table_name = "";
-						String cn_table_name = "";
-//						String storage_type = "1";
-						if (table_name.get(0) != null) {
-							en_table_name = subString(table_name.get(0), 100);
-						}
-						if (table_name.size() >= 2) {
-							cn_table_name = subString(table_name.get(1), 200);
-						}
-						//添加表的存储方式
-//						if (table_name.size() >= 3) {
-//							storage_type = UnloadType.QuanLiangXieShu.getCode();
-//						}
-						//如果表名开头为neneed_不作为数据加载
-						if (StringUtil.isEmpty(en_table_name) || en_table_name.toUpperCase().startsWith(NONEED_)) {
-							isNoneed = true;
-							continue;
-						} else {
-							isNoneed = false;
-						}
-						info = en_table_name;
-						//TODO xls需要重新设计，这里待修改 这里的卸数方式默认为全量方式,
-						addTable(en_table_name.toLowerCase(), cn_table_name, UnloadType.QuanLiangXieShu.getCode());
-						continue;
+			workbookFromExcel = ExcelUtil.getWorkbookFromExcel(file);
+			//表的数据信息在第一个Sheet页,因为Excel的Sheet页码是从0开始的
+			Sheet sheetAt = workbookFromExcel.getSheetAt(1);
+			int lastRowNum = sheetAt.getLastRowNum();
+			//遍历所有的有行数
+			for (int i = 0; i < lastRowNum; i++) {
+				//获取当前行对象
+				Row row = sheetAt.getRow(i);
+				//循环找出每个格子的数据信息,如果第一个格子的值是 "英文表名",说明是表的开始
+				String cellValue = ExcelUtil.getValue(row.getCell(0)).toString();
+				if (StringUtil.isNotBlank(cellValue)) {
+					//匹配到英文表名标签,则开始写入xml的table信息
+					if (cellValue.equals("英文表名")) {
+						//下一行必定是参数信息
+						writeTable2Xml(sheetAt.getRow(i + 1));
 					}
-
-					if (i == tableIndex + 1) {//表名下一行一定是表头，不用进行读取
-						continue;
-					}
-					String column_id = "", column_name = "", column_cn_name = "", column_type = "", column_key = "", column_null = "", column_remark = "";
-					for (int j = 0; j < 7; j++) {
-						Cell cell = row.getCell(j);
-						if (cell == null) {
-							continue;
-						}
-						String value = getheadCellValue(cell).replaceAll(":", "-");
-						if (j == 0) {
-							column_id = value;
-						}
-						if (j == 1) {
-							column_name = subString(value, 200);
-						}
-						if (j == 2) {
-							column_cn_name = subString(value, 200);
-						}
-						if (j == 3) {
-							column_type = value;
-						}
-						if (j == 4) {
-							column_key = value;
-						}
-						if (j == 5) {
-							column_null = value;
-						}
-						if (j == 6) {
-							column_remark = subString(value, 200);
-							;
-						}
-						isTable += value;
-					}
-					//i不等于表名且不等于全空额，且表头continue后，其他肯定是列内容
-					if (!StringUtil.isEmpty(isTable)) {
-						if (!isNoneed) {
-							int length = getLength(column_type);
-							//TODO xls需要重新设计，这里待修改
-							addColumn(column_id, column_name.toLowerCase(), column_cn_name, column_type,
-									null, column_key, column_null,
-									column_remark);
-						}
-					}
-					//如果整行为空,下一行一定是表名
-					if (StringUtil.isEmpty(isTable)) {
-						tableIndex = 1;
-						tableIndex = i + 1;
+					//这里是列标签的开始,写入当前表的列信息
+					if (cellValue.equals("序号")) {
+						//下一行必定是列参数信息
+						writeColumn2Xml(lastRowNum, sheetAt, i + 1);
 					}
 				}
 			}
@@ -461,7 +362,89 @@ public class Xls2xml {
 			logger.info(info + " 表的第 " + number + "数据错误");
 			logger.error(e.getMessage(), e);
 		} finally {
-			IOUtils.closeQuietly(xlsFileInputStream);
+			try {
+				if (workbookFromExcel != null) {
+					workbookFromExcel.close();
+				}
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
+
+	static void writeTable2Xml(Row rowData) {
+		//英文表名
+		String table_name = ExcelUtil.getValue(rowData.getCell(0)).toString();
+		//中文表名
+		String table_cn_name = ExcelUtil.getValue(rowData.getCell(1)).toString();
+		//将表的信息写入Xml
+		addTable(table_name.toLowerCase(), table_cn_name, UnloadType.QuanLiangXieShu.getCode());
+
+		//数据抽取定义信息
+		Data_extraction_def extraction_def = new Data_extraction_def();
+		// 数据编码
+		String database_code = ExcelUtil.getValue(rowData.getCell(2)).toString();
+		database_code = DataBaseCode.getCodeByValue(database_code);
+		extraction_def.setDatabase_code(database_code);
+		// 行分隔符
+		String row_separator = ExcelUtil.getValue(rowData.getCell(3)).toString();
+		row_separator = StringUtil.string2Unicode(row_separator);
+		extraction_def.setRow_separator(row_separator);
+		// 是否有表头
+		String is_header = ExcelUtil.getValue(rowData.getCell(4)).toString();
+		is_header = IsFlag.getCodeByValue(is_header);
+		extraction_def.setIs_header(is_header);
+		// 数据文件格式
+		String dbfile_format = ExcelUtil.getValue(rowData.getCell(5)).toString();
+		dbfile_format = FileFormat.getCodeByValue(dbfile_format);
+		extraction_def.setDbfile_format(dbfile_format);
+		// 列分隔符
+		String database_separatorr = ExcelUtil.getValue(rowData.getCell(6)).toString();
+		database_separatorr = StringUtil.string2Unicode(database_separatorr);
+		extraction_def.setDatabase_separatorr(database_separatorr);
+		// 数据文件存放路径
+		String plane_url = ExcelUtil.getValue(rowData.getCell(7)).toString();
+		extraction_def.setPlane_url(plane_url);
+		//写入表的存储信息到Xml
+		addStorage(extraction_def);
+	}
+
+	static void writeColumn2Xml(int lastRowNum, Sheet sheet, int rowNum) {
+
+		for (int i = rowNum; i < lastRowNum; i++) {
+			Row rowData = sheet.getRow(i);
+			String cellValue = ExcelUtil.getValue(rowData.getCell(0)).toString();
+			//匹配到的标签为英文表名时,说明是新的表开始
+			if (cellValue.equals("英文表名")) {
+				break;
+			}
+			Table_column table_column = new Table_column();
+			// 字段英文名
+			String column_name = ExcelUtil.getValue(rowData.getCell(1)).toString();
+			table_column.setColumn_name(column_name);
+			// 字段中文名
+			String column_cn_name = ExcelUtil.getValue(rowData.getCell(2)).toString();
+			table_column.setColumn_ch_name(column_cn_name);
+			// 数据类型
+			String column_type = ExcelUtil.getValue(rowData.getCell(3)).toString();
+			table_column.setColumn_type(column_type);
+			// 键值
+			String is_primary_key = ExcelUtil.getValue(rowData.getCell(4)).toString();
+			is_primary_key = IsFlag.getCodeByValue(is_primary_key);
+			table_column.setIs_primary_key(is_primary_key);
+			// 空值
+			String column_remark = ExcelUtil.getValue(rowData.getCell(5)).toString();
+			column_remark = IsFlag.getCodeByValue(column_remark);
+			table_column.setTc_remark(column_remark);
+			// 是否为拉链字段
+			String is_zipper_field = ExcelUtil.getValue(rowData.getCell(6)).toString();
+			is_zipper_field = IsFlag.getCodeByValue(is_zipper_field);
+			table_column.setIs_zipper_field(is_zipper_field);
+			table_column.setIs_alive(IsFlag.Shi.getCode());
+			table_column.setIs_get(IsFlag.Shi.getCode());
+			table_column.setIs_new(IsFlag.Fou.getCode());
+			//将列信息写入当前表的Xml下面
+			addColumn(table_column);
 		}
 	}
 
@@ -503,11 +486,10 @@ public class Xls2xml {
 		xmlCreater.createAttribute(table, "table_name", en_table_name);
 		xmlCreater.createAttribute(table, "table_ch_name", cn_table_name);
 		xmlCreater.createAttribute(table, "unload_type", unload_type);
-
 	}
 
 	public static void addTable(String en_table_name, String cn_table_name, String unload_type
-			, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo) {
+		, String insertColumnInfo, String updateColumnInfo, String deleteColumnInfo) {
 		table = xmlCreater.createElement(root, "table");
 		xmlCreater.createAttribute(table, "table_name", en_table_name);
 		xmlCreater.createAttribute(table, "table_ch_name", cn_table_name);
@@ -517,28 +499,27 @@ public class Xls2xml {
 		xmlCreater.createAttribute(table, "deleteColumnInfo", deleteColumnInfo);
 	}
 
-	public static void addColumn(String column_name, String column_cn_name, String column_type, String is_primary_key,
-	                             String column_remark, String is_get, String is_alive, String is_new) {
+	public static void addColumn(Table_column table_column) {
 		column = xmlCreater.createElement(table, "column");
-		xmlCreater.createAttribute(column, "column_name", column_name);
-		xmlCreater.createAttribute(column, "column_ch_name", column_cn_name);
-		xmlCreater.createAttribute(column, "column_type", column_type);
-		xmlCreater.createAttribute(column, "is_primary_key", is_primary_key);
-		xmlCreater.createAttribute(column, "column_remark", column_remark);
-		xmlCreater.createAttribute(column, "is_get", is_get);
-		xmlCreater.createAttribute(column, "is_alive", is_alive);
-		xmlCreater.createAttribute(column, "is_new", is_new);
+		xmlCreater.createAttribute(column, "column_name", table_column.getColumn_name());
+		xmlCreater.createAttribute(column, "column_ch_name", table_column.getColumn_ch_name());
+		xmlCreater.createAttribute(column, "column_type", table_column.getColumn_type());
+		xmlCreater.createAttribute(column, "is_primary_key", table_column.getIs_primary_key());
+		xmlCreater.createAttribute(column, "column_remark", table_column.getTc_remark());
+		xmlCreater.createAttribute(column, "is_get", table_column.getIs_get());
+		xmlCreater.createAttribute(column, "is_alive", table_column.getIs_alive());
+		xmlCreater.createAttribute(column, "is_new", table_column.getIs_new());
+		xmlCreater.createAttribute(column, "is_zipper_field", table_column.getIs_zipper_field());
 	}
 
-	private static void addStorage(String file_format, String is_header, String row_separator, String column_separator,
-	                               String root_path, String file_code) {
+	private static void addStorage(Data_extraction_def extraction_def) {
 		storage = xmlCreater.createElement(table, "storage");
-		xmlCreater.createAttribute(storage, "dbfile_format", file_format);
-		xmlCreater.createAttribute(storage, "is_header", is_header);
-		xmlCreater.createAttribute(storage, "row_separator", row_separator);
-		xmlCreater.createAttribute(storage, "database_separatorr", column_separator);
-		xmlCreater.createAttribute(storage, "plane_url", String.valueOf(root_path));
-		xmlCreater.createAttribute(storage, "database_code", file_code);
+		xmlCreater.createAttribute(storage, "dbfile_format", extraction_def.getDbfile_format());
+		xmlCreater.createAttribute(storage, "is_header", extraction_def.getIs_header());
+		xmlCreater.createAttribute(storage, "row_separator", extraction_def.getRow_separator());
+		xmlCreater.createAttribute(storage, "database_separatorr", extraction_def.getDatabase_separatorr());
+		xmlCreater.createAttribute(storage, "plane_url", extraction_def.getPlane_url());
+		xmlCreater.createAttribute(storage, "database_code", extraction_def.getDatabase_code());
 	}
 
 	/**
