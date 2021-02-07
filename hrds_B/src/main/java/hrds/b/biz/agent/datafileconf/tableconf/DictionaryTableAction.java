@@ -107,6 +107,10 @@ public class DictionaryTableAction extends BaseAction {
 						.orElseThrow(() -> new BusinessException("SQL填写错误"));
 					if (tableCountNum != 0) {
 						deleteTableList.add(tableName);
+					} else {
+						List<String> deleteTableNameList = new ArrayList<>();
+						deleteTableNameList.add(tableName);
+						deleteTableInfoByTableName(colSetId, deleteTableNameList);
 					}
 
 					if (deleteTableList.size() != 0) {
