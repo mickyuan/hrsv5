@@ -337,18 +337,6 @@ public class TDBResultAction extends BaseAction {
 		return columnFeatureAnalysisResultMap;
 	}
 
-	@Method(desc = "自定义图计算查询语句查询", logicStep = "")
-	@Param(name = "cypher", desc = "查询语句", range = "不能为空")
-	@Return(desc = "", range = "")
-	public Map<String, Object> searchFromNeo4j(String cypher) {
-		Validator.notBlank(cypher, "查询语句不能为空");
-		try (Neo4jUtils example = new Neo4jUtils()) {
-			List<NodeRelationBean> nodeRelationBeans = example.searchFromNeo4j(cypher);
-			return null;
-//			return nodeRelationBeans;
-		}
-	}
-
 	@Method(desc = "LPA社区发现算法", logicStep = "")
 	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")

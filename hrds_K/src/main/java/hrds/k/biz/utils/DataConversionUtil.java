@@ -31,41 +31,33 @@ public class DataConversionUtil {
 			Map<String, Object> newCategory = new HashMap<>();
 			for (int i = 0; i < dataMapList.size(); i++) {
 				newCategory.put(dataMapList.get(i).get("label").toString(), i);
-				newCategory.put("x" + i, -Math.random() * ((i + 1) * 100 - i));
-				newCategory.put("y" + i, Math.random() * ((i + 1) * 100 - i));
 			}
 			for (Map<String, Object> node : nodes) {
-				for (int i = 0; i < dataMapList.size(); i++) {
-					Map<String, Object> map = dataMapList.get(i);
+				for (Map<String, Object> map : dataMapList) {
 					if (node.get("name").equals(map.get("name"))) {
 						node.put("category", newCategory.get(map.get("label").toString()));
-						node.put("x", newCategory.get("x" + i));
-						node.put("y", newCategory.get("y" + i));
 					}
 				}
 			}
 		} else {
-			for (int i = 0; i < nodes.size(); i++) {
-				Map<String, Object> node = nodes.get(i);
+			for (Map<String, Object> node : nodes) {
 				for (Map<String, Object> map : dataMapList) {
 					if (node.get("name").equals(map.get("name"))) {
 						node.put("category", map.get("community"));
-						node.put("x", -Math.random() * ((i + 1) * 100 - i));
-						node.put("y", Math.random() * ((i + 1) * 100 - i));
 					}
 				}
 			}
 		}
-//		List<String> categoryList =
-//				nodes.stream().map(node -> node.get("category").toString()).collect(Collectors.toList());
-//		for (Map<String, Object> nodeMap : nodes) {
-//			for (String category : categoryList) {
-//				if (nodeMap.get("category").equals(category)) {
-//					nodeMap.put("x", -Math.random() * 2000);
-//					nodeMap.put("y", Math.random() * 1000);
-//				}
-//			}
-//		}
+		List<String> categoryList =
+				nodes.stream().map(node -> node.get("category").toString()).collect(Collectors.toList());
+		for (Map<String, Object> nodeMap : nodes) {
+			for (String category : categoryList) {
+				if (nodeMap.get("category").equals(category)) {
+					nodeMap.put("x", -Math.random() * 2000);
+					nodeMap.put("y", Math.random() * 1000);
+				}
+			}
+		}
 		Map<String, Object> dataMap = new HashMap<>();
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
 			List<Object> categories = dataMapList.stream().map(data -> data.get("label"))
@@ -138,13 +130,23 @@ public class DataConversionUtil {
 	public static Map<String, Object> convertToTriangle(List<TriangleRelationBean> triangleRelationBeans) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
-//		processData(nodes, links, nodeRelationBeans);
+		for (TriangleRelationBean triangleRelationBean : triangleRelationBeans) {
+			Map<Long, Map<String, Object>> nodeCollection = triangleRelationBean.getNodeCollection();
+			for (Map.Entry<Long, Map<String, Object>> entry : nodeCollection.entrySet()) {
+				setNode(nodes, null, entry);
+			}
+			Map<Long, Map<String, Object>> relationCollection = triangleRelationBean.getRelationCollection();
+			for (Map.Entry<Long, Map<String, Object>> entry : relationCollection.entrySet()) {
+				Map<String, Object> linkMap = new HashMap<>();
+				// 这里取出来是因为前端这里需要的是字符串，直接使用entry.getValue返回的是数值
+				linkMap.put("source", entry.getValue().get("source").toString());
+				linkMap.put("target", entry.getValue().get("target").toString());
+				links.add(linkMap);
+			}
+		}
 		Map<String, Object> dataMap = new HashMap<>();
 		dataMap.put("nodes", nodes);
 		dataMap.put("links", links);
-		List<Object> categories = new ArrayList<>();
-		categories.add("0");
-		dataMap.put("categories", categories);
 		return dataMap;
 	}
 
@@ -179,15 +181,17 @@ public class DataConversionUtil {
 		nodeMap.put("category", 0);
 		nodeMap.put("x", -Math.random() * 2000);
 		nodeMap.put("y", Math.random() * 1000);
+		nodeMap.put("name", entry.getValue().get("name"));
 		List<String> valueList = new ArrayList<>();
-		valueList.add("relationId:" + nodeRelationBean.getRelationId());
-		valueList.add("relationType:" + nodeRelationBean.getRelationType());
 		valueList.add("id:" + entry.getKey());
 		for (Map.Entry<String, Object> objectEntry : entry.getValue().entrySet()) {
 			valueList.add(objectEntry.getKey() + ":" + objectEntry.getValue());
 		}
+		if (nodeRelationBean != null) {
+			valueList.add("relationId:" + nodeRelationBean.getRelationId());
+			valueList.add("relationType:" + nodeRelationBean.getRelationType());
+		}
 		nodeMap.put("value", valueList);
-		nodeMap.put("name", entry.getValue().get("name"));
 		if (nodes.isEmpty()) {
 			nodes.add(nodeMap);
 		} else {
