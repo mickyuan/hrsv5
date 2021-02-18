@@ -1,7 +1,7 @@
 package hrds.k.biz.utils;
 
 import hrds.k.biz.tdb.bean.NodeRelationBean;
-import hrds.k.biz.tdb.bean.TriangleRelationBean;
+import hrds.k.biz.tdb.bean.AdaptRelationBean;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.types.Node;
@@ -55,10 +55,10 @@ public class StandardGraphUtils {
 		return nodeRelationBeans;
 	}
 
-	public static List<TriangleRelationBean> getTriangleRelationInfo(Result searchResult) {
-		List<TriangleRelationBean> triangleRelationBeanList = new ArrayList<>();
+	public static List<AdaptRelationBean> getAdaptRelationInfo(Result searchResult) {
+		List<AdaptRelationBean> triangleRelationBeanList = new ArrayList<>();
 		while (searchResult.hasNext()) {
-			TriangleRelationBean triangleRelationBean = new TriangleRelationBean();
+			AdaptRelationBean triangleRelationBean = new AdaptRelationBean();
 			Map<Long, Map<String, Object>> nodeCollection = new HashMap<>();
 			Map<Long, Map<String, Object>> relationCollection = new HashMap<>();
 			Path segments = searchResult.next().get(0).asPath();

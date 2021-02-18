@@ -2,8 +2,8 @@ package hrds.k.biz.utils;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.utils.PropertyParaValue;
+import hrds.k.biz.tdb.bean.AdaptRelationBean;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
-import hrds.k.biz.tdb.bean.TriangleRelationBean;
 import org.neo4j.driver.*;
 
 import java.io.Closeable;
@@ -208,7 +208,7 @@ public class Neo4jUtils implements Closeable {
 	 * level：最多找多少层
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<NodeRelationBean> searchAllShortPath(String columnNodeName1, String columnNodeName2,
+	public List<AdaptRelationBean> searchAllShortPath(String columnNodeName1, String columnNodeName2,
 													 int level, String limitNum) {
 		String cypher = "MATCH (p1:Column {name:'" + columnNodeName1 + "'})," +
 				" (p2:Column {name:'" + columnNodeName2 + "'})," +
@@ -217,7 +217,7 @@ public class Neo4jUtils implements Closeable {
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
 		}
-		return StandardGraphUtils.getRelationInfo(session.run(cypher));
+		return StandardGraphUtils.getAdaptRelationInfo(session.run(cypher));
 	}
 
 
@@ -228,8 +228,8 @@ public class Neo4jUtils implements Closeable {
 	 * level：最多找多少层（这个值不能太大，不然查询超级慢）
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<NodeRelationBean> searchLongestPath(String columnNodeName1, String columnNodeName2,
-													int level, String limitNum) {
+	public List<AdaptRelationBean> searchLongestPath(String columnNodeName1, String columnNodeName2,
+													 int level, String limitNum) {
 		String cypher = "MATCH (a:Column {name:'" + columnNodeName1 + "'})," +
 				" (b:Column {name:'" + columnNodeName2 + "'}),\n" +
 				" p=(a)-[*.." + level + "]-(b)\n" +
@@ -237,7 +237,7 @@ public class Neo4jUtils implements Closeable {
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
 		}
-		return StandardGraphUtils.getRelationInfo(session.run(cypher));
+		return StandardGraphUtils.getAdaptRelationInfo(session.run(cypher));
 	}
 
 	/**
@@ -246,12 +246,12 @@ public class Neo4jUtils implements Closeable {
 	 * level：最多找多少层（这个值不能太大，不然查询超级慢）
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<NodeRelationBean> searchNeighbors(String columnNodeName, int level, String limitNum) {
+	public List<AdaptRelationBean> searchNeighbors(String columnNodeName, int level, String limitNum) {
 		String cypher = "MATCH p=(:Column {name:'" + columnNodeName + "'})-[*.." + level + "]-() return p";
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
 		}
-		return StandardGraphUtils.getRelationInfo(session.run(cypher));
+		return StandardGraphUtils.getAdaptRelationInfo(session.run(cypher));
 	}
 
 	/**
@@ -259,7 +259,7 @@ public class Neo4jUtils implements Closeable {
 	 * relationship：为页面传参边的属性（FK、FD、EQUALS、SAME、BDF）
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<TriangleRelationBean> searchTriangleRelation(String relationship, String limitNum) {
+	public List<AdaptRelationBean> searchTriangleRelation(String relationship, String limitNum) {
 		String cypher = "";
 		if (!StringUtil.isEmpty(relationship)) {
 			cypher = "match b=(a)-[:" + relationship + "]-()-[:" + relationship
@@ -270,7 +270,7 @@ public class Neo4jUtils implements Closeable {
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
 		}
-		return StandardGraphUtils.getTriangleRelationInfo(session.run(cypher));
+		return StandardGraphUtils.getAdaptRelationInfo(session.run(cypher));
 	}
 
 	public static void main(String... args) {
@@ -279,7 +279,8 @@ public class Neo4jUtils implements Closeable {
 //					"S10_I_CPA_CPA_NAME", 10, "100"));
 //			System.out.println(neo4jUtils.searchAllShortPath("S10_I_PRO_ACCT_PA_INTEREST",
 //					"S10_I_CPA_CPA_NAME", 10, ""));
-			System.out.println(neo4jUtils.searchTriangleRelation("FK", ""));
+			System.out.println(neo4jUtils.searchAllShortPath("S10_I_CHOU_ACCT_CAT_HOU_KIND",
+					"S10_I_CHOU_ACCT_CAT_OWN_NAME", 5, "10"));
 		}
 //		//查询
 //		try (Neo4jUtils example = new Neo4jUtils("bolt://172.168.0.60:7687", "neo4j", "hrsdxg")) {

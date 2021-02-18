@@ -3,7 +3,7 @@ package hrds.k.biz.utils;
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
-import hrds.k.biz.tdb.bean.TriangleRelationBean;
+import hrds.k.biz.tdb.bean.AdaptRelationBean;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -150,10 +150,10 @@ public class DataConversionUtil {
 	 * @param triangleRelationBeans neo4j 三角关系结果数据
 	 * @return 返回转换后的echarts格式数据
 	 */
-	public static Map<String, Object> convertToTriangle(List<TriangleRelationBean> triangleRelationBeans) {
+	public static Map<String, Object> convertToTriangle(List<AdaptRelationBean> triangleRelationBeans) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
-		for (TriangleRelationBean triangleRelationBean : triangleRelationBeans) {
+		for (AdaptRelationBean triangleRelationBean : triangleRelationBeans) {
 			Map<Long, Map<String, Object>> nodeCollection = triangleRelationBean.getNodeCollection();
 			for (Map.Entry<Long, Map<String, Object>> entry : nodeCollection.entrySet()) {
 				setNode(nodes, null, entry);

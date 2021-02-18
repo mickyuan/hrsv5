@@ -4,7 +4,7 @@ import hrds.commons.entity.fdentity.ProjectTableEntity;
 
 import java.util.Map;
 
-public class TriangleRelationBean extends ProjectTableEntity {
+public class AdaptRelationBean extends ProjectTableEntity {
 	//节点的集合,map的key是nodeID,map的value是Node的属性
 	private Map<Long, Map<String, Object>> nodeCollection;
 	//关系的集合,map的key是nodeID,map的value是relation的属性
