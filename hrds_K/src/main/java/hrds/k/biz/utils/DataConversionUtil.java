@@ -15,15 +15,18 @@ import java.util.stream.Collectors;
  * Echarts数据格式转换工具类
  */
 public class DataConversionUtil {
+
 	/**
-	 * neo4j数据转换为echarts格式数据
+	 * LPA/LOUVAIN算法数据格式转换
 	 *
-	 * @param nodeRelationBeans neo4j返回结果数据
+	 * @param nodeRelationBeans neo4j所有结果数据
+	 * @param dataMapList       neo4j lpa/louvain算法结果数据
+	 * @param type              lpa还是louvain算法
 	 * @return 返回转换后的echarts格式数据
 	 */
-	public static Map<String, Object> conversionDataToEcharts(List<NodeRelationBean> nodeRelationBeans,
-	                                                          List<Map<String, Object>> dataMapList,
-	                                                          String type) {
+	public static Map<String, Object> lpaOrLouvainConversion(List<NodeRelationBean> nodeRelationBeans,
+	                                                         List<Map<String, Object>> dataMapList,
+	                                                         String type) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
 		processData(nodes, links, nodeRelationBeans);
@@ -73,8 +76,16 @@ public class DataConversionUtil {
 		return dataMap;
 	}
 
-	public static Map<String, Object> convertToEcharts(List<NodeRelationBean> nodeRelationBeans,
-	                                                   String columnNodeName1, String columnNodeName2) {
+	/**
+	 * 最长最短数据转换
+	 *
+	 * @param nodeRelationBeans neo4j返回结果数据
+	 * @param columnNodeName1   第一节点名称
+	 * @param columnNodeName2   第二节点名称
+	 * @return 返回转换后的echarts格式数据
+	 */
+	public static Map<String, Object> longestAndShortestDataConversion(List<NodeRelationBean> nodeRelationBeans,
+	                                                                   String columnNodeName1, String columnNodeName2) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
 		processData(nodes, links, nodeRelationBeans);
@@ -102,6 +113,12 @@ public class DataConversionUtil {
 
 	}
 
+	/**
+	 * 远近邻数据格式转换
+	 *
+	 * @param nodeRelationBeans neo4j 远近邻结果数据
+	 * @return 返回转换后的echarts格式数据
+	 */
 	public static Map<String, Object> convertToEchartsTree(List<NodeRelationBean> nodeRelationBeans) {
 		Map<String, Object> treeMap = new HashMap<>();
 		Map<Long, Map<String, Object>> leftNode = nodeRelationBeans.get(0).getLeftNode();
@@ -127,6 +144,12 @@ public class DataConversionUtil {
 		return treeMap;
 	}
 
+	/**
+	 * 三角关系数据格式转换
+	 *
+	 * @param triangleRelationBeans neo4j 三角关系结果数据
+	 * @return 返回转换后的echarts格式数据
+	 */
 	public static Map<String, Object> convertToTriangle(List<TriangleRelationBean> triangleRelationBeans) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
