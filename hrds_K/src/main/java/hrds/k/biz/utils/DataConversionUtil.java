@@ -86,25 +86,20 @@ public class DataConversionUtil {
 	 */
 	public static Map<String, Object> longestAndShortestDataConversion(List<AdaptRelationBean> adaptRelationBeans,
 	                                                                   String columnNodeName1, String columnNodeName2) {
-		List<Object> categories = new ArrayList<>();
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		Map<String, Object> dataMap = getEchartsData(adaptRelationBeans, nodes);
 		for (Map<String, Object> node : nodes) {
 			if (node.get("name").equals(columnNodeName1)) {
 				// 起始点
 				node.put("category", 0);
-				categories.add(0);
 			} else if (node.get("name").equals(columnNodeName2)) {
 				// 结束点
 				node.put("category", 1);
-				categories.add(1);
 			} else {
 				// 中间点
 				node.put("category", 2);
-				categories.add(2);
 			}
 		}
-		dataMap.put("categories", categories);
 		return dataMap;
 	}
 
