@@ -246,12 +246,12 @@ public class Neo4jUtils implements Closeable {
 	 * level：最多找多少层（这个值不能太大，不然查询超级慢）
 	 * limitNum：查询多少条，可为空，为空则表示查询全部数据
 	 */
-	public List<AdaptRelationBean> searchNeighbors(String columnNodeName, int level, String limitNum) {
+	public List<NodeRelationBean> searchNeighbors(String columnNodeName, int level, String limitNum) {
 		String cypher = "MATCH p=(:Column {name:'" + columnNodeName + "'})-[*.." + level + "]-() return p";
 		if (!StringUtil.isEmpty(limitNum)) {
 			cypher += " LIMIT " + limitNum;
 		}
-		return StandardGraphUtils.getAdaptRelationInfo(session.run(cypher));
+		return StandardGraphUtils.getRelationInfo(session.run(cypher));
 	}
 
 	/**

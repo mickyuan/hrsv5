@@ -14,8 +14,8 @@ import hrds.commons.base.BaseAction;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.entity.*;
 import hrds.commons.exception.BusinessException;
-import hrds.k.biz.tdb.bean.NodeRelationBean;
 import hrds.k.biz.tdb.bean.AdaptRelationBean;
+import hrds.k.biz.tdb.bean.NodeRelationBean;
 import hrds.k.biz.tdbresult.bean.SearchFKAnalysisBean;
 import hrds.k.biz.tdbresult.bean.SearchJoinPKAnalysisBean;
 import hrds.k.biz.tdbresult.bean.SearchTableFuncDepResultBean;
@@ -481,11 +481,11 @@ public class TDBResultAction extends BaseAction {
 		}
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取全部最短路径neo4j结果数据
-			List<AdaptRelationBean> nodeRelationBeans =
+			List<AdaptRelationBean> adaptRelationBeans =
 					example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长最短数据格式转换
-			return null;/*DataConversionUtil.longestAndShortestDataConversion(nodeRelationBeans, columnNodeName1,
-					columnNodeName2);*/
+			return DataConversionUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
+					columnNodeName2);
 		}
 	}
 
@@ -508,11 +508,11 @@ public class TDBResultAction extends BaseAction {
 		}
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取最长路径neo4j结果数据
-			List<AdaptRelationBean> nodeRelationBeans =
+			List<AdaptRelationBean> adaptRelationBeans =
 					example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长路径数据格式转换
-			return null/*DataConversionUtil.longestAndShortestDataConversion(nodeRelationBeans, columnNodeName1,
-					columnNodeName2)*/;
+			return DataConversionUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
+					columnNodeName2);
 		}
 	}
 
@@ -529,9 +529,9 @@ public class TDBResultAction extends BaseAction {
 		Validator.notNull(level, "最多找多少层不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取远近邻关系neo4j结果数据
-			List<AdaptRelationBean> nodeRelationBeans = example.searchNeighbors(columnNodeName, level, limitNum);
+			List<NodeRelationBean> nodeRelationBeans = example.searchNeighbors(columnNodeName, level, limitNum);
 			// 3.远近邻关系数据格式转换
-			return null/*DataConversionUtil.convertToEchartsTree(nodeRelationBeans)*/;
+			return DataConversionUtil.convertToEchartsTree(nodeRelationBeans);
 		}
 	}
 
@@ -546,9 +546,9 @@ public class TDBResultAction extends BaseAction {
 		Validator.notBlank(relationship, "字段节点名称不能为空");
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取三角关系neo4j结果数据
-			List<AdaptRelationBean> triangleRelationBeans = example.searchTriangleRelation(relationship, limitNum);
+			List<AdaptRelationBean> adaptRelationBeans = example.searchTriangleRelation(relationship, limitNum);
 			// 3.三角关系数据格式转换
-			return DataConversionUtil.convertToTriangle(triangleRelationBeans);
+			return DataConversionUtil.convertToTriangle(adaptRelationBeans);
 		}
 	}
 }

@@ -2,8 +2,8 @@ package hrds.k.biz.utils;
 
 import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
-import hrds.k.biz.tdb.bean.NodeRelationBean;
 import hrds.k.biz.tdb.bean.AdaptRelationBean;
+import hrds.k.biz.tdb.bean.NodeRelationBean;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,15 +30,31 @@ public class DataConversionUtil {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
 		processData(nodes, links, nodeRelationBeans);
-		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
-			Map<String, Object> newCategory = new HashMap<>();
-			for (int i = 0; i < dataMapList.size(); i++) {
-				newCategory.put(dataMapList.get(i).get("label").toString(), i);
+		List<Object> categoryList = new ArrayList<>();
+		for (Map<String, Object> node : nodes) {
+			for (Map<String, Object> map : dataMapList) {
+				if (node.get("name").equals(map.get("name"))) {
+					if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
+						if (!categoryList.contains(map.get("label"))) {
+							categoryList.add(map.get("label"));
+						}
+					} else {
+						if (!categoryList.contains(map.get("community"))) {
+							categoryList.add(map.get("community"));
+						}
+					}
+				}
 			}
+		}
+		Map<String, Object> categoryMap = new HashMap<>();
+		for (int i = 0; i < categoryList.size(); i++) {
+			categoryMap.put(categoryList.get(i).toString(), i);
+		}
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
 			for (Map<String, Object> node : nodes) {
 				for (Map<String, Object> map : dataMapList) {
 					if (node.get("name").equals(map.get("name"))) {
-						node.put("category", newCategory.get(map.get("label").toString()));
+						node.put("category", categoryMap.get(map.get("label").toString()));
 					}
 				}
 			}
@@ -46,31 +62,15 @@ public class DataConversionUtil {
 			for (Map<String, Object> node : nodes) {
 				for (Map<String, Object> map : dataMapList) {
 					if (node.get("name").equals(map.get("name"))) {
-						node.put("category", map.get("community"));
+						node.put("category", categoryMap.get(map.get("community").toString()));
 					}
-				}
-			}
-		}
-		List<String> categoryList =
-				nodes.stream().map(node -> node.get("category").toString()).collect(Collectors.toList());
-		for (Map<String, Object> nodeMap : nodes) {
-			for (String category : categoryList) {
-				if (nodeMap.get("category").equals(category)) {
-					nodeMap.put("x", -Math.random() * 2000);
-					nodeMap.put("y", Math.random() * 1000);
 				}
 			}
 		}
 		Map<String, Object> dataMap = new HashMap<>();
-		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
-			List<Object> categories = dataMapList.stream().map(data -> data.get("label"))
-					.distinct().collect(Collectors.toList());
-			dataMap.put("categories", categories);
-		} else {
-			List<Object> categories = dataMapList.stream().map(data -> data.get("community"))
-					.distinct().collect(Collectors.toList());
-			dataMap.put("categories", categories);
-		}
+		List<Object> categories = nodes.stream().map(data -> data.get("category"))
+				.distinct().collect(Collectors.toList());
+		dataMap.put("categories", categories);
 		dataMap.put("nodes", nodes);
 		dataMap.put("links", links);
 		return dataMap;
@@ -79,17 +79,16 @@ public class DataConversionUtil {
 	/**
 	 * 最长最短数据转换
 	 *
-	 * @param nodeRelationBeans neo4j返回结果数据
-	 * @param columnNodeName1   第一节点名称
-	 * @param columnNodeName2   第二节点名称
+	 * @param adaptRelationBeans neo4j返回结果数据
+	 * @param columnNodeName1    第一节点名称
+	 * @param columnNodeName2    第二节点名称
 	 * @return 返回转换后的echarts格式数据
 	 */
-	public static Map<String, Object> longestAndShortestDataConversion(List<NodeRelationBean> nodeRelationBeans,
+	public static Map<String, Object> longestAndShortestDataConversion(List<AdaptRelationBean> adaptRelationBeans,
 	                                                                   String columnNodeName1, String columnNodeName2) {
-		List<Map<String, Object>> nodes = new ArrayList<>();
-		List<Map<String, Object>> links = new ArrayList<>();
-		processData(nodes, links, nodeRelationBeans);
 		List<Object> categories = new ArrayList<>();
+		List<Map<String, Object>> nodes = new ArrayList<>();
+		Map<String, Object> dataMap = getEchartsData(adaptRelationBeans, nodes);
 		for (Map<String, Object> node : nodes) {
 			if (node.get("name").equals(columnNodeName1)) {
 				// 起始点
@@ -105,12 +104,8 @@ public class DataConversionUtil {
 				categories.add(2);
 			}
 		}
-		Map<String, Object> dataMap = new HashMap<>();
-		dataMap.put("nodes", nodes);
-		dataMap.put("links", links.stream().distinct().collect(Collectors.toList()));
 		dataMap.put("categories", categories);
 		return dataMap;
-
 	}
 
 	/**
@@ -147,18 +142,23 @@ public class DataConversionUtil {
 	/**
 	 * 三角关系数据格式转换
 	 *
-	 * @param triangleRelationBeans neo4j 三角关系结果数据
+	 * @param adaptRelationBeans neo4j 三角关系结果数据
 	 * @return 返回转换后的echarts格式数据
 	 */
-	public static Map<String, Object> convertToTriangle(List<AdaptRelationBean> triangleRelationBeans) {
+	public static Map<String, Object> convertToTriangle(List<AdaptRelationBean> adaptRelationBeans) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
+		return getEchartsData(adaptRelationBeans, nodes);
+	}
+
+	private static Map<String, Object> getEchartsData(List<AdaptRelationBean> adaptRelationBeans,
+	                                                  List<Map<String, Object>> nodes) {
 		List<Map<String, Object>> links = new ArrayList<>();
-		for (AdaptRelationBean triangleRelationBean : triangleRelationBeans) {
-			Map<Long, Map<String, Object>> nodeCollection = triangleRelationBean.getNodeCollection();
+		for (AdaptRelationBean adaptRelationBean : adaptRelationBeans) {
+			Map<Long, Map<String, Object>> nodeCollection = adaptRelationBean.getNodeCollection();
 			for (Map.Entry<Long, Map<String, Object>> entry : nodeCollection.entrySet()) {
 				setNode(nodes, null, entry);
 			}
-			Map<Long, Map<String, Object>> relationCollection = triangleRelationBean.getRelationCollection();
+			Map<Long, Map<String, Object>> relationCollection = adaptRelationBean.getRelationCollection();
 			for (Map.Entry<Long, Map<String, Object>> entry : relationCollection.entrySet()) {
 				Map<String, Object> linkMap = new HashMap<>();
 				// 这里取出来是因为前端这里需要的是字符串，直接使用entry.getValue返回的是数值
@@ -169,7 +169,7 @@ public class DataConversionUtil {
 		}
 		Map<String, Object> dataMap = new HashMap<>();
 		dataMap.put("nodes", nodes);
-		dataMap.put("links", links);
+		dataMap.put("links", links.stream().distinct().collect(Collectors.toList()));
 		return dataMap;
 	}
 
@@ -201,9 +201,8 @@ public class DataConversionUtil {
 	                            NodeRelationBean nodeRelationBean, Map.Entry<Long, Map<String, Object>> entry) {
 		Map<String, Object> nodeMap = new HashMap<>();
 		nodeMap.put("id", entry.getKey());
-		nodeMap.put("category", 0);
 		nodeMap.put("x", -Math.random() * 2000);
-		nodeMap.put("y", Math.random() * 1000);
+		nodeMap.put("y", Math.random() * 800);
 		nodeMap.put("name", entry.getValue().get("name"));
 		List<String> valueList = new ArrayList<>();
 		valueList.add("id:" + entry.getKey());
