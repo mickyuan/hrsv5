@@ -49,6 +49,8 @@ public class GraphUtil {
 				}
 			}
 			graphNode.setSymbolSize(10.00 + symbolSizeFactor);
+			//设置节点所在的 x y 轴位置
+//			getXYPosition(node_info_map, category_info_map);
 			graphNode.setX(Math.random() * 500);
 			graphNode.setY(Math.random() * 500);
 			graphNodes.add(graphNode);
@@ -156,5 +158,33 @@ public class GraphUtil {
 			link_map_s.add(map);
 		}
 		return link_map_s;
+	}
+
+	/**
+	 * 获取节点展示的 X Y 轴位置
+	 *
+	 * @param node_info_map     单个节点信息
+	 * @param category_info_map 节点分类信息
+	 * @return 节点展示的 X Y 轴位置
+	 */
+	private static Map<String, Integer> getXYPosition(Map<String, Object> node_info_map, Map<String, Integer> category_info_map) {
+		//设置区域大小
+		Integer area_size = 100;
+		//初始化 X Y 轴
+		int x = 1, y = 1;
+		for (int i = 1; i <= category_info_map.size(); i++) {
+			if ((Integer) node_info_map.get("category") == i) {
+				//如果 y 小于 x 轴,y+1
+				if (y < x) {
+					y++;
+				}
+				//如果 x y 相等,优先 x+1
+				if (x * y == i * i) {
+					x++;
+				}
+				System.out.println("x: " + x + "\t" + "y: " + y);
+			}
+		}
+		return null;
 	}
 }

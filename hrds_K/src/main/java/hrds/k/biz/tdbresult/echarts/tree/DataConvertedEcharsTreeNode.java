@@ -1,4 +1,4 @@
-package hrds.k.biz.tdbresult.echarts.tree.util;
+package hrds.k.biz.tdbresult.echarts.tree;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -20,11 +20,12 @@ import hrds.k.biz.tdbresult.bean.SearchFKAnalysisBean;
 import hrds.k.biz.tdbresult.bean.SearchJoinPKAnalysisBean;
 import hrds.k.biz.tdbresult.bean.SearchTableFuncDepResultBean;
 import hrds.k.biz.tdbresult.echarts.graph.GraphUtil;
+import hrds.k.biz.tdbresult.echarts.pie.PieUtil;
 import hrds.k.biz.tdbresult.echarts.tree.query.JoinPKAnalysisQuery;
 import hrds.k.biz.tdbresult.echarts.tree.query.TableFuncDepAnalysisQuery;
-import hrds.k.biz.tdbresult.echarts.tree.util.DataConvertedEcharsTreeNode;
-import hrds.k.biz.tdbresult.echarts.tree.util.EcharsTreeNode;
-import hrds.k.biz.tdbresult.echarts.tree.util.NodeDataConvertedTreeList;
+import hrds.k.biz.tdbresult.echarts.tree.DataConvertedEcharsTreeNode;
+import hrds.k.biz.tdbresult.echarts.tree.EcharsTreeNode;
+import hrds.k.biz.tdbresult.echarts.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.utils.DataConversionUtil;
 import hrds.k.biz.utils.Neo4jUtils;
 
@@ -72,6 +73,7 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "表联合主键信息", range = "表联合主键信息")
+	@Deprecated
 	public Map<String, Object> getPageTableJoinPkData(String table_code, int currPage, int pageSize) {
 		// 1.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -125,6 +127,7 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "表函数依赖的信息", range = "表函数依赖的信息")
+	@Deprecated
 	public Map<String, Object> getPageTableFuncDepData(String table_code, int currPage, int pageSize) {
 		// 1.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -188,6 +191,7 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "表字段外键信息", range = "表字段外键信息")
+	@Deprecated
 	public Map<String, Object> getPageTableFkData(String fk_table_code, int currPage, int pageSize) {
 		// 1.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -258,6 +262,7 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "字段相等类别分析结果", range = "字段相等类别分析结果")
+	@Deprecated
 	public Map<String, Object> getPageFieldSameResult(String table_code, int currPage, int pageSize) {
 		// 1.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
@@ -285,6 +290,58 @@ public class TDBResultAction extends BaseAction {
 		asmSql.addSql(" ORDER BY" +
 				" category_same," +
 				" dim_order");
+		// 2.分页查询作业定义信息
+		Page page = new DefaultPageImpl(currPage, pageSize);
+		List<Map<String, Object>> fieldSameResult = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
+		// 3.创建存放分页查询作业定义信息、分页查询总记录数集合并封装数据
+		Map<String, Object> fieldSameResultMap = new HashMap<>();
+		fieldSameResultMap.put("fieldSameResult", fieldSameResult);
+		fieldSameResultMap.put("totalSize", page.getTotalSize());
+		// 4.返回分页查询信息
+		return fieldSameResultMap;
+	}
+
+	@Method(desc = "根据检索条件检索字段相等类别分析统计结果", logicStep = "根据检索条件检索字段相等类别分析统计结果")
+	@Param(name = "table_code", desc = "表名", range = "表名称搜索", nullable = true)
+	@Param(name = "category_same", desc = "分类编号", range = "不可为空", nullable = true)
+	@Return(desc = "字段相等类别分析统计结果", range = "字段相等类别分析统计结果")
+	public Map<String, Object> getFieldSameStatisticalResult(String table_code, String category_same) {
+		// 1.拼接sql
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.clean();
+		asmSql.addSql("SELECT category_same,count(*) FROM " + Dbm_field_same_result.TableName);
+		if (StringUtil.isNotBlank(table_code)) {
+			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
+			if (StringUtil.isNotBlank(category_same)) {
+				asmSql.addLikeParam("cast(category_same as varchar(100))", "%" + category_same + "%", "AND");
+			}
+		} else if (StringUtil.isNotBlank(category_same)) {
+			asmSql.addLikeParam("cast(category_same as varchar(100))", "%" + category_same + "%", "WHERE");
+		}
+		asmSql.addSql(" GROUP BY category_same");
+		asmSql.addSql(" ORDER BY category_same");
+		//获取字段相等类别分析结果
+		List<Map<String, Object>> fieldSameStatisticalResult = Dbo.queryList(asmSql.sql(), asmSql.params());
+		//处理数据格式,处理成echars的pie图所需的格式
+		return PieUtil.extractLegendDataAndSeriesData(fieldSameStatisticalResult);
+	}
+
+	@Method(desc = "根据检索条件检索字段相等类别分析统计结果", logicStep = "根据检索条件检索字段相等类别分析统计结果")
+	@Param(name = "table_code", desc = "表名", range = "表名称搜索", nullable = true)
+	@Param(name = "category_same", desc = "分类编号", range = "不可为空")
+	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
+	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
+	@Return(desc = "字段相等类别分析统计结果", range = "字段相等类别分析统计结果")
+	public Map<String, Object> getFieldSameResultByCategorysame(String table_code, int category_same, int currPage, int pageSize) {
+		// 1.拼接sql
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.clean();
+		asmSql.addSql("SELECT dim_order,table_code,col_code,category_same,rel_type FROM " + Dbm_field_same_result.TableName);
+		asmSql.addSql(" WHERE category_same=?").addParam(category_same);
+		if (StringUtil.isNotBlank(table_code)) {
+			asmSql.addLikeParam("table_code", "%" + table_code + "%", "AND");
+		}
+		asmSql.addSql(" ORDER BY category_same,dim_order");
 		// 2.分页查询作业定义信息
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> fieldSameResult = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());

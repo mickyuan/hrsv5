@@ -1,4 +1,4 @@
-package hrds.k.biz.tdbresult.echarts.tree.util;
+package hrds.k.biz.tdbresult.echarts.tree;
 
 import fd.ng.core.utils.JsonUtil;
 import hrds.commons.exception.BusinessException;
