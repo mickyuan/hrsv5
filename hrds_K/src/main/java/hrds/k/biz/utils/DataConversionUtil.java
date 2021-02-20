@@ -4,6 +4,7 @@ import fd.ng.core.utils.StringUtil;
 import hrds.commons.codes.IsFlag;
 import hrds.k.biz.tdb.bean.AdaptRelationBean;
 import hrds.k.biz.tdb.bean.NodeRelationBean;
+import hrds.k.biz.tdbresult.echarts.graph.GraphUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +47,15 @@ public class DataConversionUtil {
 				}
 			}
 		}
-		Map<String, Object> categoryMap = new HashMap<>();
+		long count = dataMapList.stream().map(map -> map.get("name")).distinct().count();
+		int size = categoryList.size();
+		if (nodes.size() > count) {
+			categoryList.add(size);
+			for (Map<String, Object> node : nodes) {
+				node.putIfAbsent("category", size);
+			}
+		}
+		Map<String, Integer> categoryMap = new HashMap<>();
 		for (int i = 0; i < categoryList.size(); i++) {
 			categoryMap.put(categoryList.get(i).toString(), i);
 		}
@@ -67,10 +76,17 @@ public class DataConversionUtil {
 				}
 			}
 		}
+		Map<Integer, Map<String, Integer>> displayAreaMap = GraphUtil.initDisplayArea(categoryMap);
+		for (Map<String, Object> node : nodes) {
+			int i = Integer.parseInt(node.get("category").toString());
+			Map<String, Integer> xyMap = displayAreaMap.get(i);
+			node.put("x", (xyMap.get("x") + Math.random() * 10000) * 2);
+			node.put("y", xyMap.get("y") + Math.random() * 10000);
+		}
 		Map<String, Object> dataMap = new HashMap<>();
 		List<Object> categories = nodes.stream().map(data -> data.get("category"))
 				.distinct().collect(Collectors.toList());
-		dataMap.put("categories", categories);
+		dataMap.put("categories", categories.stream().sorted().collect(Collectors.toList()));
 		dataMap.put("nodes", nodes);
 		dataMap.put("links", links);
 		return dataMap;
@@ -196,8 +212,6 @@ public class DataConversionUtil {
 	                            NodeRelationBean nodeRelationBean, Map.Entry<Long, Map<String, Object>> entry) {
 		Map<String, Object> nodeMap = new HashMap<>();
 		nodeMap.put("id", entry.getKey());
-		nodeMap.put("x", -Math.random() * 2000);
-		nodeMap.put("y", Math.random() * 800);
 		nodeMap.put("name", entry.getValue().get("name"));
 		List<String> valueList = new ArrayList<>();
 		valueList.add("id:" + entry.getKey());

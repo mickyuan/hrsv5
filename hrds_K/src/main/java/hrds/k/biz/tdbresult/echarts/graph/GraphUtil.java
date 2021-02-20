@@ -94,7 +94,6 @@ public class GraphUtil {
 			}
 		});
 		//设置CategoryNode
-		List<Category> category_node_s = new ArrayList<>();
 		for (int i = 0; i < category_name_s.size(); i++) {
 			category_base_info.put(category_name_s.get(i), i);
 		}
@@ -168,7 +167,7 @@ public class GraphUtil {
 	 * @param category_info_map 节点分类信息
 	 * @return 节点展示的 X Y 轴位置
 	 */
-	private static Map<Integer, Map<String, Integer>> initDisplayArea(Map<String, Integer> category_info_map) {
+	public static Map<Integer, Map<String, Integer>> initDisplayArea(Map<String, Integer> category_info_map) {
 		//设置区域大小
 		int area_size = 10000;
 		//获取区域衡量值,该值的平方就是区域能存放节点区域的最小值,必然大于分类的个数
