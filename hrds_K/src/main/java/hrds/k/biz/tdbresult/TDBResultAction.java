@@ -19,6 +19,7 @@ import hrds.k.biz.tdb.bean.NodeRelationBean;
 import hrds.k.biz.tdbresult.bean.SearchFKAnalysisBean;
 import hrds.k.biz.tdbresult.bean.SearchJoinPKAnalysisBean;
 import hrds.k.biz.tdbresult.bean.SearchTableFuncDepResultBean;
+import hrds.k.biz.tdbresult.echarts.bar.BarUtil;
 import hrds.k.biz.tdbresult.echarts.graph.GraphUtil;
 import hrds.k.biz.tdbresult.echarts.pie.PieUtil;
 import hrds.k.biz.tdbresult.echarts.tree.query.JoinPKAnalysisQuery;
@@ -47,13 +48,13 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT " +
-				"  table_code, " +
-				"  col_code, " +
-				"  col_type, " +
-				"  case col_nullable when '0' then '否' else '是' end as col_nullable, " +
-				"  case col_pk when '0' then '否' else '是' end as col_pk, " +
-				" row_number() over (partition BY table_code ORDER BY col_num) as col_num " +
-				" FROM " + Dbm_mmm_field_info_tab.TableName);
+			"  table_code, " +
+			"  col_code, " +
+			"  col_type, " +
+			"  case col_nullable when '0' then '否' else '是' end as col_nullable, " +
+			"  case col_pk when '0' then '否' else '是' end as col_pk, " +
+			" row_number() over (partition BY table_code ORDER BY col_num) as col_num " +
+			" FROM " + Dbm_mmm_field_info_tab.TableName);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
 		}
@@ -79,11 +80,11 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-				" row_number() over(partition BY table_code ORDER BY group_code) col_num," +
-				" table_code," +
-				" string_agg(col_code,',') AS join_pk_col_code," +
-				" group_code" +
-				" FROM " + Dbm_joint_pk_tab.TableName);
+			" row_number() over(partition BY table_code ORDER BY group_code) col_num," +
+			" table_code," +
+			" string_agg(col_code,',') AS join_pk_col_code," +
+			" group_code" +
+			" FROM " + Dbm_joint_pk_tab.TableName);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
 		}
@@ -109,13 +110,13 @@ public class TDBResultAction extends BaseAction {
 		}
 		//获取根据搜索条件获取需要检索的表名
 		String table_code =
-				JoinPKAnalysisQuery.getJoinPKAnalysisTableCode(Dbo.db(), searchJoinPKAnalysisBean.getTable_name());
+			JoinPKAnalysisQuery.getJoinPKAnalysisTableCode(Dbo.db(), searchJoinPKAnalysisBean.getTable_name());
 		//转化表信息为Echars tree 节点
 		List<Map<String, Object>> dataList = new ArrayList<>();
 		dataList.add(DataConvertedEcharsTreeNode.conversionRootNode(table_code));
 		//获取并转化,子节点信息
 		List<Map<String, Object>> joinPkDataByTableCode
-				= JoinPKAnalysisQuery.getJoinPkDataByTableCode(Dbo.db(), table_code);
+			= JoinPKAnalysisQuery.getJoinPkDataByTableCode(Dbo.db(), table_code);
 		dataList.addAll(DataConvertedEcharsTreeNode.conversionJointPKInfos(joinPkDataByTableCode, table_code));
 		//设置并转化为 echars tree 需要的数据
 		List<EcharsTreeNode> echarsTreeNodes = NodeDataConvertedTreeList.echarsTreeNodesConversionTreeInfo(dataList);
@@ -133,25 +134,25 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-				" row_number() over(partition BY table_code ORDER BY LENGTH(right_columns)-LENGTH(REPLACE" +
-				" (right_columns,',','')) DESC,LENGTH(left_columns)-LENGTH(REPLACE(left_columns,',','')) ) AS" +
-				" row_num," +
-				" table_code," +
-				" left_columns," +
-				" right_columns" +
-				" FROM" +
-				" (" +
-				" SELECT" +
-				" string_agg(right_columns,',') AS right_columns," +
-				" table_code," +
-				" left_columns" +
-				" FROM " + Dbm_function_dependency_tab.TableName);
+			" row_number() over(partition BY table_code ORDER BY LENGTH(right_columns)-LENGTH(REPLACE" +
+			" (right_columns,',','')) DESC,LENGTH(left_columns)-LENGTH(REPLACE(left_columns,',','')) ) AS" +
+			" row_num," +
+			" table_code," +
+			" left_columns," +
+			" right_columns" +
+			" FROM" +
+			" (" +
+			" SELECT" +
+			" string_agg(right_columns,',') AS right_columns," +
+			" table_code," +
+			" left_columns" +
+			" FROM " + Dbm_function_dependency_tab.TableName);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
 		}
 		asmSql.addSql(" GROUP BY" +
-				" table_code," +
-				" left_columns) temp_dep");
+			" table_code," +
+			" left_columns) temp_dep");
 		// 2.分页查询作业定义信息
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> tableFuncDepData = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
@@ -173,13 +174,13 @@ public class TDBResultAction extends BaseAction {
 		}
 		//获取根据搜索条件获取需要检索的表名
 		String table_code =
-				TableFuncDepAnalysisQuery.getTableFuncDepTableCode(Dbo.db(), searchTableFuncDepResultBean.getTable_name());
+			TableFuncDepAnalysisQuery.getTableFuncDepTableCode(Dbo.db(), searchTableFuncDepResultBean.getTable_name());
 		//转化表信息为Echars tree 节点
 		List<Map<String, Object>> dataList = new ArrayList<>();
 		dataList.add(DataConvertedEcharsTreeNode.conversionRootNode(table_code));
 		//获取并转化,子节点信息
 		List<Map<String, Object>> tableFuncDepDataByTableCode
-				= TableFuncDepAnalysisQuery.getTableFuncDepDataByTableCode(Dbo.db(), table_code);
+			= TableFuncDepAnalysisQuery.getTableFuncDepDataByTableCode(Dbo.db(), table_code);
 		dataList.addAll(DataConvertedEcharsTreeNode.conversionTableFuncInfos(tableFuncDepDataByTableCode, table_code));
 		//设置并转化为 echars tree 需要的数据
 		List<EcharsTreeNode> echarsTreeNodes = NodeDataConvertedTreeList.echarsTreeNodesConversionTreeInfo(dataList);
@@ -197,12 +198,12 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-				" fk_table_code ," +
-				" fk_col_code ," +
-				" table_code," +
-				" col_code," +
-				" row_number() over(partition BY fk_table_code ORDER BY col_code) row_num" +
-				" FROM " + Dbm_fk_info_tab.TableName);
+			" fk_table_code ," +
+			" fk_col_code ," +
+			" table_code," +
+			" col_code," +
+			" row_number() over(partition BY fk_table_code ORDER BY col_code) row_num" +
+			" FROM " + Dbm_fk_info_tab.TableName);
 		if (StringUtil.isNotBlank(fk_table_code)) {
 			asmSql.addLikeParam("fk_table_code", "%" + fk_table_code + "%", "WHERE");
 		}
@@ -225,12 +226,12 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-				" fk_table_code ," +
-				" fk_col_code ," +
-				" table_code," +
-				" col_code," +
-				" row_number() over(partition BY fk_table_code ORDER BY col_code) row_num" +
-				" FROM " + Dbm_fk_info_tab.TableName + " WHERE id !=''");
+			" fk_table_code ," +
+			" fk_col_code ," +
+			" table_code," +
+			" col_code," +
+			" row_number() over(partition BY fk_table_code ORDER BY col_code) row_num" +
+			" FROM " + Dbm_fk_info_tab.TableName + " WHERE id !=''");
 		if (StringUtil.isNotBlank(searchFKAnalysisBean.getTable_name())) {
 			asmSql.addLikeParam("fk_table_code", "%" + searchFKAnalysisBean.getTable_name() + "%");
 		}
@@ -268,12 +269,12 @@ public class TDBResultAction extends BaseAction {
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-				" dim_order," +
-				" table_code," +
-				" col_code," +
-				" category_same," +
-				" rel_type" +
-				" FROM " + Dbm_field_same_result.TableName
+			" dim_order," +
+			" table_code," +
+			" col_code," +
+			" category_same," +
+			" rel_type" +
+			" FROM " + Dbm_field_same_result.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
 			if (table_code.contains("=")) {
@@ -288,8 +289,8 @@ public class TDBResultAction extends BaseAction {
 			}
 		}
 		asmSql.addSql(" ORDER BY" +
-				" category_same," +
-				" dim_order");
+			" category_same," +
+			" dim_order");
 		// 2.分页查询作业定义信息
 		Page page = new DefaultPageImpl(currPage, pageSize);
 		List<Map<String, Object>> fieldSameResult = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
@@ -358,26 +359,27 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
 	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "字段特征分析结果", range = "字段特征分析结果")
+	@Deprecated
 	public Map<String, Object> getColumnFeatureAnalysisResult(String table_code, int currPage, int pageSize) {
 		// 1.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
 		asmSql.addSql("SELECT" +
-				" table_code," +
-				" col_code," +
-				" col_records," +
-				" col_distinct," +
-				" max_len," +
-				" min_len," +
-				" avg_len," +
-				" skew_len," +
-				" kurt_len," +
-				" median_len," +
-				" var_len," +
-				"case when has_chinese = '0' then '否' else '是' end as has_chinese," +
-				"case when tech_cate = '1' then '日期' when tech_cate = '2' then '金额' when tech_cate = '3' then " +
-				"'码值' when tech_cate = '4' then '数值' when tech_cate = '5' then '费率' else 'UNK' end as tech_cate" +
-				" FROM " + Dbm_feature_tab.TableName
+			" table_code," +
+			" col_code," +
+			" col_records," +
+			" col_distinct," +
+			" max_len," +
+			" min_len," +
+			" avg_len," +
+			" skew_len," +
+			" kurt_len," +
+			" median_len," +
+			" var_len," +
+			"case when has_chinese = '0' then '否' else '是' end as has_chinese," +
+			"case when tech_cate = '1' then '日期' when tech_cate = '2' then '金额' when tech_cate = '3' then " +
+			"'码值' when tech_cate = '4' then '数值' when tech_cate = '5' then '费率' else 'UNK' end as tech_cate" +
+			" FROM " + Dbm_feature_tab.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
@@ -394,10 +396,41 @@ public class TDBResultAction extends BaseAction {
 		return columnFeatureAnalysisResultMap;
 	}
 
+	@Method(desc = "获取数据对标字段特征分析表名list", logicStep = "获取数据对标字段特征分析表名list")
+	@Return(desc = "数据对标字段特征分析表名list", range = "数据对标字段特征分析表名list")
+	public List<String> getColumnFeatureAnalysisTableCodeList() {
+		return Dbo.queryOneColumnList("SELECT table_code FROM " + Dbm_feature_tab.TableName + "  GROUP BY table_code");
+	}
+
+	@Method(desc = "获取数据对标字段特征分析结果", logicStep = "获取数据对标字段特征分析结果")
+	@Param(name = "table_code", desc = "表名", range = "可为空", nullable = true)
+	@Return(desc = "字段特征分析结果", range = "字段特征分析结果")
+	public Map<String, Object> searchColumnFeatureAnalysisResult(String table_code) {
+		//数据校验
+		Validator.notBlank(table_code, "检所表名不能为空!");
+		// 1.拼接sql
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.clean();
+		asmSql.addSql("SELECT table_code,col_code,col_records,col_distinct,max_len,min_len,avg_len,skew_len,kurt_len," +
+			" median_len,var_len, case when has_chinese = '0' then '否' else '是' end as has_chinese," +
+			" case when tech_cate = '1' then '日期' when tech_cate = '2' then '金额' when tech_cate = '3' then " +
+			" '码值' when tech_cate = '4' then '数值' when tech_cate = '5' then '费率' else 'UNK' end as tech_cate" +
+			" FROM " + Dbm_feature_tab.TableName);
+		asmSql.addLikeParam("table_code", table_code, "WHERE");
+		asmSql.addSql(" ORDER BY table_code");
+		// 2.查询字段特征分析结果信息
+		List<Map<String, Object>> columnFeatureAnalysisResult = Dbo.queryList(asmSql.sql(), asmSql.params());
+		// 3.创建存放查询结果信息 封装数据
+		Map<String, Object> columnFeatureAnalysisResultMap = new HashMap<>();
+		columnFeatureAnalysisResultMap.put("table_code", table_code);
+		columnFeatureAnalysisResultMap.putAll(BarUtil.extractStatisticsChartData(columnFeatureAnalysisResult));
+		return columnFeatureAnalysisResultMap;
+	}
+
 	@Method(desc = "LPA社区发现算法", logicStep = "1.参数合法性验证" +
-			"2.查询lpa算法结果数据" +
-			"3.返回所有节点关系数据" +
-			"4.LPA算法数据格式转换")
+		"2.查询lpa算法结果数据" +
+		"3.返回所有节点关系数据" +
+		"4.LPA算法数据格式转换")
 	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
@@ -441,9 +474,9 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "LOUVAIN社区发现算法", logicStep = "1.参数合法性验证" +
-			"2.查询louvain算法结果数据" +
-			"3.返回所有节点关系数据" +
-			"4.Louvain算法数据格式转换")
+		"2.查询louvain算法结果数据" +
+		"3.返回所有节点关系数据" +
+		"4.Louvain算法数据格式转换")
 	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
@@ -463,8 +496,8 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "求全部最短路径", logicStep = "1.参数合法性验证" +
-			"2.获取全部最短路径neo4j结果数据" +
-			"3.最长最短数据格式转换")
+		"2.获取全部最短路径neo4j结果数据" +
+		"3.最长最短数据格式转换")
 	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
 	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "不能为空")
@@ -482,16 +515,16 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取全部最短路径neo4j结果数据
 			List<AdaptRelationBean> adaptRelationBeans =
-					example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
+				example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长最短数据格式转换
 			return DataConversionUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
-					columnNodeName2);
+				columnNodeName2);
 		}
 	}
 
 	@Method(desc = "求最长路径", logicStep = "1.参数合法性验证" +
-			"2.获取最长路径neo4j结果数据" +
-			"3.最长路径数据格式转换")
+		"2.获取最长路径neo4j结果数据" +
+		"3.最长路径数据格式转换")
 	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
 	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
@@ -509,16 +542,16 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取最长路径neo4j结果数据
 			List<AdaptRelationBean> adaptRelationBeans =
-					example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
+				example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长路径数据格式转换
 			return DataConversionUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
-					columnNodeName2);
+				columnNodeName2);
 		}
 	}
 
 	@Method(desc = "求远近邻关系", logicStep = "1.参数合法性验证" +
-			"2.获取远近邻关系neo4j结果数据" +
-			"3.远近邻关系数据格式转换")
+		"2.获取远近邻关系neo4j结果数据" +
+		"3.远近邻关系数据格式转换")
 	@Param(name = "columnNodeName", desc = "字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
@@ -536,8 +569,8 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "三角关系展示", logicStep = "1.参数合法性验证" +
-			"2.获取三角关系neo4j结果数据" +
-			"3.三角关系数据格式转换")
+		"2.获取三角关系neo4j结果数据" +
+		"3.三角关系数据格式转换")
 	@Param(name = "relationship", desc = "为页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "返回转换格式后的三角关系数据", range = "无限制")
