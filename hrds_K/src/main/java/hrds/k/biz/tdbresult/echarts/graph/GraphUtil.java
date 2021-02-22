@@ -32,6 +32,8 @@ public class GraphUtil {
 			categories.add(categoryNode);
 		});
 		graph_data_map.put("categories", categories);
+		// 初始化图显示区域
+		Map<Integer, Map<String, Integer>> area_map = initDisplayArea(category_info_map);
 		// 转化节点信息为 RelationNode
 		List<GraphNode> graphNodes = new ArrayList<>();
 		for (Map<String, Object> node_info_map : node_info_map_s) {
@@ -49,8 +51,6 @@ public class GraphUtil {
 				}
 			}
 			graphNode.setSymbolSize(10.00 + symbolSizeFactor);
-			// 初始化图显示区域
-			Map<Integer, Map<String, Integer>> area_map = initDisplayArea(category_info_map);
 			//设置节点所在的 x y 轴位置
 			Map<String, Integer> xy_map = area_map.get(category);
 			graphNode.setX(2 * (Math.floor(Math.random() * 10000 + xy_map.get("x"))));
@@ -168,7 +168,7 @@ public class GraphUtil {
 	 * @return 节点展示的 X Y 轴位置
 	 */
 	public static Map<Integer, Map<String, Integer>> initDisplayArea(Map<String, Integer> category_info_map) {
-		//设置区域大小
+		//设置区域大小,每个分类显示区域的大小,区域值越大重叠几率越小,该值必须大于分类内节点数量,否则会出现重复的点
 		int area_size = 10000;
 		//获取区域衡量值,该值的平方就是区域能存放节点区域的最小值,必然大于分类的个数
 		int area_measure = 0;
