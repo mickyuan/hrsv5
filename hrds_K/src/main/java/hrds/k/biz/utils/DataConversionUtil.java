@@ -179,8 +179,10 @@ public class DataConversionUtil {
 			for (Map.Entry<Long, Map<String, Object>> entry : relationCollection.entrySet()) {
 				Map<String, Object> linkMap = new HashMap<>();
 				// 这里取出来是因为前端这里需要的是字符串，直接使用entry.getValue返回的是数值
-				linkMap.put("source", entry.getValue().get("source").toString());
-				linkMap.put("target", entry.getValue().get("target").toString());
+				long source = Long.parseLong(entry.getValue().get("source").toString());
+				long target = Long.parseLong(entry.getValue().get("target").toString());
+				linkMap.put("source", adaptRelationBean.getNodeCollection().get(source).get("name").toString());
+				linkMap.put("target", adaptRelationBean.getNodeCollection().get(target).get("name").toString());
 				links.add(linkMap);
 			}
 		}
@@ -229,7 +231,6 @@ public class DataConversionUtil {
 		}
 		if (nodeRelationBean != null) {
 			valueList.add("relationId:" + nodeRelationBean.getRelationId());
-//			valueList.add("relationType:" + nodeRelationBean.getRelationType());
 		}
 		nodeMap.put("value", valueList);
 		if (nodes.isEmpty()) {
