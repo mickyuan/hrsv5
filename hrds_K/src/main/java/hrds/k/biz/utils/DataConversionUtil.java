@@ -195,11 +195,13 @@ public class DataConversionUtil {
 		for (NodeRelationBean nodeRelationBean : nodeRelationBeans) {
 			Map<Long, Map<String, Object>> leftNode = nodeRelationBean.getLeftNode();
 			Map<Long, Map<String, Object>> rightNode = nodeRelationBean.getRightNode();
+			// 起始节点
 			String source = null;
 			for (Map.Entry<Long, Map<String, Object>> entry : leftNode.entrySet()) {
 				setNode(nodes, nodeRelationBean, entry);
 				source = entry.getValue().get("name").toString();
 			}
+			// 目标节点
 			String target = null;
 			for (Map.Entry<Long, Map<String, Object>> entry : rightNode.entrySet()) {
 				setNode(nodes, nodeRelationBean, entry);
@@ -209,6 +211,7 @@ public class DataConversionUtil {
 				Map<String, Object> linkMap = new HashMap<>();
 				linkMap.put("source", source);
 				linkMap.put("target", target);
+				linkMap.put("relationType", nodeRelationBean.getRelationType());
 				links.add(linkMap);
 			}
 		}
@@ -226,7 +229,7 @@ public class DataConversionUtil {
 		}
 		if (nodeRelationBean != null) {
 			valueList.add("relationId:" + nodeRelationBean.getRelationId());
-			valueList.add("relationType:" + nodeRelationBean.getRelationType());
+//			valueList.add("relationType:" + nodeRelationBean.getRelationType());
 		}
 		nodeMap.put("value", valueList);
 		if (nodes.isEmpty()) {
