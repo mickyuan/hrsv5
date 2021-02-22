@@ -47,16 +47,9 @@ public class DataConversionUtil {
 				}
 			}
 		}
-		long count = dataMapList.stream().map(map -> map.get("name")).distinct().count();
-		int size = categoryList.size();
-		if (nodes.size() > count) {
-			categoryList.add(size);
-			for (Map<String, Object> node : nodes) {
-				node.putIfAbsent("category", size);
-			}
-		}
 		Map<String, Integer> categoryMap = new HashMap<>();
-		for (int i = 0; i < categoryList.size(); i++) {
+		int size = categoryList.size();
+		for (int i = 0; i < size; i++) {
 			categoryMap.put(categoryList.get(i).toString(), i);
 		}
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
@@ -77,6 +70,19 @@ public class DataConversionUtil {
 			}
 		}
 		Map<Integer, Map<String, Integer>> displayAreaMap = GraphUtil.initDisplayArea(categoryMap);
+		long count = dataMapList.stream().map(data -> data.get("name")).distinct().count();
+		if (count < nodes.size()) {
+			// 如果有节点没分类，单独给这些节点划分为一个分类，并设置特定的区域
+			Map<String, Integer> xyMap = new HashMap<>();
+			int i = new Double(Math.ceil(Math.sqrt(count))).intValue() + 1;
+			xyMap.put("x", (i + new Double(Math.random()).intValue()) * 12000);
+			xyMap.put("y", (i + new Double(Math.random()).intValue()) * 7000);
+			displayAreaMap.put(categoryList.size(), xyMap);
+			categoryList.add(size);
+			for (Map<String, Object> node : nodes) {
+				node.putIfAbsent("category", size);
+			}
+		}
 		for (Map<String, Object> node : nodes) {
 			int i = Integer.parseInt(node.get("category").toString());
 			Map<String, Integer> xyMap = displayAreaMap.get(i);
@@ -192,12 +198,12 @@ public class DataConversionUtil {
 			String source = null;
 			for (Map.Entry<Long, Map<String, Object>> entry : leftNode.entrySet()) {
 				setNode(nodes, nodeRelationBean, entry);
-				source = entry.getKey().toString();
+				source = entry.getValue().get("name").toString();
 			}
 			String target = null;
 			for (Map.Entry<Long, Map<String, Object>> entry : rightNode.entrySet()) {
 				setNode(nodes, nodeRelationBean, entry);
-				target = entry.getKey().toString();
+				target = entry.getValue().get("name").toString();
 			}
 			if (StringUtil.isNotBlank(source) && StringUtil.isNotBlank(target)) {
 				Map<String, Object> linkMap = new HashMap<>();
@@ -211,7 +217,7 @@ public class DataConversionUtil {
 	private static void setNode(List<Map<String, Object>> nodes,
 	                            NodeRelationBean nodeRelationBean, Map.Entry<Long, Map<String, Object>> entry) {
 		Map<String, Object> nodeMap = new HashMap<>();
-		nodeMap.put("id", entry.getKey());
+		nodeMap.put("id", entry.getValue().get("name"));
 		nodeMap.put("name", entry.getValue().get("name"));
 		List<String> valueList = new ArrayList<>();
 		valueList.add("id:" + entry.getKey());
@@ -226,8 +232,8 @@ public class DataConversionUtil {
 		if (nodes.isEmpty()) {
 			nodes.add(nodeMap);
 		} else {
-			List<Object> idList = nodes.stream().map(node -> node.get("id")).collect(Collectors.toList());
-			if (!idList.contains(entry.getKey())) {
+			List<Object> nameList = nodes.stream().map(node -> node.get("name")).collect(Collectors.toList());
+			if (!nameList.contains(entry.getValue().get("name"))) {
 				nodes.add(nodeMap);
 			}
 		}
