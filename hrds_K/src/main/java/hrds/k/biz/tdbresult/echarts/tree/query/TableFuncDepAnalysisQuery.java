@@ -5,7 +5,6 @@ import fd.ng.db.jdbc.DatabaseWrapper;
 import fd.ng.db.jdbc.SqlOperator;
 import fd.ng.web.util.Dbo;
 import hrds.commons.entity.Dbm_function_dependency_tab;
-import hrds.commons.entity.Dbm_joint_pk_tab;
 import hrds.commons.exception.BusinessException;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class TableFuncDepAnalysisQuery {
 	 * @param table_code 表名
 	 * @return 搜索到的表名
 	 */
-	public static String getTableFuncDepTableCode(DatabaseWrapper db, String table_code) {
+	public static List<Object> getTableFuncDepTableCode(DatabaseWrapper db, String table_code) {
 		// 1.拼接sql,获取一条记录信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -31,12 +30,7 @@ public class TableFuncDepAnalysisQuery {
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", table_code, "WHERE");
 		}
-		List<Object> list = Dbo.queryOneColumnList(db, asmSql.sql(), asmSql.params());
-		if (list.isEmpty()) {
-			throw new BusinessException("未检索到表内函数依赖信息!");
-		}
-		//获取记录中第一条数据的表名
-		return list.get(0).toString();
+		return Dbo.queryOneColumnList(db, asmSql.sql(), asmSql.params());
 	}
 
 
@@ -71,6 +65,6 @@ public class TableFuncDepAnalysisQuery {
 		asmSql.addSql(" GROUP BY" +
 			" table_code," +
 			" left_columns) temp_dep");
-		return Dbo.queryList(asmSql.sql(), asmSql.params());
+		return Dbo.queryList(db, asmSql.sql(), asmSql.params());
 	}
 }

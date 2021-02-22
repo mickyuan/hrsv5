@@ -22,7 +22,7 @@ public class JoinPKAnalysisQuery {
 	 * @param table_code 表名
 	 * @return 搜索到的表名
 	 */
-	public static String getJoinPKAnalysisTableCode(DatabaseWrapper db, String table_code) {
+	public static List<Object> getJoinPKAnalysisTableCode(DatabaseWrapper db, String table_code) {
 		// 1.拼接sql,获取一条记录信息
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -30,12 +30,7 @@ public class JoinPKAnalysisQuery {
 		if (StringUtil.isNotBlank(table_code)) {
 			asmSql.addLikeParam("table_code", table_code, "WHERE");
 		}
-		List<Object> list = Dbo.queryOneColumnList(db, asmSql.sql(), asmSql.params());
-		if (list.isEmpty()) {
-			throw new BusinessException("未检索到表联合主键信息!");
-		}
-		//获取记录中第一条数据的表名
-		return list.get(0).toString();
+		return Dbo.queryOneColumnList(db, asmSql.sql(), asmSql.params());
 	}
 
 	/**

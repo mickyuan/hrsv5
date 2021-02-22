@@ -100,26 +100,41 @@ public class TDBResultAction extends BaseAction {
 		return tableJoinPkDataMap;
 	}
 
+	@Method(desc = "获取数据对标分析的表联合主键及表函数表名信息list", logicStep = "获取数据对标分析的表联合主键及表函数表名信息list")
+	@Return(desc = "表联合主键及表函数表名信息list", range = "表联合主键及表函数表名信息list")
+	public List<String> getJoinPKAnalysisAndTableFuncDepTableCodeList() {
+		//获取联合主键和表函数分析的表名list,取合集
+		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
+		asmSql.clean();
+		asmSql.addSql("SELECT DISTINCT(table_code) FROM " + Dbm_joint_pk_tab.TableName);
+		asmSql.addSql(" UNION");
+		asmSql.addSql("SELECT DISTINCT(table_code) FROM " + Dbm_function_dependency_tab.TableName);
+		return Dbo.queryOneColumnList(asmSql.sql(), asmSql.params());
+	}
+
 	@Method(desc = "获取数据对标分析的表联合主键信息", logicStep = "获取数据对标分析的表联合主键信息")
 	@Param(name = "searchJoinPKAnalysisBean", desc = "自定义搜索bean", range = "SearchJoinPKAnalysisBean")
 	@Return(desc = "表联合主键信息", range = "表联合主键信息")
 	public EcharsTreeNode getJoinPKAnalysisResult(SearchJoinPKAnalysisBean searchJoinPKAnalysisBean) {
-		//数据校验
-		if (StringUtil.isBlank(searchJoinPKAnalysisBean.getTable_name())) {
-			throw new BusinessException("表联合主键信息检索表名不能为空!");
-		}
+		List<EcharsTreeNode> echarsTreeNodes = new ArrayList<>();
 		//获取根据搜索条件获取需要检索的表名
-		String table_code =
+		List<Object> table_code_s =
 			JoinPKAnalysisQuery.getJoinPKAnalysisTableCode(Dbo.db(), searchJoinPKAnalysisBean.getTable_name());
-		//转化表信息为Echars tree 节点
-		List<Map<String, Object>> dataList = new ArrayList<>();
-		dataList.add(DataConvertedEcharsTreeNode.conversionRootNode(table_code));
-		//获取并转化,子节点信息
-		List<Map<String, Object>> joinPkDataByTableCode
-			= JoinPKAnalysisQuery.getJoinPkDataByTableCode(Dbo.db(), table_code);
-		dataList.addAll(DataConvertedEcharsTreeNode.conversionJointPKInfos(joinPkDataByTableCode, table_code));
-		//设置并转化为 echars tree 需要的数据
-		List<EcharsTreeNode> echarsTreeNodes = NodeDataConvertedTreeList.echarsTreeNodesConversionTreeInfo(dataList);
+		if (!table_code_s.isEmpty()) {
+			//转化表信息为Echars tree 节点
+			List<Map<String, Object>> dataList = new ArrayList<>();
+			dataList.add(DataConvertedEcharsTreeNode.conversionRootNode((String) table_code_s.get(0)));
+			//获取并转化,子节点信息
+			List<Map<String, Object>> joinPkDataByTableCode
+				= JoinPKAnalysisQuery.getJoinPkDataByTableCode(Dbo.db(), (String) table_code_s.get(0));
+			dataList.addAll(DataConvertedEcharsTreeNode.conversionJointPKInfos(joinPkDataByTableCode,
+				(String) table_code_s.get(0)));
+			//设置并转化为 echars tree 需要的数据
+			echarsTreeNodes = NodeDataConvertedTreeList.echarsTreeNodesConversionTreeInfo(dataList);
+		}
+		if (echarsTreeNodes.isEmpty()) {
+			throw new BusinessException("未找到表联合主键信息! 表名: " + searchJoinPKAnalysisBean.getTable_name());
+		}
 		return echarsTreeNodes.get(0);
 	}
 
@@ -168,22 +183,25 @@ public class TDBResultAction extends BaseAction {
 	@Param(name = "searchTableFuncDepResultBean", desc = "自定义搜索bean", range = "SearchTableFuncDepResultBean")
 	@Return(desc = "表函数依赖的信息", range = "表函数依赖的信息")
 	public EcharsTreeNode getTableFuncDepResult(SearchTableFuncDepResultBean searchTableFuncDepResultBean) {
-		//数据校验
-		if (StringUtil.isBlank(searchTableFuncDepResultBean.getTable_name())) {
-			throw new BusinessException("表内函数依赖分析检索表名不能为空!");
-		}
 		//获取根据搜索条件获取需要检索的表名
-		String table_code =
+		List<Object> table_code_s =
 			TableFuncDepAnalysisQuery.getTableFuncDepTableCode(Dbo.db(), searchTableFuncDepResultBean.getTable_name());
-		//转化表信息为Echars tree 节点
-		List<Map<String, Object>> dataList = new ArrayList<>();
-		dataList.add(DataConvertedEcharsTreeNode.conversionRootNode(table_code));
-		//获取并转化,子节点信息
-		List<Map<String, Object>> tableFuncDepDataByTableCode
-			= TableFuncDepAnalysisQuery.getTableFuncDepDataByTableCode(Dbo.db(), table_code);
-		dataList.addAll(DataConvertedEcharsTreeNode.conversionTableFuncInfos(tableFuncDepDataByTableCode, table_code));
-		//设置并转化为 echars tree 需要的数据
-		List<EcharsTreeNode> echarsTreeNodes = NodeDataConvertedTreeList.echarsTreeNodesConversionTreeInfo(dataList);
+		List<EcharsTreeNode> echarsTreeNodes = new ArrayList<>();
+		if (!table_code_s.isEmpty()) {
+			//转化表信息为Echars tree 节点
+			List<Map<String, Object>> dataList = new ArrayList<>();
+			dataList.add(DataConvertedEcharsTreeNode.conversionRootNode((String) table_code_s.get(0)));
+			//获取并转化,子节点信息
+			List<Map<String, Object>> tableFuncDepDataByTableCode
+				= TableFuncDepAnalysisQuery.getTableFuncDepDataByTableCode(Dbo.db(), (String) table_code_s.get(0));
+			dataList.addAll(DataConvertedEcharsTreeNode.conversionTableFuncInfos(tableFuncDepDataByTableCode,
+				(String) table_code_s.get(0)));
+			//设置并转化为 echars tree 需要的数据
+			echarsTreeNodes = NodeDataConvertedTreeList.echarsTreeNodesConversionTreeInfo(dataList);
+		}
+		if (echarsTreeNodes.isEmpty()) {
+			throw new BusinessException("未找到表函数依赖信息! 表名: " + searchTableFuncDepResultBean.getTable_name());
+		}
 		return echarsTreeNodes.get(0);
 	}
 
