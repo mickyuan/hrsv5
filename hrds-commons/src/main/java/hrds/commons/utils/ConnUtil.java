@@ -194,6 +194,7 @@ public class ConnUtil {
 				hashMap.put("is_get", type.getAttribute("is_get"));
 				hashMap.put("is_alive", type.getAttribute("is_alive"));
 				hashMap.put("is_new", type.getAttribute("is_new"));
+				hashMap.put("is_zipper_field", type.getAttribute("is_zipper_field"));
 				columnList.add(hashMap);
 			}
 			columnMap.put(table_name, columnList);
