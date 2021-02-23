@@ -27,7 +27,6 @@ import hrds.k.biz.tdbresult.echarts.tree.EcharsTreeNode;
 import hrds.k.biz.tdbresult.echarts.tree.NodeDataConvertedTreeList;
 import hrds.k.biz.tdbresult.echarts.tree.query.JoinPKAnalysisQuery;
 import hrds.k.biz.tdbresult.echarts.tree.query.TableFuncDepAnalysisQuery;
-import hrds.k.biz.utils.DataConversionUtil;
 import hrds.k.biz.utils.Neo4jUtils;
 
 import java.util.ArrayList;
@@ -463,7 +462,7 @@ public class TDBResultAction extends BaseAction {
 			// 3.返回所有节点关系数据
 			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
 			// 4.LPA算法数据格式转换
-			return DataConversionUtil.lpaOrLouvainConversion(nodeRelationBeans, mapList, IsFlag.Shi.getCode());
+			return GraphUtil.lpaOrLouvainConversion(nodeRelationBeans, mapList, IsFlag.Shi.getCode());
 		}
 	}
 
@@ -509,7 +508,7 @@ public class TDBResultAction extends BaseAction {
 			// 3.返回所有节点关系数据
 			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
 			// 4.Louvain算法数据格式转换
-			return DataConversionUtil.lpaOrLouvainConversion(nodeRelationBeans, mapList, IsFlag.Fou.getCode());
+			return GraphUtil.lpaOrLouvainConversion(nodeRelationBeans, mapList, IsFlag.Fou.getCode());
 		}
 	}
 
@@ -535,7 +534,7 @@ public class TDBResultAction extends BaseAction {
 			List<AdaptRelationBean> adaptRelationBeans =
 					example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长最短数据格式转换
-			return DataConversionUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
+			return GraphUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
 					columnNodeName2);
 		}
 	}
@@ -562,7 +561,7 @@ public class TDBResultAction extends BaseAction {
 			List<AdaptRelationBean> adaptRelationBeans =
 					example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长路径数据格式转换
-			return DataConversionUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
+			return GraphUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
 					columnNodeName2);
 		}
 	}
@@ -582,7 +581,7 @@ public class TDBResultAction extends BaseAction {
 			// 2.获取远近邻关系neo4j结果数据
 			List<NodeRelationBean> nodeRelationBeans = example.searchNeighbors(columnNodeName, level, limitNum);
 			// 3.远近邻关系数据格式转换
-			return DataConversionUtil.convertToEchartsTree(nodeRelationBeans);
+			return GraphUtil.convertToEchartsTree(nodeRelationBeans);
 		}
 	}
 
@@ -599,20 +598,20 @@ public class TDBResultAction extends BaseAction {
 			// 2.获取三角关系neo4j结果数据
 			List<AdaptRelationBean> adaptRelationBeans = example.searchTriangleRelation(relationship, limitNum);
 			// 3.三角关系数据格式转换
-			return DataConversionUtil.convertToTriangle(adaptRelationBeans);
+			return GraphUtil.convertToTriangle(adaptRelationBeans);
 		}
 	}
 
+	@Method(desc = "查询所有字段节点信息", logicStep = "1.查询所有字段节点信息")
+	@Return(desc = "返回所有字段节点信息", range = "无限制")
 	public List<String> searchAllColumnOfNodes() {
 		try (Neo4jUtils example = new Neo4jUtils()) {
-			// 2.获取三角关系neo4j结果数据
+			// 1.查询所有字段节点信息
 			Map<Long, Map<String, Object>> map = example.searchAllColumnOfNodes(null);
 			List<String> columnList = new ArrayList<>();
 			for (Map.Entry<Long, Map<String, Object>> entry : map.entrySet()) {
-				String columnName = entry.getValue().get("column_name").toString();
-				String tabName = entry.getValue().get("tab_name").toString();
-				if (!columnList.contains(tabName + "_" + columnName)) {
-					columnList.add(tabName + "_" + columnName);
+				if (!columnList.contains(entry.getValue().get("name").toString())) {
+					columnList.add(entry.getValue().get("name").toString());
 				}
 			}
 			return columnList;
