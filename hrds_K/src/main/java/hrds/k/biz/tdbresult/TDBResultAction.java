@@ -475,10 +475,29 @@ public class TDBResultAction extends BaseAction {
 		return columnFeatureAnalysisResultMap;
 	}
 
+	@Method(desc = "搜索关系列", logicStep = "1.参数合法性验证" +
+			"2.根据变的属性获取所有节点关系数据" +
+			"3.数据格式转换")
+	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
+	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
+	@Return(desc = "返回数据格式转换后的节点关系数据", range = "无限制")
+	public Map<String, Object> searchColumnOfRelation(String relationship, String limitNum) {
+		// 1.参数合法性验证
+		Validator.notBlank(relationship, "页面传参边的属性不能为空");
+		try (Neo4jUtils example = new Neo4jUtils()) {
+			// 2.根据变的属性获取所有节点关系数据
+			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
+			// 3.返回数据格式转换后的节点关系数据
+			return GraphUtil.convertToGraphData(nodeRelationBeans);
+		} catch (Exception e) {
+			throw new BusinessException(e.getMessage());
+		}
+	}
+
 	@Method(desc = "LPA社区发现算法", logicStep = "1.参数合法性验证" +
-		"2.查询lpa算法结果数据" +
-		"3.返回所有节点关系数据" +
-		"4.LPA算法数据格式转换")
+			"2.查询lpa算法结果数据" +
+			"3.根据边的属性获取所有节点关系数据" +
+			"4.LPA算法数据格式转换")
 	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
@@ -490,11 +509,14 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.查询lpa算法结果数据
 			List<Map<String, Object>> mapList = example.searchLabelPropagation(relationship, iterations, limitNum);
-			// 3.返回所有节点关系数据
+			// 3.根据边的属性获取所有节点关系数据
 			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
 			// 4.LPA算法数据格式转换
 			return GraphUtil.lpaOrLouvainConversion(nodeRelationBeans, mapList, IsFlag.Shi.getCode());
+		} catch (Exception e) {
+			throw new BusinessException(e.getMessage());
 		}
+
 	}
 
 	private List<NodeRelationBean> getNodeRelationBeans(String relationship, String limitNum, Neo4jUtils example) {
@@ -522,9 +544,9 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "LOUVAIN社区发现算法", logicStep = "1.参数合法性验证" +
-		"2.查询louvain算法结果数据" +
-		"3.返回所有节点关系数据" +
-		"4.Louvain算法数据格式转换")
+			"2.查询louvain算法结果数据" +
+			"3.根据变的属性获取所有节点关系数据" +
+			"4.Louvain算法数据格式转换")
 	@Param(name = "relationship", desc = "页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "iterations", desc = "算法迭代次数", range = "不能为空")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
@@ -536,7 +558,7 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.查询louvain算法结果数据
 			List<Map<String, Object>> mapList = example.searchLouVain(relationship, iterations, limitNum);
-			// 3.返回所有节点关系数据
+			// 3.根据变的属性获取所有节点关系数据
 			List<NodeRelationBean> nodeRelationBeans = getNodeRelationBeans(relationship, limitNum, example);
 			// 4.Louvain算法数据格式转换
 			return GraphUtil.lpaOrLouvainConversion(nodeRelationBeans, mapList, IsFlag.Fou.getCode());
@@ -544,8 +566,8 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "求全部最短路径", logicStep = "1.参数合法性验证" +
-		"2.获取全部最短路径neo4j结果数据" +
-		"3.最长最短数据格式转换")
+			"2.获取全部最短路径neo4j结果数据" +
+			"3.最长最短数据格式转换")
 	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
 	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "不能为空")
@@ -563,16 +585,16 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取全部最短路径neo4j结果数据
 			List<AdaptRelationBean> adaptRelationBeans =
-				example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
+					example.searchAllShortPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长最短数据格式转换
 			return GraphUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
-				columnNodeName2);
+					columnNodeName2);
 		}
 	}
 
 	@Method(desc = "求最长路径", logicStep = "1.参数合法性验证" +
-		"2.获取最长路径neo4j结果数据" +
-		"3.最长路径数据格式转换")
+			"2.获取最长路径neo4j结果数据" +
+			"3.最长路径数据格式转换")
 	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
 	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
@@ -590,16 +612,16 @@ public class TDBResultAction extends BaseAction {
 		try (Neo4jUtils example = new Neo4jUtils()) {
 			// 2.获取最长路径neo4j结果数据
 			List<AdaptRelationBean> adaptRelationBeans =
-				example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
+					example.searchLongestPath(columnNodeName1, columnNodeName2, level, limitNum);
 			// 3.最长路径数据格式转换
 			return GraphUtil.longestAndShortestDataConversion(adaptRelationBeans, columnNodeName1,
-				columnNodeName2);
+					columnNodeName2);
 		}
 	}
 
 	@Method(desc = "求远近邻关系", logicStep = "1.参数合法性验证" +
-		"2.获取远近邻关系neo4j结果数据" +
-		"3.远近邻关系数据格式转换")
+			"2.获取远近邻关系neo4j结果数据" +
+			"3.远近邻关系数据格式转换")
 	@Param(name = "columnNodeName", desc = "字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
@@ -617,8 +639,8 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "三角关系展示", logicStep = "1.参数合法性验证" +
-		"2.获取三角关系neo4j结果数据" +
-		"3.三角关系数据格式转换")
+			"2.获取三角关系neo4j结果数据" +
+			"3.三角关系数据格式转换")
 	@Param(name = "relationship", desc = "为页面传参边的属性", range = "FK、FD、EQUALS、SAME、BDF")
 	@Param(name = "limitNum", desc = "查询前多少条", range = "可为空，为空则表示查询全部数据", nullable = true)
 	@Return(desc = "返回转换格式后的三角关系数据", range = "无限制")
