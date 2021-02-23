@@ -609,9 +609,10 @@ public class TDBResultAction extends BaseAction {
 			Map<Long, Map<String, Object>> map = example.searchAllColumnOfNodes(null);
 			List<String> columnList = new ArrayList<>();
 			for (Map.Entry<Long, Map<String, Object>> entry : map.entrySet()) {
-				String column_name = entry.getValue().get("column_name").toString();
-				if (!columnList.contains(column_name)) {
-					columnList.add(column_name);
+				String columnName = entry.getValue().get("column_name").toString();
+				String tabName = entry.getValue().get("tab_name").toString();
+				if (!columnList.contains(tabName + "_" + columnName)) {
+					columnList.add(tabName + "_" + columnName);
 				}
 			}
 			return columnList;
