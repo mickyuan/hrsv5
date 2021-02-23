@@ -211,28 +211,36 @@ public class GraphUtil {
 	                                                         String type) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		List<Map<String, Object>> links = new ArrayList<>();
-		processData(nodes, links, nodeRelationBeans);
-		List<Object> categoryList = new ArrayList<>();
-		for (Map<String, Object> node : nodes) {
-			for (Map<String, Object> map : dataMapList) {
-				if (node.get("name").equals(map.get("name"))) {
-					if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
-						if (!categoryList.contains(map.get("label"))) {
-							categoryList.add(map.get("label"));
-						}
-					} else {
-						if (!categoryList.contains(map.get("community"))) {
-							categoryList.add(map.get("community"));
-						}
-					}
-				}
-			}
+		// 获取有分类的节点
+		List<Object> names = dataMapList.stream().map(data -> data.get("name"))
+			.distinct().collect(Collectors.toList());
+		// 提取节点以及节点关系
+		extractNodesAndRelationships(nodes, links, nodeRelationBeans);
+		// 过滤掉没有分类的节点
+		nodes = nodes.stream().filter(node -> names.contains(node.get("name"))).collect(Collectors.toList());
+		// 过滤没有分类的节点关系
+		links = links.stream()
+			.filter(link -> names.contains(link.get("source")) && names.contains(link.get("target")))
+			.collect(Collectors.toList());
+		// 获取有分类的节点名称
+		List<Object> nodeNames = nodes.stream().map(node -> node.get("name")).collect(Collectors.toList());
+		List<Object> categoryList;
+		// 提取节点分类信息
+		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
+			// lpa社区算法
+			categoryList = dataMapList.stream().filter(data -> nodeNames.contains(data.get("name")))
+				.map(o -> o.get("label")).distinct().collect(Collectors.toList());
+		} else {
+			// louvain社区算法
+			categoryList = dataMapList.stream().filter(data -> nodeNames.contains(data.get("name")))
+				.map(o -> o.get("community")).distinct().collect(Collectors.toList());
 		}
+		// 重新划分分类使从0开始
 		Map<String, Integer> categoryMap = new HashMap<>();
-		int size = categoryList.size();
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < categoryList.size(); i++) {
 			categoryMap.put(categoryList.get(i).toString(), i);
 		}
+		// 给节点设置分类
 		if (IsFlag.Shi == IsFlag.ofEnumByCode(type)) {
 			for (Map<String, Object> node : nodes) {
 				for (Map<String, Object> map : dataMapList) {
@@ -251,28 +259,14 @@ public class GraphUtil {
 			}
 		}
 		Map<Integer, Map<String, Integer>> displayAreaMap = GraphUtil.initDisplayArea(categoryMap);
-		long count = dataMapList.stream().map(data -> data.get("name")).distinct().count();
-		if (count < nodes.size()) {
-			// 如果有节点没分类，单独给这些节点划分为一个分类，并设置特定的区域
-			Map<String, Integer> xyMap = new HashMap<>();
-			int i = new Double(Math.ceil(Math.sqrt(count))).intValue() + 1;
-			xyMap.put("x", (i + new Double(Math.random()).intValue()) * 12000);
-			xyMap.put("y", (i + new Double(Math.random()).intValue()) * 7000);
-			displayAreaMap.put(categoryList.size(), xyMap);
-			categoryList.add(size);
-			for (Map<String, Object> node : nodes) {
-				node.putIfAbsent("category", size);
-			}
-		}
 		for (Map<String, Object> node : nodes) {
-			int i = Integer.parseInt(node.get("category").toString());
-			Map<String, Integer> xyMap = displayAreaMap.get(i);
+			Map<String, Integer> xyMap = displayAreaMap.get(Integer.parseInt(node.get("category").toString()));
 			node.put("x", (xyMap.get("x") + Math.random() * 10000) * 2);
 			node.put("y", xyMap.get("y") + Math.random() * 10000);
 		}
 		Map<String, Object> dataMap = new HashMap<>();
 		List<Object> categories = nodes.stream().map(data -> data.get("category"))
-				.distinct().collect(Collectors.toList());
+			.distinct().collect(Collectors.toList());
 		dataMap.put("categories", categories.stream().sorted().collect(Collectors.toList()));
 		dataMap.put("nodes", nodes);
 		dataMap.put("links", links);
@@ -326,7 +320,7 @@ public class GraphUtil {
 				StringBuilder sb = new StringBuilder();
 				for (Map.Entry<String, Object> objectEntry : entry.getValue().entrySet()) {
 					sb.append(objectEntry.getKey()).append(":").append(objectEntry.getValue())
-							.append(System.lineSeparator());
+						.append(System.lineSeparator());
 				}
 				childNodeMap.put("name", entry.getValue().get("name"));
 				childNodeMap.put("value", sb.toString());
@@ -346,6 +340,34 @@ public class GraphUtil {
 	public static Map<String, Object> convertToTriangle(List<AdaptRelationBean> adaptRelationBeans) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		return getEchartsData(adaptRelationBeans, nodes);
+	}
+
+	/**
+	 * @param nodeRelationBeans nodeRelationBeans neo4j 所有列节点关系数据
+	 * @return 返回转换后的echarts格式数据
+	 */
+	public static Map<String, Object> convertToGraphData(List<NodeRelationBean> nodeRelationBeans) {
+		List<Map<String, Object>> nodes = new ArrayList<>();
+		List<Map<String, Object>> links = new ArrayList<>();
+		extractNodesAndRelationships(nodes, links, nodeRelationBeans);
+		Map<String, Object> dataMap = new HashMap<>();
+		for (Map<String, Object> node : nodes) {
+			node.put("x", Math.random() * 2000000);
+			node.put("y", Math.random() * 1000000);
+		}
+		//设置节点显示大小,如果节点关系越多,节点显示越大
+		double symbolSize = 10;
+		for (Map<String, Object> node : nodes) {
+			for (Map<String, Object> link_map : links) {
+				if (node.get("id").toString().equalsIgnoreCase(link_map.get("source").toString())) {
+					symbolSize = symbolSize > 30 ? 30 : symbolSize + 0.1;
+				}
+			}
+			node.put("symbolSize", symbolSize);
+		}
+		dataMap.put("nodes", nodes);
+		dataMap.put("links", links);
+		return dataMap;
 	}
 
 	private static Map<String, Object> getEchartsData(List<AdaptRelationBean> adaptRelationBeans,
@@ -373,8 +395,9 @@ public class GraphUtil {
 		return dataMap;
 	}
 
-	private static void processData(List<Map<String, Object>> nodes, List<Map<String, Object>> links,
-	                                List<NodeRelationBean> nodeRelationBeans) {
+	private static void extractNodesAndRelationships(List<Map<String, Object>> nodes,
+	                                                 List<Map<String, Object>> links,
+	                                                 List<NodeRelationBean> nodeRelationBeans) {
 		for (NodeRelationBean nodeRelationBean : nodeRelationBeans) {
 			Map<Long, Map<String, Object>> leftNode = nodeRelationBean.getLeftNode();
 			Map<Long, Map<String, Object>> rightNode = nodeRelationBean.getRightNode();
@@ -400,8 +423,8 @@ public class GraphUtil {
 		}
 	}
 
-	private static void setNode(List<Map<String, Object>> nodes,
-	                            NodeRelationBean nodeRelationBean, Map.Entry<Long, Map<String, Object>> entry) {
+	private static void setNode(List<Map<String, Object>> nodes, NodeRelationBean nodeRelationBean,
+	                            Map.Entry<Long, Map<String, Object>> entry) {
 		Map<String, Object> nodeMap = new HashMap<>();
 		nodeMap.put("id", entry.getValue().get("name"));
 		nodeMap.put("name", entry.getValue().get("name"));
