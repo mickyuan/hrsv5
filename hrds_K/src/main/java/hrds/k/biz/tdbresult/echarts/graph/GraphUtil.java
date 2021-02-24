@@ -356,7 +356,7 @@ public class GraphUtil {
 			node.put("y", Math.random() * 1000000);
 		}
 		//设置节点显示大小,如果节点关系越多,节点显示越大
-		double symbolSize = 10;
+		double symbolSize = 1;
 		for (Map<String, Object> node : nodes) {
 			for (Map<String, Object> link_map : links) {
 				if (node.get("id").toString().equalsIgnoreCase(link_map.get("source").toString())) {
