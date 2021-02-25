@@ -404,11 +404,8 @@ public class TDBResultAction extends BaseAction {
 
 	@Method(desc = "获取数据对标字段特征分析结果", logicStep = "获取数据对标字段特征分析结果")
 	@Param(name = "table_code", desc = "表名", range = "可为空", nullable = true)
-	@Param(name = "currPage", desc = "分页查询当前页", range = "大于0的正整数", valueIfNull = "1")
-	@Param(name = "pageSize", desc = "分页查询每页显示记录数", range = "大于0的正整数", valueIfNull = "10")
 	@Return(desc = "字段特征分析结果", range = "字段特征分析结果")
-	@Deprecated
-	public Map<String, Object> getColumnFeatureAnalysisResult(String table_code, int currPage, int pageSize) {
+	public List<Map<String, Object>> getColumnFeatureAnalysisResult(String table_code) {
 		// 1.拼接sql
 		SqlOperator.Assembler asmSql = SqlOperator.Assembler.newInstance();
 		asmSql.clean();
@@ -430,18 +427,11 @@ public class TDBResultAction extends BaseAction {
 			" FROM " + Dbm_feature_tab.TableName
 		);
 		if (StringUtil.isNotBlank(table_code)) {
-			asmSql.addLikeParam("table_code", "%" + table_code + "%", "WHERE");
+			asmSql.addLikeParam("table_code", table_code, "WHERE");
 		}
 		asmSql.addSql(" ORDER BY table_code");
-		// 2.分页查询作业定义信息
-		Page page = new DefaultPageImpl(currPage, pageSize);
-		List<Map<String, Object>> columnFeatureAnalysisResult = Dbo.queryPagedList(page, asmSql.sql(), asmSql.params());
-		// 3.创建存放分页查询作业定义信息、分页查询总记录数集合并封装数据
-		Map<String, Object> columnFeatureAnalysisResultMap = new HashMap<>();
-		columnFeatureAnalysisResultMap.put("columnFeatureAnalysisResult", columnFeatureAnalysisResult);
-		columnFeatureAnalysisResultMap.put("totalSize", page.getTotalSize());
 		// 4.返回分页查询信息
-		return columnFeatureAnalysisResultMap;
+		return Dbo.queryList(asmSql.sql(), asmSql.params());
 	}
 
 	@Method(desc = "获取数据对标字段特征分析表名list", logicStep = "获取数据对标字段特征分析表名list")
@@ -597,8 +587,8 @@ public class TDBResultAction extends BaseAction {
 	}
 
 	@Method(desc = "求最长路径", logicStep = "1.参数合法性验证" +
-		"2.获取最长路径neo4j结果数据" +
-		"3.最长路径数据格式转换")
+			"2.获取最长路径neo4j结果数据" +
+			"3.最长路径数据格式转换")
 	@Param(name = "columnNodeName1", desc = "第一个字段的节点名称", range = "不为空")
 	@Param(name = "columnNodeName2", desc = "第二个字段的节点名称", range = "不为空")
 	@Param(name = "level", desc = "最多找多少层", range = "这个值不能太大，不然查询超级慢")
@@ -622,6 +612,7 @@ public class TDBResultAction extends BaseAction {
 				columnNodeName2);
 		} catch (Exception e) {
 			throw new BusinessException(e.getMessage());
+				columnNodeName2);
 		}
 	}
 
