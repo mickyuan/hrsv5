@@ -46,25 +46,38 @@ public class AlgorithmsMain {
 			return;
 		}
 		//获取所有要分析的表
-		List<String> tableList = readTextFile(args[0]);
+		List<String> lineList = readTextFile(args[0]);
 		//获取需要分析的库的连接方式
 		setDataBaseProperties(args[1]);
-		Set<String> validTableSet = new HashSet<>();
+		List<String> validTableSet = new ArrayList<>();
+		List<String> etl_datesList = new ArrayList<>();
+		List<String> end_dateList = new ArrayList<>();
 		ResultSet resultSet = null;
 		PreparedStatement curPstmt = null;
 		Connection connection = null;
 		//判断表数据量是否大于10，这里后面是统一配置
 		try {
 			connection = ConnectionTool.getDBWrapper(layerAttr).getConnection();
-			for (String table : tableList) {
-				if (!StringUtil.isEmpty(table)) {
+			for (String line : lineList) {
+				if (!StringUtil.isEmpty(line)) {
+					List<String> splitLine = StringUtil.split(line, "|");
 					curPstmt = connection.prepareStatement("select count(1) as valid_num from "
-							+ table + " where rownum <= 10");
+							+ splitLine.get(0) + " where rownum <= 10");
 					resultSet = curPstmt.executeQuery();
 					while (resultSet.next()) {
 						int valid_num = resultSet.getInt("valid_num");
 						if (valid_num > 5) {
-							validTableSet.add(table);
+							validTableSet.add(splitLine.get(0).trim());
+							if (splitLine.size() > 2) {
+								etl_datesList.add(splitLine.get(1).trim());
+								end_dateList.add(splitLine.get(2).trim());
+							} else if (splitLine.size() > 1) {
+								etl_datesList.add(splitLine.get(1).trim());
+								end_dateList.add(" ");
+							} else {
+								etl_datesList.add(" ");
+								end_dateList.add(" ");
+							}
 						}
 					}
 					resultSet.close();
@@ -81,11 +94,12 @@ public class AlgorithmsMain {
 		}
 		//获取函数依赖需要跳过分析的表
 		List<String> jumpTableList = readTextFile(args[5]);
-		runAlgorithms(validTableSet, args[2], args[3].split(","), Boolean.parseBoolean(args[4]), jumpTableList);
+		runAlgorithms(validTableSet, args[2], args[3].split(","), Boolean.parseBoolean(args[4]),
+				jumpTableList, etl_datesList, end_dateList);
 	}
 
-	private static void runAlgorithms(Set<String> tableList, String sys_class_code,
-									  String[] checkList, boolean flag, List<String> jumpTableList) {
+	private static void runAlgorithms(List<String> tableList, String sys_class_code, String[] checkList, boolean flag,
+									  List<String> jumpTableList, List<String> etl_datesList, List<String> end_dateList) {
 		//数据校验
 		if (tableList.size() == 0) {
 			throw new AppSystemException("表信息列表不能为空!");
@@ -93,7 +107,7 @@ public class AlgorithmsMain {
 		try (DatabaseWrapper db = new DatabaseWrapper()) {
 			//保存数据分析配置表、分析进度表
 			if (flag) {
-				saveDbmAnalysisConfAndScheduleTab(tableList, sys_class_code, db);
+				saveDbmAnalysisConfAndScheduleTab(tableList, sys_class_code, etl_datesList, end_dateList, db);
 			}
 			//调用数据对标接口或代码
 			for (String code : checkList) {
@@ -102,17 +116,17 @@ public class AlgorithmsMain {
 				switch (code) {
 					case "1":
 						//字段特征分析
-						analysis_feature(sys_class_code, tableList);
+						analysis_feature(sys_class_code, tableList, etl_datesList, end_dateList);
 						break;
 					case "2":
-						func_dependency_analysis(sys_class_code, tableList, jumpTableList, db);
+						func_dependency_analysis(sys_class_code, tableList, jumpTableList, db, etl_datesList, end_dateList);
 						break;
 					case "3":
-						pk_analysis(sys_class_code, tableList, db);
+						pk_analysis(sys_class_code, tableList, db, etl_datesList, end_dateList);
 						break;
 					case "4":
 						//单一外键分析
-						analyse_table_fk(sys_class_code, tableList, db);
+						analyse_table_fk(sys_class_code, tableList, db, etl_datesList, end_dateList);
 						//联合外键分析
 						if (isJoinPk(sys_class_code, db)) {
 							LOGGER.info("---------------------------------------------开始联合外键分析");
@@ -178,9 +192,10 @@ public class AlgorithmsMain {
 	/**
 	 * 保存数据分析配置表、分析进度表
 	 */
-	private static void saveDbmAnalysisConfAndScheduleTab(Set<String> tableList, String sys_class_code,
-														  DatabaseWrapper db) {
-		for (String tableName : tableList) {
+	private static void saveDbmAnalysisConfAndScheduleTab(List<String> tableList, String sys_class_code, List<String>
+			etl_datesList, List<String> end_dateList, DatabaseWrapper db) {
+		for (int i = 0; i < tableList.size(); i++) {
+			String tableName = tableList.get(i);
 			//先清空已有数据
 			db.execute("DELETE FROM dbm_analysis_conf_tab WHERE sys_class_code = ? and ori_table_code = ?",
 					sys_class_code, tableName);
@@ -201,6 +216,12 @@ public class AlgorithmsMain {
 			analysis_conf_tab.setFd_sample_count("all");
 			analysis_conf_tab.setJoint_fk_ana_mode("all");
 			analysis_conf_tab.setFk_ana_mode("all");
+			if (!StringUtil.isEmpty(etl_datesList.get(i))) {
+				analysis_conf_tab.setEtl_date_filter(etl_datesList.get(i));
+			}
+			if (!StringUtil.isEmpty(end_dateList.get(i))) {
+				analysis_conf_tab.setEnd_date_filter(end_dateList.get(i));
+			}
 			analysis_conf_tab.add(db);
 			Dbm_analysis_schedule_tab analysis_schedule_tab = new Dbm_analysis_schedule_tab();
 			analysis_schedule_tab.setSys_class_code(sys_class_code);
@@ -221,18 +242,19 @@ public class AlgorithmsMain {
 	/**
 	 * 分析字段特征
 	 */
-	private static void analysis_feature(String dsl_name, Set<String> tableList) {
+	private static void analysis_feature(String dsl_name, List<String> tableList, List<String> etl_datesList,
+										 List<String> end_dateList) {
 		String url = PropertyParaValue.getString("algorithms_python_serve", "http://127.0.0.1:33333/")
 				+ "execute_feature_main";
-		for (String tableName : tableList) {
-			LOGGER.info("---------------------------------------------开始字段特征分析表: " + tableName);
+		for (int i = 0; i < tableList.size(); i++) {
+			LOGGER.info("---------------------------------------------开始字段特征分析表: " + tableList.get(i));
 			try {
 				//3、httpClient发送请求并接收响应
 				HttpClient.ResponseValue resVal = new HttpClient()
 						.addData("sys_class_code", dsl_name)
-						.addData("table_code", tableName)
-						.addData("etl_date", "")
-						.addData("date_offset", "")
+						.addData("table_code", tableList.get(i))
+						.addData("etl_date", etl_datesList.get(i))
+						.addData("end_date", end_dateList.get(i))
 						.addData("alg", "F5")
 						.addData("layerAttr", JSONObject.toJSONString(layerAttr))
 						.post(url);
@@ -245,7 +267,7 @@ public class AlgorithmsMain {
 					LOGGER.info((">>>>>>>>>>>>>>>>>>>>>>>>错误信息为：" + ar.getMessage()));
 				}
 			} catch (Exception e) {
-				LOGGER.warn(tableName + "分析出现错误，跳过");
+				LOGGER.warn(tableList.get(i) + "分析出现错误，跳过");
 			}
 		}
 	}
@@ -253,9 +275,11 @@ public class AlgorithmsMain {
 	/**
 	 * 表内函数依赖分析
 	 */
-	private static void func_dependency_analysis(String sys_class_code, Set<String>
-			tableList, List<String> jumpTableList, DatabaseWrapper db) {
-		for (String tableName : tableList) {
+	private static void func_dependency_analysis(String sys_class_code, List<String>
+			tableList, List<String> jumpTableList, DatabaseWrapper db, List<String> etl_datesList,
+												 List<String> end_dateList) {
+		for (int i = 0; i < tableList.size(); i++) {
+			String tableName = tableList.get(i);
 			LOGGER.info("---------------------------------------------开始函数依赖分析表: " + tableName);
 			try {
 				if (jumpTableList.contains(tableName)) {
@@ -263,7 +287,8 @@ public class AlgorithmsMain {
 				}
 				//获取表字段信息
 				//将该表的信息配置填充到Conf
-				AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code, getTableColumns(tableName));
+				AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code,
+						getTableColumns(tableName), etl_datesList.get(i), end_dateList.get(i));
 				//序列化algorithmsConf类的数据到临时文件夹
 				FileUtils.write(new File(Constant.ALGORITHMS_CONF_SERIALIZE_PATH
 								+ algorithmsConf.getTable_name()), JSONObject.toJSONString(algorithmsConf),
@@ -281,13 +306,16 @@ public class AlgorithmsMain {
 	/**
 	 * 主键分析
 	 */
-	private static void pk_analysis(String sys_class_code, Set<String> tableList, DatabaseWrapper db) {
-		for (String tableName : tableList) {
+	private static void pk_analysis(String sys_class_code, List<String> tableList, DatabaseWrapper db,
+									List<String> etl_datesList, List<String> end_dateList) {
+		for (int i = 0; i < tableList.size(); i++) {
+			String tableName = tableList.get(i);
 			LOGGER.info("---------------------------------------------开始主键分析: " + tableName);
 			try {
 				//获取表字段信息
 				//将该表的信息配置填充到Conf
-				AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code, getTableColumns(tableName));
+				AlgorithmsConf algorithmsConf = getTableInfoToConf(tableName, sys_class_code, getTableColumns(tableName),
+						etl_datesList.get(i), end_dateList.get(i));
 				//序列化algorithmsConf类的数据到临时文件夹
 				FileUtils.write(new File(Constant.ALGORITHMS_CONF_SERIALIZE_PATH
 								+ algorithmsConf.getTable_name()), JSONObject.toJSONString(algorithmsConf),
@@ -305,10 +333,12 @@ public class AlgorithmsMain {
 	/**
 	 * 单一外键分析
 	 */
-	private static void analyse_table_fk(String dsl_name, Set<String> tableList, DatabaseWrapper db) {
+	private static void analyse_table_fk(String dsl_name, List<String> tableList, DatabaseWrapper db, List<String> etl_datesList,
+										 List<String> end_dateList) {
 		String url = PropertyParaValue.getString("algorithms_python_serve", "http://127.0.0.1:33333/")
 				+ "execute_analyse_table_fk";
-		for (String tableName : tableList) {
+		for (int i = 0; i < tableList.size(); i++) {
+			String tableName = tableList.get(i);
 			if (!isJoinPk(dsl_name, db, tableName)) {
 				LOGGER.info("---------------------------------------------开始单一外键分析表: " + tableName);
 				try {
@@ -316,8 +346,8 @@ public class AlgorithmsMain {
 					HttpClient.ResponseValue resVal = new HttpClient()
 							.addData("sys_class_code", dsl_name)
 							.addData("table_code", tableName)
-							.addData("start_date", "")
-							.addData("date_offset", "")
+							.addData("etl_date", etl_datesList.get(i))
+							.addData("end_date", end_dateList.get(i))
 							.addData("mode", dsl_name)
 							.addData("alg", "F5")
 							.addData("layerAttr", JSONObject.toJSONString(layerAttr))
@@ -400,7 +430,7 @@ public class AlgorithmsMain {
 	}
 
 	private static AlgorithmsConf getTableInfoToConf(String hyren_name, String
-			sys_class_code, List<String> columnList) {
+			sys_class_code, List<String> columnList, String etl_dates, String end_date) {
 		AlgorithmsConf algorithmsConf = new AlgorithmsConf();
 		algorithmsConf.setTable_name(hyren_name);
 		algorithmsConf.setSys_code(sys_class_code);
@@ -419,8 +449,30 @@ public class AlgorithmsMain {
 					|| Constant.HYREN_OPER_TIME.equalsIgnoreCase(column_name))) {
 				sb.append(column_name).append(",");
 			}
-			if (Constant.EDATENAME.equalsIgnoreCase(column_name)) {
-				algorithmsConf.setPredicates(new String[]{Constant.EDATENAME + "='" + Constant.MAXDATE + "'"});
+			if (!StringUtil.isEmpty(etl_dates) && !StringUtil.isEmpty(end_date)) {
+				List<String> split = StringUtil.split(etl_dates, "=");
+				StringBuilder sb2 = new StringBuilder();
+				sb2.append(split.get(0)).append(" IN (");
+				for (String value : StringUtil.split(split.get(1), ",")) {
+					sb2.append("'").append(value).append("'").append(",");
+				}
+				sb2.delete(sb2.length() - 1, sb2.length());
+				sb2.append(")");
+				List<String> split2 = StringUtil.split(end_date, "=");
+				algorithmsConf.setPredicates(new String[]{sb2.toString() + " AND " + split2.get(0) + "='" + split2.get(1) + "'"});
+			} else if (!StringUtil.isEmpty(etl_dates)) {
+				List<String> split = StringUtil.split(etl_dates, "=");
+				StringBuilder sb2 = new StringBuilder();
+				sb2.append(split.get(0)).append(" IN (");
+				for (String value : StringUtil.split(split.get(1), ",")) {
+					sb2.append("'").append(value).append("'").append(",");
+				}
+				sb2.delete(sb2.length() - 1, sb2.length());
+				sb2.append(")");
+				algorithmsConf.setPredicates(new String[]{sb2.toString()});
+			} else if (!StringUtil.isEmpty(end_date)) {
+				List<String> split2 = StringUtil.split(end_date, "=");
+				algorithmsConf.setPredicates(new String[]{split2.get(0) + "='" + split2.get(1) + "'"});
 			}
 		}
 		sb.delete(sb.length() - 1, sb.length());
@@ -450,5 +502,6 @@ public class AlgorithmsMain {
 		}
 		return columns;
 	}
+
 
 }

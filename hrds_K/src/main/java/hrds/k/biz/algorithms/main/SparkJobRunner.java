@@ -15,7 +15,7 @@ public class SparkJobRunner {
 	private static final long SPARK_JOB_TIMEOUT_SECONDS =
 			PropertyParaValue.getLong("spark.job.timeout.seconds", 24L * 60 * 60);
 	private static final String SPARK_DRIVER_EXTRAJAVAOPTIONS =
-			PropertyParaValue.getString("spark.driver.extraJavaOptions", "-Xss20m -Xmx49152m");
+			PropertyParaValue.getString("spark.driver.extraJavaOptions", "-Xss20m -Xmx61440m");
 
 
 	public static void runJob(String spark_main_class, String table_name) {
