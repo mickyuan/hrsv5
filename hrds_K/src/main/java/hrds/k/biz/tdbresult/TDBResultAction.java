@@ -612,7 +612,6 @@ public class TDBResultAction extends BaseAction {
 				columnNodeName2);
 		} catch (Exception e) {
 			throw new BusinessException(e.getMessage());
-				columnNodeName2);
 		}
 	}
 
