@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONObject;
 import fd.ng.core.utils.StringUtil;
 import fd.ng.core.utils.Validator;
 import hrds.commons.codes.DataBaseCode;
-import hrds.commons.codes.DatabaseType;
 import hrds.commons.codes.FileFormat;
 import hrds.commons.codes.IsFlag;
 import hrds.commons.codes.UnloadType;
@@ -14,18 +13,25 @@ import hrds.commons.entity.Data_extraction_def;
 import hrds.commons.entity.Table_column;
 import hrds.commons.exception.BusinessException;
 import hrds.commons.utils.ExcelUtil;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.w3c.dom.Element;
-
-import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Xls2xml {
 
@@ -123,9 +129,10 @@ public class Xls2xml {
 		String path_cd = pathToUnEscape(db_path);
 		File file = FileUtils.getFile(path_cd);
 		if (file.exists()) {
-			if (db_path.toUpperCase().endsWith("JSON") || db_path.endsWith("")) {
+			String suffix = FilenameUtils.getExtension(db_path);
+			if (suffix.equalsIgnoreCase("JSON") || suffix.equals("")) {
 				jsonToXml(db_path, xml_path);
-			} else if (db_path.toUpperCase().endsWith("XLS") || db_path.toUpperCase().endsWith("XLSX")) {
+			} else if (suffix.equalsIgnoreCase("XLS") || suffix.equalsIgnoreCase("XLSX")) {
 				XlsToXml(db_path, xml_path);
 			} else {
 				throw new BusinessException("请指定正确的数据字典文件！");
