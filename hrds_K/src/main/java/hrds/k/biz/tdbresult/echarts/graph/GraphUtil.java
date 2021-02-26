@@ -352,15 +352,15 @@ public class GraphUtil {
 		extractNodesAndRelationships(nodes, links, nodeRelationBeans);
 		Map<String, Object> dataMap = new HashMap<>();
 		for (Map<String, Object> node : nodes) {
-			node.put("x", Math.random() * 2000000);
-			node.put("y", Math.random() * 1000000);
+			node.put("x", Math.random() * 25000);
+			node.put("y", Math.random() * 10000);
 		}
 		//设置节点显示大小,如果节点关系越多,节点显示越大
-		double symbolSize = 1;
 		for (Map<String, Object> node : nodes) {
+			double symbolSize = 5;
 			for (Map<String, Object> link_map : links) {
 				if (node.get("id").toString().equalsIgnoreCase(link_map.get("source").toString())) {
-					symbolSize = symbolSize > 30 ? 30 : symbolSize + 0.1;
+					symbolSize ++;
 				}
 			}
 			node.put("symbolSize", symbolSize);
