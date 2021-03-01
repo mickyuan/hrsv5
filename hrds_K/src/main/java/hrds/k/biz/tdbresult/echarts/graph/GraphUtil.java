@@ -360,7 +360,7 @@ public class GraphUtil {
 			double symbolSize = 5;
 			for (Map<String, Object> link_map : links) {
 				if (node.get("id").toString().equalsIgnoreCase(link_map.get("source").toString())) {
-					symbolSize ++;
+					symbolSize++;
 				}
 			}
 			node.put("symbolSize", symbolSize);
@@ -386,6 +386,7 @@ public class GraphUtil {
 				long target = Long.parseLong(entry.getValue().get("target").toString());
 				linkMap.put("source", adaptRelationBean.getNodeCollection().get(source).get("name").toString());
 				linkMap.put("target", adaptRelationBean.getNodeCollection().get(target).get("name").toString());
+				linkMap.put("type", entry.getValue().get("type"));
 				links.add(linkMap);
 			}
 		}
