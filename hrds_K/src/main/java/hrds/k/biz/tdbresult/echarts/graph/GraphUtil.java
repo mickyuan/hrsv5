@@ -317,13 +317,13 @@ public class GraphUtil {
 			Map<String, Object> childNodeMap = new HashMap<>();
 			Map<Long, Map<String, Object>> rightNode = nodeRelationBean.getRightNode();
 			for (Map.Entry<Long, Map<String, Object>> entry : rightNode.entrySet()) {
-				StringBuilder sb = new StringBuilder();
+				List<Object> valueList = new ArrayList<>();
 				for (Map.Entry<String, Object> objectEntry : entry.getValue().entrySet()) {
-					sb.append(objectEntry.getKey()).append(":").append(objectEntry.getValue())
-						.append(System.lineSeparator());
+					valueList.add(objectEntry.getKey() + ":" + objectEntry.getValue());
 				}
 				childNodeMap.put("name", entry.getValue().get("name"));
-				childNodeMap.put("value", sb.toString());
+				childNodeMap.put("value", valueList);
+				valueList.add(nodeRelationBean.getRelationType());
 			}
 			childrenList.add(childNodeMap);
 		}
